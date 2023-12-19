@@ -21,6 +21,7 @@ python_root = '..'
 python_modules = ('geosx_mesh_tools_package',
                   'geosx_xml_tools_package',
                   'geosx_mesh_doctor',
+                  'geos_ats_package',
                   'hdf5_wrapper_package',
                   'pygeosx_tools_package',
                   'timehistory_package')
@@ -61,7 +62,7 @@ extensions = [
 ]
 
 
-autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py"]
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:

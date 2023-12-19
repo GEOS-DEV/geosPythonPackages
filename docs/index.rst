@@ -43,6 +43,8 @@ Packages
 
     hdf5_wrapper
 
+    geos_ats
+
     geosx_mesh_tools
 
     geosx_xml_tools

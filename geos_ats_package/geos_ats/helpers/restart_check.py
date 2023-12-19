@@ -195,21 +195,21 @@ class FileComparison(object):
         Compares two arrays ARR and BASEARR of floating point values.
         Entries x1 and x2 are  considered equal iff:
 
-            |x1 - x2| <= ATOL * ( 1 + max(|x2|) )
-            - or -
-            |x1 - x2| <= RTOL * |x2|.
+        abs(x1 - x2) <= ATOL * ( 1 + max(abs(x2)) )
+        or
+        abs(x1 - x2) <= RTOL * abs(x2).
 
         To measure the degree of difference a scaling factor q
         is introduced. The goal is now to minimize q such that:
 
-            |x1 - x2| <= ATOL * ( 1 + max(|x2|) ) * q
-            - or -
-            |x1 - x2| <= RTOL * |x2| * q.
+        abs(x1 - x2) <= ATOL * ( 1 + max(abs(x2)) ) * q
+        or
+        abs(x1 - x2) <= RTOL * abs(x2) * q.
 
-        If RTOL * |x2| > ATOL * ( 1 + max(|x2|) )
-            q = |x1 - x2| / (RTOL * |x2|)
+        If RTOL * abs(x2) > ATOL * ( 1 + max(abs(x2)) )
+        q = abs(x1 - x2) / (RTOL * abs(x2))
         else
-            q = |x1 - x2| / ( ATOL * ( 1 + max(|x2|) ) ).
+        q = abs(x1 - x2) / ( ATOL * ( 1 + max(abs(x2)) ) ).
 
         If the maximum value of q over all the
         entries is greater than 1.0 then the arrays are considered
@@ -667,12 +667,11 @@ def findMaxMatchingFile(file_path):
     find and return the path of the greatest matching file/folder or None if no match is found.
 
     FILE_PATH [in]: The pattern to match.
-
+    
     Examples:
-        ".*" will return the file/folder with the greatest name in the current directory.
-
-        "test/plot_*.hdf5" will return the file with the greatest name in the ./test directory
-        that begins with "plot_" and ends with ".hdf5".
+    '.*' will return the file/folder with the greatest name in the current directory.
+    'test/plot_*.hdf5' will return the file with the greatest name in the ./test directory
+    that begins with 'plot' and ends with '.hdf5'.
     """
     file_directory, pattern = os.path.split(file_path)
     if file_directory == "":
