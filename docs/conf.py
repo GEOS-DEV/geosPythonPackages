@@ -62,7 +62,7 @@ extensions = [
 ]
 
 
-autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats"]
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
