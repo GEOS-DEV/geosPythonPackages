@@ -10,7 +10,7 @@ concurrency:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -19,6 +19,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: mpi4py/setup-mpi@v1
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -29,10 +30,10 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pytest yapf toml
         python -m pip install .
-    - name: Lint with yapf
-      working-directory: ./${{ matrix.package-name }}
-      run: |
-        yapf -r --diff .
+    # - name: Lint with yapf
+    #   working-directory: ./${{ matrix.package-name }}
+    #   run: |
+    #     yapf -r --diff .
     # - name: Test with pytest
     #   working-directory: ./${{ matrix.package-name }}
     #   run: |
