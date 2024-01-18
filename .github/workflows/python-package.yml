@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         package-name: ["geos_ats_package", "geosx_mesh_doctor", "geosx_mesh_tools_package", "geosx_xml_tools_package", "hdf5_wrapper_package", "pygeosx_tools_package", "timehistory_package"]
 
     steps:
