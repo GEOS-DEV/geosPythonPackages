@@ -71,20 +71,12 @@ def evaluate_external_script(script, fn, data):
         if hasattr(module, fn):
             return getattr(module, fn)(**data)
         else:
-            raise Exception(
-                f'External script does not contain the expected function ({fn})'
-            )
+            raise Exception(f'External script does not contain the expected function ({fn})')
     else:
         raise FileNotFoundError(f'Could not find script: {script}')
 
 
-def check_diff(parameter_name,
-               set_name,
-               target,
-               baseline,
-               tolerance,
-               errors,
-               modifier='baseline'):
+def check_diff(parameter_name, set_name, target, baseline, tolerance, errors, modifier='baseline'):
     """
     Compute the L2-norm of the diff and compare to the set tolerance
 
@@ -107,8 +99,7 @@ def check_diff(parameter_name,
         )
 
 
-def curve_check_figure(parameter_name, location_str, set_name, data,
-                       data_sizes, output_root, ncol, units_time):
+def curve_check_figure(parameter_name, location_str, set_name, data, data_sizes, output_root, ncol, units_time):
     """
     Generate figures associated with the curve check
 
@@ -174,8 +165,7 @@ def curve_check_figure(parameter_name, location_str, set_name, data,
                                 kwargs['label'] = k
                             ax.plot(t, x[:, jj], color=c, **style[k], **kwargs)
                         except Exception as e:
-                            print(
-                                f'Error rendering curve {value_key}: {str(e)}')
+                            print(f'Error rendering curve {value_key}: {str(e)}')
                 else:
                     # Spatial axis
                     horizontal_label = 'X (m)'
@@ -185,14 +175,9 @@ def curve_check_figure(parameter_name, location_str, set_name, data,
                             kwargs = {}
                             if (jj == 0):
                                 kwargs['label'] = k
-                            ax.plot(position,
-                                    x[jj, :],
-                                    color=c,
-                                    **style[k],
-                                    **kwargs)
+                            ax.plot(position, x[jj, :], color=c, **style[k], **kwargs)
                         except Exception as e:
-                            print(
-                                f'Error rendering curve {value_key}: {str(e)}')
+                            print(f'Error rendering curve {value_key}: {str(e)}')
 
         # Set labels
         ax.set_xlabel(horizontal_label)
@@ -200,12 +185,10 @@ def curve_check_figure(parameter_name, location_str, set_name, data,
         # ax.set_xlim(t[[0, -1]])
         ax.legend(loc=2)
     plt.tight_layout()
-    fig.savefig(os.path.join(output_root, f'{parameter_name}_{set_name}'),
-                dpi=200)
+    fig.savefig(os.path.join(output_root, f'{parameter_name}_{set_name}'), dpi=200)
 
 
-def compare_time_history_curves(fname, baseline, curve, tolerance, output,
-                                output_n_column, units_time,
+def compare_time_history_curves(fname, baseline, curve, tolerance, output, output_n_column, units_time,
                                 script_instructions):
     """
     Compute time history curves
@@ -233,8 +216,7 @@ def compare_time_history_curves(fname, baseline, curve, tolerance, output,
 
     if len(curve) != len(tolerance):
         raise Exception(
-            f'Curvecheck inputs must be of the same length: curves ({len(curve)}) and tolerance ({len(tolerance)})'
-        )
+            f'Curvecheck inputs must be of the same length: curves ({len(curve)}) and tolerance ({len(tolerance)})')
 
     # Load data and check sizes
     data = {}
@@ -303,10 +285,8 @@ def compare_time_history_curves(fname, baseline, curve, tolerance, output,
                     key += f' {s}'
                     key2 += f' {s}'
                 data['script'][key] = data['target'][key]
-                data['script'][key2] = evaluate_external_script(
-                    script, fn, data['target'])
-                data_sizes[p][s]['script'] = list(
-                    np.shape(data['script'][key2]))
+                data['script'][key2] = evaluate_external_script(script, fn, data['target'])
+                data_sizes[p][s]['script'] = list(np.shape(data['script'][key2]))
         except Exception as e:
             errors.append(str(e))
 
@@ -337,22 +317,16 @@ def compare_time_history_curves(fname, baseline, curve, tolerance, output,
                 if set_sizes['target'] == set_sizes['baseline']:
                     check_diff(p, s, xa, xb, tol[p][s], errors)
                 else:
-                    warnings.append(
-                        size_err.format(p, s, *set_sizes['target'],
-                                        *set_sizes['baseline']))
+                    warnings.append(size_err.format(p, s, *set_sizes['target'], *set_sizes['baseline']))
                     # Check whether the data can be interpolated
-                    if (len(set_sizes['baseline'])
-                            == 1) or (set_sizes['target'][1:]
-                                      == set_sizes['baseline'][1:]):
-                        warnings.append(
-                            f'Interpolating target curve in time: {p}_{s}')
+                    if (len(set_sizes['baseline']) == 1) or (set_sizes['target'][1:] == set_sizes['baseline'][1:]):
+                        warnings.append(f'Interpolating target curve in time: {p}_{s}')
                         ta = data['target'][f'{p} Time']
                         tb = data['baseline'][f'{p} Time']
                         xc = interpolate_values_time(ta, xa, tb)
                         check_diff(p, s, xc, xb, tol[p][s], errors)
                     else:
-                        errors.append(
-                            f'Cannot perform a curve check for {p}_{s}')
+                        errors.append(f'Cannot perform a curve check for {p}_{s}')
             if (('script' in set_sizes) and ('target' in set_sizes)):
                 xa = data['target'][key]
                 xb = data['script'][key]
@@ -363,8 +337,7 @@ def compare_time_history_curves(fname, baseline, curve, tolerance, output,
     os.makedirs(output, exist_ok=True)
     for p, set_data in data_sizes.items():
         for s, set_sizes in set_data.items():
-            curve_check_figure(p, location_strings[p], s, data, data_sizes,
-                               output, output_n_column, units_time)
+            curve_check_figure(p, location_strings[p], s, data, data_sizes, output, output_n_column, units_time)
 
     return warnings, errors
 
@@ -387,8 +360,7 @@ def curve_check_parser():
             elif len(values) == 2:
                 pairs.append((values[0], values[1]))
             else:
-                raise Exception(
-                    'Only a single value or a pair of values are expected')
+                raise Exception('Only a single value or a pair of values are expected')
 
             setattr(namespace, self.dest, pairs)
 
@@ -416,40 +388,31 @@ def curve_check_parser():
                         action=PairAction,
                         help='Curves to check (value) or (value, setname)',
                         default=[])
-    parser.add_argument(
-        "-t",
-        "--tolerance",
-        nargs='+',
-        action='append',
-        help=f"The tolerance for each curve check diffs (||x-y||/N)",
-        default=[])
-    parser.add_argument(
-        "-w",
-        "--Werror",
-        action="store_true",
-        help="Force all warnings to be errors, default is False.",
-        default=False)
-    parser.add_argument("-o",
-                        "--output",
-                        help="Output figures to this directory",
-                        default='./curve_check_figures')
+    parser.add_argument("-t",
+                        "--tolerance",
+                        nargs='+',
+                        action='append',
+                        help=f"The tolerance for each curve check diffs (||x-y||/N)",
+                        default=[])
+    parser.add_argument("-w",
+                        "--Werror",
+                        action="store_true",
+                        help="Force all warnings to be errors, default is False.",
+                        default=False)
+    parser.add_argument("-o", "--output", help="Output figures to this directory", default='./curve_check_figures')
     unit_choices = list(unit_map.keys())
-    parser.add_argument("-n",
-                        "--n-column",
-                        help="Number of columns for the output figure",
-                        default=1)
+    parser.add_argument("-n", "--n-column", help="Number of columns for the output figure", default=1)
     parser.add_argument("-u",
                         "--units-time",
                         help=f"Time units for plots (default=seconds)",
                         choices=unit_choices,
                         default='seconds')
-    parser.add_argument(
-        "-s",
-        "--script",
-        nargs='+',
-        action=ScriptAction,
-        help='Python script instructions (path, function, value, setname)',
-        default=[])
+    parser.add_argument("-s",
+                        "--script",
+                        nargs='+',
+                        action=ScriptAction,
+                        help='Python script instructions (path, function, value, setname)',
+                        default=[])
 
     return parser
 
@@ -460,9 +423,8 @@ def main():
     """
     parser = curve_check_parser()
     args = parser.parse_args()
-    warnings, errors = compare_time_history_curves(
-        args.filename, args.baseline, args.curve, args.tolerance, args.output,
-        args.n_column, args.units_time, args.script)
+    warnings, errors = compare_time_history_curves(args.filename, args.baseline, args.curve, args.tolerance,
+                                                   args.output, args.n_column, args.units_time, args.script)
 
     # Write errors/warnings to the screen
     if args.Werror:

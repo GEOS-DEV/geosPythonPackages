@@ -37,8 +37,7 @@ def __check(mesh, options: Options) -> Result:
     cs.ComputeSumOff()
     cs.ComputeVertexCountOff()
     cs.ComputeVolumeOn()
-    volume_array_name = "__MESH_DOCTOR_VOLUME-" + str(
-        uuid.uuid4())  # Making the name unique
+    volume_array_name = "__MESH_DOCTOR_VOLUME-" + str(uuid.uuid4())    # Making the name unique
     cs.SetVolumeArrayName(volume_array_name)
 
     cs.SetInputData(mesh)
@@ -49,8 +48,7 @@ def __check(mesh, options: Options) -> Result:
 
     mq.SetTetQualityMeasureToVolume()
     mq.SetHexQualityMeasureToVolume()
-    if hasattr(mq, "SetPyramidQualityMeasureToVolume"
-               ):  # This feature is quite recent
+    if hasattr(mq, "SetPyramidQualityMeasureToVolume"):    # This feature is quite recent
         mq.SetPyramidQualityMeasureToVolume()
         SUPPORTED_TYPES.append(VTK_PYRAMID)
         mq.SetWedgeQualityMeasureToVolume()
@@ -64,8 +62,7 @@ def __check(mesh, options: Options) -> Result:
     mq.Update()
 
     volume = cs.GetOutput().GetCellData().GetArray(volume_array_name)
-    quality = mq.GetOutput().GetCellData().GetArray(
-        "Quality")  # Name is imposed by vtk.
+    quality = mq.GetOutput().GetCellData().GetArray("Quality")    # Name is imposed by vtk.
 
     assert volume is not None
     assert quality is not None

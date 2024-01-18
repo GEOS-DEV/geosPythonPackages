@@ -66,11 +66,7 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
     else:
         fv = frozenset(field_values)
 
-    options = Options(policy=policy,
-                      field="attribute",
-                      field_values=fv,
-                      vtk_output=None,
-                      vtk_fracture_output=None)
+    options = Options(policy=policy, field="attribute", field_values=fv, vtk_output=None, vtk_fracture_output=None)
     return mesh, options
 
 
@@ -91,12 +87,10 @@ def __generate_test_data() -> Iterator[TestCase]:
     four_nodes = numpy.arange(4, dtype=float)
 
     # Split in 2
-    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes),
-                                      (0, 1, 0, 1, 0, 1, 0, 1))
+    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes), (0, 1, 0, 1, 0, 1, 0, 1))
     yield TestCase(input_mesh=mesh,
                    options=options,
-                   collocated_nodes=tuple(
-                       map(lambda i: (1 + 3 * i, 27 + i), range(9))),
+                   collocated_nodes=tuple(map(lambda i: (1 + 3 * i, 27 + i), range(9))),
                    result=TestResult(9 * 4, 8, 9, 4))
 
     # Split in 3
@@ -115,8 +109,7 @@ def __generate_test_data() -> Iterator[TestCase]:
         (4 + 18, *inc.next(2)),
         (7 + 18, *inc.next(1)),
     )
-    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes),
-                                      (0, 1, 2, 1, 0, 1, 2, 1))
+    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes), (0, 1, 2, 1, 0, 1, 2, 1))
     yield TestCase(input_mesh=mesh,
                    options=options,
                    collocated_nodes=collocated_nodes,
@@ -145,8 +138,7 @@ def __generate_test_data() -> Iterator[TestCase]:
         (5 + 18, *inc.next(1)),
         (7 + 18, *inc.next(1)),
     )
-    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes),
-                                      range(8))
+    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes), range(8))
     yield TestCase(input_mesh=mesh,
                    options=options,
                    collocated_nodes=collocated_nodes,
@@ -162,8 +154,7 @@ def __generate_test_data() -> Iterator[TestCase]:
         (1 + 18, *inc.next(1)),
         (4 + 18, ),
     )
-    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes),
-                                      (0, 1, 2, 2, 0, 1, 2, 2),
+    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes), (0, 1, 2, 2, 0, 1, 2, 2),
                                       field_values=(0, 1))
     yield TestCase(input_mesh=mesh,
                    options=options,
@@ -182,8 +173,7 @@ def __generate_test_data() -> Iterator[TestCase]:
         (1 + 18, *inc.next(1)),
         (4 + 18, ),
     )
-    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes),
-                                      (0, 1, 0, 1, 0, 1, 2, 2),
+    mesh, options = __build_test_case((three_nodes, three_nodes, three_nodes), (0, 1, 0, 1, 0, 1, 2, 2),
                                       field_values=(0, 1))
     yield TestCase(input_mesh=mesh,
                    options=options,
@@ -202,8 +192,7 @@ def __generate_test_data() -> Iterator[TestCase]:
         (5 + 8, *inc.next(1)),
         (6 + 8, *inc.next(1)),
     )
-    mesh, options = __build_test_case((four_nodes, two_nodes, two_nodes),
-                                      (0, 1, 2))
+    mesh, options = __build_test_case((four_nodes, two_nodes, two_nodes), (0, 1, 2))
     yield TestCase(input_mesh=mesh,
                    options=options,
                    collocated_nodes=collocated_nodes,
@@ -252,19 +241,15 @@ def __generate_test_data() -> Iterator[TestCase]:
         (1 + 6, *inc.next(1)),
         (1 + 9, *inc.next(1)),
     )
-    mesh, options = __build_test_case((three_nodes, two_nodes, two_nodes),
-                                      (0, 1))
+    mesh, options = __build_test_case((three_nodes, two_nodes, two_nodes), (0, 1))
     polyhedron_mesh = vtkUnstructuredGrid()
     polyhedron_mesh.SetPoints(mesh.GetPoints())
     polyhedron_mesh.Allocate(2)
-    polyhedron_mesh.InsertNextCell(VTK_HEXAHEDRON,
-                                   to_vtk_id_list((1, 2, 5, 4, 7, 8, 10, 11)))
-    poly = to_vtk_id_list([6] + [4, 0, 1, 7, 6] + [4, 1, 4, 10, 7] +
-                          [4, 4, 3, 9, 10] + [4, 3, 0, 6, 9] +
+    polyhedron_mesh.InsertNextCell(VTK_HEXAHEDRON, to_vtk_id_list((1, 2, 5, 4, 7, 8, 10, 11)))
+    poly = to_vtk_id_list([6] + [4, 0, 1, 7, 6] + [4, 1, 4, 10, 7] + [4, 4, 3, 9, 10] + [4, 3, 0, 6, 9] +
                           [4, 6, 7, 10, 9] + [4, 1, 0, 3, 4])
     polyhedron_mesh.InsertNextCell(VTK_POLYHEDRON, poly)
-    polyhedron_mesh.GetCellData().AddArray(
-        mesh.GetCellData().GetArray("attribute"))
+    polyhedron_mesh.GetCellData().AddArray(mesh.GetCellData().GetArray("attribute"))
 
     yield TestCase(input_mesh=polyhedron_mesh,
                    options=options,
@@ -283,8 +268,7 @@ def __generate_test_data() -> Iterator[TestCase]:
                                       attribute=(0, 0, 0),
                                       field_values=(0, ),
                                       policy=FracturePolicy.INTERNAL_SURFACES)
-    mesh.InsertNextCell(VTK_QUAD, to_vtk_id_list(
-        (1, 4, 7, 10)))  # Add a fracture on the fly
+    mesh.InsertNextCell(VTK_QUAD, to_vtk_id_list((1, 4, 7, 10)))    # Add a fracture on the fly
     yield TestCase(input_mesh=mesh,
                    options=options,
                    collocated_nodes=collocated_nodes,
@@ -293,15 +277,11 @@ def __generate_test_data() -> Iterator[TestCase]:
 
 @pytest.mark.parametrize("test_case", __generate_test_data())
 def test_generate_fracture(test_case: TestCase):
-    main_mesh, fracture_mesh = __split_mesh_on_fracture(
-        test_case.input_mesh, test_case.options)
-    assert main_mesh.GetNumberOfPoints(
-    ) == test_case.result.main_mesh_num_points
+    main_mesh, fracture_mesh = __split_mesh_on_fracture(test_case.input_mesh, test_case.options)
+    assert main_mesh.GetNumberOfPoints() == test_case.result.main_mesh_num_points
     assert main_mesh.GetNumberOfCells() == test_case.result.main_mesh_num_cells
-    assert fracture_mesh.GetNumberOfPoints(
-    ) == test_case.result.fracture_mesh_num_points
-    assert fracture_mesh.GetNumberOfCells(
-    ) == test_case.result.fracture_mesh_num_cells
+    assert fracture_mesh.GetNumberOfPoints() == test_case.result.fracture_mesh_num_points
+    assert fracture_mesh.GetNumberOfCells() == test_case.result.fracture_mesh_num_cells
 
     res = format_collocated_nodes(fracture_mesh)
     assert res == test_case.collocated_nodes

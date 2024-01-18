@@ -33,7 +33,7 @@ def __check(mesh, options: Options) -> Result:
     # The vtk cell type is an int and will be the key of the following mapping,
     # that will point to the relevant permutation.
     cell_type_to_ordering: Dict[int, List[int]] = options.cell_type_to_ordering
-    unchanged_cell_types: Set[int] = set()  # For logging purpose
+    unchanged_cell_types: Set[int] = set()    # For logging purpose
 
     # Preparing the output mesh by first keeping the same instance type.
     output_mesh = mesh.NewInstance()
@@ -51,16 +51,13 @@ def __check(mesh, options: Options) -> Result:
             cells.GetCellAtId(cell_idx, support_point_ids)
             new_support_point_ids = []
             for i, v in enumerate(new_ordering):
-                new_support_point_ids.append(
-                    support_point_ids.GetId(new_ordering[i]))
-            cells.ReplaceCellAtId(cell_idx,
-                                  to_vtk_id_list(new_support_point_ids))
+                new_support_point_ids.append(support_point_ids.GetId(new_ordering[i]))
+            cells.ReplaceCellAtId(cell_idx, to_vtk_id_list(new_support_point_ids))
         else:
             unchanged_cell_types.add(cell_type)
     is_written_error = vtk_utils.write_mesh(output_mesh, options.vtk_output)
-    return Result(
-        output=options.vtk_output.output if not is_written_error else "",
-        unchanged_cell_types=frozenset(unchanged_cell_types))
+    return Result(output=options.vtk_output.output if not is_written_error else "",
+                  unchanged_cell_types=frozenset(unchanged_cell_types))
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

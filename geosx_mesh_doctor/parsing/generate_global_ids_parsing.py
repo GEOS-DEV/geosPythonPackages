@@ -15,8 +15,7 @@ class GlobalIdsInfo:
 
 
 def convert_global_ids(parsed_options) -> GlobalIdsInfo:
-    return GlobalIdsInfo(cells=parsed_options[__CELLS],
-                         points=parsed_options[__POINTS])
+    return GlobalIdsInfo(cells=parsed_options[__CELLS], points=parsed_options[__POINTS])
 
 
 def convert(parsed_options) -> Options:
@@ -27,19 +26,17 @@ def convert(parsed_options) -> Options:
 
 
 def fill_generate_global_ids_subparser(p):
-    p.add_argument(
-        '--' + __CELLS,
-        action="store_true",
-        help=f"[bool]: Generate global ids for cells. Defaults to true.")
+    p.add_argument('--' + __CELLS,
+                   action="store_true",
+                   help=f"[bool]: Generate global ids for cells. Defaults to true.")
     p.add_argument('--no-' + __CELLS,
                    action="store_false",
                    dest=__CELLS,
                    help=f"[bool]: Don't generate global ids for cells.")
     p.set_defaults(**{__CELLS: True})
-    p.add_argument(
-        '--' + __POINTS,
-        action="store_true",
-        help=f"[bool]: Generate global ids for points. Defaults to true.")
+    p.add_argument('--' + __POINTS,
+                   action="store_true",
+                   help=f"[bool]: Generate global ids for points. Defaults to true.")
     p.add_argument('--no-' + __POINTS,
                    action="store_false",
                    dest=__POINTS,
@@ -48,8 +45,7 @@ def fill_generate_global_ids_subparser(p):
 
 
 def fill_subparser(subparsers) -> None:
-    p = subparsers.add_parser(GENERATE_GLOBAL_IDS,
-                              help="Adds globals ids for points and cells.")
+    p = subparsers.add_parser(GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells.")
     fill_generate_global_ids_subparser(p)
     vtk_output_parsing.fill_vtk_output_subparser(p)
 

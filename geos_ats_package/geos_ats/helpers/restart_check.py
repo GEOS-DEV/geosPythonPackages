@@ -1,6 +1,6 @@
-import h5py  # type: ignore[import]
-from mpi4py import MPI  # type: ignore[import]
-import numpy as np  # type: ignore[import]
+import h5py    # type: ignore[import]
+from mpi4py import MPI    # type: ignore[import]
+import numpy as np    # type: ignore[import]
 import sys
 import os
 import re
@@ -8,17 +8,14 @@ import argparse
 import logging
 from pathlib import Path
 try:
-    from geos_ats.helpers.permute_array import permuteArray  # type: ignore[import]
+    from geos_ats.helpers.permute_array import permuteArray    # type: ignore[import]
 except ImportError:
     # Fallback method to be used if geos_ats isn't found
-    from permute_array import permuteArray  # type: ignore[import]
+    from permute_array import permuteArray    # type: ignore[import]
 
 RTOL_DEFAULT = 0.0
 ATOL_DEFAULT = 0.0
-EXCLUDE_DEFAULT = [
-    ".*/commandLine", ".*/schema$", ".*/globalToLocalMap",
-    ".*/timeHistoryOutput.*/restart"
-]
+EXCLUDE_DEFAULT = [".*/commandLine", ".*/schema$", ".*/globalToLocalMap", ".*/timeHistoryOutput.*/restart"]
 logger = logging.getLogger('geos_ats')
 
 
@@ -83,14 +80,11 @@ class FileComparison(object):
 
     def filesDiffer(self):
         try:
-            with h5py.File(self.file_path,
-                           "r") as file, h5py.File(self.baseline_path,
-                                                   "r") as base_file:
+            with h5py.File(self.file_path, "r") as file, h5py.File(self.baseline_path, "r") as base_file:
                 self.file_path = file.filename
                 self.baseline_path = base_file.filename
                 self.output.write("\nRank %s is comparing %s with %s \n" %
-                                  (MPI.COMM_WORLD.Get_rank(), self.file_path,
-                                   self.baseline_path))
+                                  (MPI.COMM_WORLD.Get_rank(), self.file_path, self.baseline_path))
                 self.compareGroups(file, base_file)
 
         except IOError as e:
@@ -169,8 +163,7 @@ class FileComparison(object):
         """
         dif = abs(val - base_val)
         if dif > self.atol and dif > self.rtol * abs(base_val):
-            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (
-                val.dtype, base_val.dtype, val, base_val)
+            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (val.dtype, base_val.dtype, val, base_val)
             self.errorMsg(path, msg, True)
 
     def compareIntScalars(self, path, val, base_val):
@@ -182,8 +175,7 @@ class FileComparison(object):
         BASE_VAL [in]: The baseline value to compare against.
         """
         if val != base_val:
-            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (
-                val.dtype, base_val.dtype, val, base_val)
+            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (val.dtype, base_val.dtype, val, base_val)
             self.errorMsg(path, msg, True)
 
     def compareStringScalars(self, path, val, base_val):
@@ -195,8 +187,7 @@ class FileComparison(object):
         BASE_VAL [in]: The baseline value to compare against.
         """
         if val != base_val:
-            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (
-                val.dtype, base_val.dtype, val, base_val)
+            msg = "Scalar values of types %s and %s differ: %s, %s.\n" % (val.dtype, base_val.dtype, val, base_val)
             self.errorMsg(path, msg, True)
 
     def compareFloatArrays(self, path, arr, base_arr):
@@ -234,8 +225,8 @@ class FileComparison(object):
 
         # If the shapes are different they can't be compared.
         if arr.shape != base_arr.shape:
-            msg = "Datasets have different shapes and therefore can't be compared: %s, %s.\n" % (
-                arr.shape, base_arr.shape)
+            msg = "Datasets have different shapes and therefore can't be compared: %s, %s.\n" % (arr.shape,
+                                                                                                 base_arr.shape)
             self.errorMsg(path, msg, True)
             return
 
@@ -261,8 +252,7 @@ class FileComparison(object):
         absTol = self.atol
 
         # Get the indices of the max absolute and relative error
-        max_absolute_index = np.unravel_index(np.argmax(difference),
-                                              difference.shape)
+        max_absolute_index = np.unravel_index(np.argmax(difference), difference.shape)
 
         relative_difference = difference / (abs_base_arr + 1e-20)
 
@@ -270,8 +260,7 @@ class FileComparison(object):
         if self.atol != 0:
             relative_difference = np.nan_to_num(relative_difference, 0)
 
-        max_relative_index = np.unravel_index(np.argmax(relative_difference),
-                                              relative_difference.shape)
+        max_relative_index = np.unravel_index(np.argmax(relative_difference), relative_difference.shape)
 
         if self.rtol != 0.0:
             relative_difference /= self.rtol
@@ -285,9 +274,7 @@ class FileComparison(object):
             absolute_limited = np.zeros(q.shape, dtype=bool)
         else:
             # Multiply ABS_BASE_ARR by RTOL and rename it to RTOL_ABS_BASE
-            rtol_abs_base = np.multiply(self.rtol,
-                                        abs_base_arr,
-                                        out=abs_base_arr)
+            rtol_abs_base = np.multiply(self.rtol, abs_base_arr, out=abs_base_arr)
 
             # Calculate which entries are limited by the relative tolerance.
             relative_limited = rtol_abs_base > absTol
@@ -297,8 +284,7 @@ class FileComparison(object):
             q[relative_limited] = relative_difference[relative_limited]
 
             # Compute q for the entries which are limited by the absolute tolerance.
-            absolute_limited = np.logical_not(relative_limited,
-                                              out=relative_limited)
+            absolute_limited = np.logical_not(relative_limited, out=relative_limited)
             q[absolute_limited] /= absTol
 
         # If the maximum q value is greater than 1.0 than issue an error.
@@ -306,55 +292,42 @@ class FileComparison(object):
             offenders = np.greater(q, 1.0)
             n_offenders = np.sum(offenders)
 
-            absolute_offenders = np.logical_and(offenders,
-                                                absolute_limited,
-                                                out=offenders)
+            absolute_offenders = np.logical_and(offenders, absolute_limited, out=offenders)
             q_num_absolute = np.sum(absolute_offenders)
             if q_num_absolute > 0:
                 absolute_qs = q * absolute_offenders
                 q_max_absolute = np.max(absolute_qs)
-                q_max_absolute_index = np.unravel_index(
-                    np.argmax(absolute_qs), absolute_qs.shape)
+                q_max_absolute_index = np.unravel_index(np.argmax(absolute_qs), absolute_qs.shape)
                 q_mean_absolute = np.mean(absolute_qs)
                 q_std_absolute = np.std(absolute_qs)
 
             offenders = np.greater(q, 1.0, out=offenders)
-            relative_limited = np.logical_not(absolute_limited,
-                                              out=absolute_limited)
-            relative_offenders = np.logical_and(offenders,
-                                                relative_limited,
-                                                out=offenders)
+            relative_limited = np.logical_not(absolute_limited, out=absolute_limited)
+            relative_offenders = np.logical_and(offenders, relative_limited, out=offenders)
             q_num_relative = np.sum(relative_offenders)
             if q_num_relative > 0:
                 relative_qs = q * relative_offenders
                 q_max_relative = np.max(relative_qs)
-                q_max_relative_index = np.unravel_index(
-                    np.argmax(relative_qs), q.shape)
+                q_max_relative_index = np.unravel_index(np.argmax(relative_qs), q.shape)
                 q_mean_relative = np.mean(relative_qs)
                 q_std_relative = np.std(relative_qs)
 
             message = "Arrays of types %s and %s have %d values of which %d fail both the relative and absolute tests.\n" % (
                 arr.dtype, base_arr.dtype, offenders.size, n_offenders)
             message += "\tMax absolute difference is at index %s: value = %s, base_value = %s\n" % (
-                max_absolute_index, arr[max_absolute_index],
-                base_arr[max_absolute_index])
+                max_absolute_index, arr[max_absolute_index], base_arr[max_absolute_index])
             message += "\tMax relative difference is at index %s: value = %s, base_value = %s\n" % (
-                max_relative_index, arr[max_relative_index],
-                base_arr[max_relative_index])
+                max_relative_index, arr[max_relative_index], base_arr[max_relative_index])
             message += "Statistics of the q values greater than 1.0 defined by absolute tolerance: N = %d\n" % q_num_absolute
             if q_num_absolute > 0:
-                message += "\tmax = %s, mean = %s, std = %s\n" % (
-                    q_max_absolute, q_mean_absolute, q_std_absolute)
+                message += "\tmax = %s, mean = %s, std = %s\n" % (q_max_absolute, q_mean_absolute, q_std_absolute)
                 message += "\tmax is at index %s, value = %s, base_value = %s\n" % (
-                    q_max_absolute_index, arr[q_max_absolute_index],
-                    base_arr[q_max_absolute_index])
+                    q_max_absolute_index, arr[q_max_absolute_index], base_arr[q_max_absolute_index])
             message += "Statistics of the q values greater than 1.0 defined by relative tolerance: N = %d\n" % q_num_relative
             if q_num_relative > 0:
-                message += "\tmax = %s, mean = %s, std = %s\n" % (
-                    q_max_relative, q_mean_relative, q_std_relative)
+                message += "\tmax = %s, mean = %s, std = %s\n" % (q_max_relative, q_mean_relative, q_std_relative)
                 message += "\tmax is at index %s, value = %s, base_value = %s\n" % (
-                    q_max_relative_index, arr[q_max_relative_index],
-                    base_arr[q_max_relative_index])
+                    q_max_relative_index, arr[q_max_relative_index], base_arr[q_max_relative_index])
             self.errorMsg(path, message, True)
 
     def compareIntArrays(self, path, arr, base_arr):
@@ -367,8 +340,8 @@ class FileComparison(object):
         """
         # If the shapes are different they can't be compared.
         if arr.shape != base_arr.shape:
-            msg = "Datasets have different shapes and therefore can't be compared: %s, %s.\n" % (
-                arr.shape, base_arr.shape)
+            msg = "Datasets have different shapes and therefore can't be compared: %s, %s.\n" % (arr.shape,
+                                                                                                 base_arr.shape)
             self.errorMsg(path, msg, True)
             return
 
@@ -382,8 +355,7 @@ class FileComparison(object):
         n_offenders = np.sum(offenders)
 
         if n_offenders != 0:
-            max_index = np.unravel_index(np.argmax(difference),
-                                         difference.shape)
+            max_index = np.unravel_index(np.argmax(difference), difference.shape)
             max_difference = difference[max_index]
             offenders_mean = np.mean(difference[offenders])
             offenders_std = np.std(difference[offenders])
@@ -391,8 +363,8 @@ class FileComparison(object):
             message = "Arrays of types %s and %s have %s values of which %d have differing values.\n" % (
                 arr.dtype, base_arr.dtype, offenders.size, n_offenders)
             message += "Statistics of the differences greater than 0:\n"
-            message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % (
-                max_index, max_difference, offenders_mean, offenders_std)
+            message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % (max_index, max_difference, offenders_mean,
+                                                                              offenders_std)
             self.errorMsg(path, message, True)
 
     def compareStringArrays(self, path, arr, base_arr):
@@ -424,14 +396,12 @@ class FileComparison(object):
         np_strings = set(['S', 'a', 'U'])
 
         int_compare = arr.dtype.kind in np_ints and base_arr.dtype.kind in np_ints
-        float_compare = not int_compare and (arr.dtype.kind in np_numeric and
-                                             base_arr.dtype.kind in np_numeric)
+        float_compare = not int_compare and (arr.dtype.kind in np_numeric and base_arr.dtype.kind in np_numeric)
         string_compare = arr.dtype.kind in np_strings and base_arr.dtype.kind in np_strings
 
         # If the datasets have different types issue a warning.
         if arr.dtype != base_arr.dtype:
-            msg = "Datasets have different types: %s, %s.\n" % (arr.dtype,
-                                                                base_arr.dtype)
+            msg = "Datasets have different types: %s, %s.\n" % (arr.dtype, base_arr.dtype)
             self.warningMsg(path, msg)
 
         # Handle empty datasets
@@ -442,15 +412,9 @@ class FileComparison(object):
         if arr.size == 0 and base_arr.size == 0:
             return
         elif arr.size is None and base_arr.size is not None:
-            self.errorMsg(
-                path,
-                "File to compare has an empty dataset where the baseline's dataset is not empty.\n"
-            )
+            self.errorMsg(path, "File to compare has an empty dataset where the baseline's dataset is not empty.\n")
         elif base_arr.size is None and arr.size is not None:
-            self.warningMsg(
-                path,
-                "Baseline has an empty dataset where the file to compare's dataset is not empty.\n"
-            )
+            self.warningMsg(path, "Baseline has an empty dataset where the file to compare's dataset is not empty.\n")
 
         # If either of the datasets is a scalar convert it to an array.
         if arr.shape == ():
@@ -469,9 +433,7 @@ class FileComparison(object):
             elif string_compare:
                 return self.compareStringScalars(path, val, base_val)
             else:
-                return self.warningMsg(
-                    path, "Unrecognized type combination: %s %s.\n" %
-                    (arr.dtype, base_arr.dtype))
+                return self.warningMsg(path, "Unrecognized type combination: %s %s.\n" % (arr.dtype, base_arr.dtype))
 
         # Do the actual comparison.
         if float_compare:
@@ -481,9 +443,7 @@ class FileComparison(object):
         elif string_compare:
             return self.compareStringArrays(path, arr, base_arr)
         else:
-            return self.warningMsg(
-                path, "Unrecognized type combination: %s %s.\n" %
-                (arr.dtype, base_arr.dtype))
+            return self.warningMsg(path, "Unrecognized type combination: %s %s.\n" % (arr.dtype, base_arr.dtype))
 
     def compareAttributes(self, path, attrs, base_attrs):
         """
@@ -546,10 +506,8 @@ class FileComparison(object):
         return True
 
     def compareLvArrays(self, group, base_group, other_children_to_check):
-        if self.canCompare(
-                group, base_group, "__dimensions__") and self.canCompare(
-                    group, base_group, "__permutation__") and self.canCompare(
-                        group, base_group, "__values__"):
+        if self.canCompare(group, base_group, "__dimensions__") and self.canCompare(
+                group, base_group, "__permutation__") and self.canCompare(group, base_group, "__values__"):
             other_children_to_check.remove("__dimensions__")
             other_children_to_check.remove("__permutation__")
             other_children_to_check.remove("__values__")
@@ -558,12 +516,10 @@ class FileComparison(object):
             base_dimensions = base_group["__dimensions__"][:]
 
             if len(dimensions.shape) != 1:
-                msg = "The dimensions of an LvArray must itself be a 1D array not %s\n" % len(
-                    dimensions.shape)
+                msg = "The dimensions of an LvArray must itself be a 1D array not %s\n" % len(dimensions.shape)
                 self.errorMsg(group.name, msg)
 
-            if dimensions.shape != base_dimensions.shape or np.any(
-                    dimensions != base_dimensions):
+            if dimensions.shape != base_dimensions.shape or np.any(dimensions != base_dimensions):
                 msg = "Cannot compare LvArrays because they have different dimensions. Dimensions = %s, base dimensions = %s\n" % (
                     dimensions, base_dimensions)
                 self.errorMsg(group.name, msg)
@@ -573,20 +529,17 @@ class FileComparison(object):
             base_permutation = base_group["__permutation__"][:]
 
             if len(permutation.shape) != 1:
-                msg = "The permutation of an LvArray must itself be a 1D array not %s\n" % len(
-                    permutation.shape)
+                msg = "The permutation of an LvArray must itself be a 1D array not %s\n" % len(permutation.shape)
                 self.errorMsg(group.name, msg)
 
-            if permutation.shape != dimensions.shape or np.any(
-                    np.sort(permutation) != np.arange(permutation.size)):
+            if permutation.shape != dimensions.shape or np.any(np.sort(permutation) != np.arange(permutation.size)):
                 msg = "LvArray in the file to compare has an invalid permutation. Dimensions = %s, Permutation = %s\n" % (
                     dimensions, permutation)
                 self.errorMsg(group.name, msg)
                 return True
 
             if base_permutation.shape != base_dimensions.shape or np.any(
-                    np.sort(base_permutation) != np.arange(
-                        base_permutation.size)):
+                    np.sort(base_permutation) != np.arange(base_permutation.size)):
                 msg = "LvArray in the baseline has an invalid permutation. Dimensions = %s, Permutation = %s\n" % (
                     base_dimensions, base_permutation)
                 self.errorMsg(group.name, msg)
@@ -601,8 +554,7 @@ class FileComparison(object):
                 self.errorMsg(group.name, msg)
                 return True
 
-            base_values, errorMsg = permuteArray(base_values, base_dimensions,
-                                                 base_permutation)
+            base_values, errorMsg = permuteArray(base_values, base_dimensions, base_permutation)
             if base_values is None:
                 msg = "Failed to permute the baseline LvArray: %s\n" % errorMsg
                 self.errorMsg(group.name, msg)
@@ -646,9 +598,7 @@ class FileComparison(object):
                 elif isinstance(item1, h5py.Dataset):
                     self.compareDatasets(item1, item2)
                 else:
-                    self.warningMsg(
-                        path, "Child %s has unknown type: %s.\n" %
-                        (name, type(item1)))
+                    self.warningMsg(path, "Child %s has unknown type: %s.\n" % (name, type(item1)))
 
 
 def findFiles(file_pattern, baseline_pattern, comparison_args):
@@ -669,19 +619,14 @@ def findFiles(file_pattern, baseline_pattern, comparison_args):
     files_to_compare = None
     with open(output_path, 'w') as output_file:
         comparison_args["output"] = output_file
-        writeHeader(file_pattern, file_path, baseline_pattern, baseline_path,
-                    comparison_args)
+        writeHeader(file_pattern, file_path, baseline_pattern, baseline_path, comparison_args)
 
         # Check if comparing root files.
         if file_path.endswith(".root") and baseline_path.endswith(".root"):
             p = [re.compile("/file_pattern"), re.compile("/protocol/version")]
-            comp = FileComparison(file_path, baseline_path, 0.0, 0.0, p,
-                                  output_file, True, False)
+            comp = FileComparison(file_path, baseline_path, 0.0, 0.0, p, output_file, True, False)
             if comp.filesDiffer():
-                write(
-                    output_file,
-                    "The root files are different, cannot compare data files.\n"
-                )
+                write(output_file, "The root files are different, cannot compare data files.\n")
                 return output_base_path, None
             else:
                 write(output_file, "The root files are similar.\n")
@@ -690,20 +635,16 @@ def findFiles(file_pattern, baseline_pattern, comparison_args):
             # We know the number of files are the same from the above comparison.
             with h5py.File(file_path, "r") as f:
                 numberOfFiles = f["number_of_files"][0]
-                file_data_pattern = "".join(
-                    f["file_pattern"][:].tobytes().decode('ascii')[:-1])
+                file_data_pattern = "".join(f["file_pattern"][:].tobytes().decode('ascii')[:-1])
 
             with h5py.File(baseline_path, "r") as f:
-                baseline_data_pattern = "".join(
-                    f["file_pattern"][:].tobytes().decode('ascii')[:-1])
+                baseline_data_pattern = "".join(f["file_pattern"][:].tobytes().decode('ascii')[:-1])
 
             # Get the paths to the data files.
             files_to_compare = []
             for i in range(numberOfFiles):
-                path_to_data = os.path.join(os.path.dirname(file_path),
-                                            file_data_pattern % i)
-                path_to_baseline_data = os.path.join(
-                    os.path.dirname(baseline_path), baseline_data_pattern % i)
+                path_to_data = os.path.join(os.path.dirname(file_path), file_data_pattern % i)
+                path_to_baseline_data = os.path.join(os.path.dirname(baseline_path), baseline_data_pattern % i)
                 files_to_compare += [(path_to_data, path_to_baseline_data)]
 
         else:
@@ -751,8 +692,7 @@ def findMaxMatchingFile(file_path):
     return os.path.join(file_directory, max_match)
 
 
-def writeHeader(file_pattern, file_path, baseline_pattern, baseline_path,
-                args):
+def writeHeader(file_pattern, file_path, baseline_pattern, baseline_path, args):
     """
     Write the header.
 
@@ -764,13 +704,11 @@ def writeHeader(file_pattern, file_path, baseline_pattern, baseline_path,
     """
     output = args["output"]
     msg = "Comparison of file %s from pattern %s\n" % (file_path, file_pattern)
-    msg += "Baseline file %s from pattern %s\n" % (baseline_path,
-                                                   baseline_pattern)
+    msg += "Baseline file %s from pattern %s\n" % (baseline_path, baseline_pattern)
     msg += "Relative tolerance: %s\n" % args["rtol"]
     msg += "Absolute tolerance: %s\n" % args["atol"]
     msg += "Output file: %s\n" % output.name
-    msg += "Excluded groups: %s\n" % list(
-        map(lambda e: e.pattern, args["regex_expressions"]))
+    msg += "Excluded groups: %s\n" % list(map(lambda e: e.pattern, args["regex_expressions"]))
     msg += "Warnings are errors: %s\n\n" % args["warnings_are_errors"]
     write(output, msg)
 
@@ -789,47 +727,33 @@ def main():
     n_ranks = comm.Get_size()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("file_pattern",
-                        help="The pattern used to find the file to compare.")
-    parser.add_argument("baseline_pattern",
-                        help="The pattern used to find the baseline file.")
-    parser.add_argument(
-        "-r",
-        "--relative",
-        type=float,
-        help=
-        "The relative tolerance for floating point differences, default is %s."
-        % RTOL_DEFAULT,
-        default=RTOL_DEFAULT)
-    parser.add_argument(
-        "-a",
-        "--absolute",
-        type=float,
-        help=
-        "The absolute tolerance for floating point differences, default is %s."
-        % ATOL_DEFAULT,
-        default=ATOL_DEFAULT)
-    parser.add_argument(
-        "-e",
-        "--exclude",
-        action='append',
-        help=
-        "Regular expressions specifying which groups to skip, default is %s." %
-        EXCLUDE_DEFAULT,
-        default=EXCLUDE_DEFAULT)
-    parser.add_argument(
-        "-m",
-        "--skip-missing",
-        action="store_true",
-        help=
-        "Ignore values that are missing from either the baseline or target file.",
-        default=False)
-    parser.add_argument(
-        "-w",
-        "--Werror",
-        action="store_true",
-        help="Force all warnings to be errors, default is False.",
-        default=False)
+    parser.add_argument("file_pattern", help="The pattern used to find the file to compare.")
+    parser.add_argument("baseline_pattern", help="The pattern used to find the baseline file.")
+    parser.add_argument("-r",
+                        "--relative",
+                        type=float,
+                        help="The relative tolerance for floating point differences, default is %s." % RTOL_DEFAULT,
+                        default=RTOL_DEFAULT)
+    parser.add_argument("-a",
+                        "--absolute",
+                        type=float,
+                        help="The absolute tolerance for floating point differences, default is %s." % ATOL_DEFAULT,
+                        default=ATOL_DEFAULT)
+    parser.add_argument("-e",
+                        "--exclude",
+                        action='append',
+                        help="Regular expressions specifying which groups to skip, default is %s." % EXCLUDE_DEFAULT,
+                        default=EXCLUDE_DEFAULT)
+    parser.add_argument("-m",
+                        "--skip-missing",
+                        action="store_true",
+                        help="Ignore values that are missing from either the baseline or target file.",
+                        default=False)
+    parser.add_argument("-w",
+                        "--Werror",
+                        action="store_true",
+                        help="Force all warnings to be errors, default is False.",
+                        default=False)
     args = parser.parse_args()
 
     # Check the command line arguments
@@ -849,9 +773,7 @@ def main():
     comparison_args["skip_missing"] = args.skip_missing
 
     if rank == 0:
-        output_base_path, files_to_compare = findFiles(file_pattern,
-                                                       baseline_pattern,
-                                                       comparison_args)
+        output_base_path, files_to_compare = findFiles(file_pattern, baseline_pattern, comparison_args)
     else:
         output_base_path, files_to_compare = None, None
 
@@ -865,15 +787,13 @@ def main():
     for i in range(rank, len(files_to_compare), n_ranks):
         output_path = "%s.%d.restartcheck" % (output_base_path, i)
         diff_path = "%s.%d.diff.hdf5" % (output_base_path, i)
-        with open(output_path,
-                  'w') as output_file, h5py.File(diff_path, "w") as diff_file:
+        with open(output_path, 'w') as output_file, h5py.File(diff_path, "w") as diff_file:
             comparison_args["output"] = output_file
             comparison_args["diff_file"] = diff_file
             file_path, baseline_path = files_to_compare[i]
 
             logger.info(f"About to compare {file_path} and {baseline_path}")
-            if FileComparison(file_path, baseline_path,
-                              **comparison_args).filesDiffer():
+            if FileComparison(file_path, baseline_path, **comparison_args).filesDiffer():
                 differing_files += [files_to_compare[i]]
                 output_file.write("The files are different.\n")
             else:
@@ -893,18 +813,14 @@ def main():
 
             if difference_found:
                 write(
-                    output_file,
-                    "\nCompared %d pairs of files of which %d are different.\n"
-                    % (len(files_to_compare), len(all_differing_files)))
+                    output_file, "\nCompared %d pairs of files of which %d are different.\n" %
+                    (len(files_to_compare), len(all_differing_files)))
                 for file_path, base_path in all_differing_files:
-                    write(output_file,
-                          "\t" + file_path + " and " + base_path + "\n")
+                    write(output_file, "\t" + file_path + " and " + base_path + "\n")
                 return 1
             else:
-                write(
-                    output_file,
-                    "\nThe root files and the %d pairs of files compared are similar.\n"
-                    % len(files_to_compare))
+                write(output_file,
+                      "\nThe root files and the %d pairs of files compared are similar.\n" % len(files_to_compare))
 
     return difference_found
 

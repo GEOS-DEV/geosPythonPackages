@@ -1,10 +1,10 @@
 #ATS:bgqos_0_ASQ machines.bgqos_0_ASQ bgqos_0_ASQMachine 16
 
-from ats import machines, debug, atsut  # type: ignore[import]
+from ats import machines, debug, atsut    # type: ignore[import]
 from ats import log, terminal
 from ats import configuration
-from ats.atsut import RUNNING, TIMEDOUT, SKIPPED, BATCHED, INVALID, PASSED, FAILED, CREATED, FILTERED, HALTED, EXPECTED  # type: ignore[import]
-import utils  # type: ignore[import]
+from ats.atsut import RUNNING, TIMEDOUT, SKIPPED, BATCHED, INVALID, PASSED, FAILED, CREATED, FILTERED, HALTED, EXPECTED    # type: ignore[import]
+import utils    # type: ignore[import]
 import time
 import sys
 
@@ -81,16 +81,14 @@ class bgqos_0_ASQMachine(machines.Machine):
             if len(self.allNodeList) == 0:
                 self.removeSrunStep = True
             else:
-                self.stepId, self.nodeStepNumDic = utils.setStepNumWithNode(
-                    len(self.allNodeList))
+                self.stepId, self.nodeStepNumDic = utils.setStepNumWithNode(len(self.allNodeList))
                 for oneNode in self.allNodeList:
                     self.nodeProcAvailDic[oneNode] = self.npMax
                 self.stepInUse = self.stepToUse
 
                 # Let's check if there exists a srun <defunct> process
                 if len(self.allNodeList) > 0:
-                    srunDefunct = utils.checkForSrunDefunct(
-                        self.allNodeList[0])
+                    srunDefunct = utils.checkForSrunDefunct(self.allNodeList[0])
                     self.numberMaxProcessors -= srunDefunct
                     self.nodeProcAvailDic[self.allNodeList[0]] -= srunDefunct
 
@@ -109,8 +107,7 @@ class bgqos_0_ASQMachine(machines.Machine):
         return results
 
     def label(self):
-        return "BG/Q %d nodes %d processors per node." % (self.numNodes,
-                                                          self.npMax)
+        return "BG/Q %d nodes %d processors per node." % (self.numNodes, self.npMax)
 
     def calculateCommandList(self, test):
         """Prepare for run of executable using a suitable command. First we get the plain command
@@ -171,11 +168,9 @@ class bgqos_0_ASQMachine(machines.Machine):
             test.numberOfNodesNeeded += 1
 
         if self.removeSrunStep:
-            test.requiredNP = max(test.np,
-                                  self.npMax * test.numberOfNodesNeeded)
+            test.requiredNP = max(test.np, self.npMax * test.numberOfNodesNeeded)
         if test.requiredNP > self.numberMaxProcessors:
-            return "Too many processors required, %d (limit is %d)" % (
-                test.requiredNP, self.numberMaxProcessors)
+            return "Too many processors required, %d (limit is %d)" % (test.requiredNP, self.numberMaxProcessors)
 
     def canRunNow(self, test):
         "Is this machine able to run this test now? Return True/False"
@@ -192,15 +187,14 @@ class bgqos_0_ASQMachine(machines.Machine):
 
         if not self.removeSrunStep:
             if test.srunRelativeNode < 0:
-                self.nodeProcAvailDic = utils.removeFromUsedTotalDicNoSrun(
-                    self.nodeProcAvailDic, self.nodeStepNumDic, self.npMax,
-                    test.np, self.allNodeList)
+                self.nodeProcAvailDic = utils.removeFromUsedTotalDicNoSrun(self.nodeProcAvailDic, self.nodeStepNumDic,
+                                                                           self.npMax, test.np, self.allNodeList)
             else:
-                self.nodeProcAvailDic = utils.removeFromUsedTotalDic(
-                    self.nodeProcAvailDic, self.nodeStepNumDic, self.npMax,
-                    test.step, test.np, test.numberOfNodesNeeded,
-                    test.numNodesToUse, test.srunRelativeNode, self.stepId,
-                    self.allNodeList)
+                self.nodeProcAvailDic = utils.removeFromUsedTotalDic(self.nodeProcAvailDic, self.nodeStepNumDic,
+                                                                     self.npMax, test.step, test.np,
+                                                                     test.numberOfNodesNeeded, test.numNodesToUse,
+                                                                     test.srunRelativeNode, self.stepId,
+                                                                     self.allNodeList)
             self.npBusy += max(test.np, 1)
         else:
             # this is necessary when srun exclusive is used.
@@ -226,11 +220,8 @@ class bgqos_0_ASQMachine(machines.Machine):
             self.npBusy -= max(test.np, test.numberOfNodesNeeded * self.npMax)
 
         if debug():
-            log("Finished %s, #total proc in use = %d" %
-                (test.name, self.npBusy),
-                echo=True)
-            self.scheduler.schedule("Finished %s, #total proc in use = %d" %
-                                    (test.name, self.npBusy))
+            log("Finished %s, #total proc in use = %d" % (test.name, self.npBusy), echo=True)
+            self.scheduler.schedule("Finished %s, #total proc in use = %d" % (test.name, self.npBusy))
 
         self.numberTestsRunning = self.npBusy
 
@@ -239,10 +230,7 @@ class bgqos_0_ASQMachine(machines.Machine):
         # Let's also write out the tests that are waiting ....
 
         super(bgqos_0_ASQMachine, self).periodicReport()
-        currentEligible = [
-            t.name for t in self.scheduler.testlist()
-            if t.status is atsut.CREATED
-        ]
+        currentEligible = [t.name for t in self.scheduler.testlist() if t.status is atsut.CREATED]
 
         if len(currentEligible) > 1:
             terminal("WAITING:", ", ".join(currentEligible[:5]), "... (more)")
@@ -255,13 +243,12 @@ class bgqos_0_ASQMachine(machines.Machine):
 
         if test.status is RUNNING or test.status is TIMEDOUT:
             try:
-                retcode = subprocess.call("scancel" + " -n  " + test.jobname,
-                                          shell=True)
+                retcode = subprocess.call("scancel" + " -n  " + test.jobname, shell=True)
                 if retcode < 0:
-                    log("---- kill() in bgqos_0_ASQ.py, command= scancel -n  %s failed with return code -%d  ----"
-                        % (test.jobname, retcode),
+                    log("---- kill() in bgqos_0_ASQ.py, command= scancel -n  %s failed with return code -%d  ----" %
+                        (test.jobname, retcode),
                         echo=True)
             except OSError as e:
-                log("---- kill() in bgqos_0_ASQ.py, execution of command failed (scancel -n  %s) failed:  %s----"
-                    % (test.jobname, e),
+                log("---- kill() in bgqos_0_ASQ.py, execution of command failed (scancel -n  %s) failed:  %s----" %
+                    (test.jobname, e),
                     echo=True)

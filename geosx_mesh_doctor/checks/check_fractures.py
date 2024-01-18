@@ -43,9 +43,8 @@ class Result:
     errors: Sequence[tuple[int, int, int]]
 
 
-def __read_multiblock(
-        vtk_input_file: str, matrix_name: str,
-        fracture_name: str) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
+def __read_multiblock(vtk_input_file: str, matrix_name: str,
+                      fracture_name: str) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
     reader = vtkXMLMultiBlockDataReader()
     reader.SetFileName(vtk_input_file)
     reader.Update()
@@ -60,39 +59,30 @@ def __read_multiblock(
     return matrix, fracture
 
 
-def format_collocated_nodes(
-        fracture_mesh: vtkUnstructuredGrid) -> Sequence[Iterable[int]]:
+def format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid) -> Sequence[Iterable[int]]:
     """
     Extract the collocated nodes information from the mesh and formats it in a python way.
     :param fracture_mesh: The mesh of the fracture (with 2d cells).
     :return: An iterable over all the buckets of collocated nodes.
     """
-    collocated_nodes: numpy.ndarray = vtk_to_numpy(
-        fracture_mesh.GetPointData().GetArray("collocated_nodes"))
+    collocated_nodes: numpy.ndarray = vtk_to_numpy(fracture_mesh.GetPointData().GetArray("collocated_nodes"))
     if len(collocated_nodes.shape) == 1:
-        collocated_nodes: numpy.ndarray = collocated_nodes.reshape(
-            (collocated_nodes.shape[0], 1))
-    generator = (tuple(sorted(bucket[bucket > -1]))
-                 for bucket in collocated_nodes)
+        collocated_nodes: numpy.ndarray = collocated_nodes.reshape((collocated_nodes.shape[0], 1))
+    generator = (tuple(sorted(bucket[bucket > -1])) for bucket in collocated_nodes)
     return tuple(generator)
 
 
 def __check_collocated_nodes_positions(
-    matrix_points: Sequence[Tuple[float, float, float]],
-    fracture_points: Sequence[Tuple[float, float, float]], g2l: Sequence[int],
-    collocated_nodes: Iterable[Iterable[int]]
-) -> Collection[Tuple[int, Iterable[int], Iterable[Tuple[float, float,
-                                                         float]]]]:
+    matrix_points: Sequence[Tuple[float, float, float]], fracture_points: Sequence[Tuple[float, float, float]],
+    g2l: Sequence[int], collocated_nodes: Iterable[Iterable[int]]
+) -> Collection[Tuple[int, Iterable[int], Iterable[Tuple[float, float, float]]]]:
     issues = []
     for li, bucket in enumerate(collocated_nodes):
-        matrix_nodes = (fracture_points[li], ) + tuple(
-            map(lambda gi: matrix_points[g2l[gi]], bucket))
+        matrix_nodes = (fracture_points[li], ) + tuple(map(lambda gi: matrix_points[g2l[gi]], bucket))
         m = numpy.array(matrix_nodes)
         rank: int = numpy.linalg.matrix_rank(m)
         if rank > 1:
-            issues.append((li, bucket,
-                           tuple(map(lambda gi: matrix_points[g2l[gi]],
-                                     bucket))))
+            issues.append((li, bucket, tuple(map(lambda gi: matrix_points[g2l[gi]], bucket))))
     return issues
 
 
@@ -106,8 +96,7 @@ def my_iter(ccc):
             yield (i, )
 
 
-def __check_neighbors(matrix: vtkUnstructuredGrid,
-                      fracture: vtkUnstructuredGrid, g2l: Sequence[int],
+def __check_neighbors(matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, g2l: Sequence[int],
                       collocated_nodes: Sequence[Iterable[int]]):
     fracture_nodes: Set[int] = set()
     for bucket in collocated_nodes:
@@ -125,10 +114,9 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
             if point_ids <= fracture_nodes:
                 fracture_faces.add(point_ids)
     # Finding the cells
-    for c in tqdm(range(fracture.GetNumberOfCells()),
-                  desc="Finding neighbor cell pairs"):
+    for c in tqdm(range(fracture.GetNumberOfCells()), desc="Finding neighbor cell pairs"):
         cell: vtkCell = fracture.GetCell(c)
-        cns: Set[FrozenSet[int]] = set()  # subset of collocated_nodes
+        cns: Set[FrozenSet[int]] = set()    # subset of collocated_nodes
         point_ids = frozenset(vtk_iter(cell.GetPointIds()))
         for point_id in point_ids:
             bucket = collocated_nodes[point_id]
@@ -147,13 +135,11 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
 
 
 def __check(vtk_input_file: str, options: Options) -> Result:
-    matrix, fracture = __read_multiblock(vtk_input_file, options.matrix_name,
-                                         options.fracture_name)
+    matrix, fracture = __read_multiblock(vtk_input_file, options.matrix_name, options.fracture_name)
     matrix_points: vtkPoints = matrix.GetPoints()
     fracture_points: vtkPoints = fracture.GetPoints()
 
-    collocated_nodes: Sequence[Iterable[int]] = format_collocated_nodes(
-        fracture)
+    collocated_nodes: Sequence[Iterable[int]] = format_collocated_nodes(fracture)
     assert matrix.GetPointData().GetGlobalIds() and matrix.GetCellData().GetGlobalIds() and \
            fracture.GetPointData().GetGlobalIds() and fracture.GetCellData().GetGlobalIds()
 
@@ -163,9 +149,8 @@ def __check(vtk_input_file: str, options: Options) -> Result:
         g2l[glo] = loc
     g2l.flags.writeable = False
 
-    issues = __check_collocated_nodes_positions(
-        vtk_to_numpy(matrix.GetPoints().GetData()),
-        vtk_to_numpy(fracture.GetPoints().GetData()), g2l, collocated_nodes)
+    issues = __check_collocated_nodes_positions(vtk_to_numpy(matrix.GetPoints().GetData()),
+                                                vtk_to_numpy(fracture.GetPoints().GetData()), g2l, collocated_nodes)
     assert len(issues) == 0
 
     __check_neighbors(matrix, fracture, g2l, collocated_nodes)
@@ -175,8 +160,7 @@ def __check(vtk_input_file: str, options: Options) -> Result:
         for duplicate in filter(lambda i: i > -1, duplicates):
             p0 = matrix_points.GetPoint(g2l[duplicate])
             p1 = fracture_points.GetPoint(i)
-            if numpy.linalg.norm(numpy.array(p1) -
-                                 numpy.array(p0)) > options.tolerance:
+            if numpy.linalg.norm(numpy.array(p1) - numpy.array(p0)) > options.tolerance:
                 errors.append((i, g2l[duplicate], duplicate))
     return Result(errors=errors)
 

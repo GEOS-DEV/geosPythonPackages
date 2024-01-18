@@ -18,7 +18,7 @@ def Error(msg):
 
 
 def Log(msg):
-    import ats  # type: ignore[import]
+    import ats    # type: ignore[import]
     testmode = False
     try:
         testmode = ats.tests.AtsTest.getOptions().get("testmode")
@@ -48,8 +48,7 @@ class TextTable(object):
         maxwidth = 100
         if os.name == "posix":
             try:
-                sttyout = subprocess.Popen(
-                    ["stty", "size"], stdout=subprocess.PIPE).communicate()[0]
+                sttyout = subprocess.Popen(["stty", "size"], stdout=subprocess.PIPE).communicate()[0]
                 maxwidth = int(sttyout.split()[1])
             except:
                 # If the stty size approach does not work, the use a default maxwidth
@@ -80,10 +79,7 @@ class TextTable(object):
         # find the max column sizes
         colWidth = []
         for i in range(self.columns):
-            colWidth.append(
-                max([
-                    len(str(row[i])) for row in self.table if row is not None
-                ]))
+            colWidth.append(max([len(str(row[i])) for row in self.table if row is not None]))
 
         # adjust the colWidths down if colmax is step
         for i in range(self.columns):
@@ -93,8 +89,7 @@ class TextTable(object):
 
         # last column is floating
 
-        total = sum(colWidth) + self.columns * (1 + len(self.sep)) + len(
-            self.indent)
+        total = sum(colWidth) + self.columns * (1 + len(self.sep)) + len(self.indent)
         if total > self.maxwidth:
             colWidth[-1] = max(10, self.maxwidth - (total - colWidth[-1]))
 
@@ -104,9 +99,7 @@ class TextTable(object):
 
             # row break controls.
             # if row is None then this is a break
-            addBreak = (row
-                        is None) or (self.rowbreak and rowbreakindex > 0
-                                     and rowbreakindex % self.rowbreak == 0)
+            addBreak = (row is None) or (self.rowbreak and rowbreakindex > 0 and rowbreakindex % self.rowbreak == 0)
             if addBreak:
                 table_str += self.indent
                 for i in range(self.columns):
@@ -132,14 +125,9 @@ class TextTable(object):
                     drow = str(row[i])
 
                 if i == self.columns - 1:
-                    lines.append(
-                        textwrap.wrap(drow,
-                                      colWidth[i],
-                                      break_long_words=False))
+                    lines.append(textwrap.wrap(drow, colWidth[i], break_long_words=False))
                 else:
-                    lines.append(
-                        textwrap.wrap(drow, colWidth[i],
-                                      break_long_words=True))
+                    lines.append(textwrap.wrap(drow, colWidth[i], break_long_words=True))
 
             maxlines = max([len(x) for x in lines])
 
@@ -248,10 +236,8 @@ def removeLogDirectories(dir):
         ff = os.path.join(dir, f)
         if os.path.isdir(ff) and not os.path.islink(ff):
             tests = [
-                all([
-                    os.path.exists(os.path.join(ff, "ats.log")),
-                    os.path.exists(os.path.join(ff, "geos_ats.config"))
-                ]),
+                all([os.path.exists(os.path.join(ff, "ats.log")),
+                     os.path.exists(os.path.join(ff, "geos_ats.config"))]),
                 f.find("TestLogs.") == 0
             ]
             if any(tests):

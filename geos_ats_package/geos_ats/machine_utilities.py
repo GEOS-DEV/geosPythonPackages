@@ -9,9 +9,7 @@ def CheckForEarlyTimeOut(test, retval, fraction):
     if not retval:
         return retval, fraction
     else:
-        if (config.max_retry
-                > 0) and (config.retry_err_regexp
-                          != "") and (not hasattr(test, "checkstart")):
+        if (config.max_retry > 0) and (config.retry_err_regexp != "") and (not hasattr(test, "checkstart")):
             sourceFile = getattr(test, "errname")
             if os.path.exists(sourceFile):
                 test.checkstart = 1

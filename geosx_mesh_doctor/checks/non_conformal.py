@@ -70,27 +70,21 @@ class BoundaryMesh:
         :param mesh: The 3d mesh.
         """
         # Building the boundary meshes
-        boundary_mesh, __normals, self.__original_cells = BoundaryMesh.__build_boundary_mesh(
-            mesh)
+        boundary_mesh, __normals, self.__original_cells = BoundaryMesh.__build_boundary_mesh(mesh)
         cells_to_reorient = filter(
             lambda c: mesh.GetCell(c).GetCellType() == VTK_POLYHEDRON,
-            map(self.__original_cells.GetValue,
-                range(self.__original_cells.GetNumberOfValues())))
+            map(self.__original_cells.GetValue, range(self.__original_cells.GetNumberOfValues())))
         reoriented_mesh = reorient_mesh(mesh, cells_to_reorient)
-        self.re_boundary_mesh, re_normals, _ = BoundaryMesh.__build_boundary_mesh(
-            reoriented_mesh, consistency=False)
+        self.re_boundary_mesh, re_normals, _ = BoundaryMesh.__build_boundary_mesh(reoriented_mesh, consistency=False)
         num_cells = boundary_mesh.GetNumberOfCells()
         # Precomputing the underlying cell type
-        self.__is_underlying_cell_type_a_polyhedron = numpy.zeros(num_cells,
-                                                                  dtype=bool)
+        self.__is_underlying_cell_type_a_polyhedron = numpy.zeros(num_cells, dtype=bool)
         for ic in range(num_cells):
             self.__is_underlying_cell_type_a_polyhedron[ic] = mesh.GetCell(
-                self.__original_cells.GetValue(
-                    ic)).GetCellType() == VTK_POLYHEDRON
+                self.__original_cells.GetValue(ic)).GetCellType() == VTK_POLYHEDRON
         # Precomputing the normals
-        self.__normals: numpy.ndarray = numpy.empty(
-            (num_cells, 3), dtype=numpy.double,
-            order='C')  # Do not modify the storage layout
+        self.__normals: numpy.ndarray = numpy.empty((num_cells, 3), dtype=numpy.double,
+                                                    order='C')    # Do not modify the storage layout
         for ic in range(num_cells):
             if self.__is_underlying_cell_type_a_polyhedron[ic]:
                 self.__normals[ic, :] = re_normals.GetTuple3(ic)
@@ -98,9 +92,7 @@ class BoundaryMesh:
                 self.__normals[ic, :] = __normals.GetTuple3(ic)
 
     @staticmethod
-    def __build_boundary_mesh(
-            mesh: vtkUnstructuredGrid,
-            consistency=True) -> Tuple[vtkUnstructuredGrid, Any, Any]:
+    def __build_boundary_mesh(mesh: vtkUnstructuredGrid, consistency=True) -> Tuple[vtkUnstructuredGrid, Any, Any]:
         """
         From a 3d mesh, build the envelope meshes.
         :param mesh: The input 3d mesh.
@@ -131,8 +123,7 @@ class BoundaryMesh:
         assert normals
         assert normals.GetNumberOfComponents() == 3
         assert normals.GetNumberOfTuples() == boundary_mesh.GetNumberOfCells()
-        original_cells = boundary_mesh.GetCellData().GetArray(
-            original_cells_key)
+        original_cells = boundary_mesh.GetCellData().GetArray(original_cells_key)
         assert original_cells
         return boundary_mesh, normals, original_cells
 
@@ -193,8 +184,7 @@ class BoundaryMesh:
         return self.__original_cells
 
 
-def build_poly_data_for_extrusion(i: int,
-                                  boundary_mesh: BoundaryMesh) -> vtkPolyData:
+def build_poly_data_for_extrusion(i: int, boundary_mesh: BoundaryMesh) -> vtkPolyData:
     """
     Creates a vtkPolyData containing the unique cell `i` of the boundary mesh.
     This operation is needed to use the vtk extrusion filter.
@@ -221,8 +211,7 @@ def build_poly_data_for_extrusion(i: int,
     return polygon_poly_data
 
 
-def are_points_conformal(point_tolerance: float, cell_i: vtkCell,
-                         cell_j: vtkCell) -> bool:
+def are_points_conformal(point_tolerance: float, cell_i: vtkCell, cell_j: vtkCell) -> bool:
     """
     Checks if points of cell `i` matches, one by one, the points of cell `j`.
     :param point_tolerance: The point tolerance to consider that two points match.
@@ -242,9 +231,8 @@ def are_points_conformal(point_tolerance: float, cell_i: vtkCell,
     found_points = set()
     for ip in range(cell_j.GetNumberOfPoints()):
         p = cell_j.GetPoints().GetPoint(ip)
-        squared_dist = vtk_reference(0.)  # unused
-        found_point = point_locator.FindClosestPointWithinRadius(
-            point_tolerance, p, squared_dist)
+        squared_dist = vtk_reference(0.)    # unused
+        found_point = point_locator.FindClosestPointWithinRadius(point_tolerance, p, squared_dist)
         found_points.add(found_point)
     return found_points == set(range(cell_i.GetNumberOfPoints()))
 
@@ -286,15 +274,13 @@ class Extruder:
         extrusion = self.__extrusions[i]
         if extrusion:
             return extrusion
-        extrusion = self.__extrude(
-            build_poly_data_for_extrusion(i, self.__boundary_mesh),
-            self.__boundary_mesh.normals(i))
+        extrusion = self.__extrude(build_poly_data_for_extrusion(i, self.__boundary_mesh),
+                                   self.__boundary_mesh.normals(i))
         self.__extrusions[i] = extrusion
         return extrusion
 
 
-def are_faces_conformal_using_extrusions(extrusions: Extruder, i: int, j: int,
-                                         boundary_mesh: vtkUnstructuredGrid,
+def are_faces_conformal_using_extrusions(extrusions: Extruder, i: int, j: int, boundary_mesh: vtkUnstructuredGrid,
                                          point_tolerance: float) -> bool:
     """
     Tests if two boundary faces are conformal, checking for intersection between their normal extruded volumes.
@@ -323,13 +309,10 @@ def are_faces_conformal_using_extrusions(extrusions: Extruder, i: int, j: int,
     copied_cell_i = cell_i.NewInstance()
     copied_cell_i.DeepCopy(cell_i)
 
-    return are_points_conformal(point_tolerance, copied_cell_i,
-                                boundary_mesh.GetCell(j))
+    return are_points_conformal(point_tolerance, copied_cell_i, boundary_mesh.GetCell(j))
 
 
-def are_faces_conformal_using_distances(i: int, j: int,
-                                        boundary_mesh: vtkUnstructuredGrid,
-                                        face_tolerance: float,
+def are_faces_conformal_using_distances(i: int, j: int, boundary_mesh: vtkUnstructuredGrid, face_tolerance: float,
                                         point_tolerance: float) -> bool:
     """
     Tests if two boundary faces are conformal, checking the minimal distance between triangulated surfaces.
@@ -398,8 +381,7 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
     num_cells = boundary_mesh.GetNumberOfCells()
 
     # Computing the exact number of cells per node
-    num_cells_per_node = numpy.zeros(boundary_mesh.GetNumberOfPoints(),
-                                     dtype=int)
+    num_cells_per_node = numpy.zeros(boundary_mesh.GetNumberOfPoints(), dtype=int)
     for ic in range(boundary_mesh.GetNumberOfCells()):
         c = boundary_mesh.GetCell(ic)
         point_ids = c.GetPointIds()
@@ -414,14 +396,12 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
 
     # Precomputing the bounding boxes.
     # The options are important to directly interact with memory in C++.
-    bounding_boxes = numpy.empty((boundary_mesh.GetNumberOfCells(), 6),
-                                 dtype=numpy.double,
-                                 order="C")
+    bounding_boxes = numpy.empty((boundary_mesh.GetNumberOfCells(), 6), dtype=numpy.double, order="C")
     for i in range(boundary_mesh.GetNumberOfCells()):
         bb = vtkBoundingBox(boundary_mesh.bounds(i))
         bb.Inflate(2 * options.face_tolerance)
         assert bounding_boxes[
-            i, :].data.contiguous  # Do not modify the storage layout since vtk deals with raw memory here.
+            i, :].data.contiguous    # Do not modify the storage layout since vtk deals with raw memory here.
         bb.GetBounds(bounding_boxes[i, :])
 
     non_conformal_cells = []
@@ -434,21 +414,16 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
             if j < i:
                 continue
             # Discarding pairs that are not facing each others (with a threshold).
-            normal_i, normal_j = boundary_mesh.normals(
-                i), boundary_mesh.normals(j)
-            if numpy.dot(
-                    normal_i, normal_j
-            ) > -cos_theta:  # opposite directions only (can be facing or not)
+            normal_i, normal_j = boundary_mesh.normals(i), boundary_mesh.normals(j)
+            if numpy.dot(normal_i, normal_j) > -cos_theta:    # opposite directions only (can be facing or not)
                 continue
             # At this point, back-to-back and face-to-face pairs of elements are considered.
-            if not are_faces_conformal_using_extrusions(
-                    extrusions, i, j, boundary_mesh, options.point_tolerance):
+            if not are_faces_conformal_using_extrusions(extrusions, i, j, boundary_mesh, options.point_tolerance):
                 non_conformal_cells.append((i, j))
     # Extracting the original 3d element index (and not the index of the boundary mesh).
     tmp = []
     for i, j in non_conformal_cells:
-        tmp.append((boundary_mesh.original_cells.GetValue(i),
-                    boundary_mesh.original_cells.GetValue(j)))
+        tmp.append((boundary_mesh.original_cells.GetValue(i), boundary_mesh.original_cells.GetValue(j)))
 
     return Result(non_conformal_cells=tmp)
 

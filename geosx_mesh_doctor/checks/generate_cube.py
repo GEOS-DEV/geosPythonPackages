@@ -84,8 +84,7 @@ def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]) -> vtkUnstructuredGrid:
     cells = vtkCellArray()
     cells.AllocateExact(num_cells, num_cells * 8)
 
-    m = (0, 1, 3, 2, 4, 5, 7, 6
-         )  # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
+    m = (0, 1, 3, 2, 4, 5, 7, 6)    # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
     offset = 0
     for rg in rgs:
         for i in range(rg.GetNumberOfCells()):
@@ -103,8 +102,7 @@ def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]) -> vtkUnstructuredGrid:
     return mesh
 
 
-def __add_fields(mesh: vtkUnstructuredGrid,
-                 fields: Iterable[FieldInfo]) -> vtkUnstructuredGrid:
+def __add_fields(mesh: vtkUnstructuredGrid, fields: Iterable[FieldInfo]) -> vtkUnstructuredGrid:
     for field_info in fields:
         if field_info.support == "CELLS":
             data = mesh.GetCellData()
@@ -129,18 +127,12 @@ def __build(options: Options):
             while True:
                 start, stop = coords
                 end_point = False
-                tmp = numpy.linspace(start=start,
-                                     stop=stop,
-                                     num=n + end_point,
-                                     endpoint=end_point)
+                tmp = numpy.linspace(start=start, stop=stop, num=n + end_point, endpoint=end_point)
                 coords, n = next(it)
                 result.append(tmp)
         except StopIteration:
             end_point = True
-            tmp = numpy.linspace(start=start,
-                                 stop=stop,
-                                 num=n + end_point,
-                                 endpoint=end_point)
+            tmp = numpy.linspace(start=start, stop=stop, num=n + end_point, endpoint=end_point)
             result.append(tmp)
         return numpy.concatenate(result)
 
@@ -149,8 +141,7 @@ def __build(options: Options):
     z = build_coordinates(options.zs, options.nzs)
     cube = build_rectilinear_blocks_mesh((XYZ(x, y, z), ))
     cube = __add_fields(cube, options.fields)
-    __build_global_ids(cube, options.generate_cells_global_ids,
-                       options.generate_points_global_ids)
+    __build_global_ids(cube, options.generate_cells_global_ids, options.generate_points_global_ids)
     return cube
 
 

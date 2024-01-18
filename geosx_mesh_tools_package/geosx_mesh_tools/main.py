@@ -11,13 +11,8 @@ def build_abaqus_converter_input_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=str, help='Input abaqus mesh file name')
-    parser.add_argument('output',
-                        type=str,
-                        help='Output gmsh/vtu mesh file name')
-    parser.add_argument('-v',
-                        '--verbose',
-                        help='Increase verbosity level',
-                        action="store_true")
+    parser.add_argument('output', type=str, help='Output gmsh/vtu mesh file name')
+    parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
     return parser
 
 
@@ -45,14 +40,11 @@ def main() -> None:
     # Call the converter
     err = 0
     if ('.msh' in args.output):
-        err = abaqus_converter.convert_abaqus_to_gmsh(args.input, args.output,
-                                                      logger)
+        err = abaqus_converter.convert_abaqus_to_gmsh(args.input, args.output, logger)
     else:
-        err = abaqus_converter.convert_abaqus_to_vtu(args.input, args.output,
-                                                     logger)
+        err = abaqus_converter.convert_abaqus_to_vtu(args.input, args.output, logger)
     if err:
-        sys.exit(
-            'Warnings detected: check the output file for potential errors!')
+        sys.exit('Warnings detected: check the output file for potential errors!')
 
 
 if __name__ == '__main__':

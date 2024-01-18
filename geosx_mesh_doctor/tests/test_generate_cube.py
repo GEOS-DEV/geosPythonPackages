@@ -11,9 +11,7 @@ def test_generate_cube():
                       nxs=(5, 2),
                       nys=(1, 1),
                       nzs=(1, ),
-                      fields=(FieldInfo(name="test",
-                                        dimension=2,
-                                        support="CELLS"), ))
+                      fields=(FieldInfo(name="test", dimension=2, support="CELLS"), ))
     output = __build(options)
     assert output.GetNumberOfCells() == 14
     assert output.GetNumberOfPoints() == 48

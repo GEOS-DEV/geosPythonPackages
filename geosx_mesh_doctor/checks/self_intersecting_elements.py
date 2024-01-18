@@ -30,8 +30,7 @@ class Result:
 
 def __check(mesh, options: Options) -> Result:
     err_out = vtkFileOutputWindow()
-    err_out.SetFileName(
-        "/dev/null")  # vtkCellValidator outputs loads for each cell...
+    err_out.SetFileName("/dev/null")    # vtkCellValidator outputs loads for each cell...
     vtk_std_err_out = vtkOutputWindow()
     vtk_std_err_out.SetInstance(err_out)
 
@@ -57,8 +56,7 @@ def __check(mesh, options: Options) -> Result:
     f.Update()
     output = f.GetOutput()
 
-    validity = output.GetCellData().GetArray(
-        "ValidityState")  # Could not change name using the vtk interface.
+    validity = output.GetCellData().GetArray("ValidityState")    # Could not change name using the vtk interface.
     assert validity is not None
     validity = vtk_to_numpy(validity)
     for i, v in enumerate(validity):
@@ -75,14 +73,12 @@ def __check(mesh, options: Options) -> Result:
                 non_convex_elements.append(i)
             if v & faces_are_oriented_incorrectly:
                 faces_are_oriented_incorrectly_elements.append(i)
-    return Result(
-        wrong_number_of_points_elements=wrong_number_of_points_elements,
-        intersecting_edges_elements=intersecting_edges_elements,
-        intersecting_faces_elements=intersecting_faces_elements,
-        non_contiguous_edges_elements=non_contiguous_edges_elements,
-        non_convex_elements=non_convex_elements,
-        faces_are_oriented_incorrectly_elements=
-        faces_are_oriented_incorrectly_elements)
+    return Result(wrong_number_of_points_elements=wrong_number_of_points_elements,
+                  intersecting_edges_elements=intersecting_edges_elements,
+                  intersecting_faces_elements=intersecting_faces_elements,
+                  non_contiguous_edges_elements=non_contiguous_edges_elements,
+                  non_convex_elements=non_convex_elements,
+                  faces_are_oriented_incorrectly_elements=faces_are_oriented_incorrectly_elements)
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

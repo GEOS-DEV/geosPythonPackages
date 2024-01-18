@@ -38,13 +38,9 @@ def fill_vtk_output_subparser(parser, prefix="") -> None:
 
 def convert(parsed_options, prefix="") -> VtkOutput:
     output_key = __build_arg(prefix, __OUTPUT_FILE).replace("-", "_")
-    binary_mode_key = __build_arg(prefix,
-                                  __OUTPUT_BINARY_MODE).replace("-", "_")
+    binary_mode_key = __build_arg(prefix, __OUTPUT_BINARY_MODE).replace("-", "_")
     output = parsed_options[output_key]
-    if parsed_options[binary_mode_key] and os.path.splitext(
-            output)[-1] == ".vtk":
-        logging.info(
-            "VTK data mode will be ignored for legacy file format \"vtk\".")
-    is_data_mode_binary: bool = parsed_options[
-        binary_mode_key] == __OUTPUT_BINARY_MODE_DEFAULT
+    if parsed_options[binary_mode_key] and os.path.splitext(output)[-1] == ".vtk":
+        logging.info("VTK data mode will be ignored for legacy file format \"vtk\".")
+    is_data_mode_binary: bool = parsed_options[binary_mode_key] == __OUTPUT_BINARY_MODE_DEFAULT
     return VtkOutput(output=output, is_data_mode_binary=is_data_mode_binary)

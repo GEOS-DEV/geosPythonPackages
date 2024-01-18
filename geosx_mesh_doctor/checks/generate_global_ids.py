@@ -21,8 +21,7 @@ class Result:
     info: str
 
 
-def __build_global_ids(mesh, generate_cells_global_ids: bool,
-                       generate_points_global_ids: bool) -> None:
+def __build_global_ids(mesh, generate_cells_global_ids: bool, generate_points_global_ids: bool) -> None:
     """
     Adds the global ids for cells and points in place into the mesh instance.
     :param mesh:
@@ -52,8 +51,7 @@ def __build_global_ids(mesh, generate_cells_global_ids: bool,
 
 
 def __check(mesh, options: Options) -> Result:
-    __build_global_ids(mesh, options.generate_cells_global_ids,
-                       options.generate_points_global_ids)
+    __build_global_ids(mesh, options.generate_cells_global_ids, options.generate_points_global_ids)
     vtk_utils.write_mesh(mesh, options.vtk_output)
     return Result(info=f"Mesh was written to {options.vtk_output.output}")
 

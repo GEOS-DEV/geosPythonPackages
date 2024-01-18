@@ -61,7 +61,7 @@ def test_wrong_support_elements():
     tet.GetPointIds().SetId(0, 0)
     tet.GetPointIds().SetId(1, 1)
     tet.GetPointIds().SetId(2, 2)
-    tet.GetPointIds().SetId(3, 0)  # Intentionally wrong
+    tet.GetPointIds().SetId(3, 0)    # Intentionally wrong
     cells.InsertNextCell(tet)
 
     mesh = vtkUnstructuredGrid()

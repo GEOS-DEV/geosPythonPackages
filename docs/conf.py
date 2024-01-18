@@ -18,10 +18,8 @@ import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ('geosx_mesh_tools_package', 'geosx_xml_tools_package',
-                  'geosx_mesh_doctor', 'geos_ats_package',
-                  'hdf5_wrapper_package', 'pygeosx_tools_package',
-                  'timehistory_package')
+python_modules = ('geosx_mesh_tools_package', 'geosx_xml_tools_package', 'geosx_mesh_doctor', 'geos_ats_package',
+                  'hdf5_wrapper_package', 'pygeosx_tools_package', 'timehistory_package')
 for m in python_modules:
     sys.path.insert(0, os.path.abspath(os.path.join(python_root, m)))
 
@@ -46,14 +44,11 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_design', 'sphinx.ext.todo', 'sphinx.ext.autodoc',
-    'sphinx.ext.doctest', 'sphinx.ext.imgmath', 'sphinxarg.ext',
-    'sphinx.ext.napoleon', 'sphinxcontrib.programoutput'
+    'sphinx_design', 'sphinx.ext.todo', 'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.imgmath',
+    'sphinxarg.ext', 'sphinx.ext.napoleon', 'sphinxcontrib.programoutput'
 ]
 
-autodoc_mock_imports = [
-    "pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy"
-]
+autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:

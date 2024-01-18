@@ -1,4 +1,4 @@
-import h5py  # type: ignore[import]
+import h5py    # type: ignore[import]
 import numpy as np
 from numpy.core.defchararray import encode, decode
 from typing import Union, Dict, Any, Iterable, Optional, Tuple
@@ -15,10 +15,7 @@ class hdf5_wrapper():
     A class for reading/writing hdf5 files, which behaves similar to a native dict
     """
 
-    def __init__(self,
-                 fname: str = '',
-                 target: Optional[h5py.File] = None,
-                 mode: str = 'r') -> None:
+    def __init__(self, fname: str = '', target: Optional[h5py.File] = None, mode: str = 'r') -> None:
         """
         Initialize the hdf5_wrapper class
 

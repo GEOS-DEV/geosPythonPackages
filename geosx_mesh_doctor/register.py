@@ -15,10 +15,8 @@ def __load_module_check(module_name: str, check_fct="check"):
     return getattr(module, check_fct)
 
 
-def __load_module_check_helper(module_name: str,
-                               parsing_fct_suffix="_parsing"):
-    module = importlib.import_module("parsing." + module_name +
-                                     parsing_fct_suffix)
+def __load_module_check_helper(module_name: str, parsing_fct_suffix="_parsing"):
+    module = importlib.import_module("parsing." + module_name + parsing_fct_suffix)
     return CheckHelper(fill_subparser=module.fill_subparser,
                        convert=module.convert,
                        display_results=module.display_results)
@@ -41,8 +39,7 @@ def __load_checks() -> Dict[str, Callable[[str, Any], Any]]:
     return loaded_checks
 
 
-def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[
-    [str, Any], Any]], Dict[str, CheckHelper]]:
+def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[[str, Any], Any]], Dict[str, CheckHelper]]:
     """
     Register all the parsing checks. Eventually initiate the registration of all the checks too.
     :return: The checks and the checks helpers.
@@ -55,12 +52,9 @@ def register() -> Tuple[argparse.ArgumentParser, Dict[str, Callable[
         __CHECKS[check_name] = lambda: __load_module_check(cn)
 
     # Register the modules to load here.
-    for check_name in (parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES,
-                       parsing.FIX_ELEMENTS_ORDERINGS, parsing.GENERATE_CUBE,
-                       parsing.GENERATE_FRACTURES, parsing.GENERATE_GLOBAL_IDS,
-                       parsing.NON_CONFORMAL,
-                       parsing.SELF_INTERSECTING_ELEMENTS,
-                       parsing.SUPPORTED_ELEMENTS):
+    for check_name in (parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES, parsing.FIX_ELEMENTS_ORDERINGS,
+                       parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES, parsing.GENERATE_GLOBAL_IDS,
+                       parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS):
         closure_trick(check_name)
     loaded_checks: Dict[str, Callable[[str, Any], Any]] = __load_checks()
     loaded_checks_helpers: Dict[str, CheckHelper] = dict()

@@ -40,8 +40,7 @@ def test_simple_tet():
 
     assert len(result.element_volumes) == 1
     assert result.element_volumes[0][0] == 0
-    assert abs(result.element_volumes[0][1] -
-               1. / 6.) < 10 * numpy.finfo(float).eps
+    assert abs(result.element_volumes[0][1] - 1. / 6.) < 10 * numpy.finfo(float).eps
 
     result = __check(mesh, Options(min_volume=0.))
 

@@ -1,11 +1,11 @@
 #ATS:SequentialMachine  SELF lassenMachine  1
 #ATS:lassen           SELF lassenMachine   1
 
-from ats import machines  # type: ignore[import]
+from ats import machines    # type: ignore[import]
 from ats import machines, debug, atsut
 from ats import log, terminal
 from ats import configuration
-from ats.atsut import RUNNING, TIMEDOUT  # type: ignore[import]
+from ats.atsut import RUNNING, TIMEDOUT    # type: ignore[import]
 from ats import AtsTest
 import os
 import subprocess
@@ -27,8 +27,7 @@ class lassenMachine(machines.Machine):
         super(lassenMachine, self).examineOptions(options)
 
         # Get total cpu cores available, and convert to number of gpus!
-        self.numberMaxProcessors = int(os.getenv("LSB_MAX_NUM_PROCESSORS",
-                                                 "0")) - 1
+        self.numberMaxProcessors = int(os.getenv("LSB_MAX_NUM_PROCESSORS", "0")) - 1
         self.numberMaxGPUS = self.numberMaxProcessors / 10
 
         self.numberTestsRunningMax = self.numberMaxProcessors
@@ -62,11 +61,7 @@ class lassenMachine(machines.Machine):
         commandList = []
 
         ngpu = test.ngpu
-        commandList += [
-            "lrun", "-n",
-            "%d" % test.np, "--pack", "-g",
-            "%d" % ngpu
-        ]
+        commandList += ["lrun", "-n", "%d" % test.np, "--pack", "-g", "%d" % ngpu]
         commandList += basicCommands
         return commandList
 
@@ -119,8 +114,6 @@ class lassenMachine(machines.Machine):
             try:
                 retcode = subprocess.call("jskill all", shell=True)
                 if retcode < 0:
-                    log("command= %s failed with return code %d" %
-                        ("jskill all", retcode),
-                        echo=True)
+                    log("command= %s failed with return code %d" % ("jskill all", retcode), echo=True)
             except:
                 logger.info("Killing job")

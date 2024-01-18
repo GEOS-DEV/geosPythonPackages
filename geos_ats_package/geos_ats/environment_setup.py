@@ -7,8 +7,7 @@ import argparse
 def setup_ats(src_path, build_path, ats_xargs, ats_machine, ats_machine_dir):
     bin_dir = os.path.join(build_path, "bin")
     geos_ats_fname = os.path.join(bin_dir, "run_geos_ats")
-    ats_dir = os.path.abspath(
-        os.path.join(src_path, "integratedTests", "tests", "allTests"))
+    ats_dir = os.path.abspath(os.path.join(src_path, "integratedTests", "tests", "allTests"))
     test_path = os.path.join(build_path, "integratedTests")
     link_path = os.path.join(test_path, "integratedTests")
     run_script_fname = os.path.join(test_path, "geos_ats.sh")
@@ -31,14 +30,11 @@ def setup_ats(src_path, build_path, ats_xargs, ats_machine, ats_machine_dir):
     # Write the bash script to run ats.
     with open(run_script_fname, "w") as g:
         g.write("#!/bin/bash\n")
-        g.write(
-            f"{geos_ats_fname} {bin_dir} --workingDir {ats_dir} --logs {log_dir} {ats_args} \"$@\"\n"
-        )
+        g.write(f"{geos_ats_fname} {bin_dir} --workingDir {ats_dir} --logs {log_dir} {ats_args} \"$@\"\n")
 
     # Make the script executable
     st = os.stat(run_script_fname)
-    os.chmod(run_script_fname,
-             st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    os.chmod(run_script_fname, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def main():
@@ -50,22 +46,11 @@ def main():
     parser = argparse.ArgumentParser(description="Setup ATS script")
     parser.add_argument("src_path", type=str, help="GEOS src path")
     parser.add_argument("build_path", type=str, help="GEOS build path")
-    parser.add_argument("--ats",
-                        nargs='+',
-                        default=[],
-                        action="append",
-                        help="Arguments that should be passed to ats")
-    parser.add_argument("--machine",
-                        type=str,
-                        default='',
-                        help="ATS machine name")
-    parser.add_argument("--machine-dir",
-                        type=str,
-                        default='',
-                        help="ATS machine directory")
+    parser.add_argument("--ats", nargs='+', default=[], action="append", help="Arguments that should be passed to ats")
+    parser.add_argument("--machine", type=str, default='', help="ATS machine name")
+    parser.add_argument("--machine-dir", type=str, default='', help="ATS machine directory")
     options, unkown_args = parser.parse_known_args()
-    setup_ats(options.src_path, options.build_path, options.ats,
-              options.machine, options.machine_dir)
+    setup_ats(options.src_path, options.build_path, options.ats, options.machine, options.machine_dir)
 
 
 if __name__ == '__main__':

@@ -37,19 +37,16 @@ __CELL_TYPE_SUPPORT_SIZE = {
 
 
 def fill_subparser(subparsers) -> None:
-    p = subparsers.add_parser(
-        FIX_ELEMENTS_ORDERINGS,
-        help="Reorders the support nodes for the given cell types.")
+    p = subparsers.add_parser(FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types.")
     for key, vtk_key in __CELL_TYPE_MAPPING.items():
         tmp = list(range(__CELL_TYPE_SUPPORT_SIZE[vtk_key]))
         random.Random(4).shuffle(tmp)
-        p.add_argument(
-            '--' + key,
-            type=str,
-            metavar=",".join(map(str, tmp)),
-            default=None,
-            required=False,
-            help=f"[list of integers]: node permutation for \"{key}\".")
+        p.add_argument('--' + key,
+                       type=str,
+                       metavar=",".join(map(str, tmp)),
+                       default=None,
+                       required=False,
+                       help=f"[list of integers]: node permutation for \"{key}\".")
     vtk_output_parsing.fill_vtk_output_subparser(p)
 
 
@@ -70,17 +67,14 @@ def convert(parsed_options) -> Options:
                 raise ValueError(err_msg)
             cell_type_to_ordering[vtk_key] = tmp
     vtk_output = vtk_output_parsing.convert(parsed_options)
-    return Options(vtk_output=vtk_output,
-                   cell_type_to_ordering=cell_type_to_ordering)
+    return Options(vtk_output=vtk_output, cell_type_to_ordering=cell_type_to_ordering)
 
 
 def display_results(options: Options, result: Result):
     if result.output:
         logging.info(f"New mesh was written to file '{result.output}'")
         if result.unchanged_cell_types:
-            logging.info(
-                f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]."
-            )
+            logging.info(f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}].")
         else:
             logging.info("All the cells of the mesh were reordered.")
     else:

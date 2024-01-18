@@ -3,8 +3,7 @@ import hdf5_wrapper
 from typing import Union, Dict
 
 
-def print_database_iterative(database: hdf5_wrapper.hdf5_wrapper,
-                             level: int = 0) -> None:
+def print_database_iterative(database: hdf5_wrapper.hdf5_wrapper, level: int = 0) -> None:
     """
     Print the database targets iteratively by level
 

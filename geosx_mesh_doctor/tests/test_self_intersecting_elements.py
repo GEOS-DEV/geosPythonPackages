@@ -30,8 +30,8 @@ def test_jumbled_hex():
     hex = vtkHexahedron()
     hex.GetPointIds().SetId(0, 0)
     hex.GetPointIds().SetId(1, 1)
-    hex.GetPointIds().SetId(2, 3)  # Intentionally wrong
-    hex.GetPointIds().SetId(3, 2)  # Intentionally wrong
+    hex.GetPointIds().SetId(2, 3)    # Intentionally wrong
+    hex.GetPointIds().SetId(3, 2)    # Intentionally wrong
     hex.GetPointIds().SetId(4, 4)
     hex.GetPointIds().SetId(5, 5)
     hex.GetPointIds().SetId(6, 6)

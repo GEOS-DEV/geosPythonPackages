@@ -125,9 +125,7 @@ class FaceStream:
         """
         result = []
         for face_index, face_nodes in enumerate(self.__data):
-            result.append(
-                tuple(reversed(face_nodes)) if face_index in
-                face_indices else face_nodes)
+            result.append(tuple(reversed(face_nodes)) if face_index in face_indices else face_nodes)
         return FaceStream(tuple(result))
 
     def dump(self) -> Sequence[int]:
@@ -150,9 +148,7 @@ class FaceStream:
         return ",\n".join(result)
 
 
-def build_face_to_face_connectivity_through_edges(face_stream: FaceStream,
-                                                  add_compatibility=False
-                                                  ) -> networkx.Graph:
+def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_compatibility=False) -> networkx.Graph:
     """
     Given a face stream/polyhedron, builds the connections between the faces.
     Those connections happen when two faces share an edge.
@@ -168,8 +164,7 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream,
     for face_index, face_nodes in enumerate(face_stream.face_nodes):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
         face_indices: Tuple[int, int]
-        for face_indices in zip(face_nodes,
-                                face_nodes[1:] + (face_nodes[0], )):
+        for face_indices in zip(face_nodes, face_nodes[1:] + (face_nodes[0], )):
             edges_to_face_indices[frozenset(face_indices)].append(face_index)
     # We are doing here some small validations w.r.t. the connections of the faces
     # which may only make sense in the context of numerical simulations.
@@ -198,15 +193,11 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream,
     graph.add_nodes_from(range(face_stream.num_faces))
     for edge, face_indices in edges_to_face_indices.items():
         face_index_0, face_index_1 = face_indices
-        face_nodes_0 = face_stream[face_index_0] + (
-            face_stream[face_index_0][0], )
-        face_nodes_1 = face_stream[face_index_1] + (
-            face_stream[face_index_1][0], )
+        face_nodes_0 = face_stream[face_index_0] + (face_stream[face_index_0][0], )
+        face_nodes_1 = face_stream[face_index_1] + (face_stream[face_index_1][0], )
         node_0, node_1 = edge
-        order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) +
-                                    1] == node_1 else -1
-        order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) +
-                                    1] == node_1 else -1
+        order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) + 1] == node_1 else -1
+        order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
         # Same order of nodes means that the normals of the faces
         # are _not_ both in the same "direction" (inward or outward).
         if order_0 * order_1 == 1:

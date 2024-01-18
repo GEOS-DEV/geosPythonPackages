@@ -77,24 +77,20 @@ def __build_test_meshes() -> Generator[Expected, None, None]:
     mesh = vtkUnstructuredGrid()
     mesh.Allocate(1)
     mesh.SetPoints(points)
-    mesh.InsertNextCell(VTK_POLYHEDRON,
-                        to_vtk_id_list(face_stream.flip_faces((1, 2)).dump()))
+    mesh.InsertNextCell(VTK_POLYHEDRON, to_vtk_id_list(face_stream.flip_faces((1, 2)).dump()))
     yield Expected(mesh=mesh, face_stream=face_stream)
 
     # Last, all faces are flipped.
     mesh = vtkUnstructuredGrid()
     mesh.Allocate(1)
     mesh.SetPoints(points)
-    mesh.InsertNextCell(
-        VTK_POLYHEDRON,
-        to_vtk_id_list(face_stream.flip_faces(range(len(faces))).dump()))
+    mesh.InsertNextCell(VTK_POLYHEDRON, to_vtk_id_list(face_stream.flip_faces(range(len(faces))).dump()))
     yield Expected(mesh=mesh, face_stream=face_stream)
 
 
 @pytest.mark.parametrize("expected", __build_test_meshes())
 def test_reorient_polyhedron(expected: Expected):
-    output_mesh = reorient_mesh(expected.mesh,
-                                range(expected.mesh.GetNumberOfCells()))
+    output_mesh = reorient_mesh(expected.mesh, range(expected.mesh.GetNumberOfCells()))
     assert output_mesh.GetNumberOfCells() == 1
     assert output_mesh.GetCell(0).GetCellType() == VTK_POLYHEDRON
     face_stream_ids = vtkIdList()

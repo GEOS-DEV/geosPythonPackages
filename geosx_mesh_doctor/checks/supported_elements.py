@@ -46,19 +46,19 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    unsupported_std_elements_types: FrozenSet[int]  # list of unsupported types
+    unsupported_std_elements_types: FrozenSet[int]    # list of unsupported types
     unsupported_polyhedron_elements: FrozenSet[
-        int]  # list of polyhedron elements that could not be converted to supported std elements
+        int]    # list of polyhedron elements that could not be converted to supported std elements
 
 
 MESH: Optional[
-    vtkUnstructuredGrid] = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+    vtkUnstructuredGrid] = None    # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
 
 
 class IsPolyhedronConvertible:
 
     def __init__(self, mesh: vtkUnstructuredGrid):
-        global MESH  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+        global MESH    # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
         MESH = mesh
 
         def build_prism_graph(n: int, name: str) -> networkx.Graph:
@@ -79,8 +79,7 @@ class IsPolyhedronConvertible:
         tet_graph = networkx.complete_graph(4)
         tet_graph.name = "Tetrahedron"
         pyr_graph = build_prism_graph(4, "Pyramid")
-        pyr_graph.remove_node(
-            5)  # Removing a node also removes its associated edges.
+        pyr_graph.remove_node(5)    # Removing a node also removes its associated edges.
         self.__reference_graphs: Mapping[int, Iterable[networkx.Graph]] = {
             4: (tet_graph, ),
             5: (pyr_graph, build_prism_graph(3, "Wedge")),
@@ -101,8 +100,7 @@ class IsPolyhedronConvertible:
         :param face_stream: The polyhedron.
         :return: The name of the supported type or an empty string.
         """
-        cell_graph = build_face_to_face_connectivity_through_edges(
-            face_stream, add_compatibility=True)
+        cell_graph = build_face_to_face_connectivity_through_edges(face_stream, add_compatibility=True)
         for reference_graph in self.__reference_graphs[cell_graph.order()]:
             if networkx.is_isomorphic(reference_graph, cell_graph):
                 return str(reference_graph.name)
@@ -123,29 +121,23 @@ class IsPolyhedronConvertible:
         face_stream = FaceStream.build_from_vtk_id_list(pt_ids)
         converted_type_name = self.__is_polyhedron_supported(face_stream)
         if converted_type_name:
-            logging.debug(
-                f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\""
-            )
+            logging.debug(f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"")
             return -1
         else:
-            logging.debug(
-                f"Polyhedron cell {ic} cannot be converted into any supported element."
-            )
+            logging.debug(f"Polyhedron cell {ic} cannot be converted into any supported element.")
             return ic
 
 
 def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
-    if hasattr(
-            mesh,
-            "GetDistinctCellTypesArray"):  # For more recent versions of vtk.
+    if hasattr(mesh, "GetDistinctCellTypesArray"):    # For more recent versions of vtk.
         cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
     else:
         cell_types = vtkCellTypes()
         mesh.GetCellTypes(cell_types)
         cell_types = set(vtk_iter(cell_types))
     supported_cell_types = {
-        VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM,
-        VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL, VTK_WEDGE
+        VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
+        VTK_WEDGE
     }
     unsupported_std_elements_types = cell_types - supported_cell_types
 
@@ -153,19 +145,12 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
     num_cells = mesh.GetNumberOfCells()
     result = numpy.ones(num_cells, dtype=int) * -1
     with multiprocessing.Pool(processes=options.num_proc) as pool:
-        generator = pool.imap_unordered(IsPolyhedronConvertible(mesh),
-                                        range(num_cells),
-                                        chunksize=options.chunk_size)
-        for i, val in enumerate(
-                tqdm(generator,
-                     total=num_cells,
-                     desc="Testing support for elements")):
+        generator = pool.imap_unordered(IsPolyhedronConvertible(mesh), range(num_cells), chunksize=options.chunk_size)
+        for i, val in enumerate(tqdm(generator, total=num_cells, desc="Testing support for elements")):
             result[i] = val
     unsupported_polyhedron_elements = [i for i in result if i > -1]
-    return Result(unsupported_std_elements_types=frozenset(
-        unsupported_std_elements_types),
-                  unsupported_polyhedron_elements=frozenset(
-                      unsupported_polyhedron_elements))
+    return Result(unsupported_std_elements_types=frozenset(unsupported_std_elements_types),
+                  unsupported_polyhedron_elements=frozenset(unsupported_polyhedron_elements))
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

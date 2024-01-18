@@ -63,9 +63,7 @@ def collect_block_names(fname):
     tree = etree.parse(actual_fname, parser=parser)
     root = tree.getroot()
     for child in root.getchildren():
-        results[child.tag] = [
-            grandchild.tag for grandchild in child.getchildren()
-        ]
+        results[child.tag] = [grandchild.tag for grandchild in child.getchildren()]
 
     # Collect block names in included files
     for included_root in root.findall('Included'):
@@ -124,16 +122,14 @@ def generate_geos_tests(decks: Iterable[TestDeck]):
                 checks.append('restart')
                 steps.append(
                     geos(deck=xml_file,
-                         name="{:d}to{:d}".format(deck.restart_step,
-                                                  deck.check_step),
+                         name="{:d}to{:d}".format(deck.restart_step, deck.check_step),
                          np=N,
                          ngpu=N,
                          x_partitions=nx,
                          y_partitions=ny,
                          z_partitions=nz,
-                         restart_file=os.path.join(
-                             testcase_name, "{}_restart_{:09d}".format(
-                                 base_name, deck.restart_step)),
+                         restart_file=os.path.join(testcase_name,
+                                                   "{}_restart_{:09d}".format(base_name, deck.restart_step)),
                          baseline_pattern=f"{base_name}_restart_[0-9]+\.root",
                          allow_rebaseline=False,
                          restartcheck_params=restartcheck_params))
@@ -142,8 +138,7 @@ def generate_geos_tests(decks: Iterable[TestDeck]):
             AtsTest.stick(checks=','.join(checks))
             AtsTest.stick(solvers=','.join(xml_blocks.get('Solvers', [])))
             AtsTest.stick(outputs=','.join(xml_blocks.get('Outputs', [])))
-            AtsTest.stick(constitutive_models=','.join(
-                xml_blocks.get('Constitutive', [])))
+            AtsTest.stick(constitutive_models=','.join(xml_blocks.get('Constitutive', [])))
             TestCase(name=testcase_name,
                      desc=deck.description,
                      label="auto",

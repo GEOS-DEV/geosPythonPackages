@@ -42,8 +42,7 @@ class Config(object):
                     value = item.type(value)
 
         except ValueError:
-            Error("Attempted to set config.%s (which is %s) with %s" %
-                  (name, str(item.type), str(value)))
+            Error("Attempted to set config.%s (which is %s) with %s" % (name, str(item.type), str(value)))
 
         item.value = item.type(value)
 
@@ -68,14 +67,12 @@ class Config(object):
             matches = difflib.get_close_matches(name, self._items.keys())
             if len(matches) == 0:
                 Error("Unknown config name: %s. "
-                      "See 'geos_ats -i config' for the complete list." %
-                      (name))
+                      "See 'geos_ats -i config' for the complete list." % (name))
 
             else:
                 Error("Unknown config name: %s. "
                       "Perhaps you meant '%s'. "
-                      "See 'geos_ats -i config' for the complete list." %
-                      (name, matches[0]))
+                      "See 'geos_ats -i config' for the complete list." % (name, matches[0]))
 
     def __setattr__(self, name, value):
         if name in self._items:
@@ -93,7 +90,7 @@ class Config(object):
 # The global config object
 config = Config()
 # Global testTimings object
-globalTestTimings = {}  # type: ignore[var-annotated]
+globalTestTimings = {}    # type: ignore[var-annotated]
 # Depth of testconfig recursion
 configDepth = 0
 
@@ -101,7 +98,7 @@ configDepth = 0
 def infoConfigShow(public, outfile=sys.stdout):
     topic = InfoTopic("config show", outfile)
     topic.startBanner()
-    import ats  # type: ignore[import]
+    import ats    # type: ignore[import]
 
     keys = sorted(config._items.keys())
     table = TextTable(3)
@@ -154,18 +151,12 @@ def infoConfigDocumentation(public):
 def infoConfig(*args):
 
     menu = InfoTopic("config")
-    menu.addTopic("show", "Show all the config options",
-                  lambda *x: infoConfigShow(True))
-    menu.addTopic("doc", "Documentation for the config options",
-                  lambda *x: infoConfigDocumentation(True))
-    menu.addTopic(
-        "showall",
-        "Show all the config options (including the internal options)",
-        lambda: infoConfigShow(False))
-    menu.addTopic(
-        "docall",
-        "Documentation for the config options (including the internal options)",
-        lambda: infoConfigDocumentation(False))
+    menu.addTopic("show", "Show all the config options", lambda *x: infoConfigShow(True))
+    menu.addTopic("doc", "Documentation for the config options", lambda *x: infoConfigDocumentation(True))
+    menu.addTopic("showall", "Show all the config options (including the internal options)",
+                  lambda: infoConfigShow(False))
+    menu.addTopic("docall", "Documentation for the config options (including the internal options)",
+                  lambda: infoConfigDocumentation(False))
     menu.process(args)
 
 
@@ -176,151 +167,95 @@ def initializeConfig(configFile, configOverride, options):
     geos_atsdir = os.path.realpath(os.path.dirname(__file__))
 
     # configfile
-    config.add("testbaseline_dir", str, "",
-               "Base directory that contains all the baselines")
+    config.add("testbaseline_dir", str, "", "Base directory that contains all the baselines")
 
-    config.add("geos_bin_dir", str, "",
-               "Directory that contains 'geos' and related executables.")
+    config.add("geos_bin_dir", str, "", "Directory that contains 'geos' and related executables.")
 
-    config.add(
-        "userscript_path", str, "",
-        "Directory that contains scripts for testing, searched after test directory and executable_path."
-    )
+    config.add("userscript_path", str, "",
+               "Directory that contains scripts for testing, searched after test directory and executable_path.")
 
-    config.add(
-        "clean_on_pass", bool, False, "If True, then after a TestCase passes, "
-        "all temporary files are removed.")
+    config.add("clean_on_pass", bool, False, "If True, then after a TestCase passes, "
+               "all temporary files are removed.")
 
     # geos options
-    config.add(
-        "geos_default_args", str, "-i",
-        "A string containing arguments that will always appear on the geos commandline"
-    )
+    config.add("geos_default_args", str, "-i",
+               "A string containing arguments that will always appear on the geos commandline")
 
     # reporting
-    config.add(
-        "report_html", bool, True,
-        "True if HTML formatted results will be generated with the report action"
-    )
-    config.add("report_html_file", str, "test_results.html",
-               "Location to write the html report")
-    config.add("report_html_periodic", bool, True,
-               "True to update the html file during the periodic reports")
-    config.add("browser_command", str, "firefox -no-remote",
-               "Command to use to launch a browser to view html results")
-    config.add(
-        "browser", bool, False,
-        "If True, then launch the browser_command to view the report_html_file"
-    )
-    config.add("report_doc_dir", str,
-               os.path.normpath(os.path.join(geos_atsdir, "..", "doc")),
+    config.add("report_html", bool, True, "True if HTML formatted results will be generated with the report action")
+    config.add("report_html_file", str, "test_results.html", "Location to write the html report")
+    config.add("report_html_periodic", bool, True, "True to update the html file during the periodic reports")
+    config.add("browser_command", str, "firefox -no-remote", "Command to use to launch a browser to view html results")
+    config.add("browser", bool, False, "If True, then launch the browser_command to view the report_html_file")
+    config.add("report_doc_dir", str, os.path.normpath(os.path.join(geos_atsdir, "..", "doc")),
                "Location to the test doc directory (used with html reports)")
-    config.add("report_doc_link", bool, True,
-               "Link against docgen (used with html reports)")
-    config.add(
-        "report_doc_remake", bool, False,
-        "Remake test documentation, even if it already exists (used with html reports)"
-    )
+    config.add("report_doc_link", bool, True, "Link against docgen (used with html reports)")
+    config.add("report_doc_remake", bool, False,
+               "Remake test documentation, even if it already exists (used with html reports)")
 
-    config.add(
-        "report_text", bool, True,
-        "True if you want text results to be generated with the report action")
-    config.add("report_text_file", str, "test_results.txt",
-               "Location to write the text report")
-    config.add("report_text_echo", bool, True,
-               "If True, echo the report to stdout")
-    config.add("report_wait", bool, False,
-               "Wait until all tests are complete before reporting")
+    config.add("report_text", bool, True, "True if you want text results to be generated with the report action")
+    config.add("report_text_file", str, "test_results.txt", "Location to write the text report")
+    config.add("report_text_echo", bool, True, "If True, echo the report to stdout")
+    config.add("report_wait", bool, False, "Wait until all tests are complete before reporting")
 
-    config.add(
-        "report_ini", bool, True,
-        "True if you want ini results to be generated with the report action")
-    config.add("report_ini_file", str, "test_results.ini",
-               "Location to write the ini report")
+    config.add("report_ini", bool, True, "True if you want ini results to be generated with the report action")
+    config.add("report_ini_file", str, "test_results.ini", "Location to write the ini report")
 
-    config.add("report_notations", type([]), [],
-               "Lines of text that are inserted into the reports.")
+    config.add("report_notations", type([]), [], "Lines of text that are inserted into the reports.")
 
-    config.add(
-        "report_notbuilt_regexp", str, "(not built into this version)",
-        "Regular expression that must appear in output to indicate that feature is not built."
-    )
+    config.add("report_notbuilt_regexp", str, "(not built into this version)",
+               "Regular expression that must appear in output to indicate that feature is not built.")
 
-    config.add("checkmessages_always_ignore_regexp", type([]),
-               ["not available in this version"],
+    config.add("checkmessages_always_ignore_regexp", type([]), ["not available in this version"],
                "Regular expression to ignore in all checkmessages steps.")
 
-    config.add("checkmessages_never_ignore_regexp", type([]),
-               ["not yet implemented"],
+    config.add("checkmessages_never_ignore_regexp", type([]), ["not yet implemented"],
                "Regular expression to not ignore in all checkmessages steps.")
 
-    config.add(
-        "report_timing", bool, False,
-        "True if you want timing file to be generated with the report action")
-    config.add(
-        "report_timing_overwrite", bool, False,
-        "True if you want timing file to overwrite existing timing file rather than augment it"
-    )
+    config.add("report_timing", bool, False, "True if you want timing file to be generated with the report action")
+    config.add("report_timing_overwrite", bool, False,
+               "True if you want timing file to overwrite existing timing file rather than augment it")
 
     # timing and priority
-    config.add(
-        "priority", str, "equal",
-        "Method of prioritization of tests: [\"equal\", \"processors\",\"timing\"]"
-    )
+    config.add("priority", str, "equal", "Method of prioritization of tests: [\"equal\", \"processors\",\"timing\"]")
     config.add("timing_file", str, "timing.txt", "Location of timing file")
 
     # batch
-    config.add(
-        "batch_dryrun", bool, False,
-        "If true, the batch jobs will not be submitted, but the batch scripts will be created"
-    )
-    config.add("batch_interactive", bool, False,
-               "If true, the batch jobs will be treated as interactive jobs")
+    config.add("batch_dryrun", bool, False,
+               "If true, the batch jobs will not be submitted, but the batch scripts will be created")
+    config.add("batch_interactive", bool, False, "If true, the batch jobs will be treated as interactive jobs")
     config.add("batch_bank", str, "", "The name of the bank to use")
     config.add("batch_ppn", int, 0, "Number of processors per node")
-    config.add(
-        "batch_partition", str, "",
-        "the batch partition, if not specified the default will be used.")
+    config.add("batch_partition", str, "", "the batch partition, if not specified the default will be used.")
     config.add("batch_queue", str, "pbatch", "the batch queue.")
-    config.add("batch_header", type([]), [],
-               "Additional lines to add to the batch header")
+    config.add("batch_header", type([]), [], "Additional lines to add to the batch header")
 
     # retry
-    config.add("max_retry", int, 2,
-               "Maximum number of times to retry failed runs.")
-    config.add(
-        "retry_err_regexp", str,
-        "(launch failed|Failure in initializing endpoint|channel initialization failed)",
-        "Regular expression that must appear in error log in order to retry.")
+    config.add("max_retry", int, 2, "Maximum number of times to retry failed runs.")
+    config.add("retry_err_regexp", str,
+               "(launch failed|Failure in initializing endpoint|channel initialization failed)",
+               "Regular expression that must appear in error log in order to retry.")
 
     # timeout
-    config.add(
-        "default_timelimit", str, "30m",
-        "This sets a default timelimit for all test steps which do not explicitly set a timelimit."
-    )
-    config.add(
-        "override_timelimit", bool, False,
-        "If true, the value used for the default time limit will override the time limit for each test step."
-    )
+    config.add("default_timelimit", str, "30m",
+               "This sets a default timelimit for all test steps which do not explicitly set a timelimit.")
+    config.add("override_timelimit", bool, False,
+               "If true, the value used for the default time limit will override the time limit for each test step.")
 
     # Decomposition Multiplication
     config.add(
         "decomp_factor", int, 1,
         "This sets the multiplication factor to be applied to the decomposition and number of procs of all eligible tests."
     )
-    config.add(
-        "override_np", int, 0,
-        "If non-zero, maximum number of processors to use for each test step.")
+    config.add("override_np", int, 0, "If non-zero, maximum number of processors to use for each test step.")
 
     # global environment variables
-    config.add("environment", dict, {},
-               "Additional environment variables to use during testing")
+    config.add("environment", dict, {}, "Additional environment variables to use during testing")
 
     # General check config
     for check in ("restartcheck", ):
         config.add(
-            "%s_enabled" % check, bool, True,
-            "If True, this check has the possibility of running, "
+            "%s_enabled" % check, bool, True, "If True, this check has the possibility of running, "
             "but might not run depending on the '--check' command line option. "
             "If False, this check will never be run.")
 
@@ -332,18 +267,13 @@ def initializeConfig(configFile, configOverride, options):
                    public=False)
 
     # Checks:  Restartcheck
-    config.add("restart_skip_missing", bool, False,
-               "Determines whether new/missing fields are ignored")
-    config.add("restart_exclude_pattern", list, [],
-               "A list of field names to ignore in restart files")
+    config.add("restart_skip_missing", bool, False, "Determines whether new/missing fields are ignored")
+    config.add("restart_exclude_pattern", list, [], "A list of field names to ignore in restart files")
 
     # Checks:  Curvecheck
-    config.add("curvecheck_enabled", bool, True,
-               "Determines whether curvecheck steps are run.")
-    config.add(
-        "curvecheck_tapestry_mode", bool, False,
-        "Provide temporary backwards compatibility for nighty and weekly suites until they are using geos_ats"
-    )
+    config.add("curvecheck_enabled", bool, True, "Determines whether curvecheck steps are run.")
+    config.add("curvecheck_tapestry_mode", bool, False,
+               "Provide temporary backwards compatibility for nighty and weekly suites until they are using geos_ats")
     config.add("curvecheck_absolute", float, 1e-5, "absolute tolerance")
     config.add("curvecheck_relative", float, 1e-5, "relative tolerance")
     config.add(
@@ -358,41 +288,29 @@ def initializeConfig(configFile, configOverride, options):
         "curvecheck_delete_temps", bool, True,
         "Curvecheck generates a number of temporary data files that are used to create the images for the html file.  If this parameter is true, curvecheck will delete these temporary files. By default, the parameter is true."
     )
-    config.add("gnuplot_executable", str,
-               os.path.join("/usr", "bin", "gnuplot"), "Location to gnuplot")
+    config.add("gnuplot_executable", str, os.path.join("/usr", "bin", "gnuplot"), "Location to gnuplot")
 
     # Rebaseline:
     config.add(
-        "rebaseline_undo", bool, False,
-        "If True, and the action is set to 'rebaseline',"
+        "rebaseline_undo", bool, False, "If True, and the action is set to 'rebaseline',"
         " this option will undo (revert) a previous rebaseline.")
-    config.add(
-        "rebaseline_ask", bool, True,
-        "If True, the rebaseline will not occur until the user has anwered an"
-        " 'are you sure?' question")
+    config.add("rebaseline_ask", bool, True, "If True, the rebaseline will not occur until the user has anwered an"
+               " 'are you sure?' question")
 
     # test modifier
     config.add("testmodifier", str, "", "Name of a test modifier to apply")
 
     # filters
-    config.add(
-        "filter_maxprocessors", int, -1,
-        "If not -1, Run only those tests where the number of"
-        " processors is less than or equal to this value")
+    config.add("filter_maxprocessors", int, -1, "If not -1, Run only those tests where the number of"
+               " processors is less than or equal to this value")
 
     # machines
-    config.add("machine_options", list, [],
-               "Arguments to pass to the machine module")
+    config.add("machine_options", list, [], "Arguments to pass to the machine module")
 
-    config.add(
-        "script_launch", int, 0,
-        "Whether to launch scripts (and other serial steps) on compute nodes")
-    config.add("openmpi_install", str, "",
-               "Location to the openmpi installation")
-    config.add("openmpi_maxprocs", int, 0,
-               "Number of maximum processors openmpi")
-    config.add("openmpi_procspernode", int, 1,
-               "Number of processors per node for openmpi")
+    config.add("script_launch", int, 0, "Whether to launch scripts (and other serial steps) on compute nodes")
+    config.add("openmpi_install", str, "", "Location to the openmpi installation")
+    config.add("openmpi_maxprocs", int, 0, "Number of maximum processors openmpi")
+    config.add("openmpi_procspernode", int, 1, "Number of processors per node for openmpi")
 
     config.add(
         "openmpi_precommand", str, "", "A string that will be"
@@ -407,12 +325,9 @@ def initializeConfig(configFile, configOverride, options):
         " it will be replaced by the unique name of the test.")
 
     config.add("windows_mpiexe", str, "", "Location to mpiexe")
-    config.add("windows_nompi", bool, False,
-               "Run executables on nompi processor")
-    config.add(
-        "windows_oversubscribe", int, 1,
-        "Multiplier to number of processors to allow oversubscription of processors"
-    )
+    config.add("windows_nompi", bool, False, "Run executables on nompi processor")
+    config.add("windows_oversubscribe", int, 1,
+               "Multiplier to number of processors to allow oversubscription of processors")
 
     # populate the config with overrides from the command line
     for key, value in configOverride.items():

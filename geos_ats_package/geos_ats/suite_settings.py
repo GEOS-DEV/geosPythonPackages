@@ -3,7 +3,7 @@ import logging
 
 testLabels = [
     "geos",
-    "auto",  # label used when the tests were automatically converted.  Will be deprecated.
+    "auto",    # label used when the tests were automatically converted.  Will be deprecated.
 ]
 
 testOwners = [("corbett5", "Ben Corbett")]
