@@ -4,9 +4,9 @@ import re
 import time
 from geos_ats.configuration_record import config
 from geos_ats.common_utilities import Log
-from ats.log import log    # type: ignore[import]
-from ats.atsut import PASSED, FAILED, CREATED, EXPECTED, TIMEDOUT    # type: ignore[import]
-from ats.schedulers import StandardScheduler    # type: ignore[import]
+from ats.log import log  # type: ignore[import]
+from ats.atsut import PASSED, FAILED, CREATED, EXPECTED, TIMEDOUT  # type: ignore[import]
+from ats.schedulers import StandardScheduler  # type: ignore[import]
 
 
 class GeosAtsScheduler(StandardScheduler):
@@ -33,16 +33,22 @@ class GeosAtsScheduler(StandardScheduler):
             g.recordOutput()
             if not hasattr(g, "retries"):
                 g.retries = 0
-            if test.status in [FAILED, TIMEDOUT] and g.retries < config.max_retry:
+            if test.status in [FAILED, TIMEDOUT
+                               ] and g.retries < config.max_retry:
                 with open(test.geos_atsTestCase.errname) as f:
                     erroutput = f.read()
                     if re.search(config.retry_err_regexp, erroutput):
                         f.close()
-                        os.rename(test.geos_atsTestCase.errname, "%s.%d" % (test.geos_atsTestCase.errname, g.retries))
-                        os.rename(test.geos_atsTestCase.outname, "%s.%d" % (test.geos_atsTestCase.outname, g.retries))
+                        os.rename(
+                            test.geos_atsTestCase.errname, "%s.%d" %
+                            (test.geos_atsTestCase.errname, g.retries))
+                        os.rename(
+                            test.geos_atsTestCase.outname, "%s.%d" %
+                            (test.geos_atsTestCase.outname, g.retries))
                         g.retries += 1
                         for t in g:
                             t.status = CREATED
-                        Log(f"# retry test={test.geos_atsTestCase.name} ({g.retries}/{config.max_retry})")
+                        Log(f"# retry test={test.geos_atsTestCase.name} ({g.retries}/{config.max_retry})"
+                            )
                         return
             self.groups.remove(g)

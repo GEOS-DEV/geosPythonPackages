@@ -47,23 +47,28 @@ def init_parser() -> argparse.ArgumentParser:
         An option may be missing because of an unloaded module.
         Increase verbosity (-{__VERBOSITY_FLAG}, -{__VERBOSITY_FLAG * 2}) to get full information.
         """
-    formatter = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=8)
+    formatter = lambda prog: argparse.RawTextHelpFormatter(prog,
+                                                           max_help_position=8)
     parser = argparse.ArgumentParser(description='Inspects meshes for GEOSX.',
                                      epilog=textwrap.dedent(epilog_msg),
                                      formatter_class=formatter)
     # Nothing will be done with this verbosity/quiet input.
     # It's only here for the `--help` message.
     # `parse_verbosity` does the real parsing instead.
-    parser.add_argument('-' + __VERBOSITY_FLAG,
-                        action='count',
-                        default=2,
-                        dest=__VERBOSE_KEY,
-                        help=f"Use -{__VERBOSITY_FLAG} 'INFO', -{__VERBOSITY_FLAG * 2} for 'DEBUG'. Defaults to 'WARNING'.")
-    parser.add_argument('-' + __QUIET_FLAG,
-                        action='count',
-                        default=0,
-                        dest=__QUIET_KEY,
-                        help=f"Use -{__QUIET_FLAG} to reduce the verbosity of the output.")
+    parser.add_argument(
+        '-' + __VERBOSITY_FLAG,
+        action='count',
+        default=2,
+        dest=__VERBOSE_KEY,
+        help=
+        f"Use -{__VERBOSITY_FLAG} 'INFO', -{__VERBOSITY_FLAG * 2} for 'DEBUG'. Defaults to 'WARNING'."
+    )
+    parser.add_argument(
+        '-' + __QUIET_FLAG,
+        action='count',
+        default=0,
+        dest=__QUIET_KEY,
+        help=f"Use -{__QUIET_FLAG} to reduce the verbosity of the output.")
     parser.add_argument('-i',
                         '--vtk-input-file',
                         metavar='VTK_MESH_FILE',

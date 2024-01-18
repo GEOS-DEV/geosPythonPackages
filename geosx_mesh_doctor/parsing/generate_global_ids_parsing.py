@@ -5,7 +5,6 @@ from checks.generate_global_ids import Options, Result
 
 from . import vtk_output_parsing, GENERATE_GLOBAL_IDS
 
-
 __CELLS, __POINTS = "cells", "points"
 
 
@@ -28,17 +27,19 @@ def convert(parsed_options) -> Options:
 
 
 def fill_generate_global_ids_subparser(p):
-    p.add_argument('--' + __CELLS,
-                   action="store_true",
-                   help=f"[bool]: Generate global ids for cells. Defaults to true.")
+    p.add_argument(
+        '--' + __CELLS,
+        action="store_true",
+        help=f"[bool]: Generate global ids for cells. Defaults to true.")
     p.add_argument('--no-' + __CELLS,
                    action="store_false",
                    dest=__CELLS,
                    help=f"[bool]: Don't generate global ids for cells.")
     p.set_defaults(**{__CELLS: True})
-    p.add_argument('--' + __POINTS,
-                   action="store_true",
-                   help=f"[bool]: Generate global ids for points. Defaults to true.")
+    p.add_argument(
+        '--' + __POINTS,
+        action="store_true",
+        help=f"[bool]: Generate global ids for points. Defaults to true.")
     p.add_argument('--no-' + __POINTS,
                    action="store_false",
                    dest=__POINTS,

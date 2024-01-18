@@ -3,8 +3,7 @@ from typing import Iterator, Tuple
 import pytest
 
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
     VTK_TETRA,
     vtkCellArray,

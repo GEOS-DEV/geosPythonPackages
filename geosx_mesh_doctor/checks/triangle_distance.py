@@ -6,7 +6,7 @@ import numpy
 from numpy.linalg import norm
 
 
-def __div_clamp(num: float, den :float) -> float:
+def __div_clamp(num: float, den: float) -> float:
     """
     Computes the division `num / den`. and clamps the result between 0 and 1.
     If `den` is zero, the result of the division is set to 0.
@@ -25,8 +25,9 @@ def __div_clamp(num: float, den :float) -> float:
         return tmp
 
 
-def distance_between_two_segments(x0: numpy.ndarray, d0: numpy.ndarray,
-                                  x1: numpy.ndarray, d1: numpy.ndarray) -> Tuple[numpy.ndarray, numpy.ndarray]:
+def distance_between_two_segments(
+        x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.ndarray,
+        d1: numpy.ndarray) -> Tuple[numpy.ndarray, numpy.ndarray]:
     """
     Compute the minimum distance between two segments.
     :param x0: First point of segment 0.
@@ -41,7 +42,8 @@ def distance_between_two_segments(x0: numpy.ndarray, d0: numpy.ndarray,
 
     # In the reference, the indices start at 1, while in this implementation, they start at 0.
     tmp: numpy.ndarray = x1 - x0
-    D0: float = numpy.dot(d0, d0)  # As such, this is D1 in the reference paper.
+    D0: float = numpy.dot(d0,
+                          d0)  # As such, this is D1 in the reference paper.
     D1: float = numpy.dot(d1, d1)
     R: float = numpy.dot(d0, d1)
     S0: float = numpy.dot(d0, tmp)
@@ -60,14 +62,17 @@ def distance_between_two_segments(x0: numpy.ndarray, d0: numpy.ndarray,
 
     # Step 3: compute t1 for point on line 1 closest to point at t0.
     t1: float = __div_clamp(t0 * R - S1, D1)  # Eq (10, right)
-    sol_1: numpy.ndarray = x1 + t1 * d1            # Eq (3)
+    sol_1: numpy.ndarray = x1 + t1 * d1  # Eq (3)
     t0: float = __div_clamp(t1 * R + S0, D0)  # Eq (10, left)
-    sol_0: numpy.ndarray = x0 + t0 * d0            # Eq (4)
+    sol_0: numpy.ndarray = x0 + t0 * d0  # Eq (4)
 
     return sol_0, sol_1
 
 
-def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[float, None], Union[numpy.ndarray, None], Union[numpy.ndarray, None], bool]:
+def __compute_nodes_to_triangle_distance(
+    tri_0, edges_0, tri_1
+) -> Tuple[Union[float, None], Union[numpy.ndarray, None], Union[numpy.ndarray,
+                                                                 None], bool]:
     """
     Computes the distance from nodes of `tri_1` points onto `tri_0`.
     :param tri_0: First triangle.
@@ -102,18 +107,24 @@ def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[f
         if point > -1:
             are_disjoint = True
             # But we must check that its projection is inside `tri_0`.
-            if numpy.dot(tri_1[point] - tri_0[0], numpy.cross(tri_0_normal, edges_0[0])) > 0:
-                if numpy.dot(tri_1[point] - tri_0[1], numpy.cross(tri_0_normal, edges_0[1])) > 0:
-                    if numpy.dot(tri_1[point] - tri_0[2], numpy.cross(tri_0_normal, edges_0[2])) > 0:
+            if numpy.dot(tri_1[point] - tri_0[0],
+                         numpy.cross(tri_0_normal, edges_0[0])) > 0:
+                if numpy.dot(tri_1[point] - tri_0[1],
+                             numpy.cross(tri_0_normal, edges_0[1])) > 0:
+                    if numpy.dot(tri_1[point] - tri_0[2],
+                                 numpy.cross(tri_0_normal, edges_0[2])) > 0:
                         # It is!
                         sol_0 = tri_1[point]
-                        sol_1 = tri_1[point] + (tri_1_proj[point] / tri_0_normal_norm) * tri_0_normal
+                        sol_1 = tri_1[point] + (
+                            tri_1_proj[point] /
+                            tri_0_normal_norm) * tri_0_normal
                         return norm(sol_1 - sol_0), sol_0, sol_1, are_disjoint
     return None, None, None, are_disjoint
 
 
-def distance_between_two_triangles(tri_0: numpy.ndarray,
-                                   tri_1: numpy.ndarray) -> Tuple[float, numpy.ndarray, numpy.ndarray]:
+def distance_between_two_triangles(
+        tri_0: numpy.ndarray,
+        tri_1: numpy.ndarray) -> Tuple[float, numpy.ndarray, numpy.ndarray]:
     """
     Returns the minimum distance between two triangles, and the two points where this minimum occurs.
     If the two triangles touch, then distance is exactly 0.
@@ -138,7 +149,8 @@ def distance_between_two_triangles(tri_0: numpy.ndarray,
     # Looping over all the pair of edges.
     for i, j in itertools.product(range(3), repeat=2):
         # Find the closest points on edges i and j.
-        sol_0, sol_1 = distance_between_two_segments(tri_0[i], edges_0[i], tri_1[j], edges_1[j])
+        sol_0, sol_1 = distance_between_two_segments(tri_0[i], edges_0[i],
+                                                     tri_1[j], edges_1[j])
         # Computing the distance between the two solutions.
         delta_sol = sol_1 - sol_0
         dist: float = numpy.dot(delta_sol, delta_sol)
@@ -168,12 +180,14 @@ def distance_between_two_triangles(tri_0: numpy.ndarray,
                 are_disjoint = True
     # No edge pair contained the closest points.
     # Checking the node/face situation.
-    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1)
+    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(
+        tri_0, edges_0, tri_1)
     if distance:
         return distance, sol_0, sol_1
     are_disjoint = are_disjoint or are_disjoint_tmp
 
-    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(tri_1, edges_1, tri_0)
+    distance, sol_0, sol_1, are_disjoint_tmp = __compute_nodes_to_triangle_distance(
+        tri_1, edges_1, tri_0)
     if distance:
         return distance, sol_0, sol_1
     are_disjoint = are_disjoint or are_disjoint_tmp

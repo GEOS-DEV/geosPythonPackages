@@ -1,4 +1,4 @@
-from lxml import etree as ElementTree    # type: ignore[import]
+from lxml import etree as ElementTree  # type: ignore[import]
 import os
 from pathlib import Path
 from typing import Any, Iterable, Dict
@@ -7,11 +7,14 @@ from geosx_xml_tools import command_line_parsers
 record_type = Dict[str, Dict[str, Any]]
 
 
-def parse_schema_element(root: ElementTree.Element,
-                         node: ElementTree.Element,
-                         xsd: str = '{http://www.w3.org/2001/XMLSchema}',
-                         recursive_types: Iterable[str] = ['PeriodicEvent', 'SoloEvent', 'HaltEvent'],
-                         folders: Iterable[str] = ['src', 'examples']) -> record_type:
+def parse_schema_element(
+        root: ElementTree.Element,
+        node: ElementTree.Element,
+        xsd: str = '{http://www.w3.org/2001/XMLSchema}',
+        recursive_types: Iterable[str] = [
+            'PeriodicEvent', 'SoloEvent', 'HaltEvent'
+        ],
+        folders: Iterable[str] = ['src', 'examples']) -> record_type:
     """Parse the xml schema at the current level
 
     Args:
@@ -35,15 +38,18 @@ def parse_schema_element(root: ElementTree.Element,
         attribute_name = attribute.get('name')
         local_types['attributes'][attribute_name] = {ka: [] for ka in folders}
         if ('default' in attribute.attrib):
-            local_types['attributes'][attribute_name]['default'] = attribute.get('default')
+            local_types['attributes'][attribute_name][
+                'default'] = attribute.get('default')
 
     # Parse children
     choice_node = element_def.findall('%schoice' % (xsd))
     if choice_node:
         for child in choice_node[0].findall('%selement' % (xsd)):
             child_name = child.get('name')
-            if not ((child_name in recursive_types) and (element_name in recursive_types)):
-                local_types['children'][child_name] = parse_schema_element(root, child)
+            if not ((child_name in recursive_types) and
+                    (element_name in recursive_types)):
+                local_types['children'][child_name] = parse_schema_element(
+                    root, child)
 
     return local_types
 
@@ -63,7 +69,9 @@ def parse_schema(fname: str) -> record_type:
     return {'Problem': parse_schema_element(xml_root, problem_node)}
 
 
-def collect_xml_attributes_level(local_types: record_type, node: ElementTree.Element, folder: str) -> None:
+def collect_xml_attributes_level(local_types: record_type,
+                                 node: ElementTree.Element,
+                                 folder: str) -> None:
     """Collect xml attribute usage at the current level
 
     Args:
@@ -76,10 +84,12 @@ def collect_xml_attributes_level(local_types: record_type, node: ElementTree.Ele
 
     for child in node:
         if child.tag in local_types['children']:
-            collect_xml_attributes_level(local_types['children'][child.tag], child, folder)
+            collect_xml_attributes_level(local_types['children'][child.tag],
+                                         child, folder)
 
 
-def collect_xml_attributes(xml_types: record_type, fname: str, folder: str) -> None:
+def collect_xml_attributes(xml_types: record_type, fname: str,
+                           folder: str) -> None:
     """Collect xml attribute usage in a file
 
     Args:
@@ -87,16 +97,18 @@ def collect_xml_attributes(xml_types: record_type, fname: str, folder: str) -> N
         fname (str): name of the target file
         folder (str): the source folder for the current file
     """
-    parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+    parser = ElementTree.XMLParser(remove_comments=True,
+                                   remove_blank_text=True)
     xml_tree = ElementTree.parse(fname, parser=parser)
     xml_root = xml_tree.getroot()
 
     collect_xml_attributes_level(xml_types['Problem'], xml_root, folder)
 
 
-def write_attribute_usage_xml_level(local_types: record_type,
-                                    node: ElementTree.Element,
-                                    folders: Iterable[str] = ['src', 'examples']) -> None:
+def write_attribute_usage_xml_level(
+        local_types: record_type,
+        node: ElementTree.Element,
+        folders: Iterable[str] = ['src', 'examples']) -> None:
     """Write xml attribute usage file at a given level
 
     Args:
@@ -110,7 +122,8 @@ def write_attribute_usage_xml_level(local_types: record_type,
         node.append(attribute_node)
 
         if ('default' in local_types['attributes'][ka]):
-            attribute_node.set('default', local_types['attributes'][ka]['default'])
+            attribute_node.set('default',
+                               local_types['attributes'][ka]['default'])
 
         unique_values = []
         for f in folders:

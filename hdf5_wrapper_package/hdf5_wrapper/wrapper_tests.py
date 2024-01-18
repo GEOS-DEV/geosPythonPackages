@@ -8,7 +8,10 @@ import hdf5_wrapper
 
 
 def random_string(N):
-    return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=N))
+    return ''.join(
+        random.choices(string.ascii_uppercase + string.ascii_lowercase +
+                       string.digits,
+                       k=N))
 
 
 def build_test_dict(depth=0, max_depth=3):
@@ -52,8 +55,10 @@ class TestHDF5Wrapper(unittest.TestCase):
 
             vx, vy = x[k], y[k]
             tx, ty = type(vx), type(vy)
-            if ((tx != ty) and not (isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper))
-                                    and isinstance(vy, (dict, hdf5_wrapper.hdf5_wrapper)))):
+            if ((tx != ty) and
+                    not (isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper))
+                         and isinstance(vy,
+                                        (dict, hdf5_wrapper.hdf5_wrapper)))):
                 self.assertTrue(np.issubdtype(tx, ty))
 
             if isinstance(vx, (dict, hdf5_wrapper.hdf5_wrapper)):
@@ -66,16 +71,22 @@ class TestHDF5Wrapper(unittest.TestCase):
                     self.assertTrue(vx == vy)
 
     def test_a_insert_write(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_insert.hdf5'), mode='w')
+        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir,
+                                                      'test_insert.hdf5'),
+                                         mode='w')
         data.insert(self.test_dict)
 
     def test_b_manual_write(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_manual.hdf5'), mode='w')
+        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir,
+                                                      'test_manual.hdf5'),
+                                         mode='w')
         for k, v in self.test_dict.items():
             data[k] = v
 
     def test_c_link_write(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_linked.hdf5'), mode='w')
+        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir,
+                                                      'test_linked.hdf5'),
+                                         mode='w')
         for k, v in self.test_dict.items():
             if ('child' in k):
                 child_path = os.path.join(self.test_dir, 'test_%s.hdf5' % (k))
@@ -86,20 +97,24 @@ class TestHDF5Wrapper(unittest.TestCase):
                 data[k] = v
 
     def test_d_compare_wrapper(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_insert.hdf5'))
+        data = hdf5_wrapper.hdf5_wrapper(
+            os.path.join(self.test_dir, 'test_insert.hdf5'))
         self.compare_wrapper_dict(self.test_dict, data)
 
     def test_e_compare_wrapper_copy(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_insert.hdf5'))
+        data = hdf5_wrapper.hdf5_wrapper(
+            os.path.join(self.test_dir, 'test_insert.hdf5'))
         tmp = data.copy()
         self.compare_wrapper_dict(self.test_dict, tmp)
 
     def test_f_compare_wrapper(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_manual.hdf5'))
+        data = hdf5_wrapper.hdf5_wrapper(
+            os.path.join(self.test_dir, 'test_manual.hdf5'))
         self.compare_wrapper_dict(self.test_dict, data)
 
     def test_g_compare_wrapper(self):
-        data = hdf5_wrapper.hdf5_wrapper(os.path.join(self.test_dir, 'test_linked.hdf5'))
+        data = hdf5_wrapper.hdf5_wrapper(
+            os.path.join(self.test_dir, 'test_linked.hdf5'))
         self.compare_wrapper_dict(self.test_dict, data)
 
 
@@ -112,7 +127,11 @@ def main():
 
     # Parse the user arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', type=int, help='Verbosity level', default=2)
+    parser.add_argument('-v',
+                        '--verbose',
+                        type=int,
+                        help='Verbosity level',
+                        default=2)
     args = parser.parse_args()
 
     # Unit manager tests

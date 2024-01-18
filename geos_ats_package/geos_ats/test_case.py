@@ -1,4 +1,4 @@
-﻿import ats    # type: ignore[import]
+﻿import ats  # type: ignore[import]
 import os
 import sys
 import shutil
@@ -38,8 +38,8 @@ class Batch(object):
             logger.error(e)
             Error("bad time specification: %s" % duration)
 
-        self.ppn = ppn    # processor per node
-        self.altname = altname    # alternate name to use when launcing the batch job
+        self.ppn = ppn  # processor per node
+        self.altname = altname  # alternate name to use when launcing the batch job
 
 
 class TestCase(object):
@@ -55,7 +55,14 @@ class TestCase(object):
             Log(str(e))
             raise Exception(e)
 
-    def initialize(self, name, desc, label=None, labels=None, steps=[], batch=Batch(enabled=False), **kw):
+    def initialize(self,
+                   name,
+                   desc,
+                   label=None,
+                   labels=None,
+                   steps=[],
+                   batch=Batch(enabled=False),
+                   **kw):
 
         self.name = name
         self.desc = desc
@@ -89,7 +96,9 @@ class TestCase(object):
         self.errname = os.path.join(self.path, "%s.err" % self.name)
         self.dictionary["name"] = self.name
         self.dictionary["output_directory"] = self.path
-        self.dictionary["baseline_dir"] = os.path.join(os.getcwd(), BASELINE_PATH, self.dirname)
+        self.dictionary["baseline_dir"] = os.path.join(os.getcwd(),
+                                                       BASELINE_PATH,
+                                                       self.dirname)
         self.dictionary["testcase_out"] = self.outname
         self.dictionary["testcase_err"] = self.errname
         self.dictionary["testcase_name"] = self.name
@@ -119,7 +128,8 @@ class TestCase(object):
         else:
             self.independent = self.dictionary.get("independent", False)
         if self.independent not in (True, False):
-            Error("independent must be either True or False: %s" % str(self.independent))
+            Error("independent must be either True or False: %s" %
+                  str(self.independent))
 
         # check for depends
         self.depends = self.dictionary.get("depends", None)
@@ -152,7 +162,8 @@ class TestCase(object):
                     extraStep.insertStep(newSteps)
             self.steps = newSteps
         else:
-            Log("# SKIP test=%s : testmodifier=%s" % (self.name, config.testmodifier))
+            Log("# SKIP test=%s : testmodifier=%s" %
+                (self.name, config.testmodifier))
             self.status = reporting.SKIP
             return
 
@@ -166,7 +177,8 @@ class TestCase(object):
         npMax = self.findMaxNumberOfProcessors()
         if config.filter_maxprocessors != -1:
             if npMax > config.filter_maxprocessors:
-                Log("# FILTER test=%s : max processors(%d > %d)" % (self.name, npMax, config.filter_maxprocessors))
+                Log("# FILTER test=%s : max processors(%d > %d)" %
+                    (self.name, npMax, config.filter_maxprocessors))
                 self.status = reporting.FILTERED
                 return
 
@@ -176,22 +188,26 @@ class TestCase(object):
         # filter based on not enough resources
         if action in ("run", "rerun", "continue"):
             tests = [
-                not ats.tests.AtsTest.getOptions().get("testmode"), not self.batch.enabled,
+                not ats.tests.AtsTest.getOptions().get("testmode"),
+                not self.batch.enabled,
                 hasattr(ats.manager.machine, "getNumberOfProcessors")
             ]
             if all(tests):
 
-                totalNumberOfProcessors = getattr(ats.manager.machine, "getNumberOfProcessors")()
+                totalNumberOfProcessors = getattr(ats.manager.machine,
+                                                  "getNumberOfProcessors")()
                 if npMax > totalNumberOfProcessors:
-                    Log("# SKIP test=%s : not enough processors to run (%d > %d)" %
-                        (self.name, npMax, totalNumberOfProcessors))
+                    Log("# SKIP test=%s : not enough processors to run (%d > %d)"
+                        % (self.name, npMax, totalNumberOfProcessors))
                     self.status = reporting.SKIP
                     return
 
                 # If the machine doesn't specify a number of GPUs then it has none.
-                totalNumberOfGPUs = getattr(ats.manager.machine, "getNumberOfGPUS", lambda: 1e90)()
+                totalNumberOfGPUs = getattr(ats.manager.machine,
+                                            "getNumberOfGPUS", lambda: 1e90)()
                 if ngpuMax > totalNumberOfGPUs:
-                    Log("# SKIP test=%s : not enough gpus to run (%d > %d)" % (self.name, ngpuMax, totalNumberOfGPUs))
+                    Log("# SKIP test=%s : not enough gpus to run (%d > %d)" %
+                        (self.name, ngpuMax, totalNumberOfGPUs))
                     self.status = reporting.SKIP
                     return
 
@@ -199,7 +215,9 @@ class TestCase(object):
         if action in ("run", "rerun", "continue"):
             checkoption = ats.tests.AtsTest.getOptions().get("checkoption")
             if checkoption == "none":
-                self.steps = [step for step in self.steps if not step.isCheck()]
+                self.steps = [
+                    step for step in self.steps if not step.isCheck()
+                ]
         elif action == "check":
             self.steps = [step for step in self.steps if step.isCheck()]
 
@@ -312,7 +330,7 @@ class TestCase(object):
                         else:
                             os.remove(p)
                     except OSError:
-                        pass    # so that two simultaneous clean operations don't fail
+                        pass  # so that two simultaneous clean operations don't fail
 
         # clean
         self.testClean()
@@ -381,8 +399,8 @@ class TestCase(object):
         if self.depends:
             priorTestCase = TESTS.get(self.depends, None)
             if priorTestCase is None:
-                Log("Warning: Test %s depends on testcase %s, which is not scheduled to run" %
-                    (self.name, self.depends))
+                Log("Warning: Test %s depends on testcase %s, which is not scheduled to run"
+                    % (self.name, self.depends))
             else:
                 if priorTestCase.steps:
                     atsTest = getattr(priorTestCase.steps[-1], "atsTest", None)
@@ -395,7 +413,8 @@ class TestCase(object):
             args = step.makeArgs()
 
             # set the label
-            label = "%s/%s_%d_%s" % (self.dirname, self.name, stepnum + 1, step.label())
+            label = "%s/%s_%d_%s" % (self.dirname, self.name, stepnum + 1,
+                                     step.label())
 
             # call either 'test' or 'testif'
             if atsTest is None:
@@ -419,7 +438,8 @@ class TestCase(object):
                            np=np,
                            ngpu=ngpu,
                            label=label,
-                           serial=(not step.useMPI() and not config.script_launch),
+                           serial=(not step.useMPI()
+                                   and not config.script_launch),
                            independent=self.independent,
                            batch=self.batch.enabled,
                            **kw)
@@ -435,7 +455,8 @@ class TestCase(object):
             self.status.addStep(atsTest)
 
             # set the expected result
-            if step.expectedResult() == "FAIL" or step.expectedResult() is False:
+            if step.expectedResult() == "FAIL" or step.expectedResult(
+            ) is False:
                 atsTest.expectedResult = ats.FAILED
                 # The ATS does not permit tests to depend on failed tests.
                 # therefore we need to break here
@@ -479,9 +500,13 @@ class TestCase(object):
         if config.rebaseline_ask:
             while 1:
                 if config.rebaseline_undo:
-                    logger.info(f"Are you sure you want to undo the rebaseline for TestCase '{self.name}'?", flush=True)
+                    logger.info(
+                        f"Are you sure you want to undo the rebaseline for TestCase '{self.name}'?",
+                        flush=True)
                 else:
-                    logger.info(f"Are you sure you want to rebaseline TestCase '{self.name}'?", flush=True)
+                    logger.info(
+                        f"Are you sure you want to rebaseline TestCase '{self.name}'?",
+                        flush=True)
 
                 x = input('[y/n] ')
                 x = x.strip()
@@ -504,7 +529,8 @@ class TestCase(object):
             self.testRebaseline()
 
     def testList(self):
-        Log("# test=%s : labels=%s" % (self.name.ljust(32), " ".join(self.labels)))
+        Log("# test=%s : labels=%s" %
+            (self.name.ljust(32), " ".join(self.labels)))
 
     def testReport(self):
         self.status = test_caseStatus(self)
@@ -523,7 +549,8 @@ class TestCase(object):
 
         for x in self.labels:
             if x not in testLabels:
-                Error(f"unknown label {x}. run 'geos_ats -i labels' for a list")
+                Error(
+                    f"unknown label {x}. run 'geos_ats -i labels' for a list")
 
 
 class test_caseStatus(object):
@@ -549,7 +576,8 @@ class test_caseStatus(object):
 
     def testKey(self, step):
         np = getattr(step.p, "np", 1)
-        key = str((np, step.label(), step.executable(), step.makeArgsForStatusKey()))
+        key = str(
+            (np, step.label(), step.executable(), step.makeArgsForStatusKey()))
         return key
 
     def testData(self, test):
@@ -708,16 +736,25 @@ def infoTestCase(*args):
     table = TextTable(3)
     table.addRow("name", "required", "The name of the test problem")
     table.addRow("desc", "required", "A brief description")
-    table.addRow("label", "required", "A string or sequence of strings to tag the TestCase.  See info topic 'labels'")
-    table.addRow("owner", "optional",
-                 "A string or sequence of strings of test owners for this TestCase.  See info topic 'owners'")
     table.addRow(
-        "batch", "optional", "A Batch object.  Batch(enabled=True, duration='1h', ppn=0, altname=None)."
+        "label", "required",
+        "A string or sequence of strings to tag the TestCase.  See info topic 'labels'"
+    )
+    table.addRow(
+        "owner", "optional",
+        "A string or sequence of strings of test owners for this TestCase.  See info topic 'owners'"
+    )
+    table.addRow(
+        "batch", "optional",
+        "A Batch object.  Batch(enabled=True, duration='1h', ppn=0, altname=None)."
         " ppn is short for processors per node (0 means to use the global default)."
         " altname will be used for the batch job's name if supplied, otherwise the full name of the test case is used."
     ),
-    table.addRow("depends", "optional", "The name of a testcase that this testcase depends")
-    table.addRow("steps", "required", "A sequence of TestSteps objects.  See info topic 'teststeps'")
+    table.addRow("depends", "optional",
+                 "The name of a testcase that this testcase depends")
+    table.addRow(
+        "steps", "required",
+        "A sequence of TestSteps objects.  See info topic 'teststeps'")
 
     table.printTable()
 

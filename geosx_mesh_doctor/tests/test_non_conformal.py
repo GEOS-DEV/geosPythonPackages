@@ -15,13 +15,17 @@ def test_two_close_hexs():
     mesh = build_rectilinear_blocks_mesh((xyz0, xyz1))
 
     # Close enough, but points tolerance is too strict to consider the faces matching.
-    options = Options(angle_tolerance=1., point_tolerance=delta / 2, face_tolerance=delta * 2)
+    options = Options(angle_tolerance=1.,
+                      point_tolerance=delta / 2,
+                      face_tolerance=delta * 2)
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 1
     assert set(results.non_conformal_cells[0]) == {0, 1}
 
     # Close enough, and points tolerance is loose enough to consider the faces matching.
-    options = Options(angle_tolerance=1., point_tolerance=delta * 2, face_tolerance=delta * 2)
+    options = Options(angle_tolerance=1.,
+                      point_tolerance=delta * 2,
+                      face_tolerance=delta * 2)
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 0
 
@@ -33,7 +37,9 @@ def test_two_distant_hexs():
     xyz1 = XYZ(tmp + 1 + delta, tmp, tmp)
     mesh = build_rectilinear_blocks_mesh((xyz0, xyz1))
 
-    options = Options(angle_tolerance=1., point_tolerance=delta / 2., face_tolerance=delta / 2.)
+    options = Options(angle_tolerance=1.,
+                      point_tolerance=delta / 2.,
+                      face_tolerance=delta / 2.)
 
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 0
@@ -46,7 +52,9 @@ def test_two_close_shifted_hexs():
     xyz1 = XYZ(tmp + 1 + delta_x, tmp + delta_y, tmp + delta_y)
     mesh = build_rectilinear_blocks_mesh((xyz0, xyz1))
 
-    options = Options(angle_tolerance=1., point_tolerance=delta_x * 2, face_tolerance=delta_x * 2)
+    options = Options(angle_tolerance=1.,
+                      point_tolerance=delta_x * 2,
+                      face_tolerance=delta_x * 2)
 
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 1
@@ -60,7 +68,9 @@ def test_big_elem_next_to_small_elem():
     xyz1 = XYZ(3 * tmp + 1 + delta, 3 * tmp, 3 * tmp)
     mesh = build_rectilinear_blocks_mesh((xyz0, xyz1))
 
-    options = Options(angle_tolerance=1., point_tolerance=delta * 2, face_tolerance=delta * 2)
+    options = Options(angle_tolerance=1.,
+                      point_tolerance=delta * 2,
+                      face_tolerance=delta * 2)
 
     results = __check(mesh, options)
     assert len(results.non_conformal_cells) == 1

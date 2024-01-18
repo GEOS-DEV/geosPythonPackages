@@ -9,8 +9,7 @@ from typing import (
 import pytest
 
 from checks.vtk_utils import (
-    VtkOutput,
-)
+    VtkOutput, )
 
 from checks.generate_fractures import (
     FracturePolicy,
@@ -37,13 +36,18 @@ def __generate_generate_fractures_parsing_test_data() -> Iterator[TestCase]:
     fracture_mesh: str = "fracture.vtu"
 
     cli_gen: str = f"generate_fractures --policy {{}} --name {field} --values 0,1 --output {main_mesh} --fracture-output {fracture_mesh}"
-    all_cli_args = cli_gen.format("field").split(), cli_gen.format("internal_surfaces").split(), cli_gen.format("dummy").split()
+    all_cli_args = cli_gen.format("field").split(), cli_gen.format(
+        "internal_surfaces").split(), cli_gen.format("dummy").split()
     policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
     exceptions = False, False, True
     for cli_args, policy, exception in zip(all_cli_args, policies, exceptions):
-        options: Options = Options(policy=policy, field=field, field_values=frozenset((0, 1)),
-                                   vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
-                                   vtk_fracture_output=VtkOutput(output=fracture_mesh, is_data_mode_binary=True))
+        options: Options = Options(
+            policy=policy,
+            field=field,
+            field_values=frozenset((0, 1)),
+            vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
+            vtk_fracture_output=VtkOutput(output=fracture_mesh,
+                                          is_data_mode_binary=True))
         yield TestCase(cli_args, options, exception)
 
 
@@ -63,7 +67,8 @@ def test_display_results():
     display_results(None, None)
 
 
-@pytest.mark.parametrize("test_case", __generate_generate_fractures_parsing_test_data())
+@pytest.mark.parametrize("test_case",
+                         __generate_generate_fractures_parsing_test_data())
 def test(test_case: TestCase):
     if test_case.exception:
         with pytest.raises(SystemExit):

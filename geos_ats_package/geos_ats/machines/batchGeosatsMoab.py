@@ -1,9 +1,9 @@
 #BATS:batchGeosatsMoab  batchGeosatsMoab BatchGeosatsMoab -1
 
-from ats import machines, configuration, log, atsut, times, AtsTest    # type: ignore[import]
+from ats import machines, configuration, log, atsut, times, AtsTest  # type: ignore[import]
 import subprocess, sys, os, shlex, time, socket, re
-import utils, batchTemplate    # type: ignore[import]
-from batch import BatchMachine    # type: ignore[import]
+import utils, batchTemplate  # type: ignore[import]
+from batch import BatchMachine  # type: ignore[import]
 import logging
 
 debug = configuration.debug
@@ -19,9 +19,11 @@ class BatchGeosatsMoab(BatchMachine):
         super(BatchGeosatsMoab, self).init()
 
         if "SLURM_NNODES" in os.environ.keys():
-            self.ppn = int(os.getenv("SLURM_TASKS_PER_NODE", "1").split("(")[0])
+            self.ppn = int(
+                os.getenv("SLURM_TASKS_PER_NODE", "1").split("(")[0])
         elif "SLURM_JOB_NUM_NODES" in os.environ.keys():
-            self.ppn = int(os.getenv("SLURM_JOB_CPUS_PER_NODE", "1").split("(")[0])
+            self.ppn = int(
+                os.getenv("SLURM_JOB_CPUS_PER_NODE", "1").split("(")[0])
         else:
             self.ppn = 0
 
@@ -43,9 +45,11 @@ class BatchGeosatsMoab(BatchMachine):
             if t.groupSerialNumber == 1:
                 testCase = getattr(t, "geos_atsTestCase", None)
                 if testCase:
-                    batchFilename = os.path.join(testCase.dirnamefull, "batch_%s.msub" % testCase.name)
+                    batchFilename = os.path.join(
+                        testCase.dirnamefull, "batch_%s.msub" % testCase.name)
                     self.writeSubmitScript(batchFilename, testCase)
-                    self.jobid = self.submitBatchScript(testCase.name, batchFilename)
+                    self.jobid = self.submitBatchScript(
+                        testCase.name, batchFilename)
 
     def writeSubmitScript(self, batchFilename, testCase):
 
@@ -148,7 +152,9 @@ class BatchGeosatsMoab(BatchMachine):
         if config and config.batch_dryrun:
             return
 
-        p = subprocess.Popen(["msub", batchFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(["msub", batchFilename],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
         out = p.communicate()[0]
 
         if p.returncode:

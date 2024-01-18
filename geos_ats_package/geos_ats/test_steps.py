@@ -1,5 +1,5 @@
 ﻿import os
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 import glob
 import shutil
 import sys
@@ -89,37 +89,56 @@ class TestStepBase(object):
             " clean may be a string or a list of strings.  The strings may contain"
             " wildcard characters."),
         TestParam(
-            "timelimit", "maximum time the step is allowed to run before it is considerend a TIMEOUT."
+            "timelimit",
+            "maximum time the step is allowed to run before it is considerend a TIMEOUT."
             " Specified as a string such as: 1h30m, 60m, etc.", "None"),
-        TestParam("stdout", "If set, the stdout will be placed in the named file, in the TestCase directory", None),
-        TestParam("stderr", "If set, the stderr will be placed in the named file, in the TestCase directory", None),
+        TestParam(
+            "stdout",
+            "If set, the stdout will be placed in the named file, in the TestCase directory",
+            None),
+        TestParam(
+            "stderr",
+            "If set, the stderr will be placed in the named file, in the TestCase directory",
+            None),
         TestParam("expectedResult", "'PASS' or 'FAIL'", "'PASS'"),
-        TestParam("delayed", "Whether execution of the step will be delayed", "False"),
-        TestParam("minor", "Whether failure of this step is minor issue", "False"),
+        TestParam("delayed", "Whether execution of the step will be delayed",
+                  "False"),
+        TestParam("minor", "Whether failure of this step is minor issue",
+                  "False"),
     )
 
     commonParams = {
         "name":
-        TestParam("name", "Used to give other params default values.", "The name of the TestCase"),
+        TestParam("name", "Used to give other params default values.",
+                  "The name of the TestCase"),
         "deck":
-        TestParam("deck", "Name of the input file.  Setting deck to False means no deck is used.", "<prob>.in"),
+        TestParam(
+            "deck",
+            "Name of the input file.  Setting deck to False means no deck is used.",
+            "<prob>.in"),
         "np":
         TestParam("np", "The number of processors to run on.", 1),
         "ngpu":
         TestParam("ngpu", "The number of gpus to run on when available.", 0),
         "check":
         TestParam(
-            "check", "True or False. determines whether the default checksteps will "
+            "check",
+            "True or False. determines whether the default checksteps will "
             "be automatically be added after this step.", "True"),
         "baseline_dir":
-        TestParam("baseline_dir", "subdirectory of config.testbaseline_dir where the test "
-                  "baselines are located.", "<dirname>"),
+        TestParam(
+            "baseline_dir",
+            "subdirectory of config.testbaseline_dir where the test "
+            "baselines are located.", "<dirname>"),
         "output_directory":
-        TestParam("output_directory", "subdirectory where the test log, params, rin, and "
-                  "timehistory files are located.", "<dirname>"),
+        TestParam(
+            "output_directory",
+            "subdirectory where the test log, params, rin, and "
+            "timehistory files are located.", "<dirname>"),
         "rebaseline":
         TestParam(
-            "rebaseline", "additional files to rebaseline during the rebaseline action."
+            "rebaseline",
+            "additional files to rebaseline during the rebaseline action."
             " rebaseline may be a string or a list of strings."),
         "timehistfile":
         TestParam("timehistfile", "name of the file containing all the"
@@ -129,12 +148,14 @@ class TestStepBase(object):
                   "<config.testbaseline_dir>/<baseline_dir>/<curvecheckfile>"),
         "allow_rebaseline":
         TestParam(
-            "allow_rebaseline", "True if the second file should be re-baselined during a rebaseline action."
+            "allow_rebaseline",
+            "True if the second file should be re-baselined during a rebaseline action."
             "  False if the second file should not be rebaselined.", "True"),
         "testcase_name":
         TestParam("testcase_name", "The name of the testcase"),
         "testcase_out":
-        TestParam("testcase_out", "The file where stdout for the testcase is accumulated"),
+        TestParam("testcase_out",
+                  "The file where stdout for the testcase is accumulated"),
     }
 
     # namespace to place the params.
@@ -263,7 +284,9 @@ class TestStepBase(object):
                         else:
                             os.remove(p)
                     except OSError as e:
-                        logger.debug(e)    # so that two simultaneous clean operations don't fail
+                        logger.debug(
+                            e
+                        )  # so that two simultaneous clean operations don't fail
 
     def getCheckOption(self):
         return ats.tests.AtsTest.getOptions().get("checkoption")
@@ -384,15 +407,21 @@ class geos(TestStepBase):
     command = "geosx [-i <deck>] [-r <restart_file>] [-x <x_partitions>] [-y <y_partitions>] [-z <z_partitions>] [-s <schema_level>] [-n <problem_name>] [-o <output_directory>] [ --suppress-pinned ] "
 
     params = TestStepBase.defaultParams + (
-        TestStepBase.commonParams["name"], TestStepBase.commonParams["deck"], TestStepBase.commonParams["np"],
-        TestStepBase.commonParams["ngpu"], TestStepBase.commonParams["check"],
-        TestStepBase.commonParams["baseline_dir"], TestStepBase.commonParams["output_directory"],
+        TestStepBase.commonParams["name"], TestStepBase.commonParams["deck"],
+        TestStepBase.commonParams["np"], TestStepBase.commonParams["ngpu"],
+        TestStepBase.commonParams["check"],
+        TestStepBase.commonParams["baseline_dir"],
+        TestStepBase.commonParams["output_directory"],
         TestParam("restart_file", "The name of the restart file."),
-        TestParam("x_partitions", "The number of partitions in the x direction."),
-        TestParam("y_partitions", "The number of partitions in the y direction."),
+        TestParam("x_partitions",
+                  "The number of partitions in the x direction."),
+        TestParam("y_partitions",
+                  "The number of partitions in the y direction."),
         TestParam("z_partitions",
-                  "The number of partitions in the z direction."), TestParam("schema_level", "The schema level."),
-        TestParam("suppress-pinned", "Option to suppress use of pinned memory for MPI buffers."),
+                  "The number of partitions in the z direction."),
+        TestParam("schema_level", "The schema level."),
+        TestParam("suppress-pinned",
+                  "Option to suppress use of pinned memory for MPI buffers."),
         TestParam("trace_data_migration", "Trace host-device data migration."))
 
     checkstepnames = ["restartcheck"]
@@ -521,17 +550,29 @@ class restartcheck(CheckTestStepBase):
     command = """restartcheck [-r RELATIVE] [-a ABSOLUTE] [-o OUTPUT] [-e EXCLUDE [EXCLUDE ...]] [-w] file_pattern baseline_pattern"""
 
     params = TestStepBase.defaultParams + CheckTestStepBase.checkParams + (
-        TestStepBase.commonParams["deck"], TestStepBase.commonParams["name"], TestStepBase.commonParams["np"],
-        TestStepBase.commonParams["allow_rebaseline"], TestStepBase.commonParams["baseline_dir"],
+        TestStepBase.commonParams["deck"], TestStepBase.commonParams["name"],
+        TestStepBase.commonParams["np"],
+        TestStepBase.commonParams["allow_rebaseline"],
+        TestStepBase.commonParams["baseline_dir"],
         TestStepBase.commonParams["output_directory"],
-        TestParam("file_pattern", "Regex pattern to match file written out by geos."),
-        TestParam("baseline_pattern", "Regex pattern to match file to compare against."),
-        TestParam("rtol",
-                  "Relative tolerance, default is 0.0."), TestParam("atol", "Absolute tolerance, default is 0.0."),
-        TestParam("exclude", "Regular expressions matching groups to exclude from the check, default is None."),
-        TestParam("warnings_are_errors", "Treat warnings as errors, default is True."),
-        TestParam("suppress_output", "Whether to write output to stdout, default is True."),
-        TestParam("skip_missing", "Whether to skip missing values in target or baseline files, default is False."))
+        TestParam("file_pattern",
+                  "Regex pattern to match file written out by geos."),
+        TestParam("baseline_pattern",
+                  "Regex pattern to match file to compare against."),
+        TestParam("rtol", "Relative tolerance, default is 0.0."),
+        TestParam("atol", "Absolute tolerance, default is 0.0."),
+        TestParam(
+            "exclude",
+            "Regular expressions matching groups to exclude from the check, default is None."
+        ),
+        TestParam("warnings_are_errors",
+                  "Treat warnings as errors, default is True."),
+        TestParam("suppress_output",
+                  "Whether to write output to stdout, default is True."),
+        TestParam(
+            "skip_missing",
+            "Whether to skip missing values in target or baseline files, default is False."
+        ))
 
     def __init__(self, restartcheck_params, **kw):
         """
@@ -564,12 +605,15 @@ class restartcheck(CheckTestStepBase):
         self.requireParam("output_directory")
 
         if self.p.file_pattern is None:
-            self.p.file_pattern = getGeosProblemName(self.p.deck, self.p.name) + r"_restart_[0-9]+\.root"
+            self.p.file_pattern = getGeosProblemName(
+                self.p.deck, self.p.name) + r"_restart_[0-9]+\.root"
         if self.p.baseline_pattern is None:
             self.p.baseline_pattern = self.p.file_pattern
 
-        self.restart_file_regex = os.path.join(self.p.output_directory, self.p.file_pattern)
-        self.restart_baseline_regex = os.path.join(self.p.baseline_dir, self.p.baseline_pattern)
+        self.restart_file_regex = os.path.join(self.p.output_directory,
+                                               self.p.file_pattern)
+        self.restart_baseline_regex = os.path.join(self.p.baseline_dir,
+                                                   self.p.baseline_pattern)
 
         if self.p.allow_rebaseline is None:
             self.p.allow_rebaseline = True
@@ -610,8 +654,9 @@ class restartcheck(CheckTestStepBase):
 
         root_file_path = findMaxMatchingFile(self.restart_file_regex)
         if root_file_path is None:
-            raise IOError("File not found matching the pattern %s in directory %s." %
-                          (self.restart_file_regex, os.getcwd()))
+            raise IOError(
+                "File not found matching the pattern %s in directory %s." %
+                (self.restart_file_regex, os.getcwd()))
 
         baseline_dir = os.path.dirname(self.restart_baseline_regex)
         root_baseline_path = findMaxMatchingFile(self.restart_baseline_regex)
@@ -626,13 +671,21 @@ class restartcheck(CheckTestStepBase):
             os.makedirs(baseline_dir, exist_ok=True)
 
         # Copy the root file into the baseline directory.
-        shutil.copy2(root_file_path, os.path.join(baseline_dir, os.path.basename(root_file_path)))
+        shutil.copy2(
+            root_file_path,
+            os.path.join(baseline_dir, os.path.basename(root_file_path)))
         # Copy the directory holding the data files into the baseline directory.
         data_dir_path = os.path.splitext(root_file_path)[0]
-        shutil.copytree(data_dir_path, os.path.join(baseline_dir, os.path.basename(data_dir_path)))
+        shutil.copytree(
+            data_dir_path,
+            os.path.join(baseline_dir, os.path.basename(data_dir_path)))
 
     def resultPaths(self):
-        return [os.path.join(self.p.output_directory, "%s.restartcheck" % os.path.splitext(self.p.file_pattern)[0])]
+        return [
+            os.path.join(
+                self.p.output_directory,
+                "%s.restartcheck" % os.path.splitext(self.p.file_pattern)[0])
+        ]
 
     def clean(self):
         self._clean(self.resultPaths())
@@ -651,16 +704,22 @@ class curvecheck(CheckTestStepBase):
     command = """curve_check.py [-h] [-c CURVE [CURVE ...]] [-t TOLERANCE] [-w] [-o OUTPUT] [-n N_COLUMN] [-u {milliseconds,seconds,minutes,hours,days,years}] filename baseline"""
 
     params = TestStepBase.defaultParams + CheckTestStepBase.checkParams + (
-        TestStepBase.commonParams["deck"], TestStepBase.commonParams["name"], TestStepBase.commonParams["np"],
-        TestStepBase.commonParams["allow_rebaseline"], TestStepBase.commonParams["baseline_dir"],
+        TestStepBase.commonParams["deck"], TestStepBase.commonParams["name"],
+        TestStepBase.commonParams["np"],
+        TestStepBase.commonParams["allow_rebaseline"],
+        TestStepBase.commonParams["baseline_dir"],
         TestStepBase.commonParams["output_directory"],
-        TestParam("filename", "Name of the target curve file written by GEOS."),
+        TestParam("filename",
+                  "Name of the target curve file written by GEOS."),
         TestParam("curves", "A list of parameter, setname value pairs."),
         TestParam(
             "tolerance",
             "Curve check tolerance (||x-y||/N), can be specified as a single value or a list of floats corresponding to the curves."
-        ), TestParam("warnings_are_errors", "Treat warnings as errors, default is True."),
-        TestParam("script_instructions", "A list of (path, function, value, setname) entries"),
+        ),
+        TestParam("warnings_are_errors",
+                  "Treat warnings as errors, default is True."),
+        TestParam("script_instructions",
+                  "A list of (path, function, value, setname) entries"),
         TestParam("time_units", "Time units to use for plots."))
 
     def __init__(self, curvecheck_params, **kw):
@@ -711,7 +770,8 @@ class curvecheck(CheckTestStepBase):
         self.requireParam("output_directory")
 
         self.baseline_file = os.path.join(self.p.baseline_dir, self.p.filename)
-        self.target_file = os.path.join(self.p.output_directory, self.p.filename)
+        self.target_file = os.path.join(self.p.output_directory,
+                                        self.p.filename)
         self.figure_root = os.path.join(self.p.output_directory, 'curve_check')
 
         if self.p.allow_rebaseline is None:
@@ -865,7 +925,9 @@ def infoTestSteps(*args):
     for s in steps:
         stepclass = globals()[s]
         doc = getattr(stepclass, "doc", None)
-        topic.addTopic(s, textwrap.dedent(doc).strip(), lambda ss=s: infoTestStep(ss))
+        topic.addTopic(s,
+                       textwrap.dedent(doc).strip(),
+                       lambda ss=s: infoTestStep(ss))
 
     topic.process(args)
 

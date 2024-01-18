@@ -21,7 +21,8 @@ def write_GEOS_table(axes_values: Iterable[np.ndarray],
     axes_shape = tuple([len(x) for x in axes_values])
     for k in properties.keys():
         if (np.shape(properties[k]) != axes_shape):
-            raise Exception("Shape of parameter %s is incompatible with given axes" % (k))
+            raise Exception(
+                "Shape of parameter %s is incompatible with given axes" % (k))
 
     # Write axes files
     for ka, x in zip(axes_names, axes_values):
@@ -33,8 +34,9 @@ def write_GEOS_table(axes_values: Iterable[np.ndarray],
         np.savetxt('%s.geos' % (k), tmp, fmt=string_format, delimiter=',')
 
 
-def read_GEOS_table(axes_files: Iterable[str],
-                    property_files: Iterable[str]) -> Tuple[Iterable[np.ndarray], Dict[str, np.ndarray]]:
+def read_GEOS_table(
+    axes_files: Iterable[str], property_files: Iterable[str]
+) -> Tuple[Iterable[np.ndarray], Dict[str, np.ndarray]]:
     """Read an GEOS-compatible ascii table.
 
     Args:
@@ -46,7 +48,8 @@ def read_GEOS_table(axes_files: Iterable[str],
     """
     axes_values = []
     for f in axes_files:
-        axes_values.append(np.loadtxt('%s.geos' % (f), unpack=True, delimiter=','))
+        axes_values.append(
+            np.loadtxt('%s.geos' % (f), unpack=True, delimiter=','))
     axes_shape = tuple([len(x) for x in axes_values])
 
     # Open property files

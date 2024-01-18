@@ -1,4 +1,4 @@
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 from geos_ats import common_utilities
 from geos_ats.configuration_record import config
 from geos_ats import test_steps

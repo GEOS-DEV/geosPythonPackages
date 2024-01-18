@@ -1,12 +1,12 @@
 #ATS:openmpi machines.openmpi OpenmpiMachine 16
 
 import os
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 from ats import machines
 from ats import terminal
 from ats import log
 import shlex
-from ats.atsut import RUNNING, TIMEDOUT    # type: ignore[import]
+from ats.atsut import RUNNING, TIMEDOUT  # type: ignore[import]
 from ats import AtsTest
 import logging
 
@@ -127,7 +127,8 @@ class OpenmpiMachine(machines.Machine):
         if self.precommand:
             import time
             timeNow = time.strftime('%H%M%S', time.localtime())
-            test.jobname = "t%d_%d%s%s" % (test.np, test.serialNumber, test.namebase, timeNow)
+            test.jobname = "t%d_%d%s%s" % (test.np, test.serialNumber,
+                                           test.namebase, timeNow)
             pre = self.precommand % {"np": test.np, "J": test.jobname}
             commandList = pre.split()
         else:
@@ -149,7 +150,8 @@ class OpenmpiMachine(machines.Machine):
     def canRunNow(self, test):
         "Is this machine able to run this test now? Return True/False"
         np = max(test.np, 1)
-        return ((self.numtests < self.maxtests) and (self.numProcsAvailable >= np))
+        return ((self.numtests < self.maxtests)
+                and (self.numProcsAvailable >= np))
 
     def noteLaunch(self, test):
         """A test has been launched."""
@@ -166,10 +168,12 @@ class OpenmpiMachine(machines.Machine):
     def periodicReport(self):
         "Report on current status of tasks"
         terminal("-" * 80)
-        terminal("CURRENTLY RUNNING %d of %d tests." % (self.numtests, self.maxtests))
+        terminal("CURRENTLY RUNNING %d of %d tests." %
+                 (self.numtests, self.maxtests))
         terminal("-" * 80)
         terminal("CURRENTLY UTILIZING %d processors (max %d)." %
-                 (self.numberMaxProcessors - self.numProcsAvailable, self.numberMaxProcessors))
+                 (self.numberMaxProcessors - self.numProcsAvailable,
+                  self.numberMaxProcessors))
         terminal("-" * 80)
 
     def kill(self, test):

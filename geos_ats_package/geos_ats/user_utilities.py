@@ -1,4 +1,4 @@
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 import os
 
 

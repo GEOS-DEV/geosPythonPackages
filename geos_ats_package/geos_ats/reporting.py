@@ -5,7 +5,7 @@ import time
 import re
 from geos_ats.configuration_record import config
 import sys
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 from configparser import ConfigParser
 import logging
 
@@ -31,8 +31,9 @@ EXPECTEDFAIL = 13
 UNEXPECTEDPASS = 14
 
 # A tuple of test status values.
-STATUS = (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, TIMEOUT, NOTRUN, FILTERED, RUNNING,
-          INPROGRESS, PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT)
+STATUS = (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR,
+          TIMEOUT, NOTRUN, FILTERED, RUNNING, INPROGRESS, PASS, EXPECTEDFAIL,
+          SKIP, BATCH, NOTBUILT)
 
 STATUS_NOTDONE = (NOTRUN, RUNNING, INPROGRESS, BATCH)
 
@@ -62,7 +63,8 @@ class ReportTiming(ReportBase):
     def report(self, fp):
         for testcase in self.reportcases:
             if testcase.status in [PASS, TIMEOUT]:
-                self.timings[testcase.testcase.name] = int(testcase.testcase.status.totalTime())
+                self.timings[testcase.testcase.name] = int(
+                    testcase.testcase.status.totalTime())
         output = ""
         for key in sorted(self.timings):
             output += "%s %d\n" % (key, self.timings[key])
@@ -78,7 +80,9 @@ class ReportIni(ReportBase):
         # A dictionary where the key is a status, and the value is a sequence of ReportTestCases
         self.reportcaseResults = {}
         for status in STATUS:
-            self.reportcaseResults[status] = [t for t in self.reportcases if t.status == status]
+            self.reportcaseResults[status] = [
+                t for t in self.reportcases if t.status == status
+            ]
 
         self.displayName = {}
         self.displayName[FAILRUN] = "FAILRUN"
@@ -104,7 +108,8 @@ class ReportIni(ReportBase):
         configParser = ConfigParser()
 
         configParser.add_section("Info")
-        configParser.set("Info", "Time", time.strftime("%a, %d %b %Y %H:%M:%S"))
+        configParser.set("Info", "Time",
+                         time.strftime("%a, %d %b %Y %H:%M:%S"))
         try:
             platform = socket.gethostname()
         except:
@@ -120,7 +125,8 @@ class ReportIni(ReportBase):
             if len(line_split) != 2:
                 extraNotations += "\"" + line.strip() + "\""
                 continue
-            configParser.set("Info", line_split[0].strip(), line_split[1].strip())
+            configParser.set("Info", line_split[0].strip(),
+                             line_split[1].strip())
         if extraNotations != "":
             configParser.set("Info", "Extra Notations", extraNotations)
 
@@ -139,17 +145,23 @@ class ReportIni(ReportBase):
                     configParser.set("Custodians", testName, owner)
 
                 if config.report_doc_link:
-                    linkToDocumentation = os.path.join(config.report_doc_dir, testName, testName + ".html")
+                    linkToDocumentation = os.path.join(config.report_doc_dir,
+                                                       testName,
+                                                       testName + ".html")
                     if os.path.exists(linkToDocumentation):
-                        configParser.set("Documentation", testName, linkToDocumentation)
+                        configParser.set("Documentation", testName,
+                                         linkToDocumentation)
                     else:
                         if not reportcaseResult.testcase.nodoc:
                             undocumentedTests.append(testName)
-                linkToDocumentation = getowner(testName, reportcaseResult.testcase)
+                linkToDocumentation = getowner(testName,
+                                               reportcaseResult.testcase)
             testNames = sorted(testNames)
-            configParser.set("Results", self.displayName[status], ";".join(testNames))
+            configParser.set("Results", self.displayName[status],
+                             ";".join(testNames))
         undocumentedTests = sorted(undocumentedTests)
-        configParser.set("Documentation", "undocumented", ";".join(undocumentedTests))
+        configParser.set("Documentation", "undocumented",
+                         ";".join(undocumentedTests))
         configParser.write(fp)
 
 
@@ -164,7 +176,9 @@ class ReportText(ReportBase):
         # A dictionary where the key is a status, and the value is a sequence of ReportTestCases
         self.reportcaseResults = {}
         for status in STATUS:
-            self.reportcaseResults[status] = [t for t in self.reportcases if t.status == status]
+            self.reportcaseResults[status] = [
+                t for t in self.reportcases if t.status == status
+            ]
 
         self.displayName = {}
         self.displayName[FAILRUN] = "FAIL RUN"
@@ -185,10 +199,13 @@ class ReportText(ReportBase):
 
     def report(self, fp):
         """Write out the text report to the give file pointer"""
-        self.writeSummary(fp, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, TIMEOUT, NOTRUN,
-                               INPROGRESS, FILTERED, PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
+        self.writeSummary(
+            fp, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK,
+                 FAILCHECKMINOR, TIMEOUT, NOTRUN, INPROGRESS, FILTERED, PASS,
+                 EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
         self.writeLongest(fp, 5)
-        self.writeDetails(fp, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, TIMEOUT, FILTERED))
+        self.writeDetails(fp, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL,
+                               FAILCHECK, FAILCHECKMINOR, TIMEOUT, FILTERED))
 
     def writeSummary(self, fp, statuses=STATUS):
         """The summary groups each TestCase by its status."""
@@ -212,8 +229,10 @@ class ReportText(ReportBase):
 
     def writeDetails(self,
                      fp,
-                     statuses=(FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, INPROGRESS),
-                     columns=("Status", "TestCase", "Elapsed", "Resources", "TestStep", "OutFile")):
+                     statuses=(FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL,
+                               FAILCHECK, FAILCHECKMINOR, INPROGRESS),
+                     columns=("Status", "TestCase", "Elapsed", "Resources",
+                              "TestStep", "OutFile")):
         """This function provides more information about each of the test cases"""
 
         from geos_ats import common_utilities
@@ -303,13 +322,17 @@ class ReportTextPeriodic(ReportText):
         ReportText.__init__(self, testcases)
 
     def report(self, startTime, totalProcessors=None):
-        self.writeSummary(sys.stdout,
-                          (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, TIMEOUT, NOTRUN,
-                           INPROGRESS, FILTERED, RUNNING, PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
+        self.writeSummary(
+            sys.stdout, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK,
+                         FAILCHECKMINOR, TIMEOUT, NOTRUN, INPROGRESS, FILTERED,
+                         RUNNING, PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
         self.writeUtilization(sys.stdout, startTime, totalProcessors)
         self.writeLongest(sys.stdout)
-        self.writeDetails(sys.stdout, (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, RUNNING),
-                          ("Status", "TestCase", "Directory", "Elapsed", "Resources", "TestStep"))
+        self.writeDetails(sys.stdout,
+                          (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK,
+                           FAILCHECKMINOR, RUNNING),
+                          ("Status", "TestCase", "Directory", "Elapsed",
+                           "Resources", "TestStep"))
 
     def writeUtilization(self, fp, startTime, totalProcessors=None):
         """Machine utilization is reported"""
@@ -322,13 +345,18 @@ class ReportTextPeriodic(ReportText):
 
         if totalResourcesUsed > 0:
             fp.write('\n')
-            fp.write(f"\n  TOTAL TIME           : {ats.times.hms( totaltime )}")
-            fp.write(f"\n  TOTAL PROCESSOR-TIME : {ats.times.hms(totalResourcesUsed )}")
+            fp.write(
+                f"\n  TOTAL TIME           : {ats.times.hms( totaltime )}")
+            fp.write(
+                f"\n  TOTAL PROCESSOR-TIME : {ats.times.hms(totalResourcesUsed )}"
+            )
 
             if totalProcessors:
                 availableResources = totalProcessors * totaltime
                 utilization = totalResourcesUsed / availableResources * 100.0
-                fp.write(f"  AVAIL PROCESSOR-TIME : {ats.times.hms(availableResources )}")
+                fp.write(
+                    f"  AVAIL PROCESSOR-TIME : {ats.times.hms(availableResources )}"
+                )
                 fp.write(f"  RESOURCE UTILIZATION : {utilization:5.3g}%")
 
 
@@ -398,12 +426,16 @@ class ReportHTML(ReportBase):
                 testdir[dirname] = []
             testdir[dirname].append(reportcase)
 
-        self.groups = [ReportGroup(key, value) for key, value in testdir.items()]
+        self.groups = [
+            ReportGroup(key, value) for key, value in testdir.items()
+        ]
 
         # place groups into a dictionary keyed on the group status
         self.groupResults = {}
         for status in STATUS:
-            self.groupResults[status] = [g for g in self.groups if g.status == status]
+            self.groupResults[status] = [
+                g for g in self.groups if g.status == status
+            ]
 
     def report(self, refresh=0):
         # potentially regenerate the html documentation for the test suite.
@@ -413,7 +445,8 @@ class ReportHTML(ReportBase):
         sp = open(self.html_filename, 'w')
 
         if refresh:
-            if not any(g.status in (RUNNING, NOTRUN, INPROGRESS) for g in self.groups):
+            if not any(g.status in (RUNNING, NOTRUN, INPROGRESS)
+                       for g in self.groups):
                 refresh = 0
 
         self.writeHeader(sp, refresh)
@@ -427,7 +460,8 @@ class ReportHTML(ReportBase):
         else:
             groupColumns = ("Name", "Status")
 
-        testcaseColumns = ("Status", "Name", "TestStep", "Age", "Elapsed", "Resources", "Output")
+        testcaseColumns = ("Status", "Name", "TestStep", "Age", "Elapsed",
+                           "Resources", "Output")
 
         # write the details
         self.writeTable(sp, groupColumns, testcaseColumns)
@@ -454,10 +488,13 @@ class ReportHTML(ReportBase):
                         if filetime > newest:
                             newest = filetime
             if os.path.getmtime(testdocfile) > newest:
-                logger.info(f"HTML documentation found in {os.path.relpath(testdocfile)}.  Not regenerating.")
+                logger.info(
+                    f"HTML documentation found in {os.path.relpath(testdocfile)}.  Not regenerating."
+                )
                 return
 
-        logger.info("Generating HTML documentation files (running 'atddoc')...")
+        logger.info(
+            "Generating HTML documentation files (running 'atddoc')...")
         retcode = True
         try:
             geos_atsdir = os.path.realpath(os.path.dirname(__file__))
@@ -467,9 +504,12 @@ class ReportHTML(ReportBase):
         except OSError as e:
             logger.debug(e)
         if retcode:
-            logger.info(f"  Failed to create HTML documentation in {config.report_doc_dir}")
+            logger.info(
+                f"  Failed to create HTML documentation in {config.report_doc_dir}"
+            )
         else:
-            logger.info(f"  HTML documentation created in {config.report_doc_dir}")
+            logger.info(
+                f"  HTML documentation created in {config.report_doc_dir}")
 
     def writeRowHeader(self, sp, groupColumns, testcaseColumns):
         header = f"""
@@ -574,7 +614,8 @@ class ReportHTML(ReportBase):
 
                     if col == "Status":
                         statusDisplay = self.displayName[testcase.status]
-                        retries = getattr(testcase.testcase.atsGroup, "retries", 0)
+                        retries = getattr(testcase.testcase.atsGroup,
+                                          "retries", 0)
                         if retries > 0:
                             statusDisplay += "<br>retry: %d" % retries
                         header += f'\n<td class="{self.color[testcase.status]}">{statusDisplay}</td>'
@@ -586,22 +627,27 @@ class ReportHTML(ReportBase):
                         if config.report_doc_link:
                             docfound = False
                             # first check for the full problem name, with the domain extension
-                            testhtml = os.path.join(config.report_doc_dir, test.name, testcase.testcase.name + ".html")
+                            testhtml = os.path.join(
+                                config.report_doc_dir, test.name,
+                                testcase.testcase.name + ".html")
                             if os.path.exists(testhtml):
                                 docfound = True
                             else:
                                 # next check for the full problem name without the domain extension
-                                testhtml = os.path.join(config.report_doc_dir, test.name,
-                                                        testcase.testcase.name + ".html")
+                                testhtml = os.path.join(
+                                    config.report_doc_dir, test.name,
+                                    testcase.testcase.name + ".html")
                                 if os.path.exists(testhtml):
                                     docfound = True
                                 else:
                                     # final check for any of the input file names
                                     for step in testcase.testcase.steps:
                                         if getattr(step.p, "deck", None):
-                                            [inputname, suffix] = getattr(step.p, "deck").rsplit('.', 1)
-                                            testhtml = os.path.join(config.report_doc_dir, test.name,
-                                                                    inputname + ".html")
+                                            [inputname, suffix] = getattr(
+                                                step.p, "deck").rsplit('.', 1)
+                                            testhtml = os.path.join(
+                                                config.report_doc_dir,
+                                                test.name, inputname + ".html")
                                             if os.path.exists(testhtml):
                                                 # match with the first input file
                                                 docfound = True
@@ -661,11 +707,13 @@ class ReportHTML(ReportBase):
 
                         header += "\n<td>"
                         seen = {}
-                        for stepnum, step in enumerate(testcase.testcase.steps):
+                        for stepnum, step in enumerate(
+                                testcase.testcase.steps):
                             paths = testcase.testcase.resultPaths(step)
                             for p in paths:
                                 # if p has already been accounted for, doesn't exist, or is an empty file, don't print it.
-                                if (((p in seen) or not os.path.exists(p)) or (os.stat(p)[6] == 0)):
+                                if (((p in seen) or not os.path.exists(p))
+                                        or (os.stat(p)[6] == 0)):
                                     continue
                                 header += f"\n<a href=\"file://{p}\">{os.path.basename(p)}</a><br>"
                                 seen[p] = 1
@@ -820,7 +868,8 @@ class ReportHTML(ReportBase):
                     caseref = case.name
                     retries = 0
                     for test in case.testcases:
-                        retries += getattr(test.testcase.atsGroup, "retries", 0)
+                        retries += getattr(test.testcase.atsGroup, "retries",
+                                           0)
                     if retries > 0:
                         haveRetry = True
                         casename += '*'
@@ -892,7 +941,7 @@ class ReportWait(ReportBase):
         import time
 
         start = time.time()
-        sleeptime = 60    # interval to check (seconds)
+        sleeptime = 60  # interval to check (seconds)
 
         while True:
             notdone = []
@@ -904,9 +953,11 @@ class ReportWait(ReportBase):
 
             if notdone:
                 rr = ReportText(self.testcases)
-                rr.writeSummary(sys.stdout,
-                                (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK, FAILCHECKMINOR, TIMEOUT, NOTRUN,
-                                 INPROGRESS, FILTERED, PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
+                rr.writeSummary(
+                    sys.stdout,
+                    (FAILRUN, UNEXPECTEDPASS, FAILRUNOPTIONAL, FAILCHECK,
+                     FAILCHECKMINOR, TIMEOUT, NOTRUN, INPROGRESS, FILTERED,
+                     PASS, EXPECTEDFAIL, SKIP, BATCH, NOTBUILT))
                 time.sleep(sleeptime)
             else:
                 break
@@ -922,8 +973,8 @@ class ReportTestCase(object):
 
     def __init__(self, testcase):
 
-        self.testcase = testcase    # test_case
-        self.status = None    # One of the STATUS values (e.g. FAILRUN, PASS, etc.)
+        self.testcase = testcase  # test_case
+        self.status = None  # One of the STATUS values (e.g. FAILRUN, PASS, etc.)
         self.laststep = None
         self.diffage = None
         self.elapsed = 0.0
@@ -958,14 +1009,14 @@ class ReportTestCase(object):
                     self.resources += np * dt
                     outcome = "EXPECTEDFAIL"
                     self.status = EXPECTEDFAIL
-                    break    # don't continue past an expected failure
+                    break  # don't continue past an expected failure
                 if outcome == "UNEX":
                     dt = endTime - startTime
                     self.elapsed += dt
                     self.resources += np * dt
                     outcome = "UNEXPECTEDPASS"
                     self.status = UNEXPECTEDPASS
-                    break    # don't continue past an unexpected pass
+                    break  # don't continue past an unexpected pass
                 elif outcome == "SKIP":
                     self.status = SKIP
                     break
@@ -1023,7 +1074,9 @@ class ReportTestCase(object):
                             try:
                                 with open(step.p.stdout, 'r') as fp:
                                     for line in fp:
-                                        if re.search(config.report_notbuilt_regexp, line):
+                                        if re.search(
+                                                config.report_notbuilt_regexp,
+                                                line):
                                             self.status = NOTBUILT
                                             break
                             except:
@@ -1071,7 +1124,8 @@ class ReportTestCase(object):
 
         np = getattr(teststep.p, "np", 1)
 
-        if status in ("SKIP", "FILT", "INIT", "PASS", "FAIL", "TIME", "EXEC", "BACH", "EXPT", "UNEX"):
+        if status in ("SKIP", "FILT", "INIT", "PASS", "FAIL", "TIME", "EXEC",
+                      "BACH", "EXPT", "UNEX"):
             return (status, np, startTime, endTime)
         else:
             return ("SKIP", np, startTime, endTime)
@@ -1098,7 +1152,8 @@ def getowner(dirname, testcase=None):
     owner = ""
     if not config.report_doc_link:
         try:
-            atdfile = os.path.join(config.report_doc_dir, dirname, dirname + ".atd")
+            atdfile = os.path.join(config.report_doc_dir, dirname,
+                                   dirname + ".atd")
             with open(atdfile, "r") as fp:
                 for line in fp:
                     match = re.search("CUSTODIAN:: +(.*)$", line)

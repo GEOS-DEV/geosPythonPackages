@@ -12,7 +12,8 @@ test_actions = ("run", "rerun", "check", "continue")
 report_actions = ("run", "rerun", "report", "continue")
 
 # Setup the logger
-logging.basicConfig(level=logging.DEBUG, format='(%(asctime)s %(module)s:%(lineno)d) %(message)s')
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(asctime)s %(module)s:%(lineno)d) %(message)s')
 logger = logging.getLogger('geos_ats')
 
 # Job records
@@ -108,17 +109,23 @@ def handleShutdown(signum, frame):
 def handle_salloc_relaunch(options, originalargv, configOverride):
     tests = [
         options.action in test_actions, options.salloc, options.machine
-        in ("SlurmProcessorScheduled", "GeosAtsSlurmProcessorScheduled"), "SLURM_JOB_ID" not in os.environ
+        in ("SlurmProcessorScheduled", "GeosAtsSlurmProcessorScheduled"),
+        "SLURM_JOB_ID" not in os.environ
     ]
 
     if all(tests):
         if options.sallocOptions != "":
             sallocCommand = ["salloc"] + options.sallocOptions.split(" ")
         else:
-            sallocCommand = ["salloc", "-ppdebug", "--exclusive", "-N", "%d" % options.numNodes]
+            sallocCommand = [
+                "salloc", "-ppdebug", "--exclusive", "-N",
+                "%d" % options.numNodes
+            ]
             if "testmodifier" in configOverride:
                 if configOverride["testmodifier"] == "memcheck":
-                    p = subprocess.Popen(['sinfo', '-o', '%l', '-h', '-ppdebug'], stdout=subprocess.PIPE)
+                    p = subprocess.Popen(
+                        ['sinfo', '-o', '%l', '-h', '-ppdebug'],
+                        stdout=subprocess.PIPE)
                     out, err = p.communicate()
                     tarray = out.split(":")
                     seconds = tarray.pop()
@@ -131,7 +138,8 @@ def handle_salloc_relaunch(options, originalargv, configOverride):
                             days, hours = hours.split('-')
                         except ValueError as e:
                             logger.debug(e)
-                    limit = min(360, (24 * int(days) + int(hours)) * 60 + int(minutes))
+                    limit = min(360, (24 * int(days) + int(hours)) * 60 +
+                                int(minutes))
                     sallocCommand.extend(["-t", "%d" % limit])
 
         # generate a "unique" name for the salloc job so we can remove it later
@@ -146,7 +154,9 @@ def handle_salloc_relaunch(options, originalargv, configOverride):
         command = sallocCommand
 
         # omit --workingDir on relaunch, as we have already changed directories
-        relaunchargv = [x for x in originalargv if not x.startswith("--workingDir")]
+        relaunchargv = [
+            x for x in originalargv if not x.startswith("--workingDir")
+        ]
         command += relaunchargv
         command += ["--logs=%s" % options.logs]
         p = subprocess.Popen(command)
@@ -185,7 +195,9 @@ def create_log_directory(options):
                     if os.path.islink(basename):
                         os.remove(basename)
                     else:
-                        logger.error(f"unable to replace {basename} with a symlink to {options.logs}")
+                        logger.error(
+                            f"unable to replace {basename} with a symlink to {options.logs}"
+                        )
 
                 if not os.path.exists(basename):
                     os.symlink(options.logs, basename)
@@ -207,7 +219,8 @@ def check_timing_file(options, config):
     if options.action in ["run", "rerun", "continue"]:
         if config.timing_file:
             if not os.path.isfile(config.timing_file):
-                logger.warning(f'Timing file does not exist {config.timing_file}')
+                logger.warning(
+                    f'Timing file does not exist {config.timing_file}')
                 return
 
             from geos_ats import configuration_record
@@ -215,7 +228,8 @@ def check_timing_file(options, config):
                 for line in filep:
                     if not line.startswith('#'):
                         tokens = line.split()
-                        configuration_record.globalTestTimings[tokens[0]] = int(tokens[1])
+                        configuration_record.globalTestTimings[
+                            tokens[0]] = int(tokens[1])
 
 
 def append_test_end_step(machine):
@@ -236,7 +250,9 @@ def check_working_dir(workingDir):
         if os.path.isdir(workingDir):
             os.chdir(workingDir)
         else:
-            logger.error(f"The requested working dir does not appear to exist: {workingDir}")
+            logger.error(
+                f"The requested working dir does not appear to exist: {workingDir}"
+            )
             quit()
 
 
@@ -265,22 +281,30 @@ def infoParagraph(title, paragraphs):
 
 
 def info(args):
-    from geos_ats import (common_utilities, configuration_record, test_steps, suite_settings, test_case, test_modifier)
+    from geos_ats import (common_utilities, configuration_record, test_steps,
+                          suite_settings, test_case, test_modifier)
 
     infoLabels = lambda *x: suite_settings.infoLabels(suite_settings.__file__)
     infoOwners = lambda *x: suite_settings.infoOwners(suite_settings.__file__)
 
     menu = common_utilities.InfoTopic("geos_ats info menu")
-    menu.addTopic("teststep", "Reference on all the TestStep", test_steps.infoTestSteps)
-    menu.addTopic("testcase", "Reference on the TestCase", test_case.infoTestCase)
+    menu.addTopic("teststep", "Reference on all the TestStep",
+                  test_steps.infoTestSteps)
+    menu.addTopic("testcase", "Reference on the TestCase",
+                  test_case.infoTestCase)
     menu.addTopic("labels", "List of labels", infoLabels)
     menu.addTopic("owners", "List of owners", infoOwners)
-    menu.addTopic("config", "Reference on config options", configuration_record.infoConfig)
-    menu.addTopic("actions", "Description of the command line action options",
-                  lambda *x: infoOptions("command line actions", command_line_parsers.action_ptions))
-    menu.addTopic("checks", "Description of the command line check options",
-                  lambda *x: infoOptions("command line checks", command_line_parsers.check_options))
-    menu.addTopic("modifiers", "List of test modifiers", test_modifier.infoTestModifier)
+    menu.addTopic("config", "Reference on config options",
+                  configuration_record.infoConfig)
+    menu.addTopic(
+        "actions", "Description of the command line action options",
+        lambda *x: infoOptions("command line actions", command_line_parsers.
+                               action_ptions))
+    menu.addTopic(
+        "checks", "Description of the command line check options", lambda *x:
+        infoOptions("command line checks", command_line_parsers.check_options))
+    menu.addTopic("modifiers", "List of test modifiers",
+                  test_modifier.infoTestModifier)
     # menu.addTopic("testconfig", "Information on the testconfig.py file",
     #               lambda *x: infoParagraph("testconfig", command_line_parsers.test_config_info))
     menu.process(args)
@@ -301,7 +325,8 @@ def report(manager):
         with open(configuration_record.config.report_text_file, "w") as filep:
             reporter.report(filep)
         if configuration_record.config.report_text_echo:
-            with open(configuration_record.config.report_text_file, "r") as filep:
+            with open(configuration_record.config.report_text_file,
+                      "r") as filep:
                 sys.stdout.write(filep.read())
 
     if configuration_record.config.report_html:
@@ -317,7 +342,8 @@ def report(manager):
         reporter = reporting.ReportTiming(testcases)
         if not configuration_record.config.report_timing_overwrite:
             try:
-                with open(configuration_record.config.timing_file, "r") as filep:
+                with open(configuration_record.config.timing_file,
+                          "r") as filep:
                     reporter.getOldTiming(filep)
             except IOError as e:
                 logger.debug(e)
@@ -333,7 +359,8 @@ def summary(manager, alog, short=False):
         return
 
     if hasattr(manager.machine, "getNumberOfProcessors"):
-        totalNumberOfProcessors = getattr(manager.machine, "getNumberOfProcessors", None)()
+        totalNumberOfProcessors = getattr(manager.machine,
+                                          "getNumberOfProcessors", None)()
     else:
         totalNumberOfProcessors = 1
     reporter = reporting.ReportTextPeriodic(manager.testlist)
@@ -388,8 +415,10 @@ def main():
         if os.path.isdir(options.machine_dir):
             search_path = options.machine_dir
         else:
-            logger.error(f'Target machine dir does not exist: {options.machine_dir}')
-            logger.error('geos_ats will continue searching in the default path')
+            logger.error(
+                f'Target machine dir does not exist: {options.machine_dir}')
+            logger.error(
+                'geos_ats will continue searching in the default path')
 
     if not search_path:
         search_path = os.path.dirname(machines.__file__)
@@ -421,11 +450,14 @@ def main():
 
     # Check the report location
     if options.logs:
-        config.report_html_file = os.path.join(options.logs, 'test_results.html')
-        config.report_text_file = os.path.join(options.logs, 'test_results.txt')
+        config.report_html_file = os.path.join(options.logs,
+                                               'test_results.html')
+        config.report_text_file = os.path.join(options.logs,
+                                               'test_results.txt')
         config.report_ini_file = os.path.join(options.logs, 'test_results.ini')
 
-    ats_files = check_ats_targets(options, testcases, configOverride, originalargv)
+    ats_files = check_ats_targets(options, testcases, configOverride,
+                                  originalargv)
     build_ats_arguments(options, ats_files, originalargv, config)
 
     # Additional setup tasks
@@ -444,7 +476,7 @@ def main():
     geos_atsStartTime = time.time()
 
     # Note: the sys.argv is read here by default
-    import ats    # type: ignore[import]
+    import ats  # type: ignore[import]
     ats.manager.init()
     logger.debug('Copying options to the geos_ats config record file')
     config.copy_values(ats.manager.machine)
@@ -464,7 +496,8 @@ def main():
     else:
         ats.AtsTest.glue(testcases="all")
 
-    from geos_ats import (common_utilities, suite_settings, test_case, test_steps, user_utilities)
+    from geos_ats import (common_utilities, suite_settings, test_case,
+                          test_steps, user_utilities)
 
     # Set ats options
     append_geos_ats_summary(ats.manager)
@@ -498,7 +531,10 @@ def main():
     # clean
     if options.action == "veryclean":
         common_utilities.removeLogDirectories(os.getcwd())
-        files = [config.report_html_file, config.report_ini_file, config.report_text_file]
+        files = [
+            config.report_html_file, config.report_ini_file,
+            config.report_text_file
+        ]
         for f in files:
             if os.path.exists(f):
                 os.remove(f)
@@ -512,11 +548,12 @@ def main():
     # return 0 if all tests passed, 1 otherwise
     try:
         if options.failIfTestsFail:
-            with open(os.path.join(options.logs, "test_results.html"), 'r') as f:
+            with open(os.path.join(options.logs, "test_results.html"),
+                      'r') as f:
                 contents = ''.join(f.readlines()).split("DETAILED RESULTS")[1]
                 messages = [
-                    "class=\"red\">FAIL", "class=\"yellow\">SKIPPED", "class=\"reddish\">FAIL",
-                    "class=\"yellow\">NOT RUN"
+                    "class=\"red\">FAIL", "class=\"yellow\">SKIPPED",
+                    "class=\"reddish\">FAIL", "class=\"yellow\">NOT RUN"
                 ]
                 result = any([m in contents for m in messages])
     except IOError as e:

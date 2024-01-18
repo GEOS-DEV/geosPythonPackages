@@ -1,13 +1,11 @@
 from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-)
+    vtkPoints, )
 from vtkmodules.vtkCommonDataModel import (
     VTK_HEXAHEDRON,
     vtkCellArray,
     vtkHexahedron,
     vtkUnstructuredGrid,
 )
-
 
 from checks.self_intersecting_elements import Options, __check
 

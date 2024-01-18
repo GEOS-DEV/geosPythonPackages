@@ -103,7 +103,8 @@ class SetupRules(Rule):
     def __init__(self, toggles, minToggle=0, maxToggle=None):
         self.setupMin = minToggle
         self.setupMax = maxToggle
-        Rule.__init__(self, SetupRules.numToggles, SetupRules.numCombinations, toggles)
+        Rule.__init__(self, SetupRules.numToggles, SetupRules.numCombinations,
+                      toggles)
 
     def refresh(self):
         mtoggles = self.toggles[self.setupMin:self.setupMax]
@@ -112,14 +113,16 @@ class SetupRules(Rule):
         self.isTenthCycle = mtoggles[1]
 
         self.baseName = "foo%i" % self.id
-        self.baseName = "%s%s" % (self.baseName, "_001" if underscoredName else "")
+        self.baseName = "%s%s" % (self.baseName,
+                                  "_001" if underscoredName else "")
         self.repStrings["@@BASE@@"] = self.baseName
 
         self.inputDeck = "%s.in" % self.baseName
         self.repStrings["@@DECK@@"] = self.inputDeck
 
         self.restartBaseName = "%s_001" % self.baseName
-        self.restartName = "%s_%s" % (self.restartBaseName, "00010" if self.isTenthCycle else "00000")
+        self.restartName = "%s_%s" % (self.restartBaseName, "00010"
+                                      if self.isTenthCycle else "00000")
         self.repStrings["@@RF@@"] = self.restartName
 
         super(SetupRules, self).refresh()
@@ -141,12 +144,13 @@ class CommandLineRules(Rule):
     def __init__(self, toggles, minToggle=0, maxToggle=None):
         self.clMin = minToggle
         self.clMax = maxToggle
-        Rule.__init__(self, CommandLineRules.numToggles, CommandLineRules.numCombinations, toggles)
+        Rule.__init__(self, CommandLineRules.numToggles,
+                      CommandLineRules.numCombinations, toggles)
 
     def refresh(self):
         mtoggles = self.toggles[self.clMin:self.clMax]
-        self.probDefined = mtoggles[0]    # use the -prob flag
-        self.restartDefined = mtoggles[1]    # use the -rf flag
+        self.probDefined = mtoggles[0]  # use the -prob flag
+        self.restartDefined = mtoggles[1]  # use the -rf flag
 
         #        self.prob = "-prob %s" % "@@BASE@@" if self.probDefined else ""
         #        self.rf = "-rf %s" % "@@RF@@" if self.restartDefined else ""
@@ -163,16 +167,22 @@ def main():
 
     generator = GenRules(SetupRules)
     for rule in generator:
-        vals = (rule.GetInputDeckName(), rule.GetInitialRestartName(), rule.GetPosition())
-        logger.debug(rule.replaceString("InputDeck: %s\tRestartFile: %s\tPos: %f" % vals))
+        vals = (rule.GetInputDeckName(), rule.GetInitialRestartName(),
+                rule.GetPosition())
+        logger.debug(
+            rule.replaceString("InputDeck: %s\tRestartFile: %s\tPos: %f" %
+                               vals))
 
     DeclareCompoundRuleClass("SetupCommand", SetupRules, CommandLineRules)
     logger.debug(SetupCommand.numCombinations)
     generator = GenRules(SetupCommand)
     logger.debug("compound:")
     for rule in generator:
-        vals = (rule.GetInputDeckName(), rule.GetInitialRestartName(), rule.GetPosition(), rule.prob, rule.rf)
-        logger.debug(rule.replaceString("InputDeck: %s\tRestartFile: %s\tPos: %f\t%s\t%s" % vals))
+        vals = (rule.GetInputDeckName(), rule.GetInitialRestartName(),
+                rule.GetPosition(), rule.prob, rule.rf)
+        logger.debug(
+            rule.replaceString(
+                "InputDeck: %s\tRestartFile: %s\tPos: %f\t%s\t%s" % vals))
 
     return
 

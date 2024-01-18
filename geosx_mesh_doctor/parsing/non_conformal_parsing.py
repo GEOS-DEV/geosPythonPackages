@@ -1,8 +1,8 @@
 import logging
 
 from typing import (
-   FrozenSet,
-   List,
+    FrozenSet,
+    List,
 )
 
 from checks.non_conformal import Options, Result
@@ -25,19 +25,25 @@ def convert(parsed_options) -> Options:
 
 
 def fill_subparser(subparsers) -> None:
-    p = subparsers.add_parser(NON_CONFORMAL,
-                              help="Detects non conformal elements. [EXPERIMENTAL]")
-    p.add_argument('--' + __ANGLE_TOLERANCE,
-                   type=float,
-                   metavar=__ANGLE_TOLERANCE_DEFAULT,
-                   default=__ANGLE_TOLERANCE_DEFAULT,
-                   help=f"[float]: angle tolerance in degrees. Defaults to {__ANGLE_TOLERANCE_DEFAULT}")
-    p.add_argument('--' + __POINT_TOLERANCE,
-                   type=float,
-                   help=f"[float]: tolerance for two points to be considered collocated.")
-    p.add_argument('--' + __FACE_TOLERANCE,
-                   type=float,
-                   help=f"[float]: tolerance for two faces to be considered \"touching\".")
+    p = subparsers.add_parser(
+        NON_CONFORMAL, help="Detects non conformal elements. [EXPERIMENTAL]")
+    p.add_argument(
+        '--' + __ANGLE_TOLERANCE,
+        type=float,
+        metavar=__ANGLE_TOLERANCE_DEFAULT,
+        default=__ANGLE_TOLERANCE_DEFAULT,
+        help=
+        f"[float]: angle tolerance in degrees. Defaults to {__ANGLE_TOLERANCE_DEFAULT}"
+    )
+    p.add_argument(
+        '--' + __POINT_TOLERANCE,
+        type=float,
+        help=f"[float]: tolerance for two points to be considered collocated.")
+    p.add_argument(
+        '--' + __FACE_TOLERANCE,
+        type=float,
+        help=f"[float]: tolerance for two faces to be considered \"touching\"."
+    )
 
 
 def display_results(options: Options, result: Result):
@@ -45,4 +51,6 @@ def display_results(options: Options, result: Result):
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
     non_conformal_cells: FrozenSet[int] = frozenset(non_conformal_cells)
-    logging.error(f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}")
+    logging.error(
+        f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}"
+    )

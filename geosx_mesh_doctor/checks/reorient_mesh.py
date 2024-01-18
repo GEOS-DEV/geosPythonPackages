@@ -27,11 +27,9 @@ from vtkmodules.vtkCommonDataModel import (
     vtkTetra,
 )
 from vtkmodules.vtkFiltersCore import (
-    vtkTriangleFilter,
-)
+    vtkTriangleFilter, )
 from .vtk_utils import (
-    to_vtk_id_list,
-)
+    to_vtk_id_list, )
 
 from .vtk_polyhedron import (
     FaceStream,
@@ -74,10 +72,12 @@ def __compute_volume(mesh_points: vtkPoints, face_stream: FaceStream) -> float:
     # (The basis of all the tetra being the triangles of the envelope).
     # We could take any point, not only the barycenter.
     # But in order to work with figure of the same magnitude, let's compute the barycenter.
-    tmp_barycenter = numpy.empty((face_stream.num_support_points, 3), dtype=float)
+    tmp_barycenter = numpy.empty((face_stream.num_support_points, 3),
+                                 dtype=float)
     for i, point_id in enumerate(face_stream.support_point_ids):
         tmp_barycenter[i, :] = mesh_points.GetPoint(point_id)
-    barycenter = tmp_barycenter[:, 0].mean(), tmp_barycenter[:, 1].mean(), tmp_barycenter[:, 2].mean()
+    barycenter = tmp_barycenter[:, 0].mean(), tmp_barycenter[:, 1].mean(
+    ), tmp_barycenter[:, 2].mean()
     # Looping on all the triangles of the envelope of the polyhedron, creating the matching tetra.
     # Then the volume of all the tetra are added to get the final polyhedron volume.
     cell_volume = 0.
@@ -85,7 +85,8 @@ def __compute_volume(mesh_points: vtkPoints, face_stream: FaceStream) -> float:
         triangle = triangles.GetCell(i)
         assert triangle.GetCellType() == VTK_TRIANGLE
         p = triangle.GetPoints()
-        cell_volume += vtkTetra.ComputeVolume(barycenter, p.GetPoint(0), p.GetPoint(1), p.GetPoint(2))
+        cell_volume += vtkTetra.ComputeVolume(barycenter, p.GetPoint(0),
+                                              p.GetPoint(1), p.GetPoint(2))
     return cell_volume
 
 
@@ -106,14 +107,18 @@ def __select_and_flip_faces(mesh_points: vtkPoints,
         color_to_nodes[color] += connected_components_indices
     # This implementation works even if there is one unique color.
     # Admittedly, there will be one face stream that won't be flipped.
-    fs: Tuple[FaceStream, FaceStream] = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
-    volumes = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
+    fs: Tuple[FaceStream,
+              FaceStream] = (face_stream.flip_faces(color_to_nodes[0]),
+                             face_stream.flip_faces(color_to_nodes[1]))
+    volumes = __compute_volume(mesh_points,
+                               fs[0]), __compute_volume(mesh_points, fs[1])
     # We keep the flipped element for which the volume is largest
     # (i.e. positive, since they should be the opposite of each other).
     return fs[numpy.argmax(volumes)]
 
 
-def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vtkIdList:
+def __reorient_element(mesh_points: vtkPoints,
+                       face_stream_ids: vtkIdList) -> vtkIdList:
     """
     Considers a vtk face stream and flips the appropriate faces to get an element with normals directed outwards.
     :param mesh_points: The mesh points, needed to compute the volume.
@@ -121,22 +126,28 @@ def __reorient_element(mesh_points: vtkPoints, face_stream_ids: vtkIdList) -> vt
     :return: The raw vtk face stream with faces properly flipped.
     """
     face_stream = FaceStream.build_from_vtk_id_list(face_stream_ids)
-    face_graph = build_face_to_face_connectivity_through_edges(face_stream, add_compatibility=True)
+    face_graph = build_face_to_face_connectivity_through_edges(
+        face_stream, add_compatibility=True)
     # Removing the non-compatible connections to build the non-connected components.
     g = networkx.Graph()
     g.add_nodes_from(face_graph.nodes)
-    g.add_edges_from(filter(lambda uvd: uvd[2]["compatible"] == "+", face_graph.edges(data=True)))
+    g.add_edges_from(
+        filter(lambda uvd: uvd[2]["compatible"] == "+",
+               face_graph.edges(data=True)))
     connected_components = tuple(networkx.connected_components(g))
     # Squashing all the connected nodes that need to receive the normal direction flip (or not) together.
-    quotient_graph = networkx.algorithms.quotient_graph(face_graph, connected_components)
+    quotient_graph = networkx.algorithms.quotient_graph(
+        face_graph, connected_components)
     # Coloring the new graph lets us know how which cluster of faces need to eventually receive the same flip.
     # W.r.t. the nature of our problem (a normal can be directed inwards or outwards),
     # two colors should be enough to color the face graph.
     # `colors` maps the nodes of each connected component to its color.
-    colors: Dict[FrozenSet[int], int] = networkx.algorithms.greedy_color(quotient_graph)
+    colors: Dict[FrozenSet[int],
+                 int] = networkx.algorithms.greedy_color(quotient_graph)
     assert len(colors) in (1, 2)
     # We now compute the face stream which generates outwards normal vectors.
-    flipped_face_stream = __select_and_flip_faces(mesh_points, colors, face_stream)
+    flipped_face_stream = __select_and_flip_faces(mesh_points, colors,
+                                                  face_stream)
     return to_vtk_id_list(flipped_face_stream.dump())
 
 
@@ -157,8 +168,12 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
     # I did not manage to call `output_mesh.CopyStructure(mesh)` because I could not modify the polyhedron in place.
     # Therefore, I insert the cells one by one...
     output_mesh.SetPoints(mesh.GetPoints())
-    logging.info("Reorienting the polyhedron cells to enforce normals directed outward.")
-    with tqdm(total=needs_to_be_reoriented.sum(), desc="Reorienting polyhedra") as progress_bar:  # For smoother progress, we only update on reoriented elements.
+    logging.info(
+        "Reorienting the polyhedron cells to enforce normals directed outward."
+    )
+    with tqdm(
+            total=needs_to_be_reoriented.sum(), desc="Reorienting polyhedra"
+    ) as progress_bar:  # For smoother progress, we only update on reoriented elements.
         for ic in range(num_cells):
             cell = mesh.GetCell(ic)
             cell_type = cell.GetCellType()
@@ -166,7 +181,8 @@ def reorient_mesh(mesh, cell_indices: Iterator[int]) -> vtkUnstructuredGrid:
                 face_stream_ids = vtkIdList()
                 mesh.GetFaceStream(ic, face_stream_ids)
                 if needs_to_be_reoriented[ic]:
-                    new_face_stream_ids = __reorient_element(mesh.GetPoints(), face_stream_ids)
+                    new_face_stream_ids = __reorient_element(
+                        mesh.GetPoints(), face_stream_ids)
                 else:
                     new_face_stream_ids = face_stream_ids
                 output_mesh.InsertNextCell(VTK_POLYHEDRON, new_face_stream_ids)

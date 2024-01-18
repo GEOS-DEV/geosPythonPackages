@@ -9,11 +9,9 @@ from typing import (
 )
 
 from vtkmodules.vtkCommonCore import (
-    vtkIdList,
-)
+    vtkIdList, )
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-)
+    vtkUnstructuredGrid, )
 from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridWriter,
     vtkUnstructuredGridReader,
@@ -54,10 +52,14 @@ def vtk_iter(l) -> Iterator[Any]:
 
 def __read_vtk(vtk_input_file: str) -> Optional[vtkUnstructuredGrid]:
     reader = vtkUnstructuredGridReader()
-    logging.info(f"Testing file format \"{vtk_input_file}\" using legacy format reader...")
+    logging.info(
+        f"Testing file format \"{vtk_input_file}\" using legacy format reader..."
+    )
     reader.SetFileName(vtk_input_file)
     if reader.IsFileUnstructuredGrid():
-        logging.info(f"Reader matches. Reading file \"{vtk_input_file}\" using legacy format reader.")
+        logging.info(
+            f"Reader matches. Reading file \"{vtk_input_file}\" using legacy format reader."
+        )
         reader.Update()
         return reader.GetOutput()
     else:
@@ -67,10 +69,13 @@ def __read_vtk(vtk_input_file: str) -> Optional[vtkUnstructuredGrid]:
 
 def __read_vtu(vtk_input_file: str) -> Optional[vtkUnstructuredGrid]:
     reader = vtkXMLUnstructuredGridReader()
-    logging.info(f"Testing file format \"{vtk_input_file}\" using XML format reader...")
+    logging.info(
+        f"Testing file format \"{vtk_input_file}\" using XML format reader...")
     if reader.CanReadFile(vtk_input_file):
         reader.SetFileName(vtk_input_file)
-        logging.info(f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader.")
+        logging.info(
+            f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader."
+        )
         reader.Update()
         return reader.GetOutput()
     else:
@@ -86,8 +91,7 @@ def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
     :return: A unstructured grid.
     """
     file_extension = os.path.splitext(vtk_input_file)[-1]
-    extension_to_reader = {".vtk": __read_vtk,
-                           ".vtu": __read_vtu}
+    extension_to_reader = {".vtk": __read_vtk, ".vtu": __read_vtu}
     # Testing first the reader that should match
     if file_extension in extension_to_reader:
         output_mesh = extension_to_reader.pop(file_extension)(vtk_input_file)
@@ -99,7 +103,9 @@ def read_mesh(vtk_input_file: str) -> vtkUnstructuredGrid:
         if output_mesh:
             return output_mesh
     # No reader did work. Dying.
-    logging.critical(f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying...")
+    logging.critical(
+        f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..."
+    )
     sys.exit(1)
 
 
@@ -111,12 +117,14 @@ def __write_vtk(mesh: vtkUnstructuredGrid, output: str) -> int:
     return writer.Write()
 
 
-def __write_vtu(mesh: vtkUnstructuredGrid, output: str, is_data_mode_binary: bool) -> int:
+def __write_vtu(mesh: vtkUnstructuredGrid, output: str,
+                is_data_mode_binary: bool) -> int:
     logging.info(f"Writing mesh into file \"{output}\" using XML format.")
     writer = vtkXMLUnstructuredGridWriter()
     writer.SetFileName(output)
     writer.SetInputData(mesh)
-    writer.SetDataModeToBinary() if is_data_mode_binary else writer.SetDataModeToAscii()
+    writer.SetDataModeToBinary(
+    ) if is_data_mode_binary else writer.SetDataModeToAscii()
     return writer.Write()
 
 
@@ -129,15 +137,19 @@ def write_mesh(mesh: vtkUnstructuredGrid, vtk_output: VtkOutput) -> int:
     :return: 0 in case of success.
     """
     if os.path.exists(vtk_output.output):
-        logging.error(f"File \"{vtk_output.output}\" already exists, nothing done.")
+        logging.error(
+            f"File \"{vtk_output.output}\" already exists, nothing done.")
         return 1
     file_extension = os.path.splitext(vtk_output.output)[-1]
     if file_extension == ".vtk":
         success_code = __write_vtk(mesh, vtk_output.output)
     elif file_extension == ".vtu":
-        success_code = __write_vtu(mesh, vtk_output.output, vtk_output.is_data_mode_binary)
+        success_code = __write_vtu(mesh, vtk_output.output,
+                                   vtk_output.is_data_mode_binary)
     else:
         # No writer found did work. Dying.
-        logging.critical(f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying...")
+        logging.critical(
+            f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..."
+        )
         sys.exit(1)
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
