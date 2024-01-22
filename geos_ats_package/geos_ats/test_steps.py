@@ -499,12 +499,8 @@ class geos(TestStepBase):
         return list(map(str, args))
 
     def resultPaths(self):
-        paths = []
         name = getGeosProblemName(self.p.deck, self.p.name)
-        paths += [os.path.join(self.p.output_directory, "%s_restart_*") % name]
-        paths += [os.path.join(self.p.output_directory, "silo*")]
-        paths += [os.path.join(self.p.output_directory, "%s_bp_*" % name)]
-
+        paths = [os.path.join(self.p.output_directory, f"{name}_restart_*")]
         return paths
 
     def clean(self):
@@ -759,9 +755,7 @@ class curvecheck(CheckTestStepBase):
         shutil.copyfile(self.target_file, self.baseline_file)
 
     def resultPaths(self):
-        figure_pattern = os.path.join(self.figure_root, '*.png')
-        figure_list = sorted(glob.glob(figure_pattern))
-        return [self.target_file] + figure_list
+        return [self.target_file, os.path.join(self.figure_root, '*.png')]
 
     def clean(self):
         self._clean(self.resultPaths())

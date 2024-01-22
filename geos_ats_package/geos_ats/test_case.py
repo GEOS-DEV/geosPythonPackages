@@ -1,23 +1,17 @@
 ﻿import ats    # type: ignore[import]
 import os
-import sys
 import shutil
-import errno
 import logging
 import glob
 import inspect
 from configparser import ConfigParser
+from ats import atsut
+from ats import (PASSED, FAILED, FILTERED, SKIPPED)
+from geos_ats.common_utilities import Error, Log, removeLogDirectories
+from geos_ats.configuration_record import config, globalTestTimings
 
 test = ats.manager.test
 testif = ats.manager.testif
-
-from geos_ats.suite_settings import testLabels, testOwners
-from geos_ats.common_utilities import Error, Log, InfoTopic, TextTable, removeLogDirectories
-from geos_ats.configuration_record import config, globalTestTimings
-from geos_ats import reporting
-
-TESTS = {}
-BASELINE_PATH = "baselines"
 logger = logging.getLogger('geos_ats')
 
 
@@ -75,6 +69,7 @@ class TestCase(object):
             self.dirname = os.getcwd()
 
         # Setup paths
+        log_dir = ats.tests.AtsTest.getOptions().get("logDir")
         working_relpath = os.path.relpath(self.dirname, ats_root_dir)
         working_root = ats.tests.AtsTest.getOptions().get("workingDir")
         working_dir = os.path.abspath(os.path.join(working_root, working_relpath, self.name))
@@ -92,35 +87,25 @@ class TestCase(object):
             raise Exception()
 
         # Setup other parameters
-        self.atsGroup = None
         self.dictionary = {}
         self.dictionary.update(kw)
         self.nodoc = self.dictionary.get("nodoc", False)
-        self.status = None
-        self.outname = f"{self.name}.data"
-        self.errname = f"{self.name}.err"
+        self.last_status = None
         self.dictionary["name"] = self.name
         self.dictionary["test_directory"] = self.dirname
         self.dictionary["output_directory"] = working_dir
         self.dictionary["baseline_directory"] = baseline_directory
-        self.dictionary["testcase_out"] = self.outname
-        self.dictionary["testcase_err"] = self.errname
+        self.dictionary["log_directory"] = log_dir
         self.dictionary["testcase_name"] = self.name
 
         # Check for previous log information
-        log_dir = ats.tests.AtsTest.getOptions().get("logDir")
         log_file = os.path.join(log_dir, 'test_results.ini')
         if os.path.isfile(log_file):
             previous_config = ConfigParser()
             previous_config.read(log_file)
             for k, v in previous_config['Results'].items():
                 if self.name in v.split(';'):
-                    self.status = reporting.status_map[k.upper()]
-
-        if self.name in TESTS:
-            Error("Name already in use: %s" % self.name)
-
-        TESTS[self.name] = self
+                    self.last_status = atsut.StatusCode(k.upper())
 
         # check for independent
         if config.override_np > 0:
@@ -139,8 +124,6 @@ class TestCase(object):
             # This check avoid testcases depending on themselves.
             self.depends = None
 
-        self.handleLabels(label, labels)
-
         # complete the steps.
         #  1. update the steps with data from the dictionary
         #  2. substeps are inserted into the list of steps (the steps are flattened)
@@ -155,7 +138,7 @@ class TestCase(object):
         action = ats.tests.AtsTest.getOptions().get("action")
         if action in ("run", "rerun", "continue"):
             if self.dictionary.get("skip", None):
-                self.status = reporting.SKIP
+                self.status = SKIPPED
                 return
 
         # Filtering tests on maxprocessors
@@ -163,7 +146,7 @@ class TestCase(object):
         if config.filter_maxprocessors != -1:
             if npMax > config.filter_maxprocessors:
                 Log("# FILTER test=%s : max processors(%d > %d)" % (self.name, npMax, config.filter_maxprocessors))
-                self.status = reporting.FILTERED
+                self.status = FILTERED
                 return
 
         # Filtering tests on maxGPUS
@@ -181,14 +164,14 @@ class TestCase(object):
                 if npMax > totalNumberOfProcessors:
                     Log("# SKIP test=%s : not enough processors to run (%d > %d)" %
                         (self.name, npMax, totalNumberOfProcessors))
-                    self.status = reporting.SKIP
+                    self.status = SKIPPED
                     return
 
                 # If the machine doesn't specify a number of GPUs then it has none.
                 totalNumberOfGPUs = getattr(ats.manager.machine, "getNumberOfGPUS", lambda: 1e90)()
                 if ngpuMax > totalNumberOfGPUs:
                     Log("# SKIP test=%s : not enough gpus to run (%d > %d)" % (self.name, ngpuMax, totalNumberOfGPUs))
-                    self.status = reporting.SKIP
+                    self.status = SKIPPED
                     return
 
         # filtering test steps based on action
@@ -208,20 +191,6 @@ class TestCase(object):
             if step.isDelayed():
                 reorderedSteps.append(step)
         self.steps = reorderedSteps
-
-        # filter based on previous results:
-        if action in ("run", "check", "continue"):
-            # if previously passed then skip
-            if self.status == reporting.PASS:
-                Log("# SKIP test=%s (previously passed)" % (self.name))
-                # don't set status here, as we want the report to reflect the pass
-                return
-
-            if action == "continue":
-                if self.status == reporting.FAILED:
-                    Log("# SKIP test=%s (previously failed)" % (self.name))
-                    # don't set status here, as we want the report to reflect the pass
-                    return
 
         # Perform the action:
         if action in ("run", "continue"):
@@ -259,9 +228,12 @@ class TestCase(object):
         else:
             Error("Unknown action?? %s" % action)
 
+    def logNames(self):
+        return sorted(glob.glob(os.path.join(self.dictionary["log_directory"], f'*{self.name}_*')))
+
     def resultPaths(self, step=None):
         """Return the paths to output files for the testcase.  Used in reporting"""
-        paths = [self.outname, self.errname]
+        paths = []
         if step:
             for x in step.resultPaths():
                 fullpath = os.path.join(self.path, x)
@@ -270,11 +242,12 @@ class TestCase(object):
 
         return paths
 
+    def cleanLogs(self):
+        for f in self.logNames():
+            os.remove(f)
+
     def testClean(self):
-        if os.path.exists(self.outname):
-            os.remove(self.outname)
-        if os.path.exists(self.errname):
-            os.remove(self.errname)
+        self.cleanLogs()
         for step in self.steps:
             step.clean()
 
@@ -299,7 +272,6 @@ class TestCase(object):
         # remove extra files
         if len(self.steps) > 0:
             _remove(config.report_html_file)
-            _remove(config.report_text_file)
             _remove(self.path)
             _remove("*.core")
             _remove("core")
@@ -324,15 +296,8 @@ class TestCase(object):
         return gpuMax
 
     def testCreate(self):
-        atsTest = None
-        keep = ats.tests.AtsTest.getOptions().get("keep")
-
-        # remove outname
-        if os.path.exists(self.outname):
-            os.remove(self.outname)
-        if os.path.exists(self.errname):
-            os.remove(self.errname)
-
+        # Remove old logs
+        self.cleanLogs()
         maxnp = 1
         for stepnum, step in enumerate(self.steps):
             np = getattr(step.p, "np", 1)
@@ -345,31 +310,14 @@ class TestCase(object):
         else:
             priority = 1
 
-        # start a group
+        # Setup a new test group
+        atsTest = None
         ats.tests.AtsTest.newGroup(priority=priority)
-
-        # keep a reference to the ats test group
-        self.atsGroup = ats.tests.AtsTest.group
-
-        # if depends
-        if self.depends:
-            priorTestCase = TESTS.get(self.depends, None)
-            if priorTestCase is None:
-                Log("Warning: Test %s depends on testcase %s, which is not scheduled to run" %
-                    (self.name, self.depends))
-            else:
-                if priorTestCase.steps:
-                    atsTest = getattr(priorTestCase.steps[-1], "atsTest", None)
-
         for stepnum, step in enumerate(self.steps):
-
             np = getattr(step.p, "np", 1)
             ngpu = getattr(step.p, "ngpu", 0)
             executable = step.executable()
             args = step.makeArgs()
-
-            # set the label
-            # label = "%s/%s_%d_%s" % (self.dirname, self.name, stepnum + 1, step.label())
             label = "%s_%d_%s" % (self.name, stepnum + 1, step.label())
 
             # call either 'test' or 'testif'
@@ -378,12 +326,10 @@ class TestCase(object):
             else:
                 func = lambda *a, **k: testif(atsTest, *a, **k)
 
-            # timelimit
+            # Set the time limit
             kw = {}
-
             if self.batch.enabled:
                 kw["timelimit"] = self.batch.duration
-
             if (step.timelimit() and not config.override_timelimit):
                 kw["timelimit"] = step.timelimit()
             else:
@@ -398,23 +344,9 @@ class TestCase(object):
                            independent=self.independent,
                            batch=self.batch.enabled,
                            **kw)
+            atsTest.step_outputs = step.resultPaths()
 
-            # ats test gets a reference to the TestStep and the TestCase
-            atsTest.geos_atsTestCase = self
-            atsTest.geos_atsTestStep = step
-
-            # TestStep gets a reference to the atsTest
-            step.atsTest = atsTest
-
-            # set the expected result
-            if step.expectedResult() == "FAIL" or step.expectedResult() is False:
-                atsTest.expectedResult = ats.FAILED
-                # The ATS does not permit tests to depend on failed tests.
-                # therefore we need to break here
-                self.steps = self.steps[:stepnum + 1]
-                break
-
-        # end the group
+        # End the group
         ats.tests.AtsTest.endGroup()
 
     def commandLine(self, step):
@@ -468,27 +400,11 @@ class TestCase(object):
 
     def testRebaselineFailed(self):
         config.rebaseline_ask = False
-        if self.status == reporting.FAILED:
+        if self.last_status == FAILED:
             self.testRebaseline()
 
     def testList(self):
         Log("# test=%s : labels=%s" % (self.name.ljust(32), " ".join(self.labels)))
-
-    def handleLabels(self, label, labels):
-        """set the labels, and verify they are known to the system, the avoid typos"""
-        if labels is not None and label is not None:
-            Error("specify only one of 'label' or 'labels'")
-
-        if label is not None:
-            self.labels = [label]
-        elif labels is not None:
-            self.labels = labels
-        else:
-            self.labels = []
-
-        for x in self.labels:
-            if x not in testLabels:
-                Error(f"unknown label {x}. run 'geos_ats -i labels' for a list")
 
 
 # Make available to the tests

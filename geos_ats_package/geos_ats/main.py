@@ -208,67 +208,28 @@ def info(args):
 
 def report(manager):
     """The report action"""
-    from geos_ats import (test_case, reporting, configuration_record)
-
-    testcases = test_case.TESTS.values()
-
-    if configuration_record.config.report_wait:
-        reporter = reporting.ReportWait(testcases)
-        reporter.report(sys.stdout)
-
-    if configuration_record.config.report_text:
-        reporter = reporting.ReportText(testcases)
-        with open(configuration_record.config.report_text_file, "w") as filep:
-            reporter.report(filep)
-        if configuration_record.config.report_text_echo:
-            with open(configuration_record.config.report_text_file, "r") as filep:
-                sys.stdout.write(filep.read())
+    from geos_ats import (reporting, configuration_record)
 
     if configuration_record.config.report_html:
-        reporter = reporting.ReportHTML(testcases)
+        reporter = reporting.ReportHTML(manager.testlist)
         reporter.report()
 
     if configuration_record.config.report_ini:
-        reporter = reporting.ReportIni(testcases)
+        reporter = reporting.ReportIni(manager.testlist)
         with open(configuration_record.config.report_ini_file, "w") as filep:
-            reporter.report(filep)
-
-    if configuration_record.config.report_timing:
-        reporter = reporting.ReportTiming(testcases)
-        if not configuration_record.config.report_timing_overwrite:
-            try:
-                with open(configuration_record.config.timing_file, "r") as filep:
-                    reporter.getOldTiming(filep)
-            except IOError as e:
-                logger.debug(e)
-        with open(configuration_record.config.timing_file, "w") as filep:
             reporter.report(filep)
 
 
 def summary(manager, alog, short=False):
     """Periodic summary and final summary"""
-    from geos_ats import (reporting, configuration_record, test_case)
+    from geos_ats import (reporting, configuration_record)
 
     if len(manager.testlist) == 0:
         return
 
-    if hasattr(manager.machine, "getNumberOfProcessors"):
-        totalNumberOfProcessors = getattr(manager.machine, "getNumberOfProcessors", None)()
-    else:
-        totalNumberOfProcessors = 1
-    reporter = reporting.ReportTextPeriodic(manager.testlist)
-    reporter.report(geos_atsStartTime, totalNumberOfProcessors)
-
     if configuration_record.config.report_html and configuration_record.config.report_html_periodic:
-        testcases = test_case.TESTS.values()
-        reporter = reporting.ReportHTML(testcases)
+        reporter = reporting.ReportHTML(manager.testlist)
         reporter.report(refresh=30)
-
-    if configuration_record.config.report_text:
-        testcases = test_case.TESTS.values()
-        reporter = reporting.ReportText(testcases)
-        with open(configuration_record.config.report_text_file, "w") as filep:
-            reporter.report(filep)
 
 
 def append_geos_ats_summary(manager):
@@ -346,7 +307,6 @@ def main():
     # Check the report location
     if options.logs:
         config.report_html_file = os.path.join(options.logs, 'test_results.html')
-        config.report_text_file = os.path.join(options.logs, 'test_results.txt')
         config.report_ini_file = os.path.join(options.logs, 'test_results.ini')
 
     build_ats_arguments(options, originalargv, config)
@@ -424,7 +384,7 @@ def main():
     # clean
     if options.action == "veryclean":
         common_utilities.removeLogDirectories(os.getcwd())
-        files = [config.report_html_file, config.report_ini_file, config.report_text_file]
+        files = [config.report_html_file, config.report_ini_file]
         for f in files:
             if os.path.exists(f):
                 os.remove(f)
