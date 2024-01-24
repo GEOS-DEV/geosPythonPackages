@@ -6,6 +6,8 @@ import signal
 import subprocess
 import time
 import logging
+import importlib
+import pkgutil
 from geos_ats import command_line_parsers
 
 test_actions = ("run", "rerun", "check", "continue")
@@ -397,6 +399,18 @@ def main():
 
     if options.machine:
         os.environ["MACHINE_TYPE"] = options.machine
+
+    # this module override has to happen *after* setting the machine dir and machine type in the
+    #  environ, as our machine modules import the upstream ats machines, which transitively import
+    #  the ats configuration.py module which is where the envionment options about the machines are
+    #  used (during the import... ATS is a dumpster fire of side-effects)
+
+    # Add the machines module to the ats.atsMachines submodule,
+    # So that ats can find our custom definitions at runtime
+    for _, name, _ in pkgutil.iter_modules( [ search_path ] ):
+        if name == options.machine:
+            module = importlib.import_module( f"geos_ats.machines.{name}" )
+            sys.modules[f'ats.atsMachines.{name}'] = module
 
     # ---------------------------------
     # Setup ATS
