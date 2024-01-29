@@ -15,31 +15,30 @@ from vtkmodules.vtkCommonDataModel import (
 from checks.supported_elements import Options, check, __check
 from checks.vtk_polyhedron import parse_face_stream, build_face_to_face_connectivity_through_edges, FaceStream
 from checks.vtk_utils import (
-    to_vtk_id_list,
-)
+    to_vtk_id_list, )
 
 
-@pytest.mark.parametrize("base_name",
-                         ("supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk"))
-def test_supported_elements(base_name) -> None:
+@pytest.mark.parametrize( "base_name", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )
+def test_supported_elements( base_name ) -> None:
     """
     Testing that the supported elements are properly detected as supported!
     :param base_name: Supported elements are provided as standard elements or polyhedron elements.
     """
-    directory = os.path.dirname(os.path.realpath(__file__))
-    supported_elements_file_name = os.path.join(directory, "../../../../unitTests/meshTests", base_name)
-    options = Options(chunk_size=1, num_proc=4)
-    result = check(supported_elements_file_name, options)
+    directory = os.path.dirname( os.path.realpath( __file__ ) )
+    supported_elements_file_name = os.path.join( directory, "../../../../unitTests/meshTests", base_name )
+    options = Options( chunk_size=1, num_proc=4 )
+    result = check( supported_elements_file_name, options )
     assert not result.unsupported_std_elements_types
     assert not result.unsupported_polyhedron_elements
 
 
-def make_dodecahedron() -> Tuple[vtkPoints, vtkIdList]:
+def make_dodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
     """
     Returns the points and faces for a dodecahedron.
     This code was adapted from an official vtk example.
     :return: The tuple of points and faces (as vtk instances).
     """
+    # yapf: disable
     points = (
         (1.21412, 0, 1.58931),
         (0.375185, 1.1547, 1.58931),
@@ -76,13 +75,14 @@ def make_dodecahedron() -> Tuple[vtkPoints, vtkIdList]:
              5, 18, 13, 8, 12, 17,
              5, 19, 14, 9, 13, 18,
              5, 19, 18, 17, 16, 15)
+    # yapf: enable
 
     p = vtkPoints()
-    p.Allocate(len(points))
+    p.Allocate( len( points ) )
     for coords in points:
-        p.InsertNextPoint(coords)
+        p.InsertNextPoint( coords )
 
-    f = to_vtk_id_list(faces)
+    f = to_vtk_id_list( faces )
 
     return p, f
 
@@ -93,18 +93,19 @@ def test_dodecahedron() -> None:
     """
     points, faces = make_dodecahedron()
     mesh = vtkUnstructuredGrid()
-    mesh.Allocate(1)
-    mesh.SetPoints(points)
-    mesh.InsertNextCell(VTK_POLYHEDRON, faces)
+    mesh.Allocate( 1 )
+    mesh.SetPoints( points )
+    mesh.InsertNextCell( VTK_POLYHEDRON, faces )
 
-    result = __check(mesh, Options(num_proc=1, chunk_size=1))
-    assert set(result.unsupported_polyhedron_elements) == {0}
+    result = __check( mesh, Options( num_proc=1, chunk_size=1 ) )
+    assert set( result.unsupported_polyhedron_elements ) == { 0 }
     assert not result.unsupported_std_elements_types
 
 
 def test_parse_face_stream() -> None:
     _, faces = make_dodecahedron()
-    result = parse_face_stream(faces)
+    result = parse_face_stream( faces )
+    # yapf: disable
     expected = (
         (0, 1, 2, 3, 4),
         (0, 5, 10, 6, 1),
@@ -119,7 +120,8 @@ def test_parse_face_stream() -> None:
         (19, 14, 9, 13, 18),
         (19, 18, 17, 16, 15)
     )
+    # yapf: enable
     assert result == expected
-    face_stream = FaceStream.build_from_vtk_id_list(faces)
+    face_stream = FaceStream.build_from_vtk_id_list( faces )
     assert face_stream.num_faces == 12
     assert face_stream.num_support_points == 20
