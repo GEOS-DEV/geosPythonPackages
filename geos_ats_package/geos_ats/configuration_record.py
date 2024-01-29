@@ -90,7 +90,7 @@ class Config(object):
 # The global config object
 config = Config()
 # Global testTimings object
-globalTestTimings = {}    # type: ignore[var-annotated]
+globalTestTimings = {}  # type: ignore[var-annotated]
 # Depth of testconfig recursion
 configDepth = 0
 
@@ -98,7 +98,7 @@ configDepth = 0
 def infoConfigShow(public, outfile=sys.stdout):
     topic = InfoTopic("config show", outfile)
     topic.startBanner()
-    import ats    # type: ignore[import]
+    import ats  # type: ignore[import]
 
     keys = sorted(config._items.keys())
     table = TextTable(3)

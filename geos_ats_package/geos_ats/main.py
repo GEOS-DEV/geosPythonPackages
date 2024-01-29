@@ -327,7 +327,7 @@ def main():
     geos_atsStartTime = time.time()
 
     # Note: the sys.argv is read here by default
-    import ats    # type: ignore[import]
+    import ats  # type: ignore[import]
     ats.manager.init()
     logger.debug('Copying options to the geos_ats config record file')
     config.copy_values(ats.manager.machine)

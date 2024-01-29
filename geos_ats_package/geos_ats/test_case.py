@@ -1,4 +1,4 @@
-﻿import ats    # type: ignore[import]
+﻿import ats  # type: ignore[import]
 import os
 import shutil
 import logging
@@ -33,8 +33,8 @@ class Batch(object):
             logger.error(e)
             Error("bad time specification: %s" % duration)
 
-        self.ppn = ppn    # processor per node
-        self.altname = altname    # alternate name to use when launcing the batch job
+        self.ppn = ppn  # processor per node
+        self.altname = altname  # alternate name to use when launcing the batch job
 
 
 class TestCase(object):
@@ -263,7 +263,7 @@ class TestCase(object):
                         else:
                             os.remove(p)
                     except OSError:
-                        pass    # so that two simultaneous clean operations don't fail
+                        pass  # so that two simultaneous clean operations don't fail
 
         # clean
         self.testClean()

@@ -1,5 +1,5 @@
 ﻿import os
-import ats    # type: ignore[import]
+import ats  # type: ignore[import]
 import glob
 import shutil
 import sys
@@ -265,7 +265,7 @@ class TestStepBase(object):
                         else:
                             os.remove(p)
                     except OSError as e:
-                        logger.debug(e)    # so that two simultaneous clean operations don't fail
+                        logger.debug(e)  # so that two simultaneous clean operations don't fail
 
     def getCheckOption(self):
         return ats.tests.AtsTest.getOptions().get("checkoption")
@@ -388,8 +388,8 @@ class geos(TestStepBase):
     params = TestStepBase.defaultParams + (
         TestStepBase.commonParams["name"], TestStepBase.commonParams["deck"], TestStepBase.commonParams["np"],
         TestStepBase.commonParams["ngpu"], TestStepBase.commonParams["check"],
-        TestStepBase.commonParams["test_directory"], TestStepBase.commonParams["baseline_directory"], TestStepBase.commonParams["output_directory"],
-        TestParam("restart_file", "The name of the restart file."),
+        TestStepBase.commonParams["test_directory"], TestStepBase.commonParams["baseline_directory"],
+        TestStepBase.commonParams["output_directory"], TestParam("restart_file", "The name of the restart file."),
         TestParam("x_partitions", "The number of partitions in the x direction."),
         TestParam("y_partitions", "The number of partitions in the y direction."),
         TestParam("z_partitions",

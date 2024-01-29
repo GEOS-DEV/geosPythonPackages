@@ -7,15 +7,13 @@ from tabulate import tabulate
 import glob
 import logging
 from ats.times import hms
-from ats import (PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED,
-                 SKIPPED, CREATED, RUNNING, HALTED, LSFERROR)
+from ats import (PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED, SKIPPED, CREATED, RUNNING, HALTED, LSFERROR)
 
 # Get the active logger instance
 logger = logging.getLogger('geos_ats')
 
 # Status value in priority order
-STATUS = (EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING,
-          PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED)
+STATUS = (EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED)
 
 COLORS = {}
 COLORS[EXPECTED.name] = "black"
@@ -47,15 +45,27 @@ class ReportBase(object):
 
         for t in test_steps:
             # Parse the test step name
-            step_name = t.name[t.name.find('(')+1:t.name.rfind('_')]
+            step_name = t.name[t.name.find('(') + 1:t.name.rfind('_')]
             test_name = step_name[:step_name.rfind('_')]
             test_id = t.group.number
             group_name = test_name[:test_name.rfind('_')]
 
             # Save data
             if test_name not in self.test_results:
-                self.test_results[test_name] = {'steps': {}, 'status': EXPECTED, 'id': test_id, 'elapsed': 0.0, 'current_step': ' ', 'resources': t.np}
-            self.test_results[test_name]['steps'][t.name] = {'status': t.status, 'log': t.outname, 'output': t.step_outputs, 'number': t.groupSerialNumber}
+                self.test_results[test_name] = {
+                    'steps': {},
+                    'status': EXPECTED,
+                    'id': test_id,
+                    'elapsed': 0.0,
+                    'current_step': ' ',
+                    'resources': t.np
+                }
+            self.test_results[test_name]['steps'][t.name] = {
+                'status': t.status,
+                'log': t.outname,
+                'output': t.step_outputs,
+                'number': t.groupSerialNumber
+            }
 
             # Check elapsed time
             elapsed = 0.0
@@ -207,9 +217,7 @@ class ReportHTML(ReportBase):
             username = os.getenv("USER")
 
         header += "<h1>GEOS ATS Report</h1>\n<h2>Configuration</h2>\n"
-        table = [['Test Results', gentime],
-                 ['User', username],
-                 ['Platform', platform]]
+        table = [['Test Results', gentime], ['User', username], ['Platform', platform]]
         header += tabulate(table, tablefmt='html')
         header += '\n'
         sp.write(header)
