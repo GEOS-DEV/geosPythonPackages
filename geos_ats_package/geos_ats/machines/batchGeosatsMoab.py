@@ -1,36 +1,36 @@
 #BATS:batchGeosatsMoab  batchGeosatsMoab BatchGeosatsMoab -1
 
-from ats import machines, configuration, log, atsut, times, AtsTest  # type: ignore[import]
-import subprocess, sys, os, shlex, time, socket, re
-import utils, batchTemplate  # type: ignore[import]
-from batch import BatchMachine  # type: ignore[import]
+from ats import machines, configuration, log, atsut, times, AtsTest    # type: ignore[import]
+import subprocess, sys, os, time, socket, re
+import utils  # type: ignore[import]
+from batch import BatchMachine    # type: ignore[import]
 import logging
 
 debug = configuration.debug
-logger = logging.getLogger( 'geos_ats' )
+logger = logging.getLogger('geos_ats')
 
 
-class BatchGeosatsMoab( BatchMachine ):
+class BatchGeosatsMoab(BatchMachine):
     """The batch machine
     """
 
-    def init( self ):
+    def init(self):
 
-        super( BatchGeosatsMoab, self ).init()
+        super(BatchGeosatsMoab, self).init()
 
         if "SLURM_NNODES" in os.environ.keys():
-            self.ppn = int( os.getenv( "SLURM_TASKS_PER_NODE", "1" ).split( "(" )[ 0 ] )
+            self.ppn = int(os.getenv("SLURM_TASKS_PER_NODE", "1").split("(")[0])
         elif "SLURM_JOB_NUM_NODES" in os.environ.keys():
-            self.ppn = int( os.getenv( "SLURM_JOB_CPUS_PER_NODE", "1" ).split( "(" )[ 0 ] )
+            self.ppn = int(os.getenv("SLURM_JOB_CPUS_PER_NODE", "1").split("(")[0])
         else:
             self.ppn = 0
 
         self.numberTestsRunningMax = 2048
 
-    def canRun( self, test ):
+    def canRun(self, test):
         return ''
 
-    def load( self, testlist ):
+    def load(self, testlist):
         """Receive a list of tests to possibly run.
            Submit the set of tests to batch.
         """
@@ -41,20 +41,20 @@ class BatchGeosatsMoab( BatchMachine ):
 
             # for each test group make an msub file
             if t.groupSerialNumber == 1:
-                testCase = getattr( t, "geos_atsTestCase", None )
+                testCase = getattr(t, "geos_atsTestCase", None)
                 if testCase:
-                    batchFilename = os.path.join( testCase.dirnamefull, "batch_%s.msub" % testCase.name )
-                    self.writeSubmitScript( batchFilename, testCase )
-                    self.jobid = self.submitBatchScript( testCase.name, batchFilename )
+                    batchFilename = os.path.join(testCase.dirnamefull, "batch_%s.msub" % testCase.name)
+                    self.writeSubmitScript(batchFilename, testCase)
+                    self.jobid = self.submitBatchScript(testCase.name, batchFilename)
 
-    def writeSubmitScript( self, batchFilename, testCase ):
+    def writeSubmitScript(self, batchFilename, testCase):
 
-        fc = open( batchFilename, "w" )
+        fc = open(batchFilename, "w")
         batch = testCase.batch
 
         # get references to the options and configuration
         options = AtsTest.getOptions()
-        config = options.get( "config", None )
+        config = options.get("config", None)
 
         # ppn
         # 1.  first check batch object
@@ -69,10 +69,10 @@ class BatchGeosatsMoab( BatchMachine ):
             ppn = self.ppn
 
         if ppn == 0:
-            raise RuntimeError( """
+            raise RuntimeError("""
             Unable to find the number of processors per node in
             BatchGeosatsMoab.  Try setting batch_ppn=<ppn> on the
-            command line.""" )
+            command line.""")
 
         # Specifies parallel Lustre file system.
         gresLine = ""
@@ -81,7 +81,7 @@ class BatchGeosatsMoab( BatchMachine ):
 
         # determine the max number of processors in this job
         maxprocs = testCase.findMaxNumberOfProcessors()
-        minNodes = maxprocs / ppn + ( maxprocs % ppn != 0 )
+        minNodes = maxprocs / ppn + (maxprocs % ppn != 0)
 
         # MSUB options
         msub_str = '#!/bin/csh'
@@ -114,20 +114,20 @@ class BatchGeosatsMoab( BatchMachine ):
         msub_str += f"\n\ncd {testCase.dirnamefull}"
 
         # pull out options to construct the command line
-        action = options.get( "action" )
-        checkoption = options.get( "checkoption" )
-        configFile = options.get( "configFile" )
-        configOverride = options.get( "configOverride" )
-        atsFlags = options.get( "atsFlags" )
-        geos_atsPath = options.get( "geos_atsPath" )
-        machine = options.get( "machine" )
+        action = options.get("action")
+        checkoption = options.get("checkoption")
+        configFile = options.get("configFile")
+        configOverride = options.get("configOverride")
+        atsFlags = options.get("atsFlags")
+        geos_atsPath = options.get("geos_atsPath")
+        machine = options.get("machine")
 
         # construct the command line
         msub_str += f'\n{geos_atsPath} -a {action} -c {checkoption}'
         msub_str += f' -f {configFile} -N {minNodes:d} --machine={machine}'
 
         for key, value in configOverride.items():
-            if key.startswith( "batch" ):
+            if key.startswith("batch"):
                 continue
 
             msub_str += f' {key}="{value}"'
@@ -138,26 +138,26 @@ class BatchGeosatsMoab( BatchMachine ):
         msub_str += f" batch_interactive=True {testCase.name}"
 
         # Write and close the file
-        fc.write( msub_str )
+        fc.write(msub_str)
         fc.close()
 
-    def submitBatchScript( self, testname, batchFilename ):
+    def submitBatchScript(self, testname, batchFilename):
 
         options = AtsTest.getOptions()
-        config = options.get( "config", None )
+        config = options.get("config", None)
         if config and config.batch_dryrun:
             return
 
-        p = subprocess.Popen( [ "msub", batchFilename ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
-        out = p.communicate()[ 0 ]
+        p = subprocess.Popen(["msub", batchFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = p.communicate()[0]
 
         if p.returncode:
-            raise RuntimeError( f"Error submitting {testname} to batch: {out}" )
+            raise RuntimeError(f"Error submitting {testname} to batch: {out}")
 
         try:
-            jobid = int( out )
-            logger.info( f" Submitting {testname}, jobid = {jobid:d}" )
+            jobid = int(out)
+            logger.info(f" Submitting {testname}, jobid = {jobid:d}")
         except:
             err = f"Error submitting {testname} to batch: {out}"
-            logger.error( err )
-            raise RuntimeError( err )
+            logger.error(err)
+            raise RuntimeError(err)

@@ -36,58 +36,53 @@ verbose_options = {
 
 
 def build_command_line_parser():
-    parser = argparse.ArgumentParser( description="Runs GEOS integrated tests" )
+    parser = argparse.ArgumentParser(description="Runs GEOS integrated tests")
 
-    parser.add_argument( "geos_bin_dir", type=str, help="GEOS binary directory." )
+    parser.add_argument("geos_bin_dir", type=str, help="GEOS binary directory.")
 
-    parser.add_argument( "-w", "--workingDir", type=str, help="Initial working directory" )
+    parser.add_argument("ats_target", type=str, help="ats file")
 
-    action_names = ','.join( action_options.keys() )
-    parser.add_argument( "-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})" )
+    parser.add_argument("-w", "--workingDir", type=str, help="Root working directory")
 
-    check_names = ','.join( check_options.keys() )
-    parser.add_argument( "-c", "--check", type=str, default="all", help=f"Test check options ({check_names})" )
+    parser.add_argument("-b", "--baselineDir", type=str, help="Root baseline directory")
 
-    verbosity_names = ','.join( verbose_options.keys() )
-    parser.add_argument( "-v",
-                         "--verbose",
-                         type=str,
-                         default="info",
-                         help=f"Log verbosity options ({verbosity_names})" )
+    action_names = ','.join(action_options.keys())
+    parser.add_argument("-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})")
 
-    parser.add_argument( "-d",
-                         "--detail",
-                         action="store_true",
-                         default=False,
-                         help="Show detailed action/check options" )
+    check_names = ','.join(check_options.keys())
+    parser.add_argument("-c", "--check", type=str, default="all", help=f"Test check options ({check_names})")
 
-    parser.add_argument( "-i", "--info", action="store_true", default=False, help="Info on various topics" )
+    verbosity_names = ','.join(verbose_options.keys())
+    parser.add_argument("-v", "--verbose", type=str, default="info", help=f"Log verbosity options ({verbosity_names})")
 
-    parser.add_argument( "-r",
-                         "--restartCheckOverrides",
-                         nargs='+',
-                         action='append',
-                         help='Restart check parameter override (name value)',
-                         default=[] )
+    parser.add_argument("-d", "--detail", action="store_true", default=False, help="Show detailed action/check options")
 
-    parser.add_argument(
-        "--salloc",
-        default=True,
-        help="Used by the chaosM machine to first allocate nodes with salloc, before running the tests" )
+    parser.add_argument("-i", "--info", action="store_true", default=False, help="Info on various topics")
+
+    parser.add_argument("-r",
+                        "--restartCheckOverrides",
+                        nargs='+',
+                        action='append',
+                        help='Restart check parameter override (name value)',
+                        default=[])
+
+    parser.add_argument("--salloc",
+                        default=True,
+                        help="Used by the chaosM machine to first allocate nodes with salloc, before running the tests")
 
     parser.add_argument(
         "--sallocoptions",
         type=str,
         default="",
-        help="Used to override all command-line options for salloc. No other options with be used or added." )
+        help="Used to override all command-line options for salloc. No other options with be used or added.")
 
-    parser.add_argument( "--ats", nargs='+', default=[], action="append", help="pass arguments to ats" )
+    parser.add_argument("--ats", nargs='+', default=[], action="append", help="pass arguments to ats")
 
-    parser.add_argument( "--machine", default=None, help="name of the machine" )
+    parser.add_argument("--machine", default=None, help="name of the machine")
 
-    parser.add_argument( "--machine-dir", default=None, help="Search path for machine definitions" )
+    parser.add_argument("--machine-dir", default=None, help="Search path for machine definitions")
 
-    parser.add_argument( "-l", "--logs", type=str, default=None )
+    parser.add_argument("-l", "--logs", type=str, default=None)
 
     parser.add_argument(
         "--failIfTestsFail",
@@ -96,14 +91,12 @@ def build_command_line_parser():
         help="geos_ats normally exits with 0. This will cause it to exit with an error code if there was a failed test."
     )
 
-    parser.add_argument( "-n", "-N", "--numNodes", type=int, default="2" )
-
-    parser.add_argument( "ats_targets", type=str, nargs='*', help="ats files or directories." )
+    parser.add_argument("-n", "-N", "--numNodes", type=int, default="2")
 
     return parser
 
 
-def parse_command_line_arguments( args ):
+def parse_command_line_arguments(args):
     parser = build_command_line_parser()
     options, unkown_args = parser.parse_known_args()
     exit_flag = False
@@ -112,7 +105,7 @@ def parse_command_line_arguments( args ):
     check = options.check
     if check not in check_options:
         print(
-            f"Selected check option ({check}) not recognized.  Try running with --help/--details for more information" )
+            f"Selected check option ({check}) not recognized.  Try running with --help/--details for more information")
         exit_flag = True
 
     action = options.action
@@ -124,37 +117,25 @@ def parse_command_line_arguments( args ):
 
     verbose = options.verbose
     if verbose not in verbose_options:
-        print( f"Selected verbose option ({verbose}) not recognized" )
+        print(f"Selected verbose option ({verbose}) not recognized")
         exit_flag = True
+
+    # Paths
+    if not options.workingDir:
+        options.workingDir = os.path.basename(options.ats_target)
+
+    if not options.baselineDir:
+        options.baselineDir = options.workingDir
 
     # Print detailed information
     if options.detail:
-        for option_type, details in zip( [ 'action', 'check' ], [ action_options, check_options ] ):
-            print( f'\nAvailable {option_type} options:' )
+        for option_type, details in zip(['action', 'check'], [action_options, check_options]):
+            print(f'\nAvailable {option_type} options:')
             for k, v in details.items():
-                print( f'    {k}:  {v}' )
+                print(f'    {k}:  {v}')
         exit_flag = True
 
     if exit_flag:
         quit()
 
     return options
-
-
-def patch_parser( parser ):
-
-    def add_option_patch( *xargs, **kwargs ):
-        """
-        Convert type string to actual type instance
-        """
-        tmp = kwargs.get( 'type', str )
-        type_map = { 'string': str }
-        if isinstance( tmp, str ):
-            if tmp in type_map:
-                tmp = type_map[ tmp ]
-            else:
-                tmp = locate( tmp )
-        kwargs[ 'type' ] = tmp
-        parser.add_argument( *xargs, **kwargs )
-
-    parser.add_option = add_option_patch
