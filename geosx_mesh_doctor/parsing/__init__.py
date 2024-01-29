@@ -13,8 +13,8 @@ SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
 SUPPORTED_ELEMENTS = "supported_elements"
 
 
-@dataclass(frozen=True)
+@dataclass( frozen=True )
 class CheckHelper:
-    fill_subparser: Callable[[Any], argparse.ArgumentParser]
-    convert: Callable[[Any], Any]
-    display_results: Callable[[Any, Any], None]
+    fill_subparser: Callable[ [ Any ], argparse.ArgumentParser ]
+    convert: Callable[ [ Any ], Any ]
+    display_results: Callable[ [ Any, Any ], None ]

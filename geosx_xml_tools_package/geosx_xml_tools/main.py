@@ -15,19 +15,19 @@ def check_mpi_rank() -> int:
         int: MPI rank
     """
     rank = 0
-    mpi_rank_key_options = ['OMPI_COMM_WORLD_RANK', 'PMI_RANK']
+    mpi_rank_key_options = [ 'OMPI_COMM_WORLD_RANK', 'PMI_RANK' ]
     for k in mpi_rank_key_options:
         if k in os.environ:
-            rank = int(os.environ[k])
+            rank = int( os.environ[ k ] )
     return rank
 
 
-TFunc = Callable[..., Any]
+TFunc = Callable[..., Any ]
 
 
-def wait_for_file_write_rank_0(target_file_argument: Union[int, str] = 0,
-                               max_wait_time: float = 100,
-                               max_startup_delay: float = 1) -> Callable[[TFunc], TFunc]:
+def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
+                                max_wait_time: float = 100,
+                                max_startup_delay: float = 1 ) -> Callable[ [ TFunc ], TFunc ]:
     """Constructor for a function decorator that waits for a target file to be written on rank 0
 
     Args:
@@ -39,47 +39,47 @@ def wait_for_file_write_rank_0(target_file_argument: Union[int, str] = 0,
         Wrapped function
     """
 
-    def wait_for_file_write_rank_0_inner(writer: TFunc) -> TFunc:
+    def wait_for_file_write_rank_0_inner( writer: TFunc ) -> TFunc:
         """Intermediate constructor for the function decorator
 
         Args:
             writer (typing.Callable): A function that writes to a file
         """
 
-        def wait_for_file_write_rank_0_decorator(*args, **kwargs) -> Any:
+        def wait_for_file_write_rank_0_decorator( *args, **kwargs ) -> Any:
             """Apply the writer on rank 0, and wait for completion on other ranks
             """
             # Check the target file status
             rank = check_mpi_rank()
             fname = ''
-            if isinstance(target_file_argument, int):
-                fname = args[target_file_argument]
+            if isinstance( target_file_argument, int ):
+                fname = args[ target_file_argument ]
             else:
-                fname = kwargs[target_file_argument]
+                fname = kwargs[ target_file_argument ]
 
-            target_file_exists = os.path.isfile(fname)
+            target_file_exists = os.path.isfile( fname )
             target_file_edit_time = 0.0
             if target_file_exists:
-                target_file_edit_time = os.path.getmtime(fname)
+                target_file_edit_time = os.path.getmtime( fname )
 
                 # Variations in thread startup times may mean the file has already been processed
                 # If the last edit was done within the specified time, then allow the thread to proceed
-                if (abs(target_file_edit_time - time.time()) < max_startup_delay):
+                if ( abs( target_file_edit_time - time.time() ) < max_startup_delay ):
                     target_file_edit_time = 0.0
 
             # Go into the target process or wait for the expected file update
-            if (rank == 0):
-                return writer(*args, **kwargs)
+            if ( rank == 0 ):
+                return writer( *args, **kwargs )
             else:
                 ta = time.time()
-                while (time.time() - ta < max_wait_time):
+                while ( time.time() - ta < max_wait_time ):
                     if target_file_exists:
-                        if (os.path.getmtime(fname) > target_file_edit_time):
+                        if ( os.path.getmtime( fname ) > target_file_edit_time ):
                             break
                     else:
-                        if os.path.isfile(fname):
+                        if os.path.isfile( fname ):
                             break
-                    time.sleep(0.1)
+                    time.sleep( 0.1 )
 
         return wait_for_file_write_rank_0_decorator
 
@@ -99,13 +99,14 @@ def preprocess_serial() -> None:
     #       If the rank detection fails, then it will preprocess the file on all ranks, which
     #       sometimes cause a (seemingly harmless) file write conflict.
     # processor = xml_processor.process
-    processor = wait_for_file_write_rank_0(target_file_argument='outputFile', max_wait_time=100)(xml_processor.process)
+    processor = wait_for_file_write_rank_0( target_file_argument='outputFile',
+                                            max_wait_time=100 )( xml_processor.process )
 
-    compiled_name = processor(args.input,
-                              outputFile=args.compiled_name,
-                              schema=args.schema,
-                              verbose=args.verbose,
-                              parameter_override=args.parameters)
+    compiled_name = processor( args.input,
+                               outputFile=args.compiled_name,
+                               schema=args.schema,
+                               verbose=args.verbose,
+                               parameter_override=args.parameters )
     if not compiled_name:
         if args.compiled_name:
             compiled_name = args.compiled_name
@@ -116,31 +117,31 @@ def preprocess_serial() -> None:
 
     # Note: the return value may be passed to sys.exit, and cause bash to report an error
     # return format_geosx_arguments(compiled_name, unknown_args)
-    print(compiled_name)
+    print( compiled_name )
 
 
-def preprocess_parallel() -> Iterable[str]:
+def preprocess_parallel() -> Iterable[ str ]:
     """
     MPI aware xml preprocesing
     """
     # Process the xml file
-    from mpi4py import MPI    # type: ignore[import]
+    from mpi4py import MPI  # type: ignore[import]
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
     args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
     compiled_name = ''
-    if (rank == 0):
-        compiled_name = xml_processor.process(args.input,
-                                              outputFile=args.compiled_name,
-                                              schema=args.schema,
-                                              verbose=args.verbose,
-                                              parameter_override=args.parameters)
-    compiled_name = comm.bcast(compiled_name, root=0)
-    return format_geosx_arguments(compiled_name, unknown_args)
+    if ( rank == 0 ):
+        compiled_name = xml_processor.process( args.input,
+                                               outputFile=args.compiled_name,
+                                               schema=args.schema,
+                                               verbose=args.verbose,
+                                               parameter_override=args.parameters )
+    compiled_name = comm.bcast( compiled_name, root=0 )
+    return format_geosx_arguments( compiled_name, unknown_args )
 
 
-def format_geosx_arguments(compiled_name: str, unknown_args: Iterable[str]) -> Iterable[str]:
+def format_geosx_arguments( compiled_name: str, unknown_args: Iterable[ str ] ) -> Iterable[ str ]:
     """Format GEOSX arguments
 
     Args:
@@ -150,12 +151,12 @@ def format_geosx_arguments(compiled_name: str, unknown_args: Iterable[str]) -> I
     Returns:
         list: List of arguments to pass to GEOSX
     """
-    geosx_args = [sys.argv[0], '-i', compiled_name]
+    geosx_args = [ sys.argv[ 0 ], '-i', compiled_name ]
     if unknown_args:
-        geosx_args.extend(unknown_args)
+        geosx_args.extend( unknown_args )
 
     # Print the output name for use in bash scripts
-    print(compiled_name)
+    print( compiled_name )
     return geosx_args
 
 

@@ -1,13 +1,13 @@
 import numpy as np
-from scipy import stats    # type: ignore[import]
+from scipy import stats  # type: ignore[import]
 from typing import Dict, Iterable, List, Tuple, Callable, Union
 
 
-def apply_to_bins(fn: Callable[[Union[float, np.ndarray]], float],
-                  position: np.ndarray,
-                  value: np.ndarray,
-                  bins: np.ndarray,
-                  collapse_edges: bool = True):
+def apply_to_bins( fn: Callable[ [ Union[ float, np.ndarray ] ], float ],
+                   position: np.ndarray,
+                   value: np.ndarray,
+                   bins: np.ndarray,
+                   collapse_edges: bool = True ):
     """
     Apply a function to values that are located within a series of bins
     Note: if a bin is empty, this function will fill a nan value
@@ -23,29 +23,29 @@ def apply_to_bins(fn: Callable[[Union[float, np.ndarray]], float],
         np.ndarray: an array of function results for each bin
     """
     # Sort values into bins
-    Nr = len(bins) + 1
-    Ibin = np.digitize(position, bins)
+    Nr = len( bins ) + 1
+    Ibin = np.digitize( position, bins )
 
     if collapse_edges:
         Nr -= 2
         Ibin -= 1
-        Ibin[Ibin == -1] = 0
-        Ibin[Ibin == Nr] = Nr - 1
+        Ibin[ Ibin == -1 ] = 0
+        Ibin[ Ibin == Nr ] = Nr - 1
 
     # Apply functions to bins
-    binned_values = np.zeros(Nr)
-    for ii in range(Nr):
-        tmp = (Ibin == ii)
-        if np.sum(tmp):
-            binned_values[ii] = fn(value[tmp])
+    binned_values = np.zeros( Nr )
+    for ii in range( Nr ):
+        tmp = ( Ibin == ii )
+        if np.sum( tmp ):
+            binned_values[ ii ] = fn( value[ tmp ] )
         else:
             # Empty bin
-            binned_values[ii] = np.NaN
+            binned_values[ ii ] = np.NaN
 
     return binned_values
 
 
-def extrapolate_nan_values(x, y, slope_scale=0.0):
+def extrapolate_nan_values( x, y, slope_scale=0.0 ):
     """
     Fill in any nan values in two 1D arrays by extrapolating
 
@@ -57,13 +57,13 @@ def extrapolate_nan_values(x, y, slope_scale=0.0):
     Returns:
         np.ndarray: The input array with nan values replaced by extrapolated data
     """
-    Inan = np.isnan(y)
-    reg = stats.linregress(x[~Inan], y[~Inan])
-    y[Inan] = reg[0] * x[Inan] * slope_scale + reg[1]
+    Inan = np.isnan( y )
+    reg = stats.linregress( x[ ~Inan ], y[ ~Inan ] )
+    y[ Inan ] = reg[ 0 ] * x[ Inan ] * slope_scale + reg[ 1 ]
     return y
 
 
-def get_random_realization(x, bins, value, rand_fill=0, rand_scale=0, slope_scale=0):
+def get_random_realization( x, bins, value, rand_fill=0, rand_scale=0, slope_scale=0 ):
     """
     Get a random realization for a noisy signal with a set of bins
 
@@ -78,20 +78,20 @@ def get_random_realization(x, bins, value, rand_fill=0, rand_scale=0, slope_scal
     Returns:
         np.ndarray: An array containing the random realization
     """
-    y_mean = apply_to_bins(np.mean, x, value, bins)
-    y_std = apply_to_bins(np.std, x, value, bins)
+    y_mean = apply_to_bins( np.mean, x, value, bins )
+    y_std = apply_to_bins( np.std, x, value, bins )
 
     # Extrapolate to fill the upper/lower bounds
-    x_mid = bins[:-1] + 0.5 * (bins[1] - bins[0])
-    y_mean = extrapolate_nan_values(x_mid, y_mean, slope_scale)
-    y_std[np.isnan(y_std)] = rand_fill
+    x_mid = bins[ :-1 ] + 0.5 * ( bins[ 1 ] - bins[ 0 ] )
+    y_mean = extrapolate_nan_values( x_mid, y_mean, slope_scale )
+    y_std[ np.isnan( y_std ) ] = rand_fill
 
     # Add a random perturbation to the target value to match missing high/lows
-    y_final = y_mean + (rand_scale * y_std * np.random.randn(len(y_mean)))
+    y_final = y_mean + ( rand_scale * y_std * np.random.randn( len( y_mean ) ) )
     return y_final
 
 
-def get_realizations(x, bins, targets):
+def get_realizations( x, bins, targets ):
     """
     Get random realizations for noisy signals on target bins
 
@@ -106,5 +106,5 @@ def get_realizations(x, bins, targets):
     """
     results = {}
     for k, t in targets.items():
-        results[k] = get_random_realization(x, bins, **t)
+        results[ k ] = get_random_realization( x, bins, **t )
     return results

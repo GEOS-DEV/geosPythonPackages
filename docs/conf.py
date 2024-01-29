@@ -18,10 +18,10 @@ import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ('geosx_mesh_tools_package', 'geosx_xml_tools_package', 'geosx_mesh_doctor', 'geos_ats_package',
-                  'hdf5_wrapper_package', 'pygeosx_tools_package', 'timehistory_package')
+python_modules = ( 'geosx_mesh_tools_package', 'geosx_xml_tools_package', 'geosx_mesh_doctor', 'geos_ats_package',
+                   'hdf5_wrapper_package', 'pygeosx_tools_package', 'timehistory_package' )
 for m in python_modules:
-    sys.path.insert(0, os.path.abspath(os.path.join(python_root, m)))
+    sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m ) ) )
 
 # -- Project information -----------------------------------------------------
 
@@ -48,7 +48,7 @@ extensions = [
     'sphinxarg.ext', 'sphinx.ext.napoleon', 'sphinxcontrib.programoutput'
 ]
 
-autodoc_mock_imports = ["pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy"]
+autodoc_mock_imports = [ "pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy" ]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -69,7 +69,7 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store', 'cmake/*']
+exclude_patterns = [ u'_build', 'Thumbs.db', '.DS_Store', 'cmake/*' ]
 
 todo_include_todos = True
 
@@ -83,9 +83,9 @@ extensions += [
 
 html_theme = "sphinx_rtd_theme"
 
-html_theme_options = {'navigation_depth': -1, 'collapse_navigation': False}
+html_theme_options = { 'navigation_depth': -1, 'collapse_navigation': False }
 
-html_static_path = ['./_static']
+html_static_path = [ './_static' ]
 
 html_css_files = [
     'theme_overrides.css',
