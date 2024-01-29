@@ -6,6 +6,9 @@ from configparser import ConfigParser
 from tabulate import tabulate
 import glob
 import logging
+from collections.abc import Mapping
+from dataclasses import dataclass
+from ats import atsut
 from ats.times import hms
 from ats import ( PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED, SKIPPED, CREATED, RUNNING, HALTED, LSFERROR )
 
@@ -15,18 +18,44 @@ logger = logging.getLogger( 'geos_ats' )
 # Status value in priority order
 STATUS = ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED )
 
-COLORS = {}
-COLORS[ EXPECTED.name ] = "black"
-COLORS[ CREATED.name ] = "black"
-COLORS[ BATCHED.name ] = "black"
-COLORS[ FILTERED.name ] = "black"
-COLORS[ SKIPPED.name ] = "orange"
-COLORS[ RUNNING.name ] = "blue"
-COLORS[ PASSED.name ] = "green"
-COLORS[ TIMEDOUT.name ] = "red"
-COLORS[ HALTED.name ] = "brown"
-COLORS[ LSFERROR.name ] = "brown"
-COLORS[ FAILED.name ] = "red"
+COLORS: Mapping[ str, str ] = {
+    EXPECTED.name: "black",
+    CREATED.name: "black",
+    BATCHED.name: "black",
+    FILTERED.name: "black",
+    SKIPPED.name: "orange",
+    RUNNING.name: "blue",
+    PASSED.name: "green",
+    TIMEDOUT.name: "red",
+    HALTED.name: "brown",
+    LSFERROR.name: "brown",
+    FAILED.name: "red",
+}
+
+
+@dataclass( frozen=True )
+class TestStepRecord:
+    status: atsut._StatusCode
+    log: str
+    output: list
+    number: int
+    elapsed: float
+
+
+@dataclass( frozen=True )
+class TestCaseRecord:
+    steps: dict
+    status: atsut._StatusCode
+    test_number: int
+    elapsed: float
+    current_step: str
+    resources: int
+
+
+@dataclass( frozen=True )
+class TestGroupRecord:
+    tests: list
+    status: atsut._StatusCode
 
 
 def max_status( sa, sb ):
@@ -52,43 +81,39 @@ class ReportBase( object ):
 
             # Save data
             if test_name not in self.test_results:
-                self.test_results[ test_name ] = {
-                    'steps': {},
-                    'status': EXPECTED,
-                    'id': test_id,
-                    'elapsed': 0.0,
-                    'current_step': ' ',
-                    'resources': t.np
-                }
-            self.test_results[ test_name ][ 'steps' ][ t.name ] = {
-                'status': t.status,
-                'log': t.outname,
-                'output': t.step_outputs,
-                'number': t.groupSerialNumber
-            }
+                self.test_results[ test_name ] = TestCaseRecord( steps={},
+                                                                 status=EXPECTED,
+                                                                 test_number=test_id,
+                                                                 elapsed=0.0,
+                                                                 current_step=' ',
+                                                                 resources=t.np )
 
             # Check elapsed time
             elapsed = 0.0
             if hasattr( t, 'endTime' ):
                 elapsed = t.endTime - t.startTime
-            self.test_results[ test_name ][ 'steps' ][ t.name ][ 'elapsed' ] = elapsed
-            self.test_results[ test_name ][ 'elapsed' ] += elapsed
+            self.test_results[ test_name ].elapsed += elapsed
+
+            # Add the step
+            self.test_results[ test_name ].steps[ t.name ] = TestStepRecord( status=t.status,
+                                                                             log=t.outname,
+                                                                             output=t.step_outputs,
+                                                                             number=t.groupSerialNumber,
+                                                                             elapsed=elapsed )
 
             # Check the status and the latest step
-            self.test_results[ test_name ][ 'status' ] = max_status( t.status,
-                                                                     self.test_results[ test_name ][ 'status' ] )
+            self.test_results[ test_name ].status = max_status( t.status, self.test_results[ test_name ].status )
             if t.status not in ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED ):
-                self.test_results[ test_name ][ 'current_step' ] = t.name
+                self.test_results[ test_name ].current_step = t.name
 
             if group_name not in self.test_groups:
-                self.test_groups[ group_name ] = { 'tests': [], 'status': EXPECTED }
-            self.test_groups[ group_name ][ 'tests' ].append( test_name )
-            self.test_groups[ group_name ][ 'status' ] = max_status( t.status,
-                                                                     self.test_groups[ group_name ][ 'status' ] )
+                self.test_groups[ group_name ] = TestGroupRecord( tests=[], status=EXPECTED )
+            self.test_groups[ group_name ].tests.append( test_name )
+            self.test_groups[ group_name ].status = max_status( t.status, self.test_groups[ group_name ].status )
 
         # Collect status names
         for s in STATUS:
-            self.status_lists[ s.name ] = [ k for k, v in self.test_results.items() if v[ 'status' ] == s ]
+            self.status_lists[ s.name ] = [ k for k, v in self.test_results.items() if v.status == s ]
 
         self.html_filename = config.report_html_file
 
@@ -103,7 +128,8 @@ class ReportIni( ReportBase ):
         configParser.set( "Info", "Time", time.strftime( "%a, %d %b %Y %H:%M:%S" ) )
         try:
             platform = socket.gethostname()
-        except:
+        except Exception as e:
+            logger.debug( str( e ) )
             logger.debug( "Could not get host name" )
             platform = "unknown"
         configParser.set( "Info", "Platform", platform )
@@ -209,7 +235,8 @@ class ReportHTML( ReportBase ):
         # Notations:
         try:
             platform = socket.gethostname()
-        except:
+        except Exception as e:
+            logger.debug( str( e ) )
             logger.debug( "Could not get host name" )
             platform = "unknown"
 
@@ -248,25 +275,22 @@ class ReportHTML( ReportBase ):
         color_pattern = "<p style=\"color: {};\" id=\"{}\"> {} </p>"
 
         for k, v in self.test_results.items():
-            status_str = v[ 'status' ].name
+            status_str = v.status.name
             status_formatted = color_pattern.format( COLORS[ status_str ], k, status_str )
-            step_shortname = v[ 'current_step' ]
-            elapsed_formatted = hms( v[ 'elapsed' ] )
+            step_shortname = v.current_step
+            elapsed_formatted = hms( v.elapsed )
             output_files = []
-            for s in v[ 'steps' ].values():
-                if os.path.isfile( s[ 'log' ] ):
-                    output_files.append( file_pattern.format( s[ 'log' ], os.path.basename( s[ 'log' ] ) ) )
-                if os.path.isfile( s[ 'log' ] + '.err' ):
-                    output_files.append(
-                        file_pattern.format( s[ 'log' ] + '.err', os.path.basename( s[ 'log' ] + '.err' ) ) )
-                for pattern in s[ 'output' ]:
+            for s in v.steps.values():
+                if os.path.isfile( s.log ):
+                    output_files.append( file_pattern.format( s.log, os.path.basename( s.log ) ) )
+                if os.path.isfile( s.log + '.err' ):
+                    output_files.append( file_pattern.format( s.log + '.err', os.path.basename( s.log + '.err' ) ) )
+                for pattern in s.output:
                     for f in sorted( glob.glob( pattern ) ):
                         if ( ( 'restart' not in f ) or ( '.restartcheck' in f ) ) and os.path.isfile( f ):
                             output_files.append( file_pattern.format( f, os.path.basename( f ) ) )
 
-            row = [
-                status_formatted, k, step_shortname, elapsed_formatted, v[ 'resources' ], ', '.join( output_files )
-            ]
+            row = [ status_formatted, k, step_shortname, elapsed_formatted, v.resources, ', '.join( output_files ) ]
             if status_str == 'FILTERED':
                 table_filt.append( row )
             else:
