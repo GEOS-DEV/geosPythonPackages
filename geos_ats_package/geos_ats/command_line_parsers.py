@@ -84,6 +84,8 @@ def build_command_line_parser():
 
     parser.add_argument("-l", "--logs", type=str, default=None)
 
+    parser.add_argument("-f", "--allow-failed-tests", default=False, action='store_true')
+
     parser.add_argument(
         "--failIfTestsFail",
         action="store_true",

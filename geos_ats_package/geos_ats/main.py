@@ -5,7 +5,7 @@ import signal
 import subprocess
 import time
 import logging
-from geos_ats import command_line_parsers
+from geos_ats import command_line_parsers, test_builder
 
 test_actions = ("run", "rerun", "check", "continue")
 report_actions = ("run", "rerun", "report", "continue")
@@ -369,6 +369,11 @@ def main():
     # Run ATS
     # ---------------------------------
     result = ats.manager.core()
+    if len(test_builder.test_build_failures):
+        tmp = ', '.join(test_builder.test_build_failures)
+        logger.error(f'The following ATS test failed to build: {tmp}')
+        if not options.allow_failed_tests:
+            raise Exception('Some tests failed to build')
 
     # Make sure all the testcases requested were found
     if testcases != "all":
