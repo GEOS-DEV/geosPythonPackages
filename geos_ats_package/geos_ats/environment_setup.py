@@ -16,7 +16,8 @@ def setup_ats( src_path, build_path, baseline_dir, working_dir, ats_xargs, ats_m
     ats_main_file = os.path.abspath( os.path.join( src_path, 'inputFiles', 'main.ats' ) )
 
     # Create a symbolic link to working directory
-    os.makedirs( working_dir, exist_ok=True )
+    for d in [ baseline_dir, working_dir, test_path ]:
+        os.makedirs( d, exist_ok=True )
     if os.path.islink( link_path ):
         print( 'integratedTests symlink already exists' )
     else:
