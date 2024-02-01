@@ -33,7 +33,7 @@ COLORS: Mapping[ str, str ] = {
 }
 
 
-@dataclass( frozen=True )
+@dataclass
 class TestStepRecord:
     status: atsut._StatusCode
     log: str
@@ -42,7 +42,7 @@ class TestStepRecord:
     elapsed: float
 
 
-@dataclass( frozen=True )
+@dataclass
 class TestCaseRecord:
     steps: dict
     status: atsut._StatusCode
@@ -52,7 +52,7 @@ class TestCaseRecord:
     resources: int
 
 
-@dataclass( frozen=True )
+@dataclass
 class TestGroupRecord:
     tests: list
     status: atsut._StatusCode
