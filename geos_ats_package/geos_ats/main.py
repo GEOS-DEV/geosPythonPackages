@@ -5,7 +5,7 @@ import signal
 import subprocess
 import time
 import logging
-from geos_ats import command_line_parsers, test_builder
+from geos_ats import command_line_parsers
 
 test_actions = ( "run", "rerun", "check", "continue" )
 report_actions = ( "run", "rerun", "report", "continue" )
@@ -352,7 +352,7 @@ def main():
     else:
         ats.AtsTest.glue( testcases="all" )
 
-    from geos_ats import ( common_utilities, suite_settings, test_case, test_steps )
+    from geos_ats import ( common_utilities, suite_settings, test_case, test_steps, test_builder )
 
     # Set ats options
     append_geos_ats_summary( ats.manager )
