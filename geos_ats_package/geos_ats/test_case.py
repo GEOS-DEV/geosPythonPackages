@@ -14,6 +14,8 @@ test = ats.manager.test
 testif = ats.manager.testif
 logger = logging.getLogger( 'geos_ats' )
 
+all_test_names = []
+
 
 class Batch( object ):
     """A class to represent batch options"""
@@ -51,7 +53,12 @@ class TestCase( object ):
             raise Exception( e )
 
     def initialize( self, name, desc, label=None, labels=None, steps=[], batch=Batch( enabled=False ), **kw ):
+        # Check for duplicate tests
+        if name in all_test_names:
+            raise Exception( f'Found multiple tests with the same name ({name})' )
+        all_test_names.append( name )
 
+        # Setup the test
         self.name = name
         self.desc = desc
         self.batch = batch
