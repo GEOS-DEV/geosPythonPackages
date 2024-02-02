@@ -421,6 +421,9 @@ class geos( TestStepBase ):
             if restartcheck_params is not None:
                 self.checksteps.append( restartcheck( restartcheck_params, **kw ) )
 
+        if not self.checksteps:
+            raise Exception( f'This test does not have a restart or curve check enabled: {self.p.deck}' )
+
     def label( self ):
         return "geos"
 
