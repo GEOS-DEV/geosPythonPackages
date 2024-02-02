@@ -657,7 +657,7 @@ class curvecheck( CheckTestStepBase ):
     params = TestStepBase.defaultParams + CheckTestStepBase.checkParams + (
         TestStepBase.commonParams[ "deck" ], TestStepBase.commonParams[ "name" ], TestStepBase.commonParams[ "np" ],
         TestStepBase.commonParams[ "allow_rebaseline" ], TestStepBase.commonParams[ "baseline_directory" ],
-        TestStepBase.commonParams[ "output_directory" ],
+        TestStepBase.commonParams[ "output_directory" ], TestStepBase.commonParams[ "test_directory" ],
         TestParam( "filename", "Name of the target curve file written by GEOS." ),
         TestParam( "curves", "A list of parameter, setname value pairs." ),
         TestParam(
@@ -713,6 +713,7 @@ class curvecheck( CheckTestStepBase ):
         self.requireParam( "deck" )
         self.requireParam( "baseline_directory" )
         self.requireParam( "output_directory" )
+        self.requireParam( "test_directory" )
 
         self.baseline_file = os.path.join( self.p.baseline_directory, self.p.filename )
         self.target_file = os.path.join( self.p.output_directory, self.p.filename )
@@ -742,7 +743,14 @@ class curvecheck( CheckTestStepBase ):
         if self.p.script_instructions is not None:
             for c in self.p.script_instructions.split( ';' ):
                 args += [ "-s" ]
-                args += c.split( ',' )
+
+                # Split the args and set the absolute script
+                tmp = c.split( ',' )
+                tmp[ 0 ] = os.path.abspath( os.path.join( self.p.test_directory, tmp[ 0 ] ) )
+                if not os.path.isfile( tmp[ 0 ] ):
+                    raise FileNotFoundError( f"Could not find requested script for curve check: {tmp[0]}" )
+
+                args += tmp
         if self.p.warnings_are_errors:
             args += [ "-w" ]
 
