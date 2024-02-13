@@ -1,8 +1,8 @@
 #BATS:batchGeosatsMoab  batchGeosatsMoab BatchGeosatsMoab -1
 
 from ats import machines, configuration, log, atsut, times, AtsTest  # type: ignore[import]
-import subprocess, sys, os, shlex, time, socket, re
-import utils, batchTemplate  # type: ignore[import]
+import subprocess, sys, os, time, socket, re
+import utils  # type: ignore[import]
 from batch import BatchMachine  # type: ignore[import]
 import logging
 

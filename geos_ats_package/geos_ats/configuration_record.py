@@ -167,7 +167,7 @@ def initializeConfig( configFile, configOverride, options ):
     geos_atsdir = os.path.realpath( os.path.dirname( __file__ ) )
 
     # configfile
-    config.add( "testbaseline_dir", str, "", "Base directory that contains all the baselines" )
+    config.add( "testbaseline_directory", str, "", "Base directory that contains all the baselines" )
 
     config.add( "geos_bin_dir", str, "", "Directory that contains 'geos' and related executables." )
 
@@ -194,11 +194,6 @@ def initializeConfig( configFile, configOverride, options ):
     config.add( "report_doc_remake", bool, False,
                 "Remake test documentation, even if it already exists (used with html reports)" )
 
-    config.add( "report_text", bool, True, "True if you want text results to be generated with the report action" )
-    config.add( "report_text_file", str, "test_results.txt", "Location to write the text report" )
-    config.add( "report_text_echo", bool, True, "If True, echo the report to stdout" )
-    config.add( "report_wait", bool, False, "Wait until all tests are complete before reporting" )
-
     config.add( "report_ini", bool, True, "True if you want ini results to be generated with the report action" )
     config.add( "report_ini_file", str, "test_results.ini", "Location to write the ini report" )
 
@@ -212,10 +207,6 @@ def initializeConfig( configFile, configOverride, options ):
 
     config.add( "checkmessages_never_ignore_regexp", type( [] ), [ "not yet implemented" ],
                 "Regular expression to not ignore in all checkmessages steps." )
-
-    config.add( "report_timing", bool, False, "True if you want timing file to be generated with the report action" )
-    config.add( "report_timing_overwrite", bool, False,
-                "True if you want timing file to overwrite existing timing file rather than augment it" )
 
     # timing and priority
     config.add( "priority", str, "equal", "Method of prioritization of tests: [\"equal\", \"processors\",\"timing\"]" )

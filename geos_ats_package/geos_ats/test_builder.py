@@ -7,8 +7,12 @@ from typing import (
 from dataclasses import dataclass, asdict
 from ats.tests import AtsTest
 from lxml import etree
+import logging
 from .test_steps import geos
 from .test_case import TestCase
+
+test_build_failures = []
+logger = logging.getLogger( 'geos_ats' )
 
 
 @dataclass( frozen=True )
@@ -79,7 +83,7 @@ def collect_block_names( fname ):
     return results
 
 
-def generate_geos_tests( decks: Iterable[ TestDeck ] ):
+def generate_geos_tests( decks: Iterable[ TestDeck ], test_type='smoke' ):
     """
     """
     for ii, deck in enumerate( decks ):
@@ -99,7 +103,18 @@ def generate_geos_tests( decks: Iterable[ TestDeck ] ):
 
             testcase_name = "{}_{:02d}".format( deck.name, N )
             base_name = "0to{:d}".format( deck.check_step )
-            xml_file = "{}.xml".format( deck.name )
+
+            # Search for the target xml file
+            xml_file = ''
+            for suffix in [ '', f'_{test_type}' ]:
+                if os.path.isfile( "{}{}.xml".format( deck.name, suffix ) ):
+                    xml_file = "{}{}.xml".format( deck.name, suffix )
+
+            if not xml_file:
+                logger.error( f'Could not find a matching xml file for the test: {deck.name}' )
+                test_build_failures.append( deck.name )
+                continue
+
             xml_blocks = collect_block_names( xml_file )
 
             checks = []

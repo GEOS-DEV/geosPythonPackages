@@ -111,8 +111,10 @@ class TestStepBase( object ):
         TestParam(
             "check", "True or False. determines whether the default checksteps will "
             "be automatically be added after this step.", "True" ),
-        "baseline_dir":
-        TestParam( "baseline_dir", "subdirectory of config.testbaseline_dir where the test "
+        "test_directory":
+        TestParam( "test_directory", "subdirectory holding the test definitions", "<dirname>" ),
+        "baseline_directory":
+        TestParam( "baseline_directory", "subdirectory of config.testbaseline_directory where the test "
                    "baselines are located.", "<dirname>" ),
         "output_directory":
         TestParam( "output_directory", "subdirectory where the test log, params, rin, and "
@@ -126,7 +128,7 @@ class TestStepBase( object ):
                    " timehist curves.", "testmode.<prob>.ul" ),
         "basetimehistfile":
         TestParam( "basetimehistfile", "location to the baseline timehistfile",
-                   "<config.testbaseline_dir>/<baseline_dir>/<curvecheckfile>" ),
+                   "<config.testbaseline_directory>/<baseline_directory>/<curvecheckfile>" ),
         "allow_rebaseline":
         TestParam(
             "allow_rebaseline", "True if the second file should be re-baselined during a rebaseline action."
@@ -386,8 +388,8 @@ class geos( TestStepBase ):
     params = TestStepBase.defaultParams + (
         TestStepBase.commonParams[ "name" ], TestStepBase.commonParams[ "deck" ], TestStepBase.commonParams[ "np" ],
         TestStepBase.commonParams[ "ngpu" ], TestStepBase.commonParams[ "check" ],
-        TestStepBase.commonParams[ "baseline_dir" ], TestStepBase.commonParams[ "output_directory" ],
-        TestParam( "restart_file", "The name of the restart file." ),
+        TestStepBase.commonParams[ "test_directory" ], TestStepBase.commonParams[ "baseline_directory" ],
+        TestStepBase.commonParams[ "output_directory" ], TestParam( "restart_file", "The name of the restart file." ),
         TestParam( "x_partitions", "The number of partitions in the x direction." ),
         TestParam( "y_partitions", "The number of partitions in the y direction." ),
         TestParam( "z_partitions",
@@ -419,6 +421,9 @@ class geos( TestStepBase ):
             if restartcheck_params is not None:
                 self.checksteps.append( restartcheck( restartcheck_params, **kw ) )
 
+        if not self.checksteps:
+            raise Exception( f'This test does not have a restart or curve check enabled: {self.p.deck}' )
+
     def label( self ):
         return "geos"
 
@@ -438,8 +443,9 @@ class geos( TestStepBase ):
 
         self.requireParam( "deck" )
         self.requireParam( "name" )
-        self.requireParam( "baseline_dir" )
+        self.requireParam( "baseline_directory" )
         self.requireParam( "output_directory" )
+        self.requireParam( "test_directory" )
 
         self.handleCommonParams()
 
@@ -463,10 +469,10 @@ class geos( TestStepBase ):
         args = []
 
         if self.p.deck:
-            args += [ "-i", self.p.deck ]
+            args += [ "-i", os.path.join( self.p.test_directory, self.p.deck ) ]
 
         if self.p.restart_file:
-            args += [ "-r", self.p.restart_file ]
+            args += [ "-r", os.path.abspath( os.path.join( self.p.output_directory, '..', self.p.restart_file ) ) ]
 
         if self.p.x_partitions:
             args += [ "-x", self.p.x_partitions ]
@@ -496,12 +502,8 @@ class geos( TestStepBase ):
         return list( map( str, args ) )
 
     def resultPaths( self ):
-        paths = []
         name = getGeosProblemName( self.p.deck, self.p.name )
-        paths += [ os.path.join( self.p.output_directory, "%s_restart_*" ) % name ]
-        paths += [ os.path.join( self.p.output_directory, "silo*" ) ]
-        paths += [ os.path.join( self.p.output_directory, "%s_bp_*" % name ) ]
-
+        paths = [ os.path.join( self.p.output_directory, f"{name}_restart_*" ) ]
         return paths
 
     def clean( self ):
@@ -522,7 +524,7 @@ class restartcheck( CheckTestStepBase ):
 
     params = TestStepBase.defaultParams + CheckTestStepBase.checkParams + (
         TestStepBase.commonParams[ "deck" ], TestStepBase.commonParams[ "name" ], TestStepBase.commonParams[ "np" ],
-        TestStepBase.commonParams[ "allow_rebaseline" ], TestStepBase.commonParams[ "baseline_dir" ],
+        TestStepBase.commonParams[ "allow_rebaseline" ], TestStepBase.commonParams[ "baseline_directory" ],
         TestStepBase.commonParams[ "output_directory" ],
         TestParam( "file_pattern", "Regex pattern to match file written out by geos." ),
         TestParam( "baseline_pattern", "Regex pattern to match file to compare against." ),
@@ -560,7 +562,7 @@ class restartcheck( CheckTestStepBase ):
         self.handleCommonParams()
 
         self.requireParam( "deck" )
-        self.requireParam( "baseline_dir" )
+        self.requireParam( "baseline_directory" )
         self.requireParam( "output_directory" )
 
         if self.p.file_pattern is None:
@@ -569,7 +571,7 @@ class restartcheck( CheckTestStepBase ):
             self.p.baseline_pattern = self.p.file_pattern
 
         self.restart_file_regex = os.path.join( self.p.output_directory, self.p.file_pattern )
-        self.restart_baseline_regex = os.path.join( self.p.baseline_dir, self.p.baseline_pattern )
+        self.restart_baseline_regex = os.path.join( self.p.baseline_directory, self.p.baseline_pattern )
 
         if self.p.allow_rebaseline is None:
             self.p.allow_rebaseline = True
@@ -613,7 +615,7 @@ class restartcheck( CheckTestStepBase ):
             raise IOError( "File not found matching the pattern %s in directory %s." %
                            ( self.restart_file_regex, os.getcwd() ) )
 
-        baseline_dir = os.path.dirname( self.restart_baseline_regex )
+        baseline_directory = os.path.dirname( self.restart_baseline_regex )
         root_baseline_path = findMaxMatchingFile( self.restart_baseline_regex )
 
         if root_baseline_path is not None:
@@ -623,13 +625,13 @@ class restartcheck( CheckTestStepBase ):
             data_dir_path = os.path.splitext( root_baseline_path )[ 0 ]
             shutil.rmtree( data_dir_path )
         else:
-            os.makedirs( baseline_dir, exist_ok=True )
+            os.makedirs( baseline_directory, exist_ok=True )
 
         # Copy the root file into the baseline directory.
-        shutil.copy2( root_file_path, os.path.join( baseline_dir, os.path.basename( root_file_path ) ) )
+        shutil.copy2( root_file_path, os.path.join( baseline_directory, os.path.basename( root_file_path ) ) )
         # Copy the directory holding the data files into the baseline directory.
         data_dir_path = os.path.splitext( root_file_path )[ 0 ]
-        shutil.copytree( data_dir_path, os.path.join( baseline_dir, os.path.basename( data_dir_path ) ) )
+        shutil.copytree( data_dir_path, os.path.join( baseline_directory, os.path.basename( data_dir_path ) ) )
 
     def resultPaths( self ):
         return [
@@ -654,8 +656,8 @@ class curvecheck( CheckTestStepBase ):
 
     params = TestStepBase.defaultParams + CheckTestStepBase.checkParams + (
         TestStepBase.commonParams[ "deck" ], TestStepBase.commonParams[ "name" ], TestStepBase.commonParams[ "np" ],
-        TestStepBase.commonParams[ "allow_rebaseline" ], TestStepBase.commonParams[ "baseline_dir" ],
-        TestStepBase.commonParams[ "output_directory" ],
+        TestStepBase.commonParams[ "allow_rebaseline" ], TestStepBase.commonParams[ "baseline_directory" ],
+        TestStepBase.commonParams[ "output_directory" ], TestStepBase.commonParams[ "test_directory" ],
         TestParam( "filename", "Name of the target curve file written by GEOS." ),
         TestParam( "curves", "A list of parameter, setname value pairs." ),
         TestParam(
@@ -709,10 +711,11 @@ class curvecheck( CheckTestStepBase ):
         self.handleCommonParams()
 
         self.requireParam( "deck" )
-        self.requireParam( "baseline_dir" )
+        self.requireParam( "baseline_directory" )
         self.requireParam( "output_directory" )
+        self.requireParam( "test_directory" )
 
-        self.baseline_file = os.path.join( self.p.baseline_dir, self.p.filename )
+        self.baseline_file = os.path.join( self.p.baseline_directory, self.p.filename )
         self.target_file = os.path.join( self.p.output_directory, self.p.filename )
         self.figure_root = os.path.join( self.p.output_directory, 'curve_check' )
 
@@ -740,7 +743,14 @@ class curvecheck( CheckTestStepBase ):
         if self.p.script_instructions is not None:
             for c in self.p.script_instructions.split( ';' ):
                 args += [ "-s" ]
-                args += c.split( ',' )
+
+                # Split the args and set the absolute script
+                tmp = c.split( ',' )
+                tmp[ 0 ] = os.path.abspath( os.path.join( self.p.test_directory, tmp[ 0 ] ) )
+                if not os.path.isfile( tmp[ 0 ] ):
+                    raise FileNotFoundError( f"Could not find requested script for curve check: {tmp[0]}" )
+
+                args += tmp
         if self.p.warnings_are_errors:
             args += [ "-w" ]
 
@@ -753,14 +763,12 @@ class curvecheck( CheckTestStepBase ):
             Log( "Rebaseline not allowed for curvecheck of %s." % self.p.name )
             return
 
-        baseline_dir = os.path.split( self.baseline_file )[ 0 ]
-        os.makedirs( baseline_dir, exist_ok=True )
+        baseline_directory = os.path.split( self.baseline_file )[ 0 ]
+        os.makedirs( baseline_directory, exist_ok=True )
         shutil.copyfile( self.target_file, self.baseline_file )
 
     def resultPaths( self ):
-        figure_pattern = os.path.join( self.figure_root, '*.png' )
-        figure_list = sorted( glob.glob( figure_pattern ) )
-        return [ self.target_file ] + figure_list
+        return [ self.target_file, os.path.join( self.figure_root, '*.png' ) ]
 
     def clean( self ):
         self._clean( self.resultPaths() )

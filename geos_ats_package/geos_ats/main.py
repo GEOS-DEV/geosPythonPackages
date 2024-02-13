@@ -1,6 +1,5 @@
 ﻿import sys
 import os
-import glob
 import shutil
 import signal
 import subprocess
@@ -21,51 +20,7 @@ current_jobid = None
 geos_atsStartTime = 0
 
 
-def check_ats_targets( options, testcases, configOverride, args ):
-    """
-    Determine which files, directories, or tests to run.
-    Handle command line config options.
-    """
-    configOverride[ "executable_path" ] = options.geos_bin_dir
-
-    ats_files = []
-    for a in options.ats_targets:
-        if "=" in a:
-            key, value = a.split( "=" )
-            configOverride[ key ] = value
-            args.remove( a )
-
-        elif not options.info:
-            if os.path.exists( a ):
-                args.remove( a )
-                if os.path.isdir( a ):
-                    newfiles = glob.glob( os.path.join( a, "*.ats" ) )
-                    ats_files.extend( newfiles )
-                else:
-                    ats_files.append( a )
-            else:
-                testcases.append( a )
-        else:
-            if options.action in test_actions:
-                logger.error( f"The command line arg '{a}' is not recognized."
-                              "  An ats file or a directory name is expected." )
-                sys.exit( 1 )
-
-    # If no files were specified, look in the target directories
-    for d in [ '.', 'integratedTests' ]:
-        if len( ats_files ) == 0:
-            if os.path.isdir( d ):
-                ats_files.extend( glob.glob( os.path.join( d, "*.ats" ) ) )
-
-    # prune out ats continue files.
-    for a in ats_files[ : ]:
-        if a.endswith( "continue.ats" ):
-            ats_files.remove( a )
-
-    return ats_files
-
-
-def build_ats_arguments( options, ats_files, originalargv, config ):
+def build_ats_arguments( options, originalargv, config ):
     # construct the argv to pass to the ATS:
     atsargv = []
     atsargv.append( originalargv[ 0 ] )
@@ -85,7 +40,7 @@ def build_ats_arguments( options, ats_files, originalargv, config ):
     for f in os.environ.get( 'ATS_FILTER', '' ).split( ',' ):
         atsargv.extend( [ '-f', f ] )
 
-    atsargv.extend( ats_files )
+    atsargv.append( options.ats_target )
     sys.argv = atsargv
 
 
@@ -218,28 +173,6 @@ def check_timing_file( options, config ):
                         configuration_record.globalTestTimings[ tokens[ 0 ] ] = int( tokens[ 1 ] )
 
 
-def append_test_end_step( machine ):
-    """
-    Add extra processing to the end of tests
-    """
-    originalNoteEnd = machine.noteEnd
-
-    def noteEndWrapper( test ):
-        test.geos_atsTestCase.status.noteEnd( test )
-        return originalNoteEnd( test )
-
-    machine.noteEnd = noteEndWrapper
-
-
-def check_working_dir( workingDir ):
-    if workingDir:
-        if os.path.isdir( workingDir ):
-            os.chdir( workingDir )
-        else:
-            logger.error( f"The requested working dir does not appear to exist: {workingDir}" )
-            quit()
-
-
 def infoOptions( title, options ):
     from geos_ats import common_utilities
     topic = common_utilities.InfoTopic( title )
@@ -247,19 +180,6 @@ def infoOptions( title, options ):
     table = common_utilities.TextTable( 2 )
     for opt, desc in options:
         table.addRow( opt, desc )
-    table.printTable()
-    topic.endBanner()
-
-
-def infoParagraph( title, paragraphs ):
-    from geos_ats import common_utilities
-    topic = common_utilities.InfoTopic( title )
-    topic.startBanner()
-    table = common_utilities.TextTable( 1 )
-    for p in paragraphs:
-        table.addRow( p )
-    table.rowbreak = 1
-    table.maxwidth = 75
     table.printTable()
     topic.endBanner()
 
@@ -289,67 +209,28 @@ def info( args ):
 
 def report( manager ):
     """The report action"""
-    from geos_ats import ( test_case, reporting, configuration_record )
-
-    testcases = test_case.TESTS.values()
-
-    if configuration_record.config.report_wait:
-        reporter = reporting.ReportWait( testcases )
-        reporter.report( sys.stdout )
-
-    if configuration_record.config.report_text:
-        reporter = reporting.ReportText( testcases )
-        with open( configuration_record.config.report_text_file, "w" ) as filep:
-            reporter.report( filep )
-        if configuration_record.config.report_text_echo:
-            with open( configuration_record.config.report_text_file, "r" ) as filep:
-                sys.stdout.write( filep.read() )
+    from geos_ats import ( reporting, configuration_record )
 
     if configuration_record.config.report_html:
-        reporter = reporting.ReportHTML( testcases )
+        reporter = reporting.ReportHTML( manager.testlist )
         reporter.report()
 
     if configuration_record.config.report_ini:
-        reporter = reporting.ReportIni( testcases )
+        reporter = reporting.ReportIni( manager.testlist )
         with open( configuration_record.config.report_ini_file, "w" ) as filep:
-            reporter.report( filep )
-
-    if configuration_record.config.report_timing:
-        reporter = reporting.ReportTiming( testcases )
-        if not configuration_record.config.report_timing_overwrite:
-            try:
-                with open( configuration_record.config.timing_file, "r" ) as filep:
-                    reporter.getOldTiming( filep )
-            except IOError as e:
-                logger.debug( e )
-        with open( configuration_record.config.timing_file, "w" ) as filep:
             reporter.report( filep )
 
 
 def summary( manager, alog, short=False ):
     """Periodic summary and final summary"""
-    from geos_ats import ( reporting, configuration_record, test_case )
+    from geos_ats import ( reporting, configuration_record )
 
     if len( manager.testlist ) == 0:
         return
 
-    if hasattr( manager.machine, "getNumberOfProcessors" ):
-        totalNumberOfProcessors = getattr( manager.machine, "getNumberOfProcessors", None )()
-    else:
-        totalNumberOfProcessors = 1
-    reporter = reporting.ReportTextPeriodic( manager.testlist )
-    reporter.report( geos_atsStartTime, totalNumberOfProcessors )
-
     if configuration_record.config.report_html and configuration_record.config.report_html_periodic:
-        testcases = test_case.TESTS.values()
-        reporter = reporting.ReportHTML( testcases )
+        reporter = reporting.ReportHTML( manager.testlist )
         reporter.report( refresh=30 )
-
-    if configuration_record.config.report_text:
-        testcases = test_case.TESTS.values()
-        reporter = reporting.ReportText( testcases )
-        with open( configuration_record.config.report_text_file, "w" ) as filep:
-            reporter.report( filep )
 
 
 def append_geos_ats_summary( manager ):
@@ -405,7 +286,11 @@ def main():
     configOverride = {}
     testcases = []
     configFile = ''
-    check_working_dir( options.workingDir )
+
+    # Setup paths
+    ats_root_dir = os.path.abspath( os.path.dirname( options.ats_target ) )
+    os.chdir( ats_root_dir )
+    os.makedirs( options.workingDir, exist_ok=True )
     create_log_directory( options )
 
     # Check the test configuration
@@ -423,11 +308,9 @@ def main():
     # Check the report location
     if options.logs:
         config.report_html_file = os.path.join( options.logs, 'test_results.html' )
-        config.report_text_file = os.path.join( options.logs, 'test_results.txt' )
         config.report_ini_file = os.path.join( options.logs, 'test_results.ini' )
 
-    ats_files = check_ats_targets( options, testcases, configOverride, originalargv )
-    build_ats_arguments( options, ats_files, originalargv, config )
+    build_ats_arguments( options, originalargv, config )
 
     # Additional setup tasks
     check_timing_file( options, config )
@@ -456,8 +339,12 @@ def main():
     ats.AtsTest.glue( configFile=configFile )
     ats.AtsTest.glue( configOverride=configOverride )
     ats.AtsTest.glue( testmode=False )
+    ats.AtsTest.glue( workingDir=options.workingDir )
+    ats.AtsTest.glue( baselineDir=options.baselineDir )
+    ats.AtsTest.glue( logDir=options.logs )
+    ats.AtsTest.glue( atsRootDir=ats_root_dir )
     ats.AtsTest.glue( atsFlags=options.ats )
-    ats.AtsTest.glue( atsFiles=ats_files )
+    ats.AtsTest.glue( atsFiles=options.ats_target )
     ats.AtsTest.glue( machine=options.machine )
     ats.AtsTest.glue( config=config )
     if len( testcases ):
@@ -465,11 +352,10 @@ def main():
     else:
         ats.AtsTest.glue( testcases="all" )
 
-    from geos_ats import ( common_utilities, suite_settings, test_case, test_steps, user_utilities )
+    from geos_ats import ( common_utilities, suite_settings, test_case, test_steps, test_builder )
 
     # Set ats options
     append_geos_ats_summary( ats.manager )
-    append_test_end_step( ats.manager.machine )
     ats.manager.machine.naptime = 0.2
     ats.log.echo = True
 
@@ -484,6 +370,11 @@ def main():
     # Run ATS
     # ---------------------------------
     result = ats.manager.core()
+    if len( test_builder.test_build_failures ):
+        tmp = ', '.join( test_builder.test_build_failures )
+        logger.error( f'The following ATS test failed to build: {tmp}' )
+        if not options.allow_failed_tests:
+            raise Exception( 'Some tests failed to build' )
 
     # Make sure all the testcases requested were found
     if testcases != "all":
@@ -499,7 +390,7 @@ def main():
     # clean
     if options.action == "veryclean":
         common_utilities.removeLogDirectories( os.getcwd() )
-        files = [ config.report_html_file, config.report_ini_file, config.report_text_file ]
+        files = [ config.report_html_file, config.report_ini_file ]
         for f in files:
             if os.path.exists( f ):
                 os.remove( f )

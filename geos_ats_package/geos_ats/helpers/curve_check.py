@@ -275,20 +275,17 @@ def compare_time_history_curves( fname, baseline, curve, tolerance, output, outp
     # Generate script-based curve
     if script_instructions and ( len( data ) > 0 ):
         data[ 'script' ] = {}
-        try:
-            for script, fn, p, s in script_instructions:
-                k = location_strings[ p ]
-                data[ 'script' ][ f'{p} Time' ] = data[ 'target' ][ f'{p} Time' ]
-                key = f'{p} {k}'
-                key2 = f'{p}'
-                if s != DEFAULT_SET_NAME:
-                    key += f' {s}'
-                    key2 += f' {s}'
-                data[ 'script' ][ key ] = data[ 'target' ][ key ]
-                data[ 'script' ][ key2 ] = evaluate_external_script( script, fn, data[ 'target' ] )
-                data_sizes[ p ][ s ][ 'script' ] = list( np.shape( data[ 'script' ][ key2 ] ) )
-        except Exception as e:
-            errors.append( str( e ) )
+        for script, fn, p, s in script_instructions:
+            k = location_strings[ p ]
+            data[ 'script' ][ f'{p} Time' ] = data[ 'target' ][ f'{p} Time' ]
+            key = f'{p} {k}'
+            key2 = f'{p}'
+            if s != DEFAULT_SET_NAME:
+                key += f' {s}'
+                key2 += f' {s}'
+            data[ 'script' ][ key ] = data[ 'target' ][ key ]
+            data[ 'script' ][ key2 ] = evaluate_external_script( script, fn, data[ 'target' ] )
+            data_sizes[ p ][ s ][ 'script' ] = list( np.shape( data[ 'script' ][ key2 ] ) )
 
     # Reshape data if necessary so that they have a predictable number of dimensions
     for k in data.keys():

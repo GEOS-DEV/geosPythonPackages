@@ -40,7 +40,11 @@ def build_command_line_parser():
 
     parser.add_argument( "geos_bin_dir", type=str, help="GEOS binary directory." )
 
-    parser.add_argument( "-w", "--workingDir", type=str, help="Initial working directory" )
+    parser.add_argument( "ats_target", type=str, help="ats file" )
+
+    parser.add_argument( "-w", "--workingDir", type=str, help="Root working directory" )
+
+    parser.add_argument( "-b", "--baselineDir", type=str, help="Root baseline directory" )
 
     action_names = ','.join( action_options.keys() )
     parser.add_argument( "-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})" )
@@ -89,6 +93,8 @@ def build_command_line_parser():
 
     parser.add_argument( "-l", "--logs", type=str, default=None )
 
+    parser.add_argument( "-f", "--allow-failed-tests", default=False, action='store_true' )
+
     parser.add_argument(
         "--failIfTestsFail",
         action="store_true",
@@ -97,8 +103,6 @@ def build_command_line_parser():
     )
 
     parser.add_argument( "-n", "-N", "--numNodes", type=int, default="2" )
-
-    parser.add_argument( "ats_targets", type=str, nargs='*', help="ats files or directories." )
 
     return parser
 
@@ -127,6 +131,13 @@ def parse_command_line_arguments( args ):
         print( f"Selected verbose option ({verbose}) not recognized" )
         exit_flag = True
 
+    # Paths
+    if not options.workingDir:
+        options.workingDir = os.path.basename( options.ats_target )
+
+    if not options.baselineDir:
+        options.baselineDir = options.workingDir
+
     # Print detailed information
     if options.detail:
         for option_type, details in zip( [ 'action', 'check' ], [ action_options, check_options ] ):
@@ -139,22 +150,3 @@ def parse_command_line_arguments( args ):
         quit()
 
     return options
-
-
-def patch_parser( parser ):
-
-    def add_option_patch( *xargs, **kwargs ):
-        """
-        Convert type string to actual type instance
-        """
-        tmp = kwargs.get( 'type', str )
-        type_map = { 'string': str }
-        if isinstance( tmp, str ):
-            if tmp in type_map:
-                tmp = type_map[ tmp ]
-            else:
-                tmp = locate( tmp )
-        kwargs[ 'type' ] = tmp
-        parser.add_argument( *xargs, **kwargs )
-
-    parser.add_option = add_option_patch
