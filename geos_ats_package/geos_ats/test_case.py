@@ -388,10 +388,9 @@ class TestCase( object ):
         if config.rebaseline_ask:
             while 1:
                 if config.rebaseline_undo:
-                    logger.info( f"Are you sure you want to undo the rebaseline for TestCase '{self.name}'?",
-                                 flush=True )
+                    logger.info( f"Are you sure you want to undo the rebaseline for TestCase '{self.name}'?" )
                 else:
-                    logger.info( f"Are you sure you want to rebaseline TestCase '{self.name}'?", flush=True )
+                    logger.info( f"Are you sure you want to rebaseline TestCase '{self.name}'?" )
 
                 x = input( '[y/n] ' )
                 x = x.strip()
