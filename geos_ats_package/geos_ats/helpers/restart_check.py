@@ -32,6 +32,18 @@ def write( output, msg ):
     output.write( msg )
 
 
+def is_lfs_pointer( fname ):
+    res = False
+    try:
+        header = str( open( fname, 'rb' ).read( 16 ) )
+        if 'Git LFS pointer' in header:
+            res = True
+    except Exception:
+        pass
+
+    return res
+
+
 def load_hdf5( fname, max_wait_time=10, mode='r' ):
     file = None
     for ii in range( max_wait_time ):
@@ -42,6 +54,8 @@ def load_hdf5( fname, max_wait_time=10, mode='r' ):
                 break
             except IOError:
                 logger.warning( f'Failed to open file: {fname} (attempt {ii+1}/{max_wait_time})' )
+                if is_lfs_pointer( fname ):
+                    raise Exception( f'Target LFS object is not initialized: {fname}' )
 
         time.sleep( 1 )
 
