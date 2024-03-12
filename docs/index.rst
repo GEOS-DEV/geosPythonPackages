@@ -8,7 +8,7 @@ Python Tools
 Python Tools Setup
 ---------------------------------
 
-The preferred method to setup the GEOSX python tools is to run the following command in the build directory:
+The preferred method to setup the GEOS python tools is to run the following command in the build directory:
 
 .. code-block:: bash
 
@@ -24,7 +24,7 @@ The ats setup command also sets up the python tools:
 
 These will attempt to install the required packages into the python distribution indicated via the `Python3_EXECUTABLE` cmake variable (also used by pygeosx).
 If any package dependencies are missing, then the install script will attempt to fetch them from the internet using pip.
-After installation, these packages will be available for import within the associated python distribution, and a set of console scripts will be available within the GEOSX build bin directory.
+After installation, these packages will be available for import within the associated python distribution, and a set of console scripts will be available within the GEOS build bin directory.
 
 
 .. note::

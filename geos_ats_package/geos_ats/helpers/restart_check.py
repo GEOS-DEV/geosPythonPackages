@@ -123,7 +123,10 @@ class FileComparison( object ):
             self.compareGroups( file, base_file )
 
         else:
-            self.output.write( f"\nRank {rank} Failed to load target and/or baseline files \n" )
+            if file is None:
+                self.output.write( f"\nRank {rank} failed to load target file: {self.file_path}\n" )
+            if base_file is None:
+                self.output.write( f"\nRank {rank} failed to load baseline file: {self.baseline_path}\n" )
             self.different = True
 
         return self.different
