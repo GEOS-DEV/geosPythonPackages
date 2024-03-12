@@ -6,6 +6,7 @@ import os
 import re
 import argparse
 import logging
+import time
 from pathlib import Path
 try:
     from geos_ats.helpers.permute_array import permuteArray  # type: ignore[import]
@@ -29,6 +30,36 @@ def write( output, msg ):
     sys.stdout.write( msg )
     sys.stdout.flush()
     output.write( msg )
+
+
+def is_lfs_pointer( fname ):
+    res = False
+    try:
+        header = str( open( fname, 'rb' ).read( 16 ) )
+        if 'Git LFS pointer' in header:
+            res = True
+    except Exception:
+        pass
+
+    return res
+
+
+def load_hdf5( fname, max_wait_time=10, mode='r' ):
+    file = None
+    for ii in range( max_wait_time ):
+        if os.path.isfile( fname ):
+            try:
+                file = h5py.File( fname, mode )
+                logger.debug( f'Opened file: {fname}' )
+                break
+            except IOError:
+                logger.warning( f'Failed to open file: {fname} (attempt {ii+1}/{max_wait_time})' )
+                if is_lfs_pointer( fname ):
+                    raise Exception( f'Target LFS object is not initialized: {fname}' )
+
+        time.sleep( 1 )
+
+    return file
 
 
 def h5PathJoin( p1, p2 ):
@@ -79,17 +110,23 @@ class FileComparison( object ):
         assert ( self.atol >= 0.0 )
 
     def filesDiffer( self ):
-        try:
-            with h5py.File( self.file_path, "r" ) as file, h5py.File( self.baseline_path, "r" ) as base_file:
-                self.file_path = file.filename
-                self.baseline_path = base_file.filename
-                self.output.write( "\nRank %s is comparing %s with %s \n" %
-                                   ( MPI.COMM_WORLD.Get_rank(), self.file_path, self.baseline_path ) )
-                self.compareGroups( file, base_file )
+        # Check to see if the file is on the disk, and wait in case there is any lag in IO
+        file = load_hdf5( self.file_path )
+        base_file = load_hdf5( self.baseline_path )
+        rank = MPI.COMM_WORLD.Get_rank()
+        self.output.write( f"\nRank {rank} is comparing {self.file_path} with {self.baseline_path} \n" )
 
-        except IOError as e:
-            self.logger.debug( e )
-            self.output.write( str( e ) )
+        # Compare the files
+        if ( file is not None ) and ( base_file is not None ):
+            self.file_path = file.filename
+            self.baseline_path = base_file.filename
+            self.compareGroups( file, base_file )
+
+        else:
+            if file is None:
+                self.output.write( f"\nRank {rank} failed to load target file: {self.file_path}\n" )
+            if base_file is None:
+                self.output.write( f"\nRank {rank} failed to load baseline file: {self.baseline_path}\n" )
             self.different = True
 
         return self.different
