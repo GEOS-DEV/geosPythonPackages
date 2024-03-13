@@ -35,7 +35,7 @@ jobs:
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
-        yapf -r --diff ${{ matrix.package-name }} --style ../.style.yapf
+        yapf -r --diff ${{ matrix.package-name }} --style .style.yapf
     # - name: Test with pytest
     #   working-directory: ./${{ matrix.package-name }}
     #   run: |
