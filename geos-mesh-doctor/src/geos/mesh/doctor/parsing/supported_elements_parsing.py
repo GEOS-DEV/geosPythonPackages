@@ -1,7 +1,7 @@
 import logging
 import multiprocessing
 
-from checks.supported_elements import Options, Result
+from geos.mesh.doctor.checks.supported_elements import Options, Result
 
 from . import SUPPORTED_ELEMENTS
 

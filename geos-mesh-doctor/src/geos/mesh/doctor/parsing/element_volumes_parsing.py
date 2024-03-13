@@ -1,6 +1,6 @@
 import logging
 
-from checks.element_volumes import Options, Result
+from geos.mesh.doctor.checks.element_volumes import Options, Result
 
 from . import ELEMENT_VOLUMES
 

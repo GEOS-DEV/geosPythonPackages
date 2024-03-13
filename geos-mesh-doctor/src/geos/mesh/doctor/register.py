@@ -3,20 +3,20 @@ import importlib
 import logging
 from typing import Dict, Callable, Any, Tuple
 
-import parsing
-from parsing import CheckHelper, cli_parsing
+import geos.mesh.doctor.parsing as parsing
+from geos.mesh.doctor.parsing import CheckHelper, cli_parsing
 
 __HELPERS: Dict[ str, Callable[ [ None ], CheckHelper ] ] = dict()
 __CHECKS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
 
 
 def __load_module_check( module_name: str, check_fct="check" ):
-    module = importlib.import_module( "checks." + module_name )
+    module = importlib.import_module( "geos.mesh.doctor.checks." + module_name )
     return getattr( module, check_fct )
 
 
 def __load_module_check_helper( module_name: str, parsing_fct_suffix="_parsing" ):
-    module = importlib.import_module( "parsing." + module_name + parsing_fct_suffix )
+    module = importlib.import_module( "geos.mesh.doctor.parsing." + module_name + parsing_fct_suffix )
     return CheckHelper( fill_subparser=module.fill_subparser,
                         convert=module.convert,
                         display_results=module.display_results )
