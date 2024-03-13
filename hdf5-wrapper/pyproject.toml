@@ -9,7 +9,7 @@ description = "Simple wrapper for h5py objects"
 maintainers = [
     {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
 ]
-license = "LGPL-2.1"
+license = {text = "LGPL-2.1"}
 
 requires-python = ">=3.8"
 
