@@ -18,7 +18,7 @@ import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geosx_mesh_tools_package', 'geosx_xml_tools_package', 'geosx_mesh_doctor', 'geos_ats_package',
+python_modules = ( 'geosx_mesh_tools_package', 'geosx_xml_tools_package', 'geosx_mesh_doctor', 'geos-ats_package',
                    'hdf5_wrapper_package', 'pygeosx_tools_package', 'timehistory_package' )
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m ) ) )
