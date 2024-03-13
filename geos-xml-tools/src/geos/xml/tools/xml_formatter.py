@@ -2,7 +2,7 @@ import os
 from lxml import etree as ElementTree  # type: ignore[import]
 import re
 from typing import List, Any, TextIO
-from geosx_xml_tools import command_line_parsers
+from geos.xml.tools import command_line_parsers
 
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
