@@ -2,6 +2,34 @@
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "geos-xml-tools"
+version = "0.6.0"
+description = "Tools for enabling advanced xml features in GEOSX"
+maintainers = [
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
+]
+license = {text = "LGPL-2.1"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+requires-python = ">=3.6"
+
+dependencies = [
+    "lxml>=4.5.0",
+    "parameterized",
+    "numpy"
+]
+
+[project.scripts]
+    preprocess_xml = "geos.xml.tools.main:preprocess_serial"
+    format_xml = "geos.xml.tools.xml_formatter:main"
+    test_geosx_xml_tools = "geos.xml.tools.tests.test_manager:main"
+    check_xml_attribute_coverage = "geos.xml.tools.attribute_coverage:main"
+    check_xml_redundancy = "geos.xml.tools.xml_redundancy_check:main"
+
 [tool.mypy]
 python_version = "3.8"
 warn_return_any = true

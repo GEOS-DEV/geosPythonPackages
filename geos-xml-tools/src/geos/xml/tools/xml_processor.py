@@ -4,8 +4,8 @@ from lxml import etree as ElementTree  # type: ignore[import]
 from lxml.etree import XMLSyntaxError  # type: ignore[import]
 import re
 import os
-from geosx_xml_tools import regex_tools, unit_manager
-from geosx_xml_tools import xml_formatter
+from geos.xml.tools import regex_tools, unit_manager
+from geos.xml.tools import xml_formatter
 from typing import Iterable, Tuple, List
 
 # Create an instance of the unit, parameter regex handlers

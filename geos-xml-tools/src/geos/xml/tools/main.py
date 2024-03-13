@@ -4,7 +4,7 @@ import sys
 import argparse
 import os
 import time
-from geosx_xml_tools import xml_processor, command_line_parsers
+from geos.xml.tools import xml_processor, command_line_parsers
 from typing import Callable, Any, Union, Tuple, Iterable
 
 

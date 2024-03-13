@@ -1,9 +1,9 @@
-from geosx_xml_tools.attribute_coverage import parse_schema
-from geosx_xml_tools.xml_formatter import format_file
+from geos.xml.tools.attribute_coverage import parse_schema
+from geos.xml.tools.xml_formatter import format_file
 from lxml import etree as ElementTree  # type: ignore[import]
 import os
 from pathlib import Path
-from geosx_xml_tools import command_line_parsers
+from geos.xml.tools import command_line_parsers
 from typing import Iterable, Dict, Any
 
 
