@@ -11,7 +11,7 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_WEDGE,
 )
 
-from checks.fix_elements_orderings import Options, Result
+from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result
 
 from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 

@@ -1,3 +1,36 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geos-mesh-doctor"
+version = "0.0.1"
+description = "Mesh doctor for GEOS"
+authors = [{name = "GEOS Contributors" }]
+license = {text = "LGPL-2.1"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+requires-python = ">=3.11"
+
+dependencies = [
+    "vtk >= 9.1",
+    "networkx >= 2.4",
+    "tqdm",
+    "numpy",
+]
+
+[project.scripts]
+    mesh-doctor = "geos.mesh.doctor.mesh_doctor:main"
+    
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
+
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",

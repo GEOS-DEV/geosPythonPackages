@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 
-from checks.generate_global_ids import Options, Result
+from geos.mesh.doctor.checks.generate_global_ids import Options, Result
 
 from . import vtk_output_parsing, GENERATE_GLOBAL_IDS
 
