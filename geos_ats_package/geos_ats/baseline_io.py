@@ -113,8 +113,8 @@ def manage_baselines( options ):
     """
     # Check for integrated test yaml file
     test_yaml = ''
-    if options.integrateTestsYAML:
-        test_yaml = options.integrateTestsYAML
+    if options.testYAML:
+        test_yaml = options.testYAML
     else:
         os.path.join( options.geos_bin_dir ), '..', '..', '.integrated_tests.yaml'
 

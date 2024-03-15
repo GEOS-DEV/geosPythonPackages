@@ -48,7 +48,7 @@ def build_command_line_parser():
 
     parser.add_argument( "-b", "--baselineDir", type=str, help="Root baseline directory" )
 
-    parser.add_argument( "-y", "--integrateTestsYAML", type=str, help="Baseline bucket name", default='' )
+    parser.add_argument( "-y", "--testYAML", type=str, help="Baseline bucket name", default='' )
 
     action_names = ','.join( action_options.keys() )
     parser.add_argument( "-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})" )
