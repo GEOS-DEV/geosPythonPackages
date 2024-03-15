@@ -4,7 +4,6 @@ import tempfile
 import shutil
 import yaml
 import time
-from google.cloud import storage
 
 logger = logging.getLogger( 'geos_ats' )
 
@@ -44,6 +43,9 @@ def download_baselines( bucket_name, blob_name, baseline_path, force_redownload=
         logger.info( 'Downloading baselines...' )
         tmpdir = tempfile.TemporaryDirectory()
         archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
+
+        # Download from GCP
+        from google.cloud import storage
         client = storage.Client()
         bucket = client.bucket( bucket_name )
         blob = bucket.blob( blob_name )
@@ -91,6 +93,8 @@ def upload_baselines( bucket_name, blob_name, baseline_path ):
         archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
 
+        # Upload to gcp
+        from google.cloud import storage
         logger.info( 'Uploading baseline files...' )
         client = storage.Client()
         bucket = client.bucket( bucket_name )
@@ -116,12 +120,12 @@ def manage_baselines( options ):
     if options.testYAML:
         test_yaml = options.testYAML
     else:
-        os.path.join( options.geos_bin_dir ), '..', '..', '.integrated_tests.yaml'
+        test_yaml = os.path.join( options.geos_bin_dir, '..', '..', '.integrated_tests.yaml' )
 
     if not os.path.isfile( test_yaml ):
         raise Exception( f'Could not find the integrated test yaml file: {test_yaml}' )
 
-    test_options = yaml.load( open( test_yaml ) )
+    test_options = yaml.safe_load( open( test_yaml ) )
     baseline_options = test_options.get( 'baselines', {} )
     for k in [ 'bucket', 'latest' ]:
         if k not in baseline_options:
