@@ -2,6 +2,8 @@ import os
 import logging
 import tempfile
 import shutil
+import yaml
+import time
 from google.cloud import storage
 
 logger = logging.getLogger( 'geos_ats' )
@@ -42,16 +44,14 @@ def download_baselines( bucket_name, blob_name, baseline_path, force_redownload=
         logger.info( 'Downloading baselines...' )
         tmpdir = tempfile.TemporaryDirectory()
         archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
-        bucket = storage_client.bucket( bucket_name )
+        client = storage.Client()
+        bucket = client.bucket( bucket_name )
         blob = bucket.blob( blob_name )
         blob.download_to_filename( archive_name )
 
         # Unpack new baselines
         logger.info( 'Unpacking baselines...' )
         shutil.unpack_archive( archive_name, baseline_path, format='gztar' )
-        with open( status_path, 'w' ) as f:
-            f.write( blob_name )
-
         logger.info( 'Finished fetching baselines!' )
 
     except Exception as e:
@@ -92,7 +92,8 @@ def upload_baselines( bucket_name, blob_name, baseline_path ):
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
 
         logger.info( 'Uploading baseline files...' )
-        bucket = storage_client.bucket( bucket_name )
+        client = storage.Client()
+        bucket = client.bucket( bucket_name )
         blob = bucket.blob( blob_name )
         blob.upload_from_filename( archive_name, if_generation_match=0 )
         logger.info( 'Finished uploading baselines!' )
@@ -104,3 +105,49 @@ def upload_baselines( bucket_name, blob_name, baseline_path ):
         # Reset the local blob name
         with open( status_path, 'w' ) as f:
             f.write( last_blob_name )
+
+
+def manage_baselines( options ):
+    """
+    Manage the integrated test baselines
+    """
+    # Check for integrated test yaml file
+    test_yaml = ''
+    if options.integrateTestsYAML:
+        test_yaml = options.integrateTestsYAML
+    else:
+        os.path.join( options.geos_bin_dir ), '..', '..', '.integrated_tests.yaml'
+
+    if not os.path.isfile( test_yaml ):
+        raise Exception( f'Could not find the integrated test yaml file: {test_yaml}' )
+
+    test_options = yaml.load( open( test_yaml ) )
+    baseline_options = test_options.get( 'baselines', {} )
+    for k in [ 'bucket', 'latest' ]:
+        if k not in baseline_options:
+            raise Exception(
+                f'Required information (baselines/{k}) missing from integrated test yaml file: {test_yaml}' )
+
+    # Manage baselines
+    if options.action == 'upload_baselines':
+        if os.path.isdir( options.baselineDir ):
+            epoch = int( time.time() )
+            upload_name = f'integrated_test_baseline_{epoch}.tar.gz'
+            upload_baselines( baseline_options[ 'bucket' ], upload_name, options.baselineDir )
+
+            # Update the test config file
+            baseline_options[ 'latest' ] = upload_name
+            with open( test_yaml, 'w' ) as f:
+                yaml.dump( baseline_options, f )
+            quit()
+        else:
+            raise Exception( f'Could not find the requested baselines to upload: {options.baselineDir}' )
+
+    download_baselines( baseline_options[ 'bucket' ], baseline_options[ 'latest' ], options.baselineDir )
+
+    # Cleanup
+    if not os.path.isdir( options.baselineDir ):
+        raise Exception( f'Could not find the specified baseline directory: {options.baselineDir}' )
+
+    if options.action == 'download_baselines':
+        quit()

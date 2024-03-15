@@ -17,6 +17,8 @@ action_options = {
     "rebaseline": "rebaseline the testcases from a previous run.",
     "rebaselinefailed": "rebaseline only failed testcases from a previous run.",
     "report": "generate a text or html report, see config for the reporting options.",
+    "upload_baselines": "Upload baselines to bucket",
+    "download_baselines": "Download baselines from bucket",
 }
 
 check_options = {
@@ -45,6 +47,8 @@ def build_command_line_parser():
     parser.add_argument( "-w", "--workingDir", type=str, help="Root working directory" )
 
     parser.add_argument( "-b", "--baselineDir", type=str, help="Root baseline directory" )
+
+    parser.add_argument( "-y", "--integrateTestsYAML", type=str, help="Baseline bucket name", default='' )
 
     action_names = ','.join( action_options.keys() )
     parser.add_argument( "-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})" )
