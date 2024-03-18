@@ -1,8 +1,5 @@
-import logging
 import argparse
 import os
-import shutil
-from pydoc import locate
 
 action_options = {
     "run": "execute the test cases that previously did not pass.",
@@ -48,7 +45,19 @@ def build_command_line_parser():
 
     parser.add_argument( "-b", "--baselineDir", type=str, help="Root baseline directory" )
 
-    parser.add_argument( "-y", "--testYAML", type=str, help="Baseline bucket name", default='' )
+    parser.add_argument( "-y", "--yaml", type=str, help="Path to YAML config file", default='' )
+
+    parser.add_argument( "-d",
+                         "--delete-old-baselines",
+                         action="store_true",
+                         default=False,
+                         help="Automatically delete old baselines" )
+
+    parser.add_argument( "-u",
+                         "--update-baselines",
+                         action="store_true",
+                         default=False,
+                         help="Force baseline file update" )
 
     action_names = ','.join( action_options.keys() )
     parser.add_argument( "-a", "--action", type=str, default="run", help=f"Test actions options ({action_names})" )
@@ -62,14 +71,6 @@ def build_command_line_parser():
                          type=str,
                          default="info",
                          help=f"Log verbosity options ({verbosity_names})" )
-
-    parser.add_argument( "-d",
-                         "--detail",
-                         action="store_true",
-                         default=False,
-                         help="Show detailed action/check options" )
-
-    parser.add_argument( "-i", "--info", action="store_true", default=False, help="Info on various topics" )
 
     parser.add_argument( "-r",
                          "--restartCheckOverrides",
@@ -119,16 +120,19 @@ def parse_command_line_arguments( args ):
     # Check action, check, verbosity items
     check = options.check
     if check not in check_options:
-        print(
-            f"Selected check option ({check}) not recognized.  Try running with --help/--details for more information" )
+        print( f"Selected check option ({check}) not recognized" )
         exit_flag = True
 
     action = options.action
     if action not in action_options:
-        print(
-            f"Selected action option ({action}) not recognized.  Try running with --help/--details for more information"
-        )
+        print( f"Selected action option ({action}) not recognized" )
         exit_flag = True
+
+    if exit_flag:
+        for option_type, details in zip( [ 'action', 'check' ], [ action_options, check_options ] ):
+            print( f'\nAvailable {option_type} options:' )
+            for k, v in details.items():
+                print( f'    {k}:  {v}' )
 
     verbose = options.verbose
     if verbose not in verbose_options:
@@ -141,14 +145,6 @@ def parse_command_line_arguments( args ):
 
     if not options.baselineDir:
         options.baselineDir = options.workingDir
-
-    # Print detailed information
-    if options.detail:
-        for option_type, details in zip( [ 'action', 'check' ], [ action_options, check_options ] ):
-            print( f'\nAvailable {option_type} options:' )
-            for k, v in details.items():
-                print( f'    {k}:  {v}' )
-        exit_flag = True
 
     if exit_flag:
         quit()
