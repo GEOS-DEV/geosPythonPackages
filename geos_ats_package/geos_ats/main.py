@@ -5,7 +5,7 @@ import signal
 import subprocess
 import time
 import logging
-from geos_ats import command_line_parsers
+from geos_ats import command_line_parsers, baseline_io
 
 test_actions = ( "run", "rerun", "check", "continue" )
 report_actions = ( "run", "rerun", "report", "continue" )
@@ -292,6 +292,7 @@ def main():
     os.chdir( ats_root_dir )
     os.makedirs( options.workingDir, exist_ok=True )
     create_log_directory( options )
+    baseline_io.manage_baselines( options )
 
     # Check the test configuration
     from geos_ats import configuration_record
