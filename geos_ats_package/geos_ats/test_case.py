@@ -6,7 +6,7 @@ import glob
 import inspect
 from configparser import ConfigParser
 from ats import atsut
-from ats import ( PASSED, FAILED, FILTERED, SKIPPED )
+from ats import ( EXPECTED, PASSED, FAILED, FILTERED, SKIPPED )
 from geos_ats.common_utilities import Error, Log, removeLogDirectories
 from geos_ats.configuration_record import config, globalTestTimings
 
@@ -348,11 +348,16 @@ class TestCase( object ):
                             np=np,
                             ngpu=ngpu,
                             label=label,
+                            last_status=str( self.last_status ),
                             serial=( not step.useMPI() and not config.script_launch ),
                             independent=self.independent,
                             batch=self.batch.enabled,
                             **kw )
             atsTest.step_outputs = step.resultPaths()
+
+            # Override the status if previously passed
+            if self.last_status == PASSED:
+                atsTest.status = SKIPPED
 
         # End the group
         ats.tests.AtsTest.endGroup()

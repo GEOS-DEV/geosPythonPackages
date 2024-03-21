@@ -46,6 +46,7 @@ class TestStepRecord:
 class TestCaseRecord:
     steps: dict
     status: atsut._StatusCode
+    previous_status: atsut._StatusCode
     test_number: int
     elapsed: float
     current_step: str
@@ -83,6 +84,7 @@ class ReportBase( object ):
             if test_name not in self.test_results:
                 self.test_results[ test_name ] = TestCaseRecord( steps={},
                                                                  status=EXPECTED,
+                                                                 previous_status=t.options[ 'last_status' ],
                                                                  test_number=test_id,
                                                                  elapsed=0.0,
                                                                  current_step=' ',
@@ -102,7 +104,11 @@ class ReportBase( object ):
                                                                              elapsed=elapsed )
 
             # Check the status and the latest step
-            self.test_results[ test_name ].status = max_status( t.status, self.test_results[ test_name ].status )
+            if self.test_results[ test_name ].previous_status == PASSED:
+                self.test_results[ test_name ].status = PASSED
+            else:
+                self.test_results[ test_name ].status = max_status( t.status, self.test_results[ test_name ].status )
+
             if t.status not in ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED ):
                 self.test_results[ test_name ].current_step = t.name
 
