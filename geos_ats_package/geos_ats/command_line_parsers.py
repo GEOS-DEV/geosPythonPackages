@@ -129,7 +129,7 @@ def parse_command_line_arguments( args ):
         exit_flag = True
 
     if exit_flag:
-        for option_type, details in zip( [ 'action', 'check' ], [ action_options, check_options ] ):
+        for option_type, details in ( 'action', action_options ), ( 'check', check_options ):
             print( f'\nAvailable {option_type} options:' )
             for k, v in details.items():
                 print( f'    {k}:  {v}' )
