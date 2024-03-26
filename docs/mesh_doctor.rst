@@ -10,13 +10,13 @@ Modules
 
 To list all the modules available through ``mesh-doctor``, you can simply use the ``--help`` option, which will list all available modules as well as a quick summary.
 
-.. command-output:: python mesh-doctor.py --help
+.. command-output:: python src/geos/mesh-doctor.py --help
    :cwd: ../geos-mesh-doctor
 
 Then, if you are interested in a specific module, you can ask for its documentation using the ``mesh-doctor module_name --help`` pattern.
 For example
 
-.. command-output:: python mesh-doctor.py collocated_nodes --help
+.. command-output:: python src/geos/mesh-doctor.py collocated_nodes --help
    :cwd: ../geos-mesh-doctor
 
 ``mesh-doctor`` loads its module dynamically.
@@ -39,7 +39,7 @@ Here is a list and brief description of all the modules available.
 Displays the neighboring nodes that are closer to each other than a prescribed threshold.
 It is not uncommon to define multiple nodes for the exact same position, which will typically be an issue for ``geos`` and should be fixed.
 
-.. command-output:: python mesh-doctor.py collocated_nodes --help
+.. command-output:: python src/geos/mesh-doctor.py collocated_nodes --help
    :cwd: ../geos-mesh-doctor
 
 ``element_volumes``
@@ -48,7 +48,7 @@ It is not uncommon to define multiple nodes for the exact same position, which w
 Computes the volumes of all the cells and displays the ones that are below a prescribed threshold.
 Cells with negative volumes will typically be an issue for ``geos`` and should be fixed.
 
-.. command-output:: python mesh-doctor.py element_volumes --help
+.. command-output:: python src/geos/mesh-doctor.py element_volumes --help
    :cwd: ../geos-mesh-doctor
 
 ``fix_elements_orderings``
@@ -58,7 +58,7 @@ It sometimes happens that an exported mesh does not abide by the ``vtk`` orderin
 The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
 This can be convenient if you cannot regenerate the mesh.
 
-.. command-output:: python mesh-doctor.py fix_elements_orderings --help
+.. command-output:: python src/geos/mesh-doctor.py fix_elements_orderings --help
    :cwd: ../geos-mesh-doctor
 
 ``generate_cube``
@@ -68,7 +68,7 @@ This module conveniently generates cubic meshes in ``vtk``.
 It can also generate fields with simple values.
 This tool can also be useful to generate a trial mesh that will later be refined or customized.
 
-.. command-output:: python mesh-doctor.py generate_cube --help
+.. command-output:: python src/geos/mesh-doctor.py generate_cube --help
    :cwd: ../geos-mesh-doctor
 
 ``generate_fractures``
@@ -77,7 +77,7 @@ This tool can also be useful to generate a trial mesh that will later be refined
 For a conformal fracture to be defined in a mesh, ``geos`` requires the mesh to be split at the faces where the fracture gets across the mesh.
 The ``generate_fractures`` module will split the mesh and generate the multi-block ``vtk`` files.
 
-.. command-output:: python mesh-doctor.py generate_fractures --help
+.. command-output:: python src/geos/mesh-doctor.py generate_fractures --help
    :cwd: ../geos-mesh-doctor
 
 ``generate_global_ids``
@@ -86,7 +86,7 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
 When running ``geos`` in parallel, `global ids` can be used to refer to data across multiple ranks.
 The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` mesh.
 
-.. command-output:: python mesh-doctor.py generate_global_ids --help
+.. command-output:: python src/geos/mesh-doctor.py generate_global_ids --help
    :cwd: ../geos-mesh-doctor
 
 ``non_conformal``
@@ -97,7 +97,7 @@ This module will detect elements which are close enough (there's a user defined 
 The angle between two faces can also be precribed.
 This module can be a bit time consuming.
 
-.. command-output:: python mesh-doctor.py non_conformal --help
+.. command-output:: python src/geos/mesh-doctor.py non_conformal --help
    :cwd: ../geos-mesh-doctor
 
 ``self_intersecting_elements``
@@ -106,7 +106,7 @@ This module can be a bit time consuming.
 Some meshes can have cells that auto-intersect.
 This module will display the elements that have faces intersecting.
 
-.. command-output:: python mesh-doctor.py self_intersecting_elements --help
+.. command-output:: python src/geos/mesh-doctor.py self_intersecting_elements --help
    :cwd: ../geos-mesh-doctor
 
 ``supported_elements``
@@ -120,5 +120,5 @@ But also prismes up to 11 faces.
 The ``supported_elements`` check will validate that no unsupported element is included in the input mesh.
 It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get converted into a supported type of element.
 
-.. command-output:: python mesh-doctor.py supported_elements --help
+.. command-output:: python src/geos/mesh-doctor.py supported_elements --help
    :cwd: ../geos-mesh-doctor

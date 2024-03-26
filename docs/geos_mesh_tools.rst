@@ -13,7 +13,7 @@ convert_abaqus
 Compile an xml file with advanced features into a single file that can be read by GEOS.
 
 .. argparse::
-   :module: geos.mesh.tools.main
+   :module: geosx-mesh-tools.geos.mesh.tools.main
    :func: build_abaqus_converter_input_parser
    :prog: convert_abaqus
 
@@ -47,5 +47,5 @@ Compile an xml file with advanced features into a single file that can be read b
 API
 ^^^
 
-.. automodule:: geos.mesh.tools.abaqus_converter
+.. automodule:: geosx-mesh-tools.geos.mesh.tools.abaqus_converter
     :members:
