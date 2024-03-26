@@ -1,5 +1,5 @@
 import numpy as np
-from geos.hdf5.wrapper import hdf5_wrapper as h5w
+from geos.hdf5wrapper import wrapper as h5w
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
