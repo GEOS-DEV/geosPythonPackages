@@ -2,7 +2,7 @@
 PyGEOSX Tools
 --------------------------
 
-The `pygeosx_tools` python package adds a variety of tools for working with pygeosx objects.
+The `pygeos-tools` python package adds a variety of tools for working with pygeosx objects.
 These include common operations such as setting the value of geosx wrappers with python functions, parallel communication, and file IO.
 Examples using these tools can be found here: `PYGEOSX Examples <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/advancedExamples/pygeosxExamples/Index.html>`_ .
 
@@ -10,15 +10,15 @@ Examples using these tools can be found here: `PYGEOSX Examples <https://geosx-g
 API
 ^^^^^
 
-.. automodule:: pygeosx_tools.wrapper
+.. automodule:: pygeos.tools.wrapper
     :members:
 
-.. automodule:: pygeosx_tools.file_io
+.. automodule:: pygeos.tools.file_io
     :members:
 
-.. automodule:: pygeosx_tools.mesh_interpolation
+.. automodule:: pygeos.tools.mesh_interpolation
     :members:
 
-.. automodule:: pygeosx_tools.well_log
+.. automodule:: pygeos.tools.well_log
     :members:
 
