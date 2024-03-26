@@ -2,7 +2,7 @@
 HDF5 Wrapper
 --------------------------
 
-The `hdf5_wrapper` python package adds a wrapper to `h5py` that greatly simplifies reading/writing to/from hdf5-format files.
+The `hdf5-wrapper` python package adds a wrapper to `h5py` that greatly simplifies reading/writing to/from hdf5-format files.
 
 
 Usage
@@ -12,9 +12,9 @@ Once loaded, the contents of a file can be navigated in the same way as a native
 
 .. code-block:: python
 
-  import hdf5_wrapper
+  import geos.hdf5wrapper
 
-  data = hdf5_wrapper.hdf5_wrapper('data.hdf5')
+  data = hdf5wrapper.hdf5_wrapper('data.hdf5')
 
   test = data['test']
   for k, v in data.items():
@@ -26,10 +26,10 @@ Note: for these changes to be written to the disk, the wrapper may need to be cl
 
 .. code-block:: python
 
-  import hdf5_wrapper
+  import geos.hdf5wrapper
   import numpy as np
 
-  data = hdf5_wrapper.hdf5_wrapper('data.hdf5', mode='w')
+  data = hdf5wrapper.hdf5_wrapper('data.hdf5', mode='w')
   data['string'] = 'string'
   data['integer'] = 123
   data['array'] = np.random.randn(3, 4, 5)
@@ -56,5 +56,5 @@ And external hdf5 format files can be linked together:
 API
 ^^^^^
 
-.. automodule:: hdf5_wrapper.wrapper
+.. automodule:: geos.hdf5wrapper.wrapper
     :members:
