@@ -4,4 +4,7 @@ sphinx-design
 # Running CLI programs and capture outputs
 sphinxcontrib-programoutput>=0.17
 # Installing the mesh_doctor requirements to be able to load all the modules and run the help.
--r ../geosx_mesh_doctor/requirements.txt
+vtk >= 9.1
+networkx >= 2.4
+tqdm
+numpy
