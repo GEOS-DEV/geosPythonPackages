@@ -13,7 +13,7 @@ run_geos_ats
 Primary entry point for running integrated tests.
 
 .. argparse::
-   :module: geos-ats.geos.ats.command_line_parsers
+   :module: geos.ats.command_line_parsers
    :func: build_command_line_parser
    :prog: run_geos_ats
 
@@ -45,14 +45,14 @@ API
 Restart Check
 ^^^^^^^^^^^^^^^
 
-.. automodule:: geos-ats.geos.ats.helpers.restart_check
+.. automodule:: geos.ats.helpers.restart_check
     :members:
 
 
 Curve Check
 ^^^^^^^^^^^^^^^
 
-.. automodule:: geos-ats.geos.ats.helpers.curve_check
+.. automodule:: geos.ats.helpers.curve_check
     :members:
 
 

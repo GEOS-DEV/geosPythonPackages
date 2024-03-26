@@ -21,7 +21,7 @@ python_root = '..'
 python_modules = ( 'geos-mesh-tools', 'geos-xml-tools', 'geos-mesh-doctor', 'geos-ats',
                    'hdf5-wrapper', 'pygeos-tools', 'geos-timehistory' )
 for m in python_modules:
-    sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m ) ) )
+    sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
 # -- Project information -----------------------------------------------------
 

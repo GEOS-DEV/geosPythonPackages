@@ -1,5 +1,5 @@
 
-PyGEOSX Tools
+PyGEOS Tools
 --------------------------
 
 The `pygeos-tools` python package adds a variety of tools for working with pygeosx objects.
@@ -10,15 +10,15 @@ Examples using these tools can be found here: `PYGEOSX Examples <https://geosx-g
 API
 ^^^^^
 
-.. automodule:: pygeos-tools.pygeos.tools.wrapper
+.. automodule:: pygeos.tools.wrapper
     :members:
 
-.. automodule:: pygeos-tools.pygeos.tools.file_io
+.. automodule:: pygeos.tools.file_io
     :members:
 
-.. automodule:: pygeos-tools.pygeos.tools.mesh_interpolation
+.. automodule:: pygeos.tools.mesh_interpolation
     :members:
 
-.. automodule:: pygeos-tools.pygeos.tools.well_log
+.. automodule:: pygeos.tools.well_log
     :members:
 
