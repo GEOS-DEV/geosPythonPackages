@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geos-timehistory"
+version = "0.1.0"
+description = "Scripts to plot time-series data from GEOSX time-history output files"
+authors = [{name = "GEOS Contributors" }]
+maintainers = [ 
+    {name = "William Tobin", email = "tobin6@llnl.gov"}
+]
+license = {text = "LGPL-2.1"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+requires-python = ">=3.6"
+
+dependencies = [
+    "matplotlib",
+    "h5py",
+    "numpy",
+]
+
+[project.scripts]
+    plot-timehistory = "geos.timehistory.plot:main"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
