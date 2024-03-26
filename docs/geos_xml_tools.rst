@@ -15,7 +15,7 @@ convert_abaqus
 Convert an abaqus format mesh file to gmsh or vtk format.
 
 .. argparse::
-   :module: geos.xml.tools.command_line_parsers
+   :module: geos-xml-tools.geos.xml.tools.command_line_parsers
    :func: build_preprocessor_input_parser
    :prog: preprocess_xml
 
@@ -26,7 +26,7 @@ format_xml
 Formats an xml file.
 
 .. argparse::
-   :module: geos.xml.tools.command_line_parsers
+   :module: geos-xml-tools.geos.xml.tools.command_line_parsers
    :func: build_xml_formatter_input_parser
    :prog: format_xml
 
@@ -37,7 +37,7 @@ check_xml_attribute_coverage
 Checks xml attribute coverage for files in the GEOS repository.
 
 .. argparse::
-   :module: geos.xml.tools.command_line_parsers
+   :module: geos-xml-tools.geos.xml.tools.command_line_parsers
    :func: build_attribute_coverage_input_parser
    :prog: check_xml_attribute_coverage
 
@@ -48,7 +48,7 @@ check_xml_redundancy
 Checks for redundant attribute definitions in an xml file, such as those that duplicate the default value.
 
 .. argparse::
-   :module: geos.xml.tools.command_line_parsers
+   :module: geos-xml-tools.geos.xml.tools.command_line_parsers
    :func: build_xml_redundancy_input_parser
    :prog: check_xml_redundancy
 
@@ -56,27 +56,27 @@ Checks for redundant attribute definitions in an xml file, such as those that du
 API
 ^^^
 
-.. automodule:: geos.xml.tools.main
+.. automodule:: geos-xml-tools.geos.xml.tools.main
     :members:
 
-.. automodule:: geos.xml.tools.xml_processor
+.. automodule:: geos-xml-tools.geos.xml.tools.xml_processor
     :members:
 
-.. automodule:: geos.xml.tools.xml_formatter
+.. automodule:: geos-xml-tools.geos.xml.tools.xml_formatter
     :members:
 
-.. automodule:: geos.xml.tools.unit_manager
+.. automodule:: geos-xml-tools.geos.xml.tools.unit_manager
     :members:
 
-.. automodule:: geos.xml.tools.regex_tools
+.. automodule:: geos-xml-tools.geos.xml.tools.regex_tools
     :members:
 
-.. automodule:: geos.xml.tools.xml_redundancy_check
+.. automodule:: geos-xml-tools.geos.xml.tools.xml_redundancy_check
     :members:
 
-.. automodule:: geos.xml.tools.attribute_coverage
+.. automodule:: geos-xml-tools.geos.xml.tools.attribute_coverage
     :members:
 
-.. automodule:: geos.xml.tools.table_generator
+.. automodule:: geos-xml-tools.geos.xml.tools.table_generator
     :members:
 

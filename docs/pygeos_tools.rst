@@ -10,15 +10,15 @@ Examples using these tools can be found here: `PYGEOSX Examples <https://geosx-g
 API
 ^^^^^
 
-.. automodule:: pygeos.tools.wrapper
+.. automodule:: pygeos-tools.pygeos.tools.wrapper
     :members:
 
-.. automodule:: pygeos.tools.file_io
+.. automodule:: pygeos-tools.pygeos.tools.file_io
     :members:
 
-.. automodule:: pygeos.tools.mesh_interpolation
+.. automodule:: pygeos-tools.pygeos.tools.mesh_interpolation
     :members:
 
-.. automodule:: pygeos.tools.well_log
+.. automodule:: pygeos-tools.pygeos.tools.well_log
     :members:
 

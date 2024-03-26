@@ -2,5 +2,5 @@
 Time History Tools
 --------------------------
 
-.. automodule:: geos.timehistory.plot_time_history
+.. automodule:: geos-timehistory.geos.timehistory.plot_time_history
     :members:
