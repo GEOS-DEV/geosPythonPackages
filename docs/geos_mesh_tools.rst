@@ -2,7 +2,7 @@
 GEOS Mesh Tools
 --------------------------
 
-The `geosx-mesh-tools` python package includes tools for converting meshes from common formats (abaqus, etc.) to those that can be read by GEOS (gmsh, vtk).
+The `geos-mesh-tools` python package includes tools for converting meshes from common formats (abaqus, etc.) to those that can be read by GEOS (gmsh, vtk).
 See :ref:`PythonToolsSetup` for details on setup instructions, and `External Mesh Guidelines <https://geosx-geosx.readthedocs-hosted.com/en/latest/coreComponents/mesh/docs/Mesh.html#using-an-external-mesh>`_ for a detailed description of how to use external meshes in GEOS.
 The available console scripts for this package and its API are described below.
 
@@ -13,7 +13,7 @@ convert_abaqus
 Compile an xml file with advanced features into a single file that can be read by GEOS.
 
 .. argparse::
-   :module: geosx-mesh-tools.geos.mesh.tools.main
+   :module: geos.mesh.tools.main
    :func: build_abaqus_converter_input_parser
    :prog: convert_abaqus
 
@@ -47,5 +47,5 @@ Compile an xml file with advanced features into a single file that can be read b
 API
 ^^^
 
-.. automodule:: geosx-mesh-tools.geos.mesh.tools.abaqus_converter
+.. automodule:: geos.mesh.tools.abaqus_converter
     :members:
