@@ -1,6 +1,7 @@
-import vtk
-from paraview.util.vtkAlgorithm import *
-from paraview.selection import *
+from vtk import vtkExtractSelection, vtkInformation
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase,smproxy,smproperty,smdomain
+from paraview.vtk import vtkIdTypeArray, vtkSelectionNode, vtkSelection, vtkCollection
+# from paraview.selection import *
 import functools
 from checks import element_volumes, non_conformal
 
@@ -12,8 +13,6 @@ def extract_mesh(attr_key):
 
         @functools.wraps(func)
         def wrapper_extract_mesh(self, **kwargs):
-            from paraview.vtk import vtkIdTypeArray, vtkSelectionNode, vtkSelection, vtkCollection
-            from vtk import vtkExtractSelection
             res = func(self, **kwargs)
             ids = vtkIdTypeArray()
             ids.SetNumberOfComponents(1)
@@ -54,7 +53,7 @@ class BaseFilter(VTKPythonAlgorithmBase):
         super().__init__(outputType='vtkUnstructuredGrid')
         self.opt = {'elementVolumes': element_volumes.Options(0), 'nonConformal': non_conformal.Options(0, 0, 0)}
 
-    def RequestData(self, request: vtk.vtkInformation, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
+    def RequestData(self, request: vtkInformation, inInfo: vtkInformation, outInfo: vtkInformation):
         inData = self.GetInputData(inInfo, 0, 0)
         outData = self.GetOutputData(outInfo, 0)
         assert inData is not None
@@ -76,7 +75,7 @@ class ElementVolumeFilter(BaseFilter):
         self.opt = element_volumes.Options(0)
 
     @extract_mesh(attr_key='element_volumes')
-    def _Process(self, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
+    def _Process(self, inInfo: vtkInformation, outInfo: vtkInformation):
         return element_volumes.check(self.GetInputData(inInfo, 0, 0), self.opt)
 
     @smproperty.doublevector(name="Vol Threshold", default_values=["0.0"])
@@ -95,7 +94,7 @@ class NonConformalFilter(BaseFilter):
         self.opt = non_conformal.Options(0,0,0)
 
     @extract_mesh(attr_key='non_conformal_cells')
-    def _Process(self, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
+    def _Process(self, inInfo: vtkInformation, outInfo: vtkInformation):
         return non_conformal.check(self.GetInputData(inInfo, 0, 0), self.opt)
 
     @smproperty.doublevector(name="angle/point/face tol", default_values=["0.0", "0.0", "0.0"])
