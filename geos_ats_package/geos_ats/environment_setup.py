@@ -11,13 +11,14 @@ def setup_ats( src_path, build_path, baseline_dir, working_dir, ats_xargs, ats_m
     link_path = os.path.join( test_path, "integratedTests" )
     run_script_fname = os.path.join( test_path, "geos_ats.sh" )
     log_dir = os.path.join( test_path, "TestResults" )
+    archive_dir = os.path.join( test_path, "archive" )
     baseline_dir = os.path.abspath( baseline_dir )
     working_dir = os.path.abspath( working_dir )
     ats_main_file = os.path.abspath( os.path.join( src_path, 'inputFiles', 'main.ats' ) )
     yaml_file = os.path.abspath( os.path.join( src_path, '.integrated_tests.yaml' ) )
 
     # Create a symbolic link to working directory
-    for d in [ baseline_dir, working_dir, test_path ]:
+    for d in [ baseline_dir, working_dir, test_path, archive_dir ]:
         os.makedirs( d, exist_ok=True )
     if os.path.islink( link_path ):
         print( 'integratedTests symlink already exists' )

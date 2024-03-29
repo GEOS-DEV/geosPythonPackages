@@ -14,6 +14,7 @@ action_options = {
     "rebaseline": "rebaseline the testcases from a previous run.",
     "rebaselinefailed": "rebaseline only failed testcases from a previous run.",
     "report": "generate a text or html report, see config for the reporting options.",
+    "pack_baselines": "Pack baselines into archive",
     "upload_baselines": "Upload baselines to bucket",
     "download_baselines": "Download baselines from bucket",
 }
@@ -46,6 +47,8 @@ def build_command_line_parser():
     parser.add_argument( "-b", "--baselineDir", type=str, help="Root baseline directory" )
 
     parser.add_argument( "-y", "--yaml", type=str, help="Path to YAML config file", default='' )
+
+    parser.add_argument( "--baselineArchiveName", type=str, help="Baseline archive name", default='' )
 
     parser.add_argument( "-d",
                          "--delete-old-baselines",

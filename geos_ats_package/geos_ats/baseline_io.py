@@ -83,13 +83,12 @@ def download_baselines( bucket_name: str,
         logger.error( str( e ) )
 
 
-def upload_baselines( bucket_name: str, blob_name: str, baseline_path: str ):
+def pack_baselines( archive_name: str, baseline_path: str ):
     """
     Pack and upload baselines to GCP
 
     Args:
-        bucket_name (str): Name of the GCP bucket
-        blob_name (str): Name of the baseline blob
+        archive_name (str): Name of the target archive
         baseline_path (str): Path to unpack the baselines
     """
     # Setup
@@ -102,34 +101,43 @@ def upload_baselines( bucket_name: str, blob_name: str, baseline_path: str ):
         logger.error( f'Could not find target baselines: {baseline_path}' )
         raise FileNotFoundError( 'Could not find target baseline files' )
 
-    # Check for old blob name files and over-write if necessary
-    last_blob_name = ''
-    if os.path.isfile( status_path ):
-        last_blob_name = open( status_path, 'r' ).read()
+    # Update the blob name
     with open( status_path, 'w' ) as f:
-        f.write( blob_name )
+        f.write( os.path.basename( archive_name ) )
 
     try:
         logger.info( 'Archiving baseline files...' )
-        tmpdir = tempfile.TemporaryDirectory()
         archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
+    except Exception as e:
+        logger.error( 'Failed to create baseline archive' )
+        logger.error( str( e ) )
 
-        # Upload to gcp
+
+def upload_baselines( bucket_name: str, archive_name: str ):
+    """
+    Pack and upload baselines to GCP
+
+    Args:
+        bucket_name (str): Name of the GCP bucket
+        archive_name (str): Name of the target archive
+    """
+    # Setup
+    if not os.path.isfile( archive_name ):
+        logger.error( f'Could not find target archive:{archive_name}' )
+        return
+
+    try:
         logger.info( 'Uploading baseline files...' )
         client = storage.Client()
         bucket = client.bucket( bucket_name )
-        blob = bucket.blob( blob_name )
+        blob = bucket.blob( os.path.basename( archive_name ) )
         blob.upload_from_filename( archive_name, if_generation_match=0 )
         logger.info( 'Finished uploading baselines!' )
 
     except Exception as e:
         logger.error( 'Failed to upload baselines!' )
         logger.error( str( e ) )
-
-        # Reset the local blob name
-        with open( status_path, 'w' ) as f:
-            f.write( last_blob_name )
 
 
 def manage_baselines( options ):
@@ -157,13 +165,26 @@ def manage_baselines( options ):
                 f'Required information (baselines/{k}) missing from integrated test yaml file: {test_yaml}' )
 
     # Manage baselines
-    if options.action == 'upload_baselines':
+    if options.action in [ 'pack_baselines', 'upload_baselines' ]:
         if os.path.isdir( options.baselineDir ):
-            epoch = int( time.time() )
-            upload_name = f'integrated_test_baseline_{epoch}.tar.gz'
-            upload_baselines( baseline_options[ 'bucket' ], upload_name, options.baselineDir )
+            # Check the baseline name and open a temporary directory if required
+            tmpdir = tempfile.TemporaryDirectory()
+            upload_name = options.baselineArchiveName
+            if not upload_name:
+                epoch = int( time.time() )
+                upload_name = os.path.join( tmpdir.name, f'integrated_test_baseline_{epoch}.tar.gz' )
+            else:
+                dirname = os.path.dirname( upload_name )
+                os.makedirs( dirname, exist_ok=True )
+
+            pack_baselines( upload_name, options.baselineDir )
+            if options.action == 'pack_baselines':
+                quit()
+
+            upload_baselines( baseline_options[ 'bucket' ], upload_name )
 
             # Update the test config file
+            blob_name = os.path.basename( upload_name )
             baseline_options[ 'baseline' ] = upload_name
             with open( test_yaml, 'w' ) as f:
                 yaml.dump( baseline_options, f )
