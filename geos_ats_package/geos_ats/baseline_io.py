@@ -4,18 +4,55 @@ import tempfile
 import shutil
 import yaml
 import time
+import requests
+import pathlib
+from functools import partial
+from tqdm.auto import tqdm
 from google.cloud import storage
 
 logger = logging.getLogger( 'geos_ats' )
 
 
-def download_baselines( bucket_name: str,
-                        blob_name: str,
-                        baseline_path: str,
-                        force_redownload: bool = False,
-                        ok_delete_old_baselines: bool = False ):
+def file_download_progress( headers: dict, url: str, filename: str ):
     """
-    Download and unpack baselines from GCP to the local machine
+    Download a file from a url in chunks, showing a progress bar
+
+    Args:
+        headers (dict): Request headers
+        url (str): Target address
+        filename (str): Download filename
+    """
+
+    path = pathlib.Path( filename ).expanduser().resolve()
+    path.parent.mkdir( parents=True, exist_ok=True )
+
+    r = requests.get( url, stream=True, allow_redirects=True, headers=headers )
+    if r.status_code != 200:
+        r.raise_for_status()
+        raise RuntimeError( f"Request to {url} returned status code {r.status_code}" )
+
+    file_size = int( r.headers.get( 'Content-Length', 0 ) )
+    desc = "(Unknown total file size)" if file_size == 0 else ""
+
+    try:
+        r.raw.read = partial( r.raw.read, decode_content=True )
+        with tqdm.wrapattr( r.raw, "read", total=file_size, desc=desc ) as r_raw:
+            with path.open( "wb" ) as f:
+                shutil.copyfileobj( r_raw, f )
+
+    except:
+        with path.open( "wb" ) as f:
+            for chunk in r.iter_content( chunk_size=128 ):
+                f.write( chunk )
+
+
+def collect_baselines( bucket_name: str,
+                       blob_name: str,
+                       baseline_path: str,
+                       force_redownload: bool = False,
+                       ok_delete_old_baselines: bool = False ):
+    """
+    Collect and unpack test baselines
 
     Args:
         bucket_name (str): Name of the GCP bucket
@@ -67,11 +104,14 @@ def download_baselines( bucket_name: str,
         tmpdir = tempfile.TemporaryDirectory()
         archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
 
-        # Download from GCP
-        client = storage.Client( use_auth_w_custom_endpoint=False )
-        bucket = client.bucket( bucket_name )
-        blob = bucket.blob( blob_name )
-        blob.download_to_filename( archive_name )
+        if 'https://' in bucket_name:
+            file_download_progress( {}, f"{bucket_name}/{blob_name}", archive_name )
+        else:
+            # Download from GCP
+            client = storage.Client( use_auth_w_custom_endpoint=False )
+            bucket = client.bucket( bucket_name )
+            blob = bucket.blob( blob_name )
+            blob.download_to_filename( archive_name )
 
         # Unpack new baselines
         logger.info( 'Unpacking baselines...' )
@@ -92,6 +132,7 @@ def pack_baselines( archive_name: str, baseline_path: str ):
         baseline_path (str): Path to unpack the baselines
     """
     # Setup
+    archive_name = os.path.abspath( archive_name )
     baseline_path = os.path.abspath( os.path.expanduser( baseline_path ) )
     status_path = os.path.join( baseline_path, '.blob_name' )
 
@@ -108,6 +149,7 @@ def pack_baselines( archive_name: str, baseline_path: str ):
     try:
         logger.info( 'Archiving baseline files...' )
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
+        logger.info( f'Created {archive_name}' )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
         logger.error( str( e ) )
@@ -191,11 +233,11 @@ def manage_baselines( options ):
         else:
             raise Exception( f'Could not find the requested baselines to upload: {options.baselineDir}' )
 
-    download_baselines( baseline_options[ 'bucket' ],
-                        baseline_options[ 'baseline' ],
-                        options.baselineDir,
-                        force_redownload=options.update_baselines,
-                        ok_delete_old_baselines=options.delete_old_baselines )
+    collect_baselines( baseline_options[ 'bucket' ],
+                       baseline_options[ 'baseline' ],
+                       options.baselineDir,
+                       force_redownload=options.update_baselines,
+                       ok_delete_old_baselines=options.delete_old_baselines )
 
     # Cleanup
     if not os.path.isdir( options.baselineDir ):
