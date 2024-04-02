@@ -11,6 +11,8 @@ from tqdm.auto import tqdm
 from google.cloud import storage
 
 logger = logging.getLogger( 'geos_ats' )
+tmpdir = tempfile.TemporaryDirectory()
+baseline_temporary_directory = tmpdir.name
 
 
 def file_download_progress( headers: dict, url: str, filename: str ):
@@ -50,7 +52,8 @@ def collect_baselines( bucket_name: str,
                        blob_name: str,
                        baseline_path: str,
                        force_redownload: bool = False,
-                       ok_delete_old_baselines: bool = False ):
+                       ok_delete_old_baselines: bool = False,
+                       cache_directory: str = '' ):
     """
     Collect and unpack test baselines
 
@@ -60,10 +63,12 @@ def collect_baselines( bucket_name: str,
         baseline_path (str): Path to unpack the baselines
         force_redownload (bool): Force re-download baseline files
         ok_delete_old_baselines (bool): Automatically delete old baseline files if present
+        cache_directory (str): Search this directory first for files that are already downloaded
     """
     # Setup
     baseline_path = os.path.abspath( os.path.expanduser( baseline_path ) )
     status_path = os.path.join( baseline_path, '.blob_name' )
+    cache_directory = os.path.abspath( os.path.expanduser( cache_directory ) )
 
     # Check to see if the baselines are already downloaded
     logger.info( 'Checking for existing baseline files...' )
@@ -98,29 +103,54 @@ def collect_baselines( bucket_name: str,
     else:
         os.makedirs( os.path.dirname( baseline_path ), exist_ok=True )
 
+    # Check for old baselines
+    archive_name = ''
+    if cache_directory and not force_redownload:
+        logger.info( f'Checking cache directory for existing baseline: {blob_name}' )
+        f = os.path.join( cache_directory, blob_name )
+        if os.path.isfile( f ):
+            logger.info( 'Baseline found!' )
+            archive_name = f
+
     # Download new baselines
-    try:
+    if not archive_name:
         logger.info( 'Downloading baselines...' )
-        tmpdir = tempfile.TemporaryDirectory()
-        archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
+        if cache_directory:
+            archive_name = os.path.join( cache_directory, blob_name )
+        else:
+            archive_name = os.path.join( baseline_temporary_directory, blob_name )
 
         if 'https://' in bucket_name:
-            file_download_progress( {}, f"{bucket_name}/{blob_name}", archive_name )
+            # Download from URL
+            try:
+                file_download_progress( {}, f"{bucket_name}/{blob_name}", archive_name )
+            except Exception as e:
+                logger.error( f'Failed to download baseline from URL ({bucket_name}/{blob_name})' )
+                logger.error( str( e ) )
         else:
             # Download from GCP
-            client = storage.Client( use_auth_w_custom_endpoint=False )
-            bucket = client.bucket( bucket_name )
-            blob = bucket.blob( blob_name )
-            blob.download_to_filename( archive_name )
+            try:
+                client = storage.Client( use_auth_w_custom_endpoint=False )
+                bucket = client.bucket( bucket_name )
+                blob = bucket.blob( blob_name )
+                blob.download_to_filename( archive_name )
+            except Exception as e:
+                logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_name})' )
+                logger.error( str( e ) )
 
+    if os.path.isfile( archive_name ):
         # Unpack new baselines
         logger.info( 'Unpacking baselines...' )
-        shutil.unpack_archive( archive_name, baseline_path, format='gztar' )
-        logger.info( 'Finished fetching baselines!' )
+        try:
+            shutil.unpack_archive( archive_name, baseline_path, format='gztar' )
+            logger.info( 'Finished fetching baselines!' )
+        except Exception as e:
+            logger.error( str( e ) )
+            raise Exception( f'Failed to unpack baselines: {archive_name}' )
 
-    except Exception as e:
-        logger.error( 'Failed to fetch baseline files' )
+    else:
         logger.error( str( e ) )
+        raise Exception( f'Could not find baseline files to unpack: expected={archive_name}' )
 
 
 def pack_baselines( archive_name: str, baseline_path: str ):
@@ -209,11 +239,10 @@ def manage_baselines( options ):
     if options.action in [ 'pack_baselines', 'upload_baselines' ]:
         if os.path.isdir( options.baselineDir ):
             # Check the baseline name and open a temporary directory if required
-            tmpdir = tempfile.TemporaryDirectory()
             upload_name = options.baselineArchiveName
             if not upload_name:
                 epoch = int( time.time() )
-                upload_name = os.path.join( tmpdir.name, f'integrated_test_baseline_{epoch}.tar.gz' )
+                upload_name = os.path.join( baseline_temporary_directory, f'integrated_test_baseline_{epoch}.tar.gz' )
             else:
                 dirname = os.path.dirname( upload_name )
                 os.makedirs( dirname, exist_ok=True )
@@ -237,7 +266,8 @@ def manage_baselines( options ):
                        baseline_options[ 'baseline' ],
                        options.baselineDir,
                        force_redownload=options.update_baselines,
-                       ok_delete_old_baselines=options.delete_old_baselines )
+                       ok_delete_old_baselines=options.delete_old_baselines,
+                       cache_directory=options.baselineCacheDirectory )
 
     # Cleanup
     if not os.path.isdir( options.baselineDir ):

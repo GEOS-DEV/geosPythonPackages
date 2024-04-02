@@ -49,6 +49,7 @@ def build_command_line_parser():
     parser.add_argument( "-y", "--yaml", type=str, help="Path to YAML config file", default='' )
 
     parser.add_argument( "--baselineArchiveName", type=str, help="Baseline archive name", default='' )
+    parser.add_argument( "--baselineCacheDirectory", type=str, help="Baseline cache directory", default='' )
 
     parser.add_argument( "-d",
                          "--delete-old-baselines",
