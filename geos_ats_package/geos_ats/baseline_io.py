@@ -153,13 +153,14 @@ def collect_baselines( bucket_name: str,
         raise Exception( f'Could not find baseline files to unpack: expected={archive_name}' )
 
 
-def pack_baselines( archive_name: str, baseline_path: str ):
+def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
     """
     Pack and upload baselines to GCP
 
     Args:
         archive_name (str): Name of the target archive
         baseline_path (str): Path to unpack the baselines
+        log_path (str): Path to log files (optional)
     """
     # Setup
     archive_name = os.path.abspath( archive_name )
@@ -176,9 +177,17 @@ def pack_baselines( archive_name: str, baseline_path: str ):
     with open( status_path, 'w' ) as f:
         f.write( os.path.basename( archive_name ) )
 
+    # Copy the log directory
+    if os.path.isdir( log_path ):
+        shutil.rmtree( log_path )
+    if log_path:
+        log_path = os.path.abspath( os.path.expanduser( log_path ) )
+        log_target = os.path.join( baseline_path, 'logs' )
+        shutil.copytree( log_path, log_target )
+
     try:
         logger.info( 'Archiving baseline files...' )
-        shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
+        shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
@@ -250,7 +259,7 @@ def manage_baselines( options ):
                 dirname = os.path.dirname( upload_name )
                 os.makedirs( dirname, exist_ok=True )
 
-            pack_baselines( upload_name, options.baselineDir )
+            pack_baselines( upload_name, options.baselineDir, log_path=options.logs )
             if options.action == 'pack_baselines':
                 quit()
 
