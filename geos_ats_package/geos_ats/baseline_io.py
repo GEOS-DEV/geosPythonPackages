@@ -107,7 +107,6 @@ def pack_baselines( archive_name: str, baseline_path: str ):
 
     try:
         logger.info( 'Archiving baseline files...' )
-        archive_name = os.path.join( tmpdir.name, 'baselines.tar.gz' )
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
