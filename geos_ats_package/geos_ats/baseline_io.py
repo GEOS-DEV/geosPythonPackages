@@ -105,9 +105,10 @@ def collect_baselines( bucket_name: str,
 
     # Check for old baselines
     archive_name = ''
+    blob_tar = f'{blob_name}.tar.gz'
     if cache_directory and not force_redownload:
         logger.info( 'Checking cache directory for existing baseline...' )
-        f = os.path.join( cache_directory, f'{blob_name}.tar.gz' )
+        f = os.path.join( cache_directory, blob_tar )
         if os.path.isfile( f ):
             logger.info( 'Baseline found!' )
             archive_name = f
@@ -116,26 +117,26 @@ def collect_baselines( bucket_name: str,
     if not archive_name:
         logger.info( 'Downloading baselines...' )
         if cache_directory:
-            archive_name = os.path.join( cache_directory, f'{blob_name}.tar.gz' )
+            archive_name = os.path.join( cache_directory, blob_tar )
         else:
-            archive_name = os.path.join( baseline_temporary_directory, f'{blob_name}.tar.gz' )
+            archive_name = os.path.join( baseline_temporary_directory, blob_tar )
 
         if 'https://' in bucket_name:
             # Download from URL
             try:
-                file_download_progress( {}, f"{bucket_name}/{blob_name}", archive_name )
+                file_download_progress( {}, f"{bucket_name}/{blob_tar}", archive_name )
             except Exception as e:
-                logger.error( f'Failed to download baseline from URL ({bucket_name}/{blob_name})' )
+                logger.error( f'Failed to download baseline from URL ({bucket_name}/{blob_tar})' )
                 logger.error( str( e ) )
         else:
             # Download from GCP
             try:
                 client = storage.Client( use_auth_w_custom_endpoint=False )
                 bucket = client.bucket( bucket_name )
-                blob = bucket.blob( blob_name )
+                blob = bucket.blob( blob_tar )
                 blob.download_to_filename( archive_name )
             except Exception as e:
-                logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_name})' )
+                logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
                 logger.error( str( e ) )
 
     if os.path.isfile( archive_name ):
