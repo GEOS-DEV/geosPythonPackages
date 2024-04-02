@@ -1,8 +1,11 @@
-from vtk import vtkExtractSelection, vtkInformation
-from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smproxy, smproperty, smdomain
-from paraview.vtk import vtkIdTypeArray, vtkSelectionNode, vtkSelection, vtkCollection
-# from paraview.selection import *
+import numpy as np
 import functools
+
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smproxy, smproperty, smdomain
+from paraview.vtk import vtkIdTypeArray, vtkSelectionNode, vtkSelection, vtkCollection, vtkInformation, vtkDataObject
+from paraview.vtk.util import numpy_support
+from vtkmodules.util import vtkConstants
+
 from checks import element_volumes, non_conformal
 
 
@@ -15,29 +18,19 @@ def extract_mesh( attr_key ):
         @functools.wraps( func )
         def wrapper_extract_mesh( self, **kwargs ):
             res = func( self, **kwargs )
-            ids = vtkIdTypeArray()
-            ids.SetNumberOfComponents( 1 )
-            print( attr_key )
-            for val in getattr( res, attr_key ):
-                ids.InsertNextValue( val[ 0 ] )
+            inData = self.GetInputData( kwargs[ 'inInfo' ], 0, 0 )
+            mesh = inData.NewInstance()
+            mesh.DeepCopy( inData )
+            maskArray = np.full( ( mesh.GetNumberOfCells(), ), 0 )
+            for ix, _ in getattr( res, attr_key ):
+                maskArray[ ix ] = 1
 
-            selectionNode = vtkSelectionNode()
-            selectionNode.SetFieldType( vtkSelectionNode.CELL )
-            selectionNode.SetContentType( vtkSelectionNode.INDICES )
-            selectionNode.SetSelectionList( ids )
-            selection = vtkSelection()
-            selection.AddNode( selectionNode )
-
-            extracted = vtkExtractSelection()
-            extracted.SetInputDataObject( 0, self.GetInputData( kwargs[ 'inInfo' ], 0, 0 ) )
-            extracted.SetInputData( 1, selection )
-            extracted.Update()
-            print( "There are {} cells under {} m3 vol".format( extracted.GetOutput().GetNumberOfCells(), self.opt ) )
-            print( "There are {} arrays of cell data".format( extracted.GetOutput().GetCellData().GetNumberOfArrays(),
-                                                              self.opt ) )
-
+            print( f'There are {np.sum(maskArray)} cells under {self.opt} m3 vol' )
+            insidedness = numpy_support.numpy_to_vtk( maskArray, deep=1, array_type=vtkConstants.VTK_SIGNED_CHAR )
+            insidedness.SetName( attr_key )
+            mesh.GetAttributes( vtkDataObject.CELL ).AddArray( insidedness )
             outData = self.GetOutputData( kwargs[ 'outInfo' ], 0 )
-            kwargs[ 'outInfo' ].GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), extracted.GetOutput() )
+            kwargs[ 'outInfo' ].GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), mesh )
 
             return res
 
@@ -53,7 +46,6 @@ class BaseFilter( VTKPythonAlgorithmBase ):
 
     def __init__( self ):
         super().__init__( outputType='vtkUnstructuredGrid' )
-        self.opt = { 'elementVolumes': element_volumes.Options( 0 ), 'nonConformal': non_conformal.Options( 0, 0, 0 ) }
 
     def RequestData( self, request: vtkInformation, inInfo: vtkInformation, outInfo: vtkInformation ):
         inData = self.GetInputData( inInfo, 0, 0 )
