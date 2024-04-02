@@ -106,8 +106,8 @@ def collect_baselines( bucket_name: str,
     # Check for old baselines
     archive_name = ''
     if cache_directory and not force_redownload:
-        logger.info( f'Checking cache directory for existing baseline: {blob_name}' )
-        f = os.path.join( cache_directory, blob_name )
+        logger.info( 'Checking cache directory for existing baseline...' )
+        f = os.path.join( cache_directory, f'{blob_name}.tar.gz' )
         if os.path.isfile( f ):
             logger.info( 'Baseline found!' )
             archive_name = f
@@ -116,9 +116,9 @@ def collect_baselines( bucket_name: str,
     if not archive_name:
         logger.info( 'Downloading baselines...' )
         if cache_directory:
-            archive_name = os.path.join( cache_directory, blob_name )
+            archive_name = os.path.join( cache_directory, f'{blob_name}.tar.gz' )
         else:
-            archive_name = os.path.join( baseline_temporary_directory, blob_name )
+            archive_name = os.path.join( baseline_temporary_directory, f'{blob_name}.tar.gz' )
 
         if 'https://' in bucket_name:
             # Download from URL
@@ -140,7 +140,7 @@ def collect_baselines( bucket_name: str,
 
     if os.path.isfile( archive_name ):
         # Unpack new baselines
-        logger.info( 'Unpacking baselines...' )
+        logger.info( f'Unpacking baselines: {archive_name}' )
         try:
             shutil.unpack_archive( archive_name, baseline_path, format='gztar' )
             logger.info( 'Finished fetching baselines!' )
@@ -179,7 +179,7 @@ def pack_baselines( archive_name: str, baseline_path: str ):
     try:
         logger.info( 'Archiving baseline files...' )
         shutil.make_archive( archive_name, format='gztar', base_dir=baseline_path )
-        logger.info( f'Created {archive_name}' )
+        logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
         logger.error( str( e ) )
@@ -240,9 +240,12 @@ def manage_baselines( options ):
         if os.path.isdir( options.baselineDir ):
             # Check the baseline name and open a temporary directory if required
             upload_name = options.baselineArchiveName
+            if upload_name.endswith( '.tar.gz' ):
+                upload_name = upload_name[ :-7 ]
+
             if not upload_name:
                 epoch = int( time.time() )
-                upload_name = os.path.join( baseline_temporary_directory, f'integrated_test_baseline_{epoch}.tar.gz' )
+                upload_name = os.path.join( baseline_temporary_directory, f'integrated_test_baseline_{epoch}' )
             else:
                 dirname = os.path.dirname( upload_name )
                 os.makedirs( dirname, exist_ok=True )
