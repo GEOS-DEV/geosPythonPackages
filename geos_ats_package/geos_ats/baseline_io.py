@@ -199,6 +199,14 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
 
     try:
         logger.info( 'Archiving baseline files...' )
+
+        print('archive parameters:')
+        print(os.path.isdir(os.path.dirname(archive_name)))
+        print(archive_name)
+
+        print('baseline parameters:')
+        print(os.path.isdir(baseline_path))
+        print(baseline_path)
         shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
