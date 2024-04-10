@@ -73,13 +73,16 @@ def collect_baselines( bucket_name: str,
     # Check to see if the baselines are already downloaded
     logger.info( 'Checking for existing baseline files...' )
     if os.path.isdir( baseline_path ):
-        logger.info( f'Target baseline directory already exists: {baseline_path}' )
-        if os.path.isfile( status_path ):
-            last_blob_name = open( status_path, 'r' ).read()
-            if ( blob_name == last_blob_name ) and not force_redownload:
-                logger.info( f'Target baselines are already downloaded: {blob_name}' )
-                logger.info( 'To re-download these files, run with the force_redownload option' )
-                return
+        if os.listdir( baseline_path ):
+            logger.info( f'Target baseline directory already exists: {baseline_path}' )
+            if os.path.isfile( status_path ):
+                last_blob_name = open( status_path, 'r' ).read()
+                if ( blob_name == last_blob_name ) and not force_redownload:
+                    logger.info( f'Target baselines are already downloaded: {blob_name}' )
+                    logger.info( 'To re-download these files, run with the force_redownload option' )
+                    return
+        else:
+            ok_delete_old_baselines = True
 
         if not ok_delete_old_baselines:
             for ii in range( 10 ):
