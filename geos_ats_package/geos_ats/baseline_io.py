@@ -176,16 +176,25 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
         logger.error( f'Could not find target baselines: {baseline_path}' )
         raise FileNotFoundError( 'Could not find target baseline files' )
 
+    print( 'baseline contents:' )
+    print( os.listdir( baseline_path ) )
+
     # Update the blob name
+    logger.info( 'Setting the blob name...' )
     with open( status_path, 'w' ) as f:
         f.write( os.path.basename( archive_name ) )
 
     # Copy the log directory
+    logger.info( 'Copying the logs...' )
     if os.path.isdir( log_path ):
         shutil.rmtree( log_path )
+
     if log_path:
         log_path = os.path.abspath( os.path.expanduser( log_path ) )
         log_target = os.path.join( baseline_path, 'logs' )
+
+        print( 'log parameters:' )
+        print( log_path, log_target )
         shutil.copytree( log_path, log_target )
 
     try:
