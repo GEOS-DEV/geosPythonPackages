@@ -299,6 +299,10 @@ def main():
         logger.error( repr( e ) )
         os.makedirs( options.baselineDir, exist_ok=True )
 
+    if options.action in [ "pack_baselines", "upload_baselines", "download_baselines" ]:
+        logger.error( 'geos_ats should have already quit if only managing baselines... exiting now' )
+        quit()
+
     # Check the test configuration
     from geos_ats import configuration_record
     configuration_record.initializeConfig( configFile, configOverride, options )
