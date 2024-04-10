@@ -130,7 +130,7 @@ def collect_baselines( bucket_name: str,
                 file_download_progress( {}, f"{bucket_name}/{blob_tar}", archive_name )
             except Exception as e:
                 logger.error( f'Failed to download baseline from URL ({bucket_name}/{blob_tar})' )
-                logger.error( str( e ) )
+                logger.error( repr( e ) )
         else:
             # Download from GCP
             try:
@@ -140,7 +140,7 @@ def collect_baselines( bucket_name: str,
                 blob.download_to_filename( archive_name )
             except Exception as e:
                 logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
-                logger.error( str( e ) )
+                logger.error( repr( e ) )
 
     if os.path.isfile( archive_name ):
         # Unpack new baselines
@@ -149,11 +149,10 @@ def collect_baselines( bucket_name: str,
             shutil.unpack_archive( archive_name, baseline_path, format='gztar' )
             logger.info( 'Finished fetching baselines!' )
         except Exception as e:
-            logger.error( str( e ) )
+            logger.error( repr( e ) )
             raise Exception( f'Failed to unpack baselines: {archive_name}' )
 
     else:
-        logger.error( str( e ) )
         raise Exception( f'Could not find baseline files to unpack: expected={archive_name}' )
 
 
@@ -195,7 +194,7 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
         logger.error( 'Failed to create baseline archive' )
-        logger.error( str( e ) )
+        logger.error( repr( e ) )
 
 
 def upload_baselines( bucket_name: str, archive_name: str ):
@@ -221,7 +220,7 @@ def upload_baselines( bucket_name: str, archive_name: str ):
 
     except Exception as e:
         logger.error( 'Failed to upload baselines!' )
-        logger.error( str( e ) )
+        logger.error( repr( e ) )
 
 
 def manage_baselines( options ):

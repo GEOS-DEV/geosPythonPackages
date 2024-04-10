@@ -292,7 +292,12 @@ def main():
     os.chdir( ats_root_dir )
     os.makedirs( options.workingDir, exist_ok=True )
     create_log_directory( options )
-    baseline_io.manage_baselines( options )
+    try:
+        baseline_io.manage_baselines( options )
+    except Exception as e:
+        logger.error( 'Failed to download/locate baselines... Continuing to run tests without them' )
+        logger.error( repr( e ) )
+        os.makedirs( options.baselineDir, exist_ok=True )
 
     # Check the test configuration
     from geos_ats import configuration_record
