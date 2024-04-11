@@ -3,7 +3,7 @@ import argparse
 import os
 
 
-def main( fname ):
+def log_check( fname ):
     log = ConfigParser()
     log.read( os.path.expanduser( fname ) )
 
@@ -36,9 +36,12 @@ def main( fname ):
     print( '=======================' )
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser( description="GEOS ATS Test Log Check" )
     parser.add_argument( "log_file", type=str, help="Path to the log file" )
     args = parser.parse_args()
+    log_check( args.log_file )
 
-    main( args.log_file )
+
+if __name__ == '__main__':
+    main()
