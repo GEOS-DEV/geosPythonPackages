@@ -7,7 +7,8 @@ from pyevtk.hl import gridToVTK
 
 
 class Fiber():
-    def __init__(self):
+
+    def __init__( self ):
         self.time = []
         self.channel_position = []
         self.gage_length = -1.0
@@ -19,9 +20,9 @@ class Fiber():
 
 
 class FiberAnalysis():
-    def __init__(self):
+
+    def __init__( self ):
         """
         InSAR Analysis class
         """
         self.set_names = []
-
