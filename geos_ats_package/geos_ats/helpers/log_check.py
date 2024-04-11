@@ -9,20 +9,31 @@ def main( fname ):
 
     Nfail = 0
     status_fail = [ 'TIMEDOUT', 'HALTED', 'LSFERROR', 'FAILED' ]
+    overall_status = 'PASSED'
+    fail_names = []
 
     print( '=======================' )
     print( 'Integrated test results' )
     print( '=======================' )
     for status_code, tests in log[ 'Results' ].items():
-        N = len( tests )
+        tmp = tests.split( ';' )
+        N = len( tmp )
         print( f'{status_code}: {N}' )
         if status_code in status_fail:
             Nfail += Nfail
+            fail_names.extend( tmp )
 
     if Nfail:
-        print( '\nOverall status: FAILED' )
-    else:
-        print( '\nOverall status: PASSED' )
+        overall_status = 'FAILED'
+        print( '=======================' )
+        print( 'Test failures' )
+        print( '=======================' )
+        for name in fail_names:
+            print( name )
+
+    print( '=======================' )
+    print( f'Overall status: {overall_status}' )
+    print( '=======================' )
 
 
 if __name__ == '__main__':
