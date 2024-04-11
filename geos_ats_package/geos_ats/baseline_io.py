@@ -186,27 +186,31 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
 
     # Copy the log directory
     logger.info( 'Copying the logs...' )
-    if os.path.isdir( log_path ):
-        shutil.rmtree( log_path )
-
     if log_path:
         log_path = os.path.abspath( os.path.expanduser( log_path ) )
         log_target = os.path.join( baseline_path, 'logs' )
 
         print( 'log parameters:' )
         print( log_path, log_target )
-        shutil.copytree( log_path, log_target )
+
+        try:
+            if os.path.isdir( log_target ):
+                shutil.rmtree( log_target )
+            shutil.copytree( log_path, log_target )
+        except Exception as e:
+            logger.warning( 'Failed to remove old logs' )
+            logger.warning( repr( e ) )
 
     try:
         logger.info( 'Archiving baseline files...' )
 
-        print('archive parameters:')
-        print(os.path.isdir(os.path.dirname(archive_name)))
-        print(archive_name)
+        print( 'archive parameters:' )
+        print( os.path.isdir( os.path.dirname( archive_name ) ) )
+        print( archive_name )
 
-        print('baseline parameters:')
-        print(os.path.isdir(baseline_path))
-        print(baseline_path)
+        print( 'baseline parameters:' )
+        print( os.path.isdir( baseline_path ) )
+        print( baseline_path )
         shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
