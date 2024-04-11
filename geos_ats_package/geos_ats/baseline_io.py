@@ -176,9 +176,6 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
         logger.error( f'Could not find target baselines: {baseline_path}' )
         raise FileNotFoundError( 'Could not find target baseline files' )
 
-    print( 'baseline contents:' )
-    print( os.listdir( baseline_path ) )
-
     # Update the blob name
     logger.info( 'Setting the blob name...' )
     with open( status_path, 'w' ) as f:
@@ -189,10 +186,6 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
     if log_path:
         log_path = os.path.abspath( os.path.expanduser( log_path ) )
         log_target = os.path.join( baseline_path, 'logs' )
-
-        print( 'log parameters:' )
-        print( log_path, log_target )
-
         try:
             if os.path.isdir( log_target ):
                 shutil.rmtree( log_target )
@@ -203,14 +196,6 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
 
     try:
         logger.info( 'Archiving baseline files...' )
-
-        print( 'archive parameters:' )
-        print( os.path.isdir( os.path.dirname( archive_name ) ) )
-        print( archive_name )
-
-        print( 'baseline parameters:' )
-        print( os.path.isdir( baseline_path ) )
-        print( baseline_path )
         shutil.make_archive( archive_name, format='gztar', root_dir=baseline_path )
         logger.info( f'Created {archive_name}.tar.gz' )
     except Exception as e:
