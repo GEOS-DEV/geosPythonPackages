@@ -8,7 +8,7 @@ def log_check( fname ):
     log.read( os.path.expanduser( fname ) )
 
     Nfail = 0
-    status_fail = [ 'TIMEDOUT', 'HALTED', 'LSFERROR', 'FAILED' ]
+    status_fail = [ 'timedout', 'halted', 'lsferror', 'failed' ]
     overall_status = 'PASSED'
     fail_names = []
 
