@@ -109,7 +109,7 @@ def collect_baselines( bucket_name: str,
 
     # Check for old baselines
     archive_name = ''
-    blob_tar = f'{short_blob_name}.tar.gz'
+    blob_tar = f'{blob_name}.tar.gz'
     short_blob_tar = f'{short_blob_name}.tar.gz'
     if cache_directory and not force_redownload:
         logger.info( 'Checking cache directory for existing baseline...' )
