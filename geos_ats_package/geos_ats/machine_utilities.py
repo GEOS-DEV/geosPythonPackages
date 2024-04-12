@@ -12,7 +12,7 @@ def CheckForEarlyTimeOut( test, retval, fraction ):
         if ( config.max_retry > 0 ) and ( config.retry_err_regexp != "" ) and ( not hasattr( test, "checkstart" ) ):
             sourceFile = getattr( test, "errname" )
             if os.path.exists( sourceFile ):
-                testfrom checkstart = 1
+                test.checkstart = 1
                 with open( sourceFile ) as f:
                     erroutput = f.read()
                     if re.search( config.retry_err_regexp, erroutput ):
