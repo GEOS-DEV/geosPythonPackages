@@ -812,7 +812,7 @@ def infoTestStep( stepname ):
     # compute max param width:
     allparams = [ p.name for p in stepclass.params ]
     if hasattr( stepclass, "checkstepnames" ):
-        for checkstep in stepclassfrom checkstepnames:
+        for checkstep in stepclass.checkstepnames:
             checkclass = globals()[ checkstep ]
             if not hasattr( checkclass, "doc" ):
                 continue
@@ -825,7 +825,7 @@ def infoTestStep( stepname ):
     paramset = set( [ p.name for p in stepclass.params ] )
 
     if hasattr( stepclass, "checkstepnames" ):
-        for checkstep in stepclassfrom checkstepnames:
+        for checkstep in stepclass.checkstepnames:
             logger.debug( f"CheckStep: {checkstep}" )
             checkparams = []
             checkclass = globals()[ checkstep ]
