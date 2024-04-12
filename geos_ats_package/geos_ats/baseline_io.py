@@ -134,7 +134,8 @@ def collect_baselines( bucket_name: str,
         else:
             # Download from GCP
             try:
-                client = storage.Client( use_auth_w_custom_endpoint=False )
+                client = storage.Client.create_anonymous_client()
+                # client = storage.Client( use_auth_w_custom_endpoint=False )
                 bucket = client.bucket( bucket_name )
                 blob = bucket.blob( blob_tar )
                 blob.download_to_filename( archive_name )
