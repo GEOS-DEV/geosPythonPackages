@@ -412,16 +412,16 @@ class geos( TestStepBase ):
         self.setParams( kw, self.params )
 
         checkOption = self.getCheckOption()
-        self.checksteps = []
+        selffrom checksteps = []
         if checkOption in [ "all", "curvecheck" ]:
             if curvecheck_params is not None:
-                self.checksteps.append( curvecheck( curvecheck_params, **kw ) )
+                selffrom checksteps.append( curvecheck( curvecheck_params, **kw ) )
 
         if checkOption in [ "all", "restartcheck" ]:
             if restartcheck_params is not None:
-                self.checksteps.append( restartcheck( restartcheck_params, **kw ) )
+                selffrom checksteps.append( restartcheck( restartcheck_params, **kw ) )
 
-        if not self.checksteps:
+        if not selffrom checksteps:
             raise Exception( f'This test does not have a restart or curve check enabled: {self.p.deck}' )
 
     def label( self ):
@@ -453,7 +453,7 @@ class geos( TestStepBase ):
 
         # update all the checksteps
         if self.p.check:
-            for step in self.checksteps:
+            for step in selffrom checksteps:
                 step.update( dictionary )
 
     def insertStep( self, steps ):
@@ -462,7 +462,7 @@ class geos( TestStepBase ):
 
         #  the post conditions
         if self.p.check:
-            for step in self.checksteps:
+            for step in selffrom checksteps:
                 step.insertStep( steps )
 
     def makeArgs( self ):
@@ -812,7 +812,7 @@ def infoTestStep( stepname ):
     # compute max param width:
     allparams = [ p.name for p in stepclass.params ]
     if hasattr( stepclass, "checkstepnames" ):
-        for checkstep in stepclass.checkstepnames:
+        for checkstep in stepclassfrom checkstepnames:
             checkclass = globals()[ checkstep ]
             if not hasattr( checkclass, "doc" ):
                 continue
@@ -825,7 +825,7 @@ def infoTestStep( stepname ):
     paramset = set( [ p.name for p in stepclass.params ] )
 
     if hasattr( stepclass, "checkstepnames" ):
-        for checkstep in stepclass.checkstepnames:
+        for checkstep in stepclassfrom checkstepnames:
             logger.debug( f"CheckStep: {checkstep}" )
             checkparams = []
             checkclass = globals()[ checkstep ]

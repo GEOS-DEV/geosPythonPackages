@@ -8,10 +8,10 @@ from typing import (
 
 import pytest
 
-from checks.vtk_utils import (
+from ..checks.vtk_utils import (
     VtkOutput, )
 
-from checks.generate_fractures import (
+from ..checks.generate_fractures import (
     FracturePolicy,
     Options,
 )

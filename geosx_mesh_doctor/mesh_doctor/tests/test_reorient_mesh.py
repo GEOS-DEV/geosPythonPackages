@@ -14,9 +14,9 @@ from vtkmodules.vtkCommonDataModel import (
 
 import numpy
 
-from checks.reorient_mesh import reorient_mesh
-from checks.vtk_polyhedron import FaceStream
-from checks.vtk_utils import (
+from ..checks.reorient_mesh import reorient_mesh
+from ..checks.vtk_polyhedron import FaceStream
+from ..checks.vtk_utils import (
     to_vtk_id_list,
     vtk_iter,
 )

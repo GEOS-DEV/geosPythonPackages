@@ -12,9 +12,9 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from checks.supported_elements import Options, check, __check
-from checks.vtk_polyhedron import parse_face_stream, build_face_to_face_connectivity_through_edges, FaceStream
-from checks.vtk_utils import (
+from ..checks.supported_elements import Options, check, __check
+from ..checks.vtk_polyhedron import parse_face_stream, build_face_to_face_connectivity_through_edges, FaceStream
+from ..checks.vtk_utils import (
     to_vtk_id_list, )
 
 

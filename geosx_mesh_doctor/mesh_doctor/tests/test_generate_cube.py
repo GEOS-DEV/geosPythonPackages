@@ -1,4 +1,4 @@
-from checks.generate_cube import __build, Options, FieldInfo
+from ..checks.generate_cube import __build, Options, FieldInfo
 
 
 def test_generate_cube():

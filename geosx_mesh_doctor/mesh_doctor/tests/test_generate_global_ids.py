@@ -7,7 +7,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkVertex,
 )
 
-from checks.generate_global_ids import __build_global_ids
+from ..checks.generate_global_ids import __build_global_ids
 
 
 def test_generate_global_ids():

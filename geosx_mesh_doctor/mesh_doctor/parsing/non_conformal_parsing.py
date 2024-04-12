@@ -5,7 +5,7 @@ from typing import (
     List,
 )
 
-from checks.non_conformal import Options, Result
+from ..checks.non_conformal import Options, Result
 
 from . import NON_CONFORMAL
 

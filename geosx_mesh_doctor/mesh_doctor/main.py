@@ -9,12 +9,11 @@ except AssertionError as e:
 
 import logging
 
-from parsing import CheckHelper
-from parsing.cli_parsing import parse_and_set_verbosity
-import register
+from .parsing import CheckHelper
+from .parsing.cli_parsing import parse_and_set_verbosity
+from . import register as register
 
-
-def main():
+def test():
     logging.basicConfig( format='[%(asctime)s][%(levelname)s] %(message)s' )
     parse_and_set_verbosity( sys.argv )
     main_parser, all_checks, all_checks_helpers = register.register()
@@ -32,4 +31,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    test()

@@ -11,7 +11,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from checks.collocated_nodes import Options, __check
+from ..checks.collocated_nodes import Options, __check
 
 
 def get_points() -> Iterator[ Tuple[ vtkPoints, int ] ]:
