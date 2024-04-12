@@ -69,6 +69,7 @@ def collect_baselines( bucket_name: str,
     baseline_path = os.path.abspath( os.path.expanduser( baseline_path ) )
     status_path = os.path.join( baseline_path, '.blob_name' )
     cache_directory = os.path.abspath( os.path.expanduser( cache_directory ) )
+    short_blob_name = os.path.basename( blob_name )
 
     # Check to see if the baselines are already downloaded
     logger.info( 'Checking for existing baseline files...' )
@@ -77,8 +78,8 @@ def collect_baselines( bucket_name: str,
             logger.info( f'Target baseline directory already exists: {baseline_path}' )
             if os.path.isfile( status_path ):
                 last_blob_name = open( status_path, 'r' ).read()
-                if ( blob_name == last_blob_name ) and not force_redownload:
-                    logger.info( f'Target baselines are already downloaded: {blob_name}' )
+                if ( short_blob_name == last_blob_name ) and not force_redownload:
+                    logger.info( f'Target baselines are already downloaded: {short_blob_name}' )
                     logger.info( 'To re-download these files, run with the force_redownload option' )
                     return
         else:
@@ -108,10 +109,11 @@ def collect_baselines( bucket_name: str,
 
     # Check for old baselines
     archive_name = ''
-    blob_tar = f'{blob_name}.tar.gz'
+    blob_tar = f'{short_blob_name}.tar.gz'
+    short_blob_tar = f'{short_blob_name}.tar.gz'
     if cache_directory and not force_redownload:
         logger.info( 'Checking cache directory for existing baseline...' )
-        f = os.path.join( cache_directory, blob_tar )
+        f = os.path.join( cache_directory, short_blob_tar )
         if os.path.isfile( f ):
             logger.info( 'Baseline found!' )
             archive_name = f
@@ -120,9 +122,9 @@ def collect_baselines( bucket_name: str,
     if not archive_name:
         logger.info( 'Downloading baselines...' )
         if cache_directory:
-            archive_name = os.path.join( cache_directory, blob_tar )
+            archive_name = os.path.join( cache_directory, short_blob_tar )
         else:
-            archive_name = os.path.join( baseline_temporary_directory, blob_tar )
+            archive_name = os.path.join( baseline_temporary_directory, short_blob_tar )
 
         if 'https://' in bucket_name:
             # Download from URL
@@ -135,7 +137,6 @@ def collect_baselines( bucket_name: str,
             # Download from GCP
             try:
                 client = storage.Client.create_anonymous_client()
-                # client = storage.Client( use_auth_w_custom_endpoint=False )
                 bucket = client.bucket( bucket_name )
                 blob = bucket.blob( blob_tar )
                 blob.download_to_filename( archive_name )

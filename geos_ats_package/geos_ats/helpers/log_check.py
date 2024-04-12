@@ -16,19 +16,22 @@ def log_check( fname ):
     print( 'Integrated test results' )
     print( '=======================' )
     for status_code, tests in log[ 'Results' ].items():
-        tmp = tests.split( ';' )
-        N = len( tmp )
-        print( f'{status_code}: {N}' )
-        if status_code in status_fail:
-            Nfail += Nfail
-            fail_names.extend( tmp )
+        if tests:
+            tmp = tests.split( ';' )
+            N = len( tmp )
+            print( f'{status_code}: {N}' )
+            if status_code in status_fail:
+                Nfail += N
+                fail_names.extend( tmp )
+        else:
+            print( f'{status_code}: 0' )
 
     if Nfail:
         overall_status = 'FAILED'
         print( '=======================' )
         print( 'Test failures' )
         print( '=======================' )
-        for name in fail_names:
+        for name in sorted( fail_names, key=lambda v: v.lower() ):
             print( name )
 
     print( '=======================' )
