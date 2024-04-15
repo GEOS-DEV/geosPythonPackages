@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from tabulate import tabulate
 import glob
 import logging
+import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
 from ats import atsut
@@ -157,6 +158,10 @@ class ReportHTML( ReportBase ):
     """HTML Reporting"""
 
     def report( self, refresh=0 ):
+        self.html_dir = os.path.dirname( self.html_filename )
+        self.html_assets = os.path.join( self.html_dir, 'html_assets' )
+        os.makedirs( self.html_assets, exist_ok=True )
+
         sp = open( self.html_filename, 'w' )
         self.writeHeader( sp, refresh )
         self.writeSummary( sp )
@@ -279,18 +284,33 @@ class ReportHTML( ReportBase ):
             status_formatted = color_pattern.format( COLORS[ status_str ], k, status_str )
             step_shortname = v.current_step
             elapsed_formatted = hms( v.elapsed )
+
+            # Collect file to link
             output_files = []
             for s in v.steps.values():
-                if os.path.isfile( s.log ):
-                    output_files.append( file_pattern.format( s.log, os.path.basename( s.log ) ) )
-                if os.path.isfile( s.log + '.err' ):
-                    output_files.append( file_pattern.format( s.log + '.err', os.path.basename( s.log + '.err' ) ) )
+                for f in [ s.log, s.log + '.err' ]:
+                    if os.path.isfile( f ):
+                        output_files.append( f )
                 for pattern in s.output:
                     for f in sorted( glob.glob( pattern ) ):
                         if ( ( 'restart' not in f ) or ( '.restartcheck' in f ) ) and os.path.isfile( f ):
-                            output_files.append( file_pattern.format( f, os.path.basename( f ) ) )
+                            output_files.append( f )
 
-            row = [ status_formatted, k, step_shortname, elapsed_formatted, v.resources, ', '.join( output_files ) ]
+            # Check to make sure files are in the log directory, and copy them if necessary
+            for ii in range( len( output_files ) ):
+                folder, fname = os.path.split( output_files[ ii ] )
+                if folder.startswith( self.html_dir ):
+                    output_files[ ii ] = os.path.relpath( self.html_dir, f )
+                else:
+                    copy_fname = os.path.join( self.html_assets, fname )
+                    shutil.copyfile( output_files[ ii ], copy_fname )
+                    output_files[ ii ] = copy_fname
+
+            # Create the table entry
+            output_file_links = [ file_pattern.format( f, os.path.basename( f ) ) for f in output_files ]
+            row = [
+                status_formatted, k, step_shortname, elapsed_formatted, v.resources, ', '.join( output_file_links )
+            ]
             if status_str == 'FILTERED':
                 table_filt.append( row )
             else:
