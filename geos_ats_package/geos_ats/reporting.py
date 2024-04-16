@@ -51,6 +51,7 @@ class TestCaseRecord:
     elapsed: float
     current_step: str
     resources: int
+    path: str
 
 
 @dataclass
@@ -79,6 +80,7 @@ class ReportBase( object ):
             test_name = step_name[ :step_name.rfind( '_' ) ]
             test_id = t.group.number
             group_name = test_name[ :test_name.rfind( '_' ) ]
+            group_path = os.path.join( '.', t.options[ 'path' ], test_name )
 
             # Save data
             if test_name not in self.test_results:
@@ -87,7 +89,8 @@ class ReportBase( object ):
                                                                  test_number=test_id,
                                                                  elapsed=0.0,
                                                                  current_step=' ',
-                                                                 resources=t.np )
+                                                                 resources=t.np,
+                                                                 path=group_path )
 
             # Check elapsed time
             elapsed = 0.0
@@ -159,7 +162,8 @@ class ReportHTML( ReportBase ):
 
     def report( self, refresh=0 ):
         self.html_dir = os.path.dirname( self.html_filename )
-        self.html_assets = os.path.join( self.html_dir, 'html_assets' )
+        self.html_assets_name = 'test_data'
+        self.html_assets = os.path.join( self.html_dir, self.html_assets_name )
         os.makedirs( self.html_assets, exist_ok=True )
 
         sp = open( self.html_filename, 'w' )
@@ -276,16 +280,16 @@ class ReportHTML( ReportBase ):
 
         table = []
         table_filt = []
-        file_pattern = "<a href=\"file://{}\">{}</a>"
+        file_pattern = "<a href=\"{}\">{}</a>"
         color_pattern = "<p style=\"color: {};\" id=\"{}\"> {} </p>"
 
         for k, v in self.test_results.items():
             status_str = v.status.name
             status_formatted = color_pattern.format( COLORS[ status_str ], k, status_str )
-            step_shortname = v.current_step
+            step_shortname = v.current_step[ v.current_step.rfind( '_' ) + 1:-1 ]
             elapsed_formatted = hms( v.elapsed )
 
-            # Collect file to link
+            # Collect files to include in the table
             output_files = []
             for s in v.steps.values():
                 for f in [ s.log, s.log + '.err' ]:
@@ -293,23 +297,31 @@ class ReportHTML( ReportBase ):
                         output_files.append( f )
                 for pattern in s.output:
                     for f in sorted( glob.glob( pattern ) ):
-                        if ( ( 'restart' not in f ) or ( '.restartcheck' in f ) ) and os.path.isfile( f ):
+                        if ( 'restart' not in f ):
                             output_files.append( f )
 
-            # Check to make sure files are in the log directory, and copy them if necessary
-            for ii in range( len( output_files ) ):
-                folder, fname = os.path.split( output_files[ ii ] )
-                if folder.startswith( self.html_dir ):
-                    output_files[ ii ] = os.path.relpath( self.html_dir, f )
-                else:
-                    copy_fname = os.path.join( self.html_assets, fname )
-                    shutil.copyfile( output_files[ ii ], copy_fname )
-                    output_files[ ii ] = copy_fname
+            # Copy files and build links
+            if output_files:
+                os.makedirs( os.path.join( self.html_assets, v.path ), exist_ok=True )
 
-            # Create the table entry
-            output_file_links = [ file_pattern.format( f, os.path.basename( f ) ) for f in output_files ]
+            output_file_links = []
+            for f in output_files:
+                base_fname = os.path.basename( f )
+                copy_fname = os.path.join( self.html_assets, v.path, base_fname )
+                link_fname = os.path.join( '.', self.html_assets_name, v.path, base_fname )
+                log_fname = base_fname
+                if ( '.log' in log_fname ):
+                    log_index = base_fname[ :base_fname.find( '.' ) ]
+                    log_type = ''.join( base_fname.split( '_' )[ -2: ] )
+                    log_fname = f'{log_index}_{log_type}'
+
+                shutil.copyfile( f, copy_fname )
+                output_file_links.append( file_pattern.format( link_fname, log_fname ) )
+
+            # Write row
             row = [
-                status_formatted, k, step_shortname, elapsed_formatted, v.resources, ', '.join( output_file_links )
+                status_formatted,
+                k.replace( '_', ' ' ), step_shortname, elapsed_formatted, v.resources, ', '.join( output_file_links )
             ]
             if status_str == 'FILTERED':
                 table_filt.append( row )

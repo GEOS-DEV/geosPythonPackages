@@ -5,6 +5,7 @@ import signal
 import subprocess
 import time
 import logging
+import glob
 from geos_ats import command_line_parsers, baseline_io
 
 test_actions = ( "run", "rerun", "check", "continue" )
@@ -404,6 +405,9 @@ def main():
         for f in files:
             if os.path.exists( f ):
                 os.remove( f )
+        asset_dir = os.path.join( os.path.dirname( config.report_html_file ), 'html_assets' )
+        if os.path.isdir( asset_dir ):
+            shutil.rmtree( asset_dir )
 
     # clean the temporary logfile that is not needed for certain actions.
     if options.action not in test_actions:
@@ -429,6 +433,10 @@ def main():
     ats.manager.finalReport()
     ats.manager.saveResults()
     ats.manager.finalBanner()
+
+    # Cleanup old log copies
+    for f in glob.glob( os.path.join( options.logs, '*.log*' ) ):
+        os.remove( f )
 
     # Remove unnecessary log dirs created with clean runs
     none_dir = os.path.join( options.workingDir, 'None' )

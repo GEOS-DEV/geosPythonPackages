@@ -37,7 +37,7 @@ def setup_ats( src_path, build_path, baseline_dir, working_dir, ats_xargs, ats_m
     with open( run_script_fname, "w" ) as g:
         g.write( "#!/bin/bash\n" )
         g.write(
-            f"{geos_ats_fname} {bin_dir} {ats_main_file} --yaml {yaml_file} --workingDir {working_dir} --baselineDir {baseline_dir} --logs {log_dir} {ats_args} \"$@\"\n"
+            f"{geos_ats_fname} {bin_dir} {ats_main_file} --yaml {yaml_file} --workingDir {working_dir} --baselineDir {baseline_dir} --ats keep --logs {log_dir} {ats_args} \"$@\"\n"
         )
 
     # Make the script executable
