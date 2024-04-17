@@ -179,11 +179,7 @@ class ReportHTML( ReportBase ):
         <html>
          <head>
         """
-
-        if refresh:
-            header += f'  <META HTTP-EQUIV="refresh" CONTENT="{refresh}">'
-
-        header += f"""  <title>Test results - generated on {gentime} </title>
+        header += f"""  <title>GEOS ATS Results</title>
           <style type="text/css">
            th, td {{
             font-family: "Open Sans", Arial, sans-serif;
