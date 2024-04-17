@@ -186,43 +186,61 @@ class ReportHTML( ReportBase ):
         header += f"""  <title>Test results - generated on {gentime} </title>
           <style type="text/css">
            th, td {{
-            font-family: "New Century Schoolbook", Times, serif;
+            font-family: "Open Sans", Arial, sans-serif;
             font-size: smaller ;
             vertical-align: top;
             background-color: #EEEEEE ;
            }}
+
            body {{
-            font-family: "New Century Schoolbook", Times, serif;
+            font-family: "Open Sans", Arial, sans-serif;
             font-size: medium ;
             background-color: #FFFFFF ;
            }}
+
+           a:link {{
+              text-decoration: none;
+              color: #1a0dab;
+            }}
+
+            a:visited {{
+              text-decoration: none;
+              color: #6b22a9;
+            }}
+
+           div#banner {{ 
+               position: absolute; 
+               top: 0; 
+               left: 0; 
+               background-color: #f7f7f7; 
+               width: 100%; 
+             }}
+             div#banner-content {{ 
+               width: 200px; 
+               margin: 0 auto; 
+               padding: 10px;
+             }}
+             div#main-content {{ 
+               padding-top: 70px;
+            }}
+
+
+           h1 {{
+            font-size: medium ;
+           }}
+
+           h2 {{
+            font-size: medium ;
+           }}
+
            table {{
-            empty-cells: hide;
-           }}
-
-           .lightondark1 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        x-large;
-           }}
-           .lightondark2 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        large;
-           }}
-           .lightondark3 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        medium;
-           }}
-
-           th,td {{ background-color:#EEEEEE }}
-           td.probname {{ background-color: #CCCCCC; font-size: large ; text-align: center}}
-
-           table {{
+              empty-cells: hide;
               font-family: arial, sans-serif;
               border-collapse: collapse;
             }}
+
+           th,td {{ background-color:#EEEEEE }}
+           td.probname {{ background-color: #CCCCCC; font-size: large ; text-align: center}}
 
             td {{
               border: 1px solid #dddddd;
@@ -231,7 +249,7 @@ class ReportHTML( ReportBase ):
             }}
 
             th {{
-              border: 1px solid #dddddd;
+              border: 1px solid #e7e9eb;
               background-color: #8f8f8f;
               text-align: left;
               padding: 8px;
@@ -239,6 +257,9 @@ class ReportHTML( ReportBase ):
           </style>
          </head>
         <body>
+        <div id="banner"><div id="banner-content"><h1>GEOS ATS Report</h1></div></div>
+        </br></br></br>
+        <h2>Configuration</h2>
         """
 
         # Notations:
@@ -254,7 +275,6 @@ class ReportHTML( ReportBase ):
         else:
             username = os.getenv( "USER" )
 
-        header += "<h1>GEOS ATS Report</h1>\n<h2>Configuration</h2>\n"
         table = [ [ 'Test Results', gentime ], [ 'User', username ], [ 'Platform', platform ] ]
         header += tabulate( table, tablefmt='html' )
         header += '\n'
