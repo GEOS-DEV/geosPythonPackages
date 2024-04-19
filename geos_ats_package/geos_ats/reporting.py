@@ -186,6 +186,8 @@ class ReportHTML( ReportBase ):
         header += f"""  <title>GEOS ATS Results</title>
           <script src="./{self.html_assets}/sorttable.js"></script>
           <link rel="stylesheet" href="./{self.html_assets}/style.css">
+          <link href="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/css/lightbox.css">
+          <script src="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/js/lightbox.js"></script>
          </head>
         <body>
         <div id="banner"><div id="banner-content"><h1>GEOS ATS Report</h1></div></div>
@@ -233,6 +235,7 @@ class ReportHTML( ReportBase ):
         table = []
         table_filt = []
         file_pattern = "<a href=\"{}\">{}</a>"
+        image_pattern = "<a href=\"{}\" data-lightbox=\"{}\" data-title=\"{}\">{}</a>"
         color_pattern = "<p style=\"color: {};\" id=\"{}\"> {} </p>"
 
         for k, v in self.test_results.items():
@@ -269,9 +272,12 @@ class ReportHTML( ReportBase ):
                     output_fname = f'{log_index}_{log_type}'
 
                 shutil.copyfile( f, copy_fname )
-                if os.stat( output_fname ).st_size:
+                if os.stat( f ).st_size:
                     if '.log' in output_fname:
                         log_links.append( file_pattern.format( link_fname, output_fname ) )
+                    elif '.png' in output_fname:
+                        image_name = output_fname[ :-4 ]
+                        other_links.append( image_pattern.format( link_fname, output_fname, image_name, image_name ) )
                     else:
                         other_links.append( file_pattern.format( link_fname, output_fname ) )
 
@@ -295,7 +301,7 @@ class ReportHTML( ReportBase ):
         if len( table_filt ):
             sp.write( "\n\n<h1>Filtered Tests</h1>\n\n" )
             table_html = tabulate( table_filt, headers=header, tablefmt='unsafehtml' )
-            table_html.replace( '<table>', f'<table class="sortable">' )
+            table_html = table_html.replace( '<table>', f'<table class="sortable">' )
             sp.write( table_html )
 
     def writeFooter( self, sp ):
