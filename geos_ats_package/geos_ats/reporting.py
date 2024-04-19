@@ -2,6 +2,7 @@ import os
 import socket
 import time
 from geos_ats.configuration_record import config
+from geos_ats import assets
 from configparser import ConfigParser
 from tabulate import tabulate
 import glob
@@ -162,9 +163,12 @@ class ReportHTML( ReportBase ):
 
     def report( self, refresh=0 ):
         self.html_dir = os.path.dirname( self.html_filename )
-        self.html_assets_name = 'test_data'
-        self.html_assets = os.path.join( self.html_dir, self.html_assets_name )
-        os.makedirs( self.html_assets, exist_ok=True )
+        self.html_data_name = 'test_data'
+        self.html_data = os.path.join( self.html_dir, self.html_data_name )
+        os.makedirs( self.html_data, exist_ok=True )
+
+        self.html_assets = 'html_assets'
+        assets.create_assets_folder( os.path.join( self.html_dir, self.html_assets ) )
 
         sp = open( self.html_filename, 'w' )
         self.writeHeader( sp, refresh )
@@ -180,77 +184,8 @@ class ReportHTML( ReportBase ):
          <head>
         """
         header += f"""  <title>GEOS ATS Results</title>
-          <style type="text/css">
-           th, td {{
-            font-family: "Open Sans", Arial, sans-serif;
-            font-size: smaller ;
-            vertical-align: top;
-            background-color: #EEEEEE ;
-           }}
-
-           body {{
-            font-family: "Open Sans", Arial, sans-serif;
-            font-size: medium ;
-            background-color: #FFFFFF ;
-           }}
-
-           a:link {{
-              text-decoration: none;
-              color: #1a0dab;
-            }}
-
-            a:visited {{
-              text-decoration: none;
-              color: #6b22a9;
-            }}
-
-           div#banner {{ 
-               position: absolute; 
-               top: 0; 
-               left: 0; 
-               background-color: #f7f7f7; 
-               width: 100%; 
-             }}
-             div#banner-content {{ 
-               width: 200px; 
-               margin: 0 auto; 
-               padding: 10px;
-             }}
-             div#main-content {{ 
-               padding-top: 70px;
-            }}
-
-
-           h1 {{
-            font-size: medium ;
-           }}
-
-           h2 {{
-            font-size: medium ;
-           }}
-
-           table {{
-              empty-cells: hide;
-              font-family: arial, sans-serif;
-              border-collapse: collapse;
-            }}
-
-           th,td {{ background-color:#EEEEEE }}
-           td.probname {{ background-color: #CCCCCC; font-size: large ; text-align: center}}
-
-            td {{
-              border: 1px solid #dddddd;
-              text-align: left;
-              padding: 8px;
-            }}
-
-            th {{
-              border: 1px solid #e7e9eb;
-              background-color: #8f8f8f;
-              text-align: left;
-              padding: 8px;
-            }}
-          </style>
+          <script src="./{self.html_assets}/sorttable.js"></script>
+          <link rel="stylesheet" href="./{self.html_assets}/style.css">
          </head>
         <body>
         <div id="banner"><div id="banner-content"><h1>GEOS ATS Report</h1></div></div>
@@ -289,10 +224,11 @@ class ReportHTML( ReportBase ):
 
         sp.write( "\n\n<h1>Summary</h1>\n\n" )
         table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
+        table_html.replace( '<table>', f'<table class="sortable">' )
         sp.write( table_html )
 
     def writeTable( self, sp ):
-        header = ( "Status", "Name", "TestStep", "Elapsed", "Resources", "Output" )
+        header = ( "Status", "Name", "TestStep", "Elapsed", "Resources", "Logs", "Output" )
 
         table = []
         table_filt = []
@@ -318,26 +254,32 @@ class ReportHTML( ReportBase ):
 
             # Copy files and build links
             if output_files:
-                os.makedirs( os.path.join( self.html_assets, v.path ), exist_ok=True )
+                os.makedirs( os.path.join( self.html_data, v.path ), exist_ok=True )
 
-            output_file_links = []
+            log_links = []
+            other_links = []
             for f in output_files:
                 base_fname = os.path.basename( f )
-                copy_fname = os.path.join( self.html_assets, v.path, base_fname )
-                link_fname = os.path.join( '.', self.html_assets_name, v.path, base_fname )
-                log_fname = base_fname
-                if ( '.log' in log_fname ):
+                copy_fname = os.path.join( self.html_data, v.path, base_fname )
+                link_fname = os.path.join( '.', self.html_data_name, v.path, base_fname )
+                output_fname = base_fname
+                if ( '.log' in output_fname ):
                     log_index = base_fname[ :base_fname.find( '.' ) ]
                     log_type = ''.join( base_fname.split( '_' )[ -2: ] )
-                    log_fname = f'{log_index}_{log_type}'
+                    output_fname = f'{log_index}_{log_type}'
 
                 shutil.copyfile( f, copy_fname )
-                output_file_links.append( file_pattern.format( link_fname, log_fname ) )
+                if os.stat( output_fname ).st_size:
+                    if '.log' in output_fname:
+                        log_links.append( file_pattern.format( link_fname, output_fname ) )
+                    else:
+                        other_links.append( file_pattern.format( link_fname, output_fname ) )
 
             # Write row
             row = [
                 status_formatted,
-                k.replace( '_', ' ' ), step_shortname, elapsed_formatted, v.resources, ', '.join( output_file_links )
+                k.replace( '_', ' ' ), step_shortname, elapsed_formatted, v.resources, ', '.join( log_links ),
+                ', '.join( other_links )
             ]
             if status_str == 'FILTERED':
                 table_filt.append( row )
@@ -347,11 +289,13 @@ class ReportHTML( ReportBase ):
         if len( table ):
             sp.write( "\n\n<h1>Active Tests</h1>\n\n" )
             table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
+            table_html.replace( '<table>', f'<table class="sortable">' )
             sp.write( table_html )
 
         if len( table_filt ):
             sp.write( "\n\n<h1>Filtered Tests</h1>\n\n" )
             table_html = tabulate( table_filt, headers=header, tablefmt='unsafehtml' )
+            table_html.replace( '<table>', f'<table class="sortable">' )
             sp.write( table_html )
 
     def writeFooter( self, sp ):
