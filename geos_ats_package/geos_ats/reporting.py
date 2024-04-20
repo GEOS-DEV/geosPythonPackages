@@ -186,8 +186,8 @@ class ReportHTML( ReportBase ):
         header += f"""  <title>GEOS ATS Results</title>
           <script src="./{self.html_assets}/sorttable.js"></script>
           <link rel="stylesheet" href="./{self.html_assets}/style.css">
-          <link href="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/css/lightbox.css">
-          <script src="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/js/lightbox.js"></script>
+          <link rel="stylesheet" href="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/css/lightbox.css">
+          <script src="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/js/lightbox-plus-jquery.js"></script>
          </head>
         <body>
         <div id="banner"><div id="banner-content"><h1>GEOS ATS Report</h1></div></div>
@@ -226,7 +226,7 @@ class ReportHTML( ReportBase ):
 
         sp.write( "\n\n<h1>Summary</h1>\n\n" )
         table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
-        table_html.replace( '<table>', f'<table class="sortable">' )
+        table_html = table_html.replace( '<table>', f'<table class="sortable">' )
         sp.write( table_html )
 
     def writeTable( self, sp ):
@@ -295,13 +295,13 @@ class ReportHTML( ReportBase ):
         if len( table ):
             sp.write( "\n\n<h1>Active Tests</h1>\n\n" )
             table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
-            table_html.replace( '<table>', f'<table class="sortable">' )
+            table_html = table_html.replace( '<table>', '<table class="sortable">' )
             sp.write( table_html )
 
         if len( table_filt ):
             sp.write( "\n\n<h1>Filtered Tests</h1>\n\n" )
             table_html = tabulate( table_filt, headers=header, tablefmt='unsafehtml' )
-            table_html = table_html.replace( '<table>', f'<table class="sortable">' )
+            table_html = table_html.replace( '<table>', '<table class="sortable">' )
             sp.write( table_html )
 
     def writeFooter( self, sp ):
