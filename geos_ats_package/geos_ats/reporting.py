@@ -277,7 +277,7 @@ class ReportHTML( ReportBase ):
                         log_links.append( file_pattern.format( link_fname, output_fname ) )
                     elif '.png' in output_fname:
                         image_name = output_fname[ :-4 ]
-                        other_links.append( image_pattern.format( link_fname, output_fname, image_name, image_name ) )
+                        other_links.append( image_pattern.format( link_fname, image_name, image_name, output_fname ) )
                     else:
                         other_links.append( file_pattern.format( link_fname, output_fname ) )
 
