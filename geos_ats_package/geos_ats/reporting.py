@@ -235,7 +235,7 @@ class ReportHTML( ReportBase ):
         table = []
         table_filt = []
         file_pattern = "<a href=\"{}\">{}</a>"
-        image_pattern = "<a href=\"{}\" data-lightbox=\"{}\" data-title=\"{}\">{}</a>"
+        image_pattern = "<a href=\"{}\" data-lightbox=\"curvecheck\" data-title=\"{}\">{}</a>"
         color_pattern = "<p style=\"color: {};\" id=\"{}\"> {} </p>"
 
         for k, v in self.test_results.items():
@@ -276,8 +276,8 @@ class ReportHTML( ReportBase ):
                     if '.log' in output_fname:
                         log_links.append( file_pattern.format( link_fname, output_fname ) )
                     elif '.png' in output_fname:
-                        image_name = output_fname[ :-4 ]
-                        other_links.append( image_pattern.format( link_fname, image_name, image_name, output_fname ) )
+                        image_caption = os.path.join(k, output_fname[ :-4 ])
+                        other_links.append( image_pattern.format( link_fname, image_caption, output_fname ) )
                     else:
                         other_links.append( file_pattern.format( link_fname, output_fname ) )
 
