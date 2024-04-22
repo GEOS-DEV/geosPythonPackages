@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from git import Repo
 import logging
-import datetime
+import os
+from datetime import datetime
 from configparser import ConfigParser
 
 
@@ -37,4 +38,7 @@ def write_baseline_log( fname ):
     configParser.set( "baseline", "author", git_history.author )
     configParser.set( "baseline", "email", git_history.email )
     configParser.set( "baseline", "date", datetime.now().strftime( "%m/%d/%Y" ) )
-    configParser.write( fname )
+
+    os.makedirs( os.path.dirname( fname ), exist_ok=True )
+    with open( fname, 'w' ) as f:
+        configParser.write( f )

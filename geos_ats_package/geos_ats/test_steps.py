@@ -510,7 +510,7 @@ class geos( TestStepBase ):
         self._clean( self.resultPaths() )
 
     def rebaseline( self ):
-        history.write_baseline_log( os.path.join( self.baseline_directory, '.baseline_history' ) )
+        history.write_baseline_log( os.path.join( self.p.baseline_directory, '.baseline_info' ) )
 
 
 ################################################################################
