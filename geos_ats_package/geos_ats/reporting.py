@@ -276,7 +276,7 @@ class ReportHTML( ReportBase ):
                     if '.log' in output_fname:
                         log_links.append( file_pattern.format( link_fname, output_fname ) )
                     elif '.png' in output_fname:
-                        image_caption = os.path.join(k, output_fname[ :-4 ])
+                        image_caption = os.path.join( k, output_fname[ :-4 ] )
                         other_links.append( image_pattern.format( link_fname, image_caption, output_fname ) )
                     else:
                         other_links.append( file_pattern.format( link_fname, output_fname ) )

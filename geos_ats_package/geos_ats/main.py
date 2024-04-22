@@ -6,7 +6,7 @@ import subprocess
 import time
 import logging
 import glob
-from geos_ats import command_line_parsers, baseline_io
+from geos_ats import command_line_parsers, baseline_io, history
 
 test_actions = ( "run", "rerun", "check", "continue" )
 report_actions = ( "run", "rerun", "report", "continue" )
@@ -316,6 +316,9 @@ def main():
         elif 'exclude' in r:
             config.restart_exclude_pattern.append( r[ -1 ] )
 
+    # Check GEOS history
+    history.check_git_history( options.geos_bin_dir )
+
     # Check the report location
     if options.logs:
         config.report_html_file = os.path.join( options.logs, 'test_results.html' )
@@ -405,9 +408,10 @@ def main():
         for f in files:
             if os.path.exists( f ):
                 os.remove( f )
-        asset_dir = os.path.join( os.path.dirname( config.report_html_file ), 'html_assets' )
-        if os.path.isdir( asset_dir ):
-            shutil.rmtree( asset_dir )
+        for d in [ 'html_assets', 'test_data' ]:
+            asset_dir = os.path.join( os.path.dirname( config.report_html_file ), d )
+            if os.path.isdir( asset_dir ):
+                shutil.rmtree( asset_dir )
 
     # clean the temporary logfile that is not needed for certain actions.
     if options.action not in test_actions:

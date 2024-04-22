@@ -7,7 +7,7 @@ import textwrap
 import subprocess
 import re
 import logging
-from geos_ats import common_utilities
+from geos_ats import common_utilities, history
 from geos_ats.common_utilities import Error, Log
 from geos_ats.configuration_record import config
 
@@ -508,6 +508,9 @@ class geos( TestStepBase ):
 
     def clean( self ):
         self._clean( self.resultPaths() )
+
+    def rebaseline( self ):
+        history.write_baseline_log( os.path.join( self.baseline_directory, '.baseline_history' ) )
 
 
 ################################################################################

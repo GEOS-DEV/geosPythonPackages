@@ -68,7 +68,6 @@ def collect_baselines( bucket_name: str,
     # Setup
     baseline_path = os.path.abspath( os.path.expanduser( baseline_path ) )
     status_path = os.path.join( baseline_path, '.blob_name' )
-    cache_directory = os.path.abspath( os.path.expanduser( cache_directory ) )
     short_blob_name = os.path.basename( blob_name )
 
     # Check to see if the baselines are already downloaded
@@ -112,7 +111,8 @@ def collect_baselines( bucket_name: str,
     blob_tar = f'{blob_name}.tar.gz'
     short_blob_tar = f'{short_blob_name}.tar.gz'
     if cache_directory and not force_redownload:
-        logger.info( 'Checking cache directory for existing baseline...' )
+        cache_directory = os.path.abspath( os.path.expanduser( cache_directory ) )
+        logger.info( f'Checking cache directory ({cache_directory}) for existing baseline...' )
         f = os.path.join( cache_directory, short_blob_tar )
         if os.path.isfile( f ):
             logger.info( 'Baseline found!' )
