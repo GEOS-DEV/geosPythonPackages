@@ -184,8 +184,8 @@ def pack_baselines( archive_name: str, baseline_path: str, log_path: str = '' ):
         f.write( os.path.basename( archive_name ) )
 
     # Copy the log directory
-    logger.info( 'Copying the logs...' )
     if log_path:
+        logger.info( 'Copying the logs...' )
         log_path = os.path.abspath( os.path.expanduser( log_path ) )
         log_target = os.path.join( baseline_path, 'logs' )
         try:
@@ -270,7 +270,7 @@ def manage_baselines( options ):
                 dirname = os.path.dirname( upload_name )
                 os.makedirs( dirname, exist_ok=True )
 
-            pack_baselines( upload_name, options.baselineDir, log_path=options.logs )
+            pack_baselines( upload_name, options.baselineDir )
             if options.action == 'pack_baselines':
                 quit()
 
