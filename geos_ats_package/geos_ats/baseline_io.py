@@ -238,6 +238,9 @@ def manage_baselines( options ):
     """
     Manage the integrated test baselines
     """
+    if options.action not in [ 'run', 'rerun', 'continue', 'pack_baselines', 'upload_baselines', 'download_baselines' ]:
+        return
+
     # Check for integrated test yaml file
     test_yaml = ''
     if options.yaml:
