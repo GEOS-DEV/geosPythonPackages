@@ -91,6 +91,7 @@ def collect_baselines( bucket_name: str,
                 user_input = user_input.strip().lower()
                 if user_input in [ "y", "yes" ]:
                     logger.debug( 'User chose to delete old baselines' )
+                    ok_delete_old_baselines = True
                     break
                 elif user_input in [ "n", "no" ]:
                     logger.debug( 'User chose to keep old baselines' )
@@ -98,7 +99,9 @@ def collect_baselines( bucket_name: str,
                     return
                 else:
                     print( f'Unrecognized option: {user_input}' )
-            raise Exception( 'Failed to parse user options for old baselines' )
+
+            if not ok_delete_old_baselines:
+                raise Exception( 'Failed to parse user options for old baselines' )
 
         logger.info( 'Deleting old baselines...' )
         shutil.rmtree( baseline_path )
