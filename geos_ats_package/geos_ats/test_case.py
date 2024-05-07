@@ -320,7 +320,7 @@ class TestCase( object ):
 
         # Setup a new test group
         atsTest = None
-        ats.tests.AtsTest.newGroup( priority=priority )
+        ats.tests.AtsTest.newGroup( priority=priority, path=self.path )
         for stepnum, step in enumerate( self.steps ):
             np = getattr( step.p, "np", 1 )
             ngpu = getattr( step.p, "ngpu", 0 )

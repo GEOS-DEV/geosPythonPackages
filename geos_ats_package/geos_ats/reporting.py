@@ -2,10 +2,12 @@ import os
 import socket
 import time
 from geos_ats.configuration_record import config
+from geos_ats import assets
 from configparser import ConfigParser
 from tabulate import tabulate
 import glob
 import logging
+import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
 from ats import atsut
@@ -51,6 +53,7 @@ class TestCaseRecord:
     elapsed: float
     current_step: str
     resources: int
+    path: str
 
 
 @dataclass
@@ -79,6 +82,7 @@ class ReportBase( object ):
             test_name = step_name[ :step_name.rfind( '_' ) ]
             test_id = t.group.number
             group_name = test_name[ :test_name.rfind( '_' ) ]
+            group_path = os.path.join( '.', t.options[ 'path' ], test_name )
 
             # Save data
             if test_name not in self.test_results:
@@ -88,7 +92,8 @@ class ReportBase( object ):
                                                                  test_number=test_id,
                                                                  elapsed=0.0,
                                                                  current_step=' ',
-                                                                 resources=t.np )
+                                                                 resources=t.np,
+                                                                 path=group_path )
 
             # Check elapsed time
             elapsed = 0.0
@@ -163,6 +168,14 @@ class ReportHTML( ReportBase ):
     """HTML Reporting"""
 
     def report( self, refresh=0 ):
+        self.html_dir = os.path.dirname( self.html_filename )
+        self.html_data_name = 'test_data'
+        self.html_data = os.path.join( self.html_dir, self.html_data_name )
+        os.makedirs( self.html_data, exist_ok=True )
+
+        self.html_assets = 'html_assets'
+        assets.create_assets_folder( os.path.join( self.html_dir, self.html_assets ) )
+
         sp = open( self.html_filename, 'w' )
         self.writeHeader( sp, refresh )
         self.writeSummary( sp )
@@ -176,66 +189,16 @@ class ReportHTML( ReportBase ):
         <html>
          <head>
         """
-
-        if refresh:
-            header += f'  <META HTTP-EQUIV="refresh" CONTENT="{refresh}">'
-
-        header += f"""  <title>Test results - generated on {gentime} </title>
-          <style type="text/css">
-           th, td {{
-            font-family: "New Century Schoolbook", Times, serif;
-            font-size: smaller ;
-            vertical-align: top;
-            background-color: #EEEEEE ;
-           }}
-           body {{
-            font-family: "New Century Schoolbook", Times, serif;
-            font-size: medium ;
-            background-color: #FFFFFF ;
-           }}
-           table {{
-            empty-cells: hide;
-           }}
-
-           .lightondark1 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        x-large;
-           }}
-           .lightondark2 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        large;
-           }}
-           .lightondark3 {{
-               background-color: #888888;
-               color:            white;
-               font-size:        medium;
-           }}
-
-           th,td {{ background-color:#EEEEEE }}
-           td.probname {{ background-color: #CCCCCC; font-size: large ; text-align: center}}
-
-           table {{
-              font-family: arial, sans-serif;
-              border-collapse: collapse;
-            }}
-
-            td {{
-              border: 1px solid #dddddd;
-              text-align: left;
-              padding: 8px;
-            }}
-
-            th {{
-              border: 1px solid #dddddd;
-              background-color: #8f8f8f;
-              text-align: left;
-              padding: 8px;
-            }}
-          </style>
+        header += f"""  <title>GEOS ATS Results</title>
+          <script src="./{self.html_assets}/sorttable.js"></script>
+          <link rel="stylesheet" href="./{self.html_assets}/style.css">
+          <link rel="stylesheet" href="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/css/lightbox.css">
+          <script src="./{self.html_assets}/lightbox/lightbox2-2.11.4/dist/js/lightbox-plus-jquery.js"></script>
          </head>
         <body>
+        <div id="banner"><div id="banner-content"><h1>GEOS ATS Report</h1></div></div>
+        </br></br></br>
+        <h2>Configuration</h2>
         """
 
         # Notations:
@@ -251,7 +214,6 @@ class ReportHTML( ReportBase ):
         else:
             username = os.getenv( "USER" )
 
-        header += "<h1>GEOS ATS Report</h1>\n<h2>Configuration</h2>\n"
         table = [ [ 'Test Results', gentime ], [ 'User', username ], [ 'Platform', platform ] ]
         header += tabulate( table, tablefmt='html' )
         header += '\n'
@@ -270,33 +232,67 @@ class ReportHTML( ReportBase ):
 
         sp.write( "\n\n<h1>Summary</h1>\n\n" )
         table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
+        table_html = table_html.replace( '<table>', f'<table class="sortable">' )
         sp.write( table_html )
 
     def writeTable( self, sp ):
-        header = ( "Status", "Name", "TestStep", "Elapsed", "Resources", "Output" )
+        header = ( "Status", "Name", "TestStep", "Elapsed", "Resources", "Logs", "Output" )
 
         table = []
         table_filt = []
-        file_pattern = "<a href=\"file://{}\">{}</a>"
+        file_pattern = "<a href=\"{}\">{}</a>"
+        image_pattern = "<a href=\"{}\" data-lightbox=\"curvecheck\" data-title=\"{}\">{}</a>"
         color_pattern = "<p style=\"color: {};\" id=\"{}\"> {} </p>"
 
         for k, v in self.test_results.items():
             status_str = v.status.name
             status_formatted = color_pattern.format( COLORS[ status_str ], k, status_str )
-            step_shortname = v.current_step
+            step_shortname = v.current_step[ v.current_step.rfind( '_' ) + 1:-1 ]
             elapsed_formatted = hms( v.elapsed )
+
+            # Collect files to include in the table
             output_files = []
             for s in v.steps.values():
-                if os.path.isfile( s.log ):
-                    output_files.append( file_pattern.format( s.log, os.path.basename( s.log ) ) )
-                if os.path.isfile( s.log + '.err' ):
-                    output_files.append( file_pattern.format( s.log + '.err', os.path.basename( s.log + '.err' ) ) )
+                for f in [ s.log, s.log + '.err' ]:
+                    if os.path.isfile( f ):
+                        output_files.append( f )
                 for pattern in s.output:
                     for f in sorted( glob.glob( pattern ) ):
-                        if ( ( 'restart' not in f ) or ( '.restartcheck' in f ) ) and os.path.isfile( f ):
-                            output_files.append( file_pattern.format( f, os.path.basename( f ) ) )
+                        if ( 'restart' not in f ):
+                            output_files.append( f )
 
-            row = [ status_formatted, k, step_shortname, elapsed_formatted, v.resources, ', '.join( output_files ) ]
+            # Copy files and build links
+            if output_files:
+                os.makedirs( os.path.join( self.html_data, v.path ), exist_ok=True )
+
+            log_links = []
+            other_links = []
+            for f in output_files:
+                base_fname = os.path.basename( f )
+                copy_fname = os.path.join( self.html_data, v.path, base_fname )
+                link_fname = os.path.join( '.', self.html_data_name, v.path, base_fname )
+                output_fname = base_fname
+                if ( '.log' in output_fname ):
+                    log_index = base_fname[ :base_fname.find( '.' ) ]
+                    log_type = ''.join( base_fname.split( '_' )[ -2: ] )
+                    output_fname = f'{log_index}_{log_type}'
+
+                shutil.copyfile( f, copy_fname )
+                if os.stat( f ).st_size:
+                    if '.log' in output_fname:
+                        log_links.append( file_pattern.format( link_fname, output_fname ) )
+                    elif '.png' in output_fname:
+                        image_caption = os.path.join( k, output_fname[ :-4 ] )
+                        other_links.append( image_pattern.format( link_fname, image_caption, output_fname ) )
+                    else:
+                        other_links.append( file_pattern.format( link_fname, output_fname ) )
+
+            # Write row
+            row = [
+                status_formatted,
+                k.replace( '_', ' ' ), step_shortname, elapsed_formatted, v.resources, ', '.join( log_links ),
+                ', '.join( other_links )
+            ]
             if status_str == 'FILTERED':
                 table_filt.append( row )
             else:
@@ -305,11 +301,13 @@ class ReportHTML( ReportBase ):
         if len( table ):
             sp.write( "\n\n<h1>Active Tests</h1>\n\n" )
             table_html = tabulate( table, headers=header, tablefmt='unsafehtml' )
+            table_html = table_html.replace( '<table>', '<table class="sortable">' )
             sp.write( table_html )
 
         if len( table_filt ):
             sp.write( "\n\n<h1>Filtered Tests</h1>\n\n" )
             table_html = tabulate( table_filt, headers=header, tablefmt='unsafehtml' )
+            table_html = table_html.replace( '<table>', '<table class="sortable">' )
             sp.write( table_html )
 
     def writeFooter( self, sp ):

@@ -5,7 +5,8 @@ import signal
 import subprocess
 import time
 import logging
-from geos_ats import command_line_parsers
+import glob
+from geos_ats import command_line_parsers, baseline_io, history
 
 test_actions = ( "run", "rerun", "check", "continue" )
 report_actions = ( "run", "rerun", "report", "continue" )
@@ -292,6 +293,16 @@ def main():
     os.chdir( ats_root_dir )
     os.makedirs( options.workingDir, exist_ok=True )
     create_log_directory( options )
+    try:
+        baseline_io.manage_baselines( options )
+    except Exception as e:
+        logger.error( 'Failed to download/locate baselines... Continuing to run tests without them' )
+        logger.error( repr( e ) )
+        os.makedirs( options.baselineDir, exist_ok=True )
+
+    if options.action in [ "pack_baselines", "upload_baselines", "download_baselines" ]:
+        logger.error( 'geos_ats should have already quit if only managing baselines... exiting now' )
+        quit()
 
     # Check the test configuration
     from geos_ats import configuration_record
@@ -304,6 +315,9 @@ def main():
             config.restart_skip_missing = True
         elif 'exclude' in r:
             config.restart_exclude_pattern.append( r[ -1 ] )
+
+    # Check GEOS history
+    history.check_git_history( options.geos_bin_dir )
 
     # Check the report location
     if options.logs:
@@ -394,6 +408,10 @@ def main():
         for f in files:
             if os.path.exists( f ):
                 os.remove( f )
+        for d in [ 'html_assets', 'test_data' ]:
+            asset_dir = os.path.join( os.path.dirname( config.report_html_file ), d )
+            if os.path.isdir( asset_dir ):
+                shutil.rmtree( asset_dir )
 
     # clean the temporary logfile that is not needed for certain actions.
     if options.action not in test_actions:
@@ -419,6 +437,10 @@ def main():
     ats.manager.finalReport()
     ats.manager.saveResults()
     ats.manager.finalBanner()
+
+    # Cleanup old log copies
+    for f in glob.glob( os.path.join( options.logs, '*.log*' ) ):
+        os.remove( f )
 
     # Remove unnecessary log dirs created with clean runs
     none_dir = os.path.join( options.workingDir, 'None' )

@@ -1,0 +1,75 @@
+
+body {
+font-family: "Open Sans", Arial, sans-serif;
+font-size: medium ;
+background-color: #FFFFFF ;
+}
+
+a:link {
+  text-decoration: none;
+  color: #1a0dab;
+}
+
+a:visited {
+  text-decoration: none;
+  color: #6b22a9;
+}
+
+div#banner { 
+   position: absolute; 
+   top: 0; 
+   left: 0; 
+   background-color: #f7f7f7; 
+   width: 100%; 
+ }
+ div#banner-content { 
+   width: 200px; 
+   margin: 0 auto; 
+   padding: 10px;
+ }
+ div#main-content { 
+   padding-top: 70px;
+}
+
+h1 {
+font-size: medium ;
+}
+
+h2 {
+font-size: medium ;
+}
+
+table {
+  empty-cells: hide;
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+}
+
+table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after { 
+    content: " \25B4\25BE" 
+}
+
+th, td {
+    font-family: "Open Sans", Arial, sans-serif;
+    font-size: smaller ;
+    vertical-align: top;
+    background-color: #EEEEEE ;
+}
+
+td.probname { background-color: #CCCCCC; font-size: large ; text-align: center}
+
+td {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+th {
+  border: 1px solid #e7e9eb;
+  background-color: #8f8f8f;
+  text-align: left;
+  padding: 8px;
+}
+
+.lb-outerContainer { max-width:675px; max-height:525px; }
+.lb-image{ width:600px!important; max-height:450px!important;}
