@@ -21,6 +21,21 @@ from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridWriter,
 )
 
+from vtkmodules.vtkCommonDataModel import (
+    VTK_HEXAGONAL_PRISM,
+    VTK_HEXAHEDRON,
+    VTK_PENTAGONAL_PRISM,
+    VTK_PYRAMID,
+    VTK_TETRA,
+    VTK_VOXEL,
+    VTK_WEDGE,
+    VTK_TRIANGLE,
+    VTK_QUAD,
+    VTK_PIXEL,
+    VTK_LINE,
+    VTK_VERTEX,
+)
+
 
 @dataclass( frozen=True )
 class VtkOutput:
@@ -138,3 +153,32 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         logging.critical( f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..." )
         sys.exit( 1 )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
+
+def vtkid_to_string(id: int) -> str:
+    match id:
+        case 1: # VTK_VERTEX
+            return 'Vertex'
+        case 3: #VTK_LINE
+            return 'Line'
+        case 5: #VTK_TRIANGLE
+            return 'Triangle'
+        case 8: #VTK_PIXEL
+            return 'Pixel'
+        case 9: #VTK_QUAD
+            return 'Quad'
+        case 10: #VTK_TETRA
+            return 'Tetra'
+        case 11: #VTK_VOXEL
+            return 'Voxel'
+        case 12: #VTK_HEXAHEDRON
+            return 'Hex'
+        case 13: #VTK_WEDGE
+            return 'Wedge'
+        case 14: #VTK_PYRAMID
+            return 'Pyramid'
+        case 15: #VTK_PENTAGONAL_PRISM
+            return 'Pentagonal prism'
+        case 16: #VTK_HEXAGONAL_PRISM
+            return 'Hexagonal Prism'
+        case _:
+            return 'Unknown type'

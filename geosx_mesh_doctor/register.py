@@ -55,7 +55,8 @@ def register(
     # Register the modules to load here.
     for check_name in ( parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES, parsing.FIX_ELEMENTS_ORDERINGS,
                         parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES, parsing.GENERATE_GLOBAL_IDS,
-                        parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS ):
+                        parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS, 
+                        parsing.MESH_STATS, parsing.ADD_FIELDS ):
         closure_trick( check_name )
     loaded_checks: Dict[ str, Callable[ [ str, Any ], Any ] ] = __load_checks()
     loaded_checks_helpers: Dict[ str, CheckHelper ] = dict()
