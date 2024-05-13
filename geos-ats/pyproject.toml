@@ -2,8 +2,6 @@
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# [tool.setuptools]
-# packages = ["geos-ats", "geos-ats.helpers", "geos-ats.assets", "geos-ats.machines"]
 
 [project]
 name = "geos-ats"
@@ -11,7 +9,7 @@ version = "0.2.0"
 description = "ATS implementation for GEOS testing"
 authors = [{name = "GEOS Contributors" }]
 maintainers = [
-    {name = "sherman", email = "sherman27@llnl.gov"}
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov"}
 ]
 license = {text = "LGPL-2.1"}
 classifiers = [
