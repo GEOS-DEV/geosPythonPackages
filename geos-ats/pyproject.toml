@@ -1,7 +1,7 @@
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
 
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "wheel>=0.37.1"]
 
 [project]
 name = "geos-ats"
@@ -16,9 +16,7 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-
 requires-python = ">=3.7"
-    
 dependencies = [
     "h5py",
     "mpi4py",
@@ -34,15 +32,12 @@ dependencies = [
     "ats @ https://github.com/LLNL/ATS/archive/refs/tags/7.0.105.tar.gz",
 ]
 
-[tool.setuptools.package-data]
-myModule = ["*.js", "*.css", "*.zip"]
-
 [project.scripts]
-    run_geos_ats = "geos.ats.main:main"
-    setup_ats_environment = "geos.ats.environment_setup:main"
-    geos_ats_log_check = "geos_ats.helpers.log_check:main"
-    geos_ats_restart_check = "geos_ats.helpers.restart_check:main"
-    geos_ats_curve_check = "geos_ats.helpers.curve_check:main"
+run_geos_ats = "geos.ats.main:main"
+setup_ats_environment = "geos.ats.environment_setup:main"
+geos_ats_log_check = "geos_ats.helpers.log_check:main"
+geos_ats_restart_check = "geos.ats.helpers.restart_check:main"
+geos_ats_curve_check = "geos.ats.helpers.curve_check:main"
 
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
@@ -50,3 +45,8 @@ Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geosp
 Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["*.js", "*.css", "*.zip"]
