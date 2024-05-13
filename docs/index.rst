@@ -43,8 +43,8 @@ To do this, you can clone a copy of the geosPythonPackages repository and instal
     cd /path/to/store/python/tools
     git clone https://github.com/GEOS-DEV/geosPythonPackages.git
 
-    # Install/upgrade geos_ats
-    cd geosPythonPackages/geos_ats_package
+    # Install/upgrade geos-ats
+    cd geosPythonPackages/geos-ats_package
     python -m pip install --upgrade .
 
     
@@ -78,7 +78,7 @@ Packages
 
     hdf5_wrapper
 
-    geos_ats
+    geos-ats
 
     geosx_mesh_tools
 
