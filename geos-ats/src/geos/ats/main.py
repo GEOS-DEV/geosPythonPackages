@@ -8,7 +8,6 @@ import logging
 import glob
 from geos.ats import command_line_parsers, baseline_io, history
 
-
 test_actions = ( "run", "rerun", "check", "continue" )
 report_actions = ( "run", "rerun", "report", "continue" )
 
