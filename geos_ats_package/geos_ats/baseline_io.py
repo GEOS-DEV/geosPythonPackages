@@ -128,7 +128,8 @@ def collect_baselines( bucket_name: str,
             archive_name = os.path.join( cache_directory, short_blob_tar )
         else:
             archive_name = os.path.join( baseline_temporary_directory, short_blob_tar )
-
+        
+        print( bucket_name )
         if 'https://' in bucket_name:
             # Download from URL
             try:
