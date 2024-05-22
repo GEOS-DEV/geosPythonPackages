@@ -28,7 +28,7 @@ def file_download_progress( headers: dict, url: str, filename: str ):
     path = pathlib.Path( filename ).expanduser().resolve()
     path.parent.mkdir( parents=True, exist_ok=True )
 
-    r = requests.get( url, stream=True, allow_redirects=True, headers=headers )
+    r = requests.get( url, stream=True, allow_redirects=True, headers=headers, cert='/usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.crt')
     if r.status_code != 200:
         r.raise_for_status()
         raise RuntimeError( f"Request to {url} returned status code {r.status_code}" )
