@@ -9,6 +9,9 @@ import pathlib
 from functools import partial
 from tqdm.auto import tqdm
 from google.cloud import storage
+from google.auth.transport.requests import AuthorizedSession
+from google.auth import default
+                        
 
 logger = logging.getLogger( 'geos_ats' )
 tmpdir = tempfile.TemporaryDirectory()
@@ -47,6 +50,13 @@ def file_download_progress( headers: dict, url: str, filename: str ):
             for chunk in r.iter_content( chunk_size=128 ):
                 f.write( chunk )
 
+
+# Create an anonymous client using the custom SSL context
+def create_anonymous_client_with_custom_cert(cert_path):
+    ssl_context = ssl.create_default_context(cafile=cert_path)
+    transport = storage.Client()._http  # Reuse default transport
+    transport._session.mount('https://', storage.AuthorizedSession(ssl_context))
+    return storage.Client()
 
 def collect_baselines( bucket_name: str,
                        blob_name: str,
@@ -152,7 +162,15 @@ def collect_baselines( bucket_name: str,
                 for cert in certs:
                     try:
                         os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
-                        client = storage.Client.create_anonymous_client()
+                        
+                        
+                        # Path to your self-signed certificate
+                        
+                        # Create a custom SSL context
+                        ssl_context = ssl.create_default_context(cafile=cert)
+
+                        client = create_anonymous_client_with_custom_cert(cert_path)
+
                         bucket = client.bucket( bucket_name )
                         blob = bucket.blob( blob_tar )
                         blob.download_to_filename( archive_name )
