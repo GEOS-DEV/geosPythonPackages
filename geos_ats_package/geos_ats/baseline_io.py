@@ -52,12 +52,28 @@ def file_download_progress( headers: dict, url: str, filename: str ):
                 f.write( chunk )
 
 
-# Create an anonymous client using the custom SSL context
+# # Create an anonymous client using the custom SSL context
+# def create_anonymous_client_with_custom_cert(cert_path):
+#     ssl_context = ssl.create_default_context(cafile=cert_path)
+#     transport = storage.Client()._http  # Reuse default transport
+#     transport._session.mount('https://', storage.AuthorizedSession(ssl_context))
+#     return storage.Client()
+
 def create_anonymous_client_with_custom_cert(cert_path):
+    # Create a custom SSL context
     ssl_context = ssl.create_default_context(cafile=cert_path)
-    transport = storage.Client()._http  # Reuse default transport
-    transport._session.mount('https://', storage.AuthorizedSession(ssl_context))
-    return storage.Client()
+    
+    # Obtain default credentials
+    credentials, project = default()
+    
+    # Create an authorized session with the custom SSL context
+    authed_session = AuthorizedSession(credentials, ssl_context=ssl_context)
+    
+    # Initialize the storage client with the custom session
+    client = storage.Client(credentials=credentials, _http=authed_session)
+    
+    return client
+
 
 def collect_baselines( bucket_name: str,
                        blob_name: str,
@@ -163,6 +179,8 @@ def collect_baselines( bucket_name: str,
                 for cert in certs:
                     try:
                         os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
+
+                        logger.info(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
                         
                         # Create a custom SSL context
                         ssl_context = ssl.create_default_context(cafile=cert)
