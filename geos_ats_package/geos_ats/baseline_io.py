@@ -32,7 +32,25 @@ def file_download_progress( headers: dict, url: str, filename: str ):
     path = pathlib.Path( filename ).expanduser().resolve()
     path.parent.mkdir( parents=True, exist_ok=True )
 
-    r = requests.get( url, stream=True, allow_redirects=True, headers=headers )
+    certs = ["/usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt.crt",
+                "/usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt.crt",
+                "/usr/local/share/ca-certificates/cspca.crt.crt",
+                "usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.crt", 
+                "/usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.crt", 
+                "/usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.crt"]
+
+    combined_cert_path = "/usr/local/share/ca-certificates/combined.crt"
+
+    with open(combined_cert_path, 'w') as outputfile:
+        for cert in certs:
+            with open(cert) as infile:
+                outputfile.write(infile.read())
+                outputfile.write("\n")
+
+    r = requests.get( url, stream=True, allow_redirects=True, headers=headers, cert=combined_cert_path )
     if r.status_code != 200:
         r.raise_for_status()
         raise RuntimeError( f"Request to {url} returned status code {r.status_code}" )
@@ -50,14 +68,6 @@ def file_download_progress( headers: dict, url: str, filename: str ):
         with path.open( "wb" ) as f:
             for chunk in r.iter_content( chunk_size=128 ):
                 f.write( chunk )
-
-
-# # Create an anonymous client using the custom SSL context
-# def create_anonymous_client_with_custom_cert(cert_path):
-#     ssl_context = ssl.create_default_context(cafile=cert_path)
-#     transport = storage.Client()._http  # Reuse default transport
-#     transport._session.mount('https://', storage.AuthorizedSession(ssl_context))
-#     return storage.Client()
 
 def create_anonymous_client_with_custom_cert(cert_path):
     # Create a custom SSL context
