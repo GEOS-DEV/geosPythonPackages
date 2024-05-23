@@ -28,7 +28,7 @@ def file_download_progress( headers: dict, url: str, filename: str ):
     path = pathlib.Path( filename ).expanduser().resolve()
     path.parent.mkdir( parents=True, exist_ok=True )
 
-    r = requests.get( url, stream=True, allow_redirects=True, headers=headers, cert='/usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt.crt')
+    r = requests.get( url, stream=True, allow_redirects=True, headers=headers )
     if r.status_code != 200:
         r.raise_for_status()
         raise RuntimeError( f"Request to {url} returned status code {r.status_code}" )
@@ -140,10 +140,26 @@ def collect_baselines( bucket_name: str,
         else:
             # Download from GCP
             try:
-                client = storage.Client.create_anonymous_client()
-                bucket = client.bucket( bucket_name )
-                blob = bucket.blob( blob_tar )
-                blob.download_to_filename( archive_name )
+                certs = ["/usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt.crt",
+                "/usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt.crt",
+                "/usr/local/share/ca-certificates/cspca.crt.crt",
+                "usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.crt",
+                "/usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.crt", 
+                "/usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.crt", 
+                "/usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.crt"]
+                for cert in certs:
+                    try:
+                        os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
+                        client = storage.Client()
+                        os.environ
+                        client = storage.Client.create_anonymous_client()
+                        bucket = client.bucket( bucket_name )
+                        blob = bucket.blob( blob_tar )
+                        blob.download_to_filename( archive_name )
+                    except Exception as e:
+                        logger.info(f"Failed to download using {cert}: {e}")
             except Exception as e:
                 logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
                 logger.error( repr( e ) )
