@@ -177,19 +177,17 @@ def collect_baselines( bucket_name: str,
                 "/usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.crt", 
                 "/usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.crt"]
                 for cert in certs:
-                    try:
-                        os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
+                    logger.info(f"try using {cert}")
+                    os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
                         
-                        # Create a custom SSL context
-                        ssl_context = ssl.create_default_context(cafile=cert)
+                    # Create a custom SSL context
+                    ssl_context = ssl.create_default_context(cafile=cert)
 
-                        client = create_anonymous_client_with_custom_cert(cert)
+                    client = create_anonymous_client_with_custom_cert(cert)
 
-                        bucket = client.bucket( bucket_name )
-                        blob = bucket.blob( blob_tar )
-                        blob.download_to_filename( archive_name )
-                    except Exception as e:
-                        logger.info(f"Failed to download using {cert}: {e}")
+                    bucket = client.bucket( bucket_name )
+                    blob = bucket.blob( blob_tar )
+                    blob.download_to_filename( archive_name )    
             except Exception as e:
                 logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
                 logger.error( repr( e ) )
