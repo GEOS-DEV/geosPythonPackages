@@ -152,8 +152,6 @@ def collect_baselines( bucket_name: str,
                 for cert in certs:
                     try:
                         os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
-                        client = storage.Client()
-                        os.environ
                         client = storage.Client.create_anonymous_client()
                         bucket = client.bucket( bucket_name )
                         blob = bucket.blob( blob_tar )
