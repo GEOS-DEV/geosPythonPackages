@@ -179,8 +179,6 @@ def collect_baselines( bucket_name: str,
                 for cert in certs:
                     try:
                         os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
-
-                        logger.info(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
                         
                         # Create a custom SSL context
                         ssl_context = ssl.create_default_context(cafile=cert)
