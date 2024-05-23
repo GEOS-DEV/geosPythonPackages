@@ -6,6 +6,7 @@ import yaml
 import time
 import requests
 import pathlib
+import ssl 
 from functools import partial
 from tqdm.auto import tqdm
 from google.cloud import storage
