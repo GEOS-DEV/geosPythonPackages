@@ -164,13 +164,10 @@ def collect_baselines( bucket_name: str,
                     try:
                         os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
                         
-                        
-                        # Path to your self-signed certificate
-                        
                         # Create a custom SSL context
                         ssl_context = ssl.create_default_context(cafile=cert)
 
-                        client = create_anonymous_client_with_custom_cert(cert_path)
+                        client = create_anonymous_client_with_custom_cert(cert)
 
                         bucket = client.bucket( bucket_name )
                         blob = bucket.blob( blob_tar )
