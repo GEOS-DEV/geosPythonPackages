@@ -44,12 +44,15 @@ def file_download_progress( headers: dict, url: str, filename: str ):
 
     combined_cert_path = "/usr/local/share/ca-certificates/combined.crt"
 
+    logger.info("file name.")
+
     with open(combined_cert_path, 'w') as outputfile:
         for cert in certs:
             with open(cert) as infile:
                 outputfile.write(infile.read())
                 outputfile.write("\n")
-
+    
+    
     r = requests.get( url, stream=True, allow_redirects=True, headers=headers, cert=combined_cert_path )
     if r.status_code != 200:
         r.raise_for_status()
