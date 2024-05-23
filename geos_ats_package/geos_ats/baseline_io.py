@@ -176,18 +176,28 @@ def collect_baselines( bucket_name: str,
                 "/usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.crt", 
                 "/usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.crt", 
                 "/usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.crt"]
-                for cert in certs:
-                    logger.info(f"try using {cert}")
-                    os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = cert
-                        
-                    # Create a custom SSL context
-                    ssl_context = ssl.create_default_context(cafile=cert)
 
-                    client = create_anonymous_client_with_custom_cert(cert)
+                combined_cert_path = "/usr/local/share/ca-certificates/combined.crt"
 
-                    bucket = client.bucket( bucket_name )
-                    blob = bucket.blob( blob_tar )
-                    blob.download_to_filename( archive_name )    
+                with open(combined_cert_path, 'w') as outputfile:
+                    for cert in certs:
+                        with open(cert) as infile:
+                           outputfile.write(infile.read())
+                           outputfile.write("\n")
+             
+                os.environ['GRPC_DEFAULT_SSL_ROOTS_FILE_PATH'] = combined_cert_path
+
+                # Obtain default credentials
+                credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+
+                # Print the environment variable
+                logger.info(f"GOOGLE_APPLICATION_CREDENTIALS: {credentials_path}")     
+                
+                client = create_anonymous_client_with_custom_cert(combined_cert_path)
+
+                bucket = client.bucket( bucket_name )
+                blob = bucket.blob( blob_tar )
+                blob.download_to_filename( archive_name )    
             except Exception as e:
                 logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
                 logger.error( repr( e ) )
