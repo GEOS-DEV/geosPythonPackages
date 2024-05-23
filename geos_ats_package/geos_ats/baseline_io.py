@@ -195,6 +195,7 @@ def collect_baselines( bucket_name: str,
             except Exception as e:
                 logger.error( f'Failed to download baseline from GCP ({bucket_name}/{blob_tar})' )
                 logger.error( repr( e ) )
+                raise Exception (f'did not work')
 
     if os.path.isfile( archive_name ):
         # Unpack new baselines
