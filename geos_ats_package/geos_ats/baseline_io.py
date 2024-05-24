@@ -144,7 +144,7 @@ def collect_baselines( bucket_name: str,
                 raise Exception( 'Failed to parse user options for old baselines' )
 
         logger.info( 'Deleting old baselines...' )
-        shutil.rmtree( baseline_path )
+        # shutil.rmtree( baseline_path )
 
     else:
         os.makedirs( os.path.dirname( baseline_path ), exist_ok=True )
