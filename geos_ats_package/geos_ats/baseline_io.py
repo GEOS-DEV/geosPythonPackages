@@ -144,7 +144,7 @@ def collect_baselines( bucket_name: str,
                 raise Exception( 'Failed to parse user options for old baselines' )
 
         logger.info( 'Deleting old baselines...' )
-        # shutil.rmtree( baseline_path )
+        shutil.rmtree( baseline_path )
 
     else:
         os.makedirs( os.path.dirname( baseline_path ), exist_ok=True )
@@ -153,7 +153,7 @@ def collect_baselines( bucket_name: str,
     archive_name = ''
     blob_tar = f'{blob_name}.tar.gz'
     short_blob_tar = f'{short_blob_name}.tar.gz'
-    logger.info( f'Checking cache directory ({cache_directory}) for existing baseline...' )
+    logger.info( f'Checking cache directory ({cache_directory}) for existing baseline named {short_blob_name}' )
     if cache_directory and not force_redownload:
         cache_directory = os.path.abspath( os.path.expanduser( cache_directory ) )
         logger.info( f'Checking cache directory ({cache_directory}) for existing baseline...' )
