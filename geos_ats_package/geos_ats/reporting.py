@@ -12,14 +12,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from ats import atsut
 from ats.times import hms
-from ats import ( PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED, SKIPPED, CREATED, RUNNING, HALTED, LSFERROR )
+from ats import ( PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED, SKIPPED, CREATED, RUNNING, HALTED, LSFERROR, INVALID )
 
 # Get the active logger instance
 logger = logging.getLogger( 'geos_ats' )
 
 # Status value in priority order
-FAILRUN = atsut.StatusCode( 'FAILRUN' )
-STATUS = ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED, FAILRUN )
+STATUS = ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED, INVALID )
 
 COLORS: Mapping[ str, str ] = {
     EXPECTED.name: "black",
@@ -33,7 +32,7 @@ COLORS: Mapping[ str, str ] = {
     HALTED.name: "brown",
     LSFERROR.name: "brown",
     FAILED.name: "red",
-    FAILRUN.name: "magenta",
+    INVALID.name: "magenta",
 }
 
 
@@ -103,10 +102,10 @@ class ReportBase( object ):
                 elapsed = t.endTime - t.startTime
             self.test_results[ test_name ].elapsed += elapsed
 
-            # Add the step
+            # Add the step (Note: use the INVALID code to represent the FAILRUN state)
             s = t.status
             if ( 'geosx' in t.name ) and ( s == FAILED ):
-                s = FAILRUN
+                s = INVALID
             self.test_results[ test_name ].steps[ t.name ] = TestStepRecord( status=s,
                                                                              log=t.outname,
                                                                              output=t.step_outputs,

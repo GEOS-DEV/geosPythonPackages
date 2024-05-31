@@ -50,7 +50,7 @@ def log_check( fname: str, yaml_file: str, ignored: Iterable[ str ] ) -> None:
     ignore_names = []
     Nfail = 0
     Nfailrun = 0
-    status_fail = [ 'timedout', 'halted', 'lsferror', 'failed', 'failrun' ]
+    status_fail = [ 'timedout', 'halted', 'lsferror', 'failed', 'invalid' ]
     overall_status = 'PASSED'
     fail_names = []
     failrun_names = []
@@ -73,7 +73,7 @@ def log_check( fname: str, yaml_file: str, ignored: Iterable[ str ] ) -> None:
                     print( f'{status_code}: {Na}' )
                 Nignore += Nb
                 ignore_names.extend( tmp_b )
-                if ( status_code == 'failrun' ):
+                if ( status_code == 'invalid' ):
                     Nfailrun += Na
                     failrun_names.extend( tmp_a )
                 else:
