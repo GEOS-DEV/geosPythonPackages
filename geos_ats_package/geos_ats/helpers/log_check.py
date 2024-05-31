@@ -49,9 +49,11 @@ def log_check( fname: str, yaml_file: str, ignored: Iterable[ str ] ) -> None:
     Nignore = 0
     ignore_names = []
     Nfail = 0
-    status_fail = [ 'timedout', 'halted', 'lsferror', 'failed' ]
+    Nfailrun = 0
+    status_fail = [ 'timedout', 'halted', 'lsferror', 'failed', 'invalid' ]
     overall_status = 'PASSED'
     fail_names = []
+    failrun_names = []
 
     print( '=======================' )
     print( 'Integrated test results' )
@@ -69,12 +71,18 @@ def log_check( fname: str, yaml_file: str, ignored: Iterable[ str ] ) -> None:
                     print( f'{status_code}: {Na} ({Nb} ignored)' )
                 else:
                     print( f'{status_code}: {Na}' )
-                Nfail += Na
-                fail_names.extend( tmp_a )
                 Nignore += Nb
                 ignore_names.extend( tmp_b )
+                if ( status_code == 'invalid' ):
+                    Nfailrun += Na
+                    failrun_names.extend( tmp_a )
+                else:
+                    Nfail += Na
+                    fail_names.extend( tmp_a )
+
             else:
                 print( f'{status_code}: {Na+Nb}' )
+
         else:
             print( f'{status_code}: 0' )
 
@@ -91,6 +99,14 @@ def log_check( fname: str, yaml_file: str, ignored: Iterable[ str ] ) -> None:
         print( 'Test failures' )
         print( '=======================' )
         for name in sorted( fail_names, key=lambda v: v.lower() ):
+            print( name )
+
+    if Nfailrun:
+        overall_status = 'FAIL RUN'
+        print( '=======================' )
+        print( 'Run failures' )
+        print( '=======================' )
+        for name in sorted( failrun_names, key=lambda v: v.lower() ):
             print( name )
 
     print( '=======================' )
