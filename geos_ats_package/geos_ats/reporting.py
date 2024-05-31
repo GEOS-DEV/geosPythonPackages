@@ -18,7 +18,8 @@ from ats import ( PASSED, FAILED, TIMEDOUT, EXPECTED, BATCHED, FILTERED, SKIPPED
 logger = logging.getLogger( 'geos_ats' )
 
 # Status value in priority order
-STATUS = ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED )
+FAILRUN = atsut.StatusCode( 'FAILRUN' )
+STATUS = ( EXPECTED, CREATED, BATCHED, FILTERED, SKIPPED, RUNNING, PASSED, TIMEDOUT, HALTED, LSFERROR, FAILED, FAILRUN )
 
 COLORS: Mapping[ str, str ] = {
     EXPECTED.name: "black",
@@ -32,6 +33,7 @@ COLORS: Mapping[ str, str ] = {
     HALTED.name: "brown",
     LSFERROR.name: "brown",
     FAILED.name: "red",
+    FAILRUN.name: "magenta",
 }
 
 
@@ -102,7 +104,10 @@ class ReportBase( object ):
             self.test_results[ test_name ].elapsed += elapsed
 
             # Add the step
-            self.test_results[ test_name ].steps[ t.name ] = TestStepRecord( status=t.status,
+            s = t.status
+            if ( 'geosx' in t.name ) and ( s == FAILED ):
+                s = FAILRUN
+            self.test_results[ test_name ].steps[ t.name ] = TestStepRecord( status=s,
                                                                              log=t.outname,
                                                                              output=t.step_outputs,
                                                                              number=t.groupSerialNumber,
