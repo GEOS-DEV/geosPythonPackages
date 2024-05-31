@@ -104,7 +104,7 @@ class ReportBase( object ):
 
             # Add the step (Note: use the INVALID code to represent the FAILRUN state)
             s = t.status
-            if ( 'geosx' in t.name ) and ( s == FAILED ):
+            if ( 'geos' in t.name ) and ( s == FAILED ):
                 s = INVALID
             self.test_results[ test_name ].steps[ t.name ] = TestStepRecord( status=s,
                                                                              log=t.outname,
