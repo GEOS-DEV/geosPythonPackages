@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from geos.hdf5wrapper import hdf5_wrapper
+from geos.hdf5_wrapper import hdf5_wrapper
 
 unit_map = {
     'milliseconds': 1e-3,

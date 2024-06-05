@@ -1,7 +1,7 @@
 """Tools for managing units in GEOSX"""
 
 import re
-from geos.xml.tools import regex_tools
+from geos.xml_tools import regex_tools
 from typing import List, Any, Dict, Union
 
 

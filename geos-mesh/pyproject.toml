@@ -5,8 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "geos-mesh-doctor"
 version = "0.0.1"
-description = "Mesh doctor for GEOS"
+description = "GEOS mesh tools"
 authors = [{name = "GEOS Contributors" }]
+maintainers = [
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov"}
+]
 license = {text = "LGPL-2.1"}
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -20,10 +23,12 @@ dependencies = [
     "networkx >= 2.4",
     "tqdm",
     "numpy",
+    "meshio>=5.3.2",
 ]
 
 [project.scripts]
     mesh-doctor = "geos.mesh.doctor.mesh_doctor:main"
+    convert_abaqus = "geos.mesh.conversion.main:main"
     
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"

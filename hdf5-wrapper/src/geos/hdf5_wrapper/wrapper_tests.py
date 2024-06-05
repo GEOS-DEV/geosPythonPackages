@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import random
 import string
-from geos.hdf5wrapper import hdf5_wrapper
+from geos.hdf5_wrapper import hdf5_wrapper
 
 
 def random_string( N ):
@@ -30,7 +30,7 @@ def build_test_dict( depth=0, max_depth=3 ):
 
 
 # Test the unit manager definitions
-class TestHDF5Wrapper( unittest.TestCase ):
+class Testhdf5_wrapper( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
@@ -116,7 +116,7 @@ def main():
     args = parser.parse_args()
 
     # Unit manager tests
-    suite = unittest.TestLoader().loadTestsFromTestCase( TestHDF5Wrapper )
+    suite = unittest.TestLoader().loadTestsFromTestCase( Testhdf5_wrapper )
     unittest.TextTestRunner( verbosity=args.verbose ).run( suite )
 
 

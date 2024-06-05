@@ -2,7 +2,7 @@ from lxml import etree as ElementTree  # type: ignore[import]
 import os
 from pathlib import Path
 from typing import Any, Iterable, Dict
-from geos.xml.tools import command_line_parsers
+from geos.xml_tools import command_line_parsers
 
 record_type = Dict[ str, Dict[ str, Any ] ]
 

@@ -1,5 +1,5 @@
 import numpy as np
-from geos.hdf5wrapper import hdf5_wrapper
+from geos.hdf5_wrapper import hdf5_wrapper
 from typing import Union, Dict
 
 

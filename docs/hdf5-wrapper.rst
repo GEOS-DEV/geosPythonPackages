@@ -12,7 +12,7 @@ Once loaded, the contents of a file can be navigated in the same way as a native
 
 .. code-block:: python
 
-  from geos.hdf5wrapper import hdf5_wrapper
+  from geos.hdf5_wrapper import hdf5_wrapper
 
   data = hdf5_wrapper('data.hdf5')
 
@@ -26,7 +26,7 @@ Note: for these changes to be written to the disk, the wrapper may need to be cl
 
 .. code-block:: python
 
-  from geos.hdf5wrapper import hdf5_wrapper
+  from geos.hdf5_wrapper import hdf5_wrapper
   import numpy as np
 
   data = hdf5_wrapper('data.hdf5', mode='w')
@@ -56,5 +56,5 @@ And external hdf5 format files can be linked together:
 API
 ^^^^^
 
-.. automodule:: geos.hdf5wrapper.wrapper
+.. automodule:: geos.hdf5_wrapper.wrapper
     :members:

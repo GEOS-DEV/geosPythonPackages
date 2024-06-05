@@ -80,12 +80,10 @@ Packages
 
     geos-ats
 
-    geos-mesh-tools
+    geos-mesh
 
     geos-xml-tools
 
     pygeosx_tools
 
     geos-timehistory
-
-    geos-mesh-doctor

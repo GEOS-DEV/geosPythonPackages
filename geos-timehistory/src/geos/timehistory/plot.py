@@ -1,5 +1,5 @@
 import numpy as np
-from geos.hdf5wrapper import wrapper as h5w
+from geos.hdf5_wrapper import wrapper as h5w
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
@@ -22,7 +22,7 @@ def getHistorySeries( database, variable, setname, indices=None, components=None
     Retrieve a series of time history structures suitable for plotting in addition to the specific set index and component for the time series
 
     Args:
-        database (geos.hdf5wrapper.hdf5_wrapper): database to retrieve time history data from
+        database (geos.hdf5_wrapper.hdf5_wrapper): database to retrieve time history data from
         variable (str): the name of the time history variable for which to retrieve time-series data
         setname (str): the name of the index set as specified in the geosx input xml for which to query time-series data
         indices (int, list): the indices in the named set to query for, if None, defaults to all
