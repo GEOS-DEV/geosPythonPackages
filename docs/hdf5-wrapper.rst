@@ -12,9 +12,9 @@ Once loaded, the contents of a file can be navigated in the same way as a native
 
 .. code-block:: python
 
-  import geos.hdf5wrapper
+  from geos.hdf5wrapper import hdf5_wrapper
 
-  data = hdf5wrapper.hdf5_wrapper('data.hdf5')
+  data = hdf5_wrapper('data.hdf5')
 
   test = data['test']
   for k, v in data.items():
@@ -26,10 +26,10 @@ Note: for these changes to be written to the disk, the wrapper may need to be cl
 
 .. code-block:: python
 
-  import geos.hdf5wrapper
+  from geos.hdf5wrapper import hdf5_wrapper
   import numpy as np
 
-  data = hdf5wrapper.hdf5_wrapper('data.hdf5', mode='w')
+  data = hdf5_wrapper('data.hdf5', mode='w')
   data['string'] = 'string'
   data['integer'] = 123
   data['array'] = np.random.randn(3, 4, 5)

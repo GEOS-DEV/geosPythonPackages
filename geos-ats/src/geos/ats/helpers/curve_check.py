@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-import hdf5_wrapper
+from geos.hdf5wrapper import hdf5_wrapper
 
 unit_map = {
     'milliseconds': 1e-3,
@@ -223,7 +223,7 @@ def compare_time_history_curves( fname, baseline, curve, tolerance, output, outp
     data_sizes = {}
     for k, f in files.items():
         if os.path.isfile( f ):
-            data[ k ] = hdf5_wrapper.hdf5_wrapper( f ).get_copy()
+            data[ k ] = hdf5_wrapper( f ).get_copy()
         else:
             errors.append( f'{k} file not found: {f}' )
             continue

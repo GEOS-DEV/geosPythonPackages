@@ -1,21 +1,21 @@
 import numpy as np
-import hdf5_wrapper
+from geos.hdf5wrapper import hdf5_wrapper
 from typing import Union, Dict
 
 
-def print_database_iterative( database: hdf5_wrapper.hdf5_wrapper, level: int = 0 ) -> None:
+def print_database_iterative( database: hdf5_wrapper, level: int = 0 ) -> None:
     """
     Print the database targets iteratively by level
 
     Args:
-        database (hdf5_wrapper.hdf5_wrapper) the wrapper for the current database
+        database (hdf5_wrapper) the wrapper for the current database
         level (int): the depth within the database
     """
     # Note: you can also iterate over the hdf5_wrapper object directly
     for k in database.keys():
         print( '%s%s' % ( '  ' * level, k ) )
 
-        if isinstance( database[ k ], hdf5_wrapper.hdf5_wrapper ):
+        if isinstance( database[ k ], hdf5_wrapper ):
             # This is a group, so continue iterating downward
             print_database_iterative( database[ k ], level + 1 )
         else:
@@ -53,7 +53,7 @@ def read_write_hdf5_database_example() -> None:
     # ------------------------
     # Write the first piece-by-piece to an hdf5_file
     # Note: when you exit the following scope, the database is automatically closed
-    with hdf5_wrapper.hdf5_wrapper( 'database_a.hdf5', mode='a' ) as database_a:
+    with hdf5_wrapper( 'database_a.hdf5', mode='a' ) as database_a:
         # Assign the two array objects to this level
         database_a[ '1D_double_array' ] = source_a[ '1D_double_array' ]
         database_a[ 'string_array' ] = source_a[ 'string_array' ]
@@ -63,11 +63,11 @@ def read_write_hdf5_database_example() -> None:
         child_a[ '2D_double_array' ] = source_a[ 'child_a' ][ '2D_double_array' ]
 
     # Automatically write the second source to a second database
-    with hdf5_wrapper.hdf5_wrapper( 'database_b.hdf5', mode='a' ) as database_b:
+    with hdf5_wrapper( 'database_b.hdf5', mode='a' ) as database_b:
         database_b[ '/' ] = source_b
 
     # Create a third database that links the either two
-    with hdf5_wrapper.hdf5_wrapper( 'database_c.hdf5', mode='a' ) as database_c:
+    with hdf5_wrapper( 'database_c.hdf5', mode='a' ) as database_c:
         database_c.link( 'database_a', 'database_a.hdf5' )
         database_c.link( 'database_b', 'database_b.hdf5' )
 
@@ -75,7 +75,7 @@ def read_write_hdf5_database_example() -> None:
     # Read the databases from the filesystem
     # ---------------------------------------
     print( 'Database contents:' )
-    with hdf5_wrapper.hdf5_wrapper( 'database_c.hdf5' ) as database_c:
+    with hdf5_wrapper( 'database_c.hdf5' ) as database_c:
         # Iteratively print the database contents
         print_database_iterative( database_c, 1 )
 
