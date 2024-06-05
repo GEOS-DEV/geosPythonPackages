@@ -52,8 +52,8 @@ class Testhdf5_wrapper( unittest.TestCase ):
 
             vx, vy = x[ k ], y[ k ]
             tx, ty = type( vx ), type( vy )
-            if ( ( tx != ty ) and not ( isinstance( vx, ( dict, hdf5_wrapper ) )
-                                        and isinstance( vy, ( dict, hdf5_wrapper ) ) ) ):
+            if ( ( tx != ty )
+                 and not ( isinstance( vx, ( dict, hdf5_wrapper ) ) and isinstance( vy, ( dict, hdf5_wrapper ) ) ) ):
                 self.assertTrue( np.issubdtype( tx, ty ) )
 
             if isinstance( vx, ( dict, hdf5_wrapper ) ):

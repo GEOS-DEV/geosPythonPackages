@@ -18,8 +18,7 @@ import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-xml-tools', 'geos-mesh', 'geos-ats',
-                   'hdf5-wrapper', 'pygeos-tools', 'geos-timehistory' )
+python_modules = ( 'geos-xml-tools', 'geos-mesh', 'geos-ats', 'hdf5-wrapper', 'pygeos-tools', 'geos-timehistory' )
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
