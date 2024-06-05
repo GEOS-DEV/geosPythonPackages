@@ -84,6 +84,6 @@ Packages
 
     geos-xml-tools
 
-    pygeosx_tools
+    pygeos-tools
 
     geos-timehistory
