@@ -8,11 +8,18 @@ from dataclasses import dataclass, asdict
 from ats.tests import AtsTest
 from lxml import etree
 import logging
-from .test_steps import geos
+from .test_steps import geos, pygeos_test
 from .test_case import TestCase
 
 test_build_failures = []
 logger = logging.getLogger( 'geos-ats' )
+
+has_pygeos = True
+try:
+    import pygeos
+except ImportError:
+    logger.warning( 'pygeos is not available on this system' )
+    has_pygeos = False
 
 
 @dataclass( frozen=True )
@@ -43,6 +50,7 @@ class TestDeck:
     partitions: Iterable[ Tuple[ int, int, int ] ]
     restart_step: int
     check_step: int
+    pygeos_script: str = ''
     restartcheck_params: RestartcheckParameters = None
     curvecheck_params: CurveCheckParameters = None
 
@@ -121,33 +129,38 @@ def generate_geos_tests( decks: Iterable[ TestDeck ], test_type='smoke' ):
             if curvecheck_params:
                 checks.append( 'curve' )
 
-            steps = [
-                geos( deck=xml_file,
-                      name=base_name,
-                      np=N,
-                      ngpu=N,
-                      x_partitions=nx,
-                      y_partitions=ny,
-                      z_partitions=nz,
-                      restartcheck_params=restartcheck_params,
-                      curvecheck_params=curvecheck_params )
-            ]
+            # Setup model inputs
+            model_type = geos
+            model_kwargs = {
+                'deck': xml_file,
+                'name': base_name,
+                'np': N,
+                'ngpu': N,
+                'x_partitions': nx,
+                'y_partitions': ny,
+                'z_partitions': nz,
+                'restartcheck_params': restartcheck_params,
+                'curvecheck_params': curvecheck_params
+            }
+
+            if deck.pygeos_script:
+                if has_pygeos:
+                    model_type = pygeos_test
+                    model_kwargs[ 'script' ] = deck.pygeos_script
+                else:
+                    logger.warning( f'Skipping test that requires pygeos: {deck.name}' )
+                    continue
+
+            steps = [ model_type( **model_kwargs ) ]
 
             if deck.restart_step > 0:
                 checks.append( 'restart' )
-                steps.append(
-                    geos( deck=xml_file,
-                          name="{:d}to{:d}".format( deck.restart_step, deck.check_step ),
-                          np=N,
-                          ngpu=N,
-                          x_partitions=nx,
-                          y_partitions=ny,
-                          z_partitions=nz,
-                          restart_file=os.path.join( testcase_name,
-                                                     "{}_restart_{:09d}".format( base_name, deck.restart_step ) ),
-                          baseline_pattern=f"{base_name}_restart_[0-9]+\.root",
-                          allow_rebaseline=False,
-                          restartcheck_params=restartcheck_params ) )
+                model_kwargs[ 'name' ] = "{:d}to{:d}".format( deck.restart_step, deck.check_step )
+                model_kwargs[ 'restart_file' ] = os.path.join(
+                    testcase_name, "{}_restart_{:09d}".format( base_name, deck.restart_step ) )
+                model_kwargs[ 'baseline_pattern' ] = f"{base_name}_restart_[0-9]+\.root"
+                model_kwargs[ 'allow_rebaseline' ] = False
+                steps.append( model_type( **model_kwargs ) )
 
             AtsTest.stick( level=ii )
             AtsTest.stick( checks=','.join( checks ) )
