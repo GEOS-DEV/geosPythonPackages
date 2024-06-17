@@ -529,7 +529,10 @@ class pygeos_test( geos ):
         return "pygeos"
 
     def executable( self ):
-        return os.path.join( config.geos_bin_dir, 'python' )
+        p = os.path.abspath(os.path.join( config.geos_bin_dir, 'python' ))
+        if os.path.islink(p):
+            p = os.readlink(p)
+        return p
 
     def makeArgs( self ):
         args = [ os.path.join( self.p.test_directory, self.p.script ) ]
