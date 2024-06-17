@@ -521,7 +521,7 @@ class pygeos_test( geos ):
 
     command = "python [script] [-i <deck>] [-r <restart_file>] [-x <x_partitions>] [-y <y_partitions>] [-z <z_partitions>] [-s <schema_level>] [-n <problem_name>] [-o <output_directory>] [ --suppress-pinned ] "
 
-    params = geos.params + ( TestParam( "script", "Pygeos run script." ) )  # type: ignore[operator]
+    params = geos.params + ( TestParam( "script", "Pygeos run script." ), )  # type: ignore[assignment]
 
     checkstepnames = [ "restartcheck" ]
 
