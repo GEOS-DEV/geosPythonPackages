@@ -16,7 +16,7 @@ logger = logging.getLogger( 'geos-ats' )
 
 has_pygeos = True
 try:
-    import pygeos
+    import pygeosx
 except ImportError:
     logger.warning( 'pygeos is not available on this system' )
     has_pygeos = False
