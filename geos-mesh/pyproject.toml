@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geos-mesh"
+version = "0.0.1"
+description = "GEOS mesh tools"
+authors = [{name = "GEOS Contributors" }]
+maintainers = [
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov"}
+]
+license = {text = "LGPL-2.1"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+requires-python = ">=3.8"
+
+dependencies = [
+    "vtk >= 9.1",
+    "networkx >= 2.4",
+    "tqdm",
+    "numpy",
+    "meshio>=5.3.2",
+]
+
+[project.scripts]
+    mesh-doctor = "geos.mesh.doctor.mesh_doctor:main"
+    convert_abaqus = "geos.mesh.conversion.main:main"
+    
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = [
+    "checks", "parsing",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+allow_redefinition = true
+plugins = "numpy.typing.mypy_plugin"

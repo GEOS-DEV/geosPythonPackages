@@ -43,9 +43,9 @@ To do this, you can clone a copy of the geosPythonPackages repository and instal
     cd /path/to/store/python/tools
     git clone https://github.com/GEOS-DEV/geosPythonPackages.git
 
-    # Install/upgrade geos_ats
-    cd geosPythonPackages/geos_ats_package
-    python -m pip install --upgrade .
+    # Install/upgrade geos-ats
+    cd geosPythonPackages/
+    python -m pip install --upgrade geos-ats
 
     
 .. note::
@@ -76,16 +76,14 @@ Packages
 .. toctree::
     :maxdepth: 1
 
-    hdf5_wrapper
+    hdf5-wrapper
 
-    geos_ats
+    geos-ats
 
-    geosx_mesh_tools
+    geos-mesh
 
-    geosx_xml_tools
+    geos-xml-tools
 
-    pygeosx_tools
+    pygeos-tools
 
-    timehistory
-
-    mesh_doctor
+    geos-timehistory

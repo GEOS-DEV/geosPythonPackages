@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hdf5-wrapper"
+version = "0.2.0"
+description = "Simple wrapper for h5py objects"
+maintainers = [
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
+]
+license = {text = "LGPL-2.1"}
+
+requires-python = ">=3.8"
+
+dependencies = [
+    "h5py>=2.10.0",
+    "numpy>=1.16.2",
+]
+
+[project.scripts]
+    hdf5_wrapper_tests = "geos.hdf5_wrapper.wrapper_tests:main"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
