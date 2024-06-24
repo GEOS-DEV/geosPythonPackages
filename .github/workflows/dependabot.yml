@@ -9,3 +9,5 @@ updates:
     github-actions:
       patterns:
       - '*'
+  reviewers:
+    - "cssherman"
