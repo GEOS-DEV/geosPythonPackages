@@ -1,6 +1,6 @@
 import logging
 
-from geos.mesh.doctor.checks.generate_cube import Options, Result, FieldInfo
+from checks.generate_cube import Options, Result, FieldInfo
 
 from . import vtk_output_parsing, generate_global_ids_parsing, GENERATE_CUBE
 from .generate_global_ids_parsing import GlobalIdsInfo

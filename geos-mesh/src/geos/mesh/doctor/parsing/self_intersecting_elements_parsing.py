@@ -2,7 +2,7 @@ import logging
 
 import numpy
 
-from geos.mesh.doctor.checks.self_intersecting_elements import Options, Result
+from checks.self_intersecting_elements import Options, Result
 
 from . import SELF_INTERSECTING_ELEMENTS
 

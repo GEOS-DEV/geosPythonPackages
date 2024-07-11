@@ -5,7 +5,7 @@ from typing import (
     List,
 )
 
-from geos.mesh.doctor.checks.collocated_nodes import Options, Result
+from checks.collocated_nodes import Options, Result
 
 from . import COLLOCATES_NODES
 

@@ -9,9 +9,9 @@ except AssertionError as e:
 
 import logging
 
-from geos.mesh.doctor.parsing import CheckHelper
-from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity
-import geos.mesh.doctor.register as register
+from parsing import CheckHelper
+from parsing.cli_parsing import parse_and_set_verbosity
+import register as register
 
 
 def main():
