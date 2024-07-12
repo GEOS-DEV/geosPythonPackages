@@ -2,9 +2,13 @@ import logging
 from typing import Union
 import numpy as np
 from dataclasses import dataclass
+
 from vtkmodules.util.numpy_support import (
      vtk_to_numpy, )
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+
+from vtkmodules.vtkCommonDataModel import (
+    vtkUnstructuredGrid, )
+
 from . import vtk_utils
 
 @dataclass( frozen=True )
@@ -25,24 +29,67 @@ class MeshComponentData:
 
 @dataclass( frozen=True )
 class Result:
-    num_elements: int
-    num_nodes: int
-    num_cell_types: int
+    number_elements: int
+    number_nodes: int
+    number_cell_types: int
     cell_types: list[str]
     cell_type_counts: list[int]
-    min_coords: np.array
-    max_coords: np.array
+    min_coords: np.ndarray
+    max_coords: np.ndarray
     is_empty_point_global_ids: bool
     is_empty_cell_global_ids: bool
-    cell_data: MeshComponentData
     point_data: MeshComponentData
+    cell_data: MeshComponentData
 
+def get_cell_types_and_counts(
+        mesh: vtkUnstructuredGrid
+    )-> tuple[int, int, list[str], list[int]]:
+    """From an unstructured grid, collects the number of cells,
+    the number of cell types, the list of cell types and the counts
+    of each cell element.
 
-def __build_MeshComponentData(
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        tuple[int, int, list[str], list[int]]: In order,
+        (number_cells, number_cell_types, cell_types, cell_type_counts)
+    """
+    number_cells: int = mesh.GetNumberOfCells()
+    number_cell_types: int = mesh.GetDistinctCellTypesArray().GetSize()
+    cell_types: list[str] = []
+    for cell_type in range(number_cell_types):
+        cell_types.append(vtk_utils.vtkid_to_string(mesh.GetCellType(cell_type)))
+
+    cell_type_counts: list[int] = [0]*number_cell_types
+    for cell in range(number_cells):
+        for cell_type in range(number_cell_types):
+            if vtk_utils.vtkid_to_string(mesh.GetCell(cell).GetCellType()) == cell_types[cell_type]:
+                cell_type_counts[cell_type] += 1
+                break
+
+    return (number_cells, number_cell_types, cell_types, cell_type_counts)
+
+def get_coords_min_max(mesh: vtkUnstructuredGrid) -> tuple[np.ndarray]:
+    """From an unstructured mesh, returns the coordinates of
+    the minimum and maximum points.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        tuple[np.ndarray]: Min and Max coordinates.
+    """
+    coords: np.ndarray = vtk_to_numpy(mesh.GetPoints().GetData())
+    min_coords: np.ndarray = coords.min(axis=0)
+    max_coords: np.ndarray = coords.max(axis=0)
+    return (min_coords, max_coords)
+
+def build_MeshComponentData(
         mesh: vtkUnstructuredGrid, componentType: str = "point"
     ) -> MeshComponentData:
-    """Builds a MeshComponentData object for a specific component ("points", "cells")
-    If the component type chosen is invalid, chooses "points" by default.
+    """Builds a MeshComponentData object for a specific component ("point", "cell")
+    If the component type chosen is invalid, chooses "point" by default.
 
     Args:
         mesh (vtkUnstructuredGrid): An unstructured grid.
@@ -50,21 +97,22 @@ def __build_MeshComponentData(
     Returns:
         meshCD (MeshComponentData): Object that gathers data regarding a mesh component.
     """
-    if componentType not in ["points", "cells"]:
+    if componentType not in ["point", "cell"]:
         componentType = "point"
-        # raise warning
+        logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
+    
     if componentType == "point":
         number_arrays_data: int = mesh.GetPointData().GetNumberOfArrays()
     else:
         number_arrays_data = mesh.GetCellData().GetNumberOfArrays()
 
     meshCD: MeshComponentData = MeshComponentData()
+    meshCD.componentType = componentType
     for i in range(number_arrays_data):
         if componentType == "point":
             data_array = mesh.GetPointData().GetArray(i)
         else:
             data_array = mesh.GetCellData().GetArray(i)
-        data_array = mesh.GetCellData().GetArray(i)
         data_array_name = data_array.GetName()
         data_np_array = vtk_to_numpy(data_array)
         if data_array.GetNumberOfComponents() == 1: # assumes scalar cell data for max and min
@@ -78,94 +126,24 @@ def __build_MeshComponentData(
 
     return meshCD
 
+def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
-# @dataclass( frozen=True )
-# class Result:
-#     num_elements: int
-#     num_nodes: int
-#     num_cell_types: int
-#     cell_types: list
-#     cell_type_counts: list
-#     scalar_cell_data_names: list
-#     scalar_cell_data_mins: list
-#     scalar_cell_data_maxs: list
-#     tensor_cell_data_names: list
-#     scalar_point_data_names: list
-#     scalar_point_data_mins: list
-#     scalar_point_data_maxs: list
-#     tensor_point_data_names: list
-#     is_empty_point_global_ids: bool
-#     is_empty_cell_global_ids: bool
-#     min_coords: list
-#     max_coords: list
-#     #TODO: compress this, or just print the stuff here and dont pass it
+    number_points: int = mesh.GetNumberOfPoints()
+    cells_info = get_cell_types_and_counts(mesh)
+    number_cells: int = cells_info[0]
+    number_cell_types: int = cells_info[1]
+    cell_types: int = cells_info[2]
+    cell_type_counts: int = cells_info[3]
+    min_coords, max_coords = get_coords_min_max(mesh)
+    point_ids: bool = not bool(mesh.GetPointData().GetGlobalIds())
+    cell_ids: bool = not bool(mesh.GetCellData().GetGlobalIds())
+    point_data: MeshComponentData = build_MeshComponentData(mesh, "point")
+    cell_data: MeshComponentData = build_MeshComponentData(mesh, "cell")
 
-
-def __check( mesh, options: Options ) -> Result:
-
-    number_elements: int = mesh.GetNumberOfCells()   
-    number_nodes: int = mesh.GetNumberOfPoints()
-    number_cell_types: int = mesh.GetDistinctCellTypesArray().GetSize()
-    cell_types: list[str] = []
-    for cell_type in range(number_cell_types):
-        cell_types.append(vtk_utils.vtkid_to_string(mesh.GetCellType(cell_type)))
-
-    cell_type_counts: list[int] = [0]*number_cell_types
-    for cell in range(number_elements):
-        for cell_type in range(number_cell_types):
-            if vtk_utils.vtkid_to_string(mesh.GetCell(cell).GetCellType()) == cell_types[cell_type]:
-                cell_type_counts[cell_type] += 1
-                break
-
-    cell_data_scalar_names: list[str] = []
-    cell_data_scalar_maxs: list[np_hinting] = []
-    cell_data_scalar_mins: list[np_hinting] = []
-    cell_data_tensor_names: list[str] = []
-    cell_data_tensor_maxs: list[np_hinting] = []
-    cell_data_tensor_mins: list[np_hinting] = []
-    number_cell_data: int = mesh.GetCellData().GetNumberOfArrays()
-    for i in range(number_cell_data):
-        cell_data = mesh.GetCellData().GetArray(i)
-        if cell_data.GetNumberOfComponents() == 1: # assumes scalar cell data for max and min
-            cell_data_scalar_names.append(cell_data.GetName())
-            cell_data_np = vtk_to_numpy(cell_data)
-            cell_data_scalar_maxs.append(cell_data_np.max()) 
-            cell_data_scalar_mins.append(cell_data_np.min())
-        else:
-            cell_data_tensor_names.append(cell_data.GetName())
-            cell_data_np = vtk_to_numpy(cell_data)
-            max_values = cell_data_np.max(axis=0)
-            min_values = cell_data_np.min(axis=0)
-            cell_data_tensor_maxs.append(max_values)
-            cell_data_tensor_mins.append(min_values)
-
-    point_data_scalar_names: list[str] = []
-    point_data_scalar_maxs: list[np_hinting] = []
-    point_data_scalar_mins: list[np_hinting] = []
-    point_data_tensor_names: list[str] = []
-    number_point_data = mesh.GetPointData().GetNumberOfArrays()
-    for j in range(number_point_data):
-        point_data = mesh.GetPointData().GetArray(j)
-        if point_data.GetNumberOfComponents() == 1: # assumes scalar point data for max and min
-            point_data_scalar_names.append(point_data.GetName())
-            point_data_np = vtk_to_numpy(point_data)
-            point_data_scalar_maxs.append(point_data_np.max()) 
-            point_data_scalar_mins.append(point_data_np.min()) 
-        else:
-            point_data_tensor_names.append(point_data.GetName())
-
-    point_ids: bool = bool(mesh.GetPointData().GetGlobalIds())
-    cell_ids: bool = bool(mesh.GetCellData().GetGlobalIds())
-
-    coords: np.ndarray = vtk_to_numpy(mesh.GetPoints().GetData())
-    min_coords: np.ndarray = coords.min(axis=0)
-    max_coords: np.ndarray = coords.max(axis=0)
-    # center = (coords.max(axis=0) + coords.min(axis=0))/2
-
-    return Result( num_elements=number_elements, num_nodes=number_nodes, num_cell_types=number_cell_types, cell_types=cell_types, cell_type_counts=cell_type_counts, 
-                   scalar_cell_data_names=cell_data_scalar_names, scalar_cell_data_mins=cell_data_scalar_mins, scalar_cell_data_maxs=cell_data_scalar_maxs, tensor_cell_data_names=cell_data_tensor_names,
-                   scalar_point_data_names=point_data_scalar_names, scalar_point_data_mins=point_data_scalar_mins, scalar_point_data_maxs=point_data_scalar_maxs, tensor_point_data_names=point_data_tensor_names,
-                   has_point_global_ids=point_ids, has_cell_global_ids=cell_ids, min_coords=min_coords, max_coords=max_coords )
+    return Result( number_points=number_points, number_cells=number_cells, number_cell_types=number_cell_types,
+                   cell_types=cell_types, cell_type_counts=cell_type_counts, min_coords=min_coords, max_coords=max_coords,
+                   is_empty_point_global_ids=point_ids, is_empty_cell_global_ids=cell_ids, 
+                   point_data=point_data, cell_data=cell_data)
 
 def check( vtk_input_file: str, options: Options ) -> Result:
     mesh = vtk_utils.read_mesh( vtk_input_file )

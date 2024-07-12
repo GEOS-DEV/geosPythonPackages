@@ -23,18 +23,27 @@ def display_results( options: Options, result: Result ):
     logging.info( f"                           {result.min_coords[1]} <= y <= {result.max_coords[1]}")
     logging.info( f"                           {result.min_coords[2]} <= z <= {result.max_coords[2]}")
 
-    logging.info( f"Does the mesh have global point ids: {result.has_point_global_ids}" )
-    logging.info( f"Does the mesh have global cell ids: {result.has_cell_global_ids}" )
+    logging.info( f"Does the mesh have global point ids: {not result.is_empty_point_global_ids}" )
+    logging.info( f"Does the mesh have global cell ids: {not result.is_empty_cell_global_ids}" )
 
-    logging.info( f"There are {len(result.scalar_cell_data_names)} scalar fields on the cells:" )
-    for i in range(len(result.scalar_cell_data_names)):
-        logging.info( f"\t {result.scalar_cell_data_names[i]} \t min = {result.scalar_cell_data_mins[i]} \t max = {result.scalar_cell_data_maxs[i]}" )
-    logging.info( f"There are {len(result.tensor_cell_data_names)} vector/tensor fields on the cells:" )
-    for i in range(len(result.tensor_cell_data_names)):
-        logging.info( f"\t {result.tensor_cell_data_names[i]}" )
-    logging.info( f"There are {len(result.scalar_point_data_names)} scalar fields on the points:" )
-    for i in range(len(result.scalar_point_data_names)):
-        logging.info( f"\t {result.scalar_point_data_names[i]} \t min = {result.scalar_point_data_mins[i]} \t max = {result.scalar_point_data_maxs[i]}" )
-    logging.info( f"There are {len(result.tensor_point_data_names)} vector/tensor fields on the points:" )
-    for i in range(len(result.tensor_point_data_names)):
-        logging.info( f"\t {result.tensor_point_data_names[i]}" )
+    logging.info( f"There are {len(result.cell_data.scalar_names)} scalar fields on the cells:" )
+    for i in range(len(result.cell_data.scalar_names)):
+        logging.info(   f"\t {result.cell_data.scalar_names[i]}"
+                      + f" \t min = {result.cell_data.scalar_min_values[i]}"
+                      + f" \t max = {result.cell_data.scalar_max_values[i]}" )
+    logging.info( f"There are {len(result.cell_data.tensor_names)} vector/tensor fields on the cells:" )
+    for i in range(len(result.cell_data.tensor_names)):
+        logging.info(   f"\t {result.cell_data.tensor_names[i]}"
+                      + f" \t min = {result.cell_data.tensor_min_values[i]}"
+                      + f" \t max = {result.cell_data.tensor_max_values[i]}" )
+    
+    logging.info( f"There are {len(result.point_data.scalar_names)} scalar fields on the points:" )
+    for i in range(len(result.point_data.scalar_names)):
+        logging.info(   f"\t {result.point_data.scalar_names[i]}"
+                      + f" \t min = {result.point_data.scalar_min_values[i]}"
+                      + f" \t max = {result.point_data.scalar_max_values[i]}" )
+    logging.info( f"There are {len(result.point_data.tensor_names)} vector/tensor fields on the points:" )
+    for i in range(len(result.point_data.tensor_names)):
+        logging.info(   f"\t {result.point_data.tensor_names[i]}"
+                      + f" \t min = {result.point_data.tensor_min_values[i]}"
+                      + f" \t max = {result.point_data.tensor_max_values[i]}" )
