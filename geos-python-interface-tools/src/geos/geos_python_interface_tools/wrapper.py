@@ -3,7 +3,7 @@ import numpy as np
 from mpi4py import MPI
 import matplotlib.pyplot as plt
 import pylvarray
-import pygeosx
+import geos_python_interface
 
 # Get the MPI rank
 comm = MPI.COMM_WORLD
@@ -16,7 +16,7 @@ def get_wrapper( problem, target_key, write_flag=False ):
 
     Args:
         filename (str): Catalog file name
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         write_flag (bool): Sets write mode (default=False)
 
@@ -44,7 +44,7 @@ def get_wrapper_par( problem, target_key, allgather=False, ghost_key='' ):
     Note: if ghost_key is set, it will try to remove any ghost elements
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         allgather (bool): Flag to trigger allgather across ranks (False)
         ghost_key (str): Key for the corresponding ghost wrapper (default='')
@@ -112,7 +112,7 @@ def gather_wrapper( problem, key, ghost_key='' ):
     Get a global copy of a wrapper as a numpy ndarray on rank 0
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
 
     Returns:
@@ -126,7 +126,7 @@ def allgather_wrapper( problem, key, ghost_key='' ):
     Get a global copy of a wrapper as a numpy ndarray on all ranks
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
 
     Returns:
@@ -140,7 +140,7 @@ def get_global_value_range( problem, key ):
     Get the range of a target value across all processes
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
 
     Returns:
@@ -182,7 +182,7 @@ def print_global_value_range( problem, key, header, scale=1.0, precision='%1.4f'
     Print the range of a target value across all processes
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         header (str): Header to print with the range
         scale (float): Multiply the range with this value before printing (default = 1.0)
@@ -214,7 +214,7 @@ def set_wrapper_to_value( problem, key, value ):
     Set the value of a wrapper
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         value (float): Value to set the wrapper
     """
@@ -227,7 +227,7 @@ def set_wrapper_with_function( problem, target_key, input_keys, fn, target_index
     Set the value of a wrapper using a function
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         input_keys (str, list): The input key(s)
         fn (function): Vectorized function used to calculate target values
@@ -275,7 +275,7 @@ def search_datastructure_wrappers_recursive( group, filters, matching_paths, lev
     Recursively search the group and its children for wrappers that match the filters
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         filters (list): a list of strings
         matching_paths (list): a list of matching values
     """
@@ -303,7 +303,7 @@ def get_matching_wrapper_path( problem, filters ):
     'a/b/c', 'c/b/a', 'd/e/c/f/b/a/a'
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         filters (list): a list of strings
 
     Returns:
@@ -336,7 +336,7 @@ def run_queries( problem, records ):
     'fhandle': plt.figure()  # A figure handle }}
 
     Args:
-        problem (pygeosx.Group): GEOSX problem handle
+        problem (geos_python_interface.Group): GEOSX problem handle
         records (dict): A dict of dicts that specifies the queries to run
     """
     for k in records.keys():

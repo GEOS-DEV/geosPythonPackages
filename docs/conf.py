@@ -18,7 +18,7 @@ import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-xml-tools', 'geos-mesh', 'geos-ats', 'hdf5-wrapper', 'pygeos-tools', 'geos-timehistory' )
+python_modules = ( 'geos-xml-tools', 'geos-mesh', 'geos-ats', 'hdf5-wrapper', 'geos-python-interface-tools', 'geos-timehistory' )
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
@@ -47,7 +47,7 @@ extensions = [
     'sphinxarg.ext', 'sphinx.ext.napoleon', 'sphinxcontrib.programoutput'
 ]
 
-autodoc_mock_imports = [ "pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy" ]
+autodoc_mock_imports = [ "geos_python_interface", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy" ]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
