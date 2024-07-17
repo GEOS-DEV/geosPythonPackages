@@ -112,7 +112,7 @@ def preprocess_serial() -> None:
             compiled_name = args.compiled_name
         else:
             raise Exception(
-                'When applying the preprocessor in parallel (outside of pygeosx), the --compiled_name argument is required'
+                'When applying the preprocessor in parallel (outside of geos_python_interface), the --compiled_name argument is required'
             )
 
     # Note: the return value may be passed to sys.exit, and cause bash to report an error
