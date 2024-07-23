@@ -144,7 +144,7 @@ convert_abaqus
 Compile an xml file with advanced features into a single file that can be read by GEOS.
 
 .. argparse::
-   :filename: ..\geos-mesh\src\geos\mesh\conversion\main.py
+   :module: geos.mesh.conversion.main
    :func: build_abaqus_converter_input_parser
    :prog: convert_abaqus
 
