@@ -13,7 +13,7 @@ run_geos_ats
 Primary entry point for running integrated tests.
 
 .. argparse::
-   :module: geos.ats.command_line_parsers
+   :filename: ..\geos-ats\src\geos\ats\command_line_parsers.py
    :func: build_command_line_parser
    :prog: run_geos_ats
 
