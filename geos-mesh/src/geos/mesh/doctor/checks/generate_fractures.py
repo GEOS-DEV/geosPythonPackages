@@ -287,7 +287,11 @@ def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
         tmp.SetNumberOfComponents( input_array.GetNumberOfComponents() )
         tmp.SetNumberOfTuples( new_mesh.GetNumberOfPoints() )
         for p in range( tmp.GetNumberOfTuples() ):
-            tmp.SetTuple( p, input_array.GetTuple( collocated_nodes[ p ] ) )
+            collocated_nodes_p = collocated_nodes[ p ]
+            if isinstance(collocated_nodes_p, numpy.integer):
+                tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p ) )
+            else: # when using collocated_nodes from fracture mesh, it ia an array
+                tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p[0] ) )
         new_mesh.GetPointData().AddArray( tmp )
 
 
@@ -366,7 +370,7 @@ def __perform_split( old_mesh: vtkUnstructuredGrid,
     return new_mesh
 
 
-def __generate_fracture_mesh( mesh_points: vtkPoints, fracture_info: FractureInfo,
+def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: FractureInfo,
                               cell_to_node_mapping: Mapping[ int, Mapping[ int, int ] ] ) -> vtkUnstructuredGrid:
     """
     Generates the mesh of the fracture.
@@ -377,6 +381,7 @@ def __generate_fracture_mesh( mesh_points: vtkPoints, fracture_info: FractureInf
     """
     logging.info( "Generating the meshes" )
 
+    mesh_points: vtkPoints = old_mesh.GetPoints()
     is_node_duplicated = numpy.zeros( mesh_points.GetNumberOfPoints(), dtype=bool )  # defaults to False
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
@@ -448,6 +453,9 @@ def __generate_fracture_mesh( mesh_points: vtkPoints, fracture_info: FractureInf
     if polygons.GetNumberOfCells() > 0:
         fracture_mesh.SetCells( [ VTK_POLYGON ] * polygons.GetNumberOfCells(), polygons )
     fracture_mesh.GetPointData().AddArray( array )
+
+    __copy_fields( old_mesh, fracture_mesh, fracture_nodes )
+
     return fracture_mesh
 
 
@@ -458,7 +466,7 @@ def __split_mesh_on_fracture( mesh: vtkUnstructuredGrid,
     cell_to_node_mapping: Mapping[ int, Mapping[ int, int ] ] = __identify_split( mesh.GetNumberOfPoints(),
                                                                                   cell_to_cell, fracture.node_to_cells )
     output_mesh: vtkUnstructuredGrid = __perform_split( mesh, cell_to_node_mapping )
-    fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh.GetPoints(), fracture, cell_to_node_mapping )
+    fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture, cell_to_node_mapping )
     return output_mesh, fractured_mesh
 
 
