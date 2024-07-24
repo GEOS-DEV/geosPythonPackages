@@ -83,6 +83,9 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         If first guess does not work, eventually all the others reader available will be tested.
     :return: A unstructured grid.
     """
+    if not os.path.exists( vtk_input_file ):
+        logging.critical( f"Invalid file path. COuld not read \"{vtk_input_file}\". Dying..." )
+        sys.exit( 1 )
     file_extension = os.path.splitext( vtk_input_file )[ -1 ]
     extension_to_reader = { ".vtk": __read_vtk, ".vtu": __read_vtu }
     # Testing first the reader that should match
