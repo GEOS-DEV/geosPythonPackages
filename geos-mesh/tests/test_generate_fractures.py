@@ -20,12 +20,12 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.util.numpy_support import (
     numpy_to_vtk, )
 
-from checks.vtk_utils import (
+from geos.mesh.doctor.checks.vtk_utils import (
     to_vtk_id_list, )
 
-from checks.check_fractures import format_collocated_nodes
-from checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from checks.generate_fractures import __split_mesh_on_fracture, Options, FracturePolicy
+from geos.mesh.doctor.checks.check_fractures import format_collocated_nodes
+from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
+from geos.mesh.doctor.checks.generate_fractures import __split_mesh_on_fracture, Options, FracturePolicy
 
 
 @dataclass( frozen=True )
