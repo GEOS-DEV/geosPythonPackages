@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import logging
 from typing import (
     Tuple,
     Iterable,
@@ -13,12 +13,14 @@ import pytest
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
+    vtkQuad,
     VTK_HEXAHEDRON,
     VTK_POLYHEDRON,
     VTK_QUAD,
 )
 from vtkmodules.util.numpy_support import (
-    numpy_to_vtk, )
+    numpy_to_vtk,
+    vtk_to_numpy )
 
 from geos.mesh.doctor.checks.vtk_utils import (
     to_vtk_id_list, )
@@ -44,6 +46,18 @@ class TestCase:
     options: Options
     collocated_nodes: Sequence[ Sequence[ int ] ]
     result: TestResult
+
+
+class QuadCoords:
+    def __init__( self, p1, p2, p3, p4 ):
+        self.p1: tuple[ float ] = p1
+        self.p2: tuple[ float ] = p2
+        self.p3: tuple[ float ] = p3
+        self.p4: tuple[ float ] = p4
+        self.__coordinates: list[ tuple[ float ] ] = [ self.p1, self.p2, self.p3, self.p4 ]
+
+    def get_coordinates( self ):
+        return self.__coordinates
 
 
 def __build_test_case( xs: Tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
@@ -286,3 +300,204 @@ def test_generate_fracture( test_case: TestCase ):
     res = format_collocated_nodes( fracture_mesh )
     assert res == test_case.collocated_nodes
     assert len( res ) == test_case.result.fracture_mesh_num_points
+
+
+def add_simplified_field_for_cells( 
+        mesh: vtkUnstructuredGrid, field_name: str, field_dimension: int ):
+    """Reduce functionality obtained from src.geos.mesh.doctor.checks.generate_fracture.__add_fields
+    where the goal is to add a cell data array with incrementing values.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+        field_name (str): Name of the field to add to CellData
+        field_dimension (int): Number of components for the field.
+    """
+    data = mesh.GetCellData()
+    n = mesh.GetNumberOfCells()
+    array = numpy.ones( ( n, field_dimension ), dtype=float )
+    array = numpy.arange( 1, n * field_dimension + 1 ).reshape( n, field_dimension )
+    vtk_array = numpy_to_vtk( array )
+    vtk_array.SetName( field_name )
+    data.AddArray( vtk_array )
+
+
+def find_min_max_coords_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ list[ float ] ]:
+    """For a vtk rectilinear grid, gives the coordinates of the minimum and maximum points
+    of the grid.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+
+    Returns:
+        tuple[list[float]]: ([Xmin, Ymin, Zmin], [Xmax, Ymax, Zmax])
+    """
+    points = mesh.GetPoints()
+    min_coords: list[ float ] = [ float('inf') ] * 3
+    max_coords: list[ float ] = [ float('-inf') ] * 3
+    for i in range(points.GetNumberOfPoints()):
+        coord = points.GetPoint(i)
+        for j in range( 3 ):  # Assuming 3D coordinates (x, y, z)
+            min_coords[ j ] = min( min_coords[ j ], coord[ j ] )
+            max_coords[ j ] = max( max_coords[ j ], coord[ j ] )
+    return ( min_coords, max_coords )
+
+
+def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[QuadCoords]:
+    """
+              6+--------+7
+              /        /|
+             /        / |
+           4+--------+5 |
+            |        |  |
+            | 2+     |  +3
+            |        | /
+            |        |/
+           0+--------+1
+
+    For a vtk rectilinear grid, gives the coordinates of each of its borders face nodes.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+
+    Returns:
+        tuple[QuadCoords]: For a rectilinear grid, returns a tuple of 6 elements.
+    """
+    min_coords, max_coords = find_min_max_coords_rectilinear_grid( mesh )
+    center: tuple[float] = (
+        ( min_coords[ 0 ] + max_coords[ 0 ] ) / 2,
+        ( min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
+        ( min_coords[ 2 ] + max_coords[ 2 ] ) / 2
+    )
+    hf_diag_lght: tuple[float] = (
+        ( -min_coords[ 0 ] + max_coords[ 0 ] ) / 2,
+        ( -min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
+        ( -min_coords[ 2 ] + max_coords[ 2 ] ) / 2
+    )
+    vertices: tuple[tuple[float]] = (
+        ( center[ 0 ] - hf_diag_lght[ 0 ], center[ 1 ] - hf_diag_lght[ 1 ], center[ 2 ] - hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] + hf_diag_lght[ 0 ], center[ 1 ] - hf_diag_lght[ 1 ], center[ 2 ] - hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] - hf_diag_lght[ 0 ], center[ 1 ] + hf_diag_lght[ 1 ], center[ 2 ] - hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] + hf_diag_lght[ 0 ], center[ 1 ] + hf_diag_lght[ 1 ], center[ 2 ] - hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] - hf_diag_lght[ 0 ], center[ 1 ] - hf_diag_lght[ 1 ], center[ 2 ] + hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] + hf_diag_lght[ 0 ], center[ 1 ] - hf_diag_lght[ 1 ], center[ 2 ] + hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] - hf_diag_lght[ 0 ], center[ 1 ] + hf_diag_lght[ 1 ], center[ 2 ] + hf_diag_lght[ 2 ] ),
+        ( center[ 0 ] + hf_diag_lght[ 0 ], center[ 1 ] + hf_diag_lght[ 1 ], center[ 2 ] + hf_diag_lght[ 2 ] )
+    )
+    faces: tuple[QuadCoords] = (
+        QuadCoords( p1=vertices[ 0 ], p2=vertices[ 1 ], p3=vertices[ 3 ], p4=vertices[ 2 ] ),
+        QuadCoords( p1=vertices[ 4 ], p2=vertices[ 5 ], p3=vertices[ 7 ], p4=vertices[ 6 ] ),
+        QuadCoords( p1=vertices[ 0 ], p2=vertices[ 2 ], p3=vertices[ 6 ], p4=vertices[ 4 ] ),
+        QuadCoords( p1=vertices[ 1 ], p2=vertices[ 3 ], p3=vertices[ 7 ], p4=vertices[ 5 ] ),
+        QuadCoords( p1=vertices[ 0 ], p2=vertices[ 1 ], p3=vertices[ 5 ], p4=vertices[ 4 ] ),
+        QuadCoords( p1=vertices[ 2 ], p2=vertices[ 3 ], p3=vertices[ 7 ], p4=vertices[ 6 ] )
+    )
+    return faces
+
+
+def set_quad_points( mesh: vtkUnstructuredGrid, quad: vtkQuad, coordinates: QuadCoords ):
+    """Set the coordinates of a vtkQuad by adding the points and their id. 
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+        quad (vtkQuad): A vtkQuad object.
+        coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
+    """
+    points_coords = mesh.GetPoints().GetData()
+    numpy_coordinates: numpy.array = vtk_to_numpy( points_coords )
+    coords_vertices_mesh: list[ tuple ] = [ tuple( row ) for row in numpy_coordinates ]
+    coords_vertices_quad: list [tuple ] = coordinates.get_coordinates()
+    ids_association: dict[ int, int ] = {}
+    for i in range( len( coords_vertices_mesh ) ):
+        for j in range( len( coords_vertices_quad ) ):
+            if coords_vertices_mesh[ i ] == coords_vertices_quad[ j ]:
+                ids_association[ i ] = j
+                break
+    
+    for vertice_id, quad_coord_index in ids_association.items():
+        quad.GetPoints().InsertNextPoint( coords_vertices_quad[ quad_coord_index ] )
+        quad.GetPointIds().SetId( quad_coord_index, vertice_id )
+
+
+def add_quad( mesh: vtkUnstructuredGrid, coordinates: QuadCoords ):
+    """Adds a quad cell to an unstructured mesh by knowing the coordinates of its 4 nodes.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+        coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
+    """
+    quad = vtkQuad()
+    set_quad_points( mesh, quad, coordinates )
+    mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
+
+
+def add_quads_to_all_borders_rectilinear_grid( mesh: vtkUnstructuredGrid ):
+    """Adds a quad cell to each border of an unstructured mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Unstructured mesh.
+    """
+    faces: tuple[ QuadCoords ] = find_borders_coordinates_rectilinear_grid( mesh )
+    for face in faces:
+        add_quad( mesh, face )
+
+
+def test_copy_fields_when_splitting_mesh():
+    """This test is designed to check the __copy_fields method from generate_fractures,
+    that will be called when using __split_mesh_on_fracture method from generate_fractures.
+    """
+    # Generating the rectilinear grid and its quads on all borders
+    x: numpy.array = numpy.array( [ 0, 1, 2 ] )
+    y: numpy.array = numpy.array( [ 0, 1 ] )
+    z: numpy.array = numpy.array( [ 0, 1 ] )
+    xyzs: XYZ = XYZ( x, y, z )
+    mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [xyzs] )
+    assert mesh.GetCells().GetNumberOfCells() == 2
+    add_quads_to_all_borders_rectilinear_grid( mesh )
+    assert mesh.GetCells().GetNumberOfCells() == 8
+    # Create a quad cell to represent the fracture surface.
+    fracture_coordinates: QuadCoords = QuadCoords(
+        p1 = ( 1.0, 0.0, 0.0 ),
+        p2 = ( 1.0, 1.0, 0.0 ),
+        p3 = ( 1.0, 1.0, 1.0 ),
+        p4 = ( 1.0, 0.0, 1.0 )
+    )
+    add_quad( mesh, fracture_coordinates )
+    assert mesh.GetCells().GetNumberOfCells() == 9
+    # Add a "TestField" array
+    assert mesh.GetCellData().GetNumberOfArrays() == 0
+    add_simplified_field_for_cells( mesh, "TestField", 1 )
+    assert mesh.GetCellData().GetNumberOfArrays() == 1
+    assert mesh.GetCellData().GetArrayName( 0 ) == "TestField"
+    testField_values: list[ int ] = vtk_to_numpy( mesh.GetCellData().GetArray( 0 ) ).tolist()
+    assert testField_values == [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    # Split the mesh along the fracture surface which is number 9 on TestField
+    options = Options(
+        policy=FracturePolicy.INTERNAL_SURFACES, field="TestField",
+        field_values=frozenset( map( int, [ "9" ] ) ),
+        vtk_output=None, vtk_fracture_output=None
+    )
+    main_mesh, fracture_mesh = __split_mesh_on_fracture( mesh, options )
+    assert main_mesh.GetCellData().GetNumberOfArrays() == 1
+    assert fracture_mesh.GetCellData().GetNumberOfArrays() == 1
+    assert main_mesh.GetCellData().GetArrayName( 0 ) == "TestField"
+    assert fracture_mesh.GetCellData().GetArrayName( 0 ) == "TestField"
+    #  Make sure that only 1 correct value is in "TestField" array for fracture_mesh, 9 values for main_mesh
+    fracture_mesh_values: list[ int ] = vtk_to_numpy( fracture_mesh.GetCellData().GetArray( 0 ) ).tolist()
+    main_mesh_values: list[ int ] = vtk_to_numpy( main_mesh.GetCellData().GetArray( 0 ) ).tolist()
+    assert fracture_mesh_values == [ 9 ] # The value for the fracture surface
+    assert main_mesh_values == [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+    # Test for invalid point field name
+    add_simplified_field_for_cells( mesh, "GLOBAL_IDS_POINTS", 1 )
+    with pytest.raises( SystemExit ) as pytest_wrapped_e:
+        main_mesh, fracture_mesh =__split_mesh_on_fracture( mesh, options )
+    assert pytest_wrapped_e.type == SystemExit
+    # Test for invalid cell field name
+    mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [xyzs] )
+    add_quads_to_all_borders_rectilinear_grid( mesh )
+    add_quad( mesh, fracture_coordinates )
+    add_simplified_field_for_cells( mesh, "TestField", 1 )
+    add_simplified_field_for_cells( mesh, "GLOBAL_IDS_CELLS", 1 )
+    assert mesh.GetCellData().GetNumberOfArrays() == 2
+    with pytest.raises( SystemExit ) as pytest_wrapped_e:
+        main_mesh, fracture_mesh =__split_mesh_on_fracture( mesh, options )
+    assert pytest_wrapped_e.type == SystemExit
