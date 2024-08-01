@@ -50,6 +50,38 @@ def vtk_iter( l ) -> Iterator[ Any ]:
             yield l.GetCellType( i )
 
 
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[str] ) -> bool:
+    """Checks if a mesh contains at least a data arrays within its cell, field or point data
+    having a certain name. If so, returns True, else False.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured mesh.
+        invalid_fields (list[str]): Field name of an array in any data from the data.
+
+    Returns:
+        bool: True if one field found, else False.
+    """
+    # Check the cell data fields
+    cell_data = mesh.GetCellData()
+    for i in range( cell_data.GetNumberOfArrays() ):
+        if cell_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
+            return True
+    # Check the field data fields
+    field_data = mesh.GetFieldData()
+    for i in range( field_data.GetNumberOfArrays() ):
+        if field_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
+            return True
+    # Check the point data fields
+    point_data = mesh.GetPointData()
+    for i in range( point_data.GetNumberOfArrays() ):
+        if point_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
+            return True
+    return False
+
+
 def __read_vtk( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
     reader = vtkUnstructuredGridReader()
     logging.info( f"Testing file format \"{vtk_input_file}\" using legacy format reader..." )

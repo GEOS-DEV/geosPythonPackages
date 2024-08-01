@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from sys import exit
 import logging
 from typing import (
     Collection,
@@ -19,6 +20,7 @@ from tqdm import tqdm
 import networkx
 import numpy
 
+from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
     vtkPoints,
@@ -197,7 +199,7 @@ def build_cell_to_cell_graph( mesh: vtkUnstructuredGrid, fracture: FractureInfo 
             face_hash: FrozenSet[ int ] = frozenset( vtk_iter( cell.GetFace( face_id ).GetPointIds() ) )
             if face_hash not in face_hashes:
                 face_to_cells[ face_hash ].append( cell_id )
-
+    
     # ... eventually, when a face touches two cells, this means that those two cells share the same face
     # and should be connected in the final cell to cell graph.
     cell_to_cell = networkx.Graph()
@@ -252,24 +254,96 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
     return result
 
 
-def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
-                   collocated_nodes: Sequence[ int ] ) -> None:
+def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> dict[ int, list[ tuple[ float ] ] ]:
+    """Map each cell id to a list of its points coordinates.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured mesh.
+
+    Returns:
+        dict[int, list[tuple[float]]]: {cell_id1: [(pt0_x, pt0_y, pt0_z), ...], ..., cell_idN: [...]}
+        for a mesh containing N cells.
     """
-    Copies the fields from the old mesh to the new one.
-    Point data will be duplicated for collocated nodes.
-    :param old_mesh: The mesh before the split.
-    :param new_mesh: The mesh after the split. Will receive the fields in place.
-    :param collocated_nodes: New index to old index.
-    :return: None
+    cells_nodes_coordinates: dict[ int, list[ tuple[ float ] ] ] = {}
+    for i in range( mesh.GetNumberOfCells() ):
+        cell: vtkCell = mesh.GetCell( i )
+        cells_nodes_coordinates[ i ] = []
+        cell_points = cell.GetPoints()
+        for v in range(cell.GetNumberOfPoints()):
+            node_coordinates: tuple[ float ] = cell_points.GetPoint( v )
+            truncated_coordinates: list[ float ] = [ float( '%.3f'%( coord ) ) for coord in node_coordinates ] 
+            cells_nodes_coordinates[ i ].append( tuple( truncated_coordinates ) )
+    return cells_nodes_coordinates
+    
+
+def link_new_cells_id_with_old_cells_id(
+    old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
+    """After mapping each cell id to a list of its points coordinates for the old and new mesh,
+    it is possible to determine the link between old and new cell id by coordinates position.
+
+    Args:
+        old_mesh (vtkUnstructuredGrid): An unstructured mesh before splitting.
+        new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
+
+    Returns:
+        dict[int, int]: { new_cell_id: old_cell_id }
+    """
+    new_cell_ids_with_old_cell_ids: dict[ int, int ] = {}
+    cpc_old_mesh: dict[int, list[ tuple[ float ] ]] = cells_points_coordinates( old_mesh )
+    cpc_new_mesh: dict[int, list[ tuple[ float ] ]] = cells_points_coordinates( new_mesh )
+    for new_cell_id, new_coords in cpc_new_mesh.items():
+        for old_cell_id, old_coords in cpc_old_mesh.items():
+            if all( elem in new_coords for elem in old_coords ):
+                new_cell_ids_with_old_cell_ids[ new_cell_id ] = old_cell_id
+                break
+    return new_cell_ids_with_old_cell_ids
+
+
+def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
+                      is_fracture_mesh: bool = False ):
+    """Copy the cell data arrays from the old mesh to the new mesh.
+    If the new mesh is a fracture_mesh, the fracture_mesh has less cells than the old mesh.
+    Therefore, copying the entire old cell arrays to the new one will assignate invalid
+    indexing of the values of these arrays.
+    So here, we consider the new indexing of cells to add an array with the valid size of elements
+    and correct indexes.
+
+    Args:
+        old_mesh (vtkUnstructuredGrid): An unstructured mesh before splitting.
+        new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
+        is_fracture_mesh (bool, optional): True if dealing with a new_mesh being the fracture mesh.
+        Defaults to False.
     """
     # Copying the cell data.
     # The cells are the same, just their nodes support have changed.
+    if is_fracture_mesh:
+        new_to_old_cells: dict[ int, int ] = link_new_cells_id_with_old_cells_id( old_mesh, new_mesh )
     input_cell_data = old_mesh.GetCellData()
     for i in range( input_cell_data.GetNumberOfArrays() ):
-        input_array = input_cell_data.GetArray( i )
+        input_array: vtkDataArray = input_cell_data.GetArray( i )
         logging.info( f"Copying cell field \"{input_array.GetName()}\"." )
-        new_mesh.GetCellData().AddArray( input_array )
+        if is_fracture_mesh:
+            array_name: str = input_array.GetName()
+            old_values: list = vtk_to_numpy( input_array ).tolist()
+            useful_values: list = []
+            for old_cell_id in new_to_old_cells.values():
+                useful_values.append( old_values[ old_cell_id ] )
+            useful_input_array = numpy_to_vtk( numpy.array( useful_values ) )
+            useful_input_array.SetName( array_name )
+            new_mesh.GetCellData().AddArray( useful_input_array )
+        else:
+            new_mesh.GetCellData().AddArray( input_array )
 
+
+# TODO consider the fracture_mesh case ?
+def __copy_field_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid ):
+    """Copy the field data arrays from the old mesh to the new mesh.
+    Does not consider the fracture_mesh case.
+
+    Args:
+        old_mesh (vtkUnstructuredGrid): An unstructured mesh before splitting.
+        new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
+    """
     # Copying field data. This data is a priori not related to geometry.
     input_field_data = old_mesh.GetFieldData()
     for i in range( input_field_data.GetNumberOfArrays() ):
@@ -277,22 +351,55 @@ def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
         logging.info( f"Copying field data \"{input_array.GetName()}\"." )
         new_mesh.GetFieldData().AddArray( input_array )
 
+
+# TODO consider the fracture_mesh case ?
+def __copy_point_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
+                       collocated_nodes: Sequence[ int ]):
+    """Copy the point data arrays from the old mesh to the new mesh.
+    Does not consider the fracture_mesh case.
+
+    Args:
+        old_mesh (vtkUnstructuredGrid): An unstructured mesh before splitting.
+        new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
+    """
     # Copying the point data.
     input_point_data = old_mesh.GetPointData()
     for i in range( input_point_data.GetNumberOfArrays() ):
         input_array = input_point_data.GetArray( i )
-        logging.info( f"Copying point field \"{input_array.GetName()}\"" )
+        logging.info( f"Copying point field \"{input_array.GetName()}\"." )
         tmp = input_array.NewInstance()
         tmp.SetName( input_array.GetName() )
         tmp.SetNumberOfComponents( input_array.GetNumberOfComponents() )
         tmp.SetNumberOfTuples( new_mesh.GetNumberOfPoints() )
         for p in range( tmp.GetNumberOfTuples() ):
             collocated_nodes_p = collocated_nodes[ p ]
-            if isinstance(collocated_nodes_p, numpy.integer):
+            if isinstance( collocated_nodes_p, numpy.integer ):
                 tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p ) )
             else: # when using collocated_nodes from fracture mesh, it ia an array
                 tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p[0] ) )
         new_mesh.GetPointData().AddArray( tmp )
+
+
+def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
+                   collocated_nodes: Sequence[ int ], is_fracture_mesh: bool = False ) -> None:
+    """
+    Copies the fields from the old mesh to the new one.
+    Point data will be duplicated for collocated nodes.
+    :param old_mesh: The mesh before the split.
+    :param new_mesh: The mesh after the split. Will receive the fields in place.
+    :param collocated_nodes: New index to old index.
+    :param is_fracture_mesh: True when copying fields for a fracture mesh, False instead.
+    :return: None
+    """
+    # Mesh cannot contains global ids before splitting.
+    if vtk_utils.has_invalid_field(old_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ]):
+        logging.critical( f"The mesh cannot contain global ids for neither cells nor points." )
+        logging.critical( f"The correct procedure is to split the mesh and then generate global ids for new split meshes. Dying ..." )
+        exit( 1 )
+
+    __copy_cell_data( old_mesh, new_mesh, is_fracture_mesh )        
+    __copy_field_data( old_mesh, new_mesh )
+    __copy_point_data( old_mesh, new_mesh, collocated_nodes )
 
 
 def __perform_split( old_mesh: vtkUnstructuredGrid,
@@ -454,7 +561,7 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
         fracture_mesh.SetCells( [ VTK_POLYGON ] * polygons.GetNumberOfCells(), polygons )
     fracture_mesh.GetPointData().AddArray( array )
 
-    __copy_fields( old_mesh, fracture_mesh, fracture_nodes )
+    __copy_fields( old_mesh, fracture_mesh, collocated_nodes, True )
 
     return fracture_mesh
 
