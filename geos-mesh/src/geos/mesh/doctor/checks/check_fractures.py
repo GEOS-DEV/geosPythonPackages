@@ -23,7 +23,7 @@ from vtkmodules.vtkIOXML import (
     vtkXMLMultiBlockDataReader, )
 from vtkmodules.util.numpy_support import (
     vtk_to_numpy, )
-from vtk_utils import (
+from .vtk_utils import (
     vtk_iter, )
 
 
