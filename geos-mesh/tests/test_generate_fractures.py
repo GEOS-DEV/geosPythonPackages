@@ -363,7 +363,7 @@ def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tu
     min_coords, max_coords = find_min_max_coords_rectilinear_grid( mesh )
     center: tuple[ float ] = ( ( min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
                                ( min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
-    # hdl stands for half diagonal lenght
+    # hdl stands for half diagonal length
     hdl: tuple[ float ] = ( ( -min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( -min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
                             ( -min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
     node0: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
