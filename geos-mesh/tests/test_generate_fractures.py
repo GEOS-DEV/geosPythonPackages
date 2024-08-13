@@ -366,20 +366,17 @@ def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tu
     # hdl stands for half diagonal lenght
     hdl: tuple[ float ] = ( ( -min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( -min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
                             ( -min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
-    nodes: tuple[ tuple[ float ] ] = ( ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] ),
-                                       ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] ),
-                                       ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] ),
-                                       ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] ),
-                                       ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] ),
-                                       ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] ),
-                                       ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] ),
-                                       ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] ) )
-    faces: tuple[ QuadCoords ] = ( QuadCoords( p1=nodes[ 0 ], p2=nodes[ 1 ], p3=nodes[ 3 ], p4=nodes[ 2 ] ),
-                                   QuadCoords( p1=nodes[ 4 ], p2=nodes[ 5 ], p3=nodes[ 7 ], p4=nodes[ 6 ] ),
-                                   QuadCoords( p1=nodes[ 0 ], p2=nodes[ 2 ], p3=nodes[ 6 ], p4=nodes[ 4 ] ),
-                                   QuadCoords( p1=nodes[ 1 ], p2=nodes[ 3 ], p3=nodes[ 7 ], p4=nodes[ 5 ] ),
-                                   QuadCoords( p1=nodes[ 0 ], p2=nodes[ 1 ], p3=nodes[ 5 ], p4=nodes[ 4 ] ),
-                                   QuadCoords( p1=nodes[ 2 ], p2=nodes[ 3 ], p3=nodes[ 7 ], p4=nodes[ 6 ] ) )
+    node0: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+    node1: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+    node2: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+    node3: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+    node4: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+    node5: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+    node6: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+    node7: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+    faces: tuple[ QuadCoords ] = ( QuadCoords( node0, node1, node3, node2 ), QuadCoords( node4, node5, node7, node6 ),
+                                   QuadCoords( node0, node2, node6, node4 ), QuadCoords( node1, node3, node7, node5 ),
+                                   QuadCoords( node0, node1, node5, node4 ), QuadCoords( node2, node3, node7, node6 ) )
     return faces
 
 
