@@ -199,7 +199,7 @@ def build_cell_to_cell_graph( mesh: vtkUnstructuredGrid, fracture: FractureInfo 
             face_hash: FrozenSet[ int ] = frozenset( vtk_iter( cell.GetFace( face_id ).GetPointIds() ) )
             if face_hash not in face_hashes:
                 face_to_cells[ face_hash ].append( cell_id )
-    
+
     # ... eventually, when a face touches two cells, this means that those two cells share the same face
     # and should be connected in the final cell to cell graph.
     cell_to_cell = networkx.Graph()
@@ -269,15 +269,15 @@ def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> dict[ int, list[ tu
         cell: vtkCell = mesh.GetCell( i )
         cells_nodes_coordinates[ i ] = []
         cell_points = cell.GetPoints()
-        for v in range(cell.GetNumberOfPoints()):
+        for v in range( cell.GetNumberOfPoints() ):
             node_coordinates: tuple[ float ] = cell_points.GetPoint( v )
-            truncated_coordinates: list[ float ] = [ float( '%.3f'%( coord ) ) for coord in node_coordinates ] 
+            truncated_coordinates: list[ float ] = [ float( '%.3f' % ( coord ) ) for coord in node_coordinates ]
             cells_nodes_coordinates[ i ].append( tuple( truncated_coordinates ) )
     return cells_nodes_coordinates
-    
 
-def link_new_cells_id_with_old_cells_id(
-    old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
+
+def link_new_cells_id_with_old_cells_id( old_mesh: vtkUnstructuredGrid,
+                                         new_mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
     """After mapping each cell id to a list of its points coordinates for the old and new mesh,
     it is possible to determine the link between old and new cell id by coordinates position.
 
@@ -289,8 +289,8 @@ def link_new_cells_id_with_old_cells_id(
         dict[int, int]: { new_cell_id: old_cell_id }
     """
     new_cell_ids_with_old_cell_ids: dict[ int, int ] = {}
-    cpc_old_mesh: dict[int, list[ tuple[ float ] ]] = cells_points_coordinates( old_mesh )
-    cpc_new_mesh: dict[int, list[ tuple[ float ] ]] = cells_points_coordinates( new_mesh )
+    cpc_old_mesh: dict[ int, list[ tuple[ float ] ] ] = cells_points_coordinates( old_mesh )
+    cpc_new_mesh: dict[ int, list[ tuple[ float ] ] ] = cells_points_coordinates( new_mesh )
     for new_cell_id, new_coords in cpc_new_mesh.items():
         for old_cell_id, old_coords in cpc_old_mesh.items():
             if all( elem in new_coords for elem in old_coords ):
@@ -299,8 +299,7 @@ def link_new_cells_id_with_old_cells_id(
     return new_cell_ids_with_old_cell_ids
 
 
-def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
-                      is_fracture_mesh: bool = False ):
+def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid, is_fracture_mesh: bool = False ):
     """Copy the cell data arrays from the old mesh to the new mesh.
     If the new mesh is a fracture_mesh, the fracture_mesh has less cells than the old mesh.
     Therefore, copying the entire old cell arrays to the new one will assignate invalid
@@ -354,7 +353,7 @@ def __copy_field_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredG
 
 # TODO consider the fracture_mesh case ?
 def __copy_point_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
-                       collocated_nodes: Sequence[ int ]):
+                       collocated_nodes: Sequence[ int ] ):
     """Copy the point data arrays from the old mesh to the new mesh.
     Does not consider the fracture_mesh case.
 
@@ -375,13 +374,15 @@ def __copy_point_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredG
             collocated_nodes_p = collocated_nodes[ p ]
             if isinstance( collocated_nodes_p, numpy.integer ):
                 tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p ) )
-            else: # when using collocated_nodes from fracture mesh, it ia an array
-                tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p[0] ) )
+            else:  # when using collocated_nodes from fracture mesh, it ia an array
+                tmp.SetTuple( p, input_array.GetTuple( collocated_nodes_p[ 0 ] ) )
         new_mesh.GetPointData().AddArray( tmp )
 
 
-def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
-                   collocated_nodes: Sequence[ int ], is_fracture_mesh: bool = False ) -> None:
+def __copy_fields( old_mesh: vtkUnstructuredGrid,
+                   new_mesh: vtkUnstructuredGrid,
+                   collocated_nodes: Sequence[ int ],
+                   is_fracture_mesh: bool = False ) -> None:
     """
     Copies the fields from the old mesh to the new one.
     Point data will be duplicated for collocated nodes.
@@ -392,12 +393,13 @@ def __copy_fields( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid,
     :return: None
     """
     # Mesh cannot contains global ids before splitting.
-    if vtk_utils.has_invalid_field(old_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ]):
+    if vtk_utils.has_invalid_field( old_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
         logging.critical( f"The mesh cannot contain global ids for neither cells nor points." )
-        logging.critical( f"The correct procedure is to split the mesh and then generate global ids for new split meshes. Dying ..." )
+        logging.critical( f"The correct procedure is to split the mesh and then generate global" +
+                          "ids for new split meshes. Dying ..." )
         exit( 1 )
 
-    __copy_cell_data( old_mesh, new_mesh, is_fracture_mesh )        
+    __copy_cell_data( old_mesh, new_mesh, is_fracture_mesh )
     __copy_field_data( old_mesh, new_mesh )
     __copy_point_data( old_mesh, new_mesh, collocated_nodes )
 
@@ -511,11 +513,12 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
         # for dfns in discarded_face_nodes:
         #     tmp.append(", ".join(map(str, dfns)))
         msg: str = "(" + '), ('.join( map( lambda dfns: ", ".join( map( str, dfns ) ), discarded_face_nodes ) ) + ")"
-        # logging.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded from the fracture mesh because none of their/its nodes were duplicated.")
-        # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded from the fracture mesh because none of their/its nodes were duplicated.")
-        print(
-            f"The faces made of nodes [{msg}] were/was discarded from the fracture mesh because none of their/its nodes were duplicated."
-        )
+        # logging.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
+        #              + "from the fracture mesh because none of their/its nodes were duplicated.")
+        # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
+        #              + "from the fracture mesh because none of their/its nodes were duplicated.")
+        print( f"The faces made of nodes [{msg}] were/was discarded" +
+               "from the fracture mesh because none of their/its nodes were duplicated." )
 
     fracture_nodes_tmp = numpy.ones( mesh_points.GetNumberOfPoints(), dtype=int ) * -1
     for ns in face_nodes:

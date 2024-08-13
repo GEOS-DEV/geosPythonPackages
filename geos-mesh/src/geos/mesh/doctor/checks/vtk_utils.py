@@ -50,7 +50,7 @@ def vtk_iter( l ) -> Iterator[ Any ]:
             yield l.GetCellType( i )
 
 
-def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[str] ) -> bool:
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
     """Checks if a mesh contains at least a data arrays within its cell, field or point data
     having a certain name. If so, returns True, else False.
 
