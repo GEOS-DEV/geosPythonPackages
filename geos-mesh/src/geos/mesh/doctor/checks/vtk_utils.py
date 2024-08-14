@@ -154,31 +154,32 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         sys.exit( 1 )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
 
-def vtkid_to_string(id: int) -> str:
+
+def vtkid_to_string( id: int ) -> str:
     match id:
-        case 1: # VTK_VERTEX
+        case 1:  # VTK_VERTEX
             return 'Vertex'
-        case 3: #VTK_LINE
+        case 3:  #VTK_LINE
             return 'Line'
-        case 5: #VTK_TRIANGLE
+        case 5:  #VTK_TRIANGLE
             return 'Triangle'
-        case 8: #VTK_PIXEL
+        case 8:  #VTK_PIXEL
             return 'Pixel'
-        case 9: #VTK_QUAD
+        case 9:  #VTK_QUAD
             return 'Quad'
-        case 10: #VTK_TETRA
+        case 10:  #VTK_TETRA
             return 'Tetra'
-        case 11: #VTK_VOXEL
+        case 11:  #VTK_VOXEL
             return 'Voxel'
-        case 12: #VTK_HEXAHEDRON
+        case 12:  #VTK_HEXAHEDRON
             return 'Hex'
-        case 13: #VTK_WEDGE
+        case 13:  #VTK_WEDGE
             return 'Wedge'
-        case 14: #VTK_PYRAMID
+        case 14:  #VTK_PYRAMID
             return 'Pyramid'
-        case 15: #VTK_PENTAGONAL_PRISM
+        case 15:  #VTK_PENTAGONAL_PRISM
             return 'Pentagonal prism'
-        case 16: #VTK_HEXAGONAL_PRISM
+        case 16:  #VTK_HEXAGONAL_PRISM
             return 'Hexagonal Prism'
         case _:
             return 'Unknown type'

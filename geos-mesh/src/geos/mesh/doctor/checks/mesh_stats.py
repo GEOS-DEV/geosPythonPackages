@@ -5,28 +5,32 @@ from dataclasses import dataclass
 from enum import Enum
 
 from vtkmodules.util.numpy_support import (
-     vtk_to_numpy, )
+    vtk_to_numpy, )
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, )
 
 from . import vtk_utils
 
+
 @dataclass( frozen=True )
 class Options:
     info: str
 
-ArrayGeneric = npt.NDArray[np.generic]
+
+ArrayGeneric = npt.NDArray[ np.generic ]
+
 
 @dataclass( frozen=True )
 class MeshComponentData:
     componentType: str
     scalar_names: list[ str ]
-    scalar_min_values: list[ np.generic ] # base class for all scalar types numpy
+    scalar_min_values: list[ np.generic ]  # base class for all scalar types numpy
     scalar_max_values: list[ np.generic ]
     tensor_names: list[ str ]
     tensor_min_values: list[ ArrayGeneric ]
     tensor_max_values: list[ ArrayGeneric ]
+
 
 @dataclass( frozen=True )
 class Result:
@@ -45,7 +49,8 @@ class Result:
     fields_validity_point_data: dict[ str, dict[ str, bool ] ]
     fields_validity_cell_data: dict[ str, dict[ str, bool ] ]
 
-class MIN_FIELD( float, Enum ): # SI Units
+
+class MIN_FIELD( float, Enum ):  # SI Units
     PORO = 0.0
     PERM = 0.0
     FLUIDCOMP = 0.0
@@ -59,7 +64,8 @@ class MIN_FIELD( float, Enum ): # SI Units
     BULKMOD = 0.0
     SHEARMOD = 0.0
 
-class MAX_FIELD( float, Enum ): # SI Units
+
+class MAX_FIELD( float, Enum ):  # SI Units
     PORO = 1.0
     PERM = 1.0
     FLUIDCOMP = 1.0
@@ -89,9 +95,7 @@ def associate_min_max_field_values() -> dict[ str, tuple[ float ] ]:
     return assoc_min_max_field_values
 
 
-def get_cell_types_and_counts(
-        mesh: vtkUnstructuredGrid
-    )-> tuple[ int, int, list[ str ], list[ int ] ]:
+def get_cell_types_and_counts( mesh: vtkUnstructuredGrid ) -> tuple[ int, int, list[ str ], list[ int ] ]:
     """From an unstructured grid, collects the number of cells,
     the number of cell types, the list of cell types and the counts
     of each cell element.
@@ -140,8 +144,7 @@ def get_number_cells_per_nodes( mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
     return number_cells_per_nodes
 
 
-def summary_number_cells_per_nodes( 
-        number_cells_per_nodes: dict[ int, int ] ) -> dict[ int, int ]:
+def summary_number_cells_per_nodes( number_cells_per_nodes: dict[ int, int ] ) -> dict[ int, int ]:
     """Obtain the number of nodes that have X number of cells.
 
     Args:
@@ -157,7 +160,7 @@ def summary_number_cells_per_nodes(
     for number_cells in number_cells_per_nodes.values():
         summary[ number_cells ] += 1
     return summary
-    
+
 
 def get_coords_min_max( mesh: vtkUnstructuredGrid ) -> tuple[ np.ndarray ]:
     """From an unstructured mesh, returns the coordinates of
@@ -175,9 +178,7 @@ def get_coords_min_max( mesh: vtkUnstructuredGrid ) -> tuple[ np.ndarray ]:
     return ( min_coords, max_coords )
 
 
-def build_MeshComponentData(
-        mesh: vtkUnstructuredGrid, componentType: str = "point"
-    ) -> MeshComponentData:
+def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "point" ) -> MeshComponentData:
     """Builds a MeshComponentData object for a specific component ("point", "cell")
     If the component type chosen is invalid, chooses "point" by default.
 
@@ -190,7 +191,7 @@ def build_MeshComponentData(
     if componentType not in [ "point", "cell" ]:
         componentType = "point"
         logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
-    
+
     if componentType == "point":
         number_arrays_data: int = mesh.GetPointData().GetNumberOfArrays()
     else:
@@ -209,22 +210,25 @@ def build_MeshComponentData(
             data_array = mesh.GetCellData().GetArray( i )
         data_array_name = data_array.GetName()
         data_np_array = vtk_to_numpy( data_array )
-        if data_array.GetNumberOfComponents() == 1: # assumes scalar cell data for max and min
+        if data_array.GetNumberOfComponents() == 1:  # assumes scalar cell data for max and min
             scalar_names.append( data_array_name )
-            scalar_max_values.append( data_np_array.max() ) 
+            scalar_max_values.append( data_np_array.max() )
             scalar_min_values.append( data_np_array.min() )
         else:
             tensor_names.append( data_array_name )
             tensor_max_values.append( data_np_array.max( axis=0 ) )
             tensor_min_values.append( data_np_array.min( axis=0 ) )
 
-    return MeshComponentData( componentType=componentType, scalar_names=scalar_names,
-        scalar_min_values=scalar_min_values, scalar_max_values=scalar_max_values,
-        tensor_names=tensor_names, tensor_min_values=tensor_min_values,
-        tensor_max_values=tensor_max_values )
+    return MeshComponentData( componentType=componentType,
+                              scalar_names=scalar_names,
+                              scalar_min_values=scalar_min_values,
+                              scalar_max_values=scalar_max_values,
+                              tensor_names=tensor_names,
+                              tensor_min_values=tensor_min_values,
+                              tensor_max_values=tensor_max_values )
 
 
-def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple [ bool, tuple[ float] ] ]:
+def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple[ bool, tuple[ float ] ] ]:
     """Check that for every min and max values found in the scalar and tensor fields,
     none of these values is out of bounds. If the value is out of bound, False validity flag
     is given to the field, True if no problem.
@@ -235,9 +239,9 @@ def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple [ boo
     Returns:
         dict[ str, bool ]: {poro: True, perm: False, ...}
     """
-    field_values_validity: dict[ str, tuple [ bool, tuple[ float] ] ] = {}
+    field_values_validity: dict[ str, tuple[ bool, tuple[ float ] ] ] = {}
     assoc_min_max_field: dict[ str, tuple[ float ] ] = associate_min_max_field_values()
-    logging.info( f"assoc_min_max_field : {assoc_min_max_field}")
+    logging.info( f"assoc_min_max_field : {assoc_min_max_field}" )
     # for scalar values
     for i in range( len( mcdata.scalar_names ) ):
         for field_param, min_max in assoc_min_max_field.items():
@@ -245,7 +249,7 @@ def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple [ boo
             if field_param in mcdata.scalar_names[ i ].lower():
                 if mcdata.scalar_min_values[ i ] < min_max[ 0 ] or mcdata.scalar_max_values[ i ] > min_max[ 1 ]:
                     field_values_validity[ mcdata.scalar_names[ i ] ] = ( False, min_max )
-                del assoc_min_max_field[field_param]
+                del assoc_min_max_field[ field_param ]
                 break
     # for tensor values
     for i in range( len( mcdata.tensor_names ) ):
@@ -255,7 +259,7 @@ def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple [ boo
                 for sub_value_min, sub_value_max in zip( mcdata.tensor_min_values[ i ], mcdata.tensor_max_values[ i ] ):
                     if sub_value_min < min_max[ 0 ] or sub_value_max > min_max[ 1 ]:
                         field_values_validity[ mcdata.tensor_names[ i ] ] = ( False, min_max )
-                del assoc_min_max_field[field_param]
+                del assoc_min_max_field[ field_param ]
                 break
     return field_values_validity
 
@@ -274,16 +278,23 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     cell_ids: bool = not bool( mesh.GetCellData().GetGlobalIds() )
     point_data: MeshComponentData = build_MeshComponentData( mesh, "point" )
     cell_data: MeshComponentData = build_MeshComponentData( mesh, "cell" )
-    fields_validity_point_data: dict[ str, tuple [ bool, tuple[ float] ] ] = field_values_validity( point_data )
-    fields_validity_cell_data: dict[ str, tuple [ bool, tuple[ float] ] ] = field_values_validity( cell_data )
+    fields_validity_point_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( point_data )
+    fields_validity_cell_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( cell_data )
 
-    return Result( number_points=number_points, number_cells=number_cells, number_cell_types=number_cell_types,
-                   cell_types=cell_types, cell_type_counts=cell_type_counts,
+    return Result( number_points=number_points,
+                   number_cells=number_cells,
+                   number_cell_types=number_cell_types,
+                   cell_types=cell_types,
+                   cell_type_counts=cell_type_counts,
                    sum_number_cells_per_nodes=sum_number_cells_per_nodes,
-                   min_coords=min_coords, max_coords=max_coords,
-                   is_empty_point_global_ids=point_ids, is_empty_cell_global_ids=cell_ids, 
-                   point_data=point_data, cell_data=cell_data,
-                   fields_validity_point_data=fields_validity_point_data, fields_validity_cell_data=fields_validity_cell_data )
+                   min_coords=min_coords,
+                   max_coords=max_coords,
+                   is_empty_point_global_ids=point_ids,
+                   is_empty_cell_global_ids=cell_ids,
+                   point_data=point_data,
+                   cell_data=cell_data,
+                   fields_validity_point_data=fields_validity_point_data,
+                   fields_validity_cell_data=fields_validity_cell_data )
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
