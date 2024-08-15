@@ -151,7 +151,7 @@ def summary_number_cells_per_nodes( number_cells_per_nodes: dict[ int, int ] ) -
         number_cells_per_nodes (dict[ int, int ]): { point_id0: 8, ..., point_idN: 4 }
 
     Returns:
-        dict[ int, int ]: Number of ce
+        dict[ int, int ]: Connected to N cells as key, Number of nodes concerned as value
     """
     unique_number_cells = set( [ value for value in number_cells_per_nodes.values() ] )
     summary: dict[ int, int ] = {}
@@ -237,31 +237,73 @@ def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple[ bool
         mcdata (MeshComponentData): Object that gathers data regarding a mesh component.
 
     Returns:
-        dict[ str, bool ]: {poro: True, perm: False, ...}
+        dict[ str, bool ]: {poro: (True, Min_Max_poro), perm: (False, Min_Max_perm), ...}
     """
     field_values_validity: dict[ str, tuple[ bool, tuple[ float ] ] ] = {}
     assoc_min_max_field: dict[ str, tuple[ float ] ] = associate_min_max_field_values()
-    logging.info( f"assoc_min_max_field : {assoc_min_max_field}" )
     # for scalar values
     for i in range( len( mcdata.scalar_names ) ):
         for field_param, min_max in assoc_min_max_field.items():
-            field_values_validity[ mcdata.scalar_names[ i ] ] = ( True, min_max )
             if field_param in mcdata.scalar_names[ i ].lower():
+                field_values_validity[ mcdata.scalar_names[ i ] ] = ( True, min_max )
                 if mcdata.scalar_min_values[ i ] < min_max[ 0 ] or mcdata.scalar_max_values[ i ] > min_max[ 1 ]:
                     field_values_validity[ mcdata.scalar_names[ i ] ] = ( False, min_max )
-                del assoc_min_max_field[ field_param ]
                 break
     # for tensor values
     for i in range( len( mcdata.tensor_names ) ):
         for field_param, min_max in assoc_min_max_field.items():
-            field_values_validity[ mcdata.tensor_names[ i ] ] = ( True, min_max )
             if field_param in mcdata.tensor_names[ i ].lower():
+                field_values_validity[ mcdata.tensor_names[ i ] ] = ( True, min_max )
                 for sub_value_min, sub_value_max in zip( mcdata.tensor_min_values[ i ], mcdata.tensor_max_values[ i ] ):
                     if sub_value_min < min_max[ 0 ] or sub_value_max > min_max[ 1 ]:
                         field_values_validity[ mcdata.tensor_names[ i ] ] = ( False, min_max )
-                del assoc_min_max_field[ field_param ]
+                        break
                 break
     return field_values_validity
+
+
+def get_disconnected_nodes_id( mesh: vtkUnstructuredGrid ) -> list[ int ]:
+    """Checks the nodes of the mesh to see if they are disconnected.
+    If a node does not appear in connectivity graph, we can assume that it is disconnected.
+    Returns the list of node ids that are disconnected.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        list[ int ]: [nodeId0, nodeId23, ..., nodeIdM]
+    """
+    disconnected_nodes_id: list[ int ] = []
+    connectivity = mesh.GetCells().GetConnectivityArray()
+    connectivity_unique_points: set = set()
+    for i in range( connectivity.GetNumberOfValues() ):
+        connectivity_unique_points.add( connectivity.GetValue( i ) )
+    for v in range( mesh.GetNumberOfPoints() ):
+        if v in connectivity_unique_points:
+            connectivity_unique_points.remove( v )
+        else:
+            disconnected_nodes_id.append( v )
+    return disconnected_nodes_id
+
+
+def get_disconnected_nodes_coords( mesh: vtkUnstructuredGrid ) -> dict[ int, tuple[ float ] ]:
+    """Checks the nodes of the mesh to see if they are disconnected.
+    If a node does not appear in connectivity graph, we can assume that it is disconnected.
+    Returns a dict zhere the keys are the node id of disconnected nodes and the values are their coordinates.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        dict[ int, tuple[ float ] ]: {nodeId0: (x0, y0, z0), nodeId23: (x23, y23, z23), ..., nodeIdM: (xM, yM, zM)]
+    """
+    disconnected_nodes_id: list[ int ] = get_disconnected_nodes_id( mesh )
+    disconnected_nodes_coords: dict[ int, tuple[ float ] ] = {}
+    points = mesh.GetPoints()
+    for node_id in disconnected_nodes_id:
+        node_coords: tuple[ float ] = points.GetPoint( node_id )
+        disconnected_nodes_coords[ node_id ] = node_coords
+    return disconnected_nodes_coords
 
 
 def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
