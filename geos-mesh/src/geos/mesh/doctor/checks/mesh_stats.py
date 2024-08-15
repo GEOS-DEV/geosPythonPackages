@@ -40,6 +40,7 @@ class Result:
     cell_types: list[ str ]
     cell_type_counts: list[ int ]
     sum_number_cells_per_nodes: dict[ int, int ]
+    disconnected_nodes: dict[ int, tuple[ float ] ]
     min_coords: np.ndarray
     max_coords: np.ndarray
     is_empty_point_global_ids: bool
@@ -295,7 +296,7 @@ def get_disconnected_nodes_coords( mesh: vtkUnstructuredGrid ) -> dict[ int, tup
         mesh (vtkUnstructuredGrid): An unstructured grid.
 
     Returns:
-        dict[ int, tuple[ float ] ]: {nodeId0: (x0, y0, z0), nodeId23: (x23, y23, z23), ..., nodeIdM: (xM, yM, zM)]
+        dict[ int, tuple[ float ] ]: {nodeId0: (x0, y0, z0), nodeId23: (x23, y23, z23), ..., nodeIdM: (xM, yM, zM)}
     """
     disconnected_nodes_id: list[ int ] = get_disconnected_nodes_id( mesh )
     disconnected_nodes_coords: dict[ int, tuple[ float ] ] = {}
@@ -315,6 +316,7 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     cell_type_counts: int = cells_info[ 3 ]
     number_cells_per_nodes: dict[ int, int ] = get_number_cells_per_nodes( mesh )
     sum_number_cells_per_nodes: dict[ int, int ] = summary_number_cells_per_nodes( number_cells_per_nodes )
+    disconnected_nodes: dict[ int, tuple[ float ] ] = get_disconnected_nodes_coords( mesh )
     min_coords, max_coords = get_coords_min_max( mesh )
     point_ids: bool = not bool( mesh.GetPointData().GetGlobalIds() )
     cell_ids: bool = not bool( mesh.GetCellData().GetGlobalIds() )
@@ -329,6 +331,7 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                    cell_types=cell_types,
                    cell_type_counts=cell_type_counts,
                    sum_number_cells_per_nodes=sum_number_cells_per_nodes,
+                   disconnected_nodes=disconnected_nodes,
                    min_coords=min_coords,
                    max_coords=max_coords,
                    is_empty_point_global_ids=point_ids,

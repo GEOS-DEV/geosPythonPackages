@@ -27,6 +27,11 @@ def display_results( options: Options, result: Result ):
     for number_cells_per_node, number_of_occurences in result.sum_number_cells_per_nodes.items():
         logging.critical( f"\t{number_cells_per_node}\t{number_of_occurences}" )
 
+    logging.critical( f"Number of disconnected nodes found in the mesh: {len( result.disconnected_nodes )}" )
+    logging.critical( "\tNodeId\tCoordinates" )
+    for node_id, coordinates in result.disconnected_nodes.items():
+        logging.critical( f"\t{node_id}\t{coordinates}" )
+
     logging.critical( "The domain is contained in:" )
     logging.critical( f"\t{result.min_coords[ 0 ]} <= x <= {result.max_coords[ 0 ]}" )
     logging.critical( f"\t{result.min_coords[ 1 ]} <= y <= {result.max_coords[ 1 ]}" )
@@ -64,14 +69,14 @@ def display_results( options: Options, result: Result ):
                           f"min = {result.point_data.tensor_min_values[ i ]}" + " " * space_size +
                           f"max = {result.point_data.tensor_max_values[ i ]}" )
 
-    logging.warning( f"Unexpected range of values for vector/tensor fields on the cells :" )
+    logging.warning( f"Unexpected range of values for vector/tensor fields on the cells:" )
     for field_name, validity_range in result.fields_validity_cell_data.items():
         is_valid: bool = validity_range[ 0 ]
         min_max: tuple[ float ] = validity_range[ 1 ]
         if not is_valid:
             logging.warning( f"{field_name} expected to be between {min_max[ 0 ]} and {min_max[ 1 ]}." )
 
-    logging.warning( f"Unexpected range of values for vector/tensor fields on the points :" )
+    logging.warning( f"Unexpected range of values for vector/tensor fields on the points:" )
     for field_name, validity_range in result.fields_validity_point_data.items():
         is_valid: bool = validity_range[ 0 ]
         min_max: tuple[ float ] = validity_range[ 1 ]
