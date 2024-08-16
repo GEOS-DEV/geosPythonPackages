@@ -72,6 +72,21 @@ cell_data.AddArray( vtk_array_density )
 point_data.AddArray( vtk_array_temp )
 point_data.AddArray( vtk_array_pressure )
 
+# In this mesh, certain fields have NaN values
+cube3: vtkUnstructuredGrid = __build( options_cube2 )
+array_poro = array_poro * ( -1 )
+array_temp = array_temp * ( -1 )
+array_poro[ 0 ], array_poro[ -1 ] = np.nan, np.nan
+array_temp[ 0 ], array_temp[ -1 ] = np.nan, np.nan
+vtk_array_poro = numpy_to_vtk( array_poro )
+vtk_array_temp = numpy_to_vtk( array_temp )
+vtk_array_poro.SetName( field_poro.name + "_invalid" )
+vtk_array_temp.SetName( field_temp.name + "_invalid" )
+cell_data = cube3.GetCellData()
+point_data = cube3.GetPointData()
+cell_data.AddArray( vtk_array_poro )
+point_data.AddArray( vtk_array_temp )
+
 
 class TestClass:
 
@@ -146,3 +161,7 @@ class TestClass:
             "POROSITY_invalid": ( False, ( ms.MIN_FIELD.PORO.value, ms.MAX_FIELD.PORO.value ) ),
             "DENSITY_invalid": ( False, ( ms.MIN_FIELD.DENSITY.value, ms.MAX_FIELD.DENSITY.value ) ),
         }
+
+    def test_check_NaN_fields( self ):
+        result: dict[ str, int ] = ms.check_NaN_fields( cube3 )
+        assert result == { "POROSITY_invalid": 2, "TEMPERATURE_invalid": 2 }

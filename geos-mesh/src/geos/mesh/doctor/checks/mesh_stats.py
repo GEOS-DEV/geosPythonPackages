@@ -45,10 +45,13 @@ class Result:
     max_coords: np.ndarray
     is_empty_point_global_ids: bool
     is_empty_cell_global_ids: bool
+    fields_with_NaNs: dict[ int, str ]
     point_data: MeshComponentData
     cell_data: MeshComponentData
+    field_data: MeshComponentData
     fields_validity_point_data: dict[ str, dict[ str, bool ] ]
     fields_validity_cell_data: dict[ str, dict[ str, bool ] ]
+    fields_validity_field_data: dict[ str, dict[ str, bool ] ]
 
 
 class MIN_FIELD( float, Enum ):  # SI Units
@@ -179,8 +182,32 @@ def get_coords_min_max( mesh: vtkUnstructuredGrid ) -> tuple[ np.ndarray ]:
     return ( min_coords, max_coords )
 
 
+def check_NaN_fields( mesh: vtkUnstructuredGrid ) -> dict[ str, int ]:
+    """For every array of the mesh belonging to CellData, PointData or FieldArray,
+    checks that no NaN value was found.
+    If a NaN value is found, the name of the array is outputed with the number of NaNs encountered.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        dict[ str, int ]: { array_mame0: 12, array_name4: 2, ... }
+    """
+    fields_number_of_NaNs: dict[ str, int ] = {}
+    data_to_use = ( mesh.GetCellData, mesh.GetPointData, mesh.GetFieldData )
+    for getDataFuncion in data_to_use:
+        data = getDataFuncion()
+        for i in range( data.GetNumberOfArrays() ):
+            array = data.GetArray( i )
+            array_name: str = data.GetArrayName( i )
+            number_nans: int = np.count_nonzero( np.isnan( vtk_to_numpy( array ) ) )
+            if number_nans > 0:
+                fields_number_of_NaNs[ array_name ] = number_nans
+    return fields_number_of_NaNs
+
+
 def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "point" ) -> MeshComponentData:
-    """Builds a MeshComponentData object for a specific component ("point", "cell")
+    """Builds a MeshComponentData object for a specific component ("point", "cell", "field")
     If the component type chosen is invalid, chooses "point" by default.
 
     Args:
@@ -189,14 +216,9 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
     Returns:
         meshCD (MeshComponentData): Object that gathers data regarding a mesh component.
     """
-    if componentType not in [ "point", "cell" ]:
+    if componentType not in [ "point", "cell", "field" ]:
         componentType = "point"
         logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
-
-    if componentType == "point":
-        number_arrays_data: int = mesh.GetPointData().GetNumberOfArrays()
-    else:
-        number_arrays_data = mesh.GetCellData().GetNumberOfArrays()
 
     scalar_names: list[ str ] = []
     scalar_min_values: list[ np.generic ] = []
@@ -204,11 +226,11 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
     tensor_names: list[ str ] = []
     tensor_min_values: list[ ArrayGeneric ] = []
     tensor_max_values: list[ ArrayGeneric ] = []
-    for i in range( number_arrays_data ):
-        if componentType == "point":
-            data_array = mesh.GetPointData().GetArray( i )
-        else:
-            data_array = mesh.GetCellData().GetArray( i )
+
+    data_to_use = { "cell": mesh.GetCellData, "point": mesh.GetPointData, "field": mesh.GetFieldData }
+    data = data_to_use[ componentType ]()
+    for i in range( data.GetNumberOfArrays() ):
+        data_array = data.GetArray( i )
         data_array_name = data_array.GetName()
         data_np_array = vtk_to_numpy( data_array )
         if data_array.GetNumberOfComponents() == 1:  # assumes scalar cell data for max and min
@@ -320,10 +342,13 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     min_coords, max_coords = get_coords_min_max( mesh )
     point_ids: bool = not bool( mesh.GetPointData().GetGlobalIds() )
     cell_ids: bool = not bool( mesh.GetCellData().GetGlobalIds() )
+    fields_with_NaNs: dict[ str, int ] = check_NaN_fields( mesh )
     point_data: MeshComponentData = build_MeshComponentData( mesh, "point" )
     cell_data: MeshComponentData = build_MeshComponentData( mesh, "cell" )
+    field_data: MeshComponentData = build_MeshComponentData( mesh, "field" )
     fields_validity_point_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( point_data )
     fields_validity_cell_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( cell_data )
+    fields_validity_field_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( field_data )
 
     return Result( number_points=number_points,
                    number_cells=number_cells,
@@ -336,10 +361,13 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                    max_coords=max_coords,
                    is_empty_point_global_ids=point_ids,
                    is_empty_cell_global_ids=cell_ids,
+                   fields_with_NaNs=fields_with_NaNs,
                    point_data=point_data,
                    cell_data=cell_data,
+                   field_data=field_data,
                    fields_validity_point_data=fields_validity_point_data,
-                   fields_validity_cell_data=fields_validity_cell_data )
+                   fields_validity_cell_data=fields_validity_cell_data,
+                   fields_validity_field_data=fields_validity_field_data )
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
