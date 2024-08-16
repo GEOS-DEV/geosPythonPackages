@@ -1,5 +1,6 @@
 import logging
 from typing import Iterable
+from numpy import unique, where
 
 from geos.mesh.doctor.checks.mesh_stats import Options, Result
 
@@ -18,20 +19,36 @@ def convert( parsed_options ) -> Options:
 
 def display_results( options: Options, result: Result ):
     logging.critical( f"The mesh has {result.number_cells} cells and {result.number_points} points." )
-    logging.critical( f"There are {result.number_cell_types} different types of cell in the mesh:" )
+    logging.critical( f"There are {result.number_cell_types} different types of cells in the mesh:" )
     for i in range( result.number_cell_types ):
-        logging.critical( f"\t{result.cell_types[ i ]}\t({result.cell_type_counts[ i ]} cells)" )
+        logging.critical( f"\t{result.cell_types[ i ]}\t\t({result.cell_type_counts[ i ]} cells)" )
 
-    logging.critical( "Number of nodes being shared between exactly N cells:" )
-    logging.critical( "\tCells\tNodes" )
+    logging.critical( f"Number of cells that have exactly N neighbors:" )
+    unique_numbers_neighbors, counts = unique( result.cells_neighbors_number, return_counts=True )
+    logging.critical( "\tNeighbors\tNumber of cells concerned" )
+    for number_neighbors, count in zip( unique_numbers_neighbors, counts ):
+        logging.critical( f"\t{number_neighbors}\t\t{count}" )
+    
+    logging.critical( "Number of nodes being shared by exactly N cells:" )
+    logging.critical( "\tCells\t\tNumber of nodes" )
     for number_cells_per_node, number_of_occurences in result.sum_number_cells_per_nodes.items():
-        logging.critical( f"\t{number_cells_per_node}\t{number_of_occurences}" )
+        logging.critical( f"\t{number_cells_per_node}\t\t{number_of_occurences}" )
 
-    logging.critical( f"Number of disconnected nodes found in the mesh: {len( result.disconnected_nodes )}" )
+    if 0 in unique_numbers_neighbors: #  unique_numbers_neighbors sorted in ascending order from minimum positive number
+        number_cells_disconnected: int = unique_numbers_neighbors[ 0 ]
+    else:
+        number_cells_disconnected = 0
+    logging.critical( f"Number of disconnected cells in the mesh: {number_cells_disconnected}" )
+    if number_cells_disconnected > 0:
+        logging.info( "\tIndexes of disconnected cells" )
+        indexes = where(result.cells_neighbors_number == 0)
+        logging.info( f"{indexes[ 0 ]}" )
+
+    logging.critical( f"Number of disconnected nodes in the mesh: {len( result.disconnected_nodes )}" )
     if len( result.disconnected_nodes ) > 0:
-        logging.critical( "\tNodeId\tCoordinates" )
+        logging.info( "\tNodeId\t\tCoordinates" )
         for node_id, coordinates in result.disconnected_nodes.items():
-            logging.critical( f"\t{node_id}\t{coordinates}" )
+            logging.info( f"\t{node_id}\t\t{coordinates}" )
 
     logging.critical( "The domain is contained in:" )
     logging.critical( f"\t{result.min_coords[ 0 ]} <= x <= {result.max_coords[ 0 ]}" )

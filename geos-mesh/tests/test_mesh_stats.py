@@ -3,7 +3,7 @@ import numpy as np
 from geos.mesh.doctor.checks import mesh_stats as ms
 from geos.mesh.doctor.checks.generate_cube import Options, FieldInfo, __build
 from geos.mesh.doctor.checks.vtk_utils import VtkOutput
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
 # First mesh: no anomalies to look for
@@ -87,6 +87,27 @@ point_data = cube3.GetPointData()
 cell_data.AddArray( vtk_array_poro )
 point_data.AddArray( vtk_array_temp )
 
+# cube4 is a cube with an extra hex cell disconnected added 
+options_cube4: Options = Options( vtk_output=out,
+                                  generate_cells_global_ids=False,
+                                  generate_points_global_ids=False,
+                                  xs=np.array( [ 0.0, 1.0, 2.0 ] ),
+                                  ys=np.array( [ 0.0, 1.0, 2.0 ] ),
+                                  zs=np.array( [ 0.0, 1.0, 2.0 ] ),
+                                  nxs=[ 1, 1 ],
+                                  nys=[ 1, 1 ],
+                                  nzs=[ 1, 1 ],
+                                  fields=[] )
+cube4: vtkUnstructuredGrid = __build( options_cube4 )
+number_cells_cube4: int = cube4.GetNumberOfCells()
+hex = vtkHexahedron()
+coords_new_hex = ( (3.0, 0.0, 0.0), (4.0, 0.0, 0.0), (4.0, 1.0, 0.0), (3.0, 1.0, 0.0),
+                   (3.0, 0.0, 1.0), (4.0, 0.0, 1.0), (4.0, 1.0, 1.0), (3.0, 1.0, 1.0) )
+for i in range( len( coords_new_hex ) ):
+    hex.GetPoints().InsertNextPoint( coords_new_hex[ i ] )
+    hex.GetPointIds().SetId( i, number_cells_cube4 + i )
+cube4.InsertNextCell( hex.GetCellType(), hex.GetPointIds() )
+
 
 class TestClass:
 
@@ -165,3 +186,12 @@ class TestClass:
     def test_check_NaN_fields( self ):
         result: dict[ str, int ] = ms.check_NaN_fields( cube3 )
         assert result == { "POROSITY_invalid": 2, "TEMPERATURE_invalid": 2 }
+
+    def test_get_cells_neighbors_number( self ):
+        result: np.array = ms.get_cells_neighbors_number( cube0 )
+        expected: np.array = np.ones( ( 8, 1 ), dtype=int ) * 3
+        assert np.array_equal( result, expected )
+        result2: np.array = ms.get_cells_neighbors_number( cube4 )
+        expected2: np.array = np.ones( ( 9, 1 ), dtype=int ) * 3
+        expected2[ 8 ] = 0
+        assert np.array_equal( result2, expected2 )

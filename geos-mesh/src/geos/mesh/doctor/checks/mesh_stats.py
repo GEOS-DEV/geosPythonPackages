@@ -8,7 +8,8 @@ from vtkmodules.util.numpy_support import (
     vtk_to_numpy, )
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
+    vtkUnstructuredGrid,
+    vtkCell )
 
 from . import vtk_utils
 
@@ -41,6 +42,7 @@ class Result:
     cell_type_counts: list[ int ]
     sum_number_cells_per_nodes: dict[ int, int ]
     disconnected_nodes: dict[ int, tuple[ float ] ]
+    cells_neighbors_number: np.array
     min_coords: np.ndarray
     max_coords: np.ndarray
     is_empty_point_global_ids: bool
@@ -329,6 +331,66 @@ def get_disconnected_nodes_coords( mesh: vtkUnstructuredGrid ) -> dict[ int, tup
     return disconnected_nodes_coords
 
 
+def get_cell_faces_node_ids( cell: vtkCell, sort_ids: bool = False ) -> tuple[ tuple[ int ] ]:
+    """For any vtkCell given, returns the list of faces node ids.
+
+    Args:
+        cell (vtkCell): A vtk cell object.
+        sort_ids (bool, optional): If you want the node ids to be sorted by increasing value, use True.
+        Defaults to False.
+
+    Returns:
+        tuple[ tuple[ int ] ]: [ [face0_nodeId0, ..., face0_nodeIdN], ..., [faceN_nodeId0, ..., faceN_nodeIdN] ]
+    """
+    cell_faces_node_ids: list[ tuple[ int ] ] = []
+    for f in range( cell.GetNumberOfFaces() ):
+        face = cell.GetFace( f )
+        node_ids: list[ int ] = []
+        for i in range( face.GetNumberOfPoints() ):
+            node_ids.append( face.GetPointId( i ) )
+        if sort_ids:
+            node_ids.sort()
+        cell_faces_node_ids.append( tuple( node_ids ) )
+    return tuple( cell_faces_node_ids )
+
+
+def get_cells_neighbors_number( mesh: vtkUnstructuredGrid ) -> np.array:
+    """For every cell of a mesh, returns the number of neighbors that it has.\n
+    WARNINGS:\n
+    1) Will give invalid numbers if "supposedly" neighbor cells faces do not share node ids
+    because of collocated nodes.
+    2) Node ids for each face are sorted to avoid comparison issues, because cell faces node ids
+    can be read in different order regarding spatial orientation. Therefore, we lose the ordering of
+    the nodes that construct the face. It should not cause problems unless you have degenerated faces.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured grid.
+
+    Returns:
+        np.array: Every index of this array represents a cell_id of the mesh, the value contained at this index
+        is the number of neighbors for that cell.
+    """
+    # First we need to get the node ids for all faces of every cell in the mesh.
+    # The keys are face node ids, values are cell_id of cells that have this face node ids in common
+    faces_node_ids: dict[ tuple[ int ], list[ int ] ] = {}
+    for cell_id in range( mesh.GetNumberOfCells() ):
+        cell_faces_node_ids: tuple[ tuple[ int ] ] = get_cell_faces_node_ids( mesh.GetCell( cell_id ), True )
+        for cell_face_node_ids in cell_faces_node_ids:
+            if cell_face_node_ids not in faces_node_ids:
+                faces_node_ids[ cell_face_node_ids ] = [ cell_id ]
+            else:
+                faces_node_ids[ cell_face_node_ids ].append( cell_id )
+    # Now that we know for each face node ids, which cell_ids share it.
+    # We can identify if a cell is disconnected by checking that one of its face node ids is shared with another cell.
+    # If a cell_id ends up having no neighbor = cell is disconnected
+    cells_neighbors_number: np.array = np.zeros( ( mesh.GetNumberOfCells(), 1 ), dtype=int )
+    for cell_ids in faces_node_ids.values():
+        if len(cell_ids) > 1:  # if a face node ids is shared by more than 1 cell = all cells sharing are neighbors
+            for cell_id in cell_ids:
+                cells_neighbors_number[ cell_id ] += 1
+    return cells_neighbors_number
+
+
 def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     number_points: int = mesh.GetNumberOfPoints()
     cells_info = get_cell_types_and_counts( mesh )
@@ -339,6 +401,7 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     number_cells_per_nodes: dict[ int, int ] = get_number_cells_per_nodes( mesh )
     sum_number_cells_per_nodes: dict[ int, int ] = summary_number_cells_per_nodes( number_cells_per_nodes )
     disconnected_nodes: dict[ int, tuple[ float ] ] = get_disconnected_nodes_coords( mesh )
+    cells_neighbors_number: np.array = get_cells_neighbors_number( mesh )
     min_coords, max_coords = get_coords_min_max( mesh )
     point_ids: bool = not bool( mesh.GetPointData().GetGlobalIds() )
     cell_ids: bool = not bool( mesh.GetCellData().GetGlobalIds() )
@@ -357,6 +420,7 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                    cell_type_counts=cell_type_counts,
                    sum_number_cells_per_nodes=sum_number_cells_per_nodes,
                    disconnected_nodes=disconnected_nodes,
+                   cells_neighbors_number=cells_neighbors_number,
                    min_coords=min_coords,
                    max_coords=max_coords,
                    is_empty_point_global_ids=point_ids,
