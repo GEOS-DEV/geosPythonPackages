@@ -10,9 +10,7 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VOXEL,
     VTK_WEDGE,
 )
-
 from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result
-
 from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
 __CELL_TYPE_MAPPING = {
@@ -35,6 +33,10 @@ __CELL_TYPE_SUPPORT_SIZE = {
     VTK_WEDGE: 6,
 }
 
+__VOLUME_TO_REORDER = "volume_to_reorder"
+__VOLUME_TO_REORDER_DEFAULT = "all"
+__VOLUME_TO_REORDER_CHOICES = [ "all", "positive", "negative" ] 
+
 
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
@@ -47,6 +49,15 @@ def fill_subparser( subparsers ) -> None:
                         default=None,
                         required=False,
                         help=f"[list of integers]: node permutation for \"{key}\"." )
+    p.add_argument( '--' + __VOLUME_TO_REORDER,
+                    type=str,
+                    metavar=__VOLUME_TO_REORDER_DEFAULT,
+                    default=__VOLUME_TO_REORDER_DEFAULT,
+                    choices=__VOLUME_TO_REORDER_CHOICES,
+                    required=False,
+                    help= "[str]: Select which element volume is invalid and needs reordering."
+                          + "'all' will allow reordering of nodes for every element, regarding of their volume."
+                          + "'positive' or 'negative' will only reorder the element with the corresponding volume." )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
@@ -67,15 +78,25 @@ def convert( parsed_options ) -> Options:
                 raise ValueError( err_msg )
             cell_type_to_ordering[ vtk_key ] = tmp
     vtk_output = vtk_output_parsing.convert( parsed_options )
-    return Options( vtk_output=vtk_output, cell_type_to_ordering=cell_type_to_ordering )
+    volume_to_reorder: str = parsed_options[ __VOLUME_TO_REORDER ]
+    if volume_to_reorder.lower() not in __VOLUME_TO_REORDER_CHOICES:
+        raise ValueError( f"Please use one of these options for --volume_to_reorder: {__VOLUME_TO_REORDER_CHOICES}." )
+    return Options( vtk_output=vtk_output, cell_type_to_ordering=cell_type_to_ordering,
+                    volume_to_reorder=volume_to_reorder )
 
 
 def display_results( options: Options, result: Result ):
     if result.output:
         logging.info( f"New mesh was written to file '{result.output}'" )
-        if result.unchanged_cell_types:
-            logging.info( f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
-        else:
-            logging.info( "All the cells of the mesh were reordered." )
     else:
         logging.info( "No output file was written." )
+    logging.info( f"Number of cells reordered :" )
+    logging.info( f"\tCellType\tNumber" )
+    for i in range( result.reordering_stats[ "Types reordered" ] ):
+        logging.info( f"\t{result.reordering_stats[ "Types reordered" ][ i ]}"
+                    + f"\t{result.reordering_stats[ "Number of cells reordered" ][ i ]}" )
+    logging.info( f"Number of cells non reordered :" )
+    logging.info( f"\tCellType\tNumber" )
+    for i in range( result.reordering_stats[ "Types non reordered" ] ):
+        logging.info( f"\t{result.reordering_stats[ "Types non reordered" ][ i ]}"
+                    + f"\t{result.reordering_stats[ "Number of cells non reordered" ][ i ]}" )
