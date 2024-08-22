@@ -186,7 +186,7 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
     """From an old mesh, creates a new one where certain cell nodes are reordered to obtain a correct volume.
 
     Args:
-        old_mesh (vtkDataSet): An unstructured grid needing nodes to be reordered.
+        old_mesh (vtkDataSet): A vtk grid needing nodes to be reordered.
         options (Options): Options defined by the user.
 
     Returns:
@@ -230,7 +230,7 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
             cell_type_position: int = reordering_stats[ "Types non reordered" ].index( cell_type_name )
             reordering_stats[ "Number of cells non reordered" ][ cell_type_position ] -= counter_cells_reordered
             if reordering_stats[ "Number of cells non reordered" ][ cell_type_position ] == 0:
-                reordering_stats[ "Types reordered" ].pop( cell_type_position )
+                reordering_stats[ "Types non reordered" ].pop( cell_type_position )
                 reordering_stats[ "Number of cells non reordered" ].pop( cell_type_position )
     return ( new_mesh, reordering_stats )
 
