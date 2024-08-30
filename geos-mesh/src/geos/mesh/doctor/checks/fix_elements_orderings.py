@@ -8,14 +8,8 @@ from typing import (
 from vtk import vtkCellSizeFilter
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet,
-                                            VTK_HEXAHEDRON,
-                                            VTK_TETRA,
-                                            VTK_PYRAMID,
-                                            VTK_WEDGE,
-                                            VTK_VOXEL,
-                                            VTK_PENTAGONAL_PRISM,
-                                            VTK_HEXAGONAL_PRISM )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_VOXEL,
+                                            VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
 from .vtk_utils import VtkOutput, to_vtk_id_list, write_mesh, read_mesh
 
 
@@ -32,13 +26,15 @@ class Result:
     reordering_stats: dict[ str, list[ int ] ]
 
 
-cell_type_names: dict[ int, str ] = { VTK_HEXAHEDRON: "Hexahedron",
-                                      VTK_TETRA: "Tetra",
-                                      VTK_PYRAMID: "Pyramid",
-                                      VTK_WEDGE: "Wedge",
-                                      VTK_VOXEL: "Voxel",
-                                      VTK_PENTAGONAL_PRISM: "Prism5",
-                                      VTK_HEXAGONAL_PRISM: "Prism6" }
+cell_type_names: dict[ int, str ] = {
+    VTK_HEXAHEDRON: "Hexahedron",
+    VTK_TETRA: "Tetra",
+    VTK_PYRAMID: "Pyramid",
+    VTK_WEDGE: "Wedge",
+    VTK_VOXEL: "Voxel",
+    VTK_PENTAGONAL_PRISM: "Prism5",
+    VTK_HEXAGONAL_PRISM: "Prism6"
+}
 
 
 def compute_mesh_cells_volume( mesh: vtkDataSet ) -> np.array:
@@ -52,9 +48,9 @@ def compute_mesh_cells_volume( mesh: vtkDataSet ) -> np.array:
     """
     cell_size_filter = vtkCellSizeFilter()
     cell_size_filter.SetInputData( mesh )
-    cell_size_filter.SetComputeVolume(True)
+    cell_size_filter.SetComputeVolume( True )
     cell_size_filter.Update()
-    return vtk_to_numpy( cell_size_filter.GetOutput().GetCellData().GetArray("Volume") )
+    return vtk_to_numpy( cell_size_filter.GetOutput().GetCellData().GetArray( "Volume" ) )
 
 
 def is_cell_to_reorder( cell_volume: float, volume_to_reorder: str ) -> bool:
@@ -71,7 +67,7 @@ def is_cell_to_reorder( cell_volume: float, volume_to_reorder: str ) -> bool:
         return True
     if cell_volume == 0.0:
         return True
-    sign_of_cell_volume: int = int( cell_volume / abs(cell_volume) )
+    sign_of_cell_volume: int = int( cell_volume / abs( cell_volume ) )
     if volume_to_reorder == "positive" and sign_of_cell_volume == 1:
         return True
     elif volume_to_reorder == "negative" and sign_of_cell_volume == -1:

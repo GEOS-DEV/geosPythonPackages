@@ -5,23 +5,10 @@ from geos.mesh.doctor.checks.generate_cube import Options, __build
 from geos.mesh.doctor.checks.vtk_utils import VtkOutput, to_vtk_id_list
 from geos.mesh.doctor.checks.fix_elements_orderings import Options as opt
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet,
-                                            vtkUnstructuredGrid,
-                                            vtkCellArray,
-                                            vtkHexahedron,
-                                            vtkTetra,
-                                            vtkPyramid,
-                                            vtkVoxel,
-                                            vtkWedge,
-                                            vtkPentagonalPrism,
-                                            vtkHexagonalPrism,
-                                            VTK_HEXAHEDRON,
-                                            VTK_TETRA,
-                                            VTK_PYRAMID,
-                                            VTK_WEDGE,
-                                            VTK_VOXEL,
-                                            VTK_PENTAGONAL_PRISM,
-                                            VTK_HEXAGONAL_PRISM )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkUnstructuredGrid, vtkCellArray, vtkHexahedron, vtkTetra,
+                                            vtkPyramid, vtkVoxel, vtkWedge, vtkPentagonalPrism, vtkHexagonalPrism,
+                                            VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_VOXEL,
+                                            VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
 
 
 def reorder_cell_nodes( mesh: vtkDataSet, cell_id: int, node_ordering: list[ int ] ):
@@ -33,8 +20,8 @@ def reorder_cell_nodes( mesh: vtkDataSet, cell_id: int, node_ordering: list[ int
         node_ordering (list[ int ]): Nodes id ordering to construct a cell.
     """
     if mesh.GetCell( cell_id ).GetNumberOfPoints() != len( node_ordering ):
-        raise ValueError( f"The cell to reorder needs to have '{mesh.GetCell( cell_id ).GetNumberOfPoints()}'"
-                          + "nodes in reordering." )
+        raise ValueError( f"The cell to reorder needs to have '{mesh.GetCell( cell_id ).GetNumberOfPoints()}'" +
+                          "nodes in reordering." )
     cells = mesh.GetCells()
     support_point_ids = vtkIdList()
     cells.GetCellAtId( cell_id, support_point_ids )
@@ -48,15 +35,16 @@ def reorder_cell_nodes( mesh: vtkDataSet, cell_id: int, node_ordering: list[ int
 """
 Dict used to apply false nodes orderings for test purposes
 """
-to_change_order: dict[ int, list[ int ] ] = { VTK_HEXAHEDRON: [ 0, 3, 2, 1, 4, 5, 6, 7 ],
-                                              VTK_TETRA: [ 0, 2, 1, 3 ],
-                                              VTK_PYRAMID: [ 0, 3, 2, 1, 4 ],
-                                              VTK_WEDGE: [ 0, 2, 1, 3, 4, 5 ],
-                                              VTK_VOXEL: [ 7, 6, 5, 4, 3, 2, 1, 0 ],
-                                              VTK_PENTAGONAL_PRISM: [ 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ],
-                                              VTK_HEXAGONAL_PRISM: [ 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 ] }
+to_change_order: dict[ int, list[ int ] ] = {
+    VTK_HEXAHEDRON: [ 0, 3, 2, 1, 4, 5, 6, 7 ],
+    VTK_TETRA: [ 0, 2, 1, 3 ],
+    VTK_PYRAMID: [ 0, 3, 2, 1, 4 ],
+    VTK_WEDGE: [ 0, 2, 1, 3, 4, 5 ],
+    VTK_VOXEL: [ 7, 6, 5, 4, 3, 2, 1, 0 ],
+    VTK_PENTAGONAL_PRISM: [ 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ],
+    VTK_HEXAGONAL_PRISM: [ 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 ]
+}
 to_change_order = dict( sorted( to_change_order.items() ) )
-
 """
 1 Hexahedron: no invalid ordering
 """
@@ -64,15 +52,14 @@ out: VtkOutput = VtkOutput( "test", False )
 options_one_hex: Options = Options( vtk_output=out,
                                     generate_cells_global_ids=False,
                                     generate_points_global_ids=False,
-                                    xs=np.array( [ 0.0, 1.0] ),
-                                    ys=np.array( [ 0.0, 1.0] ),
+                                    xs=np.array( [ 0.0, 1.0 ] ),
+                                    ys=np.array( [ 0.0, 1.0 ] ),
                                     zs=np.array( [ 0.0, 1.0 ] ),
                                     nxs=[ 1 ],
                                     nys=[ 1 ],
                                     nzs=[ 1 ],
                                     fields=[] )
 one_hex: vtkDataSet = __build( options_one_hex )
-
 """
 4 Hexahedrons: no invalid ordering
 """
@@ -88,26 +75,19 @@ options_hexahedrons_grid: Options = Options( vtk_output=out,
                                              nzs=[ 1 ],
                                              fields=[] )
 hexahedrons_grid: vtkDataSet = __build( options_hexahedrons_grid )
-
 """
 4 Hexahedrons: 2 Hexahedrons with invalid ordering
 """
 hexahedrons_grid_invalid: vtkDataSet = __build( options_hexahedrons_grid )
 for i in range( 2 ):
     reorder_cell_nodes( hexahedrons_grid_invalid, i * 2 + 1, to_change_order[ VTK_HEXAHEDRON ] )
-
 """
 4 tetrahedrons
 """
 points_tetras: vtkPoints = vtkPoints()
-points_tetras_coords: list[ tuple[ float ] ] = [ (0.0, 0.0, 0.0),
-                                                 (1.0, 0.0, 0.0),
-                                                 (1.0, 1.0, 0.0),
-                                                 (0.0, 1.0, 0.0),
-                                                 (0.0, 0.0, 1.0),
-                                                 (1.0, 0.0, 1.0),
-                                                 (1.0, 1.0, 1.0),
-                                                 (0.0, 1.0, 1.0) ]
+points_tetras_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ),
+                                                 ( 0.0, 1.0, 0.0 ), ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ),
+                                                 ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
 for point_tetra in points_tetras_coords:
     points_tetras.InsertNextPoint( point_tetra )
 
@@ -150,31 +130,17 @@ tetras_grid_invalid = vtkUnstructuredGrid()
 tetras_grid_invalid.DeepCopy( tetras_grid )
 for i in range( 2 ):
     reorder_cell_nodes( tetras_grid_invalid, i * 2 + 1, to_change_order[ VTK_TETRA ] )
-
 """
 4 pyramids
 """
 points_pyramids: vtkPoints = vtkPoints()
-points_pyramids_coords: list[ tuple[ float ] ] = [ (0.0, 0.0, 0.0),
-                                                   (1.0, 0.0, 0.0),
-                                                   (1.0, 1.0, 0.0),
-                                                   (0.0, 1.0, 0.0),
-                                                   (0.5, 0.5, 1.0),
-                                                   (2.0, 0.0, 0.0),
-                                                   (3.0, 0.0, 0.0),
-                                                   (3.0, 1.0, 0.0),
-                                                   (2.0, 1.0, 0.0),
-                                                   (2.5, 0.5, 1.0),
-                                                   (0.0, 2.0, 0.0),
-                                                   (1.0, 2.0, 0.0),
-                                                   (1.0, 3.0, 0.0),
-                                                   (0.0, 3.0, 0.0),
-                                                   (0.5, 2.5, 1.0),
-                                                   (2.0, 2.0, 0.0),
-                                                   (3.0, 2.0, 0.0),
-                                                   (3.0, 3.0, 0.0),
-                                                   (2.0, 3.0, 0.0),
-                                                   (2.5, 2.5, 1.0) ]
+points_pyramids_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ),
+                                                   ( 0.0, 1.0, 0.0 ), ( 0.5, 0.5, 1.0 ), ( 2.0, 0.0, 0.0 ),
+                                                   ( 3.0, 0.0, 0.0 ), ( 3.0, 1.0, 0.0 ), ( 2.0, 1.0, 0.0 ),
+                                                   ( 2.5, 0.5, 1.0 ), ( 0.0, 2.0, 0.0 ), ( 1.0, 2.0, 0.0 ),
+                                                   ( 1.0, 3.0, 0.0 ), ( 0.0, 3.0, 0.0 ), ( 0.5, 2.5, 1.0 ),
+                                                   ( 2.0, 2.0, 0.0 ), ( 3.0, 2.0, 0.0 ), ( 3.0, 3.0, 0.0 ),
+                                                   ( 2.0, 3.0, 0.0 ), ( 2.5, 2.5, 1.0 ) ]
 for point_pyramid in points_pyramids_coords:
     points_pyramids.InsertNextPoint( point_pyramid )
 
@@ -221,44 +187,21 @@ pyramids_grid_invalid = vtkUnstructuredGrid()
 pyramids_grid_invalid.DeepCopy( pyramids_grid )
 for i in range( 2 ):
     reorder_cell_nodes( pyramids_grid_invalid, i * 2 + 1, to_change_order[ VTK_PYRAMID ] )
-
-
 """
 4 voxels
 """
 points_voxels: vtkPoints = vtkPoints()
-points_voxels_coords: list[ tuple[ float ] ] = [ (0.0, 0.0, 0.0),
-                                                 (1.0, 0.0, 0.0),
-                                                 (1.0, 1.0, 0.0),
-                                                 (0.0, 1.0, 0.0),
-                                                 (0.0, 0.0, 1.0),
-                                                 (1.0, 0.0, 1.0),
-                                                 (1.0, 1.0, 1.0),
-                                                 (0.0, 1.0, 1.0),
-                                                 (2.0, 0.0, 0.0),
-                                                 (3.0, 0.0, 0.0),
-                                                 (3.0, 1.0, 0.0),
-                                                 (2.0, 1.0, 0.0),
-                                                 (2.0, 0.0, 1.0),
-                                                 (3.0, 0.0, 1.0),
-                                                 (3.0, 1.0, 1.0),
-                                                 (2.0, 1.0, 1.0),
-                                                 (0.0, 2.0, 0.0),
-                                                 (1.0, 2.0, 0.0),
-                                                 (1.0, 3.0, 0.0),
-                                                 (0.0, 3.0, 0.0),
-                                                 (0.0, 2.0, 1.0),
-                                                 (1.0, 2.0, 1.0),
-                                                 (1.0, 3.0, 1.0),
-                                                 (0.0, 3.0, 1.0),
-                                                 (2.0, 2.0, 0.0),
-                                                 (3.0, 2.0, 0.0),
-                                                 (3.0, 3.0, 0.0),
-                                                 (2.0, 3.0, 0.0),
-                                                 (2.0, 2.0, 1.0),
-                                                 (3.0, 2.0, 1.0),
-                                                 (3.0, 3.0, 1.0),
-                                                 (2.0, 3.0, 1.0) ]
+points_voxels_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ),
+                                                 ( 0.0, 1.0, 0.0 ), ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ),
+                                                 ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ), ( 2.0, 0.0, 0.0 ),
+                                                 ( 3.0, 0.0, 0.0 ), ( 3.0, 1.0, 0.0 ), ( 2.0, 1.0, 0.0 ),
+                                                 ( 2.0, 0.0, 1.0 ), ( 3.0, 0.0, 1.0 ), ( 3.0, 1.0, 1.0 ),
+                                                 ( 2.0, 1.0, 1.0 ), ( 0.0, 2.0, 0.0 ), ( 1.0, 2.0, 0.0 ),
+                                                 ( 1.0, 3.0, 0.0 ), ( 0.0, 3.0, 0.0 ), ( 0.0, 2.0, 1.0 ),
+                                                 ( 1.0, 2.0, 1.0 ), ( 1.0, 3.0, 1.0 ), ( 0.0, 3.0, 1.0 ),
+                                                 ( 2.0, 2.0, 0.0 ), ( 3.0, 2.0, 0.0 ), ( 3.0, 3.0, 0.0 ),
+                                                 ( 2.0, 3.0, 0.0 ), ( 2.0, 2.0, 1.0 ), ( 3.0, 2.0, 1.0 ),
+                                                 ( 3.0, 3.0, 1.0 ), ( 2.0, 3.0, 1.0 ) ]
 for point_voxel in points_voxels_coords:
     points_voxels.InsertNextPoint( point_voxel )
 
@@ -317,24 +260,14 @@ voxels_grid_invalid = vtkUnstructuredGrid()
 voxels_grid_invalid.DeepCopy( voxels_grid )
 for i in range( 2 ):
     reorder_cell_nodes( voxels_grid_invalid, i * 2 + 1, to_change_order[ VTK_VOXEL ] )
-
-
 """
 4 wedges
 """
 points_wedges: vtkPoints = vtkPoints()
-points_wedges_coords: list[ tuple[ float ] ] = [ (0.5, 0.0, 0.0),
-                                                 (1.5, 0.0, 0.0),
-                                                 (2.5, 0.0, 0.0),
-                                                 (0.0, 1.0, 0.0),
-                                                 (1.0, 1.0, 0.0),
-                                                 (2.0, 1.0, 0.0),
-                                                 (0.5, 0.0, 1.0),
-                                                 (1.5, 0.0, 1.0),
-                                                 (2.5, 0.0, 1.0),
-                                                 (0.0, 1.0, 1.0),
-                                                 (1.0, 1.0, 1.0),
-                                                 (2.0, 1.0, 1.0) ]
+points_wedges_coords: list[ tuple[ float ] ] = [ ( 0.5, 0.0, 0.0 ), ( 1.5, 0.0, 0.0 ), ( 2.5, 0.0, 0.0 ),
+                                                 ( 0.0, 1.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 2.0, 1.0, 0.0 ),
+                                                 ( 0.5, 0.0, 1.0 ), ( 1.5, 0.0, 1.0 ), ( 2.5, 0.0, 1.0 ),
+                                                 ( 0.0, 1.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 2.0, 1.0, 1.0 ) ]
 for point_wedge in points_wedges_coords:
     points_wedges.InsertNextPoint( point_wedge )
 
@@ -385,52 +318,24 @@ wedges_grid_invalid = vtkUnstructuredGrid()
 wedges_grid_invalid.DeepCopy( wedges_grid )
 for i in range( 2 ):
     reorder_cell_nodes( wedges_grid_invalid, i * 2 + 1, to_change_order[ VTK_WEDGE ] )
-
-
 """
 4 pentagonal prisms
 """
 points_penta_prisms: vtkPoints = vtkPoints()
-points_penta_prisms_coords: list[ tuple[ float ] ] = [ (0.0, 0.0, 0.0),
-                                                       (1.0, 0.0, 0.0),
-                                                       (1.5, 0.5, 0.0),
-                                                       (0.5, 1.0, 0.0),
-                                                       (-0.5, 0.5, 0.0),
-                                                       (0.0, 0.0, 1.0),
-                                                       (1.0, 0.0, 1.0),
-                                                       (1.5, 0.5, 1.0),
-                                                       (0.5, 1.0, 1.0),
-                                                       (-0.5, 0.5, 1.0),
-                                                       (2.0, 0.0, 0.0),
-                                                       (3.0, 0.0, 0.0),
-                                                       (3.5, 0.5, 0.0),
-                                                       (2.5, 1.0, 0.0),
-                                                       (1.5, 0.5, 0.0),
-                                                       (2.0, 0.0, 1.0),
-                                                       (3.0, 0.0, 1.0),
-                                                       (3.5, 0.5, 1.0),
-                                                       (2.5, 1.0, 1.0),
-                                                       (1.5, 0.5, 1.0),
-                                                       (0.0, 2.0, 0.0),
-                                                       (1.0, 2.0, 0.0),
-                                                       (1.5, 2.5, 0.0),
-                                                       (0.5, 3.0, 0.0),
-                                                       (-0.5, 2.5, 0.0),
-                                                       (0.0, 2.0, 1.0),
-                                                       (1.0, 2.0, 1.0),
-                                                       (1.5, 2.5, 1.0),
-                                                       (0.5, 3.0, 1.0),
-                                                       (-0.5, 2.5, 1.0),
-                                                       (2.0, 2.0, 0.0),
-                                                       (3.0, 2.0, 0.0),
-                                                       (3.5, 2.5, 0.0),
-                                                       (2.5, 3.0, 0.0),
-                                                       (1.5, 2.5, 0.0),
-                                                       (2.0, 2.0, 1.0),
-                                                       (3.0, 2.0, 1.0),
-                                                       (3.5, 2.5, 1.0),
-                                                       (2.5, 3.0, 1.0),
-                                                       (1.5, 2.5, 1.0) ]
+points_penta_prisms_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.5, 0.5, 0.0 ),
+                                                       ( 0.5, 1.0, 0.0 ), ( -0.5, 0.5, 0.0 ), ( 0.0, 0.0, 1.0 ),
+                                                       ( 1.0, 0.0, 1.0 ), ( 1.5, 0.5, 1.0 ), ( 0.5, 1.0, 1.0 ),
+                                                       ( -0.5, 0.5, 1.0 ), ( 2.0, 0.0, 0.0 ), ( 3.0, 0.0, 0.0 ),
+                                                       ( 3.5, 0.5, 0.0 ), ( 2.5, 1.0, 0.0 ), ( 1.5, 0.5, 0.0 ),
+                                                       ( 2.0, 0.0, 1.0 ), ( 3.0, 0.0, 1.0 ), ( 3.5, 0.5, 1.0 ),
+                                                       ( 2.5, 1.0, 1.0 ), ( 1.5, 0.5, 1.0 ), ( 0.0, 2.0, 0.0 ),
+                                                       ( 1.0, 2.0, 0.0 ), ( 1.5, 2.5, 0.0 ), ( 0.5, 3.0, 0.0 ),
+                                                       ( -0.5, 2.5, 0.0 ), ( 0.0, 2.0, 1.0 ), ( 1.0, 2.0, 1.0 ),
+                                                       ( 1.5, 2.5, 1.0 ), ( 0.5, 3.0, 1.0 ), ( -0.5, 2.5, 1.0 ),
+                                                       ( 2.0, 2.0, 0.0 ), ( 3.0, 2.0, 0.0 ), ( 3.5, 2.5, 0.0 ),
+                                                       ( 2.5, 3.0, 0.0 ), ( 1.5, 2.5, 0.0 ), ( 2.0, 2.0, 1.0 ),
+                                                       ( 3.0, 2.0, 1.0 ), ( 3.5, 2.5, 1.0 ), ( 2.5, 3.0, 1.0 ),
+                                                       ( 1.5, 2.5, 1.0 ) ]
 for point_penta_prism in points_penta_prisms_coords:
     points_penta_prisms.InsertNextPoint( point_penta_prism )
 
@@ -497,77 +402,43 @@ penta_prism_grid_invalid = vtkUnstructuredGrid()
 penta_prism_grid_invalid.DeepCopy( penta_prism_grid )
 for i in range( 2 ):
     reorder_cell_nodes( penta_prism_grid_invalid, i * 2 + 1, to_change_order[ VTK_PENTAGONAL_PRISM ] )
-
-
 """
 4 hexagonal prisms
 """
 points_hexa_prisms: vtkPoints = vtkPoints()
-points_hexa_prisms_coords: list[ tuple[ float ] ] = [ (0.0, 0.0, 0.0),
-                                                      (1.0, 0.0, 0.0),
-                                                      (1.5, 0.5, 0.0),
-                                                      (1.0, 1.0, 0.0),
-                                                      (0.0, 1.0, 0.0),
-                                                      (-0.5, 0.5, 0.0),
-                                                      (0.0, 0.0, 1.0),
-                                                      (1.0, 0.0, 1.0),
-                                                      (1.5, 0.5, 1.0),
-                                                      (1.0, 1.0, 1.0),
-                                                      (0.0, 1.0, 1.0),
-                                                      (-0.5, 0.5, 1.0),
-                                                      (2.0, 0.0, 0.0),
-                                                      (3.0, 0.0, 0.0),
-                                                      (3.5, 0.5, 0.0),
-                                                      (3.0, 1.0, 0.0),
-                                                      (2.0, 1.0, 0.0),
-                                                      (1.5, 0.5, 0.0),
-                                                      (2.0, 0.0, 1.0),
-                                                      (3.0, 0.0, 1.0),
-                                                      (3.5, 0.5, 1.0),
-                                                      (3.0, 1.0, 1.0),
-                                                      (2.0, 1.0, 1.0),
-                                                      (1.5, 0.5, 1.0),
-                                                      (0.0, 2.0, 0.0),
-                                                      (1.0, 2.0, 0.0),
-                                                      (1.5, 2.5, 0.0),
-                                                      (1.0, 3.0, 0.0),
-                                                      (0.0, 3.0, 0.0),
-                                                      (-0.5, 2.5, 0.0),
-                                                      (0.0, 2.0, 1.0),
-                                                      (1.0, 2.0, 1.0),
-                                                      (1.5, 2.5, 1.0),
-                                                      (1.0, 3.0, 1.0),
-                                                      (0.0, 3.0, 1.0),
-                                                      (-0.5, 2.5, 1.0),
-                                                      (2.0, 2.0, 0.0),
-                                                      (3.0, 2.0, 0.0),
-                                                      (3.5, 2.5, 0.0),
-                                                      (3.0, 3.0, 0.0),
-                                                      (2.0, 3.0, 0.0),
-                                                      (1.5, 2.5, 0.0),
-                                                      (2.0, 2.0, 1.0),
-                                                      (3.0, 2.0, 1.0),
-                                                      (3.5, 2.5, 1.0),
-                                                      (3.0, 3.0, 1.0),
-                                                      (2.0, 3.0, 1.0),
-                                                      (1.5, 2.5, 1.0) ]
+points_hexa_prisms_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.5, 0.5, 0.0 ),
+                                                      ( 1.0, 1.0, 0.0 ), ( 0.0, 1.0, 0.0 ), ( -0.5, 0.5, 0.0 ),
+                                                      ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 1.5, 0.5, 1.0 ),
+                                                      ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ), ( -0.5, 0.5, 1.0 ),
+                                                      ( 2.0, 0.0, 0.0 ), ( 3.0, 0.0, 0.0 ), ( 3.5, 0.5, 0.0 ),
+                                                      ( 3.0, 1.0, 0.0 ), ( 2.0, 1.0, 0.0 ), ( 1.5, 0.5, 0.0 ),
+                                                      ( 2.0, 0.0, 1.0 ), ( 3.0, 0.0, 1.0 ), ( 3.5, 0.5, 1.0 ),
+                                                      ( 3.0, 1.0, 1.0 ), ( 2.0, 1.0, 1.0 ), ( 1.5, 0.5, 1.0 ),
+                                                      ( 0.0, 2.0, 0.0 ), ( 1.0, 2.0, 0.0 ), ( 1.5, 2.5, 0.0 ),
+                                                      ( 1.0, 3.0, 0.0 ), ( 0.0, 3.0, 0.0 ), ( -0.5, 2.5, 0.0 ),
+                                                      ( 0.0, 2.0, 1.0 ), ( 1.0, 2.0, 1.0 ), ( 1.5, 2.5, 1.0 ),
+                                                      ( 1.0, 3.0, 1.0 ), ( 0.0, 3.0, 1.0 ), ( -0.5, 2.5, 1.0 ),
+                                                      ( 2.0, 2.0, 0.0 ), ( 3.0, 2.0, 0.0 ), ( 3.5, 2.5, 0.0 ),
+                                                      ( 3.0, 3.0, 0.0 ), ( 2.0, 3.0, 0.0 ), ( 1.5, 2.5, 0.0 ),
+                                                      ( 2.0, 2.0, 1.0 ), ( 3.0, 2.0, 1.0 ), ( 3.5, 2.5, 1.0 ),
+                                                      ( 3.0, 3.0, 1.0 ), ( 2.0, 3.0, 1.0 ), ( 1.5, 2.5, 1.0 ) ]
 for point_hexa_prism in points_hexa_prisms_coords:
     points_hexa_prisms.InsertNextPoint( point_hexa_prism )
 
 hexa_prism1: vtkHexagonalPrism = vtkHexagonalPrism()
-for i in range(12):
+for i in range( 12 ):
     hexa_prism1.GetPointIds().SetId( i, i )
 
 hexa_prism2: vtkHexagonalPrism = vtkHexagonalPrism()
-for i in range(12):
+for i in range( 12 ):
     hexa_prism2.GetPointIds().SetId( i, i + 12 )
 
 hexa_prism3: vtkHexagonalPrism = vtkHexagonalPrism()
-for i in range(12):
+for i in range( 12 ):
     hexa_prism3.GetPointIds().SetId( i, i + 24 )
 
 hexa_prism4: vtkHexagonalPrism = vtkHexagonalPrism()
-for i in range(12):
+for i in range( 12 ):
     hexa_prism4.GetPointIds().SetId( i, i + 36 )
 
 hexa_prism_cells = vtkCellArray()
@@ -585,64 +456,21 @@ hexa_prism_grid_invalid = vtkUnstructuredGrid()
 hexa_prism_grid_invalid.DeepCopy( hexa_prism_grid )
 for i in range( 2 ):
     reorder_cell_nodes( hexa_prism_grid_invalid, i * 2 + 1, to_change_order[ VTK_HEXAGONAL_PRISM ] )
-
 """
 2 hexahedrons, 2 tetrahedrons, 2 wedges, 2 pyramids, 2 voxels, 2 pentagonal prisms and 2 hexagonal prisms
 """
 points_mix: vtkPoints = vtkPoints()
-points_mix_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ),
-                                              ( 1.0, 0.0, 0.0 ),
-                                              ( 2.0, 0.0, 0.0 ),
-                                              ( 2.5, -0.5, 0.0 ),
-                                              ( 3.0, 0.0, 0.0 ),
-                                              ( 3.5, -0.5, 0.0 ),
-                                              ( 4.0, 0.0, 0.0 ),
-                                              ( 4.5, -0.5, 0.0 ),
-                                              ( 5.0, 0.0, 0.0 ),
-                                              ( 5.5, -0.5, 0.0 ),
-                                              ( 6.0, 0.5, 0.0 ),
-                                              ( 0.0, 1.0, 0.0 ),
-                                              ( 1.0, 1.0, 0.0 ),
-                                              ( 2.0, 1.0, 0.0 ),
-                                              ( 2.5, 1.5, 0.0 ),
-                                              ( 3.0, 1.0, 0.0 ),
-                                              ( 4.0, 1.0, 0.0 ),
-                                              ( 5.0, 1.0, 0.0 ),
-                                              ( 5.5, 1.5, 0.0 ),
-                                              ( 0.0, 0.0, 1.0 ),
-                                              ( 1.0, 0.0, 1.0 ),
-                                              ( 2.0, 0.0, 1.0 ),
-                                              ( 2.5, -0.5, 1.0 ),
-                                              ( 3.0, 0.0, 1.0 ),
-                                              ( 3.5, -0.5, 1.0 ),
-                                              ( 4.0, 0.0, 1.0 ),
-                                              ( 4.5, -0.5, 1.0 ),
-                                              ( 5.0, 0.0, 1.0 ),
-                                              ( 5.5, -0.5, 1.0 ),
-                                              ( 6.0, 0.5, 1.0 ),
-                                              ( 0.0, 1.0, 1.0 ),
-                                              ( 1.0, 1.0, 1.0 ),
-                                              ( 2.0, 1.0, 1.0 ),
-                                              ( 2.5, 1.5, 1.0 ),
-                                              ( 3.0, 1.0, 1.0 ),
-                                              ( 4.0, 1.0, 1.0 ),
-                                              ( 5.0, 1.0, 1.0 ),
-                                              ( 5.5, 1.5, 1.0 ),
-                                              ( 0.5, 0.5, 2.0 ),
-                                              ( 0.5, 1.5, 2.0 ),
-                                              ( 1.5, 0.5, 2.0 ),
-                                              ( 1.5, 1.5, 2.0 ),
-                                              ( 2.0, 0.0, 2.0 ),
-                                              ( 2.5, -0.5, 2.0 ),
-                                              ( 3.0, 0.0, 2.0 ),
-                                              ( 3.0, 1.0, 2.0 ),
-                                              ( 2.5, 1.5, 2.0 ),
-                                              ( 2.0, 1.0, 2.0 ),
-                                              ( 5.0, 0.0, 2.0 ),
-                                              ( 5.5, -0.5, 2.0 ),
-                                              ( 6.0, 0.5, 2.0 ),
-                                              ( 5.5, 1.5, 2.0 ),
-                                              ( 5.0, 1.0, 2.0 ) ]
+points_mix_coords: list[ tuple[ float ] ] = [
+    ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 2.0, 0.0, 0.0 ), ( 2.5, -0.5, 0.0 ), ( 3.0, 0.0, 0.0 ), ( 3.5, -0.5, 0.0 ),
+    ( 4.0, 0.0, 0.0 ), ( 4.5, -0.5, 0.0 ), ( 5.0, 0.0, 0.0 ), ( 5.5, -0.5, 0.0 ), ( 6.0, 0.5, 0.0 ), ( 0.0, 1.0, 0.0 ),
+    ( 1.0, 1.0, 0.0 ), ( 2.0, 1.0, 0.0 ), ( 2.5, 1.5, 0.0 ), ( 3.0, 1.0, 0.0 ), ( 4.0, 1.0, 0.0 ), ( 5.0, 1.0, 0.0 ),
+    ( 5.5, 1.5, 0.0 ), ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 2.0, 0.0, 1.0 ), ( 2.5, -0.5, 1.0 ), ( 3.0, 0.0, 1.0 ),
+    ( 3.5, -0.5, 1.0 ), ( 4.0, 0.0, 1.0 ), ( 4.5, -0.5, 1.0 ), ( 5.0, 0.0, 1.0 ), ( 5.5, -0.5, 1.0 ), ( 6.0, 0.5, 1.0 ),
+    ( 0.0, 1.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 2.0, 1.0, 1.0 ), ( 2.5, 1.5, 1.0 ), ( 3.0, 1.0, 1.0 ), ( 4.0, 1.0, 1.0 ),
+    ( 5.0, 1.0, 1.0 ), ( 5.5, 1.5, 1.0 ), ( 0.5, 0.5, 2.0 ), ( 0.5, 1.5, 2.0 ), ( 1.5, 0.5, 2.0 ), ( 1.5, 1.5, 2.0 ),
+    ( 2.0, 0.0, 2.0 ), ( 2.5, -0.5, 2.0 ), ( 3.0, 0.0, 2.0 ), ( 3.0, 1.0, 2.0 ), ( 2.5, 1.5, 2.0 ), ( 2.0, 1.0, 2.0 ),
+    ( 5.0, 0.0, 2.0 ), ( 5.5, -0.5, 2.0 ), ( 6.0, 0.5, 2.0 ), ( 5.5, 1.5, 2.0 ), ( 5.0, 1.0, 2.0 )
+]
 for point_mix in points_mix_coords:
     points_mix.InsertNextPoint( point_mix )
 
@@ -783,18 +611,20 @@ mix_penta_prism2.GetPointIds().SetId( 9, 52 )
 # this mix grid has only valid cell volumes
 mix_grid = vtkUnstructuredGrid()
 mix_grid.SetPoints( points_mix )
-all_cell_types_mix_grid = [ VTK_HEXAHEDRON, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_PYRAMID, VTK_TETRA, VTK_TETRA,
-                            VTK_HEXAGONAL_PRISM, VTK_HEXAGONAL_PRISM, VTK_VOXEL, VTK_VOXEL, VTK_WEDGE, VTK_WEDGE,
-                            VTK_PENTAGONAL_PRISM, VTK_PENTAGONAL_PRISM ]
-all_cells_mix_grid = [ mix_hex1, mix_hex2, mix_pyram1, mix_pyram2, mix_tetra1, mix_tetra2,
-                       mix_hex_prism1, mix_hex_prism2, mix_voxel1, mix_voxel2, mix_wedge1, mix_wedge2,
-                       mix_penta_prism1, mix_penta_prism2 ]
+all_cell_types_mix_grid = [
+    VTK_HEXAHEDRON, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_PYRAMID, VTK_TETRA, VTK_TETRA, VTK_HEXAGONAL_PRISM,
+    VTK_HEXAGONAL_PRISM, VTK_VOXEL, VTK_VOXEL, VTK_WEDGE, VTK_WEDGE, VTK_PENTAGONAL_PRISM, VTK_PENTAGONAL_PRISM
+]
+all_cells_mix_grid = [
+    mix_hex1, mix_hex2, mix_pyram1, mix_pyram2, mix_tetra1, mix_tetra2, mix_hex_prism1, mix_hex_prism2, mix_voxel1,
+    mix_voxel2, mix_wedge1, mix_wedge2, mix_penta_prism1, mix_penta_prism2
+]
 for cell_type, cell in zip( all_cell_types_mix_grid, all_cells_mix_grid ):
     mix_grid.InsertNextCell( cell_type, cell.GetPointIds() )
 
 # this mix grid has one invalid cell for each different element type
 mix_grid_invalid = vtkUnstructuredGrid()
-mix_grid_invalid.DeepCopy(mix_grid)
+mix_grid_invalid.DeepCopy( mix_grid )
 for i in range( len( all_cell_types_mix_grid ) // 2 ):
     reorder_cell_nodes( mix_grid_invalid, i * 2 + 1, to_change_order[ all_cell_types_mix_grid[ i * 2 + 1 ] ] )
 
@@ -802,84 +632,70 @@ for i in range( len( all_cell_types_mix_grid ) // 2 ):
 class TestClass:
 
     def test_reorder_cell_nodes( self ):
-        expected_nodes_coords: list[ tuple[ float] ] = [ ( 0.0, 0.0, 0.0 ),
-                                                         ( 1.0, 0.0, 0.0 ),
-                                                         ( 1.0, 1.0, 0.0 ),
-                                                         ( 0.0, 1.0, 0.0 ),
-                                                         ( 0.0, 0.0, 1.0 ),
-                                                         ( 1.0, 0.0, 1.0 ),
-                                                         ( 1.0, 1.0, 1.0 ),
-                                                         ( 0.0, 1.0, 1.0 ) ]
+        expected_nodes_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ),
+                                                          ( 0.0, 1.0, 0.0 ), ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ),
+                                                          ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
         for i in range( one_hex.GetCell( 0 ).GetNumberOfPoints() ):
             assert one_hex.GetCell( 0 ).GetPoints().GetPoint( i ) == expected_nodes_coords[ i ]
 
         # reorder the cell to make it invalid
         reorder_cell_nodes( one_hex, 0, to_change_order[ VTK_HEXAHEDRON ] )
-        expected_nodes_coords_modified = [ ( 0.0, 0.0, 0.0 ),
-                                           ( 0.0, 1.0, 0.0 ),
-                                           ( 1.0, 1.0, 0.0 ),
-                                           ( 1.0, 0.0, 0.0 ),
-                                           ( 0.0, 0.0, 1.0 ),
-                                           ( 1.0, 0.0, 1.0 ),
-                                           ( 1.0, 1.0, 1.0 ),
-                                           ( 0.0, 1.0, 1.0 ) ]
+        expected_nodes_coords_modified = [ ( 0.0, 0.0, 0.0 ), ( 0.0, 1.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 1.0, 0.0, 0.0 ),
+                                           ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
         for i in range( one_hex.GetCell( 0 ).GetNumberOfPoints() ):
             assert one_hex.GetCell( 0 ).GetPoints().GetPoint( i ) == expected_nodes_coords_modified[ i ]
 
         # reorder the cell again to make it valid again
         reorder_cell_nodes( one_hex, 0, to_change_order[ VTK_HEXAHEDRON ] )
-        expected_nodes_coords_modified2 = [ ( 0.0, 0.0, 0.0 ),
-                                            ( 1.0, 0.0, 0.0 ),
-                                            ( 1.0, 1.0, 0.0 ),
-                                            ( 0.0, 1.0, 0.0 ),
-                                            ( 0.0, 0.0, 1.0 ),
-                                            ( 1.0, 0.0, 1.0 ),
-                                            ( 1.0, 1.0, 1.0 ),
-                                            ( 0.0, 1.0, 1.0 ) ]
+        expected_nodes_coords_modified2 = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 0.0, 1.0, 0.0 ),
+                                            ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
         for i in range( one_hex.GetCell( 0 ).GetNumberOfPoints() ):
             assert one_hex.GetCell( 0 ).GetPoints().GetPoint( i ) == expected_nodes_coords_modified2[ i ]
 
     def test_compute_mesh_cells_volume( self ):
-        grid_volumes = { hexahedrons_grid:         [ 1.0, 1.0, 1.0, 1.0 ],
-                         hexahedrons_grid_invalid: [ 1.0, -0.333, 1.0, -0.333 ],
-                         tetras_grid:              [ 0.167, 0.167, 0.167, 0.167 ],
-                         tetras_grid_invalid:      [ 0.167, -0.167, 0.167, -0.167 ],
-                         pyramids_grid:            [ 0.333, 0.333, 0.333, 0.333 ],
-                         pyramids_grid_invalid:    [ 0.333, -0.333, 0.333, -0.333 ],
-                         voxels_grid:              [ 1.0, 1.0, 1.0, 1.0 ],
-                         voxels_grid_invalid:      [ 1.0, 1.0, 1.0, 1.0 ],
-                         wedges_grid:              [ 0.5, 0.5, 0.5, 0.5 ],
-                         wedges_grid_invalid:      [ 0.5, -0.167, 0.5, -0.167 ],
-                         penta_prism_grid:         [ 1.25, 1.25, 1.25, 1.25 ],
-                         penta_prism_grid_invalid: [ 1.25, -0.083, 1.25, -0.083 ],
-                         hexa_prism_grid:          [ 1.5, 1.5, 1.5, 1.5 ],
-                         hexa_prism_grid_invalid:  [ 1.5, -0.333, 1.5, -0.333 ],
-                         mix_grid:                 [ 1.0, 1.0, 0.333, 0.333, 0.167, 0.167, 1.5,
-                                                     1.5, 1.0, 1.0, 0.25, 0.25, 1.25, 1.25 ],
-                         mix_grid_invalid:         [ 1.0, -0.333, 0.333, -0.333, 0.167, -0.167, 1.5, 
-                                                     -0.333, 1.0, 1.0, 0.25, -0.083, 1.25, -0.083 ] }
+        grid_volumes = {
+            hexahedrons_grid: [ 1.0, 1.0, 1.0, 1.0 ],
+            hexahedrons_grid_invalid: [ 1.0, -0.333, 1.0, -0.333 ],
+            tetras_grid: [ 0.167, 0.167, 0.167, 0.167 ],
+            tetras_grid_invalid: [ 0.167, -0.167, 0.167, -0.167 ],
+            pyramids_grid: [ 0.333, 0.333, 0.333, 0.333 ],
+            pyramids_grid_invalid: [ 0.333, -0.333, 0.333, -0.333 ],
+            voxels_grid: [ 1.0, 1.0, 1.0, 1.0 ],
+            voxels_grid_invalid: [ 1.0, 1.0, 1.0, 1.0 ],
+            wedges_grid: [ 0.5, 0.5, 0.5, 0.5 ],
+            wedges_grid_invalid: [ 0.5, -0.167, 0.5, -0.167 ],
+            penta_prism_grid: [ 1.25, 1.25, 1.25, 1.25 ],
+            penta_prism_grid_invalid: [ 1.25, -0.083, 1.25, -0.083 ],
+            hexa_prism_grid: [ 1.5, 1.5, 1.5, 1.5 ],
+            hexa_prism_grid_invalid: [ 1.5, -0.333, 1.5, -0.333 ],
+            mix_grid: [ 1.0, 1.0, 0.333, 0.333, 0.167, 0.167, 1.5, 1.5, 1.0, 1.0, 0.25, 0.25, 1.25, 1.25 ],
+            mix_grid_invalid:
+            [ 1.0, -0.333, 0.333, -0.333, 0.167, -0.167, 1.5, -0.333, 1.0, 1.0, 0.25, -0.083, 1.25, -0.083 ]
+        }
         for grid, volumes_expected in grid_volumes.items():
             volumes_computed = feo.compute_mesh_cells_volume( grid )
             for i in range( len( volumes_computed ) ):
                 assert round( float( volumes_computed[ i ] ), 3 ) == volumes_expected[ i ]
 
     def test_is_cell_to_reorder( self ):
-        grid_needs_ordering = { hexahedrons_grid:         [ False ] * 4,
-                                hexahedrons_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
-                                tetras_grid:              [ False ] * 4,
-                                tetras_grid_invalid:      [ i % 2 != 0 for i in range( 4 ) ],
-                                pyramids_grid:            [ False ] * 4,
-                                pyramids_grid_invalid:    [ i % 2 != 0 for i in range( 4 ) ],
-                                voxels_grid:              [ False ] * 4,
-                                voxels_grid_invalid:      [ False ] * 4,
-                                wedges_grid:              [ False ] * 4,
-                                wedges_grid_invalid:      [ i % 2 != 0 for i in range( 4 ) ],
-                                penta_prism_grid:         [ False ] * 4,
-                                penta_prism_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
-                                hexa_prism_grid:          [ False ] * 4,
-                                hexa_prism_grid_invalid:  [ i % 2 != 0 for i in range( 4 ) ],
-                                mix_grid:                 [ False ] * 14,
-                                mix_grid_invalid:         [ i % 2 != 0 for i in range( 14 ) ] }
+        grid_needs_ordering = {
+            hexahedrons_grid: [ False ] * 4,
+            hexahedrons_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            tetras_grid: [ False ] * 4,
+            tetras_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            pyramids_grid: [ False ] * 4,
+            pyramids_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            voxels_grid: [ False ] * 4,
+            voxels_grid_invalid: [ False ] * 4,
+            wedges_grid: [ False ] * 4,
+            wedges_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            penta_prism_grid: [ False ] * 4,
+            penta_prism_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            hexa_prism_grid: [ False ] * 4,
+            hexa_prism_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
+            mix_grid: [ False ] * 14,
+            mix_grid_invalid: [ i % 2 != 0 for i in range( 14 ) ]
+        }
         grid_needs_ordering[ mix_grid_invalid ][ 9 ] = False
         for grid, needs_ordering in grid_needs_ordering.items():
             volumes = feo.compute_mesh_cells_volume( grid )
@@ -903,32 +719,34 @@ class TestClass:
         assert feo.get_all_cells_type( penta_prism_grid_invalid ).tolist() == [ 15, 15, 15, 15 ]
         assert feo.get_all_cells_type( hexa_prism_grid ).tolist() == [ 16, 16, 16, 16 ]
         assert feo.get_all_cells_type( hexa_prism_grid_invalid ).tolist() == [ 16, 16, 16, 16 ]
-        assert feo.get_all_cells_type( mix_grid ).tolist() == [ 12, 12, 14, 14, 10, 10, 16,
-                                                                16, 11, 11, 13, 13, 15, 15 ]
-        assert feo.get_all_cells_type( mix_grid_invalid ).tolist() == [ 12, 12, 14, 14, 10, 10, 16,
-                                                                        16, 11, 11, 13, 13, 15, 15 ]
+        assert feo.get_all_cells_type( mix_grid ).tolist() == [ 12, 12, 14, 14, 10, 10, 16, 16, 11, 11, 13, 13, 15, 15 ]
+        assert feo.get_all_cells_type( mix_grid_invalid ).tolist() == [
+            12, 12, 14, 14, 10, 10, 16, 16, 11, 11, 13, 13, 15, 15
+        ]
 
     def test_get_cell_ids_to_check( self ):
         options = opt( out, to_change_order, "negative" )
         # single element grids
-        grid_cell_type = { hexahedrons_grid:         VTK_HEXAHEDRON,
-                           hexahedrons_grid_invalid: VTK_HEXAHEDRON,
-                           tetras_grid:              VTK_TETRA,
-                           tetras_grid_invalid:      VTK_TETRA,
-                           pyramids_grid:            VTK_PYRAMID,
-                           pyramids_grid_invalid:    VTK_PYRAMID,
-                           voxels_grid:              VTK_VOXEL,
-                           voxels_grid_invalid:      VTK_VOXEL,
-                           wedges_grid:              VTK_WEDGE,
-                           wedges_grid_invalid:      VTK_WEDGE,
-                           penta_prism_grid:         VTK_PENTAGONAL_PRISM,
-                           penta_prism_grid_invalid: VTK_PENTAGONAL_PRISM,
-                           hexa_prism_grid:          VTK_HEXAGONAL_PRISM,
-                           hexa_prism_grid_invalid:  VTK_HEXAGONAL_PRISM }
+        grid_cell_type = {
+            hexahedrons_grid: VTK_HEXAHEDRON,
+            hexahedrons_grid_invalid: VTK_HEXAHEDRON,
+            tetras_grid: VTK_TETRA,
+            tetras_grid_invalid: VTK_TETRA,
+            pyramids_grid: VTK_PYRAMID,
+            pyramids_grid_invalid: VTK_PYRAMID,
+            voxels_grid: VTK_VOXEL,
+            voxels_grid_invalid: VTK_VOXEL,
+            wedges_grid: VTK_WEDGE,
+            wedges_grid_invalid: VTK_WEDGE,
+            penta_prism_grid: VTK_PENTAGONAL_PRISM,
+            penta_prism_grid_invalid: VTK_PENTAGONAL_PRISM,
+            hexa_prism_grid: VTK_HEXAGONAL_PRISM,
+            hexa_prism_grid_invalid: VTK_HEXAGONAL_PRISM
+        }
         for grid, cell_type in grid_cell_type.items():
             all_cells_type = feo.get_all_cells_type( grid )
             result = feo.get_cell_ids_to_check( all_cells_type, options )
-            expected = { cell_type: np.array([ 0, 1, 2, 3 ]) }
+            expected = { cell_type: np.array( [ 0, 1, 2, 3 ] ) }
             for cell_type_result, cell_type_expected in zip( result.keys(), expected.keys() ):
                 assert cell_type_result == cell_type_expected
             for cell_indexes_result, cell_indexes_expected in zip( result.values(), expected.values() ):
@@ -937,11 +755,17 @@ class TestClass:
         # mix elements grid
         all_cells_type_mix = feo.get_all_cells_type( mix_grid )
         result = feo.get_cell_ids_to_check( all_cells_type_mix, options )
-        result =  dict( sorted( result.items() ) )
-        expected = { 12: np.array( [ 0, 1 ] ), 14: np.array( [ 2, 3 ] ), 10: np.array( [ 4, 5 ] ),
-                     16: np.array( [ 6, 7 ] ), 11: np.array( [ 8, 9 ] ), 13: np.array( [ 10, 11 ] ),
-                     15: np.array( [ 12, 13 ] ) }
-        expected =  dict( sorted( expected.items() ) )
+        result = dict( sorted( result.items() ) )
+        expected = {
+            12: np.array( [ 0, 1 ] ),
+            14: np.array( [ 2, 3 ] ),
+            10: np.array( [ 4, 5 ] ),
+            16: np.array( [ 6, 7 ] ),
+            11: np.array( [ 8, 9 ] ),
+            13: np.array( [ 10, 11 ] ),
+            15: np.array( [ 12, 13 ] )
+        }
+        expected = dict( sorted( expected.items() ) )
         for cell_type_result, cell_type_expected in zip( result.keys(), expected.keys() ):
             assert cell_type_result == cell_type_expected
         for cell_indexes_result, cell_indexes_expected in zip( result.values(), expected.values() ):
@@ -950,20 +774,24 @@ class TestClass:
     def test_reorder_nodes_to_new_mesh( self ):
         options = opt( out, to_change_order, "negative" )
         # single element grids except voxels because volume is always positive
-        grid_cell_type = { hexahedrons_grid_invalid: VTK_HEXAHEDRON,
-                           tetras_grid_invalid:      VTK_TETRA,
-                           pyramids_grid_invalid:    VTK_PYRAMID,
-                           wedges_grid_invalid:      VTK_WEDGE,
-                           penta_prism_grid_invalid: VTK_PENTAGONAL_PRISM,
-                           hexa_prism_grid_invalid:  VTK_HEXAGONAL_PRISM }
+        grid_cell_type = {
+            hexahedrons_grid_invalid: VTK_HEXAHEDRON,
+            tetras_grid_invalid: VTK_TETRA,
+            pyramids_grid_invalid: VTK_PYRAMID,
+            wedges_grid_invalid: VTK_WEDGE,
+            penta_prism_grid_invalid: VTK_PENTAGONAL_PRISM,
+            hexa_prism_grid_invalid: VTK_HEXAGONAL_PRISM
+        }
         for grid, cell_type in grid_cell_type.items():
             new_invalid = vtkUnstructuredGrid()
             new_invalid.DeepCopy( grid )
             not_use_invalid, reorder_stats = feo.reorder_nodes_to_new_mesh( new_invalid, options )
-            expected = { "Types reordered": [ cell_type ],
-                         "Number of cells reordered": [ 2 ],
-                         "Types non reordered": [ cell_type ],
-                         "Number of cells non reordered": [ 2 ] }
+            expected = {
+                "Types reordered": [ cell_type ],
+                "Number of cells reordered": [ 2 ],
+                "Types non reordered": [ cell_type ],
+                "Number of cells non reordered": [ 2 ]
+            }
             for prop in expected.keys():
                 assert reorder_stats[ prop ] == expected[ prop ]
 
@@ -971,10 +799,12 @@ class TestClass:
         voxels_invalid = vtkUnstructuredGrid()
         voxels_invalid.DeepCopy( voxels_grid_invalid )
         not_use_invalid, voxels_stats = feo.reorder_nodes_to_new_mesh( voxels_invalid, options )
-        expected = { "Types reordered": [],
-                     "Number of cells reordered": [],
-                     "Types non reordered": [ 11 ],
-                     "Number of cells non reordered": [ 4 ] }
+        expected = {
+            "Types reordered": [],
+            "Number of cells reordered": [],
+            "Types non reordered": [ 11 ],
+            "Number of cells non reordered": [ 4 ]
+        }
         for prop in expected.keys():
             assert voxels_stats[ prop ] == expected[ prop ]
 
@@ -982,9 +812,11 @@ class TestClass:
         mix_invalid = vtkUnstructuredGrid()
         mix_invalid.DeepCopy( mix_grid_invalid )
         not_use_invalid, mix_stats = feo.reorder_nodes_to_new_mesh( mix_invalid, options )
-        expected = { "Types reordered": [ 10, 12, 13, 14, 15, 16 ],
-                     "Number of cells reordered": [ 1, 1, 1, 1, 1, 1 ],
-                     "Types non reordered": [ 10, 11, 12, 13, 14, 15, 16 ],
-                     "Number of cells non reordered": [ 1, 2, 1, 1, 1, 1, 1 ] }
+        expected = {
+            "Types reordered": [ 10, 12, 13, 14, 15, 16 ],
+            "Number of cells reordered": [ 1, 1, 1, 1, 1, 1 ],
+            "Types non reordered": [ 10, 11, 12, 13, 14, 15, 16 ],
+            "Number of cells non reordered": [ 1, 2, 1, 1, 1, 1, 1 ]
+        }
         for prop in expected.keys():
             assert mix_stats[ prop ] == expected[ prop ]
