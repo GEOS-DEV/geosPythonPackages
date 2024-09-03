@@ -33,6 +33,8 @@ def interpolate_values_time( ta, xa, tb ):
     """
     N = list( np.shape( xa ) )
     M = len( tb )
+    ta = np.ascontiguousarray( np.squeeze( ta ) )
+    tb = np.ascontiguousarray( np.squeeze( tb ) )
 
     if ( len( N ) == 1 ):
         return interp1d( ta, xa )( tb )
@@ -42,7 +44,7 @@ def interpolate_values_time( ta, xa, tb ):
         xc = np.reshape( xa, ( N[ 0 ], S ) )
         xd = np.zeros( ( len( tb ), S ) )
         for ii in range( S ):
-            xd[ :, ii ] = interp1d( ta, xc[ :, ii ] )( tb )
+            xd[ :, ii ] = interp1d( ta, xc[ :, ii ], bounds_error=False, fill_value='extrapolate' )( tb )
 
         # Return the array to it's expected shape
         N[ 0 ] = M
