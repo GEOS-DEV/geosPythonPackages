@@ -38,7 +38,7 @@ def interpolate_values_time( ta, xa, tb ):
         return interp1d( ta, xa )( tb )
     else:
         # Reshape the input array so that we can work on the non-time axes
-        S = np.product( N[ 1: ] )
+        S = np.prod( N[ 1: ] )
         xc = np.reshape( xa, ( N[ 0 ], S ) )
         xd = np.zeros( ( len( tb ), S ) )
         for ii in range( S ):
