@@ -1,5 +1,5 @@
 import numpy as np
-from pygeosx_tools import wrapper, parallel_io
+from geos.pygeos_tools import wrapper, parallel_io
 from scipy.spatial import Delaunay
 from pyevtk.hl import pointsToVTK
 

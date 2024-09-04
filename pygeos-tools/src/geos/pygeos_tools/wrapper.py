@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylvarray
 import pygeosx
-from pygeosx_tools import parallel_io
+from geos.pygeos_tools import parallel_io
 
 
 def get_wrapper( problem, target_key, write_flag=False ):
