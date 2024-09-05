@@ -19,7 +19,6 @@ __CELL_TYPE_MAPPING = {
     "Prism6": VTK_HEXAGONAL_PRISM,
     "Pyramid": VTK_PYRAMID,
     "Tetrahedron": VTK_TETRA,
-    "Voxel": VTK_VOXEL,
     "Wedge": VTK_WEDGE,
 }
 
@@ -54,7 +53,7 @@ def fill_subparser( subparsers ) -> None:
                     metavar=__VOLUME_TO_REORDER_DEFAULT,
                     default=__VOLUME_TO_REORDER_DEFAULT,
                     choices=__VOLUME_TO_REORDER_CHOICES,
-                    required=False,
+                    required=True,
                     help= "[str]: Select which element volume is invalid and needs reordering."
                           + "'all' will allow reordering of nodes for every element, regarding of their volume."
                           + "'positive' or 'negative' will only reorder the element with the corresponding volume." )
@@ -90,13 +89,13 @@ def display_results( options: Options, result: Result ):
         logging.info( f"New mesh was written to file '{result.output}'" )
     else:
         logging.info( "No output file was written." )
-    logging.info( f"Number of cells reordered :" )
+    logging.info( f"Number of cells reordered:" )
     logging.info( f"\tCellType\tNumber" )
-    for i in range( result.reordering_stats[ "Types reordered" ] ):
-        logging.info( f"\t{result.reordering_stats[ "Types reordered" ][ i ]}"
-                    + f"\t{result.reordering_stats[ "Number of cells reordered" ][ i ]}" )
-    logging.info( f"Number of cells non reordered :" )
+    for i in range( len( result.reordering_stats[ "Types reordered" ] ) ):
+        logging.info( f"\t{result.reordering_stats[ "Types reordered" ][ i ]}" +
+                      f"\t\t{result.reordering_stats[ "Number of cells reordered" ][ i ]}" )
+    logging.info( f"Number of cells non reordered:" )
     logging.info( f"\tCellType\tNumber" )
-    for i in range( result.reordering_stats[ "Types non reordered" ] ):
-        logging.info( f"\t{result.reordering_stats[ "Types non reordered" ][ i ]}"
-                    + f"\t{result.reordering_stats[ "Number of cells non reordered" ][ i ]}" )
+    for i in range( len( result.reordering_stats[ "Types non reordered" ] ) ):
+        logging.info( f"\t{result.reordering_stats[ "Types non reordered" ][ i ]}" +
+                      f"\t\t{result.reordering_stats[ "Number of cells non reordered" ][ i ]}" )

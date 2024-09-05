@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import logging
 import numpy as np
 from typing import (
     List,
@@ -37,6 +36,10 @@ cell_type_names: dict[ int, str ] = {
 }
 
 
+# Knowing the calculation of cell volumes in vtk was discussed there: https://github.com/GEOS-DEV/GEOS/issues/2253
+# Here, we do not need to have the exact volumes matching the simulation softwares results
+# because we are mostly interested in knowing the sign of the volume for the rest of the workflow.
+# Therefore, there is no need to use vtkMeshQuality for specific cell types when vtkCellSizeFilter works with all types.
 def compute_mesh_cells_volume( mesh: vtkDataSet ) -> np.array:
     """Generates a volume array that was calculated on all cells of a mesh.
 
@@ -122,17 +125,22 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
     Returns:
         tuple: ( vtkDataSet, reordering_stats )
     """
+    # gets all the cell types found in the mesh
+    all_cells_type: np.array = get_all_cells_type( old_mesh )
+    unique_cell_types, total_per_cell_types = np.unique( all_cells_type, return_counts=True )
+    unique_cell_types, total_per_cell_types = unique_cell_types.tolist(), total_per_cell_types.tolist()
+    # voxel elements are not accepted as input for GEOS mesh, so no need to perform reordering
+    if VTK_VOXEL in unique_cell_types:
+        raise ValueError( "Voxel elements were found in the grid. This element cannot be used in GEOS. Dying ..." )
+    # volumes and cell ids that have the element type suggested for reordering are collected
+    all_cells_volume: np.array = compute_mesh_cells_volume( old_mesh )
+    cell_ids_to_check: dict[ int, np.array ] = get_cell_ids_to_check( all_cells_type, options )
     # a new mesh with the same data is created from the old mesh
     new_mesh: vtkDataSet = old_mesh.NewInstance()
     new_mesh.CopyStructure( old_mesh )
     new_mesh.CopyAttributes( old_mesh )
     cells = new_mesh.GetCells()
-    # this part will get the cell ids that need to be verified and if invalid, to have their nodes be reodered
-    all_cells_volume: np.array = compute_mesh_cells_volume( new_mesh )
-    all_cells_type: np.array = get_all_cells_type( new_mesh )
-    cell_ids_to_check: dict[ int, np.array ] = get_cell_ids_to_check( all_cells_type, options )
-    unique_cell_types, total_per_cell_types = np.unique( all_cells_type, return_counts=True )
-    unique_cell_types, total_per_cell_types = unique_cell_types.tolist(), total_per_cell_types.tolist()
+    # Statistics on how many cells have or have not been reordered
     reordering_stats: dict[ str, list[ any ] ] = {
         "Types reordered": [],
         "Number of cells reordered": [],
