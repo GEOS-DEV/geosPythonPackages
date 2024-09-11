@@ -7,13 +7,28 @@ import numpy as np
 from geos.mesh.doctor.mesh_doctor import MESH_DOCTOR_FILEPATH
 from geos.mesh.doctor.checks import fix_elements_orderings as feo
 from geos.mesh.doctor.checks.generate_cube import Options, __build
-from geos.mesh.doctor.checks.vtk_utils import VtkOutput, to_vtk_id_list, write_mesh
-from geos.mesh.doctor.checks.fix_elements_orderings import Options as opt
+from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, to_vtk_id_list, write_mesh )
+from geos.mesh.doctor.checks.fix_elements_orderings import Options as opt, VTK_TYPE_TO_NAME
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkUnstructuredGrid, vtkCellArray, vtkHexahedron, vtkTetra,
-                                            vtkPyramid, vtkVoxel, vtkWedge, vtkPentagonalPrism, vtkHexagonalPrism,
-                                            VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_VOXEL,
-                                            VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
+from vtkmodules.vtkCommonDataModel import (
+    vtkDataSet,
+    vtkUnstructuredGrid,
+    vtkCellArray,
+    vtkHexahedron,
+    vtkTetra,
+    vtkPyramid,
+    vtkVoxel,
+    vtkWedge,
+    vtkPentagonalPrism,
+    vtkHexagonalPrism,
+    VTK_HEXAHEDRON,
+    VTK_TETRA,
+    VTK_PYRAMID,
+    VTK_WEDGE,
+    VTK_VOXEL,
+    VTK_PENTAGONAL_PRISM,
+    VTK_HEXAGONAL_PRISM
+)
 
 
 def reorder_cell_nodes( mesh: vtkDataSet, cell_id: int, node_ordering: list[ int ] ):
@@ -49,13 +64,12 @@ test_file: VtkOutput = VtkOutput( filepath_non_ordered_mesh, True )
 Dict used to apply false nodes orderings for test purposes
 """
 to_change_order: dict[ int, list[ int ] ] = {
-    VTK_HEXAHEDRON: [ 0, 3, 2, 1, 4, 5, 6, 7 ],
-    VTK_TETRA: [ 0, 2, 1, 3 ],
-    VTK_PYRAMID: [ 0, 3, 2, 1, 4 ],
-    VTK_WEDGE: [ 0, 2, 1, 3, 4, 5 ],
-    VTK_VOXEL: [ 7, 6, 5, 4, 3, 2, 1, 0 ],
-    VTK_PENTAGONAL_PRISM: [ 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ],
-    VTK_HEXAGONAL_PRISM: [ 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 ]
+    "Hexahedron": [ 0, 3, 2, 1, 4, 5, 6, 7 ],
+    "Tetrahedron": [ 0, 2, 1, 3 ],
+    "Pyramid": [ 0, 3, 2, 1, 4 ],
+    "Wedge": [ 0, 2, 1, 3, 4, 5 ],
+    "Prism5": [ 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ],
+    "Prism6": [ 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 ]
 }
 to_change_order = dict( sorted( to_change_order.items() ) )
 """
@@ -93,7 +107,7 @@ hexahedrons_grid: vtkDataSet = __build( options_hexahedrons_grid )
 """
 hexahedrons_grid_invalid: vtkDataSet = __build( options_hexahedrons_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( hexahedrons_grid_invalid, i * 2 + 1, to_change_order[ VTK_HEXAHEDRON ] )
+    reorder_cell_nodes( hexahedrons_grid_invalid, i * 2 + 1, to_change_order[ "Hexahedron" ] )
 """
 4 tetrahedrons
 """
@@ -142,7 +156,7 @@ tetras_grid.SetCells( VTK_TETRA, tetras_cells )
 tetras_grid_invalid = vtkUnstructuredGrid()
 tetras_grid_invalid.DeepCopy( tetras_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( tetras_grid_invalid, i * 2 + 1, to_change_order[ VTK_TETRA ] )
+    reorder_cell_nodes( tetras_grid_invalid, i * 2 + 1, to_change_order[ "Tetrahedron" ] )
 """
 4 pyramids
 """
@@ -199,7 +213,7 @@ pyramids_grid.SetCells( VTK_PYRAMID, pyramids_cells )
 pyramids_grid_invalid = vtkUnstructuredGrid()
 pyramids_grid_invalid.DeepCopy( pyramids_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( pyramids_grid_invalid, i * 2 + 1, to_change_order[ VTK_PYRAMID ] )
+    reorder_cell_nodes( pyramids_grid_invalid, i * 2 + 1, to_change_order[ "Pyramid" ] )
 """
 4 voxels: this type of element cannot be used in GEOS, we just test that the feature rejects them
 """
@@ -267,12 +281,6 @@ voxels_cells.InsertNextCell( voxel4 )
 voxels_grid: vtkUnstructuredGrid = vtkUnstructuredGrid()
 voxels_grid.SetPoints( points_voxels )
 voxels_grid.SetCells( VTK_VOXEL, voxels_cells )
-
-# one of every other wedge has invalid ordering
-voxels_grid_invalid = vtkUnstructuredGrid()
-voxels_grid_invalid.DeepCopy( voxels_grid )
-for i in range( 2 ):
-    reorder_cell_nodes( voxels_grid_invalid, i * 2 + 1, to_change_order[ VTK_VOXEL ] )
 """
 4 wedges
 """
@@ -330,7 +338,7 @@ wedges_grid.SetCells( VTK_WEDGE, wedges_cells )
 wedges_grid_invalid = vtkUnstructuredGrid()
 wedges_grid_invalid.DeepCopy( wedges_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( wedges_grid_invalid, i * 2 + 1, to_change_order[ VTK_WEDGE ] )
+    reorder_cell_nodes( wedges_grid_invalid, i * 2 + 1, to_change_order[ "Wedge" ] )
 """
 4 pentagonal prisms
 """
@@ -414,7 +422,7 @@ penta_prism_grid.SetCells( VTK_PENTAGONAL_PRISM, penta_prism_cells )
 penta_prism_grid_invalid = vtkUnstructuredGrid()
 penta_prism_grid_invalid.DeepCopy( penta_prism_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( penta_prism_grid_invalid, i * 2 + 1, to_change_order[ VTK_PENTAGONAL_PRISM ] )
+    reorder_cell_nodes( penta_prism_grid_invalid, i * 2 + 1, to_change_order[ "Prism5" ] )
 """
 4 hexagonal prisms
 """
@@ -468,7 +476,7 @@ hexa_prism_grid.SetCells( VTK_HEXAGONAL_PRISM, hexa_prism_cells )
 hexa_prism_grid_invalid = vtkUnstructuredGrid()
 hexa_prism_grid_invalid.DeepCopy( hexa_prism_grid )
 for i in range( 2 ):
-    reorder_cell_nodes( hexa_prism_grid_invalid, i * 2 + 1, to_change_order[ VTK_HEXAGONAL_PRISM ] )
+    reorder_cell_nodes( hexa_prism_grid_invalid, i * 2 + 1, to_change_order[ "Prism6" ] )
 """
 2 hexahedrons, 2 tetrahedrons, 2 wedges, 2 pyramids, 2 voxels, 2 pentagonal prisms and 2 hexagonal prisms
 """
@@ -629,6 +637,10 @@ all_cell_types_mix_grid = [
     VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_HEXAHEDRON, VTK_WEDGE, VTK_WEDGE, VTK_PENTAGONAL_PRISM,
     VTK_PENTAGONAL_PRISM
 ]
+all_cell_names_mix_grid = [
+    "Hexahedron", "Hexahedron", "Pyramid", "Pyramid", "Tetrahedron", "Tetrahedron", "Prism6", "Prism6", "Hexahedron",
+    "Hexahedron", "Wedge", "Wedge", "Prism5", "Prism5"
+]
 all_cells_mix_grid = [
     mix_hex1, mix_hex2, mix_pyram1, mix_pyram2, mix_tetra1, mix_tetra2, mix_hex_prism1, mix_hex_prism2, mix_hex3,
     mix_hex4, mix_wedge1, mix_wedge2, mix_penta_prism1, mix_penta_prism2
@@ -640,7 +652,7 @@ for cell_type, cell in zip( all_cell_types_mix_grid, all_cells_mix_grid ):
 mix_grid_invalid = vtkUnstructuredGrid()
 mix_grid_invalid.DeepCopy( mix_grid )
 for i in range( len( all_cell_types_mix_grid ) // 2 ):
-    reorder_cell_nodes( mix_grid_invalid, i * 2 + 1, to_change_order[ all_cell_types_mix_grid[ i * 2 + 1 ] ] )
+    reorder_cell_nodes( mix_grid_invalid, i * 2 + 1, to_change_order[ all_cell_names_mix_grid[ i * 2 + 1 ] ] )
 
 
 class TestClass:
@@ -653,14 +665,14 @@ class TestClass:
             assert one_hex.GetCell( 0 ).GetPoints().GetPoint( i ) == expected_nodes_coords[ i ]
 
         # reorder the cell to make it invalid
-        reorder_cell_nodes( one_hex, 0, to_change_order[ VTK_HEXAHEDRON ] )
+        reorder_cell_nodes( one_hex, 0, to_change_order[ "Hexahedron" ] )
         expected_nodes_coords_modified = [ ( 0.0, 0.0, 0.0 ), ( 0.0, 1.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 1.0, 0.0, 0.0 ),
                                            ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
         for i in range( one_hex.GetCell( 0 ).GetNumberOfPoints() ):
             assert one_hex.GetCell( 0 ).GetPoints().GetPoint( i ) == expected_nodes_coords_modified[ i ]
 
         # reorder the cell again to make it valid again
-        reorder_cell_nodes( one_hex, 0, to_change_order[ VTK_HEXAHEDRON ] )
+        reorder_cell_nodes( one_hex, 0, to_change_order[ "Hexahedron" ] )
         expected_nodes_coords_modified2 = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 0.0, 1.0, 0.0 ),
                                             ( 0.0, 0.0, 1.0 ), ( 1.0, 0.0, 1.0 ), ( 1.0, 1.0, 1.0 ), ( 0.0, 1.0, 1.0 ) ]
         for i in range( one_hex.GetCell( 0 ).GetNumberOfPoints() ):
@@ -675,7 +687,6 @@ class TestClass:
             pyramids_grid: [ 0.333, 0.333, 0.333, 0.333 ],
             pyramids_grid_invalid: [ 0.333, -0.333, 0.333, -0.333 ],
             voxels_grid: [ 1.0, 1.0, 1.0, 1.0 ],
-            voxels_grid_invalid: [ 1.0, 1.0, 1.0, 1.0 ],
             wedges_grid: [ 0.5, 0.5, 0.5, 0.5 ],
             wedges_grid_invalid: [ 0.5, -0.167, 0.5, -0.167 ],
             penta_prism_grid: [ 1.25, 1.25, 1.25, 1.25 ],
@@ -699,8 +710,6 @@ class TestClass:
             tetras_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
             pyramids_grid: [ False ] * 4,
             pyramids_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
-            voxels_grid: [ False ] * 4,
-            voxels_grid_invalid: [ False ] * 4,
             wedges_grid: [ False ] * 4,
             wedges_grid_invalid: [ i % 2 != 0 for i in range( 4 ) ],
             penta_prism_grid: [ False ] * 4,
@@ -713,75 +722,35 @@ class TestClass:
         for grid, needs_ordering in grid_needs_ordering.items():
             volumes = feo.compute_mesh_cells_volume( grid )
             for i in range( len( volumes ) ):
-                assert feo.is_cell_to_reorder( volumes[ i ], "negative" ) == needs_ordering[ i ]
-                assert feo.is_cell_to_reorder( volumes[ i ], "positive" ) != needs_ordering[ i ]
-                assert feo.is_cell_to_reorder( volumes[ i ], "all" ) == True
+                options = opt( out, to_change_order, "negative" )
+                assert feo.is_cell_to_reorder( volumes[ i ], options ) == needs_ordering[ i ]
+                options = opt( out, to_change_order, "positive" )
+                assert feo.is_cell_to_reorder( volumes[ i ], options ) != needs_ordering[ i ]
+                options = opt( out, to_change_order, "all" )
+                assert feo.is_cell_to_reorder( volumes[ i ], options ) == True
 
-    def test_get_all_cells_type( self ):
-        assert feo.get_all_cells_type( hexahedrons_grid ).tolist() == [ 12, 12, 12, 12 ]
-        assert feo.get_all_cells_type( hexahedrons_grid_invalid ).tolist() == [ 12, 12, 12, 12 ]
-        assert feo.get_all_cells_type( tetras_grid ).tolist() == [ 10, 10, 10, 10 ]
-        assert feo.get_all_cells_type( tetras_grid_invalid ).tolist() == [ 10, 10, 10, 10 ]
-        assert feo.get_all_cells_type( pyramids_grid ).tolist() == [ 14, 14, 14, 14 ]
-        assert feo.get_all_cells_type( pyramids_grid_invalid ).tolist() == [ 14, 14, 14, 14 ]
-        assert feo.get_all_cells_type( voxels_grid ).tolist() == [ 11, 11, 11, 11 ]
-        assert feo.get_all_cells_type( voxels_grid_invalid ).tolist() == [ 11, 11, 11, 11 ]
-        assert feo.get_all_cells_type( wedges_grid ).tolist() == [ 13, 13, 13, 13 ]
-        assert feo.get_all_cells_type( wedges_grid_invalid ).tolist() == [ 13, 13, 13, 13 ]
-        assert feo.get_all_cells_type( penta_prism_grid ).tolist() == [ 15, 15, 15, 15 ]
-        assert feo.get_all_cells_type( penta_prism_grid_invalid ).tolist() == [ 15, 15, 15, 15 ]
-        assert feo.get_all_cells_type( hexa_prism_grid ).tolist() == [ 16, 16, 16, 16 ]
-        assert feo.get_all_cells_type( hexa_prism_grid_invalid ).tolist() == [ 16, 16, 16, 16 ]
-        assert feo.get_all_cells_type( mix_grid ).tolist() == [ 12, 12, 14, 14, 10, 10, 16, 16, 12, 12, 13, 13, 15, 15 ]
-        assert feo.get_all_cells_type( mix_grid_invalid ).tolist() == [
-            12, 12, 14, 14, 10, 10, 16, 16, 12, 12, 13, 13, 15, 15
-        ]
-
-    def test_get_cell_ids_to_check( self ):
-        options = opt( out, to_change_order, "negative" )
-        # single element grids
-        grid_cell_type = {
-            hexahedrons_grid: VTK_HEXAHEDRON,
-            hexahedrons_grid_invalid: VTK_HEXAHEDRON,
-            tetras_grid: VTK_TETRA,
-            tetras_grid_invalid: VTK_TETRA,
-            pyramids_grid: VTK_PYRAMID,
-            pyramids_grid_invalid: VTK_PYRAMID,
-            voxels_grid: VTK_VOXEL,
-            voxels_grid_invalid: VTK_VOXEL,
-            wedges_grid: VTK_WEDGE,
-            wedges_grid_invalid: VTK_WEDGE,
-            penta_prism_grid: VTK_PENTAGONAL_PRISM,
-            penta_prism_grid_invalid: VTK_PENTAGONAL_PRISM,
-            hexa_prism_grid: VTK_HEXAGONAL_PRISM,
-            hexa_prism_grid_invalid: VTK_HEXAGONAL_PRISM
-        }
-        for grid, cell_type in grid_cell_type.items():
-            all_cells_type = feo.get_all_cells_type( grid )
-            result = feo.get_cell_ids_to_check( all_cells_type, options )
-            expected = { cell_type: np.array( [ 0, 1, 2, 3 ] ) }
-            for cell_type_result, cell_type_expected in zip( result.keys(), expected.keys() ):
-                assert cell_type_result == cell_type_expected
-            for cell_indexes_result, cell_indexes_expected in zip( result.values(), expected.values() ):
-                assert np.array_equal( cell_indexes_result, cell_indexes_expected )
-
-        # mix elements grid
-        all_cells_type_mix = feo.get_all_cells_type( mix_grid )
-        result = feo.get_cell_ids_to_check( all_cells_type_mix, options )
-        result = dict( sorted( result.items() ) )
-        expected = {
-            12: np.array( [ 0, 1, 8, 9 ] ),
-            14: np.array( [ 2, 3 ] ),
-            10: np.array( [ 4, 5 ] ),
-            16: np.array( [ 6, 7 ] ),
-            13: np.array( [ 10, 11 ] ),
-            15: np.array( [ 12, 13 ] )
-        }
-        expected = dict( sorted( expected.items() ) )
-        for cell_type_result, cell_type_expected in zip( result.keys(), expected.keys() ):
-            assert cell_type_result == cell_type_expected
-        for cell_indexes_result, cell_indexes_expected in zip( result.values(), expected.values() ):
-            assert np.array_equal( cell_indexes_result, cell_indexes_expected )
+    def test_get_cell_types_and_number( self ):
+        assert feo.get_cell_types_and_number( hexahedrons_grid ) == ( [ VTK_HEXAHEDRON ], [ 4 ] )
+        assert feo.get_cell_types_and_number( hexahedrons_grid_invalid ) == ( [ VTK_HEXAHEDRON ], [ 4 ] )
+        assert feo.get_cell_types_and_number( tetras_grid ) == ( [ VTK_TETRA ], [ 4 ] )
+        assert feo.get_cell_types_and_number( tetras_grid_invalid ) == ( [ VTK_TETRA ], [ 4 ] )
+        assert feo.get_cell_types_and_number( pyramids_grid ) == ( [ VTK_PYRAMID ], [ 4 ] )
+        assert feo.get_cell_types_and_number( pyramids_grid_invalid ) == ( [ VTK_PYRAMID ], [ 4 ] )
+        assert feo.get_cell_types_and_number( wedges_grid ) == ( [ VTK_WEDGE ], [ 4 ] )
+        assert feo.get_cell_types_and_number( wedges_grid_invalid ) == ( [ VTK_WEDGE ], [ 4 ] )
+        assert feo.get_cell_types_and_number( penta_prism_grid ) == ( [ VTK_PENTAGONAL_PRISM ], [ 4 ] )
+        assert feo.get_cell_types_and_number( penta_prism_grid_invalid ) == ( [ VTK_PENTAGONAL_PRISM ], [ 4 ] )
+        assert feo.get_cell_types_and_number( hexa_prism_grid ) == ( [ VTK_HEXAGONAL_PRISM ], [ 4 ] )
+        assert feo.get_cell_types_and_number( hexa_prism_grid_invalid ) == ( [ VTK_HEXAGONAL_PRISM ], [ 4 ] )
+        assert feo.get_cell_types_and_number( mix_grid ) == ( [
+            VTK_TETRA, VTK_HEXAHEDRON, VTK_WEDGE, VTK_PYRAMID, VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM
+        ], [ 2, 4, 2, 2, 2, 2 ] )
+        assert feo.get_cell_types_and_number( mix_grid_invalid ) == ( [
+            VTK_TETRA, VTK_HEXAHEDRON, VTK_WEDGE, VTK_PYRAMID, VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM
+        ], [ 2, 4, 2, 2, 2, 2 ] )
+        expected_error: str = f"Invalid type '11' for GEOS is in the mesh. Dying ..."
+        with pytest.raises( ValueError, match=expected_error ):
+            feo.get_cell_types_and_number( voxels_grid )
 
     def test_reorder_nodes_to_new_mesh( self ):
         options = opt( out, to_change_order, "negative" )
@@ -799,30 +768,23 @@ class TestClass:
             new_invalid.DeepCopy( grid )
             not_use_invalid, reorder_stats = feo.reorder_nodes_to_new_mesh( new_invalid, options )
             expected = {
-                "Types reordered": [ cell_type ],
+                "Types reordered": [ VTK_TYPE_TO_NAME[ cell_type ] ],
                 "Number of cells reordered": [ 2 ],
-                "Types non reordered": [ cell_type ],
+                "Types non reordered": [ VTK_TYPE_TO_NAME[ cell_type ] ],
                 "Number of cells non reordered": [ 2 ]
             }
             for prop in expected.keys():
                 assert reorder_stats[ prop ] == expected[ prop ]
-
-        # voxel elements grid to check if raise ValueError was correctly called
-        voxels_invalid = vtkUnstructuredGrid()
-        voxels_invalid.DeepCopy( voxels_grid_invalid )
-        expected_error: str = "Voxel elements were found in the grid. This element cannot be used in GEOS. Dying ..."
-        with pytest.raises( ValueError, match=expected_error ):
-            not_use_invalid, reorder_stats = feo.reorder_nodes_to_new_mesh( voxels_invalid, options )
 
         # mix elements grid
         mix_invalid = vtkUnstructuredGrid()
         mix_invalid.DeepCopy( mix_grid_invalid )
         not_use_invalid, mix_stats = feo.reorder_nodes_to_new_mesh( mix_invalid, options )
         expected = {
-            "Types reordered": [ 10, 12, 13, 14, 15, 16 ],
-            "Number of cells reordered": [ 1, 2, 1, 1, 1, 1 ],
-            "Types non reordered": [ 10, 12, 13, 14, 15, 16 ],
-            "Number of cells non reordered": [ 1, 2, 1, 1, 1, 1 ]
+            "Types reordered": [ VTK_TYPE_TO_NAME[ cell_type ] for cell_type in [ 12, 15, 16, 14, 10, 13 ] ],
+            "Number of cells reordered": [ 2, 1, 1, 1, 1, 1 ],
+            "Types non reordered": [ VTK_TYPE_TO_NAME[ cell_type ] for cell_type in [ 12, 15, 16, 14, 10, 13 ] ],
+            "Number of cells non reordered": [ 2, 1, 1, 1, 1, 1 ]
         }
         for prop in expected.keys():
             assert mix_stats[ prop ] == expected[ prop ]
@@ -830,33 +792,38 @@ class TestClass:
     def test_fix_elements_orderings_execution( self ):
         # for mix_grid_invalid mesh, checks that reordered mesh was created and that reoredring_stats are valid
         write_mesh( mix_grid_invalid, test_file )
+        invalidTest = False
         command = [
             "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_file.output, "fix_elements_orderings", "--Hexahedron",
-            str( to_change_order[ VTK_HEXAHEDRON ] ).replace( "[", "" ).replace( "]", "" ), "--Tetrahedron",
-            str( to_change_order[ VTK_TETRA ] ).replace( "[", "" ).replace( "]", "" ), "--Pyramid",
-            str( to_change_order[ VTK_PYRAMID ] ).replace( "[", "" ).replace( "]", "" ), "--Wedge",
-            str( to_change_order[ VTK_WEDGE ] ).replace( "[", "" ).replace( "]", "" ), "--Wedge",
-            str( to_change_order[ VTK_WEDGE ] ).replace( "[", "" ).replace( "]", "" ), "--Prism5",
-            str( to_change_order[ VTK_PENTAGONAL_PRISM ] ).replace( "[", "" ).replace( "]", "" ), "--Prism6",
-            str( to_change_order[ VTK_HEXAGONAL_PRISM ] ).replace( "[", "" ).replace( "]", "" ), "--volume_to_reorder",
-            "negative", "--data-mode", "binary", "--output", filepath_reordered_mesh
+            str( to_change_order[ "Hexahedron" ] ).replace( "[", "" ).replace( "]", "" ), "--Tetrahedron",
+            str( to_change_order[ "Tetrahedron" ] ).replace( "[", "" ).replace( "]", "" ), "--Pyramid",
+            str( to_change_order[ "Pyramid" ] ).replace( "[", "" ).replace( "]", "" ), "--Wedge",
+            str( to_change_order[ "Wedge" ] ).replace( "[", "" ).replace( "]", "" ), "--Prism5",
+            str( to_change_order[ "Prism5" ] ).replace( "[", "" ).replace( "]", "" ), "--Prism6",
+            str( to_change_order[ "Prism6" ] ).replace( "[", "" ).replace( "]", "" ), "--volume_to_reorder", "negative",
+            "--data-mode", "binary", "--output", filepath_reordered_mesh
         ]
         try:
             result = subprocess.run( command, shell=True, stderr=subprocess.PIPE, universal_newlines=True )
+            os.remove( filepath_reordered_mesh )
             stderr = result.stderr
             assert result.returncode == 0
-            os.remove( filepath_reordered_mesh )
             raw_stderr = r"{}".format( stderr )
             pattern = r"\[.*?\]\[.*?\] (.*)"
             matches = re.findall( pattern, raw_stderr )
             no_log = "\n".join( matches )
             reordering_stats: str = no_log[ no_log.index( "Number of cells reordered" ): ]
-            expected_stats: str = ( "Number of cells reordered:\n" + "\tCellType\tNumber\n" + "\t12\t\t2\n" +
-                                    "\t15\t\t1\n" + "\t16\t\t1\n" + "\t14\t\t1\n" + "\t10\t\t1\n" + "\t13\t\t1\n" +
-                                    "Number of cells non reordered:\n" + "\tCellType\tNumber\n" + "\t10\t\t1\n" +
-                                    "\t12\t\t2\n" + "\t13\t\t1\n" + "\t14\t\t1\n" + "\t15\t\t1\n" + "\t16\t\t1" )
+            expected_stats: str = ( "Number of cells reordered:\n" + "\tCellType\tNumber\n" + f"\tHexahedron\t\t2\n" +
+                                    f"\tPrism5\t\t1\n" + f"\tPrism6\t\t1\n" + f"\tPyramid\t\t1\n" +
+                                    f"\tTetrahedron\t\t1\n" + f"\tWedge\t\t1\n" + "Number of cells non reordered:\n" +
+                                    "\tCellType\tNumber\n" + f"\tHexahedron\t\t2\n" + f"\tPrism5\t\t1\n" +
+                                    f"\tPrism6\t\t1\n" + f"\tPyramid\t\t1\n" + f"\tTetrahedron\t\t1\n" +
+                                    f"\tWedge\t\t1" )
             assert reordering_stats == expected_stats
         except Exception as e:
             logging.error( "Invalid command input. Test has failed." )
             logging.error( e )
+            invalidTest = True
         os.remove( test_file.output )
+        if invalidTest:
+            raise ValueError( "test_fix_elements_orderings_execution has failed." )

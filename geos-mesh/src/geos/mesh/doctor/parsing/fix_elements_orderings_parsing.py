@@ -1,62 +1,42 @@
 import logging
 import random
-
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAGONAL_PRISM,
-    VTK_HEXAHEDRON,
-    VTK_PENTAGONAL_PRISM,
-    VTK_PYRAMID,
-    VTK_TETRA,
-    VTK_VOXEL,
-    VTK_WEDGE,
-)
 from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result
 from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
-__CELL_TYPE_MAPPING = {
-    "Hexahedron": VTK_HEXAHEDRON,
-    "Prism5": VTK_PENTAGONAL_PRISM,
-    "Prism6": VTK_HEXAGONAL_PRISM,
-    "Pyramid": VTK_PYRAMID,
-    "Tetrahedron": VTK_TETRA,
-    "Wedge": VTK_WEDGE,
-}
-
-__CELL_TYPE_SUPPORT_SIZE = {
-    VTK_HEXAHEDRON: 8,
-    VTK_PENTAGONAL_PRISM: 10,
-    VTK_HEXAGONAL_PRISM: 12,
-    VTK_PYRAMID: 5,
-    VTK_TETRA: 4,
-    VTK_VOXEL: 8,
-    VTK_WEDGE: 6,
+__CELL_NAME_WITH_NUMBER_NODES = {
+    "Tetrahedron": 4,
+    "Pyramid": 5,
+    "Wedge": 6,
+    "Hexahedron": 8,
+    "Prism5": 10,
+    "Prism6": 12
 }
 
 __VOLUME_TO_REORDER = "volume_to_reorder"
 __VOLUME_TO_REORDER_DEFAULT = "all"
-__VOLUME_TO_REORDER_CHOICES = [ "all", "positive", "negative" ] 
+__VOLUME_TO_REORDER_CHOICES = [ "all", "positive", "negative" ]
 
 
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
-    for key, vtk_key in __CELL_TYPE_MAPPING.items():
-        tmp = list( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) )
+    for element_name, size in __CELL_NAME_WITH_NUMBER_NODES.items():
+        tmp = list( range( size ) )
         random.Random( 4 ).shuffle( tmp )
-        p.add_argument( '--' + key,
+        p.add_argument( '--' + element_name,
                         type=str,
                         metavar=",".join( map( str, tmp ) ),
                         default=None,
                         required=False,
-                        help=f"[list of integers]: node permutation for \"{key}\"." )
+                        help=f"[list of integers]: node permutation for \"{element_name}\"." )
     p.add_argument( '--' + __VOLUME_TO_REORDER,
                     type=str,
                     metavar=__VOLUME_TO_REORDER_DEFAULT,
                     default=__VOLUME_TO_REORDER_DEFAULT,
                     choices=__VOLUME_TO_REORDER_CHOICES,
                     required=True,
-                    help= "[str]: Select which element volume is invalid and needs reordering."
-                          + "'all' will allow reordering of nodes for every element, regarding of their volume."
-                          + "'positive' or 'negative' will only reorder the element with the corresponding volume." )
+                    help="[str]: Select which element volume is invalid and needs reordering." +
+                    "'all' will allow reordering of nodes for every element, regarding of their volume." +
+                    "'positive' or 'negative' will only reorder the element with the corresponding volume." )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
@@ -66,21 +46,22 @@ def convert( parsed_options ) -> Options:
     :param options_str: Parsed cli options.
     :return: Options instance.
     """
-    cell_type_to_ordering = {}
-    for key, vtk_key in __CELL_TYPE_MAPPING.items():
-        raw_mapping = parsed_options[ key ]
+    cell_name_to_ordering: dict[ str, list[ int ] ] = {}
+    for element_name, size in __CELL_NAME_WITH_NUMBER_NODES.items():
+        raw_mapping = parsed_options[ element_name ]
         if raw_mapping:
-            tmp = tuple( map( int, raw_mapping.split( "," ) ) )
-            if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) ):
-                err_msg = f"Permutation {raw_mapping} for type {key} is not valid."
+            nodes_ordering = tuple( map( int, raw_mapping.split( "," ) ) )
+            if not set( nodes_ordering ) == set( range( size ) ):
+                err_msg: str = f"Permutation {raw_mapping} for type {element_name} is not valid."
                 logging.error( err_msg )
                 raise ValueError( err_msg )
-            cell_type_to_ordering[ vtk_key ] = tmp
+            cell_name_to_ordering[ element_name ] = nodes_ordering
     vtk_output = vtk_output_parsing.convert( parsed_options )
     volume_to_reorder: str = parsed_options[ __VOLUME_TO_REORDER ]
     if volume_to_reorder.lower() not in __VOLUME_TO_REORDER_CHOICES:
         raise ValueError( f"Please use one of these options for --volume_to_reorder: {__VOLUME_TO_REORDER_CHOICES}." )
-    return Options( vtk_output=vtk_output, cell_type_to_ordering=cell_type_to_ordering,
+    return Options( vtk_output=vtk_output,
+                    cell_name_to_ordering=cell_name_to_ordering,
                     volume_to_reorder=volume_to_reorder )
 
 
@@ -92,10 +73,10 @@ def display_results( options: Options, result: Result ):
     logging.info( f"Number of cells reordered:" )
     logging.info( f"\tCellType\tNumber" )
     for i in range( len( result.reordering_stats[ "Types reordered" ] ) ):
-        logging.info( f"\t{result.reordering_stats[ "Types reordered" ][ i ]}" +
-                      f"\t\t{result.reordering_stats[ "Number of cells reordered" ][ i ]}" )
+        logging.info( f"\t{result.reordering_stats[ 'Types reordered' ][ i ]}" +
+                      f"\t\t{result.reordering_stats[ 'Number of cells reordered' ][ i ]}" )
     logging.info( f"Number of cells non reordered:" )
     logging.info( f"\tCellType\tNumber" )
     for i in range( len( result.reordering_stats[ "Types non reordered" ] ) ):
-        logging.info( f"\t{result.reordering_stats[ "Types non reordered" ][ i ]}" +
-                      f"\t\t{result.reordering_stats[ "Number of cells non reordered" ][ i ]}" )
+        logging.info( f"\t{result.reordering_stats[ 'Types non reordered' ][ i ]}" +
+                      f"\t\t{result.reordering_stats[ 'Number of cells non reordered' ][ i ]}" )
