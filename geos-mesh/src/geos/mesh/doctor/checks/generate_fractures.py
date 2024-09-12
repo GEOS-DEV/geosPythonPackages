@@ -1,25 +1,18 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from sys import exit
 import logging
-from typing import (
-    Collection,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    Sequence,
-    Tuple,
-)
 from enum import Enum
-
 from tqdm import tqdm
 import networkx
 import numpy
-
+from typing import (
+    Collection,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    TypeAlias
+)
 from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -58,7 +51,7 @@ class FracturePolicy( Enum ):
 class Options:
     policy: FracturePolicy
     field: str
-    field_values: FrozenSet[ int ]
+    field_values: frozenset[ int ]
     vtk_output: VtkOutput
     vtk_fracture_output: VtkOutput
 
@@ -74,18 +67,26 @@ class FractureInfo:
     face_nodes: Iterable[ Collection[ int ] ]  # For each fracture face, returns the nodes of this face
 
 
-def build_node_to_cells( mesh: vtkUnstructuredGrid,
-                         face_nodes: Iterable[ Iterable[ int ] ] ) -> Mapping[ int, Iterable[ int ] ]:
-    node_to_cells: Dict[ int,
-                         Set[ int ] ] = defaultdict( set )  # TODO normally, just a list and not a set should be enough.
+"""
+TypeAliases used in this file
+"""
+IDMapping: TypeAlias = Mapping[ int, int ]
+CellsPointsCoords: TypeAlias = dict[ int, list[ tuple[ float ] ] ]
+Coordinates3D: TypeAlias = tuple[ float ]
 
-    fracture_nodes: Set[ int ] = set()
+
+def build_node_to_cells( mesh: vtkUnstructuredGrid,
+                         face_nodes: Iterable[ Iterable[ int ] ] ) -> dict[ int, Iterable[ int ] ]:
+    # TODO normally, just a list and not a set should be enough.
+    node_to_cells: dict[ int, set[ int ] ] = defaultdict( set )
+
+    fracture_nodes: set[ int ] = set()
     for fns in face_nodes:
         for n in fns:
             fracture_nodes.add( n )
 
     for cell_id in tqdm( range( mesh.GetNumberOfCells() ), desc="Computing the node to cells mapping" ):
-        cell_points: FrozenSet[ int ] = frozenset( vtk_iter( mesh.GetCell( cell_id ).GetPointIds() ) )
+        cell_points: frozenset[ int ] = frozenset( vtk_iter( mesh.GetCell( cell_id ).GetPointIds() ) )
         intersection: Iterable[ int ] = cell_points & fracture_nodes
         for node in intersection:
             node_to_cells[ node ].add( cell_id )
@@ -94,8 +95,8 @@ def build_node_to_cells( mesh: vtkUnstructuredGrid,
 
 
 def __build_fracture_info_from_fields( mesh: vtkUnstructuredGrid, f: Sequence[ int ],
-                                       field_values: FrozenSet[ int ] ) -> FractureInfo:
-    cells_to_faces: Dict[ int, List[ int ] ] = defaultdict( list )
+                                       field_values: frozenset[ int ] ) -> FractureInfo:
+    cells_to_faces: dict[ int, list[ int ] ] = defaultdict( list )
     # For each face of each cell, we search for the unique neighbor cell (if it exists).
     # Then, if the 2 values of the two cells match the field requirements,
     # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
@@ -111,10 +112,10 @@ def __build_fracture_info_from_fields( mesh: vtkUnstructuredGrid, f: Sequence[ i
             for j in range( neighbor_cell_ids.GetNumberOfIds() ):  # It's 0 or 1...
                 neighbor_cell_id = neighbor_cell_ids.GetId( j )
                 if f[ neighbor_cell_id ] != f[ cell_id ] and f[ neighbor_cell_id ] in field_values:
-                    cells_to_faces[ cell_id ].append(
-                        i )  # TODO add this (cell_is, face_id) information to the fracture_info?
-    face_nodes: List[ Collection[ int ] ] = list()
-    face_nodes_hashes: Set[ FrozenSet[ int ] ] = set()  # A temporary not to add multiple times the same face.
+                    # TODO add this (cell_is, face_id) information to the fracture_info?
+                    cells_to_faces[ cell_id ].append( i )
+    face_nodes: list[ Collection[ int ] ] = list()
+    face_nodes_hashes: set[ frozenset[ int ] ] = set()  # A temporary not to add multiple times the same face.
     for cell_id, faces_ids in tqdm( cells_to_faces.items(), desc="Extracting the faces of the fractures" ):
         cell = mesh.GetCell( cell_id )
         for face_id in faces_ids:
@@ -123,23 +124,23 @@ def __build_fracture_info_from_fields( mesh: vtkUnstructuredGrid, f: Sequence[ i
             if fnh not in face_nodes_hashes:
                 face_nodes_hashes.add( fnh )
                 face_nodes.append( fn )
-    node_to_cells: Mapping[ int, Iterable[ int ] ] = build_node_to_cells( mesh, face_nodes )
+    node_to_cells: dict[ int, Iterable[ int ] ] = build_node_to_cells( mesh, face_nodes )
 
     return FractureInfo( node_to_cells=node_to_cells, face_nodes=face_nodes )
 
 
 def __build_fracture_info_from_internal_surfaces( mesh: vtkUnstructuredGrid, f: Sequence[ int ],
-                                                  field_values: FrozenSet[ int ] ) -> FractureInfo:
-    node_to_cells: Dict[ int, List[ int ] ] = {}
-    face_nodes: List[ Collection[ int ] ] = []
+                                                  field_values: frozenset[ int ] ) -> FractureInfo:
+    node_to_cells: dict[ int, list[ int ] ] = {}
+    face_nodes: list[ Collection[ int ] ] = list()
     for cell_id in tqdm( range( mesh.GetNumberOfCells() ), desc="Computing the face to nodes mapping" ):
         cell = mesh.GetCell( cell_id )
         if cell.GetCellDimension() == 2:
             if f[ cell_id ] in field_values:
-                nodes = []
+                nodes = list()
                 for v in range( cell.GetNumberOfPoints() ):
                     point_id: int = cell.GetPointId( v )
-                    node_to_cells[ point_id ] = []
+                    node_to_cells[ point_id ] = list()
                     nodes.append( point_id )
                 face_nodes.append( tuple( nodes ) )
 
@@ -179,24 +180,24 @@ def build_cell_to_cell_graph( mesh: vtkUnstructuredGrid, fracture: FractureInfo 
     """
     # Faces are identified by their nodes. But the order of those nodes may vary while referring to the same face.
     # Therefore we compute some kinds of hashes of those face to easily detect if a face is part of the fracture.
-    tmp: List[ FrozenSet[ int ] ] = []
+    tmp: list[ frozenset[ int ] ] = list()
     for fn in fracture.face_nodes:
         tmp.append( frozenset( fn ) )
-    face_hashes: FrozenSet[ FrozenSet[ int ] ] = frozenset( tmp )
+    face_hashes: frozenset[ frozenset[ int ] ] = frozenset( tmp )
 
     # We extract the list of the cells that touch the fracture by at least one node.
-    cells: Set[ int ] = set()
+    cells: set[ int ] = set()
     for cell_ids in fracture.node_to_cells.values():
         for cell_id in cell_ids:
             cells.add( cell_id )
 
     # Using the last precomputed containers, we're now building the dict which connects
     # every face (hash) of the fracture to the cells that touch the face...
-    face_to_cells: Dict[ FrozenSet[ int ], List[ int ] ] = defaultdict( list )
+    face_to_cells: dict[ frozenset[ int ], list[ int ] ] = defaultdict( list )
     for cell_id in tqdm( cells, desc="Computing the cell to cell graph" ):
         cell: vtkCell = mesh.GetCell( cell_id )
         for face_id in range( cell.GetNumberOfFaces() ):
-            face_hash: FrozenSet[ int ] = frozenset( vtk_iter( cell.GetFace( face_id ).GetPointIds() ) )
+            face_hash: frozenset[ int ] = frozenset( vtk_iter( cell.GetFace( face_id ).GetPointIds() ) )
             if face_hash not in face_hashes:
                 face_to_cells[ face_hash ].append( cell_id )
 
@@ -210,7 +211,7 @@ def build_cell_to_cell_graph( mesh: vtkUnstructuredGrid, fracture: FractureInfo 
 
 
 def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
-                      node_to_cells: Mapping[ int, Iterable[ int ] ] ) -> Mapping[ int, Mapping[ int, int ] ]:
+                      node_to_cells: dict[ int, Iterable[ int ] ] ) -> dict[ int, IDMapping ]:
     """
     For each cell, compute the node indices replacements.
     :param num_points: Number of points in the whole mesh (not the fracture).
@@ -230,7 +231,7 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
 
         def __init__( self, num_nodes: int ):
             self.__current_last_index = num_nodes - 1
-            self.__seen: Set[ int ] = set()
+            self.__seen: set[ int ] = set()
 
         def __call__( self, index: int ) -> int:
             if index in self.__seen:
@@ -241,10 +242,9 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
                 return index
 
     build_new_index = NewIndex( num_points )
-    result: Dict[ int, Dict[ int, int ] ] = defaultdict( dict )
-    for node, cells in tqdm(
-            sorted( node_to_cells.items() ),  # Iteration over `sorted` nodes to have a predictable result for tests.
-            desc="Identifying the node splits" ):
+    result: dict[ int, IDMapping ] = defaultdict( dict )
+    # Iteration over `sorted` nodes to have a predictable result for tests.
+    for node, cells in tqdm( sorted( node_to_cells.items() ), desc="Identifying the node splits" ):
         for connected_cells in networkx.connected_components( cell_to_cell.subgraph( cells ) ):
             # Each group of connect cells need around `node` must consider the same `node`.
             # Separate groups must have different (duplicated) nodes.
@@ -254,7 +254,7 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
     return result
 
 
-def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> dict[ int, list[ tuple[ float ] ] ]:
+def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> CellsPointsCoords:
     """Map each cell id to a list of its points coordinates.
 
     Args:
@@ -264,20 +264,21 @@ def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> dict[ int, list[ tu
         dict[int, list[tuple[float]]]: {cell_id1: [(pt0_x, pt0_y, pt0_z), ...], ..., cell_idN: [...]}
         for a mesh containing N cells.
     """
-    cells_nodes_coordinates: dict[ int, list[ tuple[ float ] ] ] = {}
+    cells_points_coordinates: CellsPointsCoords = {}
     for i in range( mesh.GetNumberOfCells() ):
         cell: vtkCell = mesh.GetCell( i )
-        cells_nodes_coordinates[ i ] = []
+        cells_points_coordinates[ i ] = list()
         cell_points = cell.GetPoints()
         for v in range( cell.GetNumberOfPoints() ):
-            node_coordinates: tuple[ float ] = cell_points.GetPoint( v )
-            truncated_coordinates: list[ float ] = [ float( '%.3f' % ( coord ) ) for coord in node_coordinates ]
-            cells_nodes_coordinates[ i ].append( tuple( truncated_coordinates ) )
-    return cells_nodes_coordinates
+            node_coordinates: Coordinates3D = cell_points.GetPoint( v )
+            # to avoid floating value approximations when comparing coordinates, we truncate them
+            truncated_coordinates: Coordinates3D = ( round( coord, 3 ) for coord in node_coordinates )
+            cells_points_coordinates[ i ].append( truncated_coordinates )
+    return cells_points_coordinates
 
 
 def link_new_cells_id_with_old_cells_id( old_mesh: vtkUnstructuredGrid,
-                                         new_mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
+                                         new_mesh: vtkUnstructuredGrid ) -> IDMapping:
     """After mapping each cell id to a list of its points coordinates for the old and new mesh,
     it is possible to determine the link between old and new cell id by coordinates position.
 
@@ -286,11 +287,11 @@ def link_new_cells_id_with_old_cells_id( old_mesh: vtkUnstructuredGrid,
         new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
 
     Returns:
-        dict[int, int]: { new_cell_id: old_cell_id }
+        IDMapping: { new_cell_id: old_cell_id }
     """
-    new_cell_ids_with_old_cell_ids: dict[ int, int ] = {}
-    cpc_old_mesh: dict[ int, list[ tuple[ float ] ] ] = cells_points_coordinates( old_mesh )
-    cpc_new_mesh: dict[ int, list[ tuple[ float ] ] ] = cells_points_coordinates( new_mesh )
+    new_cell_ids_with_old_cell_ids: IDMapping = {}
+    cpc_old_mesh: CellsPointsCoords = cells_points_coordinates( old_mesh )
+    cpc_new_mesh: CellsPointsCoords = cells_points_coordinates( new_mesh )
     for new_cell_id, new_coords in cpc_new_mesh.items():
         for old_cell_id, old_coords in cpc_old_mesh.items():
             if all( elem in new_coords for elem in old_coords ):
@@ -316,7 +317,7 @@ def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGr
     # Copying the cell data.
     # The cells are the same, just their nodes support have changed.
     if is_fracture_mesh:
-        new_to_old_cells: dict[ int, int ] = link_new_cells_id_with_old_cells_id( old_mesh, new_mesh )
+        new_to_old_cells: IDMapping = link_new_cells_id_with_old_cells_id( old_mesh, new_mesh )
     input_cell_data = old_mesh.GetCellData()
     for i in range( input_cell_data.GetNumberOfArrays() ):
         input_array: vtkDataArray = input_cell_data.GetArray( i )
@@ -324,7 +325,7 @@ def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGr
         if is_fracture_mesh:
             array_name: str = input_array.GetName()
             old_values: list = vtk_to_numpy( input_array ).tolist()
-            useful_values: list = []
+            useful_values: list = list()
             for old_cell_id in new_to_old_cells.values():
                 useful_values.append( old_values[ old_cell_id ] )
             useful_input_array = numpy_to_vtk( numpy.array( useful_values ) )
@@ -394,10 +395,12 @@ def __copy_fields( old_mesh: vtkUnstructuredGrid,
     """
     # Mesh cannot contains global ids before splitting.
     if vtk_utils.has_invalid_field( old_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
-        logging.critical( f"The mesh cannot contain global ids for neither cells nor points." )
-        logging.critical( f"The correct procedure is to split the mesh and then generate global" +
-                          "ids for new split meshes. Dying ..." )
-        exit( 1 )
+        err_msg: str = (
+            "The mesh cannot contain global ids for neither cells nor points. The correct procedure is to split" +
+            " the mesh and then generate global ids for new split meshes. Dying ..."
+        )
+        logging.error( err_msg )
+        raise ValueError( err_msg )
 
     __copy_cell_data( old_mesh, new_mesh, is_fracture_mesh )
     __copy_field_data( old_mesh, new_mesh )
@@ -405,14 +408,14 @@ def __copy_fields( old_mesh: vtkUnstructuredGrid,
 
 
 def __perform_split( old_mesh: vtkUnstructuredGrid,
-                     cell_to_node_mapping: Mapping[ int, Mapping[ int, int ] ] ) -> vtkUnstructuredGrid:
+                     cell_to_node_mapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
     """
     Split the main 3d mesh based on the node duplication information contained in @p cell_to_node_mapping
     :param old_mesh: The main 3d mesh.
     :param cell_to_node_mapping: For each cell, gives the nodes that must be duplicated and their new index.
     :return: The main 3d mesh split at the fracture location.
     """
-    added_points: Set[ int ] = set()
+    added_points: set[ int ] = set()
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
             if i != o:
@@ -449,16 +452,16 @@ def __perform_split( old_mesh: vtkUnstructuredGrid,
     new_mesh.Allocate( old_mesh.GetNumberOfCells() )
 
     for c in tqdm( range( old_mesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
-        node_mapping: Mapping[ int, int ] = cell_to_node_mapping.get( c, {} )
+        node_mapping: IDMapping = cell_to_node_mapping.get( c, {} )
         cell: vtkCell = old_mesh.GetCell( c )
         cell_type: int = cell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
         if cell_type == VTK_POLYHEDRON:
             face_stream = vtkIdList()
             old_mesh.GetFaceStream( c, face_stream )
-            new_face_nodes: List[ List[ int ] ] = []
+            new_face_nodes: list[ list[ int ] ] = list()
             for face_nodes in FaceStream.build_from_vtk_id_list( face_stream ).face_nodes:
-                new_point_ids = []
+                new_point_ids = list()
                 for current_point_id in face_nodes:
                     new_point_id: int = node_mapping.get( current_point_id, current_point_id )
                     new_point_ids.append( new_point_id )
@@ -480,7 +483,7 @@ def __perform_split( old_mesh: vtkUnstructuredGrid,
 
 
 def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: FractureInfo,
-                              cell_to_node_mapping: Mapping[ int, Mapping[ int, int ] ] ) -> vtkUnstructuredGrid:
+                              cell_to_node_mapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
     """
     Generates the mesh of the fracture.
     :param mesh_points: The points of the main 3d mesh.
@@ -500,8 +503,8 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     # Some elements can have all their nodes not duplicated.
     # In this case, it's mandatory not get rid of this element
     # because the neighboring 3d elements won't follow.
-    face_nodes: List[ Collection[ int ] ] = []
-    discarded_face_nodes: Set[ Iterable[ int ] ] = set()
+    face_nodes: list[ Collection[ int ] ] = list()
+    discarded_face_nodes: set[ Iterable[ int ] ] = set()
     for ns in fracture_info.face_nodes:
         if any( map( is_node_duplicated.__getitem__, ns ) ):
             face_nodes.append( ns )
@@ -509,7 +512,7 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
             discarded_face_nodes.add( ns )
 
     if discarded_face_nodes:
-        # tmp = []
+        # tmp = list()
         # for dfns in discarded_face_nodes:
         #     tmp.append(", ".join(map(str, dfns)))
         msg: str = "(" + '), ('.join( map( lambda dfns: ", ".join( map( str, dfns ) ), discarded_face_nodes ) ) + ")"
@@ -517,8 +520,8 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
         #              + "from the fracture mesh because none of their/its nodes were duplicated.")
         # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
         #              + "from the fracture mesh because none of their/its nodes were duplicated.")
-        print( f"The faces made of nodes [{msg}] were/was discarded" +
-               "from the fracture mesh because none of their/its nodes were duplicated." )
+        logging.info( f"The faces made of nodes [{msg}] were/was discarded" +
+                      "from the fracture mesh because none of their/its nodes were duplicated." )
 
     fracture_nodes_tmp = numpy.ones( mesh_points.GetNumberOfPoints(), dtype=int ) * -1
     for ns in face_nodes:
@@ -528,9 +531,9 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     num_points: int = len( fracture_nodes )
     points = vtkPoints()
     points.SetNumberOfPoints( num_points )
-    node_3d_to_node_2d: Dict[ int, int ] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
+    node_3d_to_node_2d: IDMapping = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate( fracture_nodes ):
-        coords: Tuple[ float, float, float ] = mesh_points.GetPoint( n )
+        coords: Coordinates3D = mesh_points.GetPoint( n )
         points.SetPoint( i, coords )
         node_3d_to_node_2d[ n ] = i
 
@@ -542,7 +545,7 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
             polygon.GetPointIds().SetId( i, node_3d_to_node_2d[ n ] )
         polygons.InsertNextCell( polygon )
 
-    buckets: Dict[ int, Set[ int ] ] = defaultdict( set )
+    buckets: dict[ int, set[ int ] ] = defaultdict( set )
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
             k: Optional[ int ] = node_3d_to_node_2d.get( min( i, o ) )
@@ -570,11 +573,11 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
 
 
 def __split_mesh_on_fracture( mesh: vtkUnstructuredGrid,
-                              options: Options ) -> Tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
+                              options: Options ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
     fracture: FractureInfo = build_fracture_info( mesh, options )
     cell_to_cell: networkx.Graph = build_cell_to_cell_graph( mesh, fracture )
-    cell_to_node_mapping: Mapping[ int, Mapping[ int, int ] ] = __identify_split( mesh.GetNumberOfPoints(),
-                                                                                  cell_to_cell, fracture.node_to_cells )
+    cell_to_node_mapping: Mapping[ int, IDMapping ] = __identify_split( mesh.GetNumberOfPoints(),
+                                                                        cell_to_cell, fracture.node_to_cells )
     output_mesh: vtkUnstructuredGrid = __perform_split( mesh, cell_to_node_mapping )
     fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture, cell_to_node_mapping )
     return output_mesh, fractured_mesh

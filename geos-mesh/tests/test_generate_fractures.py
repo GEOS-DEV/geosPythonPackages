@@ -1,16 +1,14 @@
 from dataclasses import dataclass
+from math import sqrt
 import logging
+import numpy
+import pytest
 from typing import (
-    Tuple,
     Iterable,
     Iterator,
     Sequence,
+    TypeAlias
 )
-
-import numpy
-
-import pytest
-
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
     vtkQuad,
@@ -19,13 +17,16 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_QUAD,
 )
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
-
-from geos.mesh.doctor.checks.vtk_utils import (
-    to_vtk_id_list, )
-
+from geos.mesh.doctor.checks.vtk_utils import to_vtk_id_list
 from geos.mesh.doctor.checks.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from geos.mesh.doctor.checks.generate_fractures import __split_mesh_on_fracture, Options, FracturePolicy
+from geos.mesh.doctor.checks.generate_fractures import (
+    __split_mesh_on_fracture,
+    Options,
+    FracturePolicy,
+    Coordinates3D,
+    IDMapping
+)
 
 
 @dataclass( frozen=True )
@@ -48,18 +49,21 @@ class TestCase:
 
 class QuadCoords:
 
-    def __init__( self, p1, p2, p3, p4 ):
-        self.p1: tuple[ float ] = p1
-        self.p2: tuple[ float ] = p2
-        self.p3: tuple[ float ] = p3
-        self.p4: tuple[ float ] = p4
-        self.__coordinates: list[ tuple[ float ] ] = [ self.p1, self.p2, self.p3, self.p4 ]
+    def __init__( self, p1: Coordinates3D, p2: Coordinates3D, p3: Coordinates3D, p4: Coordinates3D ):
+        self.p1: Coordinates3D = p1
+        self.p2: Coordinates3D = p2
+        self.p3: Coordinates3D = p3
+        self.p4: Coordinates3D = p4
+        self.__coordinates: list[ Coordinates3D ] = [ self.p1, self.p2, self.p3, self.p4 ]
 
     def get_coordinates( self ):
         return self.__coordinates
 
 
-def __build_test_case( xs: Tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
+FaceNodesCoords: TypeAlias = tuple[ tuple[ float ] ]
+
+
+def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
                        attribute: Iterable[ int ],
                        field_values: Iterable[ int ] = None,
                        policy: FracturePolicy = FracturePolicy.FIELD ):
@@ -120,7 +124,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         ( 1 + 18, *inc.next( 1 ) ),
         ( 3 + 18, *inc.next( 1 ) ),
         ( 4 + 18, *inc.next( 2 ) ),
-        ( 7 + 18, *inc.next( 1 ) ),
+        ( 7 + 18, *inc.next( 1 ) )
     )
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), ( 0, 1, 2, 1, 0, 1, 2, 1 ) )
     yield TestCase( input_mesh=mesh,
@@ -149,7 +153,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         ( 3 + 18, *inc.next( 1 ) ),
         ( 4 + 18, *inc.next( 3 ) ),
         ( 5 + 18, *inc.next( 1 ) ),
-        ( 7 + 18, *inc.next( 1 ) ),
+        ( 7 + 18, *inc.next( 1 ) )
     )
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), range( 8 ) )
     yield TestCase( input_mesh=mesh,
@@ -165,7 +169,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         ( 1 + 9, *inc.next( 1 ) ),
         ( 4 + 9, ),
         ( 1 + 18, *inc.next( 1 ) ),
-        ( 4 + 18, ),
+        ( 4 + 18, )
     )
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), ( 0, 1, 2, 2, 0, 1, 2, 2 ),
                                        field_values=( 0, 1 ) )
@@ -184,7 +188,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         ( 4 + 9, ),
         ( 7 + 9, ),
         ( 1 + 18, *inc.next( 1 ) ),
-        ( 4 + 18, ),
+        ( 4 + 18, )
     )
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), ( 0, 1, 0, 1, 0, 1, 2, 2 ),
                                        field_values=( 0, 1 ) )
@@ -203,7 +207,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         ( 1 + 8, *inc.next( 1 ) ),
         ( 2 + 8, *inc.next( 1 ) ),
         ( 5 + 8, *inc.next( 1 ) ),
-        ( 6 + 8, *inc.next( 1 ) ),
+        ( 6 + 8, *inc.next( 1 ) )
     )
     mesh, options = __build_test_case( ( four_nodes, two_nodes, two_nodes ), ( 0, 1, 2 ) )
     yield TestCase( input_mesh=mesh,
@@ -319,28 +323,115 @@ def add_simplified_field_for_cells( mesh: vtkUnstructuredGrid, field_name: str, 
     data.AddArray( vtk_array )
 
 
-def find_min_max_coords_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ list[ float ] ]:
-    """For a vtk rectilinear grid, gives the coordinates of the minimum and maximum points
-    of the grid.
+# def find_min_max_coords_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ list[ float ] ]:
+#     """For a vtk rectilinear grid, gives the coordinates of the minimum and maximum points
+#     of the grid.
 
-    Args:
-        mesh (vtkUnstructuredGrid): Unstructured mesh.
+#     Args:
+#         mesh (vtkUnstructuredGrid): Unstructured mesh.
 
-    Returns:
-        tuple[list[float]]: ([Xmin, Ymin, Zmin], [Xmax, Ymax, Zmax])
-    """
-    points = mesh.GetPoints()
-    min_coords: list[ float ] = [ float( 'inf' ) ] * 3
-    max_coords: list[ float ] = [ float( '-inf' ) ] * 3
-    for i in range( points.GetNumberOfPoints() ):
-        coord = points.GetPoint( i )
-        for j in range( 3 ):  # Assuming 3D coordinates (x, y, z)
-            min_coords[ j ] = min( min_coords[ j ], coord[ j ] )
-            max_coords[ j ] = max( max_coords[ j ], coord[ j ] )
-    return ( min_coords, max_coords )
+#     Returns:
+#         tuple[list[float]]: ([Xmin, Ymin, Zmin], [Xmax, Ymax, Zmax])
+#     """
+#     points = mesh.GetPoints()
+#     min_coords: list[ float ] = [ float( 'inf' ) ] * 3
+#     max_coords: list[ float ] = [ float( '-inf' ) ] * 3
+#     for i in range( points.GetNumberOfPoints() ):
+#         coord = points.GetPoint( i )
+#         for j in range( 3 ):  # Assuming 3D coordinates (x, y, z)
+#             min_coords[ j ] = min( min_coords[ j ], coord[ j ] )
+#             max_coords[ j ] = max( max_coords[ j ], coord[ j ] )
+#     return ( min_coords, max_coords )
 
 
-def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ QuadCoords ]:
+# def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ QuadCoords ]:
+#     """
+#               6+--------+7
+#               /        /|
+#              /        / |
+#            4+--------+5 |
+#             |        |  |
+#             | 2+     |  +3
+#             |        | /
+#             |        |/
+#            0+--------+1
+
+#     For a vtk rectilinear grid, gives the coordinates of each of its borders face nodes.
+
+#     Args:
+#         mesh (vtkUnstructuredGrid): Unstructured mesh.
+
+#     Returns:
+#         tuple[QuadCoords]: For a rectilinear grid, returns a tuple of 6 elements.
+#     """
+#     min_coords, max_coords = find_min_max_coords_rectilinear_grid( mesh )
+#     center: tuple[ float ] = ( ( min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
+#                                ( min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
+#     # hdl stands for half diagonal length
+#     hdl: tuple[ float ] = ( ( -min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( -min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
+#                             ( -min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
+#     node0: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+#     node1: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+#     node2: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+#     node3: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
+#     node4: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+#     node5: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+#     node6: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+#     node7: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
+#     faces: tuple[ QuadCoords ] = ( QuadCoords( node0, node1, node3, node2 ), QuadCoords( node4, node5, node7, node6 ),
+#                                    QuadCoords( node0, node2, node6, node4 ), QuadCoords( node1, node3, node7, node5 ),
+#                                    QuadCoords( node0, node1, node5, node4 ), QuadCoords( node2, node3, node7, node6 ) )
+#     return faces
+
+
+# def set_quad_points( mesh: vtkUnstructuredGrid, quad: vtkQuad, coordinates: QuadCoords ):
+#     """Set the coordinates of a vtkQuad by adding the points and their id. 
+
+#     Args:
+#         mesh (vtkUnstructuredGrid): Unstructured mesh.
+#         quad (vtkQuad): A vtkQuad object.
+#         coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
+#     """
+#     points_coords = mesh.GetPoints().GetData()
+#     numpy_coordinates: numpy.array = vtk_to_numpy( points_coords )
+#     coords_vertices_mesh: list[ tuple ] = [ tuple( row ) for row in numpy_coordinates ]
+#     coords_vertices_quad: list[ tuple ] = coordinates.get_coordinates()
+#     ids_association: dict[ int, int ] = {}
+#     for i in range( len( coords_vertices_mesh ) ):
+#         for j in range( len( coords_vertices_quad ) ):
+#             if coords_vertices_mesh[ i ] == coords_vertices_quad[ j ]:
+#                 ids_association[ i ] = j
+#                 break
+
+#     for vertice_id, quad_coord_index in ids_association.items():
+#         quad.GetPoints().InsertNextPoint( coords_vertices_quad[ quad_coord_index ] )
+#         quad.GetPointIds().SetId( quad_coord_index, vertice_id )
+
+
+# def add_quad( mesh: vtkUnstructuredGrid, coordinates: QuadCoords ):
+#     """Adds a quad cell to an unstructured mesh by knowing the coordinates of its 4 nodes.
+
+#     Args:
+#         mesh (vtkUnstructuredGrid): Unstructured mesh.
+#         coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
+#     """
+#     quad = vtkQuad()
+#     set_quad_points( mesh, quad, coordinates )
+#     mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
+
+
+# def add_quads_to_all_borders_rectilinear_grid( mesh: vtkUnstructuredGrid ):
+#     """Adds a quad cell to each border of an unstructured mesh.
+
+#     Args:
+#         mesh (vtkUnstructuredGrid): Unstructured mesh.
+#     """
+#     faces: tuple[ QuadCoords ] = find_borders_coordinates_rectilinear_grid( mesh )
+#     for face in faces:
+#         add_quad( mesh, face )
+
+
+def find_borders_faces_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tuple[ FaceNodesCoords ]:
     """
               6+--------+7
               /        /|
@@ -360,71 +451,48 @@ def find_borders_coordinates_rectilinear_grid( mesh: vtkUnstructuredGrid ) -> tu
     Returns:
         tuple[QuadCoords]: For a rectilinear grid, returns a tuple of 6 elements.
     """
-    min_coords, max_coords = find_min_max_coords_rectilinear_grid( mesh )
-    center: tuple[ float ] = ( ( min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
-                               ( min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
-    # hdl stands for half diagonal length
-    hdl: tuple[ float ] = ( ( -min_coords[ 0 ] + max_coords[ 0 ] ) / 2, ( -min_coords[ 1 ] + max_coords[ 1 ] ) / 2,
-                            ( -min_coords[ 2 ] + max_coords[ 2 ] ) / 2 )
-    node0: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
-    node1: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
-    node2: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
-    node3: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] - hdl[ 2 ] )
-    node4: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
-    node5: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] - hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
-    node6: tuple[ float ] = ( center[ 0 ] - hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
-    node7: tuple[ float ] = ( center[ 0 ] + hdl[ 0 ], center[ 1 ] + hdl[ 1 ], center[ 2 ] + hdl[ 2 ] )
-    faces: tuple[ QuadCoords ] = ( QuadCoords( node0, node1, node3, node2 ), QuadCoords( node4, node5, node7, node6 ),
-                                   QuadCoords( node0, node2, node6, node4 ), QuadCoords( node1, node3, node7, node5 ),
-                                   QuadCoords( node0, node1, node5, node4 ), QuadCoords( node2, node3, node7, node6 ) )
+    mesh_bounds: tuple[ float ] = mesh.GetBounds()
+    max_bound: Coordinates3D = mesh_bounds[ 3: ]
+    center: Coordinates3D = mesh.GetCenter()
+    half_diag: float = sqrt( 
+        ( max_bound[ 0 ] - center[ 0 ] ) ** 2 +
+        ( max_bound[ 1 ] - center[ 1 ] ) ** 2 +
+        ( max_bound[ 1 ] - center[ 1 ] ) ** 2
+    )
+    node0: Coordinates3D = ( center[ 0 ] - half_diag, center[ 1 ] - half_diag, center[ 2 ] - half_diag )
+    node1: Coordinates3D = ( center[ 0 ] + half_diag, center[ 1 ] - half_diag, center[ 2 ] - half_diag )
+    node2: Coordinates3D = ( center[ 0 ] - half_diag, center[ 1 ] + half_diag, center[ 2 ] - half_diag )
+    node3: Coordinates3D = ( center[ 0 ] + half_diag, center[ 1 ] + half_diag, center[ 2 ] - half_diag )
+    node4: Coordinates3D = ( center[ 0 ] - half_diag, center[ 1 ] - half_diag, center[ 2 ] + half_diag )
+    node5: Coordinates3D = ( center[ 0 ] + half_diag, center[ 1 ] - half_diag, center[ 2 ] + half_diag )
+    node6: Coordinates3D = ( center[ 0 ] - half_diag, center[ 1 ] + half_diag, center[ 2 ] + half_diag )
+    node7: Coordinates3D = ( center[ 0 ] + half_diag, center[ 1 ] + half_diag, center[ 2 ] + half_diag )
+    faces: tuple[ FaceNodesCoords ] = ( ( node0, node1, node3, node2 ), ( node4, node5, node7, node6 ),
+                                        ( node0, node2, node6, node4 ), ( node1, node3, node7, node5 ),
+                                        ( node0, node1, node5, node4 ), ( node2, node3, node7, node6 ) )
     return faces
 
 
-def set_quad_points( mesh: vtkUnstructuredGrid, quad: vtkQuad, coordinates: QuadCoords ):
-    """Set the coordinates of a vtkQuad by adding the points and their id. 
-
-    Args:
-        mesh (vtkUnstructuredGrid): Unstructured mesh.
-        quad (vtkQuad): A vtkQuad object.
-        coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
-    """
-    points_coords = mesh.GetPoints().GetData()
-    numpy_coordinates: numpy.array = vtk_to_numpy( points_coords )
-    coords_vertices_mesh: list[ tuple ] = [ tuple( row ) for row in numpy_coordinates ]
-    coords_vertices_quad: list[ tuple ] = coordinates.get_coordinates()
-    ids_association: dict[ int, int ] = {}
-    for i in range( len( coords_vertices_mesh ) ):
-        for j in range( len( coords_vertices_quad ) ):
-            if coords_vertices_mesh[ i ] == coords_vertices_quad[ j ]:
-                ids_association[ i ] = j
-                break
-
-    for vertice_id, quad_coord_index in ids_association.items():
-        quad.GetPoints().InsertNextPoint( coords_vertices_quad[ quad_coord_index ] )
-        quad.GetPointIds().SetId( quad_coord_index, vertice_id )
-
-
-def add_quad( mesh: vtkUnstructuredGrid, coordinates: QuadCoords ):
-    """Adds a quad cell to an unstructured mesh by knowing the coordinates of its 4 nodes.
-
-    Args:
-        mesh (vtkUnstructuredGrid): Unstructured mesh.
-        coordinates (QuadCoords): A QuadCoords containing 4 points coordinates.
-    """
-    quad = vtkQuad()
-    set_quad_points( mesh, quad, coordinates )
-    mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
-
-
-def add_quads_to_all_borders_rectilinear_grid( mesh: vtkUnstructuredGrid ):
+def add_quad( mesh: vtkUnstructuredGrid, face: FaceNodesCoords ):
     """Adds a quad cell to each border of an unstructured mesh.
 
     Args:
         mesh (vtkUnstructuredGrid): Unstructured mesh.
     """
-    faces: tuple[ QuadCoords ] = find_borders_coordinates_rectilinear_grid( mesh )
-    for face in faces:
-        add_quad( mesh, face )
+    points_coords = mesh.GetPoints().GetData()
+    quad: vtkQuad = vtkQuad()
+    ids_association: IDMapping = {}
+    for i in range( len( points_coords ) ):
+        for j in range( len( face ) ):
+            if points_coords[ i ] == face[ j ]:
+                ids_association[ i ] = j
+                break
+
+    for vertice_id, quad_coord_index in ids_association.items():
+        quad.GetPoints().InsertNextPoint( face[ quad_coord_index ] )
+        quad.GetPointIds().SetId( quad_coord_index, vertice_id )
+
+    mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
 
 
 def test_copy_fields_when_splitting_mesh():
@@ -438,13 +506,14 @@ def test_copy_fields_when_splitting_mesh():
     xyzs: XYZ = XYZ( x, y, z )
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [ xyzs ] )
     assert mesh.GetCells().GetNumberOfCells() == 2
-    add_quads_to_all_borders_rectilinear_grid( mesh )
+    border_faces: tuple[ FaceNodesCoords ] = find_borders_faces_rectilinear_grid( mesh )
+    for face in border_faces:
+        add_quad( face )
     assert mesh.GetCells().GetNumberOfCells() == 8
     # Create a quad cell to represent the fracture surface.
-    fracture_coordinates: QuadCoords = QuadCoords( p1=( 1.0, 0.0, 0.0 ),
-                                                   p2=( 1.0, 1.0, 0.0 ),
-                                                   p3=( 1.0, 1.0, 1.0 ),
-                                                   p4=( 1.0, 0.0, 1.0 ) )
+    fracture_coordinates: FaceNodesCoords = ( 
+        ( 1.0, 0.0, 0.0 ), ( 1.0, 1.0, 0.0 ), ( 1.0, 1.0, 1.0 ), ( 1.0, 0.0, 1.0 )
+    )
     add_quad( mesh, fracture_coordinates )
     assert mesh.GetCells().GetNumberOfCells() == 9
     # Add a "TestField" array
@@ -477,7 +546,9 @@ def test_copy_fields_when_splitting_mesh():
     assert pytest_wrapped_e.type == SystemExit
     # Test for invalid cell field name
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [ xyzs ] )
-    add_quads_to_all_borders_rectilinear_grid( mesh )
+    border_faces: tuple[ FaceNodesCoords ] = find_borders_faces_rectilinear_grid( mesh )
+    for face in border_faces:
+        add_quad( face )
     add_quad( mesh, fracture_coordinates )
     add_simplified_field_for_cells( mesh, "TestField", 1 )
     add_simplified_field_for_cells( mesh, "GLOBAL_IDS_CELLS", 1 )
