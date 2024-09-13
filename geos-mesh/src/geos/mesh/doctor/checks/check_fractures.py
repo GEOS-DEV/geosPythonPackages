@@ -1,30 +1,14 @@
-from dataclasses import dataclass
 import logging
-
-from typing import (
-    Collection,
-    FrozenSet,
-    Iterable,
-    Sequence,
-    Set,
-    Tuple,
-)
-
-from tqdm import tqdm
 import numpy
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkCell,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkIOXML import (
-    vtkXMLMultiBlockDataReader, )
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy, )
-from .vtk_utils import (
-    vtk_iter, )
+from dataclasses import dataclass
+from typing import Collection, Iterable, Sequence
+from tqdm import tqdm
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from geos.mesh.doctor.checks.vtk_utils import vtk_iter
+from geos.mesh.doctor.checks.generate_fractures import Coordinates3D
 
 
 @dataclass( frozen=True )
@@ -44,7 +28,7 @@ class Result:
 
 
 def __read_multiblock( vtk_input_file: str, matrix_name: str,
-                       fracture_name: str ) -> Tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
+                       fracture_name: str ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
     reader = vtkXMLMultiBlockDataReader()
     reader.SetFileName( vtk_input_file )
     reader.Update()
@@ -73,9 +57,9 @@ def format_collocated_nodes( fracture_mesh: vtkUnstructuredGrid ) -> Sequence[ I
 
 
 def __check_collocated_nodes_positions(
-    matrix_points: Sequence[ Tuple[ float, float, float ] ], fracture_points: Sequence[ Tuple[ float, float, float ] ],
-    g2l: Sequence[ int ], collocated_nodes: Iterable[ Iterable[ int ] ]
-) -> Collection[ Tuple[ int, Iterable[ int ], Iterable[ Tuple[ float, float, float ] ] ] ]:
+    matrix_points: Sequence[ Coordinates3D ], fracture_points: Sequence[ Coordinates3D ], g2l: Sequence[ int ],
+    collocated_nodes: Iterable[ Iterable[ int ] ]
+) -> Collection[ tuple[ int, Iterable[ int ], Iterable[ Coordinates3D ] ] ]:
     issues = []
     for li, bucket in enumerate( collocated_nodes ):
         matrix_nodes = ( fracture_points[ li ], ) + tuple( map( lambda gi: matrix_points[ g2l[ gi ] ], bucket ) )
@@ -98,14 +82,14 @@ def my_iter( ccc ):
 
 def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, g2l: Sequence[ int ],
                        collocated_nodes: Sequence[ Iterable[ int ] ] ):
-    fracture_nodes: Set[ int ] = set()
+    fracture_nodes: set[ int ] = set()
     for bucket in collocated_nodes:
         for gi in bucket:
             fracture_nodes.add( g2l[ gi ] )
     # For each face of each cell,
     # if all the points of the face are "made" of collocated nodes,
     # then this is a fracture face.
-    fracture_faces: Set[ FrozenSet[ int ] ] = set()
+    fracture_faces: set[ frozenset[ int ] ] = set()
     for c in range( matrix.GetNumberOfCells() ):
         cell: vtkCell = matrix.GetCell( c )
         for f in range( cell.GetNumberOfFaces() ):
@@ -116,7 +100,7 @@ def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGri
     # Finding the cells
     for c in tqdm( range( fracture.GetNumberOfCells() ), desc="Finding neighbor cell pairs" ):
         cell: vtkCell = fracture.GetCell( c )
-        cns: Set[ FrozenSet[ int ] ] = set()  # subset of collocated_nodes
+        cns: set[ frozenset[ int ] ] = set()  # subset of collocated_nodes
         point_ids = frozenset( vtk_iter( cell.GetPointIds() ) )
         for point_id in point_ids:
             bucket = collocated_nodes[ point_id ]
@@ -129,9 +113,8 @@ def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGri
             if f in fracture_faces:
                 found += 1
         if found != 2:
-            logging.warning(
-                f"Something went wrong since we should have found 2 fractures faces (we found {found}) for collocated nodes {cns}."
-            )
+            logging.warning( f"Something went wrong since we should have found 2 fractures faces (we found {found})" +
+                             f" for collocated nodes {cns}." )
 
 
 def __check( vtk_input_file: str, options: Options ) -> Result:

@@ -1,10 +1,10 @@
-from collections import defaultdict
-from dataclasses import dataclass
 import logging
-from enum import Enum
-from tqdm import tqdm
 import networkx
 import numpy
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
+from tqdm import tqdm
 from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
 from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints

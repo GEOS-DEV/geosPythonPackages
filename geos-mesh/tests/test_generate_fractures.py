@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 import logging
 import numpy
 import pytest
+from dataclasses import dataclass
 from typing import Iterable, Iterator, Sequence, TypeAlias
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
