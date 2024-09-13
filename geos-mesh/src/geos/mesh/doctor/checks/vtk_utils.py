@@ -156,30 +156,22 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
 
 
 def vtkid_to_string( id: int ) -> str:
-    match id:
-        case 1:  # VTK_VERTEX
-            return 'Vertex'
-        case 3:  #VTK_LINE
-            return 'Line'
-        case 5:  #VTK_TRIANGLE
-            return 'Triangle'
-        case 8:  #VTK_PIXEL
-            return 'Pixel'
-        case 9:  #VTK_QUAD
-            return 'Quad'
-        case 10:  #VTK_TETRA
-            return 'Tetra'
-        case 11:  #VTK_VOXEL
-            return 'Voxel'
-        case 12:  #VTK_HEXAHEDRON
-            return 'Hex'
-        case 13:  #VTK_WEDGE
-            return 'Wedge'
-        case 14:  #VTK_PYRAMID
-            return 'Pyramid'
-        case 15:  #VTK_PENTAGONAL_PRISM
-            return 'Pentagonal prism'
-        case 16:  #VTK_HEXAGONAL_PRISM
-            return 'Hexagonal Prism'
-        case _:
-            return 'Unknown type'
+    choices: dict[ int, str ] = {
+        1: 'Vertex',
+        3: 'Line',
+        5: 'Triangle',
+        7: 'Polygon',
+        8: 'Pixel',
+        9: 'Quad',
+        10: 'Tetra',
+        11: 'Voxel',
+        12: 'Hex',
+        13: 'Wedge',
+        14: 'Pyramid',
+        15: 'Pentagonal prism',
+        16: 'Hexagonal Prism'
+    }
+    if id in choices:
+        return choices[ id ]
+    else:
+        return 'Unknown type'

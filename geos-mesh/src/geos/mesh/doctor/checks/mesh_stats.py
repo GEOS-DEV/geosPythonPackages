@@ -3,23 +3,21 @@ import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
 from enum import Enum
-
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy, )
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkCell )
-
-from . import vtk_utils
+from typing import TypeAlias
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
+from geos.mesh.doctor.checks import vtk_utils
+"""
+TypeAliases for this file
+"""
+ArrayGeneric: TypeAlias = npt.NDArray[ np.generic ]
+FieldValidity: TypeAlias = dict[ str, tuple[ bool, tuple[ float ] ] ]
 
 
 @dataclass( frozen=True )
 class Options:
-    info: str
-
-
-ArrayGeneric = npt.NDArray[ np.generic ]
+    output_stats_in_file: bool
+    filepath: str
 
 
 @dataclass( frozen=True )
@@ -51,9 +49,9 @@ class Result:
     point_data: MeshComponentData
     cell_data: MeshComponentData
     field_data: MeshComponentData
-    fields_validity_point_data: dict[ str, dict[ str, bool ] ]
-    fields_validity_cell_data: dict[ str, dict[ str, bool ] ]
-    fields_validity_field_data: dict[ str, dict[ str, bool ] ]
+    fields_validity_point_data: FieldValidity
+    fields_validity_cell_data: FieldValidity
+    fields_validity_field_data: FieldValidity
 
 
 class MIN_FIELD( float, Enum ):  # SI Units
@@ -253,7 +251,7 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
                               tensor_max_values=tensor_max_values )
 
 
-def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple[ bool, tuple[ float ] ] ]:
+def field_values_validity( mcdata: MeshComponentData ) -> FieldValidity:
     """Check that for every min and max values found in the scalar and tensor fields,
     none of these values is out of bounds. If the value is out of bound, False validity flag
     is given to the field, True if no problem.
@@ -262,7 +260,7 @@ def field_values_validity( mcdata: MeshComponentData ) -> dict[ str, tuple[ bool
         mcdata (MeshComponentData): Object that gathers data regarding a mesh component.
 
     Returns:
-        dict[ str, bool ]: {poro: (True, Min_Max_poro), perm: (False, Min_Max_perm), ...}
+        FieldValidity: {poro: (True, Min_Max_poro), perm: (False, Min_Max_perm), ...}
     """
     field_values_validity: dict[ str, tuple[ bool, tuple[ float ] ] ] = {}
     assoc_min_max_field: dict[ str, tuple[ float ] ] = associate_min_max_field_values()
@@ -409,9 +407,9 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     point_data: MeshComponentData = build_MeshComponentData( mesh, "point" )
     cell_data: MeshComponentData = build_MeshComponentData( mesh, "cell" )
     field_data: MeshComponentData = build_MeshComponentData( mesh, "field" )
-    fields_validity_point_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( point_data )
-    fields_validity_cell_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( cell_data )
-    fields_validity_field_data: dict[ str, tuple[ bool, tuple[ float ] ] ] = field_values_validity( field_data )
+    fields_validity_point_data: FieldValidity = field_values_validity( point_data )
+    fields_validity_cell_data: FieldValidity = field_values_validity( cell_data )
+    fields_validity_field_data: FieldValidity = field_values_validity( field_data )
 
     return Result( number_points=number_points,
                    number_cells=number_cells,
