@@ -1,4 +1,4 @@
-﻿import ats  # type: ignore[import]
+import ats  # type: ignore[import]
 import os
 import shutil
 import logging
@@ -319,7 +319,7 @@ class TestCase( object ):
             priority = 1
 
         # Setup a new test group
-        atsTest = None
+        parent_test = None
         ats.tests.AtsTest.newGroup( priority=priority, path=self.path )
         for stepnum, step in enumerate( self.steps ):
             np = getattr( step.p, "np", 1 )
@@ -329,10 +329,10 @@ class TestCase( object ):
             label = "%s_%d_%s" % ( self.name, stepnum + 1, step.label() )
 
             # call either 'test' or 'testif'
-            if atsTest is None:
+            if parent_test is None:
                 func = lambda *a, **k: test( *a, **k )
             else:
-                func = lambda *a, **k: testif( atsTest, *a, **k )
+                func = lambda *a, **k: testif( parent_test, *a, **k )
 
             # Set the time limit
             kw = {}
@@ -358,6 +358,11 @@ class TestCase( object ):
             # Override the status if previously passed
             if self.last_status == PASSED:
                 atsTest.status = SKIPPED
+
+            # Set the parent test
+            # Note: do not make tests dependent on the result of curvecheck
+            if step.label() != 'curvecheck':
+                parent_test = atsTest
 
         # End the group
         ats.tests.AtsTest.endGroup()
