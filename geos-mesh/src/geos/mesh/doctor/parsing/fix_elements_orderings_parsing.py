@@ -30,13 +30,12 @@ def fill_subparser( subparsers ) -> None:
                         help=f"[list of integers]: node permutation for \"{element_name}\"." )
     p.add_argument( '--' + __VOLUME_TO_REORDER,
                     type=str,
-                    metavar=__VOLUME_TO_REORDER_DEFAULT,
                     default=__VOLUME_TO_REORDER_DEFAULT,
-                    choices=__VOLUME_TO_REORDER_CHOICES,
+                    metavar=",".join( map( str, __VOLUME_TO_REORDER_CHOICES ) ),
                     required=True,
                     help="[str]: Select which element volume is invalid and needs reordering." +
-                    "'all' will allow reordering of nodes for every element, regarding of their volume." +
-                    "'positive' or 'negative' will only reorder the element with the corresponding volume." )
+                    " 'all' will allow reordering of nodes for every element, regarding of their volume." +
+                    " 'positive' or 'negative' will only reorder the element with the corresponding volume." )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
