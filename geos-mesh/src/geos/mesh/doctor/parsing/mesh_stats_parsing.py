@@ -7,6 +7,12 @@ from numpy import unique, where
 from geos.mesh.doctor.checks.mesh_stats import Options, Result
 from . import MESH_STATS
 
+__DISCONNECTED = "disconnected"
+__DISCONNECTED_DEFAULT = 0
+
+__FIELD_VALUES = "field_values"
+__FIELD_VALUES_DEFAULT = 0
+
 
 __WRITE_STATS = "write_stats"
 __WRITE_STATS_DEFAULT = 0
@@ -48,7 +54,6 @@ def fill_subparser( subparsers ) -> None:
                     type=str,
                     required=getattr(args, __WRITE_STATS),
                     help=f"[string]: The output folder destination where the stats will be written." )
-
 
 def convert( parsed_options ) -> Options:
     write_stats = parsed_options[ __WRITE_STATS ]
@@ -156,6 +161,9 @@ def display_results( options: Options, result: Result ):
             filepath: str = build_filepath_output_file( options )
             with open( filepath, 'w' ) as file:
                 file.writelines( log_stream.getvalue() )
+
+    if options.output_stats_in_file:
+        pass
 
 
 def harmonious_spacing( iterable_objs: Iterable[ Iterable ], indexIter: int, space_size: int = 3 ) -> str:
