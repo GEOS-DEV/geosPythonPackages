@@ -10,25 +10,10 @@ from geos.mesh.doctor.checks.generate_cube import Options, __build
 from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, to_vtk_id_list, write_mesh )
 from geos.mesh.doctor.checks.fix_elements_orderings import Options as opt, VTK_TYPE_TO_NAME
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet,
-    vtkUnstructuredGrid,
-    vtkCellArray,
-    vtkHexahedron,
-    vtkTetra,
-    vtkPyramid,
-    vtkVoxel,
-    vtkWedge,
-    vtkPentagonalPrism,
-    vtkHexagonalPrism,
-    VTK_HEXAHEDRON,
-    VTK_TETRA,
-    VTK_PYRAMID,
-    VTK_WEDGE,
-    VTK_VOXEL,
-    VTK_PENTAGONAL_PRISM,
-    VTK_HEXAGONAL_PRISM
-)
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkUnstructuredGrid, vtkCellArray, vtkHexahedron, vtkTetra,
+                                            vtkPyramid, vtkVoxel, vtkWedge, vtkPentagonalPrism, vtkHexagonalPrism,
+                                            VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_VOXEL,
+                                            VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
 
 
 def reorder_cell_nodes( mesh: vtkDataSet, cell_id: int, node_ordering: list[ int ] ):
