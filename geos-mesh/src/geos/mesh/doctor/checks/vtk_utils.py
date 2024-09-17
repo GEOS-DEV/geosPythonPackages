@@ -1,25 +1,11 @@
-from dataclasses import dataclass
-from os import path, access, R_OK, W_OK
+import os
 import logging
-from sys import exit
-from typing import (
-    Any,
-    Iterator,
-    Optional,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
-from vtkmodules.vtkIOLegacy import (
-    vtkUnstructuredGridWriter,
-    vtkUnstructuredGridReader,
-)
-from vtkmodules.vtkIOXML import (
-    vtkXMLUnstructuredGridReader,
-    vtkXMLUnstructuredGridWriter,
-)
+from dataclasses import dataclass
+from typing import Iterator, Optional
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter
 
 
 @dataclass( frozen=True )
@@ -36,7 +22,7 @@ def to_vtk_id_list( data ) -> vtkIdList:
     return result
 
 
-def vtk_iter( l ) -> Iterator[ Any ]:
+def vtk_iter( l ) -> Iterator[ any ]:
     """
     Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins python containers.
     :param l: A vtk container.
@@ -62,22 +48,22 @@ def is_filepath_valid( filepath: str, is_input=True ) -> bool:
     Returns:
         bool: False if invalid, True instead.
     """
-    dirname = path.dirname( filepath )
-    if not path.isdir( dirname ):
+    dirname = os.path.dirname( filepath )
+    if not os.path.isdir( dirname ):
         logging.error( f"The directory '{dirname}' specified does not exist." )
         return False
     if is_input:
-        if not access( dirname, R_OK ):
+        if not os.access( dirname, os.R_OK ):
             logging.error( f"You do not have rights to read in directory '{dirname}' specified for the file." )
             return False
-        if not path.exists( filepath ):
+        if not os.path.exists( filepath ):
             logging.error( f"The file specified does not exist." )
             return False
     else:
-        if not access( dirname, W_OK ):
+        if not os.access( dirname, os.W_OK ):
             logging.error( f"You do not have rights to write in directory '{dirname}' specified for the file." )
             return False
-        if path.exists( filepath ):
+        if os.path.exists( filepath ):
             logging.error( f"A file with the same name already exists. No over-writing possible." )
             return False
     return True
@@ -116,10 +102,11 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         If first guess does not work, eventually all the others reader available will be tested.
     :return: A unstructured grid.
     """
-    if not is_filepath_valid( vtk_input_file, True ):
-        logging.error( f"Invalid filepath to read. Dying ..." )
-        exit( 1 )
-    file_extension = path.splitext( vtk_input_file )[ -1 ]
+    if not is_filepath_valid( vtk_input_file ):
+        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\". Dying..."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
+    file_extension = os.path.splitext( vtk_input_file )[ -1 ]
     extension_to_reader = { ".vtk": __read_vtk, ".vtu": __read_vtu }
     # Testing first the reader that should match
     if file_extension in extension_to_reader:
@@ -132,8 +119,9 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         if output_mesh:
             return output_mesh
     # No reader did work. Dying.
-    logging.critical( f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..." )
-    exit( 1 )
+    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..."
+    logging.error( err_msg )
+    raise ValueError( err_msg )
 
 
 def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
@@ -162,15 +150,17 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
     :return: 0 in case of success.
     """
     if not is_filepath_valid( vtk_output.output, False ):
-        logging.error( f"Invalid filepath to write. Dying ..." )
-        exit( 1 )
-    file_extension = path.splitext( vtk_output.output )[ -1 ]
+        err_msg = "Invalid filepath to write. Dying ..."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
+    file_extension = os.path.splitext( vtk_output.output )[ -1 ]
     if file_extension == ".vtk":
         success_code = __write_vtk( mesh, vtk_output.output )
     elif file_extension == ".vtu":
         success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     else:
         # No writer found did work. Dying.
-        logging.critical( f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..." )
-        exit( 1 )
+        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
