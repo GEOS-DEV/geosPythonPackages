@@ -1,65 +1,173 @@
 from dataclasses import dataclass
+import numpy as np
 import logging
-from typing import (
-    List,
-    Dict,
-    Set,
-    FrozenSet,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-
-from . import vtk_utils
-from .vtk_utils import (
-    to_vtk_id_list,
-    VtkOutput,
-)
+from vtk import vtkCellSizeFilter
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE,
+                                            VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
+from .vtk_utils import VtkOutput, to_vtk_id_list, write_mesh, read_mesh
 
 
 @dataclass( frozen=True )
 class Options:
     vtk_output: VtkOutput
-    cell_type_to_ordering: Dict[ int, List[ int ] ]
+    cell_name_to_ordering: dict[ str, list[ int ] ]
+    volume_to_reorder: str
 
 
 @dataclass( frozen=True )
 class Result:
     output: str
-    unchanged_cell_types: FrozenSet[ int ]
+    reordering_stats: dict[ str, list[ int ] ]
+
+
+GEOS_ACCEPTED_TYPES = [ VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM ]
+# the number of different nodes that needs to be entered in parsing when dealing with a specific vtk element
+NAME_TO_VTK_TYPE = {
+    "Hexahedron": VTK_HEXAHEDRON,
+    "Tetrahedron": VTK_TETRA,
+    "Pyramid": VTK_PYRAMID,
+    "Wedge": VTK_WEDGE,
+    "Prism5": VTK_PENTAGONAL_PRISM,
+    "Prism6": VTK_HEXAGONAL_PRISM
+}
+VTK_TYPE_TO_NAME = { vtk_type: name for name, vtk_type in NAME_TO_VTK_TYPE.items() }
+
+
+# Knowing the calculation of cell volumes in vtk was discussed there: https://github.com/GEOS-DEV/GEOS/issues/2253
+# Here, we do not need to have the exact volumes matching the simulation softwares results
+# because we are mostly interested in knowing the sign of the volume for the rest of the workflow.
+# Therefore, there is no need to use vtkMeshQuality for specific cell types when vtkCellSizeFilter works with all types.
+def compute_mesh_cells_volume( mesh: vtkDataSet ) -> np.array:
+    """Generates a volume array that was calculated on all cells of a mesh.
+
+    Args:
+        mesh (vtkDataSet): A vtk grid.
+
+    Returns:
+        np.array: Volume for every cell of a mesh.
+    """
+    cell_size_filter = vtkCellSizeFilter()
+    cell_size_filter.SetInputData( mesh )
+    cell_size_filter.SetComputeVolume( True )
+    cell_size_filter.Update()
+    return vtk_to_numpy( cell_size_filter.GetOutput().GetCellData().GetArray( "Volume" ) )
+
+
+def get_cell_types_and_number( mesh: vtkDataSet ) -> tuple[ list[ int ] ]:
+    """Gets the cell type for every cell of a mesh and the amount for each cell type.
+
+    Args:
+        mesh (vtkDataSet): A vtk grid.
+
+    Raises:
+        ValueError: "Invalid type '{cell_type}' for GEOS is in the mesh. Dying ..."
+
+    Returns:
+        tuple[ list[ int ] ]: ( unique_cell_types, total_per_cell_types )
+    """
+    number_cells: int = mesh.GetNumberOfCells()
+    all_cells_type: np.array = np.ones( number_cells, dtype=int )
+    for cell_id in range( number_cells ):
+        all_cells_type[ cell_id ] = mesh.GetCellType( cell_id )
+    unique_cell_types, total_per_cell_types = np.unique( all_cells_type, return_counts=True )
+    unique_cell_types, total_per_cell_types = unique_cell_types.tolist(), total_per_cell_types.tolist()
+    for cell_type in unique_cell_types:
+        if cell_type not in GEOS_ACCEPTED_TYPES:
+            err_msg: str = f"Invalid type '{cell_type}' for GEOS is in the mesh. Dying ..."
+            logging.error( err_msg )
+            raise ValueError( err_msg )
+    return ( unique_cell_types, total_per_cell_types )
+
+
+def is_cell_to_reorder( cell_volume: str, options: Options ) -> bool:
+    """Check if the volume of vtkCell qualifies the cell to be reordered.
+
+    Args:
+        cell_volume (float): The volume of a vtkCell.
+        options (Options): Options defined by the user.
+
+    Returns:
+        bool: True if cell needs to be reordered
+    """
+    if options.volume_to_reorder == "all":
+        return True
+    if cell_volume == 0.0:
+        return True
+    sign_of_cell_volume: int = int( cell_volume / abs( cell_volume ) )
+    if options.volume_to_reorder == "positive" and sign_of_cell_volume == 1:
+        return True
+    elif options.volume_to_reorder == "negative" and sign_of_cell_volume == -1:
+        return True
+    return False
+
+
+def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple:
+    """From an old mesh, creates a new one where certain cell nodes are reordered to obtain a correct volume.
+
+    Args:
+        old_mesh (vtkDataSet): A vtk grid needing nodes to be reordered.
+        options (Options): Options defined by the user.
+
+    Returns:
+        tuple: ( vtkDataSet, reordering_stats )
+    """
+    unique_cell_types, total_per_cell_types = get_cell_types_and_number( old_mesh )
+    unique_cell_names: list[ str ] = [ VTK_TYPE_TO_NAME[ vtk_type ] for vtk_type in unique_cell_types ]
+    names_with_totals: dict[ str, int ] = { n: v for n, v in zip( unique_cell_names, total_per_cell_types ) }
+    # sorted dict allow for sorted output of reordering_stats
+    names_with_totals_sorted: dict[ str, int ] = dict( sorted( names_with_totals.items() ) )
+    useful_VTK_TYPEs: list[ int ] = [ NAME_TO_VTK_TYPE[ name ] for name in options.cell_name_to_ordering.keys() ]
+    all_cells_volume: np.array = compute_mesh_cells_volume( old_mesh )
+    # a new mesh with the same data is created from the old mesh
+    new_mesh: vtkDataSet = old_mesh.NewInstance()
+    new_mesh.CopyStructure( old_mesh )
+    new_mesh.CopyAttributes( old_mesh )
+    cells = new_mesh.GetCells()
+    # Statistics on how many cells have or have not been reordered
+    reordering_stats: dict[ str, list[ any ] ] = {
+        "Types reordered": list(),
+        "Number of cells reordered": list(),
+        "Types non reordered": list( names_with_totals_sorted.keys() ),
+        "Number of cells non reordered": list( names_with_totals_sorted.values() )
+    }
+    counter_cells_reordered: dict[ str, int ] = { name: 0 for name in options.cell_name_to_ordering.keys() }
+    # sorted dict allow for sorted output of reordering_stats
+    ounter_cells_reordered_sorted: dict[ str, int ] = dict( sorted( counter_cells_reordered.items() ) )
+    # Reordering operations
+    for cell_id in range( new_mesh.GetNumberOfCells() ):
+        vtk_type: int = new_mesh.GetCellType( cell_id )
+        if vtk_type in useful_VTK_TYPEs:
+            if is_cell_to_reorder( float( all_cells_volume[ cell_id ] ), options ):
+                cell_name: str = VTK_TYPE_TO_NAME[ vtk_type ]
+                support_point_ids = vtkIdList()
+                cells.GetCellAtId( cell_id, support_point_ids )
+                new_support_point_ids: list[ int ] = list()
+                node_ordering: list[ int ] = options.cell_name_to_ordering[ cell_name ]
+                for i in range( len( node_ordering ) ):
+                    new_support_point_ids.append( support_point_ids.GetId( node_ordering[ i ] ) )
+                cells.ReplaceCellAtId( cell_id, to_vtk_id_list( new_support_point_ids ) )
+                ounter_cells_reordered_sorted[ cell_name ] += 1
+    # Calculation of stats
+    for cell_name_reordered, amount in ounter_cells_reordered_sorted.items():
+        if amount > 0:
+            reordering_stats[ "Types reordered" ].append( cell_name_reordered )
+            reordering_stats[ "Number of cells reordered" ].append( amount )
+            index_non_reordered: int = reordering_stats[ "Types non reordered" ].index( cell_name_reordered )
+            reordering_stats[ "Number of cells non reordered" ][ index_non_reordered ] -= amount
+            if reordering_stats[ "Number of cells non reordered" ][ index_non_reordered ] == 0:
+                reordering_stats[ "Types non reordered" ].pop( index_non_reordered )
+                reordering_stats[ "Number of cells non reordered" ].pop( index_non_reordered )
+    return ( new_mesh, reordering_stats )
 
 
 def __check( mesh, options: Options ) -> Result:
-    # The vtk cell type is an int and will be the key of the following mapping,
-    # that will point to the relevant permutation.
-    cell_type_to_ordering: Dict[ int, List[ int ] ] = options.cell_type_to_ordering
-    unchanged_cell_types: Set[ int ] = set()  # For logging purpose
-
-    # Preparing the output mesh by first keeping the same instance type.
-    output_mesh = mesh.NewInstance()
-    output_mesh.CopyStructure( mesh )
-    output_mesh.CopyAttributes( mesh )
-
-    # `output_mesh` now contains a full copy of the input mesh.
-    # We'll now modify the support nodes orderings in place if needed.
-    cells = output_mesh.GetCells()
-    for cell_idx in range( output_mesh.GetNumberOfCells() ):
-        cell_type: int = output_mesh.GetCell( cell_idx ).GetCellType()
-        new_ordering = cell_type_to_ordering.get( cell_type )
-        if new_ordering:
-            support_point_ids = vtkIdList()
-            cells.GetCellAtId( cell_idx, support_point_ids )
-            new_support_point_ids = []
-            for i, v in enumerate( new_ordering ):
-                new_support_point_ids.append( support_point_ids.GetId( new_ordering[ i ] ) )
-            cells.ReplaceCellAtId( cell_idx, to_vtk_id_list( new_support_point_ids ) )
-        else:
-            unchanged_cell_types.add( cell_type )
-    is_written_error = vtk_utils.write_mesh( output_mesh, options.vtk_output )
-    return Result( output=options.vtk_output.output if not is_written_error else "",
-                   unchanged_cell_types=frozenset( unchanged_cell_types ) )
+    output_mesh, reordering_stats = reorder_nodes_to_new_mesh( mesh, options )
+    write_mesh( output_mesh, options.vtk_output )
+    return Result( output=options.vtk_output.output, reordering_stats=reordering_stats )
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )
