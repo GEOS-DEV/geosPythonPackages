@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from geos.mesh.conversion import abaqus_converter
 
 
 def build_abaqus_converter_input_parser() -> argparse.ArgumentParser:
@@ -25,8 +26,6 @@ def main() -> None:
         output (str): Output mesh file name
         -v/--verbose (flag): Increase verbosity level
     """
-    from geosx_mesh_tools import abaqus_converter
-
     # Parse the user arguments
     parser = build_abaqus_converter_input_parser()
     args = parser.parse_args()
