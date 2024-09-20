@@ -227,31 +227,27 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
     return result
 
 
-def cells_points_coordinates( mesh: vtkUnstructuredGrid ) -> CellsPointsCoords:
-    """Map each cell id to a list of its points coordinates.
+def truncated_coordinates_with_id( mesh: vtkUnstructuredGrid, decimals: int = 3 ) -> dict[ Coordinates3D, int ]:
+    """Creates a mapping of truncated points coordinates with the their point id for every point of a mesh.
 
     Args:
         mesh (vtkUnstructuredGrid): An unstructured mesh.
+        decimals (int, optional): Number of decimals to keep for truncation. Defaults to 3.
 
     Returns:
-        dict[int, list[tuple[float]]]: {cell_id1: [(pt0_x, pt0_y, pt0_z), ...], ..., cell_idN: [...]}
-        for a mesh containing N cells.
+        dict[ Coordinates3D, int ]: { coords0: pt_id0, ..., coordsN: pt_idN }
     """
-    cells_points_coordinates: CellsPointsCoords = dict()
-    for i in range( mesh.GetNumberOfCells() ):
-        cell: vtkCell = mesh.GetCell( i )
-        cells_points_coordinates[ i ] = list()
-        cell_points = cell.GetPoints()
-        for v in range( cell.GetNumberOfPoints() ):
-            node_coordinates: Coordinates3D = cell_points.GetPoint( v )
-            # to avoid floating value approximations when comparing coordinates, we truncate them
-            truncated_coordinates: Coordinates3D = tuple( [ round( coord, 3 ) for coord in node_coordinates ] )
-            cells_points_coordinates[ i ].append( truncated_coordinates )
-    return cells_points_coordinates
+    points: vtkPoints = mesh.GetPoints()
+    coords_with_id: dict[ Coordinates3D, int ] = dict()
+    for point_id in range( points.GetNumberOfPoints() ):
+        pt_coords = points.GetPoint( point_id )
+        truncated_pt_coords = tuple( [ round( coord, decimals ) for coord in pt_coords ] )
+        coords_with_id[ truncated_pt_coords ] = point_id
+    return coords_with_id
 
 
-def link_new_cells_id_with_old_cells_id( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid ) -> IDMapping:
-    """After mapping each cell id to a list of its points coordinates for the old and new mesh,
+def link_new_cells_with_old_cells_id( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid ) -> IDMapping:
+    """After mapping each truncated point coordinates to a list of its points ids for the old and new mesh,
     it is possible to determine the link between old and new cell id by coordinates position.
 
     Args:
@@ -259,17 +255,28 @@ def link_new_cells_id_with_old_cells_id( old_mesh: vtkUnstructuredGrid, new_mesh
         new_mesh (vtkUnstructuredGrid): An unstructured mesh after splitting the old_mesh.
 
     Returns:
-        IDMapping: { new_cell_id: old_cell_id }
+        IDMapping: { new_cell_id: old_cell_id, ... }
     """
-    new_cell_ids_with_old_cell_ids: IDMapping = {}
-    cpc_old_mesh: CellsPointsCoords = cells_points_coordinates( old_mesh )
-    cpc_new_mesh: CellsPointsCoords = cells_points_coordinates( new_mesh )
-    for new_cell_id, new_coords in cpc_new_mesh.items():
-        for old_cell_id, old_coords in cpc_old_mesh.items():
-            if all( elem in new_coords for elem in old_coords ):
-                new_cell_ids_with_old_cell_ids[ new_cell_id ] = old_cell_id
+    truncated_coords_with_id_old: dict[ Coordinates3D, int ] = truncated_coordinates_with_id( old_mesh )
+    truncated_coords_with_id_new: dict[ Coordinates3D, int ] = truncated_coordinates_with_id( new_mesh )
+    # Every new_mesh by convention in this workflow is a mesh extracted from the old_mesh.
+    # So the number of elements is lower or equal in new mesh than in old mesh so we'd rather iterate over it
+    new_pts_to_old_pts_id: IDMapping = dict()
+    for coords, new_pt_id in truncated_coords_with_id_new.items():
+        old_pt_id: int = truncated_coords_with_id_old[ coords ]  # We can do that because new_mesh is from old_mesh
+        new_pts_to_old_pts_id[ new_pt_id ] = old_pt_id
+    # Now we have a link between point ids from the new_mesh to the old_mesh
+    # So we can now link the cells of new_mesh to the ones of old_mesh
+    new_cells_with_old_cells_id: IDMapping = dict()
+    for new_cell_id in range( new_mesh.GetNumberOfCells() ):
+        new_cell_pt_ids: tuple[ int ] = tuple( vtk_iter( new_mesh.GetCell( new_cell_id ).GetPointIds() ) )
+        old_cell_pt_ids: tuple[ int ] = tuple( [ new_pts_to_old_pts_id[ new_pt_id ] for new_pt_id in new_cell_pt_ids ] )
+        for old_cell_id in range( old_mesh.GetNumberOfCells() ):
+            pt_ids: tuple[ int ] = tuple( vtk_iter( old_mesh.GetCell( old_cell_id ).GetPointIds() ) )
+            if pt_ids == old_cell_pt_ids:  # the old cell was identified with the new cell
+                new_cells_with_old_cells_id[ new_cell_id ] = old_cell_id
                 break
-    return new_cell_ids_with_old_cell_ids
+    return new_cells_with_old_cells_id
 
 
 def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGrid, is_fracture_mesh: bool = False ):
@@ -289,7 +296,7 @@ def __copy_cell_data( old_mesh: vtkUnstructuredGrid, new_mesh: vtkUnstructuredGr
     # Copying the cell data.
     # The cells are the same, just their nodes support have changed.
     if is_fracture_mesh:
-        new_to_old_cells: IDMapping = link_new_cells_id_with_old_cells_id( old_mesh, new_mesh )
+        new_to_old_cells: IDMapping = link_new_cells_with_old_cells_id( old_mesh, new_mesh )
     input_cell_data = old_mesh.GetCellData()
     for i in range( input_cell_data.GetNumberOfArrays() ):
         input_array: vtkDataArray = input_cell_data.GetArray( i )
