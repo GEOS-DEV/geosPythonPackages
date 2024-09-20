@@ -222,7 +222,7 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
     # Reordering operations
     for cell_id in range( new_mesh.GetNumberOfCells() ):
         vtk_type: int = new_mesh.GetCellType( cell_id )
-        if vtk_type in useful_VTK_TYPEs:
+        if vtk_type in useful_VTK_TYPEs:  # only cell types specified are checked
             if is_cell_to_reorder( float( all_cells_volume[ cell_id ] ), options ):
                 cell_name: str = VTK_TYPE_TO_NAME[ vtk_type ]
                 point_ids_ordering: list[ int ] = valid_cell_point_ids_ordering( new_mesh.GetCell( cell_id ) )
