@@ -1,41 +1,32 @@
 import logging
 import random
-from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result
+from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result, NAME_TO_VTK_TYPE
 from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
-__CELL_NAME_WITH_NUMBER_NODES = {
-    "Tetrahedron": 4,
-    "Pyramid": 5,
-    "Wedge": 6,
-    "Hexahedron": 8,
-    "Prism5": 10,
-    "Prism6": 12
-}
+__CELL_NAMES = "cell_names"
+__CELL_NAMES_CHOICES = list( NAME_TO_VTK_TYPE.keys() )
 
 __VOLUME_TO_REORDER = "volume_to_reorder"
-__VOLUME_TO_REORDER_DEFAULT = "all"
+__VOLUME_TO_REORDER_DEFAULT = "negative"
 __VOLUME_TO_REORDER_CHOICES = [ "all", "positive", "negative" ]
 
 
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
-    for element_name, size in __CELL_NAME_WITH_NUMBER_NODES.items():
-        tmp = list( range( size ) )
-        random.Random( 4 ).shuffle( tmp )
-        p.add_argument( '--' + element_name,
-                        type=str,
-                        metavar=",".join( map( str, tmp ) ),
-                        default=None,
-                        required=False,
-                        help=f"[list of integers]: node permutation for \"{element_name}\"." )
+    p.add_argument( '--' + __CELL_NAMES,
+                    type=str,
+                    metavar=", ".join( map( str, __CELL_NAMES_CHOICES ) ),
+                    default=", ".join( map( str, __CELL_NAMES_CHOICES ) ),
+                    help=f"[list of str]: Cell names that can be reordered in your grid. You can use multiple names." +
+                    "Defaults to all cell names being used."  )
     p.add_argument( '--' + __VOLUME_TO_REORDER,
                     type=str,
                     default=__VOLUME_TO_REORDER_DEFAULT,
-                    metavar=",".join( map( str, __VOLUME_TO_REORDER_CHOICES ) ),
-                    required=True,
+                    metavar=", ".join( __VOLUME_TO_REORDER_CHOICES ),
                     help="[str]: Select which element volume is invalid and needs reordering." +
                     " 'all' will allow reordering of nodes for every element, regarding of their volume." +
-                    " 'positive' or 'negative' will only reorder the element with the corresponding volume." )
+                    " 'positive' or 'negative' will only reorder the element with the corresponding volume." +
+                    " Defaults to 'negative'."  )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
@@ -45,22 +36,19 @@ def convert( parsed_options ) -> Options:
     :param options_str: Parsed cli options.
     :return: Options instance.
     """
-    cell_name_to_ordering: dict[ str, list[ int ] ] = {}
-    for element_name, size in __CELL_NAME_WITH_NUMBER_NODES.items():
-        raw_mapping = parsed_options[ element_name ]
-        if raw_mapping:
-            nodes_ordering = tuple( map( int, raw_mapping.split( "," ) ) )
-            if not set( nodes_ordering ) == set( range( size ) ):
-                err_msg: str = f"Permutation {raw_mapping} for type {element_name} is not valid."
-                logging.error( err_msg )
-                raise ValueError( err_msg )
-            cell_name_to_ordering[ element_name ] = nodes_ordering
+    raw_mapping = parsed_options[ __CELL_NAMES ]
+    cell_names_to_reorder = tuple( raw_mapping.split( "," ) )
+    for cell_name in cell_names_to_reorder:
+        if cell_name not in __CELL_NAMES_CHOICES:
+            raise ValueError( f"Please choose names between these options for --{__CELL_NAMES_CHOICES}:" +
+                              f" {__CELL_NAMES_CHOICES}." )
     vtk_output = vtk_output_parsing.convert( parsed_options )
     volume_to_reorder: str = parsed_options[ __VOLUME_TO_REORDER ]
     if volume_to_reorder.lower() not in __VOLUME_TO_REORDER_CHOICES:
-        raise ValueError( f"Please use one of these options for --volume_to_reorder: {__VOLUME_TO_REORDER_CHOICES}." )
+        raise ValueError( f"Please use one of these options for --{__VOLUME_TO_REORDER}:" +
+                          f" {__VOLUME_TO_REORDER_CHOICES}." )
     return Options( vtk_output=vtk_output,
-                    cell_name_to_ordering=cell_name_to_ordering,
+                    cell_names_to_reorder=cell_names_to_reorder,
                     volume_to_reorder=volume_to_reorder )
 
 
