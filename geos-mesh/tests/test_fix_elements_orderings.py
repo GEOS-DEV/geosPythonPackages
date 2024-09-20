@@ -49,14 +49,15 @@ test_file: VtkOutput = VtkOutput( filepath_non_ordered_mesh, True )
 Dict used to apply false nodes orderings for test purposes
 """
 to_change_order: dict[ int, list[ int ] ] = {
-    "Hexahedron": [ 0, 3, 2, 1, 4, 5, 6, 7 ],
-    "Tetrahedron": [ 0, 2, 1, 3 ],
-    "Pyramid": [ 0, 3, 2, 1, 4 ],
-    "Wedge": [ 0, 2, 1, 3, 4, 5 ],
-    "Prism5": [ 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ],
-    "Prism6": [ 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 ]
+    "Hexahedron": ( 0, 3, 2, 1, 4, 5, 6, 7 ),
+    "Tetrahedron": ( 0, 2, 1, 3 ),
+    "Pyramid": ( 0, 3, 2, 1, 4 ),
+    "Wedge": ( 0, 2, 1, 3, 4, 5 ),
+    "Prism5": ( 0, 4, 3, 2, 1, 5, 6, 7, 8, 9 ),
+    "Prism6": ( 0, 1, 4, 2, 3, 5, 11, 10, 9, 8, 7, 6 )
 }
 to_change_order = dict( sorted( to_change_order.items() ) )
+cell_names = list( VTK_TYPE_TO_NAME.values() )
 """
 1 Hexahedron: no invalid ordering
 """
@@ -707,11 +708,11 @@ class TestClass:
         for grid, needs_ordering in grid_needs_ordering.items():
             volumes = feo.compute_mesh_cells_volume( grid )
             for i in range( len( volumes ) ):
-                options = opt( out, to_change_order, "negative" )
+                options = opt( out, cell_names, "negative" )
                 assert feo.is_cell_to_reorder( volumes[ i ], options ) == needs_ordering[ i ]
-                options = opt( out, to_change_order, "positive" )
+                options = opt( out, cell_names, "positive" )
                 assert feo.is_cell_to_reorder( volumes[ i ], options ) != needs_ordering[ i ]
-                options = opt( out, to_change_order, "all" )
+                options = opt( out, cell_names, "all" )
                 assert feo.is_cell_to_reorder( volumes[ i ], options ) == True
 
     def test_get_cell_types_and_number( self ):
@@ -738,7 +739,7 @@ class TestClass:
             feo.get_cell_types_and_number( voxels_grid )
 
     def test_reorder_nodes_to_new_mesh( self ):
-        options = opt( out, to_change_order, "negative" )
+        options = opt( out, cell_names, "negative" )
         # single element grids except voxels because it is an invalid cell type for GEOS
         grid_cell_type = {
             hexahedrons_grid_invalid: VTK_HEXAHEDRON,
@@ -779,14 +780,9 @@ class TestClass:
         write_mesh( mix_grid_invalid, test_file )
         invalidTest = False
         command = [
-            "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_file.output, "fix_elements_orderings", "--Hexahedron",
-            str( to_change_order[ "Hexahedron" ] ).replace( "[", "" ).replace( "]", "" ), "--Tetrahedron",
-            str( to_change_order[ "Tetrahedron" ] ).replace( "[", "" ).replace( "]", "" ), "--Pyramid",
-            str( to_change_order[ "Pyramid" ] ).replace( "[", "" ).replace( "]", "" ), "--Wedge",
-            str( to_change_order[ "Wedge" ] ).replace( "[", "" ).replace( "]", "" ), "--Prism5",
-            str( to_change_order[ "Prism5" ] ).replace( "[", "" ).replace( "]", "" ), "--Prism6",
-            str( to_change_order[ "Prism6" ] ).replace( "[", "" ).replace( "]", "" ), "--volume_to_reorder", "negative",
-            "--data-mode", "binary", "--output", filepath_reordered_mesh
+            "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_file.output, "fix_elements_orderings", "--cell_names",
+            ",".join( map( str, cell_names ) ), "--volume_to_reorder", "negative", "--data-mode", "binary", "--output",
+            filepath_reordered_mesh
         ]
         try:
             result = subprocess.run( command, shell=True, stderr=subprocess.PIPE, universal_newlines=True )

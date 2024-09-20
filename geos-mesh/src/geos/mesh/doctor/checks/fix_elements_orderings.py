@@ -1,18 +1,18 @@
-from dataclasses import dataclass
 import numpy as np
 import logging
+from dataclasses import dataclass
+from itertools import permutations
 from vtk import vtkCellSizeFilter
-from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE,
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkCell, VTK_HEXAHEDRON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE,
                                             VTK_PENTAGONAL_PRISM, VTK_HEXAGONAL_PRISM )
-from .vtk_utils import VtkOutput, to_vtk_id_list, write_mesh, read_mesh
+from geos.mesh.doctor.checks.vtk_utils import VtkOutput, vtk_iter, to_vtk_id_list, write_mesh, read_mesh
 
 
 @dataclass( frozen=True )
 class Options:
     vtk_output: VtkOutput
-    cell_name_to_ordering: dict[ str, list[ int ] ]
+    cell_names_to_reorder: tuple[ str ]
     volume_to_reorder: str
 
 
@@ -103,6 +103,90 @@ def is_cell_to_reorder( cell_volume: str, options: Options ) -> bool:
     return False
 
 
+def are_face_nodes_counterclockwise( face: any ) -> bool:
+    """Checks if the nodes of a face are ordered counterclockwise when looking at the plan created by the face.
+
+    Args:
+        face (any): Face of a vtkCell.
+
+    Returns:
+        bool: True if counterclockwise, False instead.
+    """
+    face_points = face.GetPoints()
+    number_points = face_points.GetNumberOfPoints()
+    if number_points < 3:
+        err_msg = f"The face has less than 3 nodes which is invalid."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
+    # first calculate the normal vector of the face
+    a = np.array( face_points.GetPoint( 0 ) )
+    b = np.array( face_points.GetPoint( 1 ) )
+    c = np.array( face_points.GetPoint( 2 ) )
+    AB = b - a
+    AC = c - a
+    normal = np.cross( AB, AC )
+
+    # then calculate the vector cross products sum of all points of the face with a random point P
+    # from discussion https://math.stackexchange.com/questions/2152623/determine-the-order-of-a-3d-polygon
+    P = np.array( [ 0.0, 0.0, 0.0 ] )  # P position does not change the value of sum
+    all_points = [ np.array( face_points.GetPoint( v ) ) for v in range( number_points ) ]
+    vector_sum = np.array( [ 0.0, 0.0, 0.0 ] )
+    for i in range( number_points ):
+        PAi = all_points[ i % number_points ] - P
+        PAiplus1 = all_points[ ( i + 1 ) % number_points ] - P
+        vector_sum += np.cross( PAi, PAiplus1 )
+    vector_sum = vector_sum / 2  # needs to be half
+
+    # if dot product is positive, the nodes are ordered counterclockwise
+    if np.dot( vector_sum, normal ) > 0.0:
+        return True
+    return False
+
+
+def valid_cell_point_ids_ordering( cell: vtkCell ) -> list[ int ]:
+    """Returns the valid order of point ids of a cell that respect counterclockwise convention of each face.
+
+    Args:
+        cell (vtkCell): A cell of vtk grid.
+
+    Raises:
+        ValueError: "No node ids permutation made the face nodes to be ordered counterclockwise."
+
+    Returns:
+        list[ int ]: [ pt_id0, pt_id2, pt_id1, ..., pt_idN ]
+    """
+    initial_ids_order: list[ int ] = list( vtk_iter( cell.GetPointIds() ) )
+    valid_points_id: list[ int ] = initial_ids_order.copy()
+
+    for face_id in range( cell.GetNumberOfFaces() ):
+        face = cell.GetFace( face_id )
+        if are_face_nodes_counterclockwise( face ):
+            continue  # the face nodes respect the convention so continue to next face
+
+        reordered = False
+        initial_ids: list[ int ] = [ face.GetPointId( i ) for i in range( face.GetNumberOfPoints() ) ]
+        initial_coords: list[ float ] = [ face.GetPoints().GetPoint( v ) for v in range( face.GetNumberOfPoints() ) ]
+        for permutation_ids in permutations( initial_ids ):
+            for i, node_id in enumerate( permutation_ids ):
+                face.GetPointIds().SetId( i, node_id )
+                face.GetPoints().SetPoint( i, initial_coords[ initial_ids.index( node_id ) ] )
+
+            if are_face_nodes_counterclockwise( face ):  # the correct permutation was found
+                for j, initial_id in enumerate( initial_ids ):
+                    if initial_id != permutation_ids[ j ]:
+                        valid_points_id[ initial_ids_order.index( initial_id ) ] = permutation_ids[ j ]
+                reordered = True
+                break
+
+        if not reordered:
+            err_msg = ( f"For face with nodes id '{initial_ids}', that corresponds to coordinates '{initial_coords}'" +
+                        ", no node ids permutation made the face nodes to be ordered counterclockwise." )
+            logging.error( err_msg )
+            raise ValueError( err_msg )
+
+    return valid_points_id
+
+
 def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple:
     """From an old mesh, creates a new one where certain cell nodes are reordered to obtain a correct volume.
 
@@ -118,7 +202,7 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
     names_with_totals: dict[ str, int ] = { n: v for n, v in zip( unique_cell_names, total_per_cell_types ) }
     # sorted dict allow for sorted output of reordering_stats
     names_with_totals_sorted: dict[ str, int ] = dict( sorted( names_with_totals.items() ) )
-    useful_VTK_TYPEs: list[ int ] = [ NAME_TO_VTK_TYPE[ name ] for name in options.cell_name_to_ordering.keys() ]
+    useful_VTK_TYPEs: list[ int ] = [ NAME_TO_VTK_TYPE[ name ] for name in options.cell_names_to_reorder ]
     all_cells_volume: np.array = compute_mesh_cells_volume( old_mesh )
     # a new mesh with the same data is created from the old mesh
     new_mesh: vtkDataSet = old_mesh.NewInstance()
@@ -132,7 +216,7 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
         "Types non reordered": list( names_with_totals_sorted.keys() ),
         "Number of cells non reordered": list( names_with_totals_sorted.values() )
     }
-    counter_cells_reordered: dict[ str, int ] = { name: 0 for name in options.cell_name_to_ordering.keys() }
+    counter_cells_reordered: dict[ str, int ] = { name: 0 for name in options.cell_names_to_reorder }
     # sorted dict allow for sorted output of reordering_stats
     ounter_cells_reordered_sorted: dict[ str, int ] = dict( sorted( counter_cells_reordered.items() ) )
     # Reordering operations
@@ -141,13 +225,8 @@ def reorder_nodes_to_new_mesh( old_mesh: vtkDataSet, options: Options ) -> tuple
         if vtk_type in useful_VTK_TYPEs:
             if is_cell_to_reorder( float( all_cells_volume[ cell_id ] ), options ):
                 cell_name: str = VTK_TYPE_TO_NAME[ vtk_type ]
-                support_point_ids = vtkIdList()
-                cells.GetCellAtId( cell_id, support_point_ids )
-                new_support_point_ids: list[ int ] = list()
-                node_ordering: list[ int ] = options.cell_name_to_ordering[ cell_name ]
-                for i in range( len( node_ordering ) ):
-                    new_support_point_ids.append( support_point_ids.GetId( node_ordering[ i ] ) )
-                cells.ReplaceCellAtId( cell_id, to_vtk_id_list( new_support_point_ids ) )
+                point_ids_ordering: list[ int ] = valid_cell_point_ids_ordering( new_mesh.GetCell( cell_id ) )
+                cells.ReplaceCellAtId( cell_id, to_vtk_id_list( point_ids_ordering ) )
                 ounter_cells_reordered_sorted[ cell_name ] += 1
     # Calculation of stats
     for cell_name_reordered, amount in ounter_cells_reordered_sorted.items():
