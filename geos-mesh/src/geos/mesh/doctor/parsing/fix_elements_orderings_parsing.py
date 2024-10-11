@@ -1,5 +1,4 @@
 import logging
-import random
 from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result, NAME_TO_VTK_TYPE
 from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
 
@@ -17,16 +16,16 @@ def fill_subparser( subparsers ) -> None:
                     type=str,
                     metavar=", ".join( map( str, __CELL_NAMES_CHOICES ) ),
                     default=", ".join( map( str, __CELL_NAMES_CHOICES ) ),
-                    help=f"[list of str]: Cell names that can be reordered in your grid. You can use multiple names." +
-                    "Defaults to all cell names being used." )
+                    help=( "[list of str]: Cell names that can be reordered in your grid. You can use multiple names." +
+                           " Defaults to all cell names being used." ) )
     p.add_argument( '--' + __VOLUME_TO_REORDER,
                     type=str,
                     default=__VOLUME_TO_REORDER_DEFAULT,
                     metavar=", ".join( __VOLUME_TO_REORDER_CHOICES ),
-                    help="[str]: Select which element volume is invalid and needs reordering." +
-                    " 'all' will allow reordering of nodes for every element, regarding of their volume." +
-                    " 'positive' or 'negative' will only reorder the element with the corresponding volume." +
-                    " Defaults to 'negative'." )
+                    help=( "[str]: Select which element volume is invalid and needs reordering." +
+                           " 'all' will allow reordering of nodes for every element, regarding of their volume." +
+                           " 'positive' or 'negative' will only reorder the element with the corresponding volume." +
+                           " Defaults to 'negative'." ) )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
@@ -40,7 +39,7 @@ def convert( parsed_options ) -> Options:
     cell_names_to_reorder = tuple( raw_mapping.split( "," ) )
     for cell_name in cell_names_to_reorder:
         if cell_name not in __CELL_NAMES_CHOICES:
-            raise ValueError( f"Please choose names between these options for --{__CELL_NAMES_CHOICES}:" +
+            raise ValueError( f"Please choose names between these options for --{__CELL_NAMES}:" +
                               f" {__CELL_NAMES_CHOICES}." )
     vtk_output = vtk_output_parsing.convert( parsed_options )
     volume_to_reorder: str = parsed_options[ __VOLUME_TO_REORDER ]
@@ -57,13 +56,26 @@ def display_results( options: Options, result: Result ):
         logging.info( f"New mesh was written to file '{result.output}'" )
     else:
         logging.info( "No output file was written." )
-    logging.info( f"Number of cells reordered:" )
-    logging.info( f"\tCellType\tNumber" )
-    for i in range( len( result.reordering_stats[ "Types reordered" ] ) ):
-        logging.info( f"\t{result.reordering_stats[ 'Types reordered' ][ i ]}" +
-                      f"\t\t{result.reordering_stats[ 'Number of cells reordered' ][ i ]}" )
-    logging.info( f"Number of cells non reordered:" )
-    logging.info( f"\tCellType\tNumber" )
-    for i in range( len( result.reordering_stats[ "Types non reordered" ] ) ):
-        logging.info( f"\t{result.reordering_stats[ 'Types non reordered' ][ i ]}" +
-                      f"\t\t{result.reordering_stats[ 'Number of cells non reordered' ][ i ]}" )
+    if len( result.reordering_stats[ "Types reordered" ] ) > 0:
+        logging.info( "Number of cells reordered:" )
+        logging.info( "\tCellType\tNumber" )
+        for i in range( len( result.reordering_stats[ "Types reordered" ] ) ):
+            type_r = result.reordering_stats[ "Types reordered" ][ i ]
+            number = result.reordering_stats[ "Number of cells reordered" ][ i ]
+            logging.info( f"\t{type_r}\t\t{number}" )
+    if len( result.reordering_stats[ "Types non reordered because ordering is already correct" ] ) > 0:
+        logging.info( "Number of cells non reordered because ordering is already correct:" )
+        logging.info( "\tCellType\tNumber" )
+        for i in range( len( result.reordering_stats[ "Types non reordered because ordering is already correct" ] ) ):
+            type_nr = result.reordering_stats[ "Types non reordered because ordering is already correct" ][ i ]
+            number = result.reordering_stats[ "Number of cells non reordered because ordering is already correct" ][ i ]
+            logging.info( f"\t{type_nr}\t\t{number}" )
+    if len( result.reordering_stats[ "Types non reordered because of errors" ] ) > 0:
+        logging.info( "Number of cells non reordered because of errors:" )
+        logging.info( "\tCellType\tNumber" )
+        for i in range( len( result.reordering_stats[ "Types non reordered because of errors" ] ) ):
+            type_nr = result.reordering_stats[ "Types non reordered because of errors" ][ i ]
+            number = result.reordering_stats[ "Number of cells non reordered because of errors" ][ i ]
+            err_msg = result.reordering_stats[ "Error message given" ][ i ]
+            logging.info( f"\t{type_nr}\t\t{number}" )
+            logging.info( f"\tError message: {err_msg}" )
