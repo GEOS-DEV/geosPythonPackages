@@ -1,25 +1,11 @@
-from dataclasses import dataclass
 import os.path
 import logging
-import sys
-from typing import (
-    Any,
-    Iterator,
-    Optional,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
-from vtkmodules.vtkIOLegacy import (
-    vtkUnstructuredGridWriter,
-    vtkUnstructuredGridReader,
-)
-from vtkmodules.vtkIOXML import (
-    vtkXMLUnstructuredGridReader,
-    vtkXMLUnstructuredGridWriter,
-)
+from dataclasses import dataclass
+from typing import Iterator, Optional
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter
 
 
 @dataclass( frozen=True )
@@ -36,7 +22,7 @@ def to_vtk_id_list( data ) -> vtkIdList:
     return result
 
 
-def vtk_iter( l ) -> Iterator[ Any ]:
+def vtk_iter( l ) -> Iterator[ any ]:
     """
     Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins python containers.
     :param l: A vtk container.
@@ -48,6 +34,38 @@ def vtk_iter( l ) -> Iterator[ Any ]:
     elif hasattr( l, "GetNumberOfTypes" ):
         for i in range( l.GetNumberOfTypes() ):
             yield l.GetCellType( i )
+
+
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
+    """Checks if a mesh contains at least a data arrays within its cell, field or point data
+    having a certain name. If so, returns True, else False.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured mesh.
+        invalid_fields (list[str]): Field name of an array in any data from the data.
+
+    Returns:
+        bool: True if one field found, else False.
+    """
+    # Check the cell data fields
+    cell_data = mesh.GetCellData()
+    for i in range( cell_data.GetNumberOfArrays() ):
+        if cell_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
+            return True
+    # Check the field data fields
+    field_data = mesh.GetFieldData()
+    for i in range( field_data.GetNumberOfArrays() ):
+        if field_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
+            return True
+    # Check the point data fields
+    point_data = mesh.GetPointData()
+    for i in range( point_data.GetNumberOfArrays() ):
+        if point_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
+            return True
+    return False
 
 
 def __read_vtk( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
@@ -83,6 +101,10 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         If first guess does not work, eventually all the others reader available will be tested.
     :return: A unstructured grid.
     """
+    if not os.path.exists( vtk_input_file ):
+        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\". Dying..."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
     file_extension = os.path.splitext( vtk_input_file )[ -1 ]
     extension_to_reader = { ".vtk": __read_vtk, ".vtu": __read_vtu }
     # Testing first the reader that should match
@@ -96,8 +118,9 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         if output_mesh:
             return output_mesh
     # No reader did work. Dying.
-    logging.critical( f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..." )
-    sys.exit( 1 )
+    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..."
+    logging.error( err_msg )
+    raise ValueError( err_msg )
 
 
 def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
@@ -135,6 +158,7 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     else:
         # No writer found did work. Dying.
-        logging.critical( f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..." )
-        sys.exit( 1 )
+        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
