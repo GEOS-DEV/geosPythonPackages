@@ -1,11 +1,27 @@
+import os
+import re
+import logging
+import subprocess
 import numpy as np
-
+from geos.mesh.doctor.mesh_doctor import MESH_DOCTOR_FILEPATH
 from geos.mesh.doctor.checks import mesh_stats as ms
 from geos.mesh.doctor.checks.generate_cube import Options, FieldInfo, __build
-from geos.mesh.doctor.checks.vtk_utils import VtkOutput
+from geos.mesh.doctor.checks.vtk_utils import VtkOutput, write_mesh
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
+
+"""
+For creation of output test meshes
+"""
+current_file_path: str = __file__
+dir_name: str = os.path.dirname( current_file_path )
+pattern_test: str = "to_check_mesh"
+filepath_mesh_for_stats: str = os.path.join( dir_name, pattern_test + ".vtu" )
+test_mesh_for_stats: VtkOutput = VtkOutput( filepath_mesh_for_stats, True )
+"""
+Grids for stats tests
+"""
 # First mesh: no anomalies to look for
 out: VtkOutput = VtkOutput( "test", False )
 field0: FieldInfo = FieldInfo( "scalar_cells", 1, "CELLS" )
@@ -109,6 +125,63 @@ for i in range( len( coords_new_hex ) ):
 cube4.InsertNextCell( hex.GetCellType(), hex.GetPointIds() )
 
 
+# Last mesh: test mesh for output and check of execution of mesh_stats
+f_poro: FieldInfo = FieldInfo( "POROSITY", 1, "CELLS" )
+f_perm: FieldInfo = FieldInfo( "PERMEABILITY", 3, "CELLS" )
+f_density: FieldInfo = FieldInfo( "DENSITY", 1, "CELLS" )
+f_pressure: FieldInfo = FieldInfo( "PRESSURE", 1, "CELLS" )
+f_temp: FieldInfo = FieldInfo( "TEMPERATURE", 1, "POINTS" )
+f_displacement: FieldInfo = FieldInfo( "DISPLACEMENT", 3, "POINTS" )
+options_cube_output: Options = Options( vtk_output=out,
+                                        generate_cells_global_ids=True,
+                                        generate_points_global_ids=True,
+                                        xs=np.array( [ 0.0, 1.0, 2.0, 3.0 ] ),
+                                        ys=np.array( [ 0.0, 1.0, 2.0, 3.0 ] ),
+                                        zs=np.array( [ 0.0, 1.0, 2.0, 3.0 ] ),
+                                        nxs=[ 1, 1, 1 ],
+                                        nys=[ 1, 1, 1 ],
+                                        nzs=[ 1, 1, 1 ],
+                                        fields=[ f_poro, f_perm, f_density, f_pressure, f_temp, f_displacement ] )
+cube_output: vtkUnstructuredGrid = __build( options_cube_output )
+number_cells: int = cube_output.GetNumberOfCells()
+number_points: int = cube_output.GetNumberOfPoints()
+a_poro: np.array = np.linspace( 0, 1, number_cells )
+a_perm: np.array = np.empty( ( number_cells, f_perm.dimension ) )
+for i in range( f_perm.dimension ):
+    a_perm[:, i] = np.linspace( 1e-14 * 10**i, 1e-12 * 10**i, number_cells )
+a_density: np.array = np.linspace( 500, 40000, number_cells )
+a_pressure: np.array = np.linspace( 1e5, 1e7, number_cells )
+a_temp: np.array = np.linspace( 1e2, 5e3, number_points )
+a_temp = a_temp.reshape( number_points, 1 )
+a_displacement: np.array = np.empty( ( number_points, f_displacement.dimension ) )
+for i in range( f_displacement.dimension ):
+    a_displacement[:, i] = np.linspace( 1e-4 * 10**i, 1e-2 * 10**i, number_points )
+for array in [ a_density, a_pressure, a_poro ]:
+    array = array.reshape( number_cells, 1 )
+
+vtk_a_poro = numpy_to_vtk( a_poro )
+vtk_a_perm = numpy_to_vtk( a_perm )
+vtk_a_density = numpy_to_vtk( a_density )
+vtk_a_pressure = numpy_to_vtk( a_pressure )
+vtk_a_temp = numpy_to_vtk( a_temp )
+vtk_a_displacement = numpy_to_vtk( a_displacement )
+vtk_a_poro.SetName( f_poro.name )
+vtk_a_perm.SetName( f_perm.name )
+vtk_a_density.SetName( f_density.name + "_invalid" )
+vtk_a_pressure.SetName( f_pressure.name )
+vtk_a_temp.SetName( f_temp.name + "_invalid" )
+vtk_a_displacement.SetName( f_displacement.name )
+
+cell_data_output = cube_output.GetCellData()
+point_data_output = cube_output.GetPointData()
+cell_data_output.AddArray( vtk_a_poro )
+cell_data_output.AddArray( vtk_a_perm )
+cell_data_output.AddArray( vtk_a_density )
+cell_data_output.AddArray( vtk_a_pressure )
+point_data_output.AddArray( vtk_a_temp )
+point_data_output.AddArray( vtk_a_displacement )
+
+
 class TestClass:
 
     def test_get_cell_types_and_counts( self ):
@@ -195,3 +268,77 @@ class TestClass:
         expected2: np.array = np.ones( ( 9, 1 ), dtype=int ) * 3
         expected2[ 8 ] = 0
         assert np.array_equal( result2, expected2 )
+
+
+    def test_mesh_stats_execution( self ):
+        write_mesh( cube_output, test_mesh_for_stats )
+        invalidTest = False
+        command = [
+            "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_mesh_for_stats.output, "mesh_stats", "--write_stats",
+            "0", "--output", dir_name, "--disconnected", "0", "--field_values", "0"
+        ]
+        try:
+            result = subprocess.run( command, shell=True, stderr=subprocess.PIPE, universal_newlines=True )
+            os.remove( test_mesh_for_stats.output )
+            stderr = result.stderr
+            assert result.returncode == 0
+            raw_stderr = r"{}".format( stderr )
+            pattern = r"\[.*?\]\[.*?\] (.*)"
+            matches = re.findall( pattern, raw_stderr )
+            no_log = "\n".join( matches )
+            mesh_output_stats: str = no_log[ no_log.index( "The mesh has" ): ]
+            # yapf: disable
+            expected_stats: str = ( "The mesh has 27 cells and 64 points.\n" +
+                                    "There are 1 different types of cells in the mesh:\n" +
+                                    "\tHex\t\t(27 cells)\n" +
+                                    "Number of cells that have exactly N neighbors:\n" +
+                                    "\tNeighbors\tNumber of cells concerned\n" +
+                                    "\t3\t\t8\n" +
+                                    "\t4\t\t12\n" +
+                                    "\t5\t\t6\n" +
+                                    "\t6\t\t1\n" +
+                                    "Number of nodes being shared by exactly N cells:\n" +
+                                    "\tCells\t\tNumber of nodes\n" +
+                                    "\t8\t\t8\n" +
+                                    "\t1\t\t8\n" +
+                                    "\t2\t\t24\n" +
+                                    "\t4\t\t24\n" +
+                                    "Number of disconnected cells in the mesh: 0\n" +
+                                    "Number of disconnected nodes in the mesh: 0\n" +
+                                    "The domain is contained in:\n" +
+                                    "\t0.0 <= x <= 3.0\n" +
+                                    "\t0.0 <= y <= 3.0\n" +
+                                    "\t0.0 <= z <= 3.0\n" +
+                                    "Does the mesh have global point ids: True\n" +
+                                    "Does the mesh have global cell ids: True\n" +
+                                    "Number of fields data containing NaNs values: 0\n" +
+                                    "There are 5 scalar fields from the CellData:\n" +
+                                    "\tPOROSITY           min = 0.0   max = 1.0\n" +
+                                    "\tDENSITY            min = 1.0   max = 1.0\n" +
+                                    "\tPRESSURE           min = 100000.0   max = 10000000.0\n" +
+                                    "\tGLOBAL_IDS_CELLS   min = 0.0   max = 26.0\n" +
+                                    "\tDENSITY_invalid    min = 500.0   max = 40000.0\n" +
+                                    "There are 1 vector/tensor fields from the CellData:\n" +
+                                    "\tPERMEABILITY   min = [1e-14, 1e-13, 1e-12]   max = [1e-12, 1e-11, 1e-10]\n" +
+                                    "There are 3 scalar fields from the PointData:\n" +
+                                    "\tTEMPERATURE           min = 1.0   max = 1.0\n" +
+                                    "\tGLOBAL_IDS_POINTS     min = 0.0   max = 63.0\n" +
+                                    "\tTEMPERATURE_invalid   min = 100.0   max = 5000.0\n" +
+                                    "There are 1 vector/tensor fields from the PointData:\n" +
+                                    "\tDISPLACEMENT   min = [0.0001, 0.001, 0.01]   max = [0.01, 0.1, 1.0]\n" +
+                                    "There are 0 scalar fields from the FieldData:\n" +
+                                    "There are 0 vector/tensor fields from the FieldData:\n" +
+                                    "Unexpected range of values for vector/tensor fields from the CellData:\n" +
+                                    "DENSITY_invalid expected to be between 0.0 and 25000.0.\n" +
+                                    "Unexpected range of values for vector/tensor fields from the PointData:\n" +
+                                    "TEMPERATURE_invalid expected to be between 0.0 and 2000.0.\n" +
+                                    "Unexpected range of values for vector/tensor fields from the FieldData:" )
+            # yapf: enable
+            assert mesh_output_stats == expected_stats
+        except Exception as e:
+            logging.error( "Invalid command input. Test has failed." )
+            logging.error( e )
+            invalidTest = True
+
+        if invalidTest:
+            raise ValueError( "test_mesh_stats_execution has failed." )

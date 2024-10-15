@@ -118,7 +118,7 @@ def get_cell_types_and_counts( mesh: vtkUnstructuredGrid ) -> tuple[ int, int, l
     distinct_array_types = mesh.GetDistinctCellTypesArray()
     number_cell_types: int = distinct_array_types.GetNumberOfTuples()
     # Get the different cell types in the mesh
-    cell_types: list[ str ] = []
+    cell_types: list[ str ] = list()
     for cell_type in range( number_cell_types ):
         cell_types.append( vtk_utils.vtkid_to_string( distinct_array_types.GetTuple( cell_type )[ 0 ] ) )
     # Counts how many of each type are present
@@ -152,7 +152,7 @@ def get_number_cells_per_nodes( mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
 
 
 def summary_number_cells_per_nodes( number_cells_per_nodes: dict[ int, int ] ) -> dict[ int, int ]:
-    """Obtain the number of nodes that have X number of cells.
+    """Obtain the number of nodes that are a node of X number of cells.
 
     Args:
         number_cells_per_nodes (dict[ int, int ]): { point_id0: 8, ..., point_idN: 4 }
@@ -223,27 +223,34 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
         componentType = "point"
         logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
 
-    scalar_names: list[ str ] = []
-    scalar_min_values: list[ np.generic ] = []
-    scalar_max_values: list[ np.generic ] = []
-    tensor_names: list[ str ] = []
-    tensor_min_values: list[ ArrayGeneric ] = []
-    tensor_max_values: list[ ArrayGeneric ] = []
+    scalar_names: list[ str ] = list()
+    scalar_min_values: list[ float] = list()
+    scalar_max_values: list[ float] = list()
+    tensor_names: list[ str ] = list()
+    tensor_min_values: list[ list[ float ] ] = list()
+    tensor_max_values: list[ list[ float ] ] = list()
 
     data_to_use = { "cell": mesh.GetCellData, "point": mesh.GetPointData, "field": mesh.GetFieldData }
     data = data_to_use[ componentType ]()
     for i in range( data.GetNumberOfArrays() ):
         data_array = data.GetArray( i )
-        data_array_name = data_array.GetName()
-        data_np_array = vtk_to_numpy( data_array )
-        if data_array.GetNumberOfComponents() == 1:  # assumes scalar cell data for max and min
+        data_array_name: str = data_array.GetName()
+        number_components: int = data_array.GetNumberOfComponents()
+        if number_components == 1:  # assumes scalar cell data for max and min
             scalar_names.append( data_array_name )
-            scalar_max_values.append( data_np_array.max() )
-            scalar_min_values.append( data_np_array.min() )
+            min_value, max_value = data_array.GetRange()
+            scalar_min_values.append( min_value )
+            scalar_max_values.append( max_value )
         else:
             tensor_names.append( data_array_name )
-            tensor_max_values.append( data_np_array.max( axis=0 ) )
-            tensor_min_values.append( data_np_array.min( axis=0 ) )
+            min_values: list[ float ] = list()
+            max_values: list[ float ] = list()
+            for component_index in range( number_components ):
+                min_value, max_value = data_array.GetRange( component_index )
+                min_values.append( min_value )
+                max_values.append( max_value )
+            tensor_min_values.append( min_values )
+            tensor_max_values.append( max_values )
 
     return MeshComponentData( componentType=componentType,
                               scalar_names=scalar_names,
@@ -299,7 +306,7 @@ def get_disconnected_nodes_id( mesh: vtkUnstructuredGrid ) -> list[ int ]:
     Returns:
         list[ int ]: [nodeId0, nodeId23, ..., nodeIdM]
     """
-    disconnected_nodes_id: list[ int ] = []
+    disconnected_nodes_id: list[ int ] = list()
     connectivity = mesh.GetCells().GetConnectivityArray()
     connectivity_unique_points: set = set()
     for i in range( connectivity.GetNumberOfValues() ):
@@ -343,10 +350,10 @@ def get_cell_faces_node_ids( cell: vtkCell, sort_ids: bool = False ) -> tuple[ t
     Returns:
         tuple[ tuple[ int ] ]: [ [face0_nodeId0, ..., face0_nodeIdN], ..., [faceN_nodeId0, ..., faceN_nodeIdN] ]
     """
-    cell_faces_node_ids: list[ tuple[ int ] ] = []
+    cell_faces_node_ids: list[ tuple[ int ] ] = list()
     for f in range( cell.GetNumberOfFaces() ):
         face = cell.GetFace( f )
-        node_ids: list[ int ] = []
+        node_ids: list[ int ] = list()
         for i in range( face.GetNumberOfPoints() ):
             node_ids.append( face.GetPointId( i ) )
         if sort_ids:

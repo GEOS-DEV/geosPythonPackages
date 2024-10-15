@@ -7,13 +7,6 @@ from numpy import unique, where
 from geos.mesh.doctor.checks.mesh_stats import Options, Result
 from . import MESH_STATS
 
-__DISCONNECTED = "disconnected"
-__DISCONNECTED_DEFAULT = 0
-
-__FIELD_VALUES = "field_values"
-__FIELD_VALUES_DEFAULT = 0
-
-
 __WRITE_STATS = "write_stats"
 __WRITE_STATS_DEFAULT = 0
 
@@ -162,9 +155,6 @@ def display_results( options: Options, result: Result ):
             with open( filepath, 'w' ) as file:
                 file.writelines( log_stream.getvalue() )
 
-    if options.output_stats_in_file:
-        pass
-
 
 def harmonious_spacing( iterable_objs: Iterable[ Iterable ], indexIter: int, space_size: int = 3 ) -> str:
     longest_element: Iterable = max( iterable_objs, key=len )
@@ -182,10 +172,14 @@ def is_valid_to_write_folder( folder_path: str ) -> bool:
         bool:
     """
     if not os.path.exists( folder_path ):
+        logging.error( f"The folder path given '{folder_path}' to write the log in does not exist. No file written." )
         return False
     if not os.path.isdir( folder_path ):
+        logging.error( f"The path given '{folder_path}' to write the log is not a directory path. No file written." )
         return False
     if not os.access( folder_path, os.W_OK ):
+        logging.error( f"You do not have writing access to the folder chosen '{folder_path}' to write the log." +
+                       " No file written." )
         return False
     return True
 
@@ -205,6 +199,6 @@ def build_filepath_output_file( options: Options ) -> str:
     mesh_name, _ = os.path.splitext( base_name )
     current_time = datetime.now()
     time = current_time.strftime( "%Y%m%d_%H%M%S" )
-    filename: str = mesh_name + "_" + time
+    filename: str = mesh_name + "_stats_" + time + ".txt"
     filepath: str = os.path.join( options.output_folder, filename )
     return filepath
