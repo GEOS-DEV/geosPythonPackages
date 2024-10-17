@@ -7,6 +7,7 @@ import re
 import argparse
 import logging
 import time
+import string
 from pathlib import Path
 try:
     from geos.ats.helpers.permute_array import permuteArray  # type: ignore[import]
@@ -375,34 +376,82 @@ class FileComparison( object ):
         ARR [in]: The hdf5 Dataset to compare.
         BASE_ARR [in]: The hdf5 Dataset to compare against.
         """
-        # If the shapes are different they can't be compared.
+        message=""
         if arr.shape != base_arr.shape:
-            msg = "Datasets have different shapes and therefore can't be compared: %s, %s.\n" % ( arr.shape,
-                                                                                                  base_arr.shape )
-            self.errorMsg( path, msg, True )
-            return
+            message = "Datasets have different shapes and therefore can't be compared statistically: %s, %s.\n" % (
+                arr.shape, base_arr.shape )
+        else:
+            # Calculate the absolute difference.
+            difference = np.subtract( arr, base_arr )
+            np.abs( difference, out=difference )
 
-        # Create a copy of the arrays.
+            offenders = difference != 0.0
+            n_offenders = np.sum( offenders )
 
-        # Calculate the absolute difference.
-        difference = np.subtract( arr, base_arr )
-        np.abs( difference, out=difference )
+            if n_offenders != 0:
+                max_index = np.unravel_index( np.argmax( difference ), difference.shape )
+                max_difference = difference[ max_index ]
+                offenders_mean = np.mean( difference[ offenders ] )
+                offenders_std = np.std( difference[ offenders ] )
 
-        offenders = difference != 0.0
-        n_offenders = np.sum( offenders )
+                message = "Arrays of types %s and %s have %s values of which %d have differing values.\n" % (
+                    arr.dtype, base_arr.dtype, offenders.size, n_offenders )
+                message += "Statistics of the differences greater than 0:\n"
+                message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % (
+                    max_index, max_difference, offenders_mean, offenders_std )
 
-        if n_offenders != 0:
-            max_index = np.unravel_index( np.argmax( difference ), difference.shape )
-            max_difference = difference[ max_index ]
-            offenders_mean = np.mean( difference[ offenders ] )
-            offenders_std = np.std( difference[ offenders ] )
+        # actually, int8 arrays are almost always char arrays, so we sould add a character comparison.
+        if arr.dtype == np.int8 and base_arr.dtype == np.int8:
+            message += self.compareCharArrays( arr, base_arr )
 
-            message = "Arrays of types %s and %s have %s values of which %d have differing values.\n" % (
-                arr.dtype, base_arr.dtype, offenders.size, n_offenders )
-            message += "Statistics of the differences greater than 0:\n"
-            message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % ( max_index, max_difference,
-                                                                               offenders_mean, offenders_std )
+        if message != "":
             self.errorMsg( path, message, True )
+
+    def compareCharArrays( self, arr, base_arr ):
+        """
+        Compare the valid characters of two arrays and return a formatted string showing differences.
+
+        ARR [in]: The hdf5 Dataset to compare.
+        BASE_ARR [in]: The hdf5 Dataset to compare against.
+
+        Returns a formatted string highlighting the differing characters.
+        """
+        arr_np = np.array( arr )
+        base_arr_np = np.array( base_arr )
+
+        # Replace invalid characters by line breaks (unused character in the xml inputs)
+        valid_chars = set( string.ascii_letters + string.digits + string.punctuation )
+        arr_chars = "".join([chr(x) if ( 0 <= x < 128 and chr(x) in valid_chars ) else "\n" for x in arr_np.flatten()])
+        base_arr_chars = "".join([chr(x) if ( 0 <= x < 128 and chr(x) in valid_chars ) else "\n" for x in base_arr_np.flatten()])
+
+        # Replace sequences of line breaks with a double spaces to show in the error log
+        arr_chars_spaced = re.sub( r"\n+", "  ", arr_chars )
+        base_arr_chars_spaced = re.sub( r"\n+", "  ", base_arr_chars )
+
+        # Trim arrays to the length of the shortest one
+        min_length = min(len(arr_chars_spaced), len(base_arr_chars_spaced))
+        arr_chars_trim = arr_chars_spaced[:min_length]
+        base_arr_chars_trim = base_arr_chars_spaced[:min_length]
+
+        differing_indices = np.where( np.array( list( arr_chars_trim ) ) != np.array( list( base_arr_chars_trim ) ) )[0]
+        if differing_indices.size != 0:
+            # check for reordering
+            arr_set = sorted(set(arr_chars.split("\n")))
+            base_arr_set = sorted(set(base_arr_chars.split("\n")))
+            message = "Differing valid characters"
+            reordering_detected = arr_set == base_arr_set
+            message += (" (substrings reordering detected):\n" if reordering_detected else ":\n")
+
+            def limited_display(n,string):
+                return string[:n] + f"... ({len(string)-n} omitted chars)" if len(string) > n else string
+
+            maxDisplay = 110 if reordering_detected else 250
+            message += "  " + limited_display(maxDisplay, arr_chars_spaced) + "\n"
+            message += "  " + limited_display(maxDisplay, base_arr_chars_spaced) + "\n"
+            message += "  " + "".join(["^" if i in differing_indices else " " for i in range(min(maxDisplay,min_length))]) + "\n"
+            return message
+        else:
+            return ""
 
     def compareStringArrays( self, path, arr, base_arr ):
         """
