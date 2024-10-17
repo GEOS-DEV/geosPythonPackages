@@ -428,30 +428,37 @@ class FileComparison( object ):
         arr_chars_spaced = re.sub( r"\n+", "  ", arr_chars )
         base_arr_chars_spaced = re.sub( r"\n+", "  ", base_arr_chars )
 
-        # Trim arrays to the length of the shortest one
-        min_length = min(len(arr_chars_spaced), len(base_arr_chars_spaced))
-        arr_chars_trim = arr_chars_spaced[:min_length]
-        base_arr_chars_trim = base_arr_chars_spaced[:min_length]
+        message = ""
+        def limited_display(n,string):
+            return string[:n] + f"... ({len(string)-n} omitted chars)" if len(string) > n else string
 
-        differing_indices = np.where( np.array( list( arr_chars_trim ) ) != np.array( list( base_arr_chars_trim ) ) )[0]
-        if differing_indices.size != 0:
-            # check for reordering
-            arr_set = sorted(set(arr_chars.split("\n")))
-            base_arr_set = sorted(set(base_arr_chars.split("\n")))
-            message = "Differing valid characters"
-            reordering_detected = arr_set == base_arr_set
-            message += (" (substrings reordering detected):\n" if reordering_detected else ":\n")
-
-            def limited_display(n,string):
-                return string[:n] + f"... ({len(string)-n} omitted chars)" if len(string) > n else string
-
-            maxDisplay = 110 if reordering_detected else 250
-            message += "  " + limited_display(maxDisplay, arr_chars_spaced) + "\n"
-            message += "  " + limited_display(maxDisplay, base_arr_chars_spaced) + "\n"
-            message += "  " + "".join(["^" if i in differing_indices else " " for i in range(min(maxDisplay,min_length))]) + "\n"
-            return message
+        if len(arr_chars_spaced) != len(base_arr_chars_spaced):
+            maxDisplay = 250
+            message = f"Character arrays have different sizes: {len(arr_chars_spaced)}, {len(base_arr_chars_spaced)}.\n"
+            message += f"  {limited_display(maxDisplay, arr_chars_spaced)}\n"
+            message += f"  {limited_display(maxDisplay, base_arr_chars_spaced)}\n"
         else:
-            return ""
+            # We need to trim arrays to the length of the shortest one for the comparisons
+            min_length = min(len(arr_chars_spaced), len(base_arr_chars_spaced))
+            arr_chars_trim = arr_chars_spaced[:min_length]
+            base_arr_chars_trim = base_arr_chars_spaced[:min_length]
+
+            differing_indices = np.where( np.array( list( arr_chars_trim ) ) != np.array( list( base_arr_chars_trim ) ) )[0]
+            if differing_indices.size != 0:
+                # check for reordering
+                arr_set = sorted(set(arr_chars.split("\n")))
+                base_arr_set = sorted(set(base_arr_chars.split("\n")))
+                reordering_detected = arr_set == base_arr_set
+
+                maxDisplay = 110 if reordering_detected else 250
+                message = "Differing valid characters"
+                message += " (substrings reordering detected):\n" if reordering_detected else ":\n"
+
+                message += f"  {limited_display(maxDisplay, arr_chars_spaced)}\n"
+                message += f"  {limited_display(maxDisplay, base_arr_chars_spaced)}\n"
+                message += f"  {"".join(["^" if i in differing_indices else " " for i in range(min(maxDisplay,min_length))])}\n"
+
+        return message
 
     def compareStringArrays( self, path, arr, base_arr ):
         """
