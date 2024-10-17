@@ -460,8 +460,8 @@ class FileComparison( object ):
                 message = "Differing valid characters"
                 message += " (substrings reordering detected):\n" if reordering_detected else ":\n"
 
-                message += f"- {limited_display( maxDisplay, arr_chars_display )}\n"
-                message += f"- {limited_display( maxDisplay, base_arr_chars_display )}\n"
+                message += f"  {limited_display( maxDisplay, arr_chars_display )}\n"
+                message += f"  {limited_display( maxDisplay, base_arr_chars_display )}\n"
                 message += "  " + "".join( ["^" if i in differing_indices else " " for i in range( min( maxDisplay, min_length ) ) ] ) + "\n"
 
         return message
