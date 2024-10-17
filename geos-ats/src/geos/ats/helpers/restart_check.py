@@ -419,44 +419,50 @@ class FileComparison( object ):
         arr_np = np.array( arr )
         base_arr_np = np.array( base_arr )
 
-        # Replace invalid characters by line breaks (unused character in the xml inputs)
-        valid_chars = set( string.ascii_letters + string.digits + string.punctuation )
-        arr_chars = "".join([chr(x) if ( 0 <= x < 128 and chr(x) in valid_chars ) else "\n" for x in arr_np.flatten()])
-        base_arr_chars = "".join([chr(x) if ( 0 <= x < 128 and chr(x) in valid_chars ) else "\n" for x in base_arr_np.flatten()])
+        # Replace invalid characters by group-separator characters ('\x1D')
+        valid_chars = set( string.printable )
+        invalid_char = str( '\x1D' )
+        arr_chars = "".join( [ chr(x) if ( x >= 0 and chr(x) in valid_chars ) else invalid_char for x in arr_np.flatten() ] )
+        base_arr_chars = "".join( [ chr(x) if ( x >= 0 and chr(x) in valid_chars ) else invalid_char for x in base_arr_np.flatten() ] )
 
-        # Replace sequences of line breaks with a double spaces to show in the error log
-        arr_chars_spaced = re.sub( r"\n+", "  ", arr_chars )
-        base_arr_chars_spaced = re.sub( r"\n+", "  ", base_arr_chars )
+        # replace whitespaces sequences by only one space (preventing indentation / spacing changes detection)
+        whitespace_pattern = r"[ \t\n\r\v\f]+"
+        arr_chars = re.sub( whitespace_pattern, " ", arr_chars )
+        base_arr_chars = re.sub( whitespace_pattern, " ", base_arr_chars )
+        # replace invalid characters sequences by a double space (for clear display)
+        invalid_char_pattern = r"\x1D+"
+        arr_chars_display = re.sub( invalid_char_pattern, "  ", arr_chars)
+        base_arr_chars_display = re.sub( invalid_char_pattern, "  ", base_arr_chars)
 
         message = ""
         def limited_display(n,string):
             return string[:n] + f"... ({len(string)-n} omitted chars)" if len(string) > n else string
 
-        if len(arr_chars_spaced) != len(base_arr_chars_spaced):
+        if len(arr_chars) != len(base_arr_chars):
             maxDisplay = 250
-            message = f"Character arrays have different sizes: {len(arr_chars_spaced)}, {len(base_arr_chars_spaced)}.\n"
-            message += f"  {limited_display(maxDisplay, arr_chars_spaced)}\n"
-            message += f"  {limited_display(maxDisplay, base_arr_chars_spaced)}\n"
+            message = f"Character arrays have different sizes: {len( arr_chars )}, {len( base_arr_chars )}.\n"
+            message += f"  {limited_display( maxDisplay, arr_chars_display )}\n"
+            message += f"  {limited_display( maxDisplay, base_arr_chars_display )}\n"
         else:
             # We need to trim arrays to the length of the shortest one for the comparisons
-            min_length = min(len(arr_chars_spaced), len(base_arr_chars_spaced))
-            arr_chars_trim = arr_chars_spaced[:min_length]
-            base_arr_chars_trim = base_arr_chars_spaced[:min_length]
+            min_length = min( len( arr_chars_display ), len( base_arr_chars_display ) )
+            arr_chars_trim = arr_chars_display[:min_length]
+            base_arr_chars_trim = base_arr_chars_display[:min_length]
 
             differing_indices = np.where( np.array( list( arr_chars_trim ) ) != np.array( list( base_arr_chars_trim ) ) )[0]
             if differing_indices.size != 0:
                 # check for reordering
-                arr_set = sorted(set(arr_chars.split("\n")))
-                base_arr_set = sorted(set(base_arr_chars.split("\n")))
+                arr_set = sorted( set( arr_chars.split( invalid_char ) ) )
+                base_arr_set = sorted( set( base_arr_chars.split( invalid_char ) ) )
                 reordering_detected = arr_set == base_arr_set
 
                 maxDisplay = 110 if reordering_detected else 250
                 message = "Differing valid characters"
                 message += " (substrings reordering detected):\n" if reordering_detected else ":\n"
 
-                message += f"  {limited_display(maxDisplay, arr_chars_spaced)}\n"
-                message += f"  {limited_display(maxDisplay, base_arr_chars_spaced)}\n"
-                message += f"  {"".join(["^" if i in differing_indices else " " for i in range(min(maxDisplay,min_length))])}\n"
+                message += f"- {limited_display( maxDisplay, arr_chars_display )}\n"
+                message += f"- {limited_display( maxDisplay, base_arr_chars_display )}\n"
+                message += "  " + "".join( ["^" if i in differing_indices else " " for i in range( min( maxDisplay, min_length ) ) ] ) + "\n"
 
         return message
 
