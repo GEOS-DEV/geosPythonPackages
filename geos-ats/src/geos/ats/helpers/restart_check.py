@@ -376,7 +376,7 @@ class FileComparison( object ):
         ARR [in]: The hdf5 Dataset to compare.
         BASE_ARR [in]: The hdf5 Dataset to compare against.
         """
-        message=""
+        message = ""
         if arr.shape != base_arr.shape:
             message = "Datasets have different shapes and therefore can't be compared statistically: %s, %s.\n" % (
                 arr.shape, base_arr.shape )
@@ -394,8 +394,8 @@ class FileComparison( object ):
                 offenders_mean = np.mean( difference[ offenders ] )
                 offenders_std = np.std( difference[ offenders ] )
 
-                message = "Arrays of types %s and %s have %s values of which %d have differing values.\n" % (
-                    arr.dtype, base_arr.dtype, offenders.size, n_offenders )
+                message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % ( max_index, max_difference,
+                                                                                   offenders_mean, offenders_std )
                 message += "Statistics of the differences greater than 0:\n"
                 message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % (
                     max_index, max_difference, offenders_mean, offenders_std )
@@ -407,62 +407,65 @@ class FileComparison( object ):
         if message != "":
             self.errorMsg( path, message, True )
 
-    def compareCharArrays( self, arr, base_arr ):
+    def compareCharArrays( self, comp_arr, base_arr ):
         """
         Compare the valid characters of two arrays and return a formatted string showing differences.
 
-        ARR [in]: The hdf5 Dataset to compare.
+        COMP_ARR [in]: The hdf5 Dataset to compare.
         BASE_ARR [in]: The hdf5 Dataset to compare against.
 
         Returns a formatted string highlighting the differing characters.
         """
-        arr_np = np.array( arr )
-        base_arr_np = np.array( base_arr )
+        comp_ndarr = np.array( comp_arr ).flatten()
+        base_ndarr = np.array( base_arr ).flatten()
 
         # Replace invalid characters by group-separator characters ('\x1D')
         valid_chars = set( string.printable )
-        invalid_char = str( '\x1D' )
-        arr_chars = "".join( [ chr(x) if ( x >= 0 and chr(x) in valid_chars ) else invalid_char for x in arr_np.flatten() ] )
-        base_arr_chars = "".join( [ chr(x) if ( x >= 0 and chr(x) in valid_chars ) else invalid_char for x in base_arr_np.flatten() ] )
+        invalid_char = '\x1D'
+        comp_str = "".join( [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in comp_ndarr ] )
+        base_str = "".join( [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in base_ndarr ] )
 
         # replace whitespaces sequences by only one space (preventing indentation / spacing changes detection)
         whitespace_pattern = r"[ \t\n\r\v\f]+"
-        arr_chars = re.sub( whitespace_pattern, " ", arr_chars )
-        base_arr_chars = re.sub( whitespace_pattern, " ", base_arr_chars )
+        comp_str = re.sub( whitespace_pattern, " ", comp_str )
+        base_str = re.sub( whitespace_pattern, " ", base_str )
         # replace invalid characters sequences by a double space (for clear display)
         invalid_char_pattern = r"\x1D+"
-        arr_chars_display = re.sub( invalid_char_pattern, "  ", arr_chars)
-        base_arr_chars_display = re.sub( invalid_char_pattern, "  ", base_arr_chars)
+        comp_str_display = re.sub( invalid_char_pattern, "  ", comp_str )
+        base_str_display = re.sub( invalid_char_pattern, "  ", base_str )
 
         message = ""
-        def limited_display(n,string):
-            return string[:n] + f"... ({len(string)-n} omitted chars)" if len(string) > n else string
 
-        if len(arr_chars) != len(base_arr_chars):
-            maxDisplay = 250
-            message = f"Character arrays have different sizes: {len( arr_chars )}, {len( base_arr_chars )}.\n"
-            message += f"  {limited_display( maxDisplay, arr_chars_display )}\n"
-            message += f"  {limited_display( maxDisplay, base_arr_chars_display )}\n"
+        def limited_display( n, string ):
+            return string[ :n ] + f"... ({len(string)-n} omitted chars)" if len( string ) > n else string
+
+        if len( comp_str ) != len( base_str ):
+            max_display = 250
+            message = f"Character arrays have different sizes: {len( comp_str )}, {len( base_str )}.\n"
+            message += f"  {limited_display( max_display, comp_str_display )}\n"
+            message += f"  {limited_display( max_display, base_str_display )}\n"
         else:
             # We need to trim arrays to the length of the shortest one for the comparisons
-            min_length = min( len( arr_chars_display ), len( base_arr_chars_display ) )
-            arr_chars_trim = arr_chars_display[:min_length]
-            base_arr_chars_trim = base_arr_chars_display[:min_length]
+            min_length = min( len( comp_str_display ), len( base_str_display ) )
+            comp_str_trim = comp_str_display[ :min_length ]
+            base_str_trim = base_str_display[ :min_length ]
 
-            differing_indices = np.where( np.array( list( arr_chars_trim ) ) != np.array( list( base_arr_chars_trim ) ) )[0]
+            differing_indices = np.where(
+                np.array( list( comp_str_trim ) ) != np.array( list( base_str_trim ) ) )[ 0 ]
             if differing_indices.size != 0:
                 # check for reordering
-                arr_set = sorted( set( arr_chars.split( invalid_char ) ) )
-                base_arr_set = sorted( set( base_arr_chars.split( invalid_char ) ) )
+                arr_set = sorted( set( comp_str.split( invalid_char ) ) )
+                base_arr_set = sorted( set( base_str.split( invalid_char ) ) )
                 reordering_detected = arr_set == base_arr_set
 
-                maxDisplay = 110 if reordering_detected else 250
+                max_display = 110 if reordering_detected else 250
                 message = "Differing valid characters"
                 message += " (substrings reordering detected):\n" if reordering_detected else ":\n"
 
-                message += f"  {limited_display( maxDisplay, arr_chars_display )}\n"
-                message += f"  {limited_display( maxDisplay, base_arr_chars_display )}\n"
-                message += "  " + "".join( ["^" if i in differing_indices else " " for i in range( min( maxDisplay, min_length ) ) ] ) + "\n"
+                message += f"  {limited_display( max_display, comp_str_display )}\n"
+                message += f"  {limited_display( max_display, base_str_display )}\n"
+                message += "  " + "".join(
+                    [ "^" if i in differing_indices else " " for i in range( min( max_display, min_length ) ) ] ) + "\n"
 
         return message
 
