@@ -394,11 +394,11 @@ class FileComparison( object ):
                 offenders_mean = np.mean( difference[ offenders ] )
                 offenders_std = np.std( difference[ offenders ] )
 
+                message = "Arrays of types %s and %s have %s values of which %d have differing values.\n" % (
+                    arr.dtype, base_arr.dtype, offenders.size, n_offenders )
+                message += "Statistics of the differences greater than 0:\n"
                 message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % ( max_index, max_difference,
                                                                                    offenders_mean, offenders_std )
-                message += "Statistics of the differences greater than 0:\n"
-                message += "\tmax_index = %s, max = %s, mean = %s, std = %s\n" % (
-                    max_index, max_difference, offenders_mean, offenders_std )
 
         # actually, int8 arrays are almost always char arrays, so we sould add a character comparison.
         if arr.dtype == np.int8 and base_arr.dtype == np.int8:
@@ -422,8 +422,10 @@ class FileComparison( object ):
         # Replace invalid characters by group-separator characters ('\x1D')
         valid_chars = set( string.printable )
         invalid_char = '\x1D'
-        comp_str = "".join( [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in comp_ndarr ] )
-        base_str = "".join( [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in base_ndarr ] )
+        comp_str = "".join(
+            [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in comp_ndarr ] )
+        base_str = "".join(
+            [ chr( x ) if ( x >= 0 and chr( x ) in valid_chars ) else invalid_char for x in base_ndarr ] )
 
         # replace whitespaces sequences by only one space (preventing indentation / spacing changes detection)
         whitespace_pattern = r"[ \t\n\r\v\f]+"
@@ -450,8 +452,7 @@ class FileComparison( object ):
             comp_str_trim = comp_str_display[ :min_length ]
             base_str_trim = base_str_display[ :min_length ]
 
-            differing_indices = np.where(
-                np.array( list( comp_str_trim ) ) != np.array( list( base_str_trim ) ) )[ 0 ]
+            differing_indices = np.where( np.array( list( comp_str_trim ) ) != np.array( list( base_str_trim ) ) )[ 0 ]
             if differing_indices.size != 0:
                 # check for reordering
                 arr_set = sorted( set( comp_str.split( invalid_char ) ) )
