@@ -40,12 +40,9 @@ def fill_subparser( subparsers ) -> None:
                     metavar=[0, 1],
                     default=__FIELD_VALUES_DEFAULT,
                     help=f"\t[int]: Display all range of field values that seem not realistic." )
-
-    # Check the value of __WRITE_STATS argument to determine if argument __OUTPUT is a required argument
-    args, unknown = p.parse_known_args()
     p.add_argument( '--' + __OUTPUT,
                     type=str,
-                    required=getattr(args, __WRITE_STATS),
+                    required=False,
                     help=f"[string]: The output folder destination where the stats will be written." )
 
 def convert( parsed_options ) -> Options:
