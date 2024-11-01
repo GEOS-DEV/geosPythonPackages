@@ -32,9 +32,9 @@ class FracturePolicy( Enum ):
 class Options:
     policy: FracturePolicy
     field: str
-    field_values: frozenset[ int ]
-    vtk_output: VtkOutput
-    vtk_fracture_output: VtkOutput
+    field_values: list[ frozenset[ int ] ]
+    mesh_VtkOutput: VtkOutput
+    all_fractures_VtkOutput: list[ VtkOutput ]
 
 
 @dataclass( frozen=True )
@@ -127,9 +127,9 @@ def __build_fracture_info_from_internal_surfaces( mesh: vtkUnstructuredGrid, f: 
     return FractureInfo( node_to_cells=node_to_cells, face_nodes=face_nodes )
 
 
-def build_fracture_info( mesh: vtkUnstructuredGrid, options: Options ) -> FractureInfo:
+def build_fracture_info( mesh: vtkUnstructuredGrid, options: Options, fracture_id: int ) -> FractureInfo:
     field = options.field
-    field_values = options.field_values
+    field_values = options.field_values[ fracture_id ]
     cell_data = mesh.GetCellData()
     if cell_data.HasArray( field ):
         f = vtk_to_numpy( cell_data.GetArray( field ) )
@@ -183,8 +183,8 @@ def build_cell_to_cell_graph( mesh: vtkUnstructuredGrid, fracture: FractureInfo 
     return cell_to_cell
 
 
-def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
-                      node_to_cells: dict[ int, Iterable[ int ] ] ) -> dict[ int, IDMapping ]:
+def __identify_split( last_index: int, cell_to_cell: networkx.Graph,
+                      node_to_cells: dict[ int, Iterable[ int ] ] ) -> tuple[ dict[ int, IDMapping ], int ]:
     """
     For each cell, compute the node indices replacements.
     :param num_points: Number of points in the whole mesh (not the fracture).
@@ -202,8 +202,8 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
         we do not want to change an index if we do not have to.
         """
 
-        def __init__( self, num_nodes: int ):
-            self.__current_last_index = num_nodes - 1
+        def __init__( self, current_last_index: int ):
+            self.__current_last_index = current_last_index
             self.__seen: set[ int ] = set()
 
         def __call__( self, index: int ) -> int:
@@ -214,7 +214,10 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
                 self.__seen.add( index )
                 return index
 
-    build_new_index = NewIndex( num_points )
+        def get_last_index( self ) -> int:
+            return self.__current_last_index
+
+    build_new_index = NewIndex( last_index )
     result: dict[ int, IDMapping ] = defaultdict( dict )
     # Iteration over `sorted` nodes to have a predictable result for tests.
     for node, cells in tqdm( sorted( node_to_cells.items() ), desc="Identifying the node splits" ):
@@ -224,7 +227,44 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
             new_index: int = build_new_index( node )
             for cell in connected_cells:
                 result[ cell ][ node ] = new_index
-    return result
+    return ( result, build_new_index.get_last_index() )
+
+
+def combined_and_fracture_mappings( all_mappings: list[ Mapping[ int, IDMapping ] ] ):
+    shortened_mappings: list[ Mapping[ int, IDMapping ] ] = all_mappings.copy()
+    for fracture in shortened_mappings:
+        toRemoveCellId: list[ int ] = list()
+        for cell_id, node_conversion in fracture.items():
+            toRemoveNode: list[ int ] = list()
+            for node_init, node_final in node_conversion.items():
+                if node_init == node_final:
+                    toRemoveNode.append( node_init )
+            for node_value in toRemoveNode:
+                del node_conversion[ node_value ]
+            if len( node_conversion ) == 0:
+                toRemoveCellId.append( cell_id )
+        for cell_id_value in toRemoveCellId:
+            del fracture[ cell_id_value ]
+
+    combined_mapping: Mapping[ int, IDMapping ] = dict()
+    for fracture in shortened_mappings:
+        for cell_id, node_conversion in fracture.items():
+            if cell_id not in combined_mapping.keys():
+                combined_mapping[ cell_id ] = dict()
+            for node_init, node_final in node_conversion.items():
+                if node_init not in combined_mapping[ cell_id ].keys():
+                    combined_mapping[ cell_id ][ node_init ] = node_final
+                elif node_final < combined_mapping[ cell_id ][ node_init ]:
+                    combined_mapping[ cell_id ][ node_init ] = node_final
+
+    new_fracture_mappings: list[ Mapping[ int, IDMapping ] ] = list()
+    for fracture in all_mappings:
+        fracture_mapping: Mapping[ int, IDMapping ] = dict()
+        for cell_id in fracture.keys():
+            fracture_mapping[ cell_id ] = combined_mapping[ cell_id ]
+        new_fracture_mappings.append( fracture_mapping )
+
+    return ( combined_mapping, new_fracture_mappings )
 
 
 def truncated_coordinates_with_id( mesh: vtkUnstructuredGrid, decimals: int = 3 ) -> dict[ Coordinates3D, int ]:
@@ -538,21 +578,31 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     return fracture_mesh
 
 
-def __split_mesh_on_fracture( mesh: vtkUnstructuredGrid,
-                              options: Options ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
-    fracture: FractureInfo = build_fracture_info( mesh, options )
-    cell_to_cell: networkx.Graph = build_cell_to_cell_graph( mesh, fracture )
-    cell_to_node_mapping: Mapping[ int, IDMapping ] = __identify_split( mesh.GetNumberOfPoints(), cell_to_cell,
-                                                                        fracture.node_to_cells )
-    output_mesh: vtkUnstructuredGrid = __perform_split( mesh, cell_to_node_mapping )
-    fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture, cell_to_node_mapping )
-    return output_mesh, fractured_mesh
+def __split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
+                               options: Options ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+    all_cell_to_node_mappings: list[ Mapping[ int, IDMapping ] ] = list()
+    fracture_infos: list[ FractureInfo ] = list()
+    last_node_id: int = mesh.GetNumberOfPoints() - 1
+    for fracture_id in range( len( options.field_values ) ):
+        fracture: FractureInfo = build_fracture_info( mesh, options, fracture_id )
+        fracture_infos.append( fracture )
+        cell_to_cell: networkx.Graph = build_cell_to_cell_graph( mesh, fracture )
+        cell_to_node_mapping, last_node_id = __identify_split( last_node_id, cell_to_cell, fracture.node_to_cells )
+        all_cell_to_node_mappings.append( cell_to_node_mapping )
+    cell_to_node_mapping_mesh, fracture_mappings = combined_and_fracture_mappings( all_cell_to_node_mappings )
+    output_mesh: vtkUnstructuredGrid = __perform_split( mesh, cell_to_node_mapping_mesh )
+    fracture_meshes: list[ vtkUnstructuredGrid ] = list()
+    for i, cell_to_node_fracture_mapping in enumerate( fracture_mappings ):
+        fracture_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture_infos[ i ], cell_to_node_fracture_mapping )
+        fracture_meshes.append( fracture_mesh )
+    return ( output_mesh, fracture_meshes )
 
 
 def __check( mesh, options: Options ) -> Result:
-    output_mesh, fracture_mesh = __split_mesh_on_fracture( mesh, options )
-    write_mesh( output_mesh, options.vtk_output )
-    write_mesh( fracture_mesh, options.vtk_fracture_output )
+    output_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+    write_mesh( output_mesh, options.mesh_VtkOutput )
+    for i, fracture_mesh in enumerate( fracture_meshes ):
+        write_mesh( fracture_mesh, options.all_fractures_VtkOutput[ i ] )
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result( info="OK" )
 
