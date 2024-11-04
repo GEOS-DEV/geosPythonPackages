@@ -201,6 +201,8 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
       --fractures_output_dir FRACTURES_OUTPUT_DIR
                               [string]: The output directory for the fractures meshes that will be generated from the mesh.
+      --fractures_data_mode FRACTURES_DATA_MODE
+                              [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
 ``generate_global_ids``
 """""""""""""""""""""""

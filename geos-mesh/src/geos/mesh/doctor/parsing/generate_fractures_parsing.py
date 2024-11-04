@@ -13,6 +13,7 @@ __FIELD_NAME = "name"
 __FIELD_VALUES = "values"
 
 __FRACTURES_OUTPUT_DIR = "fractures_output_dir"
+__FRACTURES_DATA_MODE = "fractures_data_mode"
 
 
 def convert_to_fracture_policy( s: str ) -> FracturePolicy:
@@ -58,6 +59,10 @@ def fill_subparser( subparsers ) -> None:
         '--' + __FRACTURES_OUTPUT_DIR,
         type=str,
         help=f"[string]: The output directory for the fractures meshes that will be generated from the mesh." )
+    p.add_argument(
+        '--' + __FRACTURES_DATA_MODE,
+        type=str,
+        help=f'[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
 
 def convert( parsed_options ) -> Options:
@@ -71,21 +76,22 @@ def convert( parsed_options ) -> Options:
         )
     all_values_no_separator: str = all_values.replace( ":", "," )
     field_values_combined: frozenset[ int ] = frozenset( map( int, all_values_no_separator.split( "," ) ) )
-    vtk_output = vtk_output_parsing.convert( parsed_options )
+    mesh_vtk_output = vtk_output_parsing.convert( parsed_options )
     # create the different fractures
     per_fracture: list[ str ] = all_values.split( ":" )
     field_values_per_fracture: list[ frozenset[ int ] ] = [
         frozenset( map( int, fracture.split( "," ) ) ) for fracture in per_fracture
     ]
     fracture_names: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in per_fracture ]
-    fracture_output_dir: str = parsed_options[ __FRACTURES_OUTPUT_DIR ]
-    all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fracture_output_dir, vtk_output,
-                                                                                fracture_names )
+    fractures_output_dir: str = parsed_options[ __FRACTURES_OUTPUT_DIR ]
+    fractures_data_mode: str = parsed_options[ __FRACTURES_DATA_MODE ]
+    all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fractures_output_dir, fractures_data_mode,
+                                                                                mesh_vtk_output, fracture_names )
     return Options( policy=policy,
                     field=field,
                     field_values_combined=field_values_combined,
                     field_values_per_fracture=field_values_per_fracture,
-                    mesh_VtkOutput=vtk_output,
+                    mesh_VtkOutput=mesh_vtk_output,
                     all_fractures_VtkOutput=all_fractures_VtkOutput )
 
 
@@ -103,7 +109,9 @@ def are_values_parsable( values: str ) -> bool:
     return True
 
 
-def build_all_fractures_VtkOutput( fracture_output_dir: str, vtk_output: VtkOutput,
+def build_all_fractures_VtkOutput( fracture_output_dir: str,
+                                   fractures_data_mode: str,
+                                   mesh_vtk_output: VtkOutput,
                                    fracture_names: list[ str ] ) -> list[ VtkOutput ]:
     if not os.path.exists( fracture_output_dir ):
         raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory does not exist." )
@@ -111,11 +119,11 @@ def build_all_fractures_VtkOutput( fracture_output_dir: str, vtk_output: VtkOutp
     if not os.access( fracture_output_dir, os.W_OK ):
         raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory is not writable." )
 
-    output_name = os.path.basename( vtk_output.output )
+    output_name = os.path.basename( mesh_vtk_output.output )
     splitted_name_without_expension: list[ str ] = output_name.split( "." )[ :-1 ]
     name_without_extension: str = '_'.join( splitted_name_without_expension ) + "_"
     all_fractures_VtkOuput: list[ VtkOutput ] = list()
     for fracture_name in fracture_names:
         fracture_path = os.path.join( fracture_output_dir, name_without_extension + fracture_name )
-        all_fractures_VtkOuput.append( VtkOutput( fracture_path, vtk_output.is_data_mode_binary ) )
+        all_fractures_VtkOuput.append( VtkOutput( fracture_path, fractures_data_mode ) )
     return all_fractures_VtkOuput

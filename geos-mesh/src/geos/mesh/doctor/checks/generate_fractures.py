@@ -234,43 +234,6 @@ def __identify_split( num_points: int, cell_to_cell: networkx.Graph,
     return result
 
 
-def combined_and_fracture_mappings( all_mappings: list[ Mapping[ int, IDMapping ] ] ):
-    shortened_mappings: list[ Mapping[ int, IDMapping ] ] = all_mappings.copy()
-    for fracture in shortened_mappings:
-        toRemoveCellId: list[ int ] = list()
-        for cell_id, node_conversion in fracture.items():
-            toRemoveNode: list[ int ] = list()
-            for node_init, node_final in node_conversion.items():
-                if node_init == node_final:
-                    toRemoveNode.append( node_init )
-            for node_value in toRemoveNode:
-                del node_conversion[ node_value ]
-            if len( node_conversion ) == 0:
-                toRemoveCellId.append( cell_id )
-        for cell_id_value in toRemoveCellId:
-            del fracture[ cell_id_value ]
-
-    combined_mapping: Mapping[ int, IDMapping ] = dict()
-    for fracture in shortened_mappings:
-        for cell_id, node_conversion in fracture.items():
-            if cell_id not in combined_mapping.keys():
-                combined_mapping[ cell_id ] = dict()
-            for node_init, node_final in node_conversion.items():
-                if node_init not in combined_mapping[ cell_id ].keys():
-                    combined_mapping[ cell_id ][ node_init ] = node_final
-                elif node_final < combined_mapping[ cell_id ][ node_init ]:
-                    combined_mapping[ cell_id ][ node_init ] = node_final
-
-    new_fracture_mappings: list[ Mapping[ int, IDMapping ] ] = list()
-    for fracture in all_mappings:
-        fracture_mapping: Mapping[ int, IDMapping ] = dict()
-        for cell_id in fracture.keys():
-            fracture_mapping[ cell_id ] = combined_mapping[ cell_id ]
-        new_fracture_mappings.append( fracture_mapping )
-
-    return ( combined_mapping, new_fracture_mappings )
-
-
 def truncated_coordinates_with_id( mesh: vtkUnstructuredGrid, decimals: int = 3 ) -> dict[ Coordinates3D, int ]:
     """Creates a mapping of truncated points coordinates with the their point id for every point of a mesh.
 
