@@ -85,8 +85,9 @@ def convert( parsed_options ) -> Options:
     fracture_names: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in per_fracture ]
     fractures_output_dir: str = parsed_options[ __FRACTURES_OUTPUT_DIR ]
     fractures_data_mode: str = parsed_options[ __FRACTURES_DATA_MODE ]
-    all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fractures_output_dir, fractures_data_mode,
-                                                                                mesh_vtk_output, fracture_names )
+    all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fractures_output_dir,
+                                                                                fractures_data_mode, mesh_vtk_output,
+                                                                                fracture_names )
     return Options( policy=policy,
                     field=field,
                     field_values_combined=field_values_combined,
@@ -109,9 +110,7 @@ def are_values_parsable( values: str ) -> bool:
     return True
 
 
-def build_all_fractures_VtkOutput( fracture_output_dir: str,
-                                   fractures_data_mode: str,
-                                   mesh_vtk_output: VtkOutput,
+def build_all_fractures_VtkOutput( fracture_output_dir: str, fractures_data_mode: str, mesh_vtk_output: VtkOutput,
                                    fracture_names: list[ str ] ) -> list[ VtkOutput ]:
     if not os.path.exists( fracture_output_dir ):
         raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory does not exist." )
