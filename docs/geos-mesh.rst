@@ -185,28 +185,22 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
 .. code-block::
 
       $ python src/geos/mesh/doctor/mesh_doctor.py generate_fractures --help
-      usage: mesh_doctor.py generate_fractures [-h] --policy field, internal_surfaces [--name NAME] [--values VALUES]
-                                             --output OUTPUT [--data-mode binary, ascii] --fracture-output
-                                             FRACTURE_OUTPUT [--fracture-data-mode binary, ascii]
+      usage: mesh_doctor.py generate_fractures [-h] --policy field, internal_surfaces [--name NAME] [--values VALUES] --output OUTPUT
+                                               [--data-mode binary, ascii] [--fractures_output_dir FRACTURES_OUTPUT_DIR]
 
       options:
       -h, --help              show this help message and exit
       --policy field, internal_surfaces
-                              [string]: The criterion to define the surfaces that will be changed into fracture zones.
-                              Possible values are "field, internal_surfaces"
-      --name NAME             [string]: If the "field" policy is selected, defines which field will be considered to
-                              define the fractures. If the "internal_surfaces" policy is selected, defines the name of
-                              the attribute will be considered to identify the fractures.
-      --values VALUES         [list of comma separated integers]: If the "field" policy is selected, which changes of    
-                              the field will be considered as a fracture. If the "internal_surfaces" policy is
-                              selected, list of the fracture attributes.
+                              [string]: The criterion to define the surfaces that will be changed into fracture zones. Possible values are "field, internal_surfaces"
+      --name NAME             [string]: If the "field" policy is selected, defines which field will be considered to define the fractures. If the "internal_surfaces" policy is selected, defines the name of the attribute will be considered to identify the fractures.
+      --values VALUES         [list of comma separated integers]: If the "field" policy is selected, which changes of the field will be considered as a fracture. If the "internal_surfaces" policy is selected, list of the fracture attributes.
+                              You can create multiple fractures by separating the values with ':' like shown in this example.
+                              --values 10,12:13,14,16,18:22 will create 3 fractures identified respectively with the values (10,12), (13,14,16,18) and (22). If no ':' is found, all values specified will be assumed to create only 1 single fracture.
       --output OUTPUT         [string]: The vtk output file destination.
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
-      --fracture-output FRACTURE_OUTPUT
-                              [string]: The vtk output file destination.
-      --fracture-data-mode binary, ascii
-                              [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
+      --fractures_output_dir FRACTURES_OUTPUT_DIR
+                              [string]: The output directory for the fractures meshes that will be generated from the mesh.
 
 ``generate_global_ids``
 """""""""""""""""""""""
