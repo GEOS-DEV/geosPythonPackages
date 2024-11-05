@@ -11,7 +11,6 @@ from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh,
 from geos.mesh.doctor.checks.generate_fractures import ( __split_mesh_on_fractures, Options, FracturePolicy,
                                                          Coordinates3D, IDMapping )
 
-
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
 
@@ -54,8 +53,12 @@ def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
     else:
         fv = frozenset( field_values )
 
-    options = Options( policy=policy, field="attribute", field_values_combined=fv, field_values_per_fracture=[ fv ],
-                       mesh_VtkOutput=None, all_fractures_VtkOutput=None )
+    options = Options( policy=policy,
+                       field="attribute",
+                       field_values_combined=fv,
+                       field_values_per_fracture=[ fv ],
+                       mesh_VtkOutput=None,
+                       all_fractures_VtkOutput=None )
     return mesh, options
 
 
@@ -324,7 +327,7 @@ def test_copy_fields_when_splitting_mesh():
     options = Options( policy=FracturePolicy.INTERNAL_SURFACES,
                        field="TestField",
                        field_values_combined=frozenset( map( int, [ "9" ] ) ),
-                       field_values_per_fracture=[frozenset( map( int, [ "9" ] ) )],
+                       field_values_per_fracture=[ frozenset( map( int, [ "9" ] ) ) ],
                        mesh_VtkOutput=None,
                        all_fractures_VtkOutput=None )
     main_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
