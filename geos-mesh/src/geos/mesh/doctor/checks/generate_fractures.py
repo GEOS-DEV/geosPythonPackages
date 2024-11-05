@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from tqdm import tqdm
-from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
+from typing import Collection, Iterable, Mapping, Optional, Sequence
 from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, vtkUnstructuredGrid, VTK_POLYGON,
@@ -16,11 +16,12 @@ from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, vtk_iter, to_vtk_id_l
                                                 has_invalid_field )
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
 """
-TypeAliases used in this file
+TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
+https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
 """
-IDMapping: TypeAlias = Mapping[ int, int ]
-CellsPointsCoords: TypeAlias = dict[ int, list[ tuple[ float ] ] ]
-Coordinates3D: TypeAlias = tuple[ float ]
+IDMapping = Mapping[ int, int ]
+CellsPointsCoords = dict[ int, list[ tuple[ float ] ] ]
+Coordinates3D = tuple[ float ]
 
 
 class FracturePolicy( Enum ):
