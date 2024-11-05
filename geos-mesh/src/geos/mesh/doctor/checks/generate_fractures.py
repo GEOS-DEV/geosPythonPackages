@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from tqdm import tqdm
-from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
+from typing import Collection, Iterable, Mapping, Optional, Sequence
 from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, vtkUnstructuredGrid, VTK_POLYGON,
@@ -16,11 +16,12 @@ from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, vtk_iter, to_vtk_id_l
                                                 has_invalid_field )
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
 """
-TypeAliases used in this file
+TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
+https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
 """
-IDMapping: TypeAlias = Mapping[ int, int ]
-CellsPointsCoords: TypeAlias = dict[ int, list[ tuple[ float ] ] ]
-Coordinates3D: TypeAlias = tuple[ float ]
+IDMapping = Mapping[ int, int ]
+CellsPointsCoords = dict[ int, list[ tuple[ float ] ] ]
+Coordinates3D = tuple[ float ]
 
 
 class FracturePolicy( Enum ):
@@ -32,9 +33,10 @@ class FracturePolicy( Enum ):
 class Options:
     policy: FracturePolicy
     field: str
-    field_values: frozenset[ int ]
-    vtk_output: VtkOutput
-    vtk_fracture_output: VtkOutput
+    field_values_combined: frozenset[ int ]
+    field_values_per_fracture: list[ frozenset[ int ] ]
+    mesh_VtkOutput: VtkOutput
+    all_fractures_VtkOutput: list[ VtkOutput ]
 
 
 @dataclass( frozen=True )
@@ -127,9 +129,15 @@ def __build_fracture_info_from_internal_surfaces( mesh: vtkUnstructuredGrid, f: 
     return FractureInfo( node_to_cells=node_to_cells, face_nodes=face_nodes )
 
 
-def build_fracture_info( mesh: vtkUnstructuredGrid, options: Options ) -> FractureInfo:
+def build_fracture_info( mesh: vtkUnstructuredGrid,
+                         options: Options,
+                         combined_fractures: bool,
+                         fracture_id: int = 0 ) -> FractureInfo:
     field = options.field
-    field_values = options.field_values
+    if combined_fractures:
+        field_values = options.field_values_combined
+    else:
+        field_values = options.field_values_per_fracture[ fracture_id ]
     cell_data = mesh.GetCellData()
     if cell_data.HasArray( field ):
         f = vtk_to_numpy( cell_data.GetArray( field ) )
@@ -538,21 +546,30 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     return fracture_mesh
 
 
-def __split_mesh_on_fracture( mesh: vtkUnstructuredGrid,
-                              options: Options ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
-    fracture: FractureInfo = build_fracture_info( mesh, options )
-    cell_to_cell: networkx.Graph = build_cell_to_cell_graph( mesh, fracture )
+def __split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
+                               options: Options ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+    all_fracture_infos: list[ FractureInfo ] = list()
+    for fracture_id in range( len( options.field_values_per_fracture ) ):
+        fracture_info: FractureInfo = build_fracture_info( mesh, options, False, fracture_id )
+        all_fracture_infos.append( fracture_info )
+    combined_fractures: FractureInfo = build_fracture_info( mesh, options, True )
+    cell_to_cell: networkx.Graph = build_cell_to_cell_graph( mesh, combined_fractures )
     cell_to_node_mapping: Mapping[ int, IDMapping ] = __identify_split( mesh.GetNumberOfPoints(), cell_to_cell,
-                                                                        fracture.node_to_cells )
+                                                                        combined_fractures.node_to_cells )
     output_mesh: vtkUnstructuredGrid = __perform_split( mesh, cell_to_node_mapping )
-    fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture, cell_to_node_mapping )
-    return output_mesh, fractured_mesh
+    fracture_meshes: list[ vtkUnstructuredGrid ] = list()
+    for fracture_info_separated in all_fracture_infos:
+        fracture_mesh: vtkUnstructuredGrid = __generate_fracture_mesh( mesh, fracture_info_separated,
+                                                                       cell_to_node_mapping )
+        fracture_meshes.append( fracture_mesh )
+    return ( output_mesh, fracture_meshes )
 
 
 def __check( mesh, options: Options ) -> Result:
-    output_mesh, fracture_mesh = __split_mesh_on_fracture( mesh, options )
-    write_mesh( output_mesh, options.vtk_output )
-    write_mesh( fracture_mesh, options.vtk_fracture_output )
+    output_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+    write_mesh( output_mesh, options.mesh_VtkOutput )
+    for i, fracture_mesh in enumerate( fracture_meshes ):
+        write_mesh( fracture_mesh, options.all_fractures_VtkOutput[ i ] )
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result( info="OK" )
 
