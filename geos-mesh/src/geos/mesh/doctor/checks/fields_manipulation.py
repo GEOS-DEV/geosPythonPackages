@@ -4,15 +4,9 @@ from math import sqrt
 from numpy import empty
 from numpy.random import rand
 
-from vtkmodules.util.numpy_support import (
-    numpy_to_vtk,
-    vtk_to_numpy,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkDoubleArray, )
-
-from . import vtk_utils
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtkmodules.vtkCommonCore import vtkDoubleArray
+from geos.mesh.doctor.checks import vtk_utils
 
 
 @dataclass( frozen=True )

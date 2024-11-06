@@ -12,7 +12,7 @@ NON_CONFORMAL = "non_conformal"
 SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
 SUPPORTED_ELEMENTS = "supported_elements"
 MESH_STATS = "mesh_stats"
-ADD_FIELDS = "add_fields"
+FIELDS_MANIPULATION = "fields_manipulation"
 
 
 @dataclass( frozen=True )

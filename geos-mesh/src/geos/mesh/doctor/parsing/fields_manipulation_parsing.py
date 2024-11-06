@@ -1,8 +1,6 @@
 import logging
-
-from checks.add_fields import Options, Result
-
-from . import vtk_output_parsing, ADD_FIELDS
+from geos.mesh.doctor.checks.fields_manipulation import Options, Result
+from geos.mesh.doctor.parsing import vtk_output_parsing, FIELDS_MANIPULATION
 
 __SUPPORT = "support"
 __NAME = "name"
@@ -10,7 +8,7 @@ __SOURCE = "source"
 
 
 def fill_subparser( subparsers ) -> None:
-    p = subparsers.add_parser( ADD_FIELDS, help=f"Add cell or point data to a mesh." )
+    p = subparsers.add_parser( FIELDS_MANIPULATION, help=f"Add cell or point data to a mesh." )
     p.add_argument( '--' + __SUPPORT, type=str, required=True, help=f"[string]: Where to define field (point/cell)." )
     p.add_argument( '--' + __NAME, type=str, required=True, help=f"[string]: Name of the field to add." )
     p.add_argument( '--' + __SOURCE,
