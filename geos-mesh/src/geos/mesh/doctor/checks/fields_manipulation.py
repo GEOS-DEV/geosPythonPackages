@@ -6,15 +6,17 @@ from numpy.random import rand
 
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDoubleArray
-from geos.mesh.doctor.checks import vtk_utils
+from geos.mesh.doctor.checks.vtk_utils import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )
 class Options:
+    manipulation: str
     support: str
-    field_name: str
+    field_names: list[ str ]
     source: str
-    out_vtk: vtk_utils.VtkOutput
+    vtm_index: int
+    out_vtk: VtkOutput
 
 
 @dataclass( frozen=True )
@@ -89,7 +91,7 @@ def __compatible_meshes( dest_mesh, source_mesh ) -> bool:
 
 
 def __transfer_field( mesh, support, field_name, source ) -> bool:
-    from_mesh = vtk_utils.read_mesh( source )
+    from_mesh = read_mesh( source )
     same_mesh = __compatible_meshes( mesh, from_mesh )
     if not same_mesh:
         logging.error( 'meshes are not the same' )
@@ -120,11 +122,11 @@ def __check( mesh, options: Options ) -> Result:
     if options.source == 'function':
         succ = __analytic_field( mesh, options.support, options.field_name )
         if succ:
-            vtk_utils.write_mesh( mesh, options.out_vtk )
+            write_mesh( mesh, options.out_vtk )
     elif ( options.source[ -4: ] == '.vtu' or options.source[ -4: ] == '.vtk' ):
         succ = __transfer_field( mesh, options.support, options.field_name, options.source )
         if succ:
-            vtk_utils.write_mesh( mesh, options.out_vtk )
+            write_mesh( mesh, options.out_vtk )
     else:
         logging.error( 'incorrect source option. Options are function, *.vtu, *.vtk.' )
         succ = False
@@ -133,5 +135,5 @@ def __check( mesh, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )
