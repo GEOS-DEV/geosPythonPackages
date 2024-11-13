@@ -4,15 +4,15 @@ from typing import Callable, Any
 
 COLLOCATES_NODES = "collocated_nodes"
 ELEMENT_VOLUMES = "element_volumes"
+FIELD_OPERATIONS = "field_operations"
 FIX_ELEMENTS_ORDERINGS = "fix_elements_orderings"
 GENERATE_CUBE = "generate_cube"
 GENERATE_FRACTURES = "generate_fractures"
 GENERATE_GLOBAL_IDS = "generate_global_ids"
+MESH_STATS = "mesh_stats"
 NON_CONFORMAL = "non_conformal"
 SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
 SUPPORTED_ELEMENTS = "supported_elements"
-MESH_STATS = "mesh_stats"
-FIELDS_MANIPULATION = "fields_manipulation"
 
 
 @dataclass( frozen=True )

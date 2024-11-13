@@ -1,9 +1,9 @@
 import logging
-from geos.mesh.doctor.checks.fields_manipulation import Options, Result
-from geos.mesh.doctor.parsing import vtk_output_parsing, FIELDS_MANIPULATION
+from geos.mesh.doctor.checks.field_operations import Options, Result
+from geos.mesh.doctor.parsing import vtk_output_parsing, FIELD_OPERATIONS
 
-__MANIPULATION = "manipulation"
-__MANIPULATION_CHOICES = [ "transfer" ]
+__OPERATION = "operation"
+__OPERATION_CHOICES = [ "transfer" ]
 
 __SUPPORT = "support"
 __SUPPORT_CHOICES = [ "point", "cell" ]
@@ -16,14 +16,14 @@ __WHICH_VTM_SUGGESTIONS = [ "first", "last" ]
 
 
 def fill_subparser( subparsers ) -> None:
-    p = subparsers.add_parser( FIELDS_MANIPULATION, help=f"Allows to perform an operation from a source to your input mesh." )
-    p.add_argument( '--' + __MANIPULATION,
+    p = subparsers.add_parser( FIELD_OPERATIONS, help=f"Allows to perform an operation on fields from a source to your input mesh." )
+    p.add_argument( '--' + __OPERATION,
                     type=str,
                     required=True,
-                    metavar=", ".join( map( str, __MANIPULATION_CHOICES ) ),
-                    default=__MANIPULATION_CHOICES[ 0 ],
+                    metavar=", ".join( map( str, __OPERATION_CHOICES ) ),
+                    default=__OPERATION_CHOICES[ 0 ],
                     help="[string]: Choose what operation you want to perform from the source to your input mesh. "
-                         f"'{__MANIPULATION_CHOICES[ 0 ]}' copies field(s) from the source to the input mesh." )
+                         f"'{__OPERATION_CHOICES[ 0 ]}' copies field(s) from the source to the input mesh." )
     p.add_argument( '--' + __SUPPORT,
                     type=str,
                     required=True,
@@ -50,9 +50,9 @@ def fill_subparser( subparsers ) -> None:
 
 
 def convert( parsed_options ) -> Options:
-    manipulation: str = parsed_options[ __MANIPULATION ]
-    if support not in __MANIPULATION_CHOICES:
-        raise ValueError( f"For --{__MANIPULATION}, the only choices available are {__MANIPULATION_CHOICES}." )
+    operation: str = parsed_options[ __OPERATION ]
+    if support not in __OPERATION_CHOICES:
+        raise ValueError( f"For --{__OPERATION}, the only choices available are {__OPERATION_CHOICES}." )
     support: str = parsed_options[ __SUPPORT ]
     if support not in __SUPPORT_CHOICES:
         raise ValueError( f"For --{__SUPPORT}, the only choices available are {__SUPPORT_CHOICES}." )
@@ -66,7 +66,7 @@ def convert( parsed_options ) -> Options:
         except ValueError:
             raise ValueError( f"The choice for --{__WHICH_VTM} needs to be an integer or " +
                               f"'{__WHICH_VTM_SUGGESTIONS[ 0 ]}' or '{__WHICH_VTM_SUGGESTIONS[ 1 ]}'." )
-    return Options( manipulation=manipulation,
+    return Options( operation=operation,
                     support=support,
                     field_names=field_names,
                     source=parsed_options[ __SOURCE ],

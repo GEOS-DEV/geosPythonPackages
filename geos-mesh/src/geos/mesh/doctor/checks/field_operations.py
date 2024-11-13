@@ -11,7 +11,7 @@ from geos.mesh.doctor.checks.vtk_utils import VtkOutput, read_mesh, write_mesh
 
 @dataclass( frozen=True )
 class Options:
-    manipulation: str
+    operation: str
     support: str
     field_names: list[ str ]
     source: str
