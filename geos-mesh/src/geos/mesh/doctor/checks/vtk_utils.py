@@ -1,40 +1,12 @@
-from dataclasses import dataclass
-import os.path
 import logging
-import sys
-from typing import (
-    Any,
-    Iterator,
-    Optional,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
-from vtkmodules.vtkIOLegacy import (
-    vtkUnstructuredGridWriter,
-    vtkUnstructuredGridReader,
-)
-from vtkmodules.vtkIOXML import (
-    vtkXMLUnstructuredGridReader,
-    vtkXMLUnstructuredGridWriter,
-)
-
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAGONAL_PRISM,
-    VTK_HEXAHEDRON,
-    VTK_PENTAGONAL_PRISM,
-    VTK_PYRAMID,
-    VTK_TETRA,
-    VTK_VOXEL,
-    VTK_WEDGE,
-    VTK_TRIANGLE,
-    VTK_QUAD,
-    VTK_PIXEL,
-    VTK_LINE,
-    VTK_VERTEX,
-)
+import os.path
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from typing import Iterator, Optional
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
+from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter, vtkXMLMultiBlockDataReader
 
 
 @dataclass( frozen=True )
@@ -51,7 +23,7 @@ def to_vtk_id_list( data ) -> vtkIdList:
     return result
 
 
-def vtk_iter( l ) -> Iterator[ Any ]:
+def vtk_iter( l ) -> Iterator[ any ]:
     """
     Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins python containers.
     :param l: A vtk container.
@@ -63,6 +35,38 @@ def vtk_iter( l ) -> Iterator[ Any ]:
     elif hasattr( l, "GetNumberOfTypes" ):
         for i in range( l.GetNumberOfTypes() ):
             yield l.GetCellType( i )
+
+
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
+    """Checks if a mesh contains at least a data arrays within its cell, field or point data
+    having a certain name. If so, returns True, else False.
+
+    Args:
+        mesh (vtkUnstructuredGrid): An unstructured mesh.
+        invalid_fields (list[str]): Field name of an array in any data from the data.
+
+    Returns:
+        bool: True if one field found, else False.
+    """
+    # Check the cell data fields
+    cell_data = mesh.GetCellData()
+    for i in range( cell_data.GetNumberOfArrays() ):
+        if cell_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
+            return True
+    # Check the field data fields
+    field_data = mesh.GetFieldData()
+    for i in range( field_data.GetNumberOfArrays() ):
+        if field_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
+            return True
+    # Check the point data fields
+    point_data = mesh.GetPointData()
+    for i in range( point_data.GetNumberOfArrays() ):
+        if point_data.GetArrayName( i ) in invalid_fields:
+            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
+            return True
+    return False
 
 
 def __read_vtk( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
@@ -98,6 +102,10 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         If first guess does not work, eventually all the others reader available will be tested.
     :return: A unstructured grid.
     """
+    if not os.path.exists( vtk_input_file ):
+        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
     file_extension = os.path.splitext( vtk_input_file )[ -1 ]
     extension_to_reader = { ".vtk": __read_vtk, ".vtu": __read_vtu }
     # Testing first the reader that should match
@@ -111,8 +119,115 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         if output_mesh:
             return output_mesh
     # No reader did work. Dying.
-    logging.critical( f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..." )
-    sys.exit( 1 )
+    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\"."
+    logging.error( err_msg )
+    raise ValueError( err_msg )
+
+
+def read_vtm( vtk_input_file: str ) -> vtkMultiBlockDataSet:
+    if not vtk_input_file.endswith( ".vtm" ):
+        raise ValueError( f"Input file '{vtk_input_file}' is not a .vtm file. Cannot read it." )
+    reader = vtkXMLMultiBlockDataReader()
+    reader.SetFileName( vtk_input_file )
+    reader.Update()
+    return reader.GetOutput()
+
+
+def get_vtm_filepath_from_pvd( vtk_input_file: str, vtm_index: int ) -> str:
+    """From a GEOS output .pvd file, extracts one .vtm file and returns its filepath.
+
+    Args:
+        vtk_input_file (str): .pvd filepath
+        vtm_index (int): Index that will select which .vtm to choose.
+
+    Returns:
+        str: Filepath to the .vtm at the chosen index.
+    """
+    if not vtk_input_file.endswith( ".pvd" ):
+        raise ValueError( f"Input file '{vtk_input_file}' is not a .pvd file. Cannot read it." )
+    tree = ET.parse( vtk_input_file )
+    root = tree.getroot()
+    # Extract all .vtm file paths contained in the .pvd
+    vtm_paths: list[ str ] = list()
+    for dataset in root.findall( ".//DataSet" ):
+        file_path = dataset.get( "file" )
+        if file_path.endswith( ".vtm" ):
+            vtm_paths.append( file_path )
+    number_vtms: int = len( vtm_paths )
+    if number_vtms == 0:
+        raise ValueError( f"The '{vtk_input_file}' does not contain any .vtm path." )
+    if vtm_index >= number_vtms:
+        raise ValueError( f"Cannot access the .vtm at index '{vtm_index}' in the '{vtk_input_file}'." +
+                          f" The indexes available are between 0 and {number_vtms - 1}." )
+    # build the complete filepath of the vtm to use
+    directory: str = os.path.dirname( vtk_input_file )
+    vtm_filepath: str = os.path.join( directory, vtm_paths[ vtm_index ] )
+    return vtm_filepath
+
+
+def get_vtu_filepaths_from_vtm( vtm_filepath: str ) -> tuple[ str ]:
+    """By reading a vtm file, returns all the vtu filepaths present inside it.
+
+    Args:
+        vtm_filepath (str): Filepath to a .vtm
+
+    Returns:
+        tuple[ str ]: ( "file/path/0.vtu", ..., "file/path/N.vtu" )
+    """
+    if not vtm_filepath.endswith( ".vtm" ):
+        raise ValueError( f"Input file '{vtm_filepath}' is not a .vtm file. Cannot read it." )
+    # Parse the XML file and find all DataSet elements
+    tree = ET.parse( vtm_filepath )
+    root = tree.getroot()
+    dataset_elements = root.findall( ".//DataSet" )
+    # Extract the file attribute from each DataSet
+    vtu_filepaths: list[ str ] = [ ds.get( 'file' ) for ds in dataset_elements if ds.get( 'file' ).endswith( '.vtu' ) ]
+    directory: str = os.path.dirname( vtm_filepath )
+    vtu_filepaths = [ os.path.join( directory, vtu_filepath ) for vtu_filepath in vtu_filepaths ]
+    return tuple( vtu_filepaths )  # to lock the order of the vtus like in the vtm
+
+
+def get_number_of_cells_vtm_multiblock( multiblock: vtkMultiBlockDataSet ) -> int:
+    """Counts the total number of cells that are part of a vtkMultiBlockDataSet from a .vtm produced by GEOS.
+
+    Args:
+        multiblock (vtkMultiBlockDataSet): Dataset obtained from reading a .vtm file from GEOS output simulation.
+        The tree hierarchy must look like this:
+        <vtkMultiBlockDataSet>
+            <Block name="mesh">
+                <Block name="Level0">
+                    <Block name="CellElementRegion">
+                        <Block name="region_name_0">
+                            <DataSet name="rank_00" file="000000/mesh/Level0/region_name_0/rank_00.vtu" />
+                            ...
+                            <DataSet name="rank_N" file="000000/mesh/Level0/region_name_0/rank_N.vtu" />
+                        </Block>
+                        ...
+                        <Block name="region_name_K">
+                            <DataSet name="rank_00" file="000000/mesh/Level0/region_name_K/rank_00.vtu" />
+                            ...
+                            <DataSet name="rank_M" file="000000/mesh/Level0/region_name_K/rank_M.vtu" />
+                        </Block>
+                    </Block>
+                </Block>
+            </Block>
+        </vtkMultiBlockDataSet>
+
+    Returns:
+        int: The number of cells when combining all cell blocks.
+    """
+    try:
+        cell_element_region: vtkMultiBlockDataSet = multiblock.GetBlock( 0 ).GetBlock( 0 ).GetBlock( 0 )
+        assert cell_element_region.IsA( "vtkMultiBlockDataSet" )
+    except AssertionError:
+        raise ValueError( "The multiblock provided from a .vtm is not of the expected GEOS format." )
+    total_number_cells: int = 0
+    for region_id in range( cell_element_region.GetNumberOfBlocks() ):
+        region: vtkMultiBlockDataSet = cell_element_region.GetBlock( region_id )
+        for rank_id in range( region.GetNumberOfBlocks() ):
+            rank: vtkUnstructuredGrid = region.GetBlock( rank_id )
+            total_number_cells += rank.GetNumberOfCells()
+    return total_number_cells
 
 
 def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
@@ -150,28 +265,7 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     else:
         # No writer found did work. Dying.
-        logging.critical( f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..." )
-        sys.exit( 1 )
+        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\"."
+        logging.error( err_msg )
+        raise ValueError( err_msg )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
-
-
-def vtkid_to_string( id: int ) -> str:
-    choices: dict[ int, str ] = {
-        1: 'Vertex',
-        3: 'Line',
-        5: 'Triangle',
-        7: 'Polygon',
-        8: 'Pixel',
-        9: 'Quad',
-        10: 'Tetra',
-        11: 'Voxel',
-        12: 'Hex',
-        13: 'Wedge',
-        14: 'Pyramid',
-        15: 'Pentagonal prism',
-        16: 'Hexagonal Prism'
-    }
-    if id in choices:
-        return choices[ id ]
-    else:
-        return 'Unknown type'
