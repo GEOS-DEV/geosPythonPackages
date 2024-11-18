@@ -1,14 +1,12 @@
 import logging
-from geos.mesh.doctor.checks.field_operations import Options, Result
+from geos.mesh.doctor.checks.field_operations import Options, Result, __SUPPORT_CHOICES, __OPERATION_CHOICES
 from geos.mesh.doctor.parsing import vtk_output_parsing, FIELD_OPERATIONS
 
 __OPERATION = "operation"
-__OPERATION_CHOICES = [ "transfer" ]
 
 __SUPPORT = "support"
-__SUPPORT_CHOICES = [ "point", "cell" ]
 
-__NAME = "name"
+__FIELD_NAMES = "field_names"
 __SOURCE = "source"
 
 __WHICH_VTM = "which_vtm"
@@ -30,10 +28,10 @@ def fill_subparser( subparsers ) -> None:
                     metavar=", ".join( map( str, __SUPPORT_CHOICES ) ),
                     default=__SUPPORT_CHOICES[ 0 ],
                     help="[string]: Where to define field." )
-    p.add_argument( '--' + __NAME,
+    p.add_argument( '--' + __FIELD_NAMES,
                     type=str,
                     required=True,
-                    help="[list of string comma separated]: Name of the field(s) to manipulate." )
+                    help="[list of string comma separated]: Name of each field to use for the operation." )
     p.add_argument( '--' + __SOURCE,
                     type=str,
                     required=True,
@@ -51,15 +49,15 @@ def fill_subparser( subparsers ) -> None:
 
 def convert( parsed_options ) -> Options:
     operation: str = parsed_options[ __OPERATION ]
-    if support not in __OPERATION_CHOICES:
+    if operation not in __OPERATION_CHOICES:
         raise ValueError( f"For --{__OPERATION}, the only choices available are {__OPERATION_CHOICES}." )
     support: str = parsed_options[ __SUPPORT ]
     if support not in __SUPPORT_CHOICES:
         raise ValueError( f"For --{__SUPPORT}, the only choices available are {__SUPPORT_CHOICES}." )
-    field_names: list[ str ] = list( map( int, parsed_options[ __NAME ].split( "," ) ) )
+    field_names: list[ str ] = list( map( str, parsed_options[ __FIELD_NAMES ].split( "," ) ) )
     which_vtm: str = parsed_options[ __WHICH_VTM ]
     if which_vtm in __WHICH_VTM_SUGGESTIONS:
-        vtm_index: int = 0 if __WHICH_VTM_SUGGESTIONS[ 0 ] else -1
+        vtm_index: int = 0 if which_vtm == __WHICH_VTM_SUGGESTIONS[ 0 ] else -1
     else:
         try:
             vtm_index = int( which_vtm )
@@ -75,5 +73,5 @@ def convert( parsed_options ) -> Options:
 
 
 def display_results( options: Options, result: Result ):
-    if result.info != True:
+    if result.info != "OK":
         logging.error( f"Field addition failed" )
