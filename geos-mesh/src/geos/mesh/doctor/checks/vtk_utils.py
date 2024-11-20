@@ -2,9 +2,11 @@ import logging
 import os.path
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from numpy import array
 from typing import Iterator, Optional
+from vtkmodules.vtkFiltersCore import vtkCellCenters
 from vtkmodules.vtkCommonCore import vtkIdList
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter, vtkXMLMultiBlockDataReader
 
@@ -67,6 +69,38 @@ def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) 
             logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
             return True
     return False
+
+
+def get_points_coords_from_vtk( data: vtkPolyData ) -> array:
+    """Extracts the coordinates of every point from a vtkPolyData and returns them in a numpy array.
+
+    Args:
+        data (vtkPolyData): vtkPolyData object.
+
+    Returns:
+        array: Numpy array of shape( number_of_points, 3 )
+    """
+    points = data.GetPoints()
+    num_points: int = points.GetNumberOfPoints()
+    points_coords: array = array( [ points.GetPoint( i ) for i in range( num_points ) ], dtype=float )
+    return points_coords
+
+
+def get_cell_centers_array( mesh: vtkUnstructuredGrid ) -> array:
+    """Returns an array containing the cell centers coordinates for every cell of a mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): A vtk grid.
+
+    Returns:
+        np.array: Shape=( mesh number of cells, 3 )
+    """
+    cell_centers_filter: vtkCellCenters = vtkCellCenters()
+    cell_centers_filter.SetInputData( mesh )
+    cell_centers_filter.Update()
+    cell_centers = cell_centers_filter.GetOutput()
+    cell_centers_array: array = get_points_coords_from_vtk( cell_centers )
+    return cell_centers_array
 
 
 def __read_vtk( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
