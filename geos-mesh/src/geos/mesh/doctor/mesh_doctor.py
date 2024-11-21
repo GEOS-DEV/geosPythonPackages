@@ -1,17 +1,17 @@
 import sys
+import logging
+from geos.mesh.doctor.parsing import CheckHelper
+from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity
+import geos.mesh.doctor.register as register
 
+min_python_version = ( 3, 7 )
 try:
-    min_python_version = ( 3, 7 )
     assert sys.version_info >= min_python_version
 except AssertionError as e:
     print( f"Please update python to at least version {'.'.join(map(str, min_python_version))}." )
     sys.exit( 1 )
 
-import logging
-
-from geos.mesh.doctor.parsing import CheckHelper
-from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity
-import geos.mesh.doctor.register as register
+MESH_DOCTOR_FILEPATH = __file__
 
 
 def main():
