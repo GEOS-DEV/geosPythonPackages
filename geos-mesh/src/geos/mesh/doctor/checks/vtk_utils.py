@@ -8,7 +8,8 @@ from vtkmodules.vtkFiltersCore import vtkCellCenters
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter, vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
+                                  vtkXMLMultiBlockDataReader, vtkXMLMultiBlockDataWriter )
 
 
 @dataclass( frozen=True )
@@ -221,49 +222,6 @@ def get_vtu_filepaths_from_vtm( vtm_filepath: str ) -> tuple[ str ]:
     return tuple( vtu_filepaths )  # to lock the order of the vtus like in the vtm
 
 
-def get_number_of_cells_vtm_multiblock( multiblock: vtkMultiBlockDataSet ) -> int:
-    """Counts the total number of cells that are part of a vtkMultiBlockDataSet from a .vtm produced by GEOS.
-
-    Args:
-        multiblock (vtkMultiBlockDataSet): Dataset obtained from reading a .vtm file from GEOS output simulation.
-        The tree hierarchy must look like this:
-        <vtkMultiBlockDataSet>
-            <Block name="mesh">
-                <Block name="Level0">
-                    <Block name="CellElementRegion">
-                        <Block name="region_name_0">
-                            <DataSet name="rank_00" file="000000/mesh/Level0/region_name_0/rank_00.vtu" />
-                            ...
-                            <DataSet name="rank_N" file="000000/mesh/Level0/region_name_0/rank_N.vtu" />
-                        </Block>
-                        ...
-                        <Block name="region_name_K">
-                            <DataSet name="rank_00" file="000000/mesh/Level0/region_name_K/rank_00.vtu" />
-                            ...
-                            <DataSet name="rank_M" file="000000/mesh/Level0/region_name_K/rank_M.vtu" />
-                        </Block>
-                    </Block>
-                </Block>
-            </Block>
-        </vtkMultiBlockDataSet>
-
-    Returns:
-        int: The number of cells when combining all cell blocks.
-    """
-    try:
-        cell_element_region: vtkMultiBlockDataSet = multiblock.GetBlock( 0 ).GetBlock( 0 ).GetBlock( 0 )
-        assert cell_element_region.IsA( "vtkMultiBlockDataSet" )
-    except AssertionError:
-        raise ValueError( "The multiblock provided from a .vtm is not of the expected GEOS format." )
-    total_number_cells: int = 0
-    for region_id in range( cell_element_region.GetNumberOfBlocks() ):
-        region: vtkMultiBlockDataSet = cell_element_region.GetBlock( region_id )
-        for rank_id in range( region.GetNumberOfBlocks() ):
-            rank: vtkUnstructuredGrid = region.GetBlock( rank_id )
-            total_number_cells += rank.GetNumberOfCells()
-    return total_number_cells
-
-
 def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
     logging.info( f"Writing mesh into file \"{output}\" using legacy format." )
     writer = vtkUnstructuredGridWriter()
@@ -303,3 +261,14 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         logging.error( err_msg )
         raise ValueError( err_msg )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
+
+
+def write_VTM( multiblock: vtkMultiBlockDataSet, vtk_output: VtkOutput ) -> int:
+    if os.path.exists( vtk_output.output ):
+        logging.error( f"File \"{vtk_output.output}\" already exists, nothing done." )
+        return 1
+    writer = vtkXMLMultiBlockDataWriter()
+    writer.SetFileName( vtk_output.output )
+    writer.SetInputData( multiblock )
+    writer.SetDataModeToBinary() if vtk_output.is_data_mode_binary else writer.SetDataModeToAscii()
+    writer.Write()
