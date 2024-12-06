@@ -18,7 +18,7 @@ dir_name: str = os.path.dirname( current_file_path )
 pattern_test: str = "to_check_mesh"
 filepath_mesh_for_stats: str = os.path.join( dir_name, pattern_test + ".vtu" )
 test_mesh_for_stats: vu.VtkOutput = vu.VtkOutput( filepath_mesh_for_stats, True )
-geos_hierarchy: str = "mesh/Level0"
+geos_hierarchy: str = os.path.join( "mesh", "Level0" )
 
 
 """
@@ -95,7 +95,7 @@ def create_geos_pvd( all_grids_per_vtm: dict[ str, dict[ str, list[ vtkUnstructu
             for i, grid in enumerate( grids ):
                 rank_name: str = "rank_0" + str( i )
                 vtu_name: str = rank_name + ".vtu"
-                path_from_vtm: str = os.path.join( timestep, geos_hierarchy, vtu_name )
+                path_from_vtm: str = os.path.join( timestep, geos_hierarchy, region, vtu_name )
                 ET.SubElement( region_block, "DataSet", name=rank_name, file=path_from_vtm )
                 vtu_filepath: str = os.path.join( region_directory, vtu_name )
                 output_vtu: vu.VtkOutput = vu.VtkOutput( vtu_filepath, False )
@@ -286,13 +286,13 @@ class TestClass:
         # read the meshes
         read_vtu: vtkUnstructuredGrid = vu.read_mesh( output_four_hex_vtu.output )
         read_vtk: vtkUnstructuredGrid = vu.read_mesh( output_four_hex_vtu.output )
-        assert read_vtu.GetNumberOfCells() == four_hex_grid.GetNumberOfCells()
-        assert read_vtk.GetNumberOfCells() == four_hex_grid.GetNumberOfCells()
         try:
             os.remove( output_four_hex_vtu.output )
             os.remove( output_four_hex_vtk.output )
         except Exception as e:
             raise ValueError( f"test_write_and_read_mesh failed because of '{e}'." )
+        assert read_vtu.GetNumberOfCells() == four_hex_grid.GetNumberOfCells()
+        assert read_vtk.GetNumberOfCells() == four_hex_grid.GetNumberOfCells()
 
     def test_write_and_read_vtm( self ):
         multiblock: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
@@ -310,19 +310,27 @@ class TestClass:
         pvd_filepath: str = create_geos_pvd( stored_grids, pvd_directory )
         result0: str = vu.get_vtm_filepath_from_pvd( pvd_filepath, 0 )
         result1: str = vu.get_vtm_filepath_from_pvd( pvd_filepath, 1 )
-        assert result0.endswith( "time0.vtm" )
-        assert result1.endswith( "time1.vtm" )
         result2: list[ str ] = vu.get_vtu_filepaths_from_vtm( result0 )
-        for i, path2 in enumerate( result2 ):
-            if i % 2 == 0:
-                assert path2.endswith( "rank_00.vtu" )
-            else:
-                assert path2.endswith( "rank_01.vtu" )
+
         try:
             shutil.rmtree( pvd_directory )
         except OSError as e:
             print( f"Error: {e}" )
         os.remove( pvd_filepath )
+
+        assert result0.endswith( "time0.vtm" )
+        assert result1.endswith( "time1.vtm" )
+        for i, path2 in enumerate( result2 ):
+            print( "path2: ", path2 )
+            if i % 4 < 2:
+                region_name: str = "region0"
+            else:
+                region_name = "region1"
+            if i % 2 == 0:
+                assert path2.endswith( os.path.join( geos_hierarchy, region_name, "rank_00.vtu" ) )
+            else:
+                assert path2.endswith( os.path.join( geos_hierarchy, region_name, "rank_01.vtu" ) )
+        
 
     def test_has_invalid_field( self ):
         # initialize test meshes
