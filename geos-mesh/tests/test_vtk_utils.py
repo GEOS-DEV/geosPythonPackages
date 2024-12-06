@@ -321,7 +321,6 @@ class TestClass:
         assert result0.endswith( "time0.vtm" )
         assert result1.endswith( "time1.vtm" )
         for i, path2 in enumerate( result2 ):
-            print( "path2: ", path2 )
             if i % 4 < 2:
                 region_name: str = "region0"
             else:

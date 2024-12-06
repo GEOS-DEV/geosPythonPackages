@@ -40,6 +40,27 @@ def vtk_iter( l ) -> Iterator[ any ]:
             yield l.GetCellType( i )
 
 
+def get_all_array_names( mesh: vtkUnstructuredGrid ) -> dict[ str, dict[ str, int ] ]:
+    """Returns a dict with the names of each arrays and their indexes for each type of data contained in the mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): A vtk grid.
+
+    Returns:
+        dict[ str, dict[ str, int ] ]: { "CellData": { array_name0: 3, array_name1: 0, ... },
+                                         "FieldData": { ... },
+                                         "PointData": { ... } }
+    """
+    data_types: dict[ str, any ] = { "CellData": mesh.GetCellData, "FieldData": mesh.GetFieldData,
+                                     "PointData": mesh.GetPointData }
+    all_array_names: dict[ str, dict[ str, int ] ] = { data_type: dict() for data_type in data_types }
+    for typ, data in data_types.items():
+        for i in range( data().GetNumberOfArrays() ):
+            name: str = data().GetArrayName( i )
+            all_array_names[ typ ][ name ] = i
+    return all_array_names
+
+
 def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
     """Checks if a mesh contains at least a data arrays within its cell, field or point data
     having a certain name. If so, returns True, else False.
@@ -51,24 +72,12 @@ def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) 
     Returns:
         bool: True if one field found, else False.
     """
-    # Check the cell data fields
-    cell_data = mesh.GetCellData()
-    for i in range( cell_data.GetNumberOfArrays() ):
-        if cell_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
-            return True
-    # Check the field data fields
-    field_data = mesh.GetFieldData()
-    for i in range( field_data.GetNumberOfArrays() ):
-        if field_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
-            return True
-    # Check the point data fields
-    point_data = mesh.GetPointData()
-    for i in range( point_data.GetNumberOfArrays() ):
-        if point_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
-            return True
+    all_array_names: dict[ str, dict[ str, int ] ] = get_all_array_names( mesh )
+    for data_type, array_names in all_array_names.items():
+        for array_name in array_names.keys():
+            if array_name in invalid_fields:
+                logging.error( f"The mesh contains an invalid {data_type} array name '{array_name}'." )
+                return True
     return False
 
 
