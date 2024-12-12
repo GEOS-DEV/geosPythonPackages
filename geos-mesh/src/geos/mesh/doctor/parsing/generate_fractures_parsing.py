@@ -14,6 +14,8 @@ __FIELD_VALUES = "values"
 
 __FRACTURES_OUTPUT_DIR = "fractures_output_dir"
 __FRACTURES_DATA_MODE = "fractures_data_mode"
+__FRACTURES_DATA_MODE_VALUES = "binary", "ascii"
+__FRACTURES_DATA_MODE_DEFAULT = __FRACTURES_DATA_MODE_VALUES[ 0 ]
 
 
 def convert_to_fracture_policy( s: str ) -> FracturePolicy:
@@ -62,6 +64,8 @@ def fill_subparser( subparsers ) -> None:
     p.add_argument(
         '--' + __FRACTURES_DATA_MODE,
         type=str,
+        metavar=", ".join( __FRACTURES_DATA_MODE_VALUES ),
+        default=__FRACTURES_DATA_MODE_DEFAULT,
         help=f'[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
 
@@ -84,7 +88,7 @@ def convert( parsed_options ) -> Options:
     ]
     fracture_names: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in per_fracture ]
     fractures_output_dir: str = parsed_options[ __FRACTURES_OUTPUT_DIR ]
-    fractures_data_mode: str = parsed_options[ __FRACTURES_DATA_MODE ]
+    fractures_data_mode: str = parsed_options[ __FRACTURES_DATA_MODE ] == __FRACTURES_DATA_MODE_DEFAULT
     all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fractures_output_dir,
                                                                                 fractures_data_mode, mesh_vtk_output,
                                                                                 fracture_names )
@@ -110,13 +114,13 @@ def are_values_parsable( values: str ) -> bool:
     return True
 
 
-def build_all_fractures_VtkOutput( fracture_output_dir: str, fractures_data_mode: str, mesh_vtk_output: VtkOutput,
+def build_all_fractures_VtkOutput( fracture_output_dir: str, fractures_data_mode: bool, mesh_vtk_output: VtkOutput,
                                    fracture_names: list[ str ] ) -> list[ VtkOutput ]:
     if not os.path.exists( fracture_output_dir ):
-        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory does not exist." )
+        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fracture_output_dir}' does not exist." )
 
     if not os.access( fracture_output_dir, os.W_OK ):
-        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory is not writable." )
+        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fracture_output_dir}' is not writable." )
 
     output_name = os.path.basename( mesh_vtk_output.output )
     splitted_name_without_expension: list[ str ] = output_name.split( "." )[ :-1 ]
