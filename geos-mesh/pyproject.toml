@@ -23,6 +23,7 @@ dependencies = [
     "networkx >= 2.4",
     "tqdm",
     "numpy",
+    "numexpr",
     "meshio>=5.3.2",
 ]
 
