@@ -1,25 +1,25 @@
 import logging
 from numexpr import evaluate
 from dataclasses import dataclass
+from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, get_points_coords_from_vtk, get_cell_centers_array,
+                                                get_vtm_filepath_from_pvd, get_vtu_filepaths_from_vtm,
+                                                get_all_array_names, read_mesh, write_mesh )
 from math import sqrt
 from numpy import array, empty, full, int64, nan
 from numpy.random import rand
 from scipy.spatial import KDTree
+from tqdm import tqdm
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
-from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, get_points_coords_from_vtk, get_cell_centers_array,
-                                                get_vtm_filepath_from_pvd, get_vtu_filepaths_from_vtm,
-                                                get_all_array_names, read_mesh, write_mesh )
 
 
 @dataclass( frozen=True )
 class Options:
-    support: str
-    source: str
-    copy_fields: dict[ str, list[ str ] ]
-    created_fields: dict[ str, str ]
-    vtm_index: int
+    support: str  # choice between 'cell' and 'point' to operate on fields
+    source: str  # file from where the data is collected
+    copy_fields: list[ tuple[ str ] ]  # [ ( old_name0, new_name0, function0 ), ... ]
+    created_fields: list[ tuple[ str ] ]  # [ ( new_name0, function0 ), ... ]
+    vtm_index: int  # useful when source is a .pvd or .vtm file
     out_vtk: VtkOutput
 
 
@@ -179,16 +179,18 @@ def get_array_names_to_collect( sub_vtu_filepath: str, options: Options ) -> lis
         support_array_names: list[ str ] = list( all_array_names[ "CellData" ].keys() )
 
     to_use_arrays: set[ str ] = set()
-    for name in options.copy_fields.keys():
+    for name_newname_function in options.copy_fields:
+        name: str = name_newname_function[ 0 ]
         if name in support_array_names:
             to_use_arrays.add( name )
         else:
-            logging.warning( f"The field named '{name}' does not exist in '{sub_vtu_filepath}' in the data. " +
-                             "Cannot perform operations on it." )
+            logging.warning( f"The field named '{name}' does not exist in '{sub_vtu_filepath}' in the " +
+                             f"{options.support} data. Cannot perform operations on it." )
 
-    for function in options.created_fields.values():
+    for newname_function in options.created_fields:
+        funct: str = newname_function[ 1 ]
         for support_array_name in support_array_names:
-            if support_array_name in function:
+            if support_array_name in funct:
                 to_use_arrays.add( support_array_name )
 
     return list( to_use_arrays )
@@ -229,31 +231,33 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
 
     arrays_to_implement: dict[ str, array ] = dict()
     # proceed copy operations
-    for name, new_name_expression in options.copy_fields.items():
-        new_name: str = name
-        if len( new_name_expression ) > 0:
-            new_name: str = new_name_expression[ 0 ]
-        if len( new_name_expression ) == 2:
-            expression: str = new_name_expression[ 1 ]
-            copy_arr: array = evaluate( name + expression, local_dict=global_arrays )
+    for name_newname_function in tqdm( options.copy_fields, desc="Copying fields" ):
+        name: str = name_newname_function[ 0 ]
+        new_name: str = name_newname_function[ 0 ]
+        if len( name_newname_function ) > 1:
+            new_name = name_newname_function[ 1 ]
+        if len( name_newname_function ) == 3:
+            funct: str = name_newname_function[ 2 ]
+            copy_arr: array = evaluate( name + funct, local_dict=global_arrays )
         else:
             copy_arr = global_arrays[ name ]
         arrays_to_implement[ new_name ] = copy_arr
 
     # proceed create operations
-    for new_name, expression in options.created_fields.items():
-        if expression in create_precoded_fields:
-            created_arr: array = create_precoded_fields[ expression ]( mesh, options.support )
+    for newname_function in tqdm( options.created_fields, desc="Creating fields" ):
+        new_name, funct = newname_function
+        if funct in create_precoded_fields:
+            created_arr: array = create_precoded_fields[ funct ]( mesh, options.support )
         else:
-            created_arr = evaluate( expression, local_dict=global_arrays )
+            created_arr = evaluate( funct, local_dict=global_arrays )
         arrays_to_implement[ new_name ] = created_arr
 
     # once the data is selected, we can implement the global arrays inside it
     for final_name, final_array in arrays_to_implement.items():
-        dimension: int = final_array.shape[ 1 ] if len( final_array.shape ) == 2 else 1
-        if dimension > 1:  # Reshape the VTK array to match the original dimensions
+        number_columns: int = final_array.shape[ 1 ] if len( final_array.shape ) == 2 else 1
+        if number_columns > 1:  # Reshape the VTK array to match the original dimensions
             vtk_array = numpy_to_vtk( final_array.flatten() )
-            vtk_array.SetNumberOfComponents( dimension )
+            vtk_array.SetNumberOfComponents( number_columns )
             vtk_array.SetNumberOfTuples( number_elements )
         else:
             vtk_array = numpy_to_vtk( final_array )
@@ -274,13 +278,9 @@ def __check( grid_ref: vtkUnstructuredGrid, options: Options ) -> Result:
     kd_tree_ref: KDTree = KDTree( support_elements )
     # perform operations to construct the global arrays to implement in the output mesh from copy
     global_arrays: dict[ str, array ] = dict()
-    for vtu_id in range( len( sub_vtu_filepaths ) ):
+    for vtu_id in tqdm( range( len( sub_vtu_filepaths ) ), desc="Processing VTU files" ):
         sub_grid: vtkUnstructuredGrid = read_mesh( sub_vtu_filepaths[ vtu_id ] )
-        if options.support == __SUPPORT_CHOICES[ 0 ]:
-            sub_data = sub_grid.GetPointData()
-        else:
-            sub_data = sub_grid.GetCellData()
-
+        sub_data = sub_grid.GetPointData() if options.support == __SUPPORT_CHOICES[ 0 ] else sub_grid.GetCellData()
         arrays_available: list[ str ] = [ sub_data.GetArrayName( i ) for i in range( sub_data.GetNumberOfArrays() ) ]
         to_operate_on_indexes: list[ int ] = list()
         for name in useful_array_names:

@@ -43,8 +43,11 @@ def fill_subparser( subparsers ) -> None:
                     help="[list of string comma separated]: Allows to create new fields by using a function that is " +
                     "either pre-defined or to implement one. The syntax to use is 'new_field_name:function'. " +
                     "Predefined functions are: 1) 'distances_mesh_center' calculates the distance from the center. " +
-                    "2) 'random' populates an array with samples from a uniform distribution over [0, 1). " +
-                    "The other method, which is to implement a function using the numexpr functionalities." )
+                    "2) 'random' populates an array with samples from a uniform distribution over [0, 1). An example " +
+                    f" would be '--{__CREATE_FIELDS} new_distances:distances_mesh_center'." +
+                    "The other method is to implement a function using the 'numexpr' library functionalities. For " +
+                    "example, if in your source vtk data you have a cell array called 'PERMEABILITY' and you want to " +
+                    f"create a new field that is the log of this field, you can use: '--{__CREATE_FIELDS} log_perm:log(PERMEABILITY)'.")
     p.add_argument( '--' + __WHICH_VTM,
                     type=str,
                     required=False,
@@ -61,23 +64,23 @@ def convert( parsed_options ) -> Options:
     if support not in __SUPPORT_CHOICES:
         raise ValueError( f"For --{__SUPPORT}, the only choices available are {__SUPPORT_CHOICES}." )
 
-    copy_fields: dict[ str, list[ str ] ] = dict()
+    copy_fields: list[ tuple[ str ] ] = list()
     splitted_copy_fields: list[ str ] = parsed_options[ __COPY_FIELDS ].split( "," )
     for copy_field in splitted_copy_fields:
-        parts: list[ str ] = copy_field.split( ":" )
-        if len( parts ) > 0 and len( parts ) <= 3:
-            copy_fields[ parts[ 0 ] ] = list() if len( parts ) == 1 else parts[ 1: ]
-        else:
+        name_newname_function: tuple[ str ] = tuple( copy_field.split( ":" ) )
+        if len( name_newname_function ) == 0 or len( name_newname_function ) > 3:
             raise ValueError( f"The correct format for '--{__COPY_FIELDS}' is to have either: 'field_name', or " +
                               f"'field_name:new_field_name' or 'field_name:new_field_name:function' "
                               f"but not '{copy_field}'." )
+        else:
+            copy_fields.append( name_newname_function )
 
-    created_fields: dict[ str, str ] = dict()
+    created_fields: list[ tuple[ str ] ] = list()
     splitted_created_fields: list[ str ] = parsed_options[ __CREATE_FIELDS ].split( "," )
     for created_field in splitted_created_fields:
-        parts = created_field.split( ":" )
-        if len( parts ) == 2:
-            created_fields[ parts[ 0 ] ] = parts[ 1 ]
+        newname_function = tuple( created_field.split( ":" ) )
+        if len( newname_function ) == 2:
+            created_fields.append( newname_function )
         else:
             raise ValueError( f"The correct format for '--{__CREATE_FIELDS}' is to have 'new_field_name:function', " +
                               f"but not '{created_field}'." )
