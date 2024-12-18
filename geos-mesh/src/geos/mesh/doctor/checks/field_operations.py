@@ -20,7 +20,7 @@ class Options:
     copy_fields: list[ tuple[ str ] ]  # [ ( old_name0, new_name0, function0 ), ... ]
     created_fields: list[ tuple[ str ] ]  # [ ( new_name0, function0 ), ... ]
     vtm_index: int  # useful when source is a .pvd or .vtm file
-    out_vtk: VtkOutput
+    vtk_output: VtkOutput
 
 
 @dataclass( frozen=True )
@@ -105,7 +105,8 @@ def get_vtu_filepaths( options: Options ) -> tuple[ str ]:
         vtm_filepath: str = get_vtm_filepath_from_pvd( source_filepath, options.vtm_index )
         return get_vtu_filepaths_from_vtm( vtm_filepath )
     else:
-        raise ValueError( f"The filepath '{options.source}' provided targets neither a .vtu, a .vtm nor a .pvd file." )
+        raise ValueError( f"The source filepath '{options.source}' provided does not target a .vtu, a .vtm nor a " +
+                          ".pvd file." )
 
 
 def get_reorder_mapping( kd_tree_grid_ref: KDTree, sub_grid: vtkUnstructuredGrid, support: str ) -> array:
@@ -160,7 +161,8 @@ def __compatible_meshes( dest_mesh, source_mesh ) -> bool:
     return True
 
 
-def get_array_names_to_collect( sub_vtu_filepath: str, options: Options ) -> list[ str ]:
+def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
+                                            options: Options ) -> tuple[ list[ tuple[ str ] ], Options ]:
     """We need to have the list of array names that are required to perform copy and creation of new arrays. To build
     global_arrays to perform operations, we need only these names and not all array names present in the sub meshes.
 
@@ -176,24 +178,40 @@ def get_array_names_to_collect( sub_vtu_filepath: str, options: Options ) -> lis
     if options.support == __SUPPORT_CHOICES[ 0 ]:  # point
         support_array_names: list[ str ] = list( all_array_names[ "PointData" ].keys() )
     else:  # cell
-        support_array_names: list[ str ] = list( all_array_names[ "CellData" ].keys() )
+        support_array_names = list( all_array_names[ "CellData" ].keys() )
 
     to_use_arrays: set[ str ] = set()
+    to_use_copy: list[ tuple[ str ] ] = list()
     for name_newname_function in options.copy_fields:
         name: str = name_newname_function[ 0 ]
         if name in support_array_names:
             to_use_arrays.add( name )
+            to_use_copy.append( name_newname_function )
         else:
-            logging.warning( f"The field named '{name}' does not exist in '{sub_vtu_filepath}' in the " +
-                             f"{options.support} data. Cannot perform operations on it." )
+            logging.warning( f"The field named '{name}' does not exist in '{sub_vtu_filepath}' " +
+                             f"{options.support} data. Cannot perform copy operation on it." )
 
+    to_use_create: list[ tuple[ str ] ] = list()
     for newname_function in options.created_fields:
         funct: str = newname_function[ 1 ]
+        if funct in create_precoded_fields:
+            to_use_create.append( newname_function )
+            continue
+
+        is_usable: bool = False
         for support_array_name in support_array_names:
             if support_array_name in funct:
                 to_use_arrays.add( support_array_name )
+                is_usable = True
+        if is_usable:
+            to_use_create.append( newname_function )
+        else:
+            logging.warning( f"Cannot perform create operations with '{funct}' because some or all the fields do not " +
+                             f"exist in '{sub_vtu_filepath}'." )
 
-    return list( to_use_arrays )
+    updated_options: Options = Options( options.support, options.source, to_use_copy, to_use_create, options.vtm_index,
+                                        options.vtk_output )
+    return ( list( to_use_arrays ), updated_options )
 
 
 def merge_local_in_global_array( global_array: array, local_array: array, mapping: array ) -> None:
@@ -207,10 +225,12 @@ def merge_local_in_global_array( global_array: array, local_array: array, mappin
         mapping (np.array): Array of global indexes of size M.
     """
     size_global, size_local = global_array.shape, local_array.shape
-    assert size_global[ 0 ] >= size_local[ 0 ], "The global array to fill is smaller than the local array to merge."
+    if size_global[ 0 ] < size_local[ 0 ]:
+        raise ValueError( "The global array to fill is smaller than the local array to merge." )
     number_columns_global: int = size_global[ 1 ] if len( size_global ) == 2 else 1
     number_columns_local: int = size_local[ 1 ] if len( size_local ) == 2 else 1
-    assert number_columns_global == number_columns_local, "The arrays do not have same number of columns."
+    if number_columns_global != number_columns_local:
+        raise ValueError( "The arrays do not have same number of columns." )
     # when converting a numpy array to vtk array, you need to make sure to have a 2D array
     if len( size_local ) == 1:
         local_array = local_array.reshape( -1, 1 )
@@ -232,8 +252,7 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
     arrays_to_implement: dict[ str, array ] = dict()
     # proceed copy operations
     for name_newname_function in tqdm( options.copy_fields, desc="Copying fields" ):
-        name: str = name_newname_function[ 0 ]
-        new_name: str = name_newname_function[ 0 ]
+        name, new_name = name_newname_function[ 0 ], name_newname_function[ 0 ]
         if len( name_newname_function ) > 1:
             new_name = name_newname_function[ 1 ]
         if len( name_newname_function ) == 3:
@@ -267,37 +286,40 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
 
 def __check( grid_ref: vtkUnstructuredGrid, options: Options ) -> Result:
     sub_vtu_filepaths: tuple[ str ] = get_vtu_filepaths( options )
-    useful_array_names: list[ str ] = get_array_names_to_collect( sub_vtu_filepaths[ 0 ], options )
+    array_names_to_collect, new_options = get_array_names_to_collect_and_options( sub_vtu_filepaths[ 0 ], options )
+    if len( array_names_to_collect ) == 0:
+        raise ValueError( "No array corresponding to the operations suggested for either copy or creation was found " +
+                          f"in the source {new_options.support} data. Check your support and source file." )
     # create the output grid
     output_mesh: vtkUnstructuredGrid = grid_ref.NewInstance()
     output_mesh.CopyStructure( grid_ref )
     output_mesh.CopyAttributes( grid_ref )
     # find the support elements to use and construct their KDTree
-    support_elements: array = support_construction[ options.support ]( output_mesh )
-    size_support: int = support_elements.shape[ 0 ]
+    support_elements: array = support_construction[ new_options.support ]( output_mesh )
+    number_elements: int = support_elements.shape[ 0 ]
     kd_tree_ref: KDTree = KDTree( support_elements )
     # perform operations to construct the global arrays to implement in the output mesh from copy
     global_arrays: dict[ str, array ] = dict()
     for vtu_id in tqdm( range( len( sub_vtu_filepaths ) ), desc="Processing VTU files" ):
         sub_grid: vtkUnstructuredGrid = read_mesh( sub_vtu_filepaths[ vtu_id ] )
-        sub_data = sub_grid.GetPointData() if options.support == __SUPPORT_CHOICES[ 0 ] else sub_grid.GetCellData()
-        arrays_available: list[ str ] = [ sub_data.GetArrayName( i ) for i in range( sub_data.GetNumberOfArrays() ) ]
-        to_operate_on_indexes: list[ int ] = list()
-        for name in useful_array_names:
-            array_index: int = arrays_available.index( name )
-            to_operate_on_indexes.append( array_index )
-            if not name in global_arrays:
-                dimension: int = sub_data.GetArray( array_index ).GetNumberOfComponents()
-                global_arrays[ name ] = full( ( size_support, dimension ), nan )
+        sub_data = sub_grid.GetPointData() if new_options.support == __SUPPORT_CHOICES[ 0 ] else sub_grid.GetCellData()
+        usable_arrays: list[ tuple[ int, str ] ] = list()
+        for array_index in range( sub_data.GetNumberOfArrays() ):
+            array_name: str = sub_data.GetArrayName( array_index )
+            if array_name in array_names_to_collect:
+                usable_arrays.append( ( array_index, array_name ) )
+                if not array_name in global_arrays:
+                    number_components: int = sub_data.GetArray( array_index ).GetNumberOfComponents()
+                    global_arrays[ array_name ] = full( ( number_elements, number_components ), nan )
 
-        reorder_mapping: array = get_reorder_mapping( kd_tree_ref, sub_grid, options.support )
-        for index in to_operate_on_indexes:
-            name = arrays_available[ index ]
-            sub_array: array = vtk_to_numpy( sub_data.GetArray( index ) )
-            merge_local_in_global_array( global_arrays[ name ], sub_array, reorder_mapping )
+        if len( usable_arrays ) > 0:
+            reorder_mapping: array = get_reorder_mapping( kd_tree_ref, sub_grid, new_options.support )
+            for index_name in usable_arrays:
+                sub_array: array = vtk_to_numpy( sub_data.GetArray( index_name[ 0 ] ) )
+                merge_local_in_global_array( global_arrays[ index_name[ 1 ] ], sub_array, reorder_mapping )
     # The global arrays have been filled, so now we need to implement them in the output_mesh
-    implement_arrays( output_mesh, global_arrays, options )
-    write_mesh( output_mesh, options.out_vtk )
+    implement_arrays( output_mesh, global_arrays, new_options )
+    write_mesh( output_mesh, new_options.vtk_output )
     return Result( info="OK" )
 
 
