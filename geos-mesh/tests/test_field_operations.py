@@ -116,17 +116,16 @@ for i, sub_grid in enumerate( sub_grids ):
         else:
             sub_grid.GetPointData().AddArray( arr_values )
 
-copy_fields_points: list[ tuple[ str ] ] = [ ( "point_param0", ), ( "point_param1", "point_param1" + "_new" ),
-                                             ( "point_param2", "point_param2" + "_new", "*3" ) ]
-copy_fields_cells: list[ tuple[ str ] ] = [ ( "cell_param0", ), ( "cell_param1", "cell_param1" + "_new" ),
-                                            ( "cell_param2", "cell_param2" + "_new", "+ 10" ) ]
-
-created_fields_points: list[ tuple[ str ] ] = [ ( "point_param0" + "_created", "log( point_param0 )" ),
-                                                ( "point_param1" + "_created", "sqrt( point_param1 )" ),
-                                                ( "point_param2" + "_created", "point_param0 +point_param1 * 2" ) ]
-created_fields_cells: dict[ str, str ] = [ ( "cell_param0" + "_created", "log( cell_param0 )" ),
-                                           ( "cell_param1" + "_created", "sqrt( cell_param1 )" ),
-                                           ( "cell_param2" + "_created", "cell_param0 + cell_param1 * 2" ) ]
+operations_points: list[ tuple[ str ] ] = [ ( "point_param0", "point_param0" ), ( "point_param1", "point_param1_new" ),
+                                            ( "point_param2 * 3", "point_param2_new" ),
+                                            ( "log( point_param0 )", "point_param0_created" ),
+                                            ( "sqrt( point_param1 )", "point_param1_created" ),
+                                            ( "point_param0 + point_param1 * 2", "point_param2_created" ) ]
+operations_cells: list[ tuple[ str ] ] = [ ( "cell_param0", "cell_param0" ), ( "cell_param1", "cell_param1_new" ),
+                                           ( "cell_param2 + 10", "cell_param2_new" ),
+                                           ( "log( cell_param0 )", "cell_param0_created" ),
+                                           ( "sqrt( cell_param1 )", "cell_param1_created" ),
+                                           ( "cell_param0 + cell_param1 * 2", "cell_param2_created" ) ]
 
 out_points: vu.VtkOutput = vu.VtkOutput( os.path.join( tvu.dir_name, "points.vtu" ), True )
 out_cells: vu.VtkOutput = vu.VtkOutput( os.path.join( tvu.dir_name, "cells.vtu" ), True )
@@ -154,14 +153,12 @@ class TestClass:
         pvd_filepath: str = tvu.create_geos_pvd( tvu.stored_grids, tvu.pvd_directory )
         options_pvd0: fo.Options = fo.Options( support="point",
                                                source=pvd_filepath,
-                                               copy_fields=dict(),
-                                               created_fields=dict(),
+                                               operations=dict(),
                                                vtm_index=0,
                                                vtk_output=out_points )
         options_pvd1: fo.Options = fo.Options( support="point",
                                                source=pvd_filepath,
-                                               copy_fields=dict(),
-                                               created_fields=dict(),
+                                               operations=dict(),
                                                vtm_index=-1,
                                                vtk_output=out_points )
         result0: tuple[ str ] = fo.get_vtu_filepaths( options_pvd0 )
@@ -191,17 +188,15 @@ class TestClass:
 
     def test_get_array_names_to_collect_and_options( self ):
         vu.write_mesh( eight_hex_grid, eight_hex_grid_output )
-        options1: fo.Options = fo.Options( "cell", eight_hex_grid_output.output, copy_fields_cells,
-                                           created_fields_cells, -1, out_cells )
-        options2: fo.Options = fo.Options( "point", eight_hex_grid_output.output, copy_fields_points,
-                                           created_fields_points, -1, out_points )
+        options1: fo.Options = fo.Options( "cell", eight_hex_grid_output.output, operations_cells, -1, out_cells )
+        options2: fo.Options = fo.Options( "point", eight_hex_grid_output.output, operations_points, -1, out_points )
         result1, options1_new = fo.get_array_names_to_collect_and_options( eight_hex_grid_output.output, options1 )
         result2, options2_new = fo.get_array_names_to_collect_and_options( eight_hex_grid_output.output, options2 )
         os.remove( eight_hex_grid_output.output )
-        assert result1.sort() == [ fc[ 0 ] for fc in copy_fields_cells ].sort()
-        assert result2.sort() == [ fp[ 0 ] for fp in copy_fields_points ].sort()
-        assert options1_new.copy_fields.sort() == copy_fields_cells.sort()
-        assert options2_new.copy_fields.sort() == copy_fields_points.sort()
+        assert result1.sort() == [ fc[ 0 ] for fc in operations_cells ].sort()
+        assert result2.sort() == [ fp[ 0 ] for fp in operations_points ].sort()
+        assert options1_new.operations.sort() == operations_cells.sort()
+        assert options2_new.operations.sort() == operations_points.sort()
 
     def test_merge_local_in_global_array( self ):
         # create arrays filled with nan values
@@ -238,16 +233,14 @@ class TestClass:
         empty_mesh.DeepCopy( eight_hex_grid_empty )
         npoints: int = empty_mesh.GetNumberOfPoints()
         ncells: int = empty_mesh.GetNumberOfCells()
-        copy_fpoints = [ ( "point_param0", ), ( "point_param1", "point_copy1" ),
-                         ( "point_param2", "point_param2", "*10 + 0.1" ) ]
-        copy_fcells = [ ( "cell_param0", ), ( "cell_param1", "cell_copy1" ),
-                        ( "cell_param2", "cell_param2", "/0.1 - 0.5" ) ]
-        create_fpoints = [ ( "new0", "log(point_param0)" ), ( "new1", "sqrt(point_param1)" ),
-                           ( "new2", "distances_mesh_center" ) ]
-        create_fcells = [ ( "new3", "sqrt(cell_param0)" ), ( "new4", "log10(cell_param1)" ),
-                          ( "new5", "cell_param0 + cell_param1" ) ]
-        options_point = fo.Options( "point", "empty.vtu", copy_fpoints, create_fpoints, -1, output )
-        options_cell = fo.Options( "cell", "empty.vtu", copy_fcells, create_fcells, -1, output )
+        ope_points = [ ( "point_param0", "point_param0" ), ( "point_param1", "point_copy1" ),
+                       ( "point_param2 * 10 + 0.1", "point_param2" ), ( "log(point_param0)", "new0" ),
+                       ( "sqrt(point_param1)", "new1" ), ( "distances_mesh_center", "new2" ) ]
+        ope_cells = [ ( "cell_param0", "cell_param0" ), ( "cell_param1", "cell_copy1" ),
+                      ( "cell_param2 / 0.1 - 0.5", "cell_param2" ), ( "sqrt(cell_param0)", "new3" ),
+                      ( "log10(cell_param1)", "new4" ), ( "cell_param0 + cell_param1", "new5" ) ]
+        options_point = fo.Options( "point", "empty.vtu", ope_points, -1, output )
+        options_cell = fo.Options( "cell", "empty.vtu", ope_cells, -1, output )
         fo.implement_arrays( empty_mesh, eight_hex_grid_values, options_point )
         fo.implement_arrays( empty_mesh, eight_hex_grid_values, options_cell )
         point_data_mesh = empty_mesh.GetPointData()

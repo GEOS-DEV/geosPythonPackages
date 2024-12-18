@@ -126,33 +126,25 @@ The term 'operations' covers two distinct categories:
 .. code-block::
 
       $ python src/geos/mesh/doctor/mesh_doctor.py field_operations --help
-      usage: mesh_doctor.py field_operations [-h] [--support point, cell] [--source SOURCE] [--copy_fields COPY_FIELDS]
-                                             [--create_fields CREATE_FIELDS] [--which_vtm WHICH_VTM] --output OUTPUT
-                                             [--data-mode binary, ascii]
+      usage: mesh_doctor.py field_operations [-h] [--support point, cell] [--source SOURCE] [--operations OPERATIONS]
+                                             [--which_vtm WHICH_VTM] --output OUTPUT [--data-mode binary, ascii]
 
       options:
       -h, --help              show this help message and exit
       --support point, cell
                               [string]: Where to define field.
       --source SOURCE         [string]: Where field data to use for operation comes from .vtu, .vtm or .pvd file.
-      --copy_fields COPY_FIELDS
-                              [list of string comma separated]: Allows to copy a field from an input mesh to an output mesh.
-                              This copy can also be done while applying a coefficient on the copied field.
-                              The syntax to use is 'old_field_name:new_field_name:function'.
-                              Example: The available fields in your input mesh are 'poro,perm,temp,pressure'.
-                              First, to copy 'poro' without any modification use 'poro'.
-                              Then, to copy 'perm' and change its name to 'permeability' use 'perm:permeability'.
-                              After, to copy 'temp' and change its name to 'temperature' and to increase the values by 3 use 'temp:temperature:+3'.
-                              Finally, to copy 'pressure' without changing its name and to multiply the values by 10 use 'pressure:pressure:*10'.
-                              The combined syntax is '--copy_fields poro,perm:permeability,temp:temperature:+3,pressure:pressure:*10'.
-      --create_fields CREATE_FIELDS
-                              [list of string comma separated]: Allows to create new fields by using a function that is either pre-defined or to implement one.
-                              The syntax to use is 'new_field_name:function'.
-                              Predefined functions are: 'distances_mesh_center' calculates the distance from the center.
-                              random' populates an array with samples from a uniform distribution over (0, 1).
-                              An example would be '--create_fields new_distances:distances_mesh_center'.
-                              The other method is to implement a function using the 'numexpr' library functionalities.
-                              For example, if in your source vtk data you have a cell array called 'PERMEABILITY' and you want to create a new field that is the log of this field, you can use: '--create_fields log_perm:log(PERMEABILITY)'.
+      --operations OPERATIONS
+                              [list of string comma separated]: The syntax here is function0:new_name0, function1:new_name1, ...
+                              Allows to perform a wide arrays of operations to add new data to your output mesh using the source file data.
+                              Examples are the following:
+                              1. Copy of the field 'poro' from the input to the ouput with 'poro:poro'.
+                              2. Copy of the field 'PERM' from the input to the ouput with a multiplication of the values by 10 with 'PERM*10:PERM'.
+                              3. Copy of the field 'TEMP' from the input to the ouput with an addition to the values by 0.5 and change the name of the field to 'temperature' with 'TEMP+0.5:TEMPERATURE'.
+                              4. Create a new field 'NEW_PARAM' using the input 'PERM' field and having the square root of it with 'sqrt(PERM):NEW_PARAM'.
+                              Another method is to use precoded functions available which are:
+                              1. 'distances_mesh_center' will create a field where the distances from the mesh centerare calculated for all the elements chosen as support. To use: 'distances_mesh_center:NEW_FIELD_NAME'.
+                              2. 'random' will create a field with samples from a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'.
       --which_vtm WHICH_VTM
                               [string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique timestep) will be used for the operation.
                               To do so, you can choose amongst these possibilities: 'first' will select the initial timestep; 

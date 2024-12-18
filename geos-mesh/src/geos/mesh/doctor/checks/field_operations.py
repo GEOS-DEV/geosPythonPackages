@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, get_points_coords_from_vtk, get_cell_centers_array,
                                                 get_vtm_filepath_from_pvd, get_vtu_filepaths_from_vtm,
                                                 get_all_array_names, read_mesh, write_mesh )
-from math import sqrt
-from numpy import array, empty, full, int64, nan
+from numpy import array, empty, full, sqrt, int64, nan
 from numpy.random import rand
 from scipy.spatial import KDTree
 from tqdm import tqdm
@@ -17,8 +16,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 class Options:
     support: str  # choice between 'cell' and 'point' to operate on fields
     source: str  # file from where the data is collected
-    copy_fields: list[ tuple[ str ] ]  # [ ( old_name0, new_name0, function0 ), ... ]
-    created_fields: list[ tuple[ str ] ]  # [ ( new_name0, function0 ), ... ]
+    operations: list[ tuple[ str ] ]  # [ ( function0, new_name0 ), ... ]
     vtm_index: int  # useful when source is a .pvd or .vtm file
     vtk_output: VtkOutput
 
@@ -59,7 +57,8 @@ def get_distances_mesh_center( mesh: vtkUnstructuredGrid, support: str ) -> arra
         coord = coords[ i ]
         for j in range( len( coord ) ):
             distance_squared += ( coord[ j ] - center[ j ] ) * ( coord[ j ] - center[ j ] )
-        distances[ i ] = sqrt( distance_squared )
+        distances[ i ] = distance_squared
+    distances = sqrt( distances )
     return distances
 
 
@@ -132,35 +131,6 @@ def get_reorder_mapping( kd_tree_grid_ref: KDTree, sub_grid: vtkUnstructuredGrid
     return mapping
 
 
-def __compatible_meshes( dest_mesh, source_mesh ) -> bool:
-    # for now, just check that meshes have same number of elements and same number of nodes
-    # and require that each cell has same nodes, each node has same coordinate
-    dest_ne = dest_mesh.GetNumberOfCells()
-    dest_nn = dest_mesh.GetNumberOfPoints()
-    source_ne = source_mesh.GetNumberOfCells()
-    source_nn = source_mesh.GetNumberOfPoints()
-
-    if dest_ne != source_ne:
-        logging.error( 'meshes have different number of cells' )
-        return False
-    if dest_nn != source_nn:
-        logging.error( 'meshes have different number of nodes' )
-        return False
-
-    for i in range( dest_nn ):
-        if not ( ( dest_mesh.GetPoint( i ) ) == ( source_mesh.GetPoint( i ) ) ):
-            logging.error( 'at least one node is in a different location' )
-            return False
-
-    for i in range( dest_ne ):
-        if not ( vtk_to_numpy( dest_mesh.GetCell( i ).GetPoints().GetData() ) == vtk_to_numpy(
-                source_mesh.GetCell( i ).GetPoints().GetData() ) ).all():
-            logging.error( 'at least one cell has different nodes' )
-            return False
-
-    return True
-
-
 def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
                                             options: Options ) -> tuple[ list[ tuple[ str ] ], Options ]:
     """We need to have the list of array names that are required to perform copy and creation of new arrays. To build
@@ -181,21 +151,11 @@ def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
         support_array_names = list( all_array_names[ "CellData" ].keys() )
 
     to_use_arrays: set[ str ] = set()
-    to_use_copy: list[ tuple[ str ] ] = list()
-    for name_newname_function in options.copy_fields:
-        name: str = name_newname_function[ 0 ]
-        if name in support_array_names:
-            to_use_arrays.add( name )
-            to_use_copy.append( name_newname_function )
-        else:
-            logging.warning( f"The field named '{name}' does not exist in '{sub_vtu_filepath}' " +
-                             f"{options.support} data. Cannot perform copy operation on it." )
-
-    to_use_create: list[ tuple[ str ] ] = list()
-    for newname_function in options.created_fields:
-        funct: str = newname_function[ 1 ]
+    to_use_operate: list[ tuple[ str ] ] = list()
+    for function_newname in options.operations:
+        funct: str = function_newname[ 0 ]
         if funct in create_precoded_fields:
-            to_use_create.append( newname_function )
+            to_use_operate.append( function_newname )
             continue
 
         is_usable: bool = False
@@ -204,12 +164,12 @@ def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
                 to_use_arrays.add( support_array_name )
                 is_usable = True
         if is_usable:
-            to_use_create.append( newname_function )
+            to_use_operate.append( function_newname )
         else:
-            logging.warning( f"Cannot perform create operations with '{funct}' because some or all the fields do not " +
+            logging.warning( f"Cannot perform operations with '{funct}' because some or all the fields do not " +
                              f"exist in '{sub_vtu_filepath}'." )
 
-    updated_options: Options = Options( options.support, options.source, to_use_copy, to_use_create, options.vtm_index,
+    updated_options: Options = Options( options.support, options.source, to_use_operate, options.vtm_index,
                                         options.vtk_output )
     return ( list( to_use_arrays ), updated_options )
 
@@ -250,21 +210,9 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
                            mesh.GetNumberOfCells()
 
     arrays_to_implement: dict[ str, array ] = dict()
-    # proceed copy operations
-    for name_newname_function in tqdm( options.copy_fields, desc="Copying fields" ):
-        name, new_name = name_newname_function[ 0 ], name_newname_function[ 0 ]
-        if len( name_newname_function ) > 1:
-            new_name = name_newname_function[ 1 ]
-        if len( name_newname_function ) == 3:
-            funct: str = name_newname_function[ 2 ]
-            copy_arr: array = evaluate( name + funct, local_dict=global_arrays )
-        else:
-            copy_arr = global_arrays[ name ]
-        arrays_to_implement[ new_name ] = copy_arr
-
-    # proceed create operations
-    for newname_function in tqdm( options.created_fields, desc="Creating fields" ):
-        new_name, funct = newname_function
+    # proceed operations
+    for function_newname in tqdm( options.operations, desc="Performing operations" ):
+        funct, new_name = function_newname
         if funct in create_precoded_fields:
             created_arr: array = create_precoded_fields[ funct ]( mesh, options.support )
         else:
@@ -288,8 +236,8 @@ def __check( grid_ref: vtkUnstructuredGrid, options: Options ) -> Result:
     sub_vtu_filepaths: tuple[ str ] = get_vtu_filepaths( options )
     array_names_to_collect, new_options = get_array_names_to_collect_and_options( sub_vtu_filepaths[ 0 ], options )
     if len( array_names_to_collect ) == 0:
-        raise ValueError( "No array corresponding to the operations suggested for either copy or creation was found " +
-                          f"in the source {new_options.support} data. Check your support and source file." )
+        raise ValueError( "No array corresponding to the operations suggested was found in the source" +
+                          f" {new_options.support} data. Check your support and source file." )
     # create the output grid
     output_mesh: vtkUnstructuredGrid = grid_ref.NewInstance()
     output_mesh.CopyStructure( grid_ref )

@@ -5,9 +5,8 @@ from geos.mesh.doctor.parsing import vtk_output_parsing, FIELD_OPERATIONS
 __SUPPORT = "support"
 __SOURCE = "source"
 
-__COPY_FIELDS = "copy_fields"
-__CREATE_FIELDS = "create_fields"
-__FIELDS_DEFAULT = ""
+__OPERATIONS = "operations"
+__OPERATIONS_DEFAULT = ""
 
 __WHICH_VTM = "which_vtm"
 __WHICH_VTM_SUGGESTIONS = [ "first", "last" ]
@@ -24,47 +23,29 @@ def fill_subparser( subparsers ) -> None:
                     help="[string]: Where to define field." )
     p.add_argument( '--' + __SOURCE,
                     type=str,
-                    required=False,
+                    required=True,
                     help="[string]: Where field data to use for operation comes from .vtu, .vtm or .pvd file." )
-    p.add_argument(
-        '--' + __COPY_FIELDS,
-        type=str,
-        required=False,
-        default=__FIELDS_DEFAULT,
-        help="[list of string comma separated]: Allows to copy a field from an input mesh to an output mesh. " +
-        "This copy can also be done while applying a coefficient on the copied field. The syntax to use " +
-        "is 'old_field_name:new_field_name:function'. Example: The available fields in your input mesh " +
-        "are 'poro,perm,temp,pressure,'. First, to copy 'poro' without any modification use 'poro'. " +
-        "Then, to copy 'perm' and change its name to 'permeability' use 'perm:permeability'. " +
-        "After, to copy 'temp' and change its name to 'temperature' and to increase the values by 3 use 'temp:temperature:+3'. "
-        +
-        "Finally, to copy 'pressure' without changing its name and to multiply the values by 10 use 'pressure:pressure:*10'. "
-        +
-        f"The combined syntax is '--{__COPY_FIELDS} poro,perm:permeability,temp:temperature:+3,pressure:pressure:*10'."
-    )
-    p.add_argument(
-        '--' + __CREATE_FIELDS,
-        type=str,
-        required=False,
-        default=__FIELDS_DEFAULT,
-        help="[list of string comma separated]: Allows to create new fields by using a function that is " +
-        "either pre-defined or to implement one. The syntax to use is 'new_field_name:function'. " +
-        "Predefined functions are: 1) 'distances_mesh_center' calculates the distance from the center. " +
-        "2) 'random' populates an array with samples from a uniform distribution over [0, 1). An example " +
-        f" would be '--{__CREATE_FIELDS} new_distances:distances_mesh_center'." +
-        "The other method is to implement a function using the 'numexpr' library functionalities. For " +
-        "example, if in your source vtk data you have a cell array called 'PERMEABILITY' and you want to " +
-        f"create a new field that is the log of this field, you can use: '--{__CREATE_FIELDS} log_perm:log(PERMEABILITY)'."
-    )
-    p.add_argument(
-        '--' + __WHICH_VTM,
-        type=str,
-        required=False,
-        default=__WHICH_VTM_SUGGESTIONS[ 1 ],
-        help="[string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique "
-        "timestep) will be used for the operation. To do so, you can choose amongst these possibilities: "
-        "'first' will select the initial timestep; 'last' will select the final timestep; or you can enter "
-        "directly the index starting from 0 of the timestep (not the time). By default, the value is set to 'last'." )
+    p.add_argument( '--' + __OPERATIONS,
+                    type=str,
+                    required=True,
+                    default=__OPERATIONS_DEFAULT,
+                    help="[list of string comma separated]: The syntax here is function0:new_name0, function1:new_name1, ... " +
+                    "Allows to perform a wide arrays of operations to add new data to your output mesh using the source file data. " +
+                    "Examples are the following: 1. Copy of the field 'poro' from the input to the ouput with 'poro:poro'. " +
+                    "2. Copy of the field 'PERM' from the input to the ouput with a multiplication of the values by 10 with 'PERM*10:PERM'. " +
+                    "3. Copy of the field 'TEMP' from the input to the ouput with an addition to the values by 0.5 and change the name of the field to 'temperature' with 'TEMP+0.5:TEMPERATURE'. " +
+                    "4. Create a new field 'NEW_PARAM' using the input 'PERM' field and having the square root of it with 'sqrt(PERM):NEW_PARAM'. " +
+                    "Another method is to use precoded functions available which are: " +
+                    "1. 'distances_mesh_center' will create a field where the distances from the mesh centerare calculated for all the elements chosen as support. To use: 'distances_mesh_center:NEW_FIELD_NAME'. " +
+                    "2. 'random' will create a field with samples from a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'." )
+    p.add_argument( '--' + __WHICH_VTM,
+                    type=str,
+                    required=False,
+                    default=__WHICH_VTM_SUGGESTIONS[ 1 ],
+                    help="[string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique "
+                    "timestep) will be used for the operation. To do so, you can choose amongst these possibilities: "
+                    "'first' will select the initial timestep; 'last' will select the final timestep; or you can enter "
+                    "directly the index starting from 0 of the timestep (not the time). By default, the value is set to 'last'." )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 
@@ -73,38 +54,18 @@ def convert( parsed_options ) -> Options:
     if support not in __SUPPORT_CHOICES:
         raise ValueError( f"For --{__SUPPORT}, the only choices available are {__SUPPORT_CHOICES}." )
 
-    copy_fields: list[ tuple[ str ] ] = list()
-    parsed_copy_fields: str = parsed_options[ __COPY_FIELDS ]
-    if parsed_copy_fields == __FIELDS_DEFAULT:
-        logging.info( "No field will be copied because none was provided." )
+    operations: list[ tuple[ str ] ] = list()
+    parsed_operations: str = parsed_options[ __OPERATIONS ]
+    if parsed_operations == __OPERATIONS_DEFAULT:
+        raise ValueError( f"No operation was found. Cannot execute this feature." )
     else:
-        splitted_copy_fields: list[ str ] = parsed_copy_fields.split( "," )
-        for copy_field in splitted_copy_fields:
-            name_newname_function: tuple[ str ] = tuple( copy_field.split( ":" ) )
-            if len( name_newname_function ) == 0 or len( name_newname_function ) > 3:
-                raise ValueError( f"The correct format for '--{__COPY_FIELDS}' is to have either: 'field_name', or " +
-                                  f"'field_name:new_field_name' or 'field_name:new_field_name:function' "
-                                  f"but not '{copy_field}'." )
+        splitted_operations: list[ str ] = parsed_operations.split( "," )
+        for operation in splitted_operations:
+            function_newname: tuple[ str ] = tuple( operation.split( ":" ) )
+            if len( function_newname ) == 0 or len( function_newname ) > 2:
+                raise ValueError( f"The correct format for '--{__OPERATIONS}' is to have 'function:newname'." )
             else:
-                copy_fields.append( name_newname_function )
-
-    created_fields: list[ tuple[ str ] ] = list()
-    parsed_create_fields: str = parsed_options[ __CREATE_FIELDS ]
-    if parsed_create_fields == __FIELDS_DEFAULT:
-        logging.info( "No field will be created because none was provided." )
-    else:
-        splitted_created_fields: list[ str ] = parsed_create_fields.split( "," )
-        for created_field in splitted_created_fields:
-            newname_function = tuple( created_field.split( ":" ) )
-            if len( newname_function ) == 2:
-                created_fields.append( newname_function )
-            else:
-                raise ValueError(
-                    f"The correct format for '--{__CREATE_FIELDS}' is to have 'new_field_name:function', " +
-                    f"but not '{created_field}'." )
-
-    if len( copy_fields ) == len( created_fields ) == 0:
-        raise ValueError( f"No copy nor creation of field was found. No operation can be executed with this feature." )
+                operations.append( function_newname )
 
     which_vtm: str = parsed_options[ __WHICH_VTM ]
     if which_vtm in __WHICH_VTM_SUGGESTIONS:
@@ -118,8 +79,7 @@ def convert( parsed_options ) -> Options:
 
     return Options( support=support,
                     source=parsed_options[ __SOURCE ],
-                    copy_fields=copy_fields,
-                    created_fields=created_fields,
+                    operations=operations,
                     vtm_index=vtm_index,
                     vtk_output=vtk_output_parsing.convert( parsed_options ) )
 
