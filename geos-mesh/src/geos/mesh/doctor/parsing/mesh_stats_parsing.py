@@ -24,26 +24,27 @@ def fill_subparser( subparsers ) -> None:
     p.add_argument( '--' + __WRITE_STATS,
                     type=int,
                     required=True,
-                    metavar=[0, 1],
+                    metavar=[ 0, 1 ],
                     default=__WRITE_STATS_DEFAULT,
                     help=( f"\t[int]: The stats of the mesh will be printed in a file" +
                            " to the folder specified in --output." ) )
     p.add_argument( '--' + __DISCONNECTED,
                     type=int,
                     required=False,
-                    metavar=[0, 1],
+                    metavar=[ 0, 1 ],
                     default=__DISCONNECTED_DEFAULT,
                     help=f"\t[int]: Display all disconnected nodes ids and disconnected cell ids." )
     p.add_argument( '--' + __FIELD_VALUES,
                     type=int,
                     required=False,
-                    metavar=[0, 1],
+                    metavar=[ 0, 1 ],
                     default=__FIELD_VALUES_DEFAULT,
                     help=f"\t[int]: Display all range of field values that seem not realistic." )
     p.add_argument( '--' + __OUTPUT,
                     type=str,
                     required=False,
                     help=f"[string]: The output folder destination where the stats will be written." )
+
 
 def convert( parsed_options ) -> Options:
     write_stats = parsed_options[ __WRITE_STATS ]
@@ -60,13 +61,13 @@ def convert( parsed_options ) -> Options:
 
 def display_results( options: Options, result: Result ):
     log_stream = StringIO()
-    stream_handler = logging.StreamHandler(log_stream)
-    stream_handler.setLevel(logging.INFO)
+    stream_handler = logging.StreamHandler( log_stream )
+    stream_handler.setLevel( logging.INFO )
 
     # Get the root logger and add the StreamHandler to it to possibly output the log to an external file
     logger = logging.getLogger()
-    logger.addHandler(stream_handler)
-    logger.setLevel(logging.INFO)
+    logger.addHandler( stream_handler )
+    logger.setLevel( logging.INFO )
 
     logging.info( f"The mesh has {result.number_cells} cells and {result.number_points} points." )
     logging.info( f"There are {result.number_cell_types} different types of cells in the mesh:" )
@@ -78,20 +79,20 @@ def display_results( options: Options, result: Result ):
     logging.info( "\tNeighbors\tNumber of cells concerned" )
     for number_neighbors, count in zip( unique_numbers_neighbors, counts ):
         logging.info( f"\t{number_neighbors}\t\t{count}" )
-    
+
     logging.info( "Number of nodes being shared by exactly N cells:" )
     logging.info( "\tCells\t\tNumber of nodes" )
     for number_cells_per_node, number_of_occurences in result.sum_number_cells_per_nodes.items():
         logging.info( f"\t{number_cells_per_node}\t\t{number_of_occurences}" )
 
-    if 0 in unique_numbers_neighbors: #  unique_numbers_neighbors sorted in ascending order from minimum positive number
+    if 0 in unique_numbers_neighbors:  #  unique_numbers_neighbors sorted in ascending order from minimum positive number
         number_cells_disconnected: int = unique_numbers_neighbors[ 0 ]
     else:
         number_cells_disconnected = 0
     logging.info( f"Number of disconnected cells in the mesh: {number_cells_disconnected}" )
     if number_cells_disconnected > 0:
         logging.info( "\tIndexes of disconnected cells" )
-        indexes = where(result.cells_neighbors_number == 0)
+        indexes = where( result.cells_neighbors_number == 0 )
         logging.info( f"{indexes[ 0 ]}" )
 
     logging.info( f"Number of disconnected nodes in the mesh: {len( result.disconnected_nodes )}" )
@@ -124,14 +125,14 @@ def display_results( options: Options, result: Result ):
         logging.info( f"There are {len( data.scalar_names )} scalar fields from the {data_type}:" )
         for i in range( len( data.scalar_names ) ):
             logging.info( f"\t{data.scalar_names[i]}" + harmonious_spacing( data.scalar_names, i, space_size ) +
-                              f"min = {data.scalar_min_values[ i ]}" + " " * space_size +
-                              f"max = {data.scalar_max_values[ i ]}" )
+                          f"min = {data.scalar_min_values[ i ]}" + " " * space_size +
+                          f"max = {data.scalar_max_values[ i ]}" )
 
         logging.info( f"There are {len( data.tensor_names )} vector/tensor fields from the {data_type}:" )
         for i in range( len( data.tensor_names ) ):
             logging.info( f"\t{data.tensor_names[ i ]}" + harmonious_spacing( data.tensor_names, i, space_size ) +
-                              f"min = {data.tensor_min_values[ i ]}" + " " * space_size +
-                              f"max = {data.tensor_max_values[ i ]}" )
+                          f"min = {data.tensor_min_values[ i ]}" + " " * space_size +
+                          f"max = {data.tensor_max_values[ i ]}" )
 
     fields_validity_types: dict[ str, any ] = {
         "CellData": result.fields_validity_cell_data,

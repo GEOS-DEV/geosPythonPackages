@@ -9,8 +9,6 @@ from geos.mesh.doctor.checks.generate_cube import Options, FieldInfo, __build
 from geos.mesh.doctor.checks.vtk_utils import VtkOutput, write_mesh
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
 from vtkmodules.util.numpy_support import numpy_to_vtk
-
-
 """
 For creation of output test meshes
 """
@@ -103,7 +101,7 @@ point_data = cube3.GetPointData()
 cell_data.AddArray( vtk_array_poro )
 point_data.AddArray( vtk_array_temp )
 
-# cube4 is a cube with an extra hex cell disconnected added 
+# cube4 is a cube with an extra hex cell disconnected added
 options_cube4: Options = Options( vtk_output=out,
                                   generate_cells_global_ids=False,
                                   generate_points_global_ids=False,
@@ -117,13 +115,12 @@ options_cube4: Options = Options( vtk_output=out,
 cube4: vtkUnstructuredGrid = __build( options_cube4 )
 number_cells_cube4: int = cube4.GetNumberOfCells()
 hex = vtkHexahedron()
-coords_new_hex = ( (3.0, 0.0, 0.0), (4.0, 0.0, 0.0), (4.0, 1.0, 0.0), (3.0, 1.0, 0.0),
-                   (3.0, 0.0, 1.0), (4.0, 0.0, 1.0), (4.0, 1.0, 1.0), (3.0, 1.0, 1.0) )
+coords_new_hex = ( ( 3.0, 0.0, 0.0 ), ( 4.0, 0.0, 0.0 ), ( 4.0, 1.0, 0.0 ), ( 3.0, 1.0, 0.0 ), ( 3.0, 0.0, 1.0 ),
+                   ( 4.0, 0.0, 1.0 ), ( 4.0, 1.0, 1.0 ), ( 3.0, 1.0, 1.0 ) )
 for i in range( len( coords_new_hex ) ):
     hex.GetPoints().InsertNextPoint( coords_new_hex[ i ] )
     hex.GetPointIds().SetId( i, number_cells_cube4 + i )
 cube4.InsertNextCell( hex.GetCellType(), hex.GetPointIds() )
-
 
 # Last mesh: test mesh for output and check of execution of mesh_stats
 f_poro: FieldInfo = FieldInfo( "POROSITY", 1, "CELLS" )
@@ -148,14 +145,14 @@ number_points: int = cube_output.GetNumberOfPoints()
 a_poro: np.array = np.linspace( 0, 1, number_cells )
 a_perm: np.array = np.empty( ( number_cells, f_perm.dimension ) )
 for i in range( f_perm.dimension ):
-    a_perm[:, i] = np.linspace( 1e-14 * 10**i, 1e-12 * 10**i, number_cells )
+    a_perm[ :, i ] = np.linspace( 1e-14 * 10**i, 1e-12 * 10**i, number_cells )
 a_density: np.array = np.linspace( 500, 40000, number_cells )
 a_pressure: np.array = np.linspace( 1e5, 1e7, number_cells )
 a_temp: np.array = np.linspace( 1e2, 5e3, number_points )
 a_temp = a_temp.reshape( number_points, 1 )
 a_displacement: np.array = np.empty( ( number_points, f_displacement.dimension ) )
 for i in range( f_displacement.dimension ):
-    a_displacement[:, i] = np.linspace( 1e-4 * 10**i, 1e-2 * 10**i, number_points )
+    a_displacement[ :, i ] = np.linspace( 1e-4 * 10**i, 1e-2 * 10**i, number_points )
 for array in [ a_density, a_pressure, a_poro ]:
     array = array.reshape( number_cells, 1 )
 
@@ -269,13 +266,12 @@ class TestClass:
         expected2[ 8 ] = 0
         assert np.array_equal( result2, expected2 )
 
-
     def test_mesh_stats_execution( self ):
         write_mesh( cube_output, test_mesh_for_stats )
         invalidTest = False
         command = [
-            "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_mesh_for_stats.output, "mesh_stats", "--write_stats",
-            "0", "--output", dir_name, "--disconnected", "0", "--field_values", "0"
+            "python", MESH_DOCTOR_FILEPATH, "-v", "-i", test_mesh_for_stats.output, "mesh_stats", "--write_stats", "0",
+            "--output", dir_name, "--disconnected", "0", "--field_values", "0"
         ]
         try:
             result = subprocess.run( command, shell=True, stderr=subprocess.PIPE, universal_newlines=True )

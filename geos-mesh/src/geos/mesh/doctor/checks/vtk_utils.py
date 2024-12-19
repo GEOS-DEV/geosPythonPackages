@@ -51,8 +51,11 @@ def get_all_array_names( mesh: vtkUnstructuredGrid ) -> dict[ str, dict[ str, in
                                          "FieldData": { ... },
                                          "PointData": { ... } }
     """
-    data_types: dict[ str, any ] = { "CellData": mesh.GetCellData, "FieldData": mesh.GetFieldData,
-                                     "PointData": mesh.GetPointData }
+    data_types: dict[ str, any ] = {
+        "CellData": mesh.GetCellData,
+        "FieldData": mesh.GetFieldData,
+        "PointData": mesh.GetPointData
+    }
     all_array_names: dict[ str, dict[ str, int ] ] = { data_type: dict() for data_type in data_types }
     for typ, data in data_types.items():
         for i in range( data().GetNumberOfArrays() ):

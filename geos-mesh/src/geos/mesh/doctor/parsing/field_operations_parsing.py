@@ -29,23 +29,28 @@ def fill_subparser( subparsers ) -> None:
                     type=str,
                     required=True,
                     default=__OPERATIONS_DEFAULT,
-                    help="[list of string comma separated]: The syntax here is function0:new_name0, function1:new_name1, ... " +
-                    "Allows to perform a wide arrays of operations to add new data to your output mesh using the source file data. " +
-                    "Examples are the following: 1. Copy of the field 'poro' from the input to the ouput with 'poro:poro'. " +
-                    "2. Copy of the field 'PERM' from the input to the ouput with a multiplication of the values by 10 with 'PERM*10:PERM'. " +
-                    "3. Copy of the field 'TEMP' from the input to the ouput with an addition to the values by 0.5 and change the name of the field to 'temperature' with 'TEMP+0.5:TEMPERATURE'. " +
-                    "4. Create a new field 'NEW_PARAM' using the input 'PERM' field and having the square root of it with 'sqrt(PERM):NEW_PARAM'. " +
-                    "Another method is to use precoded functions available which are: " +
-                    "1. 'distances_mesh_center' will create a field where the distances from the mesh centerare calculated for all the elements chosen as support. To use: 'distances_mesh_center:NEW_FIELD_NAME'. " +
-                    "2. 'random' will create a field with samples from a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'." )
+                    help="[list of string comma separated]: The syntax here is function0:new_name0, " +
+                    "function1:new_name1, ... Allows to perform a wide arrays of operations to  add new data to your " +
+                    "output mesh using the source file data.  Examples are the following: 1. Copy of the field " +
+                    " 'poro' from the input to the ouput with 'poro:poro'.  2. Copy of the field 'PERM' from the " +
+                    "input to the ouput with a multiplication of the values by 10 with 'PERM*10:PERM'. " +
+                    "3. Copy of the field 'TEMP' from the input to the ouput with an addition to the values by 0.5 " +
+                    "and change the name of the field to 'temperature' with 'TEMP+0.5:TEMPERATURE'. 4. Create a new " +
+                    "field 'NEW_PARAM' using the input 'PERM' field and having the square root of it with " +
+                    "'sqrt(PERM):NEW_PARAM'. Another method is to use precoded functions available which are: " +
+                    "1. 'distances_mesh_center' will create a field where the distances from the mesh center are " +
+                    "calculated for all the elements chosen as support. To use: " +
+                    "'distances_mesh_center:NEW_FIELD_NAME'.  2. 'random' will create a field with samples from " +
+                    "a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'." )
     p.add_argument( '--' + __WHICH_VTM,
                     type=str,
                     required=False,
                     default=__WHICH_VTM_SUGGESTIONS[ 1 ],
-                    help="[string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique "
-                    "timestep) will be used for the operation. To do so, you can choose amongst these possibilities: "
-                    "'first' will select the initial timestep; 'last' will select the final timestep; or you can enter "
-                    "directly the index starting from 0 of the timestep (not the time). By default, the value is set to 'last'." )
+                    help="[string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique " +
+                    "timestep) will be used for the operation. To do so, you can choose amongst these possibilities: " +
+                    "'first' will select the initial timestep; 'last' will select the final timestep; or you can " +
+                    "enter directly the index starting from 0 of the timestep (not the time). By default, the value" +
+                    " is set to 'last'." )
     vtk_output_parsing.fill_vtk_output_subparser( p )
 
 

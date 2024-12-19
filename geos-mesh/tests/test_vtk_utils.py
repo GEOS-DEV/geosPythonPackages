@@ -8,8 +8,6 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkUnstructuredGrid, vtkCellArray, vtkHexahedron,
                                             vtkCompositeDataSet, VTK_HEXAHEDRON )
-
-
 """
 For creation of output test meshes
 """
@@ -19,11 +17,11 @@ pattern_test: str = "to_check_mesh"
 filepath_mesh_for_stats: str = os.path.join( dir_name, pattern_test + ".vtu" )
 test_mesh_for_stats: vu.VtkOutput = vu.VtkOutput( filepath_mesh_for_stats, True )
 geos_hierarchy: str = os.path.join( "mesh", "Level0" )
-
-
 """
 Utility functions for tests
 """
+
+
 def split_list( initial_list: list[ any ], number_sub_lists: int ) -> list[ list[ any ] ]:
     initial_len: int = len( initial_list )
     assert number_sub_lists <= initial_len
@@ -52,8 +50,7 @@ def create_vtk_hexahedron( point_ids: list[ int ] ) -> vtkHexahedron:
     return hex
 
 
-def create_type_vtk_grid( point_3D_coords: list[ list[  float ] ],
-                          all_point_ids: list[ list[ int ] ],
+def create_type_vtk_grid( point_3D_coords: list[ list[ float ] ], all_point_ids: list[ list[ int ] ],
                           vtk_type: int ) -> vtkUnstructuredGrid:
     points: vtkPoints = create_vtk_points( point_3D_coords )
     cells: vtkCellArray = vtkCellArray()
@@ -117,6 +114,7 @@ def create_geos_pvd( all_grids_per_vtm: dict[ str, dict[ str, list[ vtkUnstructu
 """
 Grids to perform tests on.
 """
+# yapf: disable
 # 4 Hexahedrons
 four_hex_ids: list[ list[ int ] ] = [ [ 0, 1, 4, 3, 6, 7, 10, 9 ],
                                       [ 1, 2, 5, 4, 7, 8, 11, 10 ],
@@ -213,7 +211,7 @@ two_hex4_points_coords: list[ list[ float ] ] = [ [ 0.0, 1.0, 1.0 ],  # point0
                                                   [ 2.0, 2.0, 2.0 ] ] # point11
 two_hex4_grid: vtkUnstructuredGrid = create_type_vtk_grid( two_hex4_points_coords, two_hex_ids, VTK_HEXAHEDRON )
 all_two_hex_grids: list[ vtkUnstructuredGrid ] = [ two_hex1_grid, two_hex2_grid, two_hex3_grid, two_hex4_grid ]
-
+# yapf: enable
 
 ## Duplicated grids but with different DataArrays per region and per timestep
 number_timesteps: int = 2
@@ -253,8 +251,8 @@ class TestClass:
         data2: tuple[ int ] = ( 3, 4, 5, 6 )
         result = vu.to_vtk_id_list( data1 )
         result2 = vu.to_vtk_id_list( data2 )
-        assert result.IsA("vtkIdList")
-        assert result2.IsA("vtkIdList")
+        assert result.IsA( "vtkIdList" )
+        assert result2.IsA( "vtkIdList" )
         assert result.GetNumberOfIds() == 3
         assert result2.GetNumberOfIds() == 4
         # vtk_iter
@@ -329,7 +327,6 @@ class TestClass:
                 assert path2.endswith( os.path.join( geos_hierarchy, region_name, "rank_00.vtu" ) )
             else:
                 assert path2.endswith( os.path.join( geos_hierarchy, region_name, "rank_01.vtu" ) )
-        
 
     def test_has_invalid_field( self ):
         # initialize test meshes

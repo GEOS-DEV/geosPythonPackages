@@ -224,8 +224,8 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
         logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
 
     scalar_names: list[ str ] = list()
-    scalar_min_values: list[ float] = list()
-    scalar_max_values: list[ float] = list()
+    scalar_min_values: list[ float ] = list()
+    scalar_max_values: list[ float ] = list()
     tensor_names: list[ str ] = list()
     tensor_min_values: list[ list[ float ] ] = list()
     tensor_max_values: list[ list[ float ] ] = list()
@@ -393,7 +393,7 @@ def get_cells_neighbors_number( mesh: vtkUnstructuredGrid ) -> np.array:
     # If a cell_id ends up having no neighbor = cell is disconnected
     cells_neighbors_number: np.array = np.zeros( ( mesh.GetNumberOfCells(), 1 ), dtype=int )
     for cell_ids in faces_node_ids.values():
-        if len(cell_ids) > 1:  # if a face node ids is shared by more than 1 cell = all cells sharing are neighbors
+        if len( cell_ids ) > 1:  # if a face node ids is shared by more than 1 cell = all cells sharing are neighbors
             for cell_id in cell_ids:
                 cells_neighbors_number[ cell_id ] += 1
     return cells_neighbors_number
