@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TypeAlias
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
-from geos.mesh.doctor.checks import vtk_utils
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkFieldData
+from geos.mesh.doctor.checks.vtk_utils import read_mesh, vtkid_to_string
 """
 TypeAliases for this file
 """
@@ -94,7 +94,7 @@ def associate_min_max_field_values() -> dict[ str, tuple[ float ] ]:
     Returns:
         dict[ str, tuple[ float ] ]: { poro: (min_value, max_value), perm: (min_value, max_value), ... }
     """
-    assoc_min_max_field_values: dict[ str, tuple[ float ] ] = {}
+    assoc_min_max_field_values: dict[ str, tuple[ float ] ] = dict()
     for name in MIN_FIELD.__members__:
         mini = MIN_FIELD[ name ]
         maxi = MAX_FIELD[ name ]
@@ -120,12 +120,12 @@ def get_cell_types_and_counts( mesh: vtkUnstructuredGrid ) -> tuple[ int, int, l
     # Get the different cell types in the mesh
     cell_types: list[ str ] = list()
     for cell_type in range( number_cell_types ):
-        cell_types.append( vtk_utils.vtkid_to_string( distinct_array_types.GetTuple( cell_type )[ 0 ] ) )
+        cell_types.append( vtkid_to_string( distinct_array_types.GetTuple( cell_type )[ 0 ] ) )
     # Counts how many of each type are present
     cell_type_counts: list[ int ] = [ 0 ] * number_cell_types
     for cell in range( number_cells ):
         for cell_type in range( number_cell_types ):
-            if vtk_utils.vtkid_to_string( mesh.GetCell( cell ).GetCellType() ) == cell_types[ cell_type ]:
+            if vtkid_to_string( mesh.GetCell( cell ).GetCellType() ) == cell_types[ cell_type ]:
                 cell_type_counts[ cell_type ] += 1
                 break
     return ( number_cells, number_cell_types, cell_types, cell_type_counts )
@@ -140,7 +140,7 @@ def get_number_cells_per_nodes( mesh: vtkUnstructuredGrid ) -> dict[ int, int ]:
     Returns:
         dict[ int, int ]: { point_id0: 8, ..., point_idN: 4 }
     """
-    number_cells_per_nodes: dict[ int, int ] = {}
+    number_cells_per_nodes: dict[ int, int ] = dict()
     for point_id in range( mesh.GetNumberOfPoints() ):
         number_cells_per_nodes[ point_id ] = 0
     for cell_id in range( mesh.GetNumberOfCells() ):
@@ -161,7 +161,7 @@ def summary_number_cells_per_nodes( number_cells_per_nodes: dict[ int, int ] ) -
         dict[ int, int ]: Connected to N cells as key, Number of nodes concerned as value
     """
     unique_number_cells = set( [ value for value in number_cells_per_nodes.values() ] )
-    summary: dict[ int, int ] = {}
+    summary: dict[ int, int ] = dict()
     for unique_number in unique_number_cells:
         summary[ unique_number ] = 0
     for number_cells in number_cells_per_nodes.values():
@@ -196,10 +196,10 @@ def check_NaN_fields( mesh: vtkUnstructuredGrid ) -> dict[ str, int ]:
     Returns:
         dict[ str, int ]: { array_mame0: 12, array_name4: 2, ... }
     """
-    fields_number_of_NaNs: dict[ str, int ] = {}
+    fields_number_of_NaNs: dict[ str, int ] = dict()
     data_to_use = ( mesh.GetCellData, mesh.GetPointData, mesh.GetFieldData )
     for getDataFuncion in data_to_use:
-        data = getDataFuncion()
+        data: vtkFieldData = getDataFuncion()
         for i in range( data.GetNumberOfArrays() ):
             array = data.GetArray( i )
             array_name: str = data.GetArrayName( i )
@@ -221,7 +221,7 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
     """
     if componentType not in [ "point", "cell", "field" ]:
         componentType = "point"
-        logging.error( f"Invalid component type chosen to build MeshComponentData. Defaulted to point." )
+        logging.error( "Invalid component type chosen to build MeshComponentData. Defaulted to point." )
 
     scalar_names: list[ str ] = list()
     scalar_min_values: list[ float ] = list()
@@ -231,7 +231,7 @@ def build_MeshComponentData( mesh: vtkUnstructuredGrid, componentType: str = "po
     tensor_max_values: list[ list[ float ] ] = list()
 
     data_to_use = { "cell": mesh.GetCellData, "point": mesh.GetPointData, "field": mesh.GetFieldData }
-    data = data_to_use[ componentType ]()
+    data: vtkFieldData = data_to_use[ componentType ]()
     for i in range( data.GetNumberOfArrays() ):
         data_array = data.GetArray( i )
         data_array_name: str = data_array.GetName()
@@ -272,25 +272,24 @@ def field_values_validity( mcdata: MeshComponentData ) -> FieldValidity:
     Returns:
         FieldValidity: {poro: (True, Min_Max_poro), perm: (False, Min_Max_perm), ...}
     """
-    field_values_validity: dict[ str, tuple[ bool, tuple[ float ] ] ] = {}
+    field_values_validity: dict[ str, tuple[ bool, tuple[ float ] ] ] = dict()
     assoc_min_max_field: dict[ str, tuple[ float ] ] = associate_min_max_field_values()
     # for scalar values
-    for i in range( len( mcdata.scalar_names ) ):
+    for i, scalar_name in enumerate( mcdata.scalar_names ):
         for field_param, min_max in assoc_min_max_field.items():
-            if field_param in mcdata.scalar_names[ i ].lower():
-                field_values_validity[ mcdata.scalar_names[ i ] ] = ( True, min_max )
-                if mcdata.scalar_min_values[ i ] < min_max[ 0 ] or mcdata.scalar_max_values[ i ] > min_max[ 1 ]:
-                    field_values_validity[ mcdata.scalar_names[ i ] ] = ( False, min_max )
+            if field_param in scalar_name.lower():
+                is_valid = mcdata.scalar_min_values[ i ] >= min_max[ 0 ] \
+                    and mcdata.scalar_max_values[ i ] <= min_max[ 1 ]
+                field_values_validity[ scalar_name ] = ( is_valid, min_max )
                 break
     # for tensor values
-    for i in range( len( mcdata.tensor_names ) ):
+    for i, tensor_name in enumerate( mcdata.tensor_names ):
         for field_param, min_max in assoc_min_max_field.items():
-            if field_param in mcdata.tensor_names[ i ].lower():
-                field_values_validity[ mcdata.tensor_names[ i ] ] = ( True, min_max )
+            if field_param in tensor_name.lower():
                 for sub_value_min, sub_value_max in zip( mcdata.tensor_min_values[ i ], mcdata.tensor_max_values[ i ] ):
-                    if sub_value_min < min_max[ 0 ] or sub_value_max > min_max[ 1 ]:
-                        field_values_validity[ mcdata.tensor_names[ i ] ] = ( False, min_max )
-                        break
+                    is_valid = sub_value_min >= min_max[ 0 ] and sub_value_max <= min_max[ 1 ]
+                    field_values_validity[ tensor_name ] = ( is_valid, min_max )
+                    break
                 break
     return field_values_validity
 
@@ -331,12 +330,8 @@ def get_disconnected_nodes_coords( mesh: vtkUnstructuredGrid ) -> dict[ int, tup
         dict[ int, tuple[ float ] ]: {nodeId0: (x0, y0, z0), nodeId23: (x23, y23, z23), ..., nodeIdM: (xM, yM, zM)}
     """
     disconnected_nodes_id: list[ int ] = get_disconnected_nodes_id( mesh )
-    disconnected_nodes_coords: dict[ int, tuple[ float ] ] = {}
     points = mesh.GetPoints()
-    for node_id in disconnected_nodes_id:
-        node_coords: tuple[ float ] = points.GetPoint( node_id )
-        disconnected_nodes_coords[ node_id ] = node_coords
-    return disconnected_nodes_coords
+    return { node_id: points.GetPoint( node_id ) for node_id in disconnected_nodes_id }
 
 
 def get_cell_faces_node_ids( cell: vtkCell, sort_ids: bool = False ) -> tuple[ tuple[ int ] ]:
@@ -356,8 +351,7 @@ def get_cell_faces_node_ids( cell: vtkCell, sort_ids: bool = False ) -> tuple[ t
         node_ids: list[ int ] = list()
         for i in range( face.GetNumberOfPoints() ):
             node_ids.append( face.GetPointId( i ) )
-        if sort_ids:
-            node_ids.sort()
+        node_ids.sort() if sort_ids else None
         cell_faces_node_ids.append( tuple( node_ids ) )
     return tuple( cell_faces_node_ids )
 
@@ -380,7 +374,7 @@ def get_cells_neighbors_number( mesh: vtkUnstructuredGrid ) -> np.array:
     """
     # First we need to get the node ids for all faces of every cell in the mesh.
     # The keys are face node ids, values are cell_id of cells that have this face node ids in common
-    faces_node_ids: dict[ tuple[ int ], list[ int ] ] = {}
+    faces_node_ids: dict[ tuple[ int ], list[ int ] ] = dict()
     for cell_id in range( mesh.GetNumberOfCells() ):
         cell_faces_node_ids: tuple[ tuple[ int ] ] = get_cell_faces_node_ids( mesh.GetCell( cell_id ), True )
         for cell_face_node_ids in cell_faces_node_ids:
@@ -443,6 +437,6 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     options.input_filepath = vtk_input_file
     return __check( mesh, options )

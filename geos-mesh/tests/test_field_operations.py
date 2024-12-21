@@ -134,8 +134,8 @@ out_cells: vu.VtkOutput = vu.VtkOutput( os.path.join( tvu.dir_name, "cells.vtu" 
 class TestClass:
 
     def test_precoded_fields( self ):
-        result_points: array = fo.get_distances_mesh_center( eight_hex_grid_empty, "point" )
-        result_cells: array = fo.get_distances_mesh_center( eight_hex_grid_empty, "cell" )
+        result_points: array = fo.build_distances_mesh_center( eight_hex_grid_empty, "point" )
+        result_cells: array = fo.build_distances_mesh_center( eight_hex_grid_empty, "cell" )
         sq2, sq3, sq3h = sqrt( 2 ), sqrt( 3 ), sqrt( 3 ) / 2
         expected_points: array = array( [
             sq3, sq2, sq3, sq2, 1.0, sq2, sq3, sq2, sq3, sq2, 1.0, sq2, 1.0, 0.0, 1.0, sq2, 1.0, sq2, sq3, sq2, sq3,
@@ -144,37 +144,14 @@ class TestClass:
         expected_cells: array = array( [ sq3h, sq3h, sq3h, sq3h, sq3h, sq3h, sq3h, sq3h ] )
         assert array_equal( result_points, expected_points )
         assert array_equal( result_cells, expected_cells )
-        random_points: array = fo.get_random_field( eight_hex_grid_empty, "point" )
-        random_cells: array = fo.get_random_field( eight_hex_grid_empty, "cell" )
+        random_points: array = fo.build_random_uniform_distribution( eight_hex_grid_empty, "point" )
+        random_cells: array = fo.build_random_uniform_distribution( eight_hex_grid_empty, "cell" )
         assert eight_hex_grid_empty.GetNumberOfPoints() == random_points.shape[ 0 ]
         assert eight_hex_grid_empty.GetNumberOfCells() == random_cells.shape[ 0 ]
 
-    def test_get_vtu_filepaths( self ):
-        pvd_filepath: str = tvu.create_geos_pvd( tvu.stored_grids, tvu.pvd_directory )
-        options_pvd0: fo.Options = fo.Options( support="point",
-                                               source=pvd_filepath,
-                                               operations=dict(),
-                                               vtm_index=0,
-                                               vtk_output=out_points )
-        options_pvd1: fo.Options = fo.Options( support="point",
-                                               source=pvd_filepath,
-                                               operations=dict(),
-                                               vtm_index=-1,
-                                               vtk_output=out_points )
-        result0: tuple[ str ] = fo.get_vtu_filepaths( options_pvd0 )
-        result1: tuple[ str ] = fo.get_vtu_filepaths( options_pvd1 )
-        try:
-            shutil.rmtree( tvu.pvd_directory )
-        except OSError as e:
-            print( f"Error: {e}" )
-        os.remove( pvd_filepath )
-        for i in range( len( result0 ) ):
-            assert "time0" in result0[ i ]  # looking through first vtm which is time0
-            assert "time1" in result1[ i ]  # looking through last vtm which is time1
-
     def test_get_reorder_mapping( self ):
-        support_points: array = fo.support_construction[ "point" ]( eight_hex_grid )
-        support_cells: array = fo.support_construction[ "cell" ]( eight_hex_grid )
+        support_points: array = fo.get_support_elements( eight_hex_grid, "point" )
+        support_cells: array = fo.get_support_elements( eight_hex_grid, "cell" )
         kd_tree_points: KDTree = KDTree( support_points )
         kd_tree_cells: KDTree = KDTree( support_cells )
         result_points1: array = fo.get_reorder_mapping( kd_tree_points, hex0_grid, "point" )
@@ -254,7 +231,7 @@ class TestClass:
             "cell_param2": eight_hex_grid_values[ "cell_param2" ] / 0.1 - 0.5,
             "new0": log( eight_hex_grid_values[ "point_param0" ] ),
             "new1": sqrt( eight_hex_grid_values[ "point_param1" ] ),
-            "new2": fo.get_distances_mesh_center( empty_mesh, "point" ).reshape( ( npoints, 1 ) ),
+            "new2": fo.build_distances_mesh_center( empty_mesh, "point" ).reshape( ( npoints, 1 ) ),
             "new3": sqrt( eight_hex_grid_values[ "cell_param0" ] ),
             "new4": log10( eight_hex_grid_values[ "cell_param1" ] ),
             "new5": eight_hex_grid_values[ "cell_param0" ] + eight_hex_grid_values[ "cell_param1" ]

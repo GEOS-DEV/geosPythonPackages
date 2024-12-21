@@ -328,6 +328,19 @@ class TestClass:
             else:
                 assert path2.endswith( os.path.join( geos_hierarchy, region_name, "rank_01.vtu" ) )
 
+    def test_get_vtu_filepaths( self ):
+        pvd_filepath: str = create_geos_pvd( stored_grids, pvd_directory )
+        result0: tuple[ str ] = vu.get_vtu_filepaths( pvd_filepath, 0 )
+        result1: tuple[ str ] = vu.get_vtu_filepaths( pvd_filepath, 1 )
+        try:
+            shutil.rmtree( pvd_directory )
+        except OSError as e:
+            print( f"Error: {e}" )
+        os.remove( pvd_filepath )
+        for i in range( len( result0 ) ):
+            assert "time0" in result0[ i ]  # looking through first vtm which is time0
+            assert "time1" in result1[ i ]  # looking through last vtm which is time1
+
     def test_has_invalid_field( self ):
         # initialize test meshes
         test_mesh_points: vtkUnstructuredGrid = four_hex_grid.NewInstance()

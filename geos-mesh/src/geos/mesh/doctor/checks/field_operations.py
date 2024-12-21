@@ -1,22 +1,21 @@
 import logging
-from numexpr import evaluate
 from dataclasses import dataclass
-from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, get_points_coords_from_vtk, get_cell_centers_array,
-                                                get_vtm_filepath_from_pvd, get_vtu_filepaths_from_vtm,
-                                                get_all_array_names, read_mesh, write_mesh )
+from numexpr import evaluate
 from numpy import array, empty, full, sqrt, int64, nan
 from numpy.random import rand
 from scipy.spatial import KDTree
 from tqdm import tqdm
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkDataSetAttributes
+from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, get_points_coords_from_vtk, get_cell_centers_array,
+                                                get_vtu_filepaths, get_all_array_names, read_mesh, write_mesh )
 
 
 @dataclass( frozen=True )
 class Options:
     support: str  # choice between 'cell' and 'point' to operate on fields
     source: str  # file from where the data is collected
-    operations: list[ tuple[ str ] ]  # [ ( function0, new_name0 ), ... ]
+    operations: list[ tuple[ str, str ] ]  # [ ( function0, new_name0 ), ... ]
     vtm_index: int  # useful when source is a .pvd or .vtm file
     vtk_output: VtkOutput
 
@@ -27,14 +26,66 @@ class Result:
 
 
 __SUPPORT_CHOICES = [ "point", "cell" ]
-support_construction: dict[ str, tuple[ any ] ] = {
-    __SUPPORT_CHOICES[ 0 ]: get_points_coords_from_vtk,
-    __SUPPORT_CHOICES[ 1 ]: get_cell_centers_array
-}
 
 
-def get_distances_mesh_center( mesh: vtkUnstructuredGrid, support: str ) -> array:
-    f"""For a specific support type {__SUPPORT_CHOICES}, returns a numpy array filled with the distances between
+def check_valid_support( support: str ) -> None:
+    if support not in __SUPPORT_CHOICES:
+        raise ValueError( f"For support, the only choices available are '{__SUPPORT_CHOICES}', not '{support}'." )
+
+
+def get_support_data( mesh: vtkUnstructuredGrid, support: str ) -> vtkDataSetAttributes:
+    f"""Returns the support vtkPointData or vtkCellData.
+
+    Args:
+        mesh (vtkUnstructuredGrid): A vtk grid.
+        support (str): Choice between {__SUPPORT_CHOICES}.
+
+    Returns:
+        any: vtkPointData or vtkCellData.
+    """
+    check_valid_support( support )
+    support_data: dict[ str, any ] = { "point": mesh.GetPointData, "cell": mesh.GetCellData }
+    if list( support_data.keys() ).sort() != __SUPPORT_CHOICES.sort():
+        raise ValueError( f"No implementation defined to access the {support} data." )
+    return support_data[ support ]()
+
+
+def get_support_elements( mesh: vtkUnstructuredGrid, support: str ) -> array:
+    f"""Returns the support elements which are either points coordinates or cell centers coordinates.
+
+    Args:
+        mesh (vtkUnstructuredGrid): A vtk grid.
+        support (str): Choice between {__SUPPORT_CHOICES}.
+
+    Returns:
+        int: Number of points or cells.
+    """
+    check_valid_support( support )
+    support_elements: dict[ str, any ] = { "point": get_points_coords_from_vtk, "cell": get_cell_centers_array }
+    if list( support_elements.keys() ).sort() != __SUPPORT_CHOICES.sort():
+        raise ValueError( f"No implementation defined to access the {support} data." )
+    return support_elements[ support ]( mesh )
+
+
+def get_number_elements( mesh: vtkUnstructuredGrid, support: str ) -> int:
+    f"""Returns the number of points or cells depending on the support.
+
+    Args:
+        mesh (vtkUnstructuredGrid): A vtk grid.
+        support (str): Choice between {__SUPPORT_CHOICES}.
+
+    Returns:
+        int: Number of points or cells.
+    """
+    check_valid_support( support )
+    number_funct: dict[ str, any ] = { 'point': mesh.GetNumberOfPoints, 'cell': mesh.GetNumberOfCells }
+    if list( number_funct.keys() ).sort() != __SUPPORT_CHOICES.sort():
+        raise ValueError( f"No implementation defined to return the number of elements for {support} data." )
+    return number_funct[ support ]()
+
+
+def build_distances_mesh_center( mesh: vtkUnstructuredGrid, support: str ) -> array:
+    f"""For a specific support type {__SUPPORT_CHOICES}, returns an array filled with the distances between
     their coordinates and the center of the mesh.
 
     Args:
@@ -43,26 +94,13 @@ def get_distances_mesh_center( mesh: vtkUnstructuredGrid, support: str ) -> arra
     Returns:
         array: [ distance0, distance1, ..., distanceN ] with N being the number of support elements.
     """
-    if support == __SUPPORT_CHOICES[ 0 ]:
-        coords: array = get_points_coords_from_vtk( mesh )
-    elif support == __SUPPORT_CHOICES[ 1 ]:
-        coords = get_cell_centers_array( mesh )
-    else:
-        raise ValueError( f"For support, the only choices available are {__SUPPORT_CHOICES}." )
-
+    coords: array = get_support_elements( mesh, support )
     center = ( coords.max( axis=0 ) + coords.min( axis=0 ) ) / 2
-    distances = empty( coords.shape[ 0 ] )
-    for i in range( coords.shape[ 0 ] ):
-        distance_squared: float = 0.0
-        coord = coords[ i ]
-        for j in range( len( coord ) ):
-            distance_squared += ( coord[ j ] - center[ j ] ) * ( coord[ j ] - center[ j ] )
-        distances[ i ] = distance_squared
-    distances = sqrt( distances )
+    distances = sqrt( ( ( coords - center )**2 ).sum( axis=1 ) )
     return distances
 
 
-def get_random_field( mesh: vtkUnstructuredGrid, support: str ) -> array:
+def build_random_uniform_distribution( mesh: vtkUnstructuredGrid, support: str ) -> array:
     f"""For a specific support type {__SUPPORT_CHOICES}, an array with samples from a uniform distribution over [0, 1).
 
     Args:
@@ -71,41 +109,13 @@ def get_random_field( mesh: vtkUnstructuredGrid, support: str ) -> array:
     Returns:
         array: Array of size N being the number of support elements.
     """
-    if support == __SUPPORT_CHOICES[ 0 ]:
-        number_elements: int = mesh.GetNumberOfPoints()
-    elif support == __SUPPORT_CHOICES[ 1 ]:
-        number_elements = mesh.GetNumberOfCells()
-    else:
-        raise ValueError( f"For support, the only choices available are {__SUPPORT_CHOICES}." )
-    return rand( number_elements, 1 )
+    return rand( get_number_elements( mesh, support ), 1 )
 
 
 create_precoded_fields: dict[ str, any ] = {
-    "distances_mesh_center": get_distances_mesh_center,
-    "random": get_random_field
+    "distances_mesh_center": build_distances_mesh_center,
+    "random_uniform_distribution": build_random_uniform_distribution
 }
-
-
-def get_vtu_filepaths( options: Options ) -> tuple[ str ]:
-    """Returns the vtu filepaths to use for the rest of the workflow.
-
-    Args:
-        options (Options): Options chosen by the user.
-
-    Returns:
-        tuple[ str ]: ( "file/path/0.vtu", ..., "file/path/N.vtu" )
-    """
-    source_filepath: str = options.source
-    if source_filepath.endswith( ".vtu" ):
-        return ( source_filepath, )
-    elif source_filepath.endswith( ".vtm" ):
-        return get_vtu_filepaths_from_vtm( source_filepath )
-    elif source_filepath.endswith( ".pvd" ):
-        vtm_filepath: str = get_vtm_filepath_from_pvd( source_filepath, options.vtm_index )
-        return get_vtu_filepaths_from_vtm( vtm_filepath )
-    else:
-        raise ValueError( f"The source filepath '{options.source}' provided does not target a .vtu, a .vtm nor a " +
-                          ".pvd file." )
 
 
 def get_reorder_mapping( kd_tree_grid_ref: KDTree, sub_grid: vtkUnstructuredGrid, support: str ) -> array:
@@ -121,9 +131,9 @@ def get_reorder_mapping( kd_tree_grid_ref: KDTree, sub_grid: vtkUnstructuredGrid
     Returns:
         np.array: [ cell_idK_grid, cell_idN_grid, ... ] or [ point_idK_grid, point_idN_grid, ... ]
     """
-    support_elements: array = support_construction[ support ]( sub_grid )
+    support_elements: array = get_support_elements( sub_grid, support )
     # now that you have the support elements, you can map them to the reference grid
-    number_elements: int = support_elements.shape[ 0 ]
+    number_elements: int = get_number_elements( sub_grid, support )
     mapping: array = empty( number_elements, dtype=int64 )
     for cell_id in range( number_elements ):
         _, index = kd_tree_grid_ref.query( support_elements[ cell_id ] )
@@ -143,12 +153,10 @@ def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
     Returns:
         list[ str ]: Array names.
     """
+    check_valid_support( options.support )
     ref_mesh: vtkUnstructuredGrid = read_mesh( sub_vtu_filepath )
     all_array_names: dict[ str, dict[ str, int ] ] = get_all_array_names( ref_mesh )
-    if options.support == __SUPPORT_CHOICES[ 0 ]:  # point
-        support_array_names: list[ str ] = list( all_array_names[ "PointData" ].keys() )
-    else:  # cell
-        support_array_names = list( all_array_names[ "CellData" ].keys() )
+    support_array_names: list[ str ] = list( all_array_names[ options.support ].keys() )
 
     to_use_arrays: set[ str ] = set()
     to_use_operate: list[ tuple[ str ] ] = list()
@@ -158,12 +166,8 @@ def get_array_names_to_collect_and_options( sub_vtu_filepath: str,
             to_use_operate.append( function_newname )
             continue
 
-        is_usable: bool = False
-        for support_array_name in support_array_names:
-            if support_array_name in funct:
-                to_use_arrays.add( support_array_name )
-                is_usable = True
-        if is_usable:
+        if any( name in funct for name in support_array_names ):
+            to_use_arrays.update( name for name in support_array_names if name in funct )
             to_use_operate.append( function_newname )
         else:
             logging.warning( f"Cannot perform operations with '{funct}' because some or all the fields do not " +
@@ -184,15 +188,15 @@ def merge_local_in_global_array( global_array: array, local_array: array, mappin
         local_array (np.array): Array of size M <= N that is representing a subset of the global_array.
         mapping (np.array): Array of global indexes of size M.
     """
-    size_global, size_local = global_array.shape, local_array.shape
-    if size_global[ 0 ] < size_local[ 0 ]:
+    global_shape, local_shape = global_array.shape, local_array.shape
+    if global_shape[ 0 ] < local_shape[ 0 ]:
         raise ValueError( "The global array to fill is smaller than the local array to merge." )
-    number_columns_global: int = size_global[ 1 ] if len( size_global ) == 2 else 1
-    number_columns_local: int = size_local[ 1 ] if len( size_local ) == 2 else 1
+    number_columns_global: int = global_shape[ 1 ] if len( global_shape ) == 2 else 1
+    number_columns_local: int = local_shape[ 1 ] if len( local_shape ) == 2 else 1
     if number_columns_global != number_columns_local:
         raise ValueError( "The arrays do not have same number of columns." )
     # when converting a numpy array to vtk array, you need to make sure to have a 2D array
-    if len( size_local ) == 1:
+    if len( local_shape ) == 1:
         local_array = local_array.reshape( -1, 1 )
     global_array[ mapping ] = local_array
 
@@ -205,10 +209,8 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
         global_arrays (dict[ str, np.array ]): { "array_name0": np.array, ..., "array_nameN": np.array }
         options (Options): Options chosen by the user.
     """
-    data = mesh.GetPointData() if options.support == __SUPPORT_CHOICES[ 0 ] else mesh.GetCellData()
-    number_elements: int = mesh.GetNumberOfPoints() if options.support == __SUPPORT_CHOICES[ 0 ] else \
-                           mesh.GetNumberOfCells()
-
+    support_data: vtkDataSetAttributes = get_support_data( mesh, options.support )
+    number_elements: int = get_number_elements( mesh, options.support )
     arrays_to_implement: dict[ str, array ] = dict()
     # proceed operations
     for function_newname in tqdm( options.operations, desc="Performing operations" ):
@@ -229,7 +231,7 @@ def implement_arrays( mesh: vtkUnstructuredGrid, global_arrays: dict[ str, array
         else:
             vtk_array = numpy_to_vtk( final_array )
         vtk_array.SetName( final_name )
-        data.AddArray( vtk_array )
+        support_data.AddArray( vtk_array )
 
 
 def __check( grid_ref: vtkUnstructuredGrid, options: Options ) -> Result:
@@ -243,14 +245,14 @@ def __check( grid_ref: vtkUnstructuredGrid, options: Options ) -> Result:
     output_mesh.CopyStructure( grid_ref )
     output_mesh.CopyAttributes( grid_ref )
     # find the support elements to use and construct their KDTree
-    support_elements: array = support_construction[ new_options.support ]( output_mesh )
+    support_elements: array = get_support_elements( output_mesh, options.support )
     number_elements: int = support_elements.shape[ 0 ]
     kd_tree_ref: KDTree = KDTree( support_elements )
     # perform operations to construct the global arrays to implement in the output mesh from copy
     global_arrays: dict[ str, array ] = dict()
     for vtu_id in tqdm( range( len( sub_vtu_filepaths ) ), desc="Processing VTU files" ):
         sub_grid: vtkUnstructuredGrid = read_mesh( sub_vtu_filepaths[ vtu_id ] )
-        sub_data = sub_grid.GetPointData() if new_options.support == __SUPPORT_CHOICES[ 0 ] else sub_grid.GetCellData()
+        sub_data: vtkDataSetAttributes = get_support_data( sub_grid, options.support )
         usable_arrays: list[ tuple[ int, str ] ] = list()
         for array_index in range( sub_data.GetNumberOfArrays() ):
             array_name: str = sub_data.GetArrayName( array_index )

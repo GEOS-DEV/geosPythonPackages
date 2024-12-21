@@ -1,5 +1,5 @@
 import logging
-from geos.mesh.doctor.checks.field_operations import Options, Result, __SUPPORT_CHOICES
+from geos.mesh.doctor.checks.field_operations import Options, Result, check_valid_support, __SUPPORT_CHOICES
 from geos.mesh.doctor.parsing import vtk_output_parsing, FIELD_OPERATIONS
 
 __SUPPORT = "support"
@@ -40,8 +40,8 @@ def fill_subparser( subparsers ) -> None:
                     "'sqrt(PERM):NEW_PARAM'. Another method is to use precoded functions available which are: " +
                     "1. 'distances_mesh_center' will create a field where the distances from the mesh center are " +
                     "calculated for all the elements chosen as support. To use: " +
-                    "'distances_mesh_center:NEW_FIELD_NAME'.  2. 'random' will create a field with samples from " +
-                    "a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'." )
+                    "'distances_mesh_center:NEW_FIELD_NAME'. 2. 'random_uniform_distribution' will create a field " +
+                    "with samples from a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'." )
     p.add_argument( '--' + __WHICH_VTM,
                     type=str,
                     required=False,
@@ -56,21 +56,18 @@ def fill_subparser( subparsers ) -> None:
 
 def convert( parsed_options ) -> Options:
     support: str = parsed_options[ __SUPPORT ]
-    if support not in __SUPPORT_CHOICES:
-        raise ValueError( f"For --{__SUPPORT}, the only choices available are {__SUPPORT_CHOICES}." )
+    check_valid_support( support )
 
     operations: list[ tuple[ str ] ] = list()
     parsed_operations: str = parsed_options[ __OPERATIONS ]
     if parsed_operations == __OPERATIONS_DEFAULT:
         raise ValueError( f"No operation was found. Cannot execute this feature." )
-    else:
-        splitted_operations: list[ str ] = parsed_operations.split( "," )
-        for operation in splitted_operations:
-            function_newname: tuple[ str ] = tuple( operation.split( ":" ) )
-            if len( function_newname ) == 0 or len( function_newname ) > 2:
-                raise ValueError( f"The correct format for '--{__OPERATIONS}' is to have 'function:newname'." )
-            else:
-                operations.append( function_newname )
+    splitted_operations: list[ str ] = parsed_operations.split( "," )
+    for operation in splitted_operations:
+        function_newname: tuple[ str ] = tuple( operation.split( ":" ) )
+        if not len( function_newname ) == 2:
+            raise ValueError( f"The correct format for '--{__OPERATIONS}' is to have 'function:newname'." )
+        operations.append( function_newname )
 
     which_vtm: str = parsed_options[ __WHICH_VTM ]
     if which_vtm in __WHICH_VTM_SUGGESTIONS:

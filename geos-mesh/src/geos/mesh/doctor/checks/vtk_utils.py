@@ -18,6 +18,27 @@ class VtkOutput:
     is_data_mode_binary: bool
 
 
+vtk_type_name_mapping: dict[ int, str ] = {
+    1: 'Vertex',
+    3: 'Line',
+    5: 'Triangle',
+    8: 'Pixel',
+    9: 'Quad',
+    10: 'Tetra',
+    11: 'Voxel',
+    12: 'Hex',
+    13: 'Wedge',
+    14: 'Pyramid',
+    15: 'Pentagonal prism',
+    16: 'Hexagonal Prism',
+    42: 'Polyhedron'
+}
+
+
+def vtkid_to_string( id: int ) -> str:
+    return vtk_type_name_mapping.get( id, 'Unknown type' )
+
+
 def to_vtk_id_list( data ) -> vtkIdList:
     result = vtkIdList()
     result.Allocate( len( data ) )
@@ -47,15 +68,11 @@ def get_all_array_names( mesh: vtkUnstructuredGrid ) -> dict[ str, dict[ str, in
         mesh (vtkUnstructuredGrid): A vtk grid.
 
     Returns:
-        dict[ str, dict[ str, int ] ]: { "CellData": { array_name0: 3, array_name1: 0, ... },
-                                         "FieldData": { ... },
-                                         "PointData": { ... } }
+        dict[ str, dict[ str, int ] ]: { "cell": { array_name0: 3, array_name1: 0, ... },
+                                         "field": { ... },
+                                         "point": { ... } }
     """
-    data_types: dict[ str, any ] = {
-        "CellData": mesh.GetCellData,
-        "FieldData": mesh.GetFieldData,
-        "PointData": mesh.GetPointData
-    }
+    data_types: dict[ str, any ] = { "point": mesh.GetCellData, "cell": mesh.GetFieldData, "field": mesh.GetPointData }
     all_array_names: dict[ str, dict[ str, int ] ] = { data_type: dict() for data_type in data_types }
     for typ, data in data_types.items():
         for i in range( data().GetNumberOfArrays() ):
@@ -232,6 +249,29 @@ def get_vtu_filepaths_from_vtm( vtm_filepath: str ) -> tuple[ str ]:
     directory: str = os.path.dirname( vtm_filepath )
     vtu_filepaths = [ os.path.join( directory, vtu_filepath ) for vtu_filepath in vtu_filepaths ]
     return tuple( vtu_filepaths )  # to lock the order of the vtus like in the vtm
+
+
+def get_vtu_filepaths( vtk_filepath: str, vtm_index: int = -1 ) -> tuple[ str ]:
+    """When dealing with a .pvd or .vtm file, returns the filepaths that are contained inside that file.
+    When dealing with a .vtu, just returns the filepath of the given file.
+
+    Args:
+        vtk_filepath (str): Filepath to a .pvd, .vtm or .vtu file.
+        vtm_index (int, optional): When dealing with a .pvd file, selects which vtm index to use. Defaults to -1.
+
+    Returns:
+        tuple[ str ]: ( "file/path/0.vtu", ..., "file/path/N.vtu" )
+    """
+    if vtk_filepath.endswith( ".vtu" ):
+        return ( vtk_filepath, )
+    elif vtk_filepath.endswith( ".vtm" ):
+        return get_vtu_filepaths_from_vtm( vtk_filepath )
+    elif vtk_filepath.endswith( ".pvd" ):
+        vtm_filepath: str = get_vtm_filepath_from_pvd( vtk_filepath, vtm_index )
+        return get_vtu_filepaths_from_vtm( vtm_filepath )
+    else:
+        raise ValueError( f"The source filepath '{vtk_filepath}' provided does not target a .vtu, a .vtm nor a " +
+                          ".pvd file." )
 
 
 def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:

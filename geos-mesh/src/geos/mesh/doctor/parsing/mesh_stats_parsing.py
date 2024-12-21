@@ -1,11 +1,11 @@
 import logging
 import os
-from io import StringIO
 from datetime import datetime
-from typing import Iterable
+from io import StringIO
 from numpy import unique, where
+from typing import Iterable
 from geos.mesh.doctor.checks.mesh_stats import Options, Result
-from . import MESH_STATS
+from geos.mesh.doctor.parsing import MESH_STATS
 
 __WRITE_STATS = "write_stats"
 __WRITE_STATS_DEFAULT = 0
@@ -47,16 +47,12 @@ def fill_subparser( subparsers ) -> None:
 
 
 def convert( parsed_options ) -> Options:
-    write_stats = parsed_options[ __WRITE_STATS ]
-    output_folder = parsed_options[ __OUTPUT ]
-    disconnected = parsed_options[ __DISCONNECTED ]
-    field_values = parsed_options[ __FIELD_VALUES ]
     # input_filepath will be defined in check function before calling __check
-    return Options( write_stats=write_stats,
-                    output_folder=output_folder,
+    return Options( write_stats=parsed_options[ __WRITE_STATS ],
+                    output_folder=parsed_options[ __OUTPUT ],
                     input_filepath="",
-                    disconnected=disconnected,
-                    field_values=field_values )
+                    disconnected=parsed_options[ __DISCONNECTED ],
+                    field_values=parsed_options[ __FIELD_VALUES ] )
 
 
 def display_results( options: Options, result: Result ):
@@ -71,8 +67,8 @@ def display_results( options: Options, result: Result ):
 
     logging.info( f"The mesh has {result.number_cells} cells and {result.number_points} points." )
     logging.info( f"There are {result.number_cell_types} different types of cells in the mesh:" )
-    for i in range( result.number_cell_types ):
-        logging.info( f"\t{result.cell_types[ i ]}\t\t({result.cell_type_counts[ i ]} cells)" )
+    for cell_type, type_count in zip( result.cell_types, result.cell_type_counts ):
+        logging.info( f"\t{cell_type}\t\t({type_count} cells)" )
 
     logging.info( f"Number of cells that have exactly N neighbors:" )
     unique_numbers_neighbors, counts = unique( result.cells_neighbors_number, return_counts=True )
@@ -85,10 +81,8 @@ def display_results( options: Options, result: Result ):
     for number_cells_per_node, number_of_occurences in result.sum_number_cells_per_nodes.items():
         logging.info( f"\t{number_cells_per_node}\t\t{number_of_occurences}" )
 
-    if 0 in unique_numbers_neighbors:  #  unique_numbers_neighbors sorted in ascending order from minimum positive number
-        number_cells_disconnected: int = unique_numbers_neighbors[ 0 ]
-    else:
-        number_cells_disconnected = 0
+    #  unique_numbers_neighbors sorted in ascending order from minimum positive number
+    number_cells_disconnected: int = unique_numbers_neighbors[ 0 ] if 0 in unique_numbers_neighbors else 0
     logging.info( f"Number of disconnected cells in the mesh: {number_cells_disconnected}" )
     if number_cells_disconnected > 0:
         logging.info( "\tIndexes of disconnected cells" )
@@ -141,17 +135,14 @@ def display_results( options: Options, result: Result ):
     }
     for field_vailidity_type, data in fields_validity_types.items():
         logging.info( f"Unexpected range of values for vector/tensor fields from the {field_vailidity_type}:" )
-        for field_name, validity_range in data.items():
-            is_valid: bool = validity_range[ 0 ]
-            min_max: tuple[ float ] = validity_range[ 1 ]
+        for field_name, ( is_valid, min_max ) in data.items():
             if not is_valid:
                 logging.info( f"{field_name} expected to be between {min_max[ 0 ]} and {min_max[ 1 ]}." )
 
-    if options.write_stats:
-        if is_valid_to_write_folder( options.output_folder ):
-            filepath: str = build_filepath_output_file( options )
-            with open( filepath, 'w' ) as file:
-                file.writelines( log_stream.getvalue() )
+    if options.write_stats and is_valid_to_write_folder( options.output_folder ):
+        filepath: str = build_filepath_output_file( options )
+        with open( filepath, 'w' ) as file:
+            file.writelines( log_stream.getvalue() )
 
 
 def harmonious_spacing( iterable_objs: Iterable[ Iterable ], indexIter: int, space_size: int = 3 ) -> str:
