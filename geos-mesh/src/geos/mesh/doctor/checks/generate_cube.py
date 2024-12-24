@@ -1,26 +1,13 @@
 from dataclasses import dataclass
 import logging
-from typing import Sequence, Iterable
-
 import numpy
-
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAHEDRON,
-    vtkCellArray,
-    vtkHexahedron,
-    vtkRectilinearGrid,
-    vtkUnstructuredGrid,
-)
-from vtkmodules.util.numpy_support import (
-    numpy_to_vtk, )
-
-from . import vtk_utils
-from .vtk_utils import (
-    VtkOutput, )
-
-from .generate_global_ids import __build_global_ids
+from typing import Iterable, Sequence
+from vtkmodules.util.numpy_support import numpy_to_vtk
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
+                                            VTK_HEXAHEDRON )
+from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
+from utils.src.geos.utils.vtk.io import VtkOutput, write_mesh
 
 
 @dataclass( frozen=True )
@@ -147,7 +134,7 @@ def __build( options: Options ):
 
 def __check( options: Options ) -> Result:
     output_mesh = __build( options )
-    vtk_utils.write_mesh( output_mesh, options.vtk_output )
+    write_mesh( output_mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
 
 

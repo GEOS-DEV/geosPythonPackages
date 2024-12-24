@@ -1,13 +1,6 @@
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAHEDRON,
-    vtkCellArray,
-    vtkHexahedron,
-    vtkUnstructuredGrid,
-)
-
-from checks.self_intersecting_elements import Options, __check
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkUnstructuredGrid, VTK_HEXAHEDRON
+from geos.mesh.doctor.checks.self_intersecting_elements import Options, __check
 
 
 def test_jumbled_hex():

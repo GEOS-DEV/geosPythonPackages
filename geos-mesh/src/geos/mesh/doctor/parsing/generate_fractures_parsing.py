@@ -1,8 +1,7 @@
-import logging
 import os
 from geos.mesh.doctor.checks.generate_fractures import Options, Result, FracturePolicy
-from geos.mesh.doctor.checks.vtk_utils import VtkOutput
-from . import vtk_output_parsing, GENERATE_FRACTURES
+from utils.src.geos.utils.vtk.io import VtkOutput
+from geos.mesh.doctor.parsing import vtk_output_parsing, GENERATE_FRACTURES
 
 __POLICY = "policy"
 __FIELD_POLICY = "field"

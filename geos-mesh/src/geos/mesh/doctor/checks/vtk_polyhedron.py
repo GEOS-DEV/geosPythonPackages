@@ -1,22 +1,9 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import (
-    Collection,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    Sequence,
-    Tuple,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-
 import networkx
-
-from .vtk_utils import (
-    vtk_iter, )
+from typing import Collection, Dict, FrozenSet, Iterable, List, Sequence, Tuple
+from vtkmodules.vtkCommonCore import vtkIdList
+from utils.src.geos.utils.vtk.helpers import vtk_iter
 
 
 @dataclass( frozen=True )

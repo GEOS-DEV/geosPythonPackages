@@ -1,15 +1,15 @@
-import logging
+from dataclasses import dataclass
 import numpy
 import pytest
-from dataclasses import dataclass
 from typing import Iterable, Iterator, Sequence
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
-from geos.mesh.doctor.checks.vtk_utils import to_vtk_id_list
 from geos.mesh.doctor.checks.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from geos.mesh.doctor.checks.generate_fractures import ( __split_mesh_on_fractures, Options, FracturePolicy,
                                                          Coordinates3D, IDMapping )
+from utils.src.geos.utils.vtk.helpers import to_vtk_id_list
+
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]

@@ -1,25 +1,10 @@
 import argparse
 from dataclasses import dataclass
-
-from typing import (
-    Iterator,
-    Sequence,
-)
-
 import pytest
-
-from checks.vtk_utils import (
-    VtkOutput, )
-
-from checks.generate_fractures import (
-    FracturePolicy,
-    Options,
-)
-from parsing.generate_fractures_parsing import (
-    convert,
-    display_results,
-    fill_subparser,
-)
+from typing import Iterator, Sequence
+from geos.mesh.doctor.checks.generate_fractures import FracturePolicy, Options
+from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, display_results, fill_subparser
+from utils.src.geos.utils.vtk.io import VtkOutput
 
 
 @dataclass( frozen=True )

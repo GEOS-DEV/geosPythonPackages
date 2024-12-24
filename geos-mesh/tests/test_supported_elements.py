@@ -1,21 +1,11 @@
 import os
-from typing import Tuple
-
 import pytest
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList,
-    vtkPoints,
-)
-from vtkmodules.vtkCommonDataModel import (
-    VTK_POLYHEDRON,
-    vtkUnstructuredGrid,
-)
-
-from checks.supported_elements import Options, check, __check
-from checks.vtk_polyhedron import parse_face_stream, build_face_to_face_connectivity_through_edges, FaceStream
-from checks.vtk_utils import (
-    to_vtk_id_list, )
+from typing import Tuple
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
+from geos.mesh.doctor.checks.supported_elements import Options, check, __check
+from geos.mesh.doctor.checks.vtk_polyhedron import parse_face_stream, FaceStream
+from utils.src.geos.utils.vtk.helpers import to_vtk_id_list
 
 
 @pytest.mark.parametrize( "base_name", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )

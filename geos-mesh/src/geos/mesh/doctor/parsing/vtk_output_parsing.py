@@ -1,8 +1,8 @@
 import os.path
 import logging
 import textwrap
+from utils.src.geos.utils.vtk.io import VtkOutput
 
-from geos.mesh.doctor.checks.vtk_utils import VtkOutput
 
 __OUTPUT_FILE = "output"
 __OUTPUT_BINARY_MODE = "data-mode"

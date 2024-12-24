@@ -1,8 +1,8 @@
-import logging
-import networkx
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import networkx
 from numpy import empty, ones, zeros
 from tqdm import tqdm
 from typing import Collection, Iterable, Mapping, Optional, Sequence
@@ -10,11 +10,12 @@ from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, vtkUnstructuredGrid, VTK_POLYGON,
                                             VTK_POLYHEDRON )
-from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.util.vtkConstants import VTK_ID_TYPE
-from geos.mesh.doctor.checks.vtk_utils import ( VtkOutput, vtk_iter, to_vtk_id_list, read_mesh, write_mesh,
-                                                has_invalid_field )
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
+from utils.src.geos.utils.vtk.helpers import has_invalid_field, to_vtk_id_list, vtk_iter
+from utils.src.geos.utils.vtk.io import VtkOutput, read_mesh, write_mesh
+
 """
 TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
 https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
