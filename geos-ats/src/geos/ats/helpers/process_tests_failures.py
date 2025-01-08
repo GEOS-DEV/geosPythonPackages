@@ -60,8 +60,8 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
 
     if filteredErrors:
        for fileName, errors in filteredErrors.items():
-        logging.warning(f"Found unfiltered diff in: {fileName}")
-        logging.info(f"Details of diffs: {errors}")
+           logging.warning(f"Found unfiltered diff in: {fileName}")
+           logging.info(f"Details of diffs: {errors}")
     else:
         logging.info("No unfiltered differences were found.")
 
