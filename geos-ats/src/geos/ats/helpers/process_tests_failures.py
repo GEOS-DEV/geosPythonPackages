@@ -108,7 +108,7 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
             unfilteredErrors[ fileName ] = errors
 
     # --- Logging / Output ---
-    logging.info(f"Total number of log files processed: {total_files_processed}")
+    logging.info(f"Total number of log files processed: {total_files_processed}\n")
 
     # Unfiltered errors
     if filteredErrors:
