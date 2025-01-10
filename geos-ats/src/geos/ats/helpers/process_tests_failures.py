@@ -7,6 +7,7 @@ import argparse
 import platform
 import shutil
 import logging
+import glob
 
 logging.basicConfig( level=logging.INFO, format="%(levelname)s: %(message)s" )
 
@@ -101,7 +102,7 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
 
         # If at least 1 block was matched, and not all of them ended up in 'included_block_count'
         # it means at least one block was excluded.
-        if matched_block_count > 0 and included_block_count < matched_block_count < 0:
+        if matched_block_count > 0 and included_block_count < matched_block_count:
             files_with_excluded_errors.append( fileName )    
 
         if errors:
@@ -111,8 +112,8 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
     logging.info(f"Total number of log files processed: {total_files_processed}\n")
 
     # Unfiltered errors
-    if filteredErrors:
-        for fileName, errors in filteredErrors.items():
+    if unfilteredErrors:
+        for fileName, errors in unfilteredErrors.items():
             logging.warning(f"Found unfiltered diff in: {fileName}")
             logging.info(f"Details of diffs: {errors}")
     else:
@@ -120,7 +121,9 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
 
     # Files that had at least one excluded block
     if files_with_excluded_errors:
-        excluded_files_text = "\n".join(files_with_excluded_errors)
+        files_with_excluded_errors_basename = [ os.path.basename(f) for f in files_with_excluded_errors ]
+
+        excluded_files_text = "\n".join(files_with_excluded_errors_basename)
         logging.info( f"The following file(s) had at least one error block that was filtered:\n{excluded_files_text}")
 
 def main():
@@ -157,7 +160,7 @@ def main():
     if unknown_args:
         print( "unknown arguments %s" % unknown_args )
 
-    exclusionStrings = DEFAULT_EXCLUSION_LIST + args.exclusionStrings
+    exclusionStrings = DEFAULT_EXCLUSION_STRINGS + args.exclusionStrings
     parse_logs_and_filter_errors( args.directory, args.extension, exclusionStrings, args.numTrailingLines )
 
 
