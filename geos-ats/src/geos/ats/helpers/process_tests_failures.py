@@ -10,63 +10,118 @@ import logging
 
 logging.basicConfig( level=logging.INFO, format="%(levelname)s: %(message)s" )
 
-
-# fines all files recursively from
 def findFiles( folder, extension ):
-    for root, folders, files in os.walk( folder ):
-        for filename in folders + files:
-            if ( extension in filename ):
-                yield os.path.join( root, filename )
+    """
+    Recursively find all files in `folder` that match a given extension.
+    """
+    # Build a pattern such as "*.py", "*.txt", etc.
+    pattern = f"*{extension}"
 
+    # Use glob with ** (recursive) to match all files under folder
+    return glob.glob(os.path.join(folder, "**", pattern), recursive=True)            
+
+def find_error_indices(lines, matchStrings):
+    """
+    Returns a list of indices where all `matchStrings` appear in the line.
+    """
+    indices = []
+    for idx, line in enumerate(lines):
+        if all(matchString in line for matchString in matchStrings):
+            indices.append(idx)
+    return indices
+
+def process_error_blocks(lines, indices, numTrailingLines):
+    """
+    For each index in `indices`, collect the line itself plus a few trailing lines.
+    Returns a list of match blocks (strings).
+    """
+    match_blocks = []
+    for idx in indices:
+        # Prepare the current match block
+        match_block = []
+
+        # Safely get the previous line if idx > 0
+        if idx > 0:
+            match_block.append('  ' + lines[idx - 1])
+
+        # Current line
+        match_block.append('  ' + lines[idx])
+
+        # Trailing lines
+        for j in range(1, numTrailingLines + 1):
+            if idx + j >= len(lines):
+                match_block.append('  ***** No closing line. File truncated? Filters may not be properly applied! *****')
+                break
+            match_block.append('  ' + lines[idx + j])
+
+            # If we see a "stop" condition, break out of the trailing loop
+            if '******************************************************************************' in lines[idx + j]:
+                break
+
+        # Convert match_block to a single string
+        match_blocks.append('\n'.join(match_block))
+
+    return match_blocks   
 
 def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTrailingLines ):
+    """
+    Returns a list of indices where all `matchStrings` appear in the line.
+    """
     # What strings to look for in order to flag a line/block for output
-    matchStrings = [ 'Error:' ]
+    errorStrings = [ 'Error:' ]
 
-    filteredErrors = {}
+    unfilteredErrors = {}
+    total_files_processed = 0
+    files_with_excluded_errors = []
 
-    # What stings to look for in order to exclude a block
     for fileName in findFiles( directory, extension ):
+        total_files_processed += 1
         errors = ''
+        
+        # Count how many blocks we matched and how many blocks we ended up including
+        matched_block_count = 0
+        included_block_count = 0
 
         with open( fileName ) as f:
             lines = f.readlines()
 
-            for i in range( 0, len( lines ) ):
-                line = lines[ i ]
-                if all( matchString in line for matchString in matchStrings ):
-                    matchBlock = []
-                    matchBlock.append( '  ' + lines[ i - 1 ] )
-                    matchBlock.append( '  ' + line )
+            # 1. Find the indices where the errorStrings are found
+            indices = find_error_indices(lines, errorStrings)
 
-                    for j in range( 1, numTrailingLines + 1 ):
-                        if i + j >= len( lines ):
-                            matchBlock.append(
-                                '  ***** No closing line. file truncated? Filters may not be properly applied! *****' )
-                            break
-                        matchBlock.append( '  ' + lines[ i + j ] )
+            # 2. Extract the block of text associated with each error.
+            matchBlock = process_error_blocks(lines, indices, numTrailingLines)
 
-                    matchBlock = '\n'.join( matchBlock )
+            for block in matchBlock:
+                # if none of the exclusions appear in this block
+                matched_block_count += 1
+                if not any(excludeString in block for excludeString in exclusionStrings):
+                    # ... then add it to `errors`
+                    included_block_count += 1
+                    errors += block + "\n"
 
-                    if ( '******************************************************************************'
-                         in lines[ i + j ] ):
-                        break
-
-                    i += j
-
-            if not any( excludeString in matchBlock for excludeString in exclusionStrings ):
-                errors += matchBlock
+        # If at least 1 block was matched, and not all of them ended up in 'included_block_count'
+        # it means at least one block was excluded.
+        if matched_block_count > 0 and included_block_count < matched_block_count < 0:
+            files_with_excluded_errors.append( fileName )    
 
         if errors:
-            filteredErrors[ fileName ] = errors
+            unfilteredErrors[ fileName ] = errors
 
+    # --- Logging / Output ---
+    logging.info(f"Total number of log files processed: {total_files_processed}")
+
+    # Unfiltered errors
     if filteredErrors:
         for fileName, errors in filteredErrors.items():
-            logging.warning( f"Found unfiltered diff in: {fileName}" )
-            logging.info( f"Details of diffs: {errors}" )
+            logging.warning(f"Found unfiltered diff in: {fileName}")
+            logging.info(f"Details of diffs: {errors}")
     else:
-        logging.info( "No unfiltered differences were found." )
+        logging.info("No unfiltered differences were found.\n")
 
+    # Files that had at least one excluded block
+    if files_with_excluded_errors:
+        excluded_files_text = "\n".join(files_with_excluded_errors)
+        logging.info( f"The following file(s) had at least one error block that was filtered:\n{excluded_files_text}")
 
 def main():
 
