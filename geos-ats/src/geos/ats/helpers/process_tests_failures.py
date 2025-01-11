@@ -11,6 +11,7 @@ import glob
 
 logging.basicConfig( level=logging.INFO, format="%(levelname)s: %(message)s" )
 
+
 def findFiles( folder, extension ):
     """
     Recursively find all files in `folder` that match a given extension.
@@ -19,19 +20,21 @@ def findFiles( folder, extension ):
     pattern = f"*{extension}"
 
     # Use glob with ** (recursive) to match all files under folder
-    return glob.glob(os.path.join(folder, "**", pattern), recursive=True)            
+    return glob.glob( os.path.join( folder, "**", pattern ), recursive=True )
 
-def find_error_indices(lines, matchStrings):
+
+def find_error_indices( lines, matchStrings ):
     """
     Returns a list of indices where all `matchStrings` appear in the line.
     """
     indices = []
-    for idx, line in enumerate(lines):
-        if all(matchString in line for matchString in matchStrings):
-            indices.append(idx)
+    for idx, line in enumerate( lines ):
+        if all( matchString in line for matchString in matchStrings ):
+            indices.append( idx )
     return indices
 
-def process_error_blocks(lines, indices, numTrailingLines):
+
+def process_error_blocks( lines, indices, numTrailingLines ):
     """
     For each index in `indices`, collect the line itself plus a few trailing lines.
     Returns a list of match blocks (strings).
@@ -43,26 +46,28 @@ def process_error_blocks(lines, indices, numTrailingLines):
 
         # Safely get the previous line if idx > 0
         if idx > 0:
-            match_block.append('  ' + lines[idx - 1])
+            match_block.append( '  ' + lines[ idx - 1 ] )
 
         # Current line
-        match_block.append('  ' + lines[idx])
+        match_block.append( '  ' + lines[ idx ] )
 
         # Trailing lines
-        for j in range(1, numTrailingLines + 1):
-            if idx + j >= len(lines):
-                match_block.append('  ***** No closing line. File truncated? Filters may not be properly applied! *****')
+        for j in range( 1, numTrailingLines + 1 ):
+            if idx + j >= len( lines ):
+                match_block.append(
+                    '  ***** No closing line. File truncated? Filters may not be properly applied! *****' )
                 break
-            match_block.append('  ' + lines[idx + j])
+            match_block.append( '  ' + lines[ idx + j ] )
 
             # If we see a "stop" condition, break out of the trailing loop
-            if '******************************************************************************' in lines[idx + j]:
+            if '******************************************************************************' in lines[ idx + j ]:
                 break
 
         # Convert match_block to a single string
-        match_blocks.append('\n'.join(match_block))
+        match_blocks.append( '\n'.join( match_block ) )
 
-    return match_blocks   
+    return match_blocks
+
 
 def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTrailingLines ):
     """
@@ -78,7 +83,7 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
     for fileName in findFiles( directory, extension ):
         total_files_processed += 1
         errors = ''
-        
+
         # Count how many blocks we matched and how many blocks we ended up including
         matched_block_count = 0
         included_block_count = 0
@@ -87,15 +92,15 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
             lines = f.readlines()
 
             # 1. Find the indices where the errorStrings are found
-            indices = find_error_indices(lines, errorStrings)
+            indices = find_error_indices( lines, errorStrings )
 
             # 2. Extract the block of text associated with each error.
-            matchBlock = process_error_blocks(lines, indices, numTrailingLines)
+            matchBlock = process_error_blocks( lines, indices, numTrailingLines )
 
             for block in matchBlock:
                 # if none of the exclusions appear in this block
                 matched_block_count += 1
-                if not any(excludeString in block for excludeString in exclusionStrings):
+                if not any( excludeString in block for excludeString in exclusionStrings ):
                     # ... then add it to `errors`
                     included_block_count += 1
                     errors += block + "\n"
@@ -103,28 +108,29 @@ def parse_logs_and_filter_errors( directory, extension, exclusionStrings, numTra
         # If at least 1 block was matched, and not all of them ended up in 'included_block_count'
         # it means at least one block was excluded.
         if matched_block_count > 0 and included_block_count < matched_block_count:
-            files_with_excluded_errors.append( fileName )    
+            files_with_excluded_errors.append( fileName )
 
         if errors:
             unfilteredErrors[ fileName ] = errors
 
     # --- Logging / Output ---
-    logging.info(f"Total number of log files processed: {total_files_processed}\n")
+    logging.info( f"Total number of log files processed: {total_files_processed}\n" )
 
     # Unfiltered errors
     if unfilteredErrors:
         for fileName, errors in unfilteredErrors.items():
-            logging.warning(f"Found unfiltered diff in: {fileName}")
-            logging.info(f"Details of diffs: {errors}")
+            logging.warning( f"Found unfiltered diff in: {fileName}" )
+            logging.info( f"Details of diffs: {errors}" )
     else:
-        logging.info("No unfiltered differences were found.\n")
+        logging.info( "No unfiltered differences were found.\n" )
 
     # Files that had at least one excluded block
     if files_with_excluded_errors:
-        files_with_excluded_errors_basename = [ os.path.basename(f) for f in files_with_excluded_errors ]
+        files_with_excluded_errors_basename = [ os.path.basename( f ) for f in files_with_excluded_errors ]
 
-        excluded_files_text = "\n".join(files_with_excluded_errors_basename)
-        logging.info( f"The following file(s) had at least one error block that was filtered:\n{excluded_files_text}")
+        excluded_files_text = "\n".join( files_with_excluded_errors_basename )
+        logging.info( f"The following file(s) had at least one error block that was filtered:\n{excluded_files_text}" )
+
 
 def main():
 
