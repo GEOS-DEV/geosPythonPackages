@@ -22,6 +22,10 @@ dependencies = [
     "numpy",
     "scipy",
     "mpi4py",
+    "vtk",
+    "pyevtk",
+    "xmltodict",
+    "h5py"
 ]
 
 [tool.mypy]
