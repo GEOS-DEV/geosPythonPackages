@@ -47,7 +47,7 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
     :return: A unstructured grid.
     """
     if not os.path.exists( vtk_input_file ):
-        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\". Dying..."
+        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."
         logging.error( err_msg )
         raise ValueError( err_msg )
     file_extension = os.path.splitext( vtk_input_file )[ -1 ]
@@ -63,7 +63,7 @@ def read_mesh( vtk_input_file: str ) -> vtkUnstructuredGrid:
         if output_mesh:
             return output_mesh
     # No reader did work. Dying.
-    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\". Dying..."
+    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\"."
     logging.error( err_msg )
     raise ValueError( err_msg )
 
@@ -103,7 +103,7 @@ def write_mesh( mesh: vtkUnstructuredGrid, vtk_output: VtkOutput ) -> int:
         success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     else:
         # No writer found did work. Dying.
-        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\". Dying..."
+        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\"."
         logging.error( err_msg )
         raise ValueError( err_msg )
     return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
