@@ -12,11 +12,17 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
 
-import os
-import vtk
-from geos.pygeos_tools.utilities.mesh.VtkFieldSpecifications import VTKCellSpecifications, VTKPointSpecifications
+from os import path
+from numpy import array
+from typing import Iterable
 from geos.pygeos_tools.utilities.model.utils.vtkUtils import cGlobalIds
-from vtkmodules.util import numpy_support as VN
+from utils.src.geos.utils.vtk.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
+from utils.src.geos.utils.vtk.io import read_mesh, write_mesh
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkIdList, vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkImageData, vtkPointData, vtkPointSet
+from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
+from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
 
 
 class VTKMesh:
@@ -29,7 +35,7 @@ class VTKMesh:
             Mesh filename
         vtktype : str
             Format of the VTK mesh
-        bounds : tuple of int 
+        bounds : tuple of float 
             Real bounds of the mesh (xmin, xmax, ymin, ymax, zmin, zmax)
         numberOfPoints : int
             Total number of points of the mesh
@@ -40,67 +46,39 @@ class VTKMesh:
         hasLocator : bool
             Whether or not the mesh cell locator has been initialized
     """
-
-    def __init__( self, meshfile ):
+    def __init__( self, meshfile: str ):
         """
         Parameters
         ----------
             meshfile : str
                 Mesh filename
         """
-        self.meshfile = meshfile
-        self.vtktype = os.path.splitext( self.meshfile )[ -1 ][ 1: ]
+        self.meshfile: str = meshfile
+        self.vtktype: str = path.splitext( self.meshfile )[ -1 ][ 1: ]
 
-        self.bounds = None
-        self.numberOfPoints = None
-        self.numberOfCells = None
+        self.bounds: Iterable[ float ] = None
+        self.numberOfPoints: int = None
+        self.numberOfCells: int = None
 
-        self.isSet = False
-        self.hasLocator = False
-
-    def getReader( self ):
-        """Return the appropriate reader given the VTK format
-        
-        Returns
-        --------
-            vtk.vtkXMLReader
-                Appropriate reader given the format of the VTK mesh file.
-        """
-
-        if self.vtktype == "vtu":
-            return vtk.vtkXMLUnstructuredGridReader()
-        elif self.vtktype == "vts":
-            return vtk.vtkXMLStructuredGridReader()
-        elif self.vtktype == "pvtu":
-            return vtk.vtkXMLPUnstructuredGridReader()
-        elif self.vtktype == "pvts":
-            return vtk.vtkXMLPStructuredGridReader()
-        else:
-            print( "This VTK format is not handled." )
-            return None
+        self.isSet: bool = False
+        self.hasLocator: bool = False
 
     def read( self ):
         """Read information from the VTK file
 
         Returns
         --------
-            vtk.vtkDataObject
+            vtk.vtkPointSet
                 General representation of VTK mesh data 
         """
-        reader = self.getReader()
-        reader.SetFileName( self.meshfile )
-        reader.Update()
-
-        return reader.GetOutput()
+        return read_mesh( self.meshfile )
 
     def setMeshProperties( self ):
         """Read and set as attributes the bounds, number of points and cells"""
         data = self.read()
-
         self.bounds = data.GetBounds()
         self.numberOfPoints = data.GetNumberOfPoints()
         self.numberOfCells = data.GetNumberOfCells()
-
         self.isSet = True
 
     def getBounds( self ):
@@ -142,24 +120,22 @@ class VTKMesh:
     
         Returns
         --------
-            VTKCellSpecifications
+            vtk.vtkFieldData
                 Cell data information
         """
         data = self.read()
-
-        return VTKCellSpecifications( data.GetCellData() )
+        return data.GetCellData()
 
     def getPointData( self ):
         """Read the point data
 
         Returns
         --------
-            VTKPointSpecifications
+            vtk.vtkFieldData
                 Point data information
         """
         data = self.read()
-
-        return VTKPointSpecifications( data.GetPointData() )
+        return data.GetPointData()
 
     def getArray( self, name, dtype="cell", copy=False, sorted=False ):
         """
@@ -170,14 +146,11 @@ class VTKMesh:
             name : str
                 Name of the vtk cell/point data array
             dtype : str
-                Type of vtk data \
-                `cell` or `point`
+                Type of vtk data `cell` or `point`
             copy : bool
-                Return a copy of the requested array
-                Default is False
+                Return a copy of the requested array. Default is False
             sorted : bool
-                Return the array sorted with respect to GlobalPointIds or GlobalCellIds
-                Default is False
+                Return the array sorted with respect to GlobalPointIds or GlobalCellIds. Default is False
 
         Returns
         --------
@@ -185,20 +158,15 @@ class VTKMesh:
                 Requested array
         """
         assert dtype.lower() in ( "cell", "point" )
-
-        if dtype.lower() == "cell":
-            fdata = self.getCellData()
-        else:
-            fdata = self.getPointData()
-
+        fdata = self.getCellData() if dtype.lower() == "cell" else self.getPointData()
         if copy:
-            array = fdata.getCopyArray( name, sorted=sorted )
+            array = getCopyNumpyArrayByName( fdata, name, sorted=sorted )
         else:
-            array = fdata.getArray( name, sorted=sorted )
-
+            array = getNumpyArrayByName( fdata, name, sorted=sorted )
         return array
 
-    def extractMesh( self, center, srootname, dist=[ None, None, None ], comm=None, export=True ):
+    def extractMesh( self, center: Iterable[ float ], srootname: str, dist: Iterable[ float ]=[ None, None, None ],
+                     comm=None, export=True ):
         """
         Extract a rectangular submesh such that for each axis we have the subax: [center-dist, center+dist]
 
@@ -225,8 +193,8 @@ class VTKMesh:
         if comm is None or comm.Get_rank() == 0:
             if not self.isSet:
                 self.setMeshProperties()
-            minpos = []
-            maxpos = []
+            minpos = list()
+            maxpos = list()
 
             for i in range( 3 ):
                 xmin, d = self.getSubAx( center[ i ], dist[ i ], ax=i + 1 )
@@ -246,7 +214,7 @@ class VTKMesh:
 
         return submesh
 
-    def getSubAx( self, center, dist, ax ):
+    def getSubAx( self, center: float, dist: float, ax: int ):
         """
         Return the min and max positions in the mesh given the center, distance and ax considered. If the 2*distance if greater than the bounds, the min/max is the corresponding mesh bound.
 
@@ -265,7 +233,6 @@ class VTKMesh:
                 Min and Max positions 
         """
         assert ( type( ax ) == int )
-
         bounds = [ self.bounds[ ( ax - 1 ) * 2 ], self.bounds[ ax * 2 - 1 ] ]
 
         if dist is not None:
@@ -275,20 +242,18 @@ class VTKMesh:
         else:
             ox = bounds[ 0 ]
             x = bounds[ 1 ]
-
         return ox, x
 
     def getNumberOfBlocks( self ):
         """Return the number of blocks of a mesh."""
         if self.vtktype in [ "pvtu", "pvts" ]:
             with open( self.meshfile ) as ff:
-                nb = 0
+                nb: int = 0
                 for line in ff:
                     m = line.split()
                     if m[ 0 ] == '<Piece':
                         nb += 1
             return nb
-
         else:
             return 1
 
@@ -306,19 +271,8 @@ class VTKMesh:
                 Global Ids
         """
         assert dtype.lower() in ( "cell", "point" )
-
-        if dtype.lower() == "cell":
-            fdata = self.getCellData()
-        else:
-            fdata = self.getPointData()
-
-        if fdata.hasArray( f"Global{dtype.title()}Ids" ):
-            gids = fdata.getArray( f"Global{dtype.title()}Ids" ).ravel()
-            return gids
-
-        else:
-            print( "No global Ids array found in this VTK mesh" )
-            return None
+        fdata = self.getCellData() if dtype.lower() == "cell" else self.getPointData()
+        return getNumpyGlobalIdsArray( fdata )
 
     def getExtractToGlobalMap( self ):
         """Return the global cell ids
@@ -336,15 +290,12 @@ class VTKMesh:
 
         Parameters
         ----------
-            data : vtkDataSet
-                vtk.vtkStructuredGrid or vtk.vtkUnstructuredGrid
-                Default is self.read()
+            data : vtkPointSet
+                vtk.vtkStructuredGrid or vtk.vtkUnstructuredGrid. Default is self.read()
             rootname : str
-                Root of the output filename
-                Default is self.meshfile (without extension)
+                Root of the output filename. Default is self.meshfile (without extension)
             vtktype : str
-                Format of the output VTK
-                Default is self.vtktype
+                Format of the output VTK. Default is self.vtktype
 
         Returns
         --------
@@ -354,36 +305,13 @@ class VTKMesh:
         if vtktype is None:
             vtktype = self.vtktype
         if rootname is None:
-            rootname, _ = os.path.splitext( self.meshfile )
+            rootname, _ = path.splitext( self.meshfile )
         if data is None:
             data = self.read()
 
         filename = ".".join( ( rootname, vtktype ) )
-
-        writer = self.getWriter( vtktype=vtktype )
-        writer.SetFileName( filename )
-        writer.SetInputData( data )
-        writer.Update()
-        writer.Write()
-
+        write_mesh( data, filename )
         return filename
-
-    def getWriter( self, vtktype=None ):
-        """
-        Return the VTK writer
-
-        Returns
-        --------
-            vtk.vtkXMLWriter
-                Appropriate writer given the format of the VTK mesh file.
-        """
-        if vtktype is None:
-            vtktype = self.vtktype
-
-        if vtktype == "vts":
-            return vtk.vtkXMLStructuredGridWriter()
-        elif vtktype == "vtu":
-            return vtk.vtkXMLUnstructuredGridWriter()
 
     def setCellLocator( self ):
         """Set the cell locator"""
@@ -391,12 +319,12 @@ class VTKMesh:
             self.setMeshProperties()
 
         if not self.hasLocator:
-            self.cellLocator = vtk.vtkCellLocator()
+            self.cellLocator = vtkCellLocator()
             self.cellLocator.SetDataSet( self.read() )
             self.cellLocator.BuildLocator()
             self.hasLocator = True
 
-    def getCellContainingPoint( self, point ):
+    def getCellContainingPoint( self, point: Iterable[ float ] ):
         """
         Return the global index of the cell containing the coordinates
 
@@ -416,7 +344,7 @@ class VTKMesh:
         cellIds = self.cellLocator.FindCell( [ point[ 0 ], point[ 1 ], point[ 2 ] ] )
         return cellIds
 
-    def interpolateValues( self, centers, name, values ):
+    def interpolateValues( self, centers: Iterable[ Iterable[ float ] ], name: str, values: array ):
         """
         Interpolate the given cell data over the given points
 
@@ -437,33 +365,31 @@ class VTKMesh:
         if not self.isSet:
             self.setMeshProperties()
 
-        dest = vtk.vtkPointSet()
-        destPoints = vtk.vtkPoints()
+        dest = vtkPointSet()
+        destPoints = vtkPoints()
 
         for point in centers:
             destPoints.InsertNextPoint( [ point[ 0 ], point[ 1 ], point[ 2 ] ] )
         dest.SetPoints( destPoints )
 
-        transferArray = vtk.vtkDoubleArray()
+        transferArray = vtkDoubleArray()
         for value in values:
             transferArray.InsertNextTuple1( value )
         transferArray.SetName( name )
 
         data = self.read()
         data.GetCellData().AddArray( transferArray )
-        resample = vtk.vtkResampleWithDataSet()
+        resample = vtkResampleWithDataSet()
         resample.SetSourceData( data )
         resample.SetInputData( dest )
         resample.Update()
 
-        pointdata = resample.GetOutput().GetPointData()
+        pointdata: vtkPointData = resample.GetOutput().GetPointData()
 
         interpValues = None
-        for i in range( pointdata.GetNumberOfArrays() ):
-            array = pointdata.GetArray( i )
-            if array.GetName() == name:
-                interpValues = VN.vtk_to_numpy( array )
-
+        if pointdata.HasArray( name ):
+            arr: vtkDataArray = pointdata.GetArray( name )
+            interpValues = vtk_to_numpy( arr )
         return interpValues
 
 
@@ -486,8 +412,7 @@ class VTKSubMesh( VTKMesh ):
         isSet : bool
             Whether or not the mesh properties have been set
     """
-
-    def __init__( self, meshfile, data, minpos, maxpos, create=True ):
+    def __init__( self, meshfile: str, data: vtkImageData, minpos, maxpos, create=True ):
         """
         Parameters
         -----------
@@ -511,7 +436,7 @@ class VTKSubMesh( VTKMesh ):
         if create:
             self.export( data=sdata )
 
-    def __setGlobalIds( self, sdata, data ):
+    def __setGlobalIds( self, sdata: vtkImageData, data: vtkImageData ):
         """
         Set the global cell Ids of the submesh
 
@@ -524,7 +449,7 @@ class VTKSubMesh( VTKMesh ):
             if subcdata.HasArray( "GlobalCellIds" ) == 1:
                 subcdata.RemoveArray( "vtkOriginalCellIds" )
             else:
-                cgids = subcdata.GetArray( "vtkOriginalCellIds" )
+                cgids: vtkDataArray = subcdata.GetArray( "vtkOriginalCellIds" )
                 cgids.SetName( "GlobalCellIds" )
 
         elif self.vtktype == "vts":
@@ -541,11 +466,11 @@ class VTKSubMesh( VTKMesh ):
                                     ymin0, zmin0 )
 
                 subcdata = sdata.GetCellData()
-                cgidsAsVtkArray = VN.numpy_to_vtk( num_array=cgids.ravel(), deep=True )
+                cgidsAsVtkArray = numpy_to_vtk( num_array=cgids.ravel(), deep=True )
                 cgidsAsVtkArray.SetName( "GlobalCellIds" )
                 subcdata.AddArray( cgidsAsVtkArray )
 
-    def __setData( self, data, minpos, maxpos ):
+    def __setData( self, data: vtkImageData, minpos, maxpos ):
         """
         Return the submesh extracted from the whole mesh dataset
 
@@ -562,20 +487,16 @@ class VTKSubMesh( VTKMesh ):
         assert None not in maxpos and len( maxpos ) == 3
 
         if self.vtktype == "vtu":
-            cellLocator = vtk.vtkCellLocator()
+            cellLocator = vtkCellLocator()
             cellLocator.SetDataSet( data )
             cellLocator.BuildLocator()
 
-            idList = vtk.vtkIdList()
-            cells = cellLocator.FindCellsWithinBounds(
-                [ minpos[ 0 ], maxpos[ 0 ], minpos[ 1 ], maxpos[ 1 ], minpos[ 2 ], maxpos[ 2 ] ], idList )
-
+            idList = vtkIdList()
             #Extraction of the cells
-            extract = vtk.vtkExtractCells()
+            extract = vtkExtractCells()
             extract.SetInputData( data )
             extract.SetCellList( idList )
             extract.Update()
-
             dataExtract = extract.GetOutput()
 
         elif self.vtktype == "vts":
@@ -594,12 +515,10 @@ class VTKSubMesh( VTKMesh ):
             maxz = int( maxpos[ 2 ] // dz )
 
             #Extraction of the grid
-            extract = vtk.vtkExtractGrid()
+            extract = vtkExtractGrid()
             extract.SetInputData( data )
-
             extract.SetVOI( minx, maxx, miny, maxy, minz, maxz )
             extract.Update()
-
             dataExtract = extract.GetOutput()
 
         return dataExtract

@@ -14,5 +14,3 @@
 """Mesh"""
 from geos.pygeos_tools.utilities.mesh.InternalMesh import InternalMesh
 from geos.pygeos_tools.utilities.mesh.VtkMesh import VTKMesh, VTKSubMesh
-from geos.pygeos_tools.utilities.mesh.VtkFieldSpecifications import ( VTKPointSpecifications, VTKCellSpecifications,
-                                                                      VTKFieldSpecifications )

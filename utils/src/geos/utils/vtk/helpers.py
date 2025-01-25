@@ -1,7 +1,10 @@
 import logging
-from typing import Iterator
-from vtkmodules.vtkCommonCore import vtkIdList
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from copy import deepcopy
+from numpy import argsort, array
+from typing import Iterator, Optional
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkFieldData
 
 
 def to_vtk_id_list( data ) -> vtkIdList:
@@ -57,3 +60,65 @@ def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) 
             logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
             return True
     return False
+
+
+def getFieldType( data: vtkFieldData ) -> str:
+    if not data.IsA( "vtkFieldData" ):
+        raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
+    if data.IsA( "vtkCellData" ):
+        return "vtkCellData"
+    elif data.IsA( "vtkPointData" ):
+        return "vtkPointData"
+    else:
+        return "vtkFieldData"
+
+
+def getArrayNames( data: vtkFieldData ) -> list[ str ]:
+    if not data.IsA( "vtkFieldData" ):
+        raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
+    return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
+
+
+def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
+    if data.HasArray( name ):
+        return data.GetArray( name )
+    logging.warning( f"No array named '{name}' was found in '{data}'." )
+    return None
+
+
+def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
+    return deepcopy( getArrayByName( data, name ) )
+
+
+def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
+    array_names: list[ str ] = getArrayNames( data )
+    for name in array_names:
+        if name.startswith("Global") and name.endswith("Ids"):
+            return getCopyArrayByName( data, name )
+    logging.warning( f"No GlobalIds array was found." )
+
+
+def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[ array ]:
+    return vtk_to_numpy( getGlobalIdsArray( data ) )
+
+
+def sortArrayByGlobalIds( data: vtkFieldData, arr: array ) -> None:
+    globalids: array = getNumpyGlobalIdsArray( data )
+    if globalids is not None:
+        arr = arr[ argsort( globalids ) ]
+    else:
+        logging.warning( f"No sorting was performed." )
+
+
+def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> Optional[ array ]:
+    arr: array = vtk_to_numpy( getArrayByName( data, name ) )
+    if arr is not None:
+        if sorted:
+            array_names: list[ str ] = getArrayNames( data )
+            sortArrayByGlobalIds( data, arr, array_names )
+        return arr
+    return None
+
+
+def getCopyNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> Optional[ array ]:
+    return deepcopy( getNumpyArrayByName( data, name, sorted=sorted ) )

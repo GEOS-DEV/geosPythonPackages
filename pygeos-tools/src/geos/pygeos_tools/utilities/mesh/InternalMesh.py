@@ -12,7 +12,7 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
 
-import numpy as np
+from numpy import arange, zeros
 
 
 class InternalMesh:
@@ -97,34 +97,34 @@ class InternalMesh:
 
         self.layers = [ xlayers, ylayers, zlayers ]
 
-        xCellsBounds = np.zeros( sum( nx ) + 1 )
-        yCellsBounds = np.zeros( sum( ny ) + 1 )
-        zCellsBounds = np.zeros( sum( nz ) + 1 )
+        xCellsBounds = zeros( sum( nx ) + 1 )
+        yCellsBounds = zeros( sum( ny ) + 1 )
+        zCellsBounds = zeros( sum( nz ) + 1 )
 
         for i in range( len( nx ) ):
             xstep = ( xlayers[ i ][ 1 ] - xlayers[ i ][ 0 ] ) / nx[ i ]
             if i == 0:
-                xCellsBounds[ 0:nx[ i ] ] = np.arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ], xstep )
+                xCellsBounds[ 0:nx[ i ] ] = arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ], xstep )
             else:
-                xCellsBounds[ nx[ i - 1 ]:sum( nx[ 0:i + 1 ] ) ] = np.arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ],
+                xCellsBounds[ nx[ i - 1 ]:sum( nx[ 0:i + 1 ] ) ] = arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ],
                                                                               xstep )
         xCellsBounds[ nx[ -1 ] ] = xlayers[ i ][ 1 ]
 
         for i in range( len( ny ) ):
             ystep = ( ylayers[ i ][ 1 ] - ylayers[ i ][ 0 ] ) / ny[ i ]
             if i == 0:
-                yCellsBounds[ 0:ny[ i ] ] = np.arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ], ystep )
+                yCellsBounds[ 0:ny[ i ] ] = arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ], ystep )
             else:
-                xCellsBounds[ ny[ i - 1 ]:sum( ny[ 0:i + 1 ] ) ] = np.arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ],
+                xCellsBounds[ ny[ i - 1 ]:sum( ny[ 0:i + 1 ] ) ] = arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ],
                                                                               ystep )
         yCellsBounds[ ny[ -1 ] ] = ylayers[ i ][ 1 ]
 
         for i in range( len( nz ) ):
             zstep = ( zlayers[ i ][ 1 ] - zlayers[ i ][ 0 ] ) / nz[ i ]
             if i == 0:
-                zCellsBounds[ 0:nz[ i ] ] = np.arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ], zstep )
+                zCellsBounds[ 0:nz[ i ] ] = arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ], zstep )
             else:
-                zCellsBounds[ nz[ i - 1 ]:sum( nz[ 0:i + 1 ] ) ] = np.arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ],
+                zCellsBounds[ nz[ i - 1 ]:sum( nz[ 0:i + 1 ] ) ] = arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ],
                                                                               zstep )
         zCellsBounds[ nz[ -1 ] ] = zlayers[ i ][ 1 ]
 
