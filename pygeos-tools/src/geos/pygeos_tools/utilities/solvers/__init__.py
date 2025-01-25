@@ -18,10 +18,3 @@ from geos.pygeos_tools.utilities.solvers.ElasticSolver import ElasticSolver
 from geos.pygeos_tools.utilities.solvers.ReservoirSolver import ReservoirSolver
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 from geos.pygeos_tools.utilities.solvers.WaveSolver import WaveSolver
-from geos.pygeos_tools.utilities.solvers.utils.solverutils import (
-    print_group,
-    print_with_indent,
-    printGeosx,
-    printSolver,
-    printGroup,
-)
