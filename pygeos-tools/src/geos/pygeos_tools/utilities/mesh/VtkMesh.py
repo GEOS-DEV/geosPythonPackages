@@ -15,7 +15,7 @@
 from os import path
 from numpy import array
 from typing import Iterable
-from geos.pygeos_tools.utilities.model.utils.vtkUtils import cGlobalIds
+from geos.pygeos_tools.utilities.model.pyevtk_tools import cGlobalIds
 from utils.src.geos.utils.vtk.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
 from utils.src.geos.utils.vtk.io import read_mesh, write_mesh
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy

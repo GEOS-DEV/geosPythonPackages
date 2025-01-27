@@ -16,7 +16,7 @@ import os
 import sys
 import numpy as np
 import vtk
-from geos.pygeos_tools.utilities.model.utils import vtkUtils as vtkwriter
+from geos.pygeos_tools.utilities.model import pyevtk_tools as vtkwriter
 
 
 class VTKModel:

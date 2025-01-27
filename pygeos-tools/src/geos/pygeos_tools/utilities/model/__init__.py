@@ -13,13 +13,13 @@
 # ------------------------------------------------------------------------------------------------------------
 """Model utilities"""
 
-from geos.pygeos_tools.utilities.model.utils.VtkModel import (
+from geos.pygeos_tools.utilities.model.VtkModel import (
     VTKModel,
     VTSModel,
     VTUModel,
     PVTKModel,
 )
-from geos.pygeos_tools.utilities.model.utils.vtkUtils import (
+from geos.pygeos_tools.utilities.model.pyevtk_tools import (
     _addDataToFile,
     structuredToVTK,
     unstructuredGridToVTK,
