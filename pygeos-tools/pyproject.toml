@@ -25,7 +25,8 @@ dependencies = [
     "vtk",
     "pyevtk",
     "xmltodict",
-    "h5py"
+    "h5py",
+    "segyio"
 ]
 
 [tool.mypy]

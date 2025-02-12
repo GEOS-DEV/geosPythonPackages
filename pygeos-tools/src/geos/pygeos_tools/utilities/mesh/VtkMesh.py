@@ -46,6 +46,7 @@ class VTKMesh:
         hasLocator : bool
             Whether or not the mesh cell locator has been initialized
     """
+
     def __init__( self, meshfile: str ):
         """
         Parameters
@@ -165,8 +166,12 @@ class VTKMesh:
             array = getNumpyArrayByName( fdata, name, sorted=sorted )
         return array
 
-    def extractMesh( self, center: Iterable[ float ], srootname: str, dist: Iterable[ float ]=[ None, None, None ],
-                     comm=None, export=True ):
+    def extractMesh( self,
+                     center: Iterable[ float ],
+                     srootname: str,
+                     dist: Iterable[ float ] = [ None, None, None ],
+                     comm=None,
+                     export=True ):
         """
         Extract a rectangular submesh such that for each axis we have the subax: [center-dist, center+dist]
 
@@ -412,6 +417,7 @@ class VTKSubMesh( VTKMesh ):
         isSet : bool
             Whether or not the mesh properties have been set
     """
+
     def __init__( self, meshfile: str, data: vtkImageData, minpos, maxpos, create=True ):
         """
         Parameters

@@ -1,0 +1,79 @@
+import argparse
+from geos.pygeos_tools.utilities.input import XML
+from geos.pygeos_tools.utilities.acquisition import Acquisition
+from geos.pygeos_tools.utilities.solvers import ElasticSolver
+from geos.pygeos_tools.utilities.output import SeismicTraceOutput
+from mpi4py import MPI
+
+
+def parse_args():
+    """Get arguments
+
+    Returns:
+        argument '--xml': Input xml file for GEOSX
+    """
+    parser = argparse.ArgumentParser( description="Modeling acquisition example" )
+    parser.add_argument( '--xml', type=str, required=True, help="Input xml file for GEOSX" )
+
+    args, _ = parser.parse_known_args()
+    return args
+
+
+def main():
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    args = parse_args()
+    print( args )
+    xmlfile = args.xml
+    xml = XML( xmlfile )
+
+    # Read acquisition
+    if rank == 0:
+        acquisition = Acquisition( xml )
+    else:
+        acquisition = None
+    acquisition = comm.bcast( acquisition, root=0 )
+
+    solver = ElasticSolver()
+
+    for ishot, shot in enumerate( acquisition.shots ):
+        xmlshot = shot.xml
+        rank = comm.Get_rank()
+
+        solver.initialize( rank, xmlshot )
+        solver.applyInitialConditions()
+
+        solver.updateSourceAndReceivers( shot.getSourceCoords(), shot.getReceiverCoords() )
+        solver.updateVtkOutputsName( directory=f"Shot{shot.id}" )
+
+        t = 0
+        cycle = 0
+        while t < solver.maxTime:
+            if rank == 0 and cycle % 100 == 0:
+                print( f"time = {t:.3f}s, dt = {solver.dt:.4f}, iter = {cycle+1}" )
+            solver.execute( t )
+            if cycle % 100 == 0:
+                solver.outputVtk( t )
+            t += solver.dt
+            cycle += 1
+
+        shot.flag = "Done"
+        if rank == 0:
+            print( f"Shot {shot.id} done" )
+            print( "Gathering and exporting seismos" )
+
+        seismos = solver.getAllDisplacementAtReceivers()
+
+        directory = './seismoTraces/'
+        rootname = f"seismo_{shot.id}_U"
+
+        for i, dir in enumerate( ( 'X', 'Y', 'Z' ) ):
+            seismoOut = SeismicTraceOutput( seismos[ i ], format="SEP" )
+            seismoOut.export( directory=directory, rootname=rootname + dir, dt=solver.dtSeismo, verbose=True )
+
+        solver.resetWaveField()
+
+
+if __name__ == "__main__":
+    main()
