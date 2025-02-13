@@ -4,8 +4,8 @@ import glob
 import numpy as np
 import segyio
 
-from geos.pygeos_tools.utilities.acquisition import Acquisition
-from geos.pygeos_tools.utilities.acquisition.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
+from geos.pygeos_tools.utilities.acquisition_library.Acquisition import Acquisition
+from geos.pygeos_tools.utilities.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
 
 
 class SEGYAcquisition( Acquisition ):
@@ -28,7 +28,7 @@ class SEGYAcquisition( Acquisition ):
         super().__init__( xml, dt, **kwargs )
         self.type = "segyAcquisition"
 
-    def acquisition( self, segdir, **kwargs ):
+    def acquisition_method( self, segdir, **kwargs ):
         """
         Set the shots configurations
 
@@ -57,7 +57,7 @@ class SEGYAcquisition( Acquisition ):
         ext = ( "*.sgy", "*.segy" )
         filesToIgnore = kwargs.get( "ignore", () )
 
-        while notEmpty != True and i <= len( ext ):
+        while notEmpty is not True and i <= len( ext ):
             segfiles = glob.glob( os.path.join( segdir, ext[ i ] ) )
 
             if segfiles != []:

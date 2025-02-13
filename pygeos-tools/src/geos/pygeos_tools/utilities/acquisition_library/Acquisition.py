@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 import numpy as np
 
-from geos.pygeos_tools.utilities.acquisition.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
+from geos.pygeos_tools.utilities.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
 from geos.pygeos_tools.utilities.mesh.VtkMesh import VTKMesh
 from geos.pygeos_tools.utilities.mesh.InternalMesh import InternalMesh
 
@@ -35,7 +35,7 @@ class Acquisition:
 
         self.limited_aperture = False
 
-        self.acquisition( **kwargs )
+        self.acquisition_method( **kwargs )
 
         acqId = kwargs.get( "acqId", 1 )
         self.id = f"{acqId:05d}"
@@ -64,7 +64,7 @@ class Acquisition:
         """
         return self.mesh
 
-    def acquisition( self, sources=None, receivers=None, **kwargs ):
+    def acquisition_method( self, sources=None, receivers=None, **kwargs ):
         """
         Set the shots configurations
         The same set of receivers is used for all shots

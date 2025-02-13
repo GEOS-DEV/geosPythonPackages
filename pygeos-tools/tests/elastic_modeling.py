@@ -1,6 +1,6 @@
 import argparse
 from geos.pygeos_tools.utilities.input import XML
-from geos.pygeos_tools.utilities.acquisition import Acquisition
+from geos.pygeos_tools.utilities.acquisition_library.Acquisition import Acquisition
 from geos.pygeos_tools.utilities.solvers import ElasticSolver
 from geos.pygeos_tools.utilities.output import SeismicTraceOutput
 from mpi4py import MPI
@@ -30,14 +30,14 @@ def main():
 
     # Read acquisition
     if rank == 0:
-        acquisition = Acquisition( xml )
+        acqui = Acquisition( xml )
     else:
-        acquisition = None
-    acquisition = comm.bcast( acquisition, root=0 )
+        acqui = None
+    acqui = comm.bcast( acqui, root=0 )
 
     solver = ElasticSolver()
 
-    for ishot, shot in enumerate( acquisition.shots ):
+    for ishot, shot in enumerate( acqui.shots ):
         xmlshot = shot.xml
         rank = comm.Get_rank()
 

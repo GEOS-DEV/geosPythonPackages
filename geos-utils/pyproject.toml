@@ -3,9 +3,9 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pygeos-tools"
+name = "geos-utils"
 version = "0.1.0"
-description = "Tools for interacting with pygeosx"
+description = "Utilities for all geos packages."
 maintainers = [
     {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
 ]
@@ -18,17 +18,8 @@ classifiers = [
 requires-python = ">=3.8"
 
 dependencies = [
-    "matplotlib",
     "numpy",
-    "scipy",
-    "mpi4py",
-    "vtk",
-    "pyevtk",
-    "xmltodict",
-    "h5py",
-    "segyio",
-    "numba"
-
+    "vtk"
 ]
 
 [tool.mypy]

@@ -1,7 +1,7 @@
 import argparse
 import os
 from geos.pygeos_tools.utilities.input import XML
-from geos.pygeos_tools.utilities.acquisition import EquispacedAcquisition
+from geos.pygeos_tools.utilities.acquisition_library.EquispacedAcquisition import EQUISPACEDAcquisition
 from geos.pygeos_tools.utilities.solvers import AcousticSolver
 from geos.pygeos_tools.utilities.output import SeismicTraceOutput
 from mpi4py import MPI
@@ -63,25 +63,25 @@ def main():
 
     wf_args = parse_workflow_parameters( args.pfile )
 
-    #Time Parameters
+    # Time Parameters
     minTime = wf_args.mintime
     maxTime = wf_args.maxtime
     dt = wf_args.dt
     dtSeismo = wf_args.dtSeismo
 
-    #Output parameters
+    # Output parameters
     outdirseis = args.soutdir
     os.makedirs( outdirseis, exist_ok=True )
     outseisname = args.soutn
 
-    #Source parameters
+    # Source parameters
     sourceType = wf_args.sourceType
     sourceFreq = wf_args.sourceFreq
 
     # Read acquisition
     if rank == 0:
-        #acquisition = Acquisition(xml)
-        acquisition = EquispacedAcquisition( xml=xml,
+        # acquisition = Acquisition(xml)
+        acquisition = EQUISPACEDAcquisition( xml=xml,
                                              startFirstSourceLine=[ 305.01, 305.01, 5.01 ],
                                              endFirstSourceLine=[ 325.01, 305.01, 5.01 ],
                                              startLastSourceLine=[ 305.01, 325.01, 5.01 ],

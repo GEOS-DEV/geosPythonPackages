@@ -16,8 +16,8 @@ from os import path
 from numpy import array
 from typing import Iterable
 from geos.pygeos_tools.utilities.model.pyevtk_tools import cGlobalIds
-from utils.src.geos.utils.vtk.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
-from utils.src.geos.utils.vtk.io import read_mesh, write_mesh
+from geos.utils.vtk.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
+from geos.utils.vtk.io import read_mesh, write_mesh
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkImageData, vtkPointData, vtkPointSet
@@ -35,7 +35,7 @@ class VTKMesh:
             Mesh filename
         vtktype : str
             Format of the VTK mesh
-        bounds : tuple of float 
+        bounds : tuple of float
             Real bounds of the mesh (xmin, xmax, ymin, ymax, zmin, zmax)
         numberOfPoints : int
             Total number of points of the mesh
@@ -70,7 +70,7 @@ class VTKMesh:
         Returns
         --------
             vtk.vtkPointSet
-                General representation of VTK mesh data 
+                General representation of VTK mesh data
         """
         return read_mesh( self.meshfile )
 
@@ -88,7 +88,7 @@ class VTKMesh:
             (xmin, xmax, ymin, ymax, zmin, zmax)
 
         Returns
-        ------- 
+        -------
             tuple or None
                 Bounds of the mesh
         """
@@ -118,7 +118,7 @@ class VTKMesh:
 
     def getCellData( self ):
         """Read the cell data
-    
+   
         Returns
         --------
             vtk.vtkFieldData
@@ -221,7 +221,8 @@ class VTKMesh:
 
     def getSubAx( self, center: float, dist: float, ax: int ):
         """
-        Return the min and max positions in the mesh given the center, distance and ax considered. If the 2*distance if greater than the bounds, the min/max is the corresponding mesh bound.
+        Return the min and max positions in the mesh given the center, distance and ax considered.
+        If the 2*distance if greater than the bounds, the min/max is the corresponding mesh bound.
 
         Parameters
         ----------
@@ -237,7 +238,7 @@ class VTKMesh:
             min, max : float
                 Min and Max positions 
         """
-        assert ( type( ax ) == int )
+        assert ( ax is int )
         bounds = [ self.bounds[ ( ax - 1 ) * 2 ], self.bounds[ ax * 2 - 1 ] ]
 
         if dist is not None:
@@ -263,7 +264,8 @@ class VTKMesh:
             return 1
 
     def getGlobalIds( self, dtype="cell" ):
-        """Return the global ids of the cells or points. If the mesh is an extract of an original mesh, it is the local to global map
+        """Return the global ids of the cells or points. If the mesh is an extract of an original mesh,
+        it is the local to global map
 
         Parameters
         ----------
@@ -498,7 +500,7 @@ class VTKSubMesh( VTKMesh ):
             cellLocator.BuildLocator()
 
             idList = vtkIdList()
-            #Extraction of the cells
+            # Extraction of the cells
             extract = vtkExtractCells()
             extract.SetInputData( data )
             extract.SetCellList( idList )
@@ -520,7 +522,7 @@ class VTKSubMesh( VTKMesh ):
             maxy = int( maxpos[ 1 ] // dy )
             maxz = int( maxpos[ 2 ] // dz )
 
-            #Extraction of the grid
+            # Extraction of the grid
             extract = vtkExtractGrid()
             extract.SetInputData( data )
             extract.SetVOI( minx, maxx, miny, maxy, minz, maxz )

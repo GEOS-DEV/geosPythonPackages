@@ -14,7 +14,7 @@
 
 import numpy as np
 import numba
-from pyevtk.vtk import VtkFile, VtkUnstructuredGrid, VtkStructuredGrid, VtkPUnstructuredGrid, VtkPStructuredGrid, VtkParallelFile
+from pyevtk.vtk import ( VtkFile, VtkUnstructuredGrid, VtkStructuredGrid, VtkPUnstructuredGrid, VtkPStructuredGrid, VtkParallelFile )
 from pyevtk.hl import _appendDataToFile
 
 

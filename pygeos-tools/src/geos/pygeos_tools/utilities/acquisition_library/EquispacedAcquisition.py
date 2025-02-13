@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
-from geos.pygeos_tools.utilities.acquisition import Acquisition
-from geos.pygeos_tools.utilities.acquisition.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
+from geos.pygeos_tools.utilities.acquisition_library.Acquisition import Acquisition
+from geos.pygeos_tools.utilities.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
 
 
 class EQUISPACEDAcquisition( Acquisition ):
@@ -37,20 +37,20 @@ class EQUISPACEDAcquisition( Acquisition ):
         super().__init__( xml, dt, **kwargs )
         self.type = "equispacedAcquisition"
 
-    def acquisition( self,
-                     startFirstSourceLine,
-                     endFirstSourceLine,
-                     startFirstReceiversLine,
-                     endFirstReceiversLine,
-                     startLastSourceLine=None,
-                     endLastSourceLine=None,
-                     startLastReceiversLine=None,
-                     endLastReceiversLine=None,
-                     numberOfSourceLines=1,
-                     sourcesPerLine=1,
-                     numberOfReceiverLines=1,
-                     receiversPerLine=1,
-                     **kwargs ):
+    def acquisition_method( self,
+                            startFirstSourceLine,
+                            endFirstSourceLine,
+                            startFirstReceiversLine,
+                            endFirstReceiversLine,
+                            startLastSourceLine=None,
+                            endLastSourceLine=None,
+                            startLastReceiversLine=None,
+                            endLastReceiversLine=None,
+                            numberOfSourceLines=1,
+                            sourcesPerLine=1,
+                            numberOfReceiverLines=1,
+                            receiversPerLine=1,
+                            **kwargs ):
         """
         Set the shots configurations
 
