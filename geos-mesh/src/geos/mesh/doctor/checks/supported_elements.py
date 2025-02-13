@@ -11,8 +11,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
                                             VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
                                             VTK_WEDGE )
 from geos.mesh.doctor.checks.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
-from utils.src.geos.utils.vtk.helpers import vtk_iter
-from utils.src.geos.utils.vtk.io import read_mesh
+from geos.utils.vtk.helpers import vtk_iter
+from geos.utils.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )

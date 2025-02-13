@@ -1,7 +1,7 @@
 import os.path
 import logging
 import textwrap
-from utils.src.geos.utils.vtk.io import VtkOutput
+from geos.utils.vtk.io import VtkOutput
 
 
 __OUTPUT_FILE = "output"

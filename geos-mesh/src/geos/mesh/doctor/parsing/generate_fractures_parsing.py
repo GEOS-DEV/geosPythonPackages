@@ -1,6 +1,6 @@
 import os
 from geos.mesh.doctor.checks.generate_fractures import Options, Result, FracturePolicy
-from utils.src.geos.utils.vtk.io import VtkOutput
+from geos.utils.vtk.io import VtkOutput
 from geos.mesh.doctor.parsing import vtk_output_parsing, GENERATE_FRACTURES
 
 __POLICY = "policy"
