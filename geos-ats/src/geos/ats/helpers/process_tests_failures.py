@@ -167,7 +167,9 @@ def main():
         print( "unknown arguments %s" % unknown_args )
 
     exclusionStrings = DEFAULT_EXCLUSION_STRINGS + args.exclusionStrings
-    logging.info(f"exclusionStrings: {exclusionStrings}\n")
+    logging.info( f"exclusionStrings:\n")
+    for exclusionString in exclusionStrings:
+        logging.info(f"{exclusionString}\n")
     parse_logs_and_filter_errors( args.directory, args.extension, exclusionStrings, args.numTrailingLines )
 
 
