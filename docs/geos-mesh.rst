@@ -113,6 +113,47 @@ Cells with negative volumes will typically be an issue for ``geos`` and should b
       -h, --help              show this help message and exit
       --min 0.0               [float]: The minimum acceptable volume. Defaults to 0.0.
 
+``field_operations``
+""""""""""""""""""""""""""
+
+Using a source file containing PointData or CellData, allows to perform operations on that data from the source file to an output .vtu file.
+The source file can be a .vtu, .vtm or .pvd file as long as the geometry of the multiblock corresponds to the geometry of the output .vtu file.
+An example of source file can be the vtkOutput.pvd from a GEOS simulation and the output file can be your VTK mesh used in this simulation.
+The term 'operations' covers two distinct categories:
+'COPY' operations which copies data arrays from the source file to the output file, with the possibility to rename the arrays copied and to apply multiplication or addition to these arrays.
+'CREATE' operations which uses the source file data to create new arrays by performing addition between several arrays, applying log or sqrt functions ... allowed by the numexpr library.
+
+.. code-block::
+
+      $ python src/geos/mesh/doctor/mesh_doctor.py field_operations --help
+      usage: mesh_doctor.py field_operations [-h] [--support point, cell] [--source SOURCE] [--operations OPERATIONS]
+                                             [--which_vtm WHICH_VTM] --output OUTPUT [--data-mode binary, ascii]
+
+      options:
+      -h, --help              show this help message and exit
+      --support point, cell
+                              [string]: Where to define field.
+      --source SOURCE         [string]: Where field data to use for operation comes from .vtu, .vtm or .pvd file.
+      --operations OPERATIONS
+                              [list of string comma separated]: The syntax here is function0:new_name0, function1:new_name1, ...
+                              Allows to perform a wide arrays of operations to add new data to your output mesh using the source file data.
+                              Examples are the following:
+                              1. Copy of the field 'poro' from the input to the ouput with 'poro:poro'.
+                              2. Copy of the field 'PERM' from the input to the ouput with a multiplication of the values by 10 with 'PERM*10:PERM'.
+                              3. Copy of the field 'TEMP' from the input to the ouput with an addition to the values by 0.5 and change the name of the field to 'temperature' with 'TEMP+0.5:TEMPERATURE'.
+                              4. Create a new field 'NEW_PARAM' using the input 'PERM' field and having the square root of it with 'sqrt(PERM):NEW_PARAM'.
+                              Another method is to use precoded functions available which are:
+                              1. 'distances_mesh_center' will create a field where the distances from the mesh centerare calculated for all the elements chosen as support. To use: 'distances_mesh_center:NEW_FIELD_NAME'.
+                              2. 'random' will create a field with samples from a uniform distribution over (0, 1). To use: 'random:NEW_FIELD_NAME'.
+      --which_vtm WHICH_VTM
+                              [string]: If your input is a .pvd, choose which .vtm (each .vtm corresponding to a unique timestep) will be used for the operation.
+                              To do so, you can choose amongst these possibilities: 'first' will select the initial timestep; 
+                              'last' will select the final timestep; or you can enter directly the index starting from 0 of the timestep (not the time).
+                              By default, the value is set to 'last'.
+      --output OUTPUT         [string]: The vtk output file destination.
+      --data-mode binary, ascii
+                              [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
+
 ``fix_elements_orderings``
 """"""""""""""""""""""""""
 
@@ -229,6 +270,27 @@ The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` m
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
+``mesh_stats``
+"""""""""""""""""
+
+Performs a summary over certain geometrical, topological and data painting mesh properties.
+The future goal for this feature would be to provide a deeper mesh analysis and to evaluate the 'quality' of this mesh before using it in GEOS.
+
+.. code-block::
+
+      $ python src/geos/mesh/doctor/mesh_doctor.py mesh_stats --help
+      usage: mesh_doctor.py mesh_stats [-h] --write_stats [0, 1] [--disconnected [0, 1]]
+                                       [--field_values [0, 1]] [--output OUTPUT]
+
+      options:
+      -h, --help              show this help message and exit
+      --write_stats [0, 1]    [int]: The stats of the mesh will be printed in a file to the folder specified in --output.
+      --disconnected [0, 1]
+                              [int]: Display all disconnected nodes ids and disconnected cell ids.
+      --field_values [0, 1]
+                              [int]: Display all range of field values that seem not realistic.
+      --output OUTPUT         [string]: The output folder destination where the stats will be written.
+
 ``non_conformal``
 """""""""""""""""
 
@@ -340,7 +402,3 @@ API
 
 .. automodule:: geos.mesh.conversion.abaqus_converter
     :members:
-
-
-
-
