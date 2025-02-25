@@ -27,18 +27,36 @@ class XML():
 
         self.tree = ET.parse( xmlFile )
         root = self.tree.getroot()
-        to_string = ET.tostring( root, method='xml' )
 
+        root = self.processIncludes(root)
+
+        to_string = ET.tostring( root, method='xml' )
         self.outputs = None
 
         root = xmltodict.parse( to_string, attr_prefix="", dict_constructor=dict )
         for k, v in root[ 'Problem' ].items():
             words = findall( '[A-Z][^A-Z]*', k )
             words[ 0 ] = words[ 0 ].lower()
-            attr = ""
-            for word in words:
-                attr += word
+            attr = "".join(words)
             setattr( self, attr, v )
+
+    def processIncludes(self, root):
+        """Process any <Included> elements by merging the referenced XML files into the main XML tree."""
+        includes = root.find("Included")
+        if includes is not None:
+            for file_element in includes.findall("File"):
+                file_name = file_element.get("name")
+                full_path = file_name if os.path.isabs(file_name) else os.path.join(os.path.dirname(self.filename), file_name)
+                try:
+                    included_tree = ET.parse(full_path)
+                    included_root = included_tree.getroot()
+                    for child in list(included_root):
+                        root.append(child)
+                except Exception as e:
+                    print(f"Error including file {full_path}: {e}")
+
+            root.remove(includes)
+        return root
 
     def updateSolvers( self, solverName, **kwargs ):
         root = self.tree.getroot()
