@@ -1,0 +1,4 @@
+*.JPG[[:space:]]*.ttf[[:space:]]*.png filter=lfs diff=lfs merge=lfs -text
+*.JPG filter=lfs diff=lfs merge=lfs -text
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text

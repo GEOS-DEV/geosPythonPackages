@@ -1,0 +1,303 @@
+GEOSX version: 0.2.0 (HEAD, sha1: c40be5d)
+  - c++ compiler: gcc 8.3.0
+  - MPI version: Open MPI v2.1.5, package: Open MPI root@pandev07 Distribution, ident: 2.1.5, repo rev: v2.1.4-8-g697c1e9, Aug 15, 2018
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - hypre release version: 2.26.0
+Adding Solver of type CompositionalMultiphaseReservoir, named compositionalMultiphaseReservoirSolver
+Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFVMSolver
+Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWellSolver
+Adding Mesh: VTKMesh, mesh
+Adding Mesh: InternalWell, wellInjector
+Adding Event: PeriodicEvent, outputInjectionPeriod
+Adding Event: PeriodicEvent, outputPostInjectionPeriod
+Adding Event: PeriodicEvent, statistics
+Adding Event: SoloEvent, soloStatistics
+Adding Event: PeriodicEvent, solverApplicationInjectionPeriod
+Adding Event: PeriodicEvent, solverApplicationPostInjectionPeriod1
+Adding Event: PeriodicEvent, solverApplicationPostInjectionPeriod2
+Adding Output: VTK, vtkOutput
+   TableFunction: initGasCompFracTable
+   TableFunction: initWaterCompFracTable
+   TableFunction: initTempTable
+   TableFunction: waterRelativePermeabilityTable
+   TableFunction: gasRelativePermeabilityTable
+   TableFunction: totalRateTable
+Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
+Adding Object CellElementRegion named reservoir_admunsen from ObjectManager::Catalog.
+Adding Object WellElementRegion named well from ObjectManager::Catalog.
+   TableFunction: fluid_phaseModel1_EzrokhiBrineDensity_sat_density_table
+   TableFunction: fluid_phaseModel1_EzrokhiBrineDensity_sat_pressure_table
+   TableFunction: fluid_phaseModel1_EzrokhiBrineViscosity_table
+   TableFunction: fluid_phaseModel2_SpanWagnerCO2Density_table
+   TableFunction: fluid_phaseModel2_FenghourCO2Viscosity_table
+   TableFunction: fluid_CO2Solubility_table
+VTK `vtkOutput`: found 8 fields to plot in `fieldNames`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.
+   TableFunction: wellControls_ConstantBHP_table
+   TableFunction: wellControls_ConstantPhaseRate_table
+VTKMesh 'mesh': reading mesh from /work206/workrd/users/j0459652/GEOSX/nl_hexdom_margaux/04_hexdom_10m_with_uvw_with_properties_from_structured_grid_reservoir.vtu
+Generating global Ids from VTK mesh
+VTKMesh 'mesh': generating GEOSX mesh data structure
+Number of nodes: 715020
+  Number of elems: 475821
+             C3D4: 705248
+             C3D5: 221014
+             C3D8: 475821
+Load balancing:   min   avg   max
+(element/rank):   421  4956 15051
+
+++++++++++++++++++++++++++
+InternalWellGenerator = wellInjector
+MPI rank = 0
+
+Number of well elements = 16
+Well element #0
+Coordinates of the element center: { 524560, 6.71631e+06, -2606.5 }
+No next well element
+Previous well element #1
+First well node: #0
+Second well node: #1
+Well element #1
+Coordinates of the element center: { 524560, 6.71631e+06, -2618 }
+Next well element # = 0
+Previous well element #2
+First well node: #1
+Second well node: #2
+Well element #2
+Coordinates of the element center: { 524560, 6.71631e+06, -2628 }
+Next well element # = 1
+Previous well element #3
+First well node: #2
+Second well node: #3
+Well element #3
+Coordinates of the element center: { 524560, 6.71631e+06, -2638 }
+Next well element # = 2
+Previous well element #4
+First well node: #3
+Second well node: #4
+Well element #4
+Coordinates of the element center: { 524560, 6.71631e+06, -2648 }
+Next well element # = 3
+Previous well element #5
+First well node: #4
+Second well node: #5
+Well element #5
+Coordinates of the element center: { 524560, 6.71631e+06, -2658 }
+Next well element # = 4
+Previous well element #6
+First well node: #5
+Second well node: #6
+Well element #6
+Coordinates of the element center: { 524560, 6.71631e+06, -2668 }
+Next well element # = 5
+Previous well element #7
+First well node: #6
+Second well node: #7
+Well element #7
+Coordinates of the element center: { 524560, 6.71631e+06, -2678 }
+Next well element # = 6
+Previous well element #8
+First well node: #7
+Second well node: #8
+Well element #8
+Coordinates of the element center: { 524560, 6.71631e+06, -2688 }
+Next well element # = 7
+Previous well element #9
+First well node: #8
+Second well node: #9
+Well element #9
+Coordinates of the element center: { 524560, 6.71631e+06, -2698 }
+Next well element # = 8
+Previous well element #10
+First well node: #9
+Second well node: #10
+Well element #10
+Coordinates of the element center: { 524560, 6.71631e+06, -2708 }
+Next well element # = 9
+Previous well element #11
+First well node: #10
+Second well node: #11
+Well element #11
+Coordinates of the element center: { 524560, 6.71631e+06, -2718 }
+Next well element # = 10
+Previous well element #12
+First well node: #11
+Second well node: #12
+Well element #12
+Coordinates of the element center: { 524560, 6.71631e+06, -2728 }
+Next well element # = 11
+Previous well element #13
+First well node: #12
+Second well node: #13
+Well element #13
+Coordinates of the element center: { 524560, 6.71631e+06, -2738 }
+Next well element # = 12
+Previous well element #14
+First well node: #13
+Second well node: #14
+Well element #14
+Coordinates of the element center: { 524560, 6.71631e+06, -2748 }
+Next well element # = 13
+Previous well element #15
+First well node: #14
+Second well node: #15
+Well element #15
+Coordinates of the element center: { 524560, 6.71631e+06, -2758 }
+Next well element # = 14
+No previous well element
+First well node: #15
+Second well node: #16
+
+Number of perforations = 16
+Perforation #0
+Coordinates of the perforation: { 524560, 6.71631e+06, -2610.5 }
+Is connected to well element #0
+Perforation #1
+Coordinates of the perforation: { 524560, 6.71631e+06, -2619.5 }
+Is connected to well element #1
+Perforation #2
+Coordinates of the perforation: { 524560, 6.71631e+06, -2628.5 }
+Is connected to well element #2
+Perforation #3
+Coordinates of the perforation: { 524560, 6.71631e+06, -2637.9 }
+Is connected to well element #3
+Perforation #4
+Coordinates of the perforation: { 524560, 6.71631e+06, -2647 }
+Is connected to well element #4
+Perforation #5
+Coordinates of the perforation: { 524560, 6.71631e+06, -2656.5 }
+Is connected to well element #5
+Perforation #6
+Coordinates of the perforation: { 524560, 6.71631e+06, -2666.5 }
+Is connected to well element #6
+Perforation #7
+Coordinates of the perforation: { 524560, 6.71631e+06, -2676.5 }
+Is connected to well element #7
+Perforation #8
+Coordinates of the perforation: { 524560, 6.71631e+06, -2686.5 }
+Is connected to well element #8
+Perforation #9
+Coordinates of the perforation: { 524560, 6.71631e+06, -2696.5 }
+Is connected to well element #9
+Perforation #10
+Coordinates of the perforation: { 524560, 6.71631e+06, -2706.5 }
+Is connected to well element #10
+Perforation #11
+Coordinates of the perforation: { 524560, 6.71631e+06, -2716.5 }
+Is connected to well element #11
+Perforation #12
+Coordinates of the perforation: { 524560, 6.71631e+06, -2726.3 }
+Is connected to well element #12
+Perforation #13
+Coordinates of the perforation: { 524560, 6.71631e+06, -2736.3 }
+Is connected to well element #13
+Perforation #14
+Coordinates of the perforation: { 524560, 6.71631e+06, -2746.3 }
+Is connected to well element #14
+Perforation #15
+Coordinates of the perforation: { 524560, 6.71631e+06, -2756.3 }
+Is connected to well element #15
+
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_hexahedra
+mesh/Level0/reservoir/2_hexahedra/rock allocated 1 quadrature points
+mesh/Level0/reservoir/2_hexahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_pyramids
+mesh/Level0/reservoir/2_pyramids/rock allocated 1 quadrature points
+mesh/Level0/reservoir/2_pyramids/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_pyramids/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_tetrahedra
+mesh/Level0/reservoir/2_tetrahedra/rock allocated 1 quadrature points
+mesh/Level0/reservoir/2_tetrahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_hexahedra
+mesh/Level0/reservoir/3_hexahedra/rock allocated 1 quadrature points
+mesh/Level0/reservoir/3_hexahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_pyramids
+mesh/Level0/reservoir/3_pyramids/rock allocated 1 quadrature points
+mesh/Level0/reservoir/3_pyramids/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_pyramids/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_tetrahedra
+mesh/Level0/reservoir/3_tetrahedra/rock allocated 1 quadrature points
+mesh/Level0/reservoir/3_tetrahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, well, wellUniqueSubRegion
+mesh/Level0/well/wellUniqueSubRegion/fluid allocated 1 quadrature points
+mesh/Level0/well/wellUniqueSubRegion/relperm allocated 1 quadrature points
+   TableFunction: equil_2_hexahedra_water_table
+   TableFunction: equil_2_tetrahedra_water_table
+   TableFunction: equil_2_pyramids_water_table
+   TableFunction: equil_3_hexahedra_water_table
+   TableFunction: equil_3_tetrahedra_water_table
+   TableFunction: equil_3_pyramids_water_table
+Time: 0s, dt:8600s, Cycle: 0
+compflowStatistics, reservoir: Pressure (min, average, max): 2.0159e+07, 2.68032e+07, 3.89368e+07 Pa
+compflowStatistics, reservoir: Delta pressure (min, max): 0, 0 Pa
+compflowStatistics, reservoir: Temperature (min, average, max): 346.964, 372.107, 395.15 K
+compflowStatistics, reservoir: Total dynamic pore volume: 3.45705e+10 rm^3
+compflowStatistics, reservoir: Phase dynamic pore volumes: { 0, 3.45705e+10 } rm^3
+compflowStatistics, reservoir: Phase mass (including both trapped and non-trapped): { 0, 3.35481e+13 } kg
+compflowStatistics, reservoir: Trapped phase mass: { 0, 1.00644e+13 } kg
+compflowStatistics, reservoir: Dissolved component mass: { { 0, 0 }, { 0, 3.35481e+13 } } kg
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.35e-02 ) ;     ( Rwell ) = ( 3.12e+02 ) ;     ( R ) = ( 3.12e+02 ) ; 
+{ 3, 4 }
+		Linear Solver | Success | Iterations: 1 | Final Rel Res: 5.96636e-05 | Make Restrictor Time: 0 | Compute Auu Time: 0 | SC Filter Time: 0 | Setup Time: 1.5156 s | Solve Time: 0.041093 s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 4.89e-04 ) ;     ( Rwell ) = ( 3.49e-04 ) ;     ( R ) = ( 6.01e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 5.97e-05 ) ; 
+compositionalMultiphaseFVMSolver: Max relative pressure change: 0.0884298 %
+compositionalMultiphaseFVMSolver: Max absolute phase volume fraction change: 6.29211e-09
+compositionalMultiphaseReservoirSolver: Time-step required will be increased based on state change.
+Time: 8600s, dt:17124.3s, Cycle: 1
+wellControls: BHP (at the specified reference elevation): 27452073.075918034 Pa
+wellControls: Total rate: 49.49343235863489 kg/s; total surface volumetric rate: 26.524664060614963 sm3/s
+wellControls: Phase 0 surface volumetric rate: 26.52466406061294 sm3/s
+wellControls: Phase 1 surface volumetric rate: 2.0274305932361715e-12 sm3/s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 4.90e-03 ) ;     ( Rwell ) = ( 3.60e-04 ) ;     ( R ) = ( 4.91e-03 ) ; 
+{ 3, 4 }
+		Linear Solver | Success | Iterations: 2 | Final Rel Res: 0.00144374 | Make Restrictor Time: 0 | Compute Auu Time: 0 | SC Filter Time: 0 | Setup Time: 0.327855 s | Solve Time: 0.0461692 s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 3.07e-05 ) ;     ( Rwell ) = ( 4.13e-06 ) ;     ( R ) = ( 3.10e-05 ) ; 
+    Last LinSolve(iter,res) = (   2, 1.44e-03 ) ; 
+compositionalMultiphaseFVMSolver: Max relative pressure change: 0.0487591 %
+compositionalMultiphaseFVMSolver: Max absolute phase volume fraction change: 2.10852e-08
+compositionalMultiphaseReservoirSolver: Time-step required will be increased based on state change.
+Time: 25724.3s, dt:34165.3s, Cycle: 2
+wellControls: BHP (at the specified reference elevation): 27375394.375235207 Pa
+wellControls: Total rate: 49.485508293503074 kg/s; total surface volumetric rate: 26.5204173726081 sm3/s
+wellControls: Phase 0 surface volumetric rate: 26.520417372606076 sm3/s
+wellControls: Phase 1 surface volumetric rate: 2.0271059947731947e-12 sm3/s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 8.13e-03 ) ;     ( Rwell ) = ( 4.14e-06 ) ;     ( R ) = ( 8.13e-03 ) ; 
+{ 3, 4 }
+		Linear Solver | Success | Iterations: 2 | Final Rel Res: 0.0019764 | Make Restrictor Time: 0 | Compute Auu Time: 0 | SC Filter Time: 0 | Setup Time: 0.336642 s | Solve Time: 0.0473239 s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 1.33e-04 ) ;     ( Rwell ) = ( 6.43e-06 ) ;     ( R ) = ( 1.33e-04 ) ; 
+    Last LinSolve(iter,res) = (   2, 1.98e-03 ) ; 
+compositionalMultiphaseFVMSolver: Max relative pressure change: 0.0263923 %
+compositionalMultiphaseFVMSolver: Max absolute phase volume fraction change: 8.11139e-08
+compositionalMultiphaseReservoirSolver: Time-step required will be increased based on state change.
+compositionalMultiphaseReservoirSolver, number of time steps: 767
+compositionalMultiphaseReservoirSolver, number of successful nonlinear iterations: 2519
+compositionalMultiphaseReservoirSolver, number of successful linear iterations: 14336
+compositionalMultiphaseReservoirSolver, number of time step cuts: 0
+compositionalMultiphaseReservoirSolver, number of discarded nonlinear iterations: 0
+compositionalMultiphaseReservoirSolver, number of discarded linear iterations: 0
+Umpire            HOST sum across ranks:    7.2 GB
+Umpire            HOST         rank max:   98.7 MB
+total time                      1385.860s
+initialization time              120.890s
+run time                        1263.686s
