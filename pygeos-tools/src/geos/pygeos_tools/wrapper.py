@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+import mpi4py
+mpi4py.rc.initialize = False
 from mpi4py import MPI
 import matplotlib.pyplot as plt
 import pylvarray

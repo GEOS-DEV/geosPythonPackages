@@ -22,7 +22,7 @@ dependencies = [
     "numpy",
     "scipy",
     "mpi4py",
-    "vtk",
+    #    "vtk", # no need, should use the one with geos
     "pyevtk",
     "xmltodict",
     "h5py",

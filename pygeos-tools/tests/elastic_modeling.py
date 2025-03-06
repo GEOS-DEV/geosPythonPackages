@@ -3,8 +3,10 @@ from geos.pygeos_tools.utilities.input import XML
 from geos.pygeos_tools.utilities.acquisition_library.Acquisition import Acquisition
 from geos.pygeos_tools.utilities.solvers import ElasticSolver
 from geos.pygeos_tools.utilities.output import SeismicTraceOutput
-from mpi4py import MPI
 
+import mpi4py
+mpi4py.rc.initialize = True
+from mpi4py import MPI
 
 def parse_args():
     """Get arguments
@@ -20,6 +22,13 @@ def parse_args():
 
 
 def main():
+
+    if MPI.Is_initialized():
+        print("MPI initialized")
+    else:
+        print("MPI not initialized. Initializing...")
+        MPI.Init()
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
