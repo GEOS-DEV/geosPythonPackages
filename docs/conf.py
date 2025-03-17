@@ -42,7 +42,7 @@ release = u''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
+extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinx_lfs_content', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
                'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
                'sphinx.ext.todo', 'sphinx.ext.viewcode' ]
 
