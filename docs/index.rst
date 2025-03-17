@@ -22,7 +22,7 @@ The ats setup command also sets up the python tools:
     make ats_environment
 
 
-These will attempt to install the required packages into the python distribution indicated via the `Python3_EXECUTABLE` cmake variable (also used by pygeosx).
+These will attempt to install the required packages into the python distribution indicated via the `Python3_EXECUTABLE` cmake variable (also used by geos_python_interface).
 If any package dependencies are missing, then the install script will attempt to fetch them from the internet using pip.
 After installation, these packages will be available for import within the associated python distribution, and a set of console scripts will be available within the GEOS build bin directory.
 
@@ -84,6 +84,6 @@ Packages
 
     geos-xml-tools
 
-    pygeos-tools
+    geos-python-interface-tools
 
     geos-timehistory
