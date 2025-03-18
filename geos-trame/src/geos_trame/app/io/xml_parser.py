@@ -35,15 +35,9 @@ class XMLParser(object):
         self.file_path = expanded_file.parent
         self._is_valid = True
 
-        try:
-            parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
-            tree = ElementTree.parse(expanded_file, parser=parser)
-            self.root = tree.getroot()
-        except XMLSyntaxError as err:
-            error_msg = "Invalid XML file. Cannot load " + expanded_file
-            error_msg += ". Outputted error:\n" + err.msg
-            print(error_msg, file=os.sys.stderr)
-            self._is_valid = False
+        parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+        tree = ElementTree.parse(expanded_file, parser=parser)
+        self.root = tree.getroot()
 
     def is_valid(self) -> bool:
         if not self._is_valid:

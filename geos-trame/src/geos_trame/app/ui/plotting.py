@@ -84,8 +84,8 @@ class DeckPlotting(vuetify.VCard):
             and self.gaz_y is not None
         ):
             np.random.seed(0)
-            ax.plot(self.water_x, self.water_y, label="water")
-            ax.plot(self.gaz_x, self.gaz_y, label="gaz")
+            ax.plot(self.water_x, self.water_y, label="water", marker='+')
+            ax.plot(self.gaz_x, self.gaz_y, label="gaz", marker='+')
 
             ax.set_xlabel("Water saturation")
             ax.set_ylabel("Relative permeability")

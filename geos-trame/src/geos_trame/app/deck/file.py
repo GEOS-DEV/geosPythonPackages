@@ -4,6 +4,7 @@
 import os
 import re
 import typing
+from lxml.etree import XMLSyntaxError
 from dataclasses import fields, is_dataclass
 from io import StringIO
 from typing import Any, Iterator, List, TextIO
@@ -124,7 +125,11 @@ class DeckFile(object):
         self.root_node = None
         self.filename = normalize_path(filename)
         if self.filename:
-            self.open_deck_file(self.filename)
+            try:
+                self.open_deck_file(self.filename)
+            except RuntimeError as err:
+                raise RuntimeError(err) from err
+
         self.original_text = ""
         self.changed = False
 
@@ -159,7 +164,12 @@ class DeckFile(object):
             msg = "Input file %s does not have the proper extension" % filename
             raise GeosTrameException(msg)
 
-        self.xml_parser = XMLParser(filename=filename)
+        try:
+            self.xml_parser = XMLParser(filename=filename)
+        except XMLSyntaxError as err:
+            raise RuntimeError("XML Syntax error : " + err.msg) from err
+
+
         self.xml_parser.build()
         simulation_deck = self.xml_parser.get_simulation_deck()
 

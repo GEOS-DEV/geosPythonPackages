@@ -179,11 +179,4 @@ class GeosTrame:
             with vuetify.VCol(
                 v_show=("tab_idx == 0",), classes="flex-grow-1 pa-0 ma-0"
             ):
-                if self.tree.input_file is not None:
                     self.deck_ui()
-                else:
-
-                    print(
-                        "Cannot build ui as the input file cannot be parse.",
-                        file=sys.stderr,
-                    )

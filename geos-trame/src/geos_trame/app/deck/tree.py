@@ -60,7 +60,7 @@ class DeckTree(object):
             self.input_real_filename = os.path.basename(self.input_file.filename)
         except Exception as e:
             msg = "set_input_file exception: %s" % e
-            return GeosTrameException(msg)
+            raise GeosTrameException(msg) from e
 
     def root_fields(self) -> list[str]:
         return self.input_file.root_fields
