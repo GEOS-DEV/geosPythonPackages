@@ -1,8 +1,20 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geos_xml_viewer*", "PVplugins*"]
+exclude = ['tests*']
+
+[project]
 name = "geos-xml-viewer"
 version = "1.2.1"
 description = "geos-xml-viewer is a Python package dedicated to preprocessing and postpressing of data for the geos simulation framework"
-authors = ["Lionel Untereiner <lionel.untereiner@external.totalenergies.com>"]
+authors = [{name = "Lionel Untereiner", email = "lionel.untereiner@external.totalenergies.com"}]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -15,47 +27,60 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
-readme = "README.md"
 keywords = [
     "GEOS",
     "Simulation",
 ]
+readme = {file = "README.md", content-type = "text/markdown"}
+dependencies = [
+	"pyvista >= 0.42",
+	"lxml >= 4.9",
+	"xsdata >= 24",
+	"colorcet >= 3.0.1",
+]
+requires-python = ">= 3.9"
 
-[project.readme]
-file = "README.md"
-content-type = "text/markdown"
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pyvista = "^0.42"
-lxml = "^4.9"
-xsdata = {version = "^24", extras = ["cli"]}
-colorcet = "^3.0.1"
+[project.optional-dependencies]
+cli = ["xsdata[cli]>=24"]
+build = [
+  "build >= 1.2"
+]
+dev = [
+    "pylint",
+    "mypy",
+    "ruff",
+    "black",
+    "xmlschema"
+]
+test = [
+    "coverage", 
+    "pytest"
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7"
-pytest-cov = "^4"
+[project.scripts]
+geos-viewer = "geos_xml_viewer.bin.viewer:run"
+geos-exporter = "geos_xml_viewer.bin.exporter:run"
+#validate = "geos_xml_viewer.bin.validate:run"
+#xsd = "geos_xml_viewer.bin.test_xsdata:run"
+geos-modifier = "geos_xml_viewer.bin.modifier:run"
+#testCellLocator = "geos_xml_viewer.bin.testCellLocator:run"
+geos-splitter = "geos_xml_viewer.bin.splitter:run"
 
-[tool.poetry.group.tests.dependencies]
-mypy = "^1.7"
-ruff = "^0"
-xmlschema = "^3.0.0"
+[tool.bumpversion]
+current_version = "1.2.1"
 
-[tool.poetry.scripts]
-geos-viewer = 'geos-xml-viewer.bin.viewer:run'
-geos-exporter = 'geos-xml-viewer.bin.exporter:run'
-#validate = 'geos-xml-viewer.bin.validate:run'
-#xsd = 'geos-xml-viewer.bin.test_xsdata:run'
-geos-modifier = 'geos-xml-viewer.bin.modifier:run'
-#testCellLocator = 'geos-xml-viewer.bin.testCellLocator:run'
-geos-splitter = 'geos-xml-viewer.bin.splitter:run'
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = [
@@ -94,7 +119,7 @@ convention = "google"
 
 # [tool.black]
 # line-length = 88
-# target-version = ["py310", "py311"]
+# target-version = ["py39", "py310", "py311"]
 # include = '\.pyi?$'
 # exclude = '''
 # /(
@@ -122,24 +147,28 @@ convention = "google"
 # # skip_glob = ["tests"]
 
 [tool.pytest.ini_options]
-addopts = ""
+addopts = [
+    "--import-mode=importlib",
+]
 console_output_style = "count"
 python_classes = "Test"
 python_files = "test_*.py"
 python_functions = "test*"
 testpaths = ["tests"]
-
+pythonpath = [
+    "src",
+]
 
 [tool.coverage.run]
 branch = true
-source = ["geos-xml-viewer, PVplugins"]
+source = ["src"]
 
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
-python_version = "3.11"
+python_version = "3.9"
 mypy_path = "src"
 strict = true
 # Unreachable blocks have been an issue when compiling mypyc, let's try to avoid 'em in the first place.
@@ -148,5 +177,5 @@ implicit_reexport = true
 show_error_codes = true
 show_column_numbers = true
 exclude = [
-    'geos-xml-viewer/algorithms/write_wells.py',
+    'geos_xml_viewer/algorithms/write_wells.py',
 ]

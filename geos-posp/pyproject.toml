@@ -37,9 +37,22 @@ dependencies = [
 ]
 requires-python = ">= 3.9"
 
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
+
 [project.optional-dependencies]
-dev = ["black", "ruff", "mypy", "sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"]
-test = ["coverage", "pytest"]
+dev = [
+   "black", 
+   "ruff", 
+   "mypy", 
+]
+test = [
+   "coverage", 
+   "pytest"
+]
 
 [project.readme]
 file = "README.md"
@@ -57,10 +70,10 @@ target-version = "py39"
 
 src = ["src"]
 
-extend-exclude = ["tests/Data", "docs/"]
+extend-exclude = ["tests/Data"]
 
 # Same as Black.
-line-length = 79
+line-length = 88
 indent-width = 4
 
 [tool.ruff.lint]
@@ -116,16 +129,21 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-addopts = ""
+addopts = [
+    "--import-mode=importlib",
+]
 console_output_style = "count"
 python_classes = "Test"
-python_files = "test*.py"
+python_files = "tests*.py"
 python_functions = "test*"
 testpaths = ["tests"]
+pythonpath = [
+    "src",
+]
 
 [tool.coverage.run]
 branch = true
-source = ["PVplugins, geos-posp"]
+source = ["PVplugins", "geos-posp"]
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
@@ -150,4 +168,3 @@ module = [
     "tests.unit.*",
 ]
 ignore_errors = true
-

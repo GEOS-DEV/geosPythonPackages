@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from geostk.filters.geostkDeckSource import GeosDeckReader
+from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
 
 # Dir containing the files
 FIXTURE_DIR = Path(__file__).parent.resolve() / "files"
@@ -23,4 +23,4 @@ def test_DeckReader() -> None:
         reader.GetOutputDataObject(0).GetClassName()
         == "vtkPartitionedDataSetCollection"
     )
-    assert reader.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 3
+    assert reader.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 5

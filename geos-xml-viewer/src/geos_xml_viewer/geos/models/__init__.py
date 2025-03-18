@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
 
-from geostk.geos.models.schema import (
+from geos_xml_viewer.geos.models.schema import (
     AcousticFirstOrderSemtype,
     AcousticSemtype,
     AcousticVtisemtype,

@@ -27,7 +27,7 @@ class PVGeosDeckReader(VTKPythonAlgorithmBase):
             outputType="vtkPartitionedDataSetCollection",
         )  # type: ignore
         self.__filename: str
-        from geostk.filters.geosDeckReader import GeosDeckReader
+        from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
 
         self.__realAlgorithm = GeosDeckReader()
 

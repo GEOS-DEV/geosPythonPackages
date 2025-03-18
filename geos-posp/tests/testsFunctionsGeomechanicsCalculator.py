@@ -22,17 +22,6 @@ from geos_posp.utils import PhysicalConstants
 from geos_posp.utils.geosUtils import getAttributeMatrixFromVector
 from geos_posp.utils.UnitRepository import Unit, UnitRepository
 
-inputDF: pd.DataFrame = pd.read_csv(os.path.join(dir_path, "Data/geomeca_data.csv"))
-userPropertiesUnits: dict[str, int] = {
-    "pressure": 0,
-    "stress": 0,
-    "length": 0,
-    "density": 0,
-    "permeability": 0,
-}
-unitObj: UnitRepository = UnitRepository(userPropertiesUnits)
-propertiesUnit: dict[str, Unit] = unitObj.getPropertiesUnit()
-
 # geomechanical outputs - Testing variables - Unit is GPa
 bulkModulus: npt.NDArray[np.float64] = np.array([9.0, 50.0, 65.0, np.nan, 150.0])
 shearModulus: npt.NDArray[np.float64] = np.array([3.2, 24.0, np.nan, 70.0, 100.0])
