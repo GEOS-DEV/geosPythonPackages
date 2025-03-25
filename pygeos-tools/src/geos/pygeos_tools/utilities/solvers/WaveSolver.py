@@ -14,8 +14,8 @@
 
 import numpy as np
 import pygeosx
-from geos.pygeos_tools.utilities.solvers.Solver import Solver
 from scipy.fftpack import fftfreq, ifft, fft
+from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
 class WaveSolver( Solver ):
@@ -24,46 +24,27 @@ class WaveSolver( Solver ):
 
     Attributes
     -----------
-        dt : float
-            Time step for simulation
+        The ones herited from Solver class and:
+
+        dtSeismo : float
+            Time step to save pressure for seismic trace
+        dtWaveField : float
+            Time step to save fields
         minTime : float
             Min time to consider
         maxTime : float
             End time to consider
-        dtSeismo : float
-            Time step to save pressure for seismic trace
         minTimeSim : float
             Starting time of simulation
         maxTimeSim : float
             End Time of simulation
-        dtWaveField : float
-            Time step to save fields
         sourceType : str
             Type of source
         sourceFreq : float
             Frequency of the source
-        name : str
-            Solver name
-        type : str
-            Type of solver
-            Default is None
-        geosxArgs : GeosxArgs
-            Object containing GEOSX launching options
-        geosx : pygeosx instance
-            
-        alreadyInitialized : bool
-            Flag indicating if the initial conditions have been applied yet
-        firstGeosxInit : bool
-            Flag for initialize or reinitialize 
-        collectionTargets : list
-            Output targets for geosx
-        hdf5Targets : list
-            HDF5 output targets for geosx
-        vtkTargets : list
-            VTK output targets for geosx
     """
-
     def __init__( self,
+                  solverType: str,
                   dt=None,
                   minTime=0,
                   maxTime=None,
@@ -75,6 +56,8 @@ class WaveSolver( Solver ):
         """
         Parameters
         ----------
+            solverType: str
+                The solverType targeted in GEOS XML deck
             dt : float
                 Time step for simulation
             minTime : float
@@ -96,27 +79,22 @@ class WaveSolver( Solver ):
                 geosx_argv : list
                     GEOSX arguments or command line as a splitted line
         """
-        super().__init__( **kwargs )
+        super().__init__( solverType, **kwargs )
 
-        self.name = None
+        self.dt: float = dt
+        self.dtSeismo: float = dtSeismo
+        self.dtWaveField: float = dtWaveField
+        self.minTime: float = minTime
+        self.minTimeSim: float = minTime
+        self.maxTime: float = maxTime
+        self.maxTimeSim: float = maxTime
 
-        self.dt = dt
-        self.minTime = minTime
-        self.maxTime = maxTime
-
-        self.minTimeSim = minTime
-        self.maxTimeSim = maxTime
-
-        self.dtSeismo = dtSeismo
-
-        self.sourceType = sourceType
-        self.sourceFreq = sourceFreq
-
-        self.dtWaveField = dtWaveField
+        self.sourceType: str = sourceType
+        self.sourceFreq: float = sourceFreq
 
     def __repr__( self ):
         string_list = []
-        string_list.append( "Solver type : " + type( self ).__name__ + "\n" )
+        string_list.append( "Solver type : " + self.type + "\n" )
         string_list.append( "dt : " + str( self.dt ) + "\n" )
         string_list.append( "maxTime : " + str( self.maxTime ) + "\n" )
         string_list.append( "dtSeismo : " + str( self.dtSeismo ) + "\n" )
@@ -127,65 +105,7 @@ class WaveSolver( Solver ):
 
         return rep
 
-    def _setTimeVariables( self ):
-        """Initialize the time variables"""
-        if hasattr( self.xml, "events" ):
-            events = self.xml.events
-            if self.dt is None:
-                for event in events[ "PeriodicEvent" ]:
-                    if isinstance( event, dict ):
-                        if event[ "target" ] == "/Solvers/" + self.name:
-                            self.dt = float( event[ 'forceDt' ] )
-                    else:
-                        if event == "target" and events[ "PeriodicEvent" ][ "target" ] == "/Solvers/" + self.name:
-                            self.dt = float( events[ "PeriodicEvent" ][ "forceDt" ] )
-            else:
-                self.updateTimeVariable( "dt" )
-
-            if self.maxTime is None:
-                self.maxTime = float( events[ "maxTime" ] )
-                self.maxTimeSim = self.maxTime
-            else:
-                self.updateTimeVariable( "maxTime" )
-
-            if self.dtSeismo is None:
-                if self.type is None:
-                    self._getType()
-
-                solverdict = self.xml.solvers[ self.type ]
-                for k, v in solverdict.items():
-                    if k == "dtSeismoTrace":
-                        self.dtSeismo = float( v )
-            else:
-                self.updateTimeVariable( "dtSeismo" )
-
-            assert None not in ( self.dt, self.dtSeismo, self.maxTime )
-
-    def _setSourceProperties( self ):
-        """Set the frequency and type of source"""
-        if self.sourceFreq is None:
-            if self.type is None:
-                self._getType()
-            solverdict = self.xml.solvers[ self.type ]
-            for k, v in solverdict.items():
-                if k == "timeSourceFrequency":
-                    self.sourceFreq = v
-
-        if self.sourceType is None:
-            if hasattr( self.xml, "events" ):
-                events = self.xml.events
-            try:
-                for event in events[ "PeriodicEvent" ]:
-                    if isinstance( event, dict ):
-                        if event[ "target" ] == "/Solvers/" + self.name:
-                            self.sourceType = "ricker" + event[ 'rickerOrder' ]
-                    else:
-                        if event == "target" and events[ "PeriodicEvent" ][ "target" ] == "/Solvers/" + self.name:
-                            self.sourceType = "ricker" + events[ "PeriodicEvent" ][ "rickerOrder" ]
-            except:
-                self.sourceType = "ricker2"
-
-    def initialize( self, rank=0, xml=None ):
+    def initialize( self, rank: int = 0, xml=None ) -> None:
         """
         Initialization or reinitialization of GEOSX
 
@@ -198,57 +118,46 @@ class WaveSolver( Solver ):
                 Only required if not set in the __init__ OR if different from it
         """
         super().initialize( rank, xml )
-        self._setSourceProperties()
+        self.updateSourceProperties()
 
-    def updateTimeStep( self, dt ):
+    """
+    Accessors
+    """
+    def getVelocityModel( self, velocityName: str, filterGhost=False, **kwargs ) -> np.array:
         """
-        Update the solver time step
+        Get the velocity values
+        WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
+        and that this CellElementRegion contains only one cellBlock.
 
         Parameters
-        ----------
-            dt : double
-                Time step
+        -----------
+            velocityName : str
+                Name of velocity array in GEOS
+            filterGhost : bool
+                Filter the ghost ranks
+
+        Returns
+        -------
+            Numpy Array : Array containing the velocity values
         """
-        self.dt = dt
+        velocity = self.getSolverFieldWithPrefix( velocityName, **kwargs )
 
-    def updateTimeVariable( self, timeVariable ):
-        """
-        Overwrite a GEOS time variable
+        if velocity is not None:
+            if filterGhost:
+                velocity_filtered = self.filterGhostRankFor1RegionWith1CellBlock( velocity, **kwargs )
+                if velocity_filtered is not None:
+                    return velocity_filtered
+                else:
+                    print( "getVelocityModelFor1RegionWith1CellBlock->filterGhostRank: No ghostRank was found." )
+            else:
+                return velocity
+        else:
+            print( "getVelocityModelFor1RegionWith1CellBlock: No velocity was found." )
 
-        Parameters
-        ----------
-            timeVariable : str
-                Name of the time variable to update
-        """
-        if timeVariable == "maxTime":
-            assert hasattr( self, "maxTime" )
-            self.geosx.get_wrapper( "Events/maxTime" ).value()[ 0 ] = self.maxTime
-
-        elif timeVariable == "minTime":
-            assert hasattr( self, "minTime" )
-            self.geosx.get_wrapper( "Events/minTime" ).value()[ 0 ] = self.minTime
-
-        elif timeVariable == "dt":
-            assert hasattr( self, "dt" )
-            self.geosx.get_wrapper( "Events/solverApplications/forceDt" ).value()[ 0 ] = self.dt
-
-        elif timeVariable == "dtSeismo":
-            assert hasattr( self, "dtSeismo" )
-            self.geosx.get_wrapper( "/Solvers/" + self.name + "/dtSeismoTrace" ).value()[ 0 ] = self.dtSeismo
-
-    def updateSourceFrequency( self, freq ):
-        """
-        Overwrite GEOSX source frequency
-        
-        Parameters
-        ----------
-            freq : float
-                Frequency of the source in Hz
-        """
-        self.geosx.get_wrapper( "/Solvers/" + self.name + "/timeSourceFrequency" ).value()[ 0 ] = freq
-        self.sourceFreq = freq
-
-    def updateSourceAndReceivers( self, sourcesCoords=[], receiversCoords=[] ):
+    """
+    Mutators
+    """
+    def setSourceAndReceivers( self, sourcesCoords=[], receiversCoords=[] ) -> None:
         """
         Update sources and receivers positions in GEOS
 
@@ -279,7 +188,69 @@ class WaveSolver( Solver ):
 
         self.solver.reinit()
 
-    def evaluateSource( self ):
+    def setSourceFrequency( self, freq ) -> None:
+        """
+        Overwrite GEOSX source frequency and set self.sourceFreq
+
+        Parameters
+        ----------
+            freq : float
+                Frequency of the source in Hz
+        """
+        self.setGeosWrapperValueByTargetKey( "/Solvers/" + self.name + "/timeSourceFrequency", freq )
+        self.sourceFreq = freq
+
+    def setSourceValue( self, value ) -> None:
+        """
+        Set the value of the source in GEOS
+
+        Parameters
+        ----------
+            value : array/list
+                List/array containing the value of the source at each time step
+        """
+        src_value = self.solver.get_wrapper( "sourceValue" ).value()
+        src_value.set_access_level( pygeosx.pylvarray.RESIZEABLE )
+
+        src_value.resize_all( value.shape )
+        src_value.to_numpy()[ : ] = value[ : ]
+
+        self.maxTimeSim = ( value.shape[ 0 ] - 1 ) * self.dt
+        self.setGeosWrapperValueByTargetKey( "Events/minTime", self.minTime )
+        self.sourceValue = value[ : ]
+
+    """
+    Update method
+    """
+    def updateSourceProperties( self ) -> None:
+        """
+        Updates the frequency and type of source to match the XML
+        """
+        if self.sourceFreq is None:
+            solverdict = self.xml.solvers[ self.type ]
+            for k, v in solverdict.items():
+                if k == "timeSourceFrequency":
+                    self.sourceFreq = v
+                    break
+
+        if self.sourceType is None:
+            if hasattr( self.xml, "events" ):
+                events = self.xml.events
+            try:
+                for event in events[ "PeriodicEvent" ]:
+                    if isinstance( event, dict ):
+                        if event[ "target" ] == "/Solvers/" + self.name:
+                            self.sourceType = "ricker" + event[ 'rickerOrder' ]
+                    else:
+                        if event == "target" and events[ "PeriodicEvent" ][ "target" ] == "/Solvers/" + self.name:
+                            self.sourceType = "ricker" + events[ "PeriodicEvent" ][ "rickerOrder" ]
+            except KeyError:
+                self.sourceType = "ricker2"
+
+    """
+    Utils
+    """
+    def evaluateSource( self ) -> None:
         """
         Evaluate source and update on GEOS
         Only ricker order {0 - 4} accepted
@@ -331,32 +302,14 @@ class WaveSolver( Solver ):
 
             time += self.dt
 
-        self.updateSourceFrequency( self.sourceFreq )
-        self.updateSourceValue( sourceValue )
+        self.setSourceFrequency( self.sourceFreq )
+        self.setSourceValue( sourceValue )
         self.sourceValue = sourceValue
 
-    def updateSourceValue( self, value ):
+    def filterSource( self, fmax ) -> None:
         """
-        Update the value of the source in GEOS
-
-        Parameters
-        ----------
-            value : array/list
-                List/array containing the value of the source at each time step
-        """
-        src_value = self.solver.get_wrapper( "sourceValue" ).value()
-        src_value.set_access_level( pygeosx.pylvarray.RESIZEABLE )
-
-        src_value.resize_all( value.shape )
-        src_value.to_numpy()[ : ] = value[ : ]
-
-        self.maxTimeSim = ( value.shape[ 0 ] - 1 ) * self.dt
-        self.geosx.get_wrapper( "Events/minTime" ).value()[ 0 ] = self.minTime
-        self.sourceValue = value[ : ]
-
-    def filterSource( self, fmax ):
-        """
-        Filter the source value and give the value to GEOSX. Note that is can also modify the start and end time of simulation to avoid discontinuity.
+        Filter the source value and give the value to GEOSX. Note that is can also modify the start and end time of
+        simulation to avoid discontinuity.
 
         Parameters
         -----------
@@ -420,49 +373,13 @@ class WaveSolver( Solver ):
 
         t = np.arange( minTime - pad * dt, maxTime + pad * dt + dt / 2, dt )
 
-        self.updateSourceValue( np.real( y[ max( i1 - d, 0 ):min( i4 + d, n ), : ] ) )
+        self.setSourceValue( np.real( y[ max( i1 - d, 0 ):min( i4 + d, n ), : ] ) )
         self.minTimeSim = t[ max( i1 - d, 0 ) ]
         self.maxTimeSim = t[ min( i4 + d, n - 1 ) ]
-        self.geosx.get_wrapper( "Events/minTime" ).value()[ 0 ] = self.minTimeSim
+        self.setGeosWrapperValueByTargetKey( "Events/minTime", self.minTimeSim )
         self.sourceValue = np.real( y[ max( i1 - d, 0 ):min( i4 + d, n ), : ] )
 
-    def updateVelocityModel( self, vel, velocityName, **kwargs ):
-        """
-        Update velocity value in GEOS
-
-        Parameters
-        ----------
-            vel : float/array
-                Value(s) for velocity field
-            velocityName : str
-                Name of the velocity array in GEOS
-        """
-        prefix = self._getPrefixPath( **kwargs )
-
-        velocity = self.solver.get_wrapper( prefix + velocityName ).value()
-        velocity.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-        velocity.to_numpy()[ vel > 0 ] = vel[ vel > 0 ]
-
-    def updateDensityModel( self, density, densityName, **kwargs ):
-        """
-        Update density values in GEOS
-        
-        Parameters
-        -----------
-            density : array
-                New values for the density
-            densityName : str
-                Name of density array in GEOS
-        """
-        prefix = self._getPrefixPath( **kwargs )
-
-        d = self.solver.get_wrapper( prefix + densityName ).value()
-        d.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-        d.to_numpy()[ density > 0 ] = density[ density > 0 ]
-
-    def outputWaveField( self, time ):
+    def outputWaveField( self, time ) -> None:
         """
         Trigger the wavefield output
 
@@ -473,31 +390,3 @@ class WaveSolver( Solver ):
         """
         self.collections[ 0 ].collect( time, self.dt )
         self.hdf5Outputs[ 0 ].output( time, self.dt )
-
-    def getVelocityModel( self, velocityName, filterGhost=False, **kwargs ):
-        """
-        Get the velocity values
-
-        Parameters
-        -----------
-            velocityName : str
-                Name of velocity array in GEOS
-            filterGhost : bool
-                Filter the ghost ranks
-
-        Returns
-        -------
-            Numpy Array : Array containing the velocity values
-        """
-        velocity = self.getField( velocityName, **kwargs )
-
-        if filterGhost:
-            velocity = self.filterGhostRank( velocity, **kwargs )
-
-        return velocity
-
-    def getWaveField( self ):
-        pass
-
-    def getWaveFieldAtReceivers( self, comm ):
-        pass
