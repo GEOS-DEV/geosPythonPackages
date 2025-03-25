@@ -11,6 +11,40 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
+from enum import Enum
+
+
+class StrEnum(str, Enum):
+    """
+    StrEnum class that inherits from both str and Enum.
+    This allows enum members to behave like strings.
+    """
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}.{self.name}"
+
+
+class GEOS_STATE( Enum ):
+    """This class needs to be up to date with the implementation of getState in pygeosx.cpp.
+
+    Args:
+        Enum (int): GEOS state parameter.
+    """
+    UNINITIALIZED = 0
+    INITIALIZED = 1
+    READY_TO_RUN = 2
+    COMPLETED = 3
+
+
+class MODEL_FOR_GRADIENT( StrEnum ):
+    """This class needs to be up to date with the model for gradient available.
+    This refers to inversion parameters.
+    """
+    VELOCITY = "c"
+    SLOWNESS = "1/c"
+    SLOWNESS_SQUARED = "1/c2"
 
 
 def print_group( group, indent=0 ):
