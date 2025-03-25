@@ -118,7 +118,7 @@ def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
     return writer.Write()
 
 
-def __write_vts( mesh: vtkStructuredGrid, output: str, toBinary: bool=False ) -> int:
+def __write_vts( mesh: vtkStructuredGrid, output: str, toBinary: bool = False ) -> int:
     logging.info( f"Writing mesh into file \"{output}\" using XML format." )
     writer = vtkXMLStructuredGridWriter()
     writer.SetFileName( output )
@@ -127,7 +127,7 @@ def __write_vts( mesh: vtkStructuredGrid, output: str, toBinary: bool=False ) ->
     return writer.Write()
 
 
-def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool=False ) -> int:
+def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False ) -> int:
     logging.info( f"Writing mesh into file \"{output}\" using XML format." )
     writer = vtkXMLUnstructuredGridWriter()
     writer.SetFileName( output )
@@ -136,7 +136,7 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool=False ) 
     return writer.Write()
 
 
-def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, toBinary: bool=False, canOverwrite: bool=False ) -> int:
+def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, toBinary: bool = False, canOverwrite: bool = False ) -> int:
     """
     Writes the mesh to disk.
     Nothing will be done if the file already exists.

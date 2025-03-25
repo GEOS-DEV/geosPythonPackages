@@ -35,10 +35,10 @@ class GeosxArgs:
             args : list of str
                 List corresponding to a splitted submission line with options
         """
-        self.cmdline = args
-        self.options = self.optionsParser()
+        self.cmdline: list[ str ] = args
+        self.options: dict[ str, str ] = self.optionsParser()
 
-    def optionsParser( self, cmdline=[] ):
+    def optionsParser( self, cmdline: list[ str ] = list() ):
         """
         Return a dict with useful geosx options parsed from a list/submission line.
 
@@ -54,7 +54,7 @@ class GeosxArgs:
         """
         if not cmdline:
             cmdline = self.cmdline
-        desc = "Parser of GEOSX command line"
+        desc: str = "Parser of GEOSX command line"
         parser = argparse.ArgumentParser( "GEOSX command line parser", allow_abbrev=False, description=desc )
 
         parser.add_argument( "--input", "-i", "--xml", type=str, dest="xml", default=None, help="XML input file" )
@@ -114,7 +114,7 @@ class GeosxArgs:
 
         return vars( parser.parse_known_args( cmdline )[ 0 ] )
 
-    def updateArg( self, optionName=None, newValue=None ):
+    def updateArg( self, optionName: str = None, newValue: str = None ):
         """
         Update the GEOSX initialization arguments
 
@@ -145,7 +145,7 @@ class GeosxArgs:
             cl : list of str
                 List containing all the options requested
         """
-        cl = [ "" ]
+        cl: list[ str ] = [ "" ]
         for opt, val in self.options.items():
             if val is not None:
                 ab = GeosxAbbrevOption().getAbbrv( opt )
@@ -182,7 +182,7 @@ class GeosxAbbrevOption:
             "pause_for": ( "--pause-for" )
         }
 
-    def getAbbrv( self, optionName=None ):
+    def getAbbrv( self, optionName: str = None ):
         """
         Returns the abbreviation corresponding to the requested option
         
@@ -197,7 +197,7 @@ class GeosxAbbrevOption:
         """
         return self.abbrvDict[ optionName ][ -1 ]
 
-    def getAllAbbrv( self, optionName=None ):
+    def getAllAbbrv( self, optionName: str = None ):
         """
         Returns the abbreviation corresponding to the requested option
         
@@ -208,11 +208,10 @@ class GeosxAbbrevOption:
 
         Returns
         -------
-            list of str : 
+            list of str :
                 Requested abbreviations
         """
         try:
             return self.abbrvDict[ optionName ]
-
-        except:
+        except KeyError:
             return [ "" ]
