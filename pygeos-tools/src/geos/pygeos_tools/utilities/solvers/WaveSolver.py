@@ -46,7 +46,7 @@ class WaveSolver( Solver ):
     def __init__( self,
                   solverType: str,
                   dt=None,
-                  minTime=0,
+                  minTime=0.0,
                   maxTime=None,
                   dtSeismo=None,
                   dtWaveField=None,

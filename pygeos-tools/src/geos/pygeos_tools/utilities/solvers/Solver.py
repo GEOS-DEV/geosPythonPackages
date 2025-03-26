@@ -48,6 +48,12 @@ class Solver:
             geosx group
         hdf5Targets : List[ str ]
             Outputs of TimeHistory
+        maxTime : float
+            End time of the simulation
+        meshName : str
+            Name of the mesh in the GEOS XML deck
+        minTime : float
+            Begin time of the simulation
         name : str
             Name of the solver defined in the GEOS XML deck
         timeVariables : Dict[ str, float ]
@@ -84,8 +90,10 @@ class Solver:
         self.geosx: pygeosx.Group = None
         self.hdf5Outputs: List[ pygeosx.Group ] = None
         self.hdf5Targets: List[ str ] = None
-        self.name: str = None
+        self.maxTime: float = None
         self.meshName: str = None
+        self.minTime: float = None
+        self.name: str = None
         self.targetRegions: List[ str ] = None
         self.timeVariables: Dict[ str, float ] = None
         self.vtkOutputs: List[ pygeosx.Group ] = None
@@ -187,9 +195,17 @@ class Solver:
     def getHdf5Outputs( self ) -> List[ pygeosx.Group ]:
         return self.hdf5Outputs
 
+    @required_attributes( 'maxTime' )
+    def getMaxTime( self ) -> float:
+        return self.maxTime
+
     @required_attributes( 'meshName' )
     def getMeshName( self ) -> str:
         return self.meshName
+
+    @required_attributes( 'minTime' )
+    def getMinTime( self ) -> float:
+        return self.minTime
 
     @required_attributes( 'name' )
     def getName( self ) -> str:
@@ -559,6 +575,12 @@ class Solver:
         else:
             raise ValueError( "No HDF5 Outputs specified in XML." )
 
+    def setMinTime( self, new_minTime: float ) -> None:
+        self.minTime = new_minTime
+
+    def setMaxTime( self, new_maxTime: float ) -> None:
+        self.maxTime = new_maxTime
+
     @required_attributes( "vtkOutputs" )
     def setVtkOutputsName( self, directory: str ) -> None:
         """
@@ -735,6 +757,10 @@ class Solver:
         """
         xmlTimes: Dict[ str, XMLTime ] = self.xml.getXMLTimes()
         timeVariables: Dict[ str, float ] = dict()
+        if "minTime" in xmlTimes:
+            timeVariables[ "minTime" ] = xmlTimes[ "minTime" ].getValues()[ 0 ]
+        if "maxTime" in xmlTimes:
+            timeVariables[ "maxTime" ] = xmlTimes[ "maxTime" ].getValues()[ 0 ]
         for param, xmlTime in xmlTimes.items():
             value: float = xmlTime.getSolverValue( self.name )
             if value is not None:
