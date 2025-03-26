@@ -86,7 +86,6 @@ class XML:
     """
     Accessors
     """
-    @required_attributes( "root" )
     def getAttribute( self, parentElement, attributeTag ):
         if parentElement == "root":
             pElement = self.tree.find( f"./[@{attributeTag}]" )
