@@ -1,6 +1,8 @@
+pandas
 sphinx >= 7.4.7
 sphinx_rtd_theme
 sphinx-argparse >= 0.5.2
+sphinx-autodoc-typehints
 sphinx-design
 # Running CLI programs and capture outputs
 sphinxcontrib-programoutput>=0.17

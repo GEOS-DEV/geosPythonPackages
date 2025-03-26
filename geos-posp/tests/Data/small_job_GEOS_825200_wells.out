@@ -1,0 +1,289 @@
+Num ranks: 1
+MKL max threads: 1
+GEOSX version: 0.2.0 (feature/dkachuma/allow-negative-pressure-with-errors, sha1: d15a5d5)
+  - c++ compiler: gcc 8.3.0
+  - MPI version: Open MPI v2.1.5, package: Open MPI root@pandev07 Distribution, ident: 2.1.5, repo rev: v2.1.4-8-g697c1e9, Aug 15, 2018
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - hypre release version: 2.27.0
+Started at 2023-06-20 16:04:54
+Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
+Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
+Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
+Adding Mesh: VTKMesh, SyntheticMesh
+Adding Mesh: InternalWell, well_1
+Adding Mesh: InternalWell, well_2
+Adding Mesh: InternalWell, well_3
+Adding Event: PeriodicEvent, outputInjectionPeriod
+Adding Event: PeriodicEvent, outputPostInjectionPeriod
+Adding Event: PeriodicEvent, statistics
+Adding Event: PeriodicEvent, solverApplicationsInjectionPeriod
+Adding Event: PeriodicEvent, solverApplicationsPostInjectionPeriod1
+Adding Event: PeriodicEvent, solverApplicationsPostInjectionPeriod2
+Adding Output: VTK, vtkOutput
+   TableFunction: totalRateTable
+Adding Object CellElementRegion named Reservoir from ObjectManager::Catalog.
+Adding Object CellElementRegion named Caprock from ObjectManager::Catalog.
+Adding Object WellElementRegion named wellRegion1 from ObjectManager::Catalog.
+Adding Object WellElementRegion named wellRegion2 from ObjectManager::Catalog.
+Adding Object WellElementRegion named wellRegion3 from ObjectManager::Catalog.
+   TableFunction: fluid_phaseModel1_PhillipsBrineDensity_table
+   TableFunction: fluid_phaseModel1_PhillipsBrineViscosity_table
+   TableFunction: fluid_phaseModel2_SpanWagnerCO2Density_table
+   TableFunction: fluid_phaseModel2_FenghourCO2Viscosity_table
+   TableFunction: fluid_CO2Solubility_table
+   TableFunction: wellControls1_ConstantBHP_table
+   TableFunction: wellControls1_ConstantPhaseRate_table
+   TableFunction: WellControls_OpenStatus_table
+   TableFunction: wellControls2_ConstantBHP_table
+   TableFunction: wellControls2_ConstantPhaseRate_table
+   TableFunction: wellControls3_ConstantBHP_table
+   TableFunction: wellControls3_ConstantPhaseRate_table
+VTKMesh 'SyntheticMesh': reading mesh from /scratchrd/GIS/OT/l1094441/TestJeanne/TestJeanne9C/ModelA.vtu
+Generating global Ids from VTK mesh
+VTKMesh 'SyntheticMesh': generating GEOSX mesh data structure
+Importing cell block 0_tetrahedra
+Importing cell block 3_tetrahedra
+Importing cell block 1_tetrahedra
+Importing cell block 4_tetrahedra
+Importing cell block 2_tetrahedra
+Number of nodes:  9188
+  Number of elems: 48935
+             C3D4: 48935
+Load balancing:   min   avg   max
+(element/rank): 48935 48935 48935
+
+++++++++++++++++++++++++++
+InternalWellGenerator = well_1
+MPI rank = 0
+
+Number of well elements = 3
+Well element #0
+Coordinates of the element center: { 400, 1400, 237.313 }
+No next well element
+Previous well element #1
+First well node: #0
+Second well node: #1
+Well element #1
+Coordinates of the element center: { 400, 1400, -79.354 }
+Next well element # = 0
+Previous well element #2
+First well node: #1
+Second well node: #2
+Well element #2
+Coordinates of the element center: { 400, 1400, -396.021 }
+Next well element # = 1
+No previous well element
+First well node: #2
+Second well node: #3
+
+Number of perforations = 3
+Perforation #0
+Coordinates of the perforation: { 400, 1400, -15 }
+Is connected to well element #1
+Perforation #1
+Coordinates of the perforation: { 400, 1400, -120.436 }
+Is connected to well element #1
+Perforation #2
+Coordinates of the perforation: { 400, 1400, -350 }
+Is connected to well element #2
+
+
+++++++++++++++++++++++++++
+InternalWellGenerator = well_2
+MPI rank = 0
+
+Number of well elements = 2
+Well element #0
+Coordinates of the element center: { 1200, 742.759, 158.146 }
+No next well element
+Previous well element #1
+First well node: #0
+Second well node: #1
+Well element #1
+Coordinates of the element center: { 1200, 742.759, -316.854 }
+Next well element # = 0
+No previous well element
+First well node: #1
+Second well node: #2
+
+Number of perforations = 2
+Perforation #0
+Coordinates of the perforation: { 1200, 742.759, 100 }
+Is connected to well element #0
+Perforation #1
+Coordinates of the perforation: { 1200, 742.759, -500 }
+Is connected to well element #1
+
+
+++++++++++++++++++++++++++
+InternalWellGenerator = well_3
+MPI rank = 0
+
+Number of well elements = 5
+Well element #0
+Coordinates of the element center: { 800, 1450, 300.646 }
+No next well element
+Previous well element #1
+First well node: #0
+Second well node: #1
+Well element #1
+Coordinates of the element center: { 800, 1450, 110.646 }
+Next well element # = 0
+Previous well element #2
+First well node: #1
+Second well node: #2
+Well element #2
+Coordinates of the element center: { 800, 1450, -79.354 }
+Next well element # = 1
+Previous well element #3
+First well node: #2
+Second well node: #3
+Well element #3
+Coordinates of the element center: { 800, 1450, -269.354 }
+Next well element # = 2
+Previous well element #4
+First well node: #3
+Second well node: #4
+Well element #4
+Coordinates of the element center: { 800, 1450, -459.354 }
+Next well element # = 3
+No previous well element
+First well node: #4
+Second well node: #5
+
+Number of perforations = 5
+Perforation #0
+Coordinates of the perforation: { 800, 1450, 150 }
+Is connected to well element #1
+Perforation #1
+Coordinates of the perforation: { 800, 1450, -30 }
+Is connected to well element #2
+Perforation #2
+Coordinates of the perforation: { 800, 1450, -150 }
+Is connected to well element #2
+Perforation #3
+Coordinates of the perforation: { 800, 1450, -325 }
+Is connected to well element #3
+Perforation #4
+Coordinates of the perforation: { 800, 1450, -480 }
+Is connected to well element #4
+
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Caprock, 4_tetrahedra
+SyntheticMesh/Level0/Caprock/4_tetrahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Caprock/4_tetrahedra/rock_caprock allocated 1 quadrature points
+SyntheticMesh/Level0/Caprock/4_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Overburden, 3_tetrahedra
+SyntheticMesh/Level0/Overburden/3_tetrahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Overburden/3_tetrahedra/rock_burden allocated 1 quadrature points
+SyntheticMesh/Level0/Overburden/3_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Reservoir, 2_tetrahedra
+SyntheticMesh/Level0/Reservoir/2_tetrahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Reservoir/2_tetrahedra/rock_reservoir allocated 1 quadrature points
+SyntheticMesh/Level0/Reservoir/2_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Salt, 0_tetrahedra
+SyntheticMesh/Level0/Salt/0_tetrahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Salt/0_tetrahedra/rock_salt allocated 1 quadrature points
+SyntheticMesh/Level0/Salt/0_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Underburden, 1_tetrahedra
+SyntheticMesh/Level0/Underburden/1_tetrahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Underburden/1_tetrahedra/rock_burden allocated 1 quadrature points
+SyntheticMesh/Level0/Underburden/1_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, wellRegion1, wellRegion1UniqueSubRegion
+SyntheticMesh/Level0/wellRegion1/wellRegion1UniqueSubRegion/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion1/wellRegion1UniqueSubRegion/relperm allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion1/wellRegion1UniqueSubRegion/rockPerm_burden allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, wellRegion2, wellRegion2UniqueSubRegion
+SyntheticMesh/Level0/wellRegion2/wellRegion2UniqueSubRegion/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion2/wellRegion2UniqueSubRegion/relperm allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion2/wellRegion2UniqueSubRegion/rockPerm_burden allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, wellRegion3, wellRegion3UniqueSubRegion
+SyntheticMesh/Level0/wellRegion3/wellRegion3UniqueSubRegion/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion3/wellRegion3UniqueSubRegion/relperm allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion3/wellRegion3UniqueSubRegion/rockPerm_burden allocated 1 quadrature points
+SyntheticMesh: importing field data from mesh dataset
+Time: 0s, dt:100s, Cycle: 0
+compflowStatistics, Reservoir: Pressure (min, average, max): 1.25e+07, 1.25e+07, 1.25e+07 Pa
+compflowStatistics, Reservoir: Mobile phase mass (metric 2): { 0, 6.38235e+10 } kg
+compflowStatistics, Caprock: Pressure (min, average, max): 1.25e+07, 1.25e+07, 1.25e+07 Pa
+compflowStatistics, Caprock: Mobile phase mass (metric 2): { 0, 1.25037e+10 } kg
+compflowStatistics: Max phase CFL number: 0.00696878
+compflowStatistics: Max component CFL number: 0.00696878
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.01e-02 ) ;     ( Rwell ) = ( 1.54e+02 ) ;     ( R ) = ( 1.54e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.33e-04 ) ;     ( Rwell ) = ( 7.41e-01 ) ;     ( R ) = ( 7.41e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.38e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.70e-05 ) ;     ( Rwell ) = ( 9.97e-04 ) ;     ( R ) = ( 9.99e-04 ) ; 
+    Last LinSolve(iter,res) = (   2, 4.23e-03 ) ; 
+wellControls1: BHP (at the specified reference elevation): 12337146.157562563 Pa
+wellControls1: Total rate: 56.37348443784919 kg/s; total surface volumetric rate: 30.024025669350802 sm3/s
+wellControls1: Phase 0 surface volumetric rate: 30.023748128796043 sm3/s
+wellControls1: Phase 1 surface volumetric rate: 0.00027754055475897704 sm3/s
+wellControls2: BHP (at the specified reference elevation): 13268440.020500632 Pa
+wellControls2: Total rate: 56.38455514210006 kg/s; total surface volumetric rate: 30.029921829787227 sm3/s
+wellControls2: Phase 0 surface volumetric rate: 30.029644234728664 sm3/s
+wellControls2: Phase 1 surface volumetric rate: 0.0002775950585639181 sm3/s
+wellControls3: BHP (at the specified reference elevation): 12318458.650753867 Pa
+wellControls3: Total rate: 56.379144772078966 kg/s; total surface volumetric rate: 30.027040313946728 sm3/s
+wellControls3: Phase 0 surface volumetric rate: 30.02676274552475 sm3/s
+wellControls3: Phase 1 surface volumetric rate: 0.0002775684219790799 sm3/s
+compositionalMultiphaseFlow: Max relative pressure change: 2.40959 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 5.78676e-09
+coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be increased.
+Time: 1e6s, dt:1e6s, Cycle: 0
+compflowStatistics, Reservoir: Pressure (min, average, max): 1.25e+07, 1.25e+07, 1.25e+07 Pa
+compflowStatistics, Reservoir: Mobile phase mass (metric 2): { 0, 6.38235e+10 } kg
+compflowStatistics, Caprock: Pressure (min, average, max): 1.25e+07, 1.25e+07, 1.25e+07 Pa
+compflowStatistics, Caprock: Mobile phase mass (metric 2): { 0, 1.25037e+10 } kg
+compflowStatistics: Max phase CFL number: 0.00696878
+compflowStatistics: Max component CFL number: 0.00696878
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.01e-02 ) ;     ( Rwell ) = ( 1.54e+02 ) ;     ( R ) = ( 1.54e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 6.33e-04 ) ;     ( Rwell ) = ( 7.41e-01 ) ;     ( R ) = ( 7.41e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 9.38e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 4.70e-05 ) ;     ( Rwell ) = ( 9.97e-04 ) ;     ( R ) = ( 9.99e-04 ) ; 
+    Last LinSolve(iter,res) = (   2, 4.23e-03 ) ; 
+compositionalMultiphaseFlow: Max relative pressure change: 2.40959 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 5.78676e-09
+coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be increased.
+Time: 3.1536e+07s, dt:55106.9s, Cycle: 337
+compflowStatistics, Reservoir: Pressure (min, average, max): 2.80948e+07, 2.99421e+07, 3.12538e+07 Pa
+compflowStatistics, Reservoir: Mobile phase mass (metric 2): { 1.3012e+07, 6.51497e+10 } kg
+compflowStatistics, Caprock: Pressure (min, average, max): 2.76478e+07, 2.89944e+07, 2.98486e+07 Pa
+compflowStatistics, Caprock: Mobile phase mass (metric 2): { 2.19936e+07, 1.27238e+10 } kg
+compflowStatistics: Max phase CFL number: 0.721008
+compflowStatistics: Max component CFL number: 1.15538
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.33e-02 ) ;     ( Rwell ) = ( 3.27e-07 ) ;     ( R ) = ( 1.33e-02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 9.74e-04 ) ;     ( Rwell ) = ( 6.85e-07 ) ;     ( R ) = ( 9.74e-04 ) ; 
+    Last LinSolve(iter,res) = (   4, 7.03e-03 ) ; 
+wellControls1: BHP (at the specified reference elevation): 27252686.916117527 Pa
+wellControls1: Total rate: 56.32837354192296 kg/s; total surface volumetric rate: 30 sm3/s
+wellControls1: Phase 0 surface volumetric rate: 29.9997226815373 sm3/s
+wellControls1: Phase 1 surface volumetric rate: 0.00027731846270264625 sm3/s
+wellControls2: BHP (at the specified reference elevation): 27450836.07294756 Pa
+wellControls2: Total rate: 56.32837354192296 kg/s; total surface volumetric rate: 30 sm3/s
+wellControls2: Phase 0 surface volumetric rate: 29.9997226815373 sm3/s
+wellControls2: Phase 1 surface volumetric rate: 0.00027731846270264126 sm3/s
+wellControls3: BHP (at the specified reference elevation): 26935804.208137162 Pa
+wellControls3: Total rate: 56.32837354192296 kg/s; total surface volumetric rate: 30 sm3/s
+wellControls3: Phase 0 surface volumetric rate: 29.9997226815373 sm3/s
+wellControls3: Phase 1 surface volumetric rate: 0.00027731846270264625 sm3/s
+compositionalMultiphaseFlow: Max relative pressure change: 0.0702061 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 0.0218585
+coupledFlowAndWells: Time-step required will be increased based on state change.
