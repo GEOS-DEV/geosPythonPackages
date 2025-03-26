@@ -17,7 +17,10 @@ import os
 import numpy as np
 import pygeosx
 import shutil
+from typing import Optional
 from geos.pygeos_tools.utilities.solvers.WaveSolver import WaveSolver
+from geos.utils.errors_handling.classes import required_attributes
+from geos.utils.pygeos.solvers import MODEL_FOR_GRADIENT
 
 
 class AcousticSolver( WaveSolver ):
@@ -26,46 +29,13 @@ class AcousticSolver( WaveSolver ):
 
     Attributes
     -----------
-        dt : float
-            Time step for simulation
-        minTime : float
-            Min time to consider
-        maxTime : float
-            End time to consider
-        dtSeismo : float
-            Time step to save pressure for seismic trace
-        minTimeSim : float
-            Starting time of simulation
-        maxTimeSim : float
-            End Time of simulation
-        dtWaveField : float
-            Time step to save fields
-        sourceType : str
-            Type of source
-        sourceFreq : float
-            Frequency of the source
-        name : str
-            Solver name
-        type : str
-            Type of solver
-            Default is None
-        geosxArgs : GeosxArgs
-            Object containing GEOSX launching options
-        geosx : pygeosx instance
-            
-        alreadyInitialized : bool
-            Flag indicating if the initial conditions have been applied yet
-        firstGeosxInit : bool
-            Flag for initialize or reinitialize 
-        collectionTargets : list
-            Output targets for geosx
-        hdf5Targets : list
-            HDF5 output targets for geosx
-        vtkTargets : list
-            VTK output targets for geosx
-    """
+        The ones inherited from WaveSolver class
 
+        modelForGradient : str
+            Gradient model used
+    """
     def __init__( self,
+                  solverType: str = "AcousticSEM",
                   dt=None,
                   minTime=0,
                   maxTime=None,
@@ -77,6 +47,8 @@ class AcousticSolver( WaveSolver ):
         """
         Parameters
         ----------
+            solverType: str
+                The solverType targeted in GEOS XML deck. Defaults to "AcousticSEM"
             dt : float
                 Time step for simulation
             minTime : float
@@ -98,7 +70,8 @@ class AcousticSolver( WaveSolver ):
                 geosx_argv : list
                     GEOSX arguments or command line as a splitted line
         """
-        super().__init__( dt=dt,
+        super().__init__( solverType=solverType,
+                          dt=dt,
                           minTime=minTime,
                           maxTime=maxTime,
                           dtSeismo=dtSeismo,
@@ -106,6 +79,7 @@ class AcousticSolver( WaveSolver ):
                           sourceType=sourceType,
                           sourceFreq=sourceFreq,
                           **kwargs )
+        self.modelForGradient: str = None
 
     def __repr__( self ):
         string_list = []
@@ -120,202 +94,12 @@ class AcousticSolver( WaveSolver ):
 
         return rep
 
-    def setModelForGradient( self, model ):
-        """
-        Set the model for the gradient
-
-        Parameters
-        -----------
-            model : str
-                Model for the velocity
-                'c', '1/c' or '1/c2'
-        """
-        self.model = model
-
-    def updateModel( self, filename, low, high, comm, **kwargs ):
-        """
-        Update velocity model
-
-        Parameters
-        -----------
-            filename : str
-                .hdf5 file where to get the new model
-            low : float
-                Min value threshold. All new values < low are set to low
-            high : float
-                Max value threshold. All new values > high are set to high
-            comm : MPI_COMM
-               MPI communicators
-        """
-        root = 0
-        rank = comm.Get_rank()
-        size = comm.Get_size()
-
-        x = None
-        if rank == root:
-            with h5py.File( filename, 'r' ) as f:
-                x = f[ "velocity" ][ : ]
-
-            imin = np.where( x < low )[ 0 ]
-            imax = np.where( x > high )[ 0 ]
-            x[ imin ] = low
-            x[ imax ] = high
-
-            if self.model == "1/c2":
-                x = np.sqrt( 1 / x )
-            elif self.model == "1/c":
-                x = 1 / x
-            elif self.model == "c":
-                pass
-            else:
-                raise ValueError( "Not implemented" )
-
-        startModel = self.bcastField( x, comm )
-
-        self.updateVelocityModel( startModel )
-
-    def updateVelocityModel( self, vel, **kwargs ):
-        """
-        Update velocity value in GEOS
-
-        Parameters
-        ----------
-            vel : array
-                Values for velocity field
-        """
-        super().updateVelocityModel( vel, velocityName="acousticVelocity", **kwargs )
-
-    def setConstantVelocityModel( self, vel, velFieldName="acousticVelocity", **kwargs ):
-        """
-        Update velocity value in GEOS, using a constant value.
-
-        Parameters
-        ----------
-            vel : float
-                Value for velocity field
-        """
-        prefix = self._getPrefixPath( **kwargs )
-
-        velocity = self.solver.get_wrapper( prefix + velFieldName ).value()
-        velocity.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-        velocity.to_numpy()[ : ] = vel
-
-    def getVelocityModel( self, filterGhost=False, **kwargs ):
-        """
-        Get the velocity values
-
-        Parameters
-        -----------
-            filterGhost : bool
-                Filter the ghost ranks
-
-        Returns
-        -------
-            velocity : numpy array
-                Velocity values
-        """
-        velocity = super().getVelocityModel( velocityName="acousticVelocity", filterGhost=filterGhost, **kwargs )
-
-        return velocity
-
-    def updateDensityModel( self, density, **kwargs ):
-        """
-        Update density values in GEOS
-        
-        Parameters
-        -----------
-            density : array
-                New values for the density
-        """
-        super().updateDensityModel( density=density, densityName="acousticDensity", **kwargs )
-
-    def getGradient( self, filterGhost=False, **kwargs ):
-        """Get the local rank gradient value
-
-        Returns
-        --------
-            partialGradient : Numpy Array
-                Array containing the element id list for the local rank
-        """
-        partialGradient = self.getField( "partialGradient", **kwargs )
-
-        if filterGhost:
-            partialGradient = self.filterGhostRank( partialGradient, **kwargs )
-
-        return partialGradient
-
-    def computePartialGradient( self, shotId, minDepth, comm, gradDirectory="partialGradient", **kwargs ):
-        """Compute the partial Gradient
-
-        Parameters
-        -----------
-            shotId : string
-                Number of the shot as string
-            minDepth : float
-                Depth at which gradient values are kept, otherwise it is set to 0.
-                NOTE : this is done in this routine to avoid storage \
-                    of elementCenter coordinates in the .hdf5 \
-                    but might be problem for WolfeConditions later on \
-                    if minDepth is too large
-            comm : MPI_COMM
-                MPI communicators
-            gradDirectory : str, optional
-                Partial gradient directory \
-                Default is `partialGradient`
-        """
-        rank = comm.Get_rank()
-        size = comm.Get_size()
-        root = 0
-
-        # Get local gradient
-        grad = self.getGradient( **kwargs )
-        if self.model == "1/c2":
-            x = self.getVelocityModel( **kwargs )
-            grad = -( x * x * x / 2 ) * grad
-        elif self.model == "1/c":
-            x = self.getVelocityModel( filterGhost=True, **kwargs )
-            grad = -x * x * grad
-        elif self.model == "c":
-            pass
-        else:
-            raise ValueError( "Not implemented" )
-
-        grad = grad.astype( np.float64 )
-
-        zind = np.where( self.getElementCenter( **kwargs )[ :, 2 ] < minDepth )[ 0 ]
-        grad[ zind ] = 0.0
-
-        # Gather global gradient
-        gradFull, ntot = self.gatherField( field=grad, comm=comm, root=root )
-
-        if rank == root:
-            os.makedirs( gradDirectory, exist_ok=True )
-
-            with h5py.File( f"{gradDirectory}/partialGradient_" + shotId + ".hdf5", 'w' ) as h5p:
-
-                h5p.create_dataset( "partialGradient", data=np.zeros( ntot ), chunks=True, maxshape=( ntot, ) )
-                h5p[ "partialGradient" ][ : ] = self.dtWaveField * gradFull
-
-            shutil.move( f"{gradDirectory}/partialGradient_" + shotId + ".hdf5",
-                         f"{gradDirectory}/partialGradient_ready_" + shotId + ".hdf5" )
-
-        comm.Barrier()
-
-    def getPressureAtReceivers( self ):
-        """
-        Get the pressure values at receivers coordinates
-
-        Returns
-        ------
-            numpy Array : Array containing the pressure values at all time step at all receivers coordinates
-        """
-        pressureAtReceivers = self.solver.get_wrapper( "pressureNp1AtReceivers" ).value()
-
-        return pressureAtReceivers.to_numpy()
-
+    """
+    Accessors
+    """
     def getFullPressureAtReceivers( self, comm ):
-        """Return all pressures at receivers values on all ranks
+        """
+        Return all pressures at receivers values on all ranks
         Note that for a too large 2d array this may not work.
 
         Parameters:
@@ -331,52 +115,231 @@ class AcousticSolver( WaveSolver ):
         if rank == 0:
             for p in allPressure:
                 for i in range( p.shape[ 1 ] ):
-                    if any( p[ 1:, i ] ) == True:
+                    if any( p[ 1:, i ] ):
                         pressure[ :, i ] = p[ :, i ]
 
         pressure = comm.bcast( pressure, root=0 )
-
         return pressure
 
-    def resetWaveField( self, **kwargs ):
-        """Reinitialize all pressure values on the Wavefield to zero in GEOSX"""
+    def getFullWaveFieldAtReceivers( self, comm ):
+        return self.getFullPressureAtReceivers( comm )[ :, :-1 ]
 
-        self.geosx.get_wrapper( "Solvers/" + self.name + "/indexSeismoTrace" ).value()[ 0 ] = 0
-        meshName = self._getMeshName()
-        discretization = self._getDiscretization()
+    @required_attributes( "modelForGradient" )
+    def getModelForGradient( self ) -> str:
+        return self.modelForGradient
 
-        nodeManagerPath = f"domain/MeshBodies/{meshName}/meshLevels/{discretization}/nodeManager/"
-
-        if self.type == "AcousticSEM":
-            for ts in ( "nm1", "n", "np1" ):
-                pressure = self.geosx.get_wrapper( nodeManagerPath + f"pressure_{ts}" ).value()
-                pressure.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-                pressure.to_numpy()[ : ] = 0.0
-
-        elif self.type == "AcousticFirstOrderSEM":
-            pressure_np1 = self.geosx.get_wrapper( nodeManagerPath + "pressure_np1" ).value()
-            pressure_np1.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-            pressure_np1.to_numpy()[ : ] = 0.0
-
-            prefix = self._getPrefixPath( **kwargs )
-            for component in ( "x", "y", "z" ):
-                velocity = self.geosx.get_wrapper( prefix + f"velocity_{component}" ).value()
-                velocity.set_access_level( pygeosx.pylvarray.MODIFIABLE )
-
-                velocity.to_numpy()[ : ] = 0.0
-
-    def resetPressureAtReceivers( self ):
-        """Reinitialize pressure values at receivers to 0
+    def getPartialGradientFor1RegionWith1CellBlock( self, filterGhost=False, **kwargs ) -> Optional[ np.array ]:
         """
-        pressure = self.solver.get_wrapper( "pressureNp1AtReceivers" ).value()
-        pressure.set_access_level( pygeosx.pylvarray.MODIFIABLE )
+        Get the local rank gradient value
+        WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
+        and that this CellElementRegion contains only one cellBlock.
 
-        pressure.to_numpy()[ : ] = 0.0
+        Returns
+        --------
+            partialGradient : Numpy Array-
+                Array containing the element id list for the local rank
+        """
+        partialGradient = self.getSolverFieldWithPrefix( "partialGradient", **kwargs )
+
+        if partialGradient is not None:
+            if filterGhost:
+                partialGradient_filtered = self.filterGhostRankFor1RegionWith1CellBlock( partialGradient, **kwargs )
+                if partialGradient_filtered is not None:
+                    return partialGradient_filtered
+                else:
+                    print( "getPartialGradientFor1RegionWith1CellBlock->filterGhostRank: Filtering of ghostRank could" +
+                           "not be performed. No partialGradient returned." )
+            else:
+                return partialGradient
+        else:
+            print( "getPartialGradientFor1RegionWith1CellBlock: No partialGradient was found." )
+
+    def getPressureAtReceivers( self ):
+        """
+        Get the pressure values at receivers coordinates
+
+        Returns
+        ------
+            numpy Array : Array containing the pressure values at all time step at all receivers coordinates
+        """
+        return self.getGeosWrapperByName( "pressureNp1AtReceivers", ["Solvers"] )
 
     def getWaveField( self ):
         return self.getPressureAtReceivers()[ :, :-1 ]
 
-    def getFullWaveFieldAtReceivers( self, comm ):
-        return self.getFullPressureAtReceivers( comm )[ :, :-1 ]
+    """
+    Mutators
+    """
+    def setModelForGradient( self, modelForGradient: str ) -> None:
+        f"""
+        Set the model for the gradient
+
+        Parameters
+        -----------
+            model : str
+                Model for the gradients available are:
+                {list( MODEL_FOR_GRADIENT.__members__.keys() )}
+        """
+        if modelForGradient in MODEL_FOR_GRADIENT.__members__:
+            self.modelForGradient = MODEL_FOR_GRADIENT[ modelForGradient ]
+        else:
+            raise ValueError( f"The model for gradient chosen '{modelForGradient}' is not implemented. The available" +
+                              f" ones are '{list( MODEL_FOR_GRADIENT.__members__.keys() )}'." )
+
+    """
+    Update methods
+    """
+    def updateDensityModel( self, density ):
+        """
+        Update density values in GEOS
+
+        Parameters
+        -----------
+            density : array
+                New values for the density
+        """
+        self.setGeosWrapperValueByName( "acousticDensity", value=density, filters=[ self.discretization ] )
+
+    def updateVelocityModel( self, vel ):
+        """
+        Update velocity value in GEOS
+
+        Parameters
+        ----------
+            vel : float/array
+                Value(s) for velocity field
+        """
+        self.setGeosWrapperValueByName( "acousticVelocity", value=vel, filters=[ self.discretization ] )
+
+    def updateVelocityModelFromHDF5( self, filename: str, low: float, high: float, comm, velocityModelName: str,
+                                     **kwargs ):
+        """
+        Update velocity model
+        WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
+        and that this CellElementRegion contains only one cellBlock.
+
+        Parameters
+        -----------
+            filename : str
+                .hdf5 file where to get the new model
+            low : float
+                Min value threshold. All new values < low are set to low
+            high : float
+                Max value threshold. All new values > high are set to high
+            comm : MPI_COMM
+               MPI communicators
+        """
+        root = 0
+        rank = comm.Get_rank()
+
+        x = None
+        if rank == root:
+            with h5py.File( filename, 'r' ) as f:
+                x = f[ "velocity" ][ : ]
+
+            imin = np.where( x < low )[ 0 ]
+            imax = np.where( x > high )[ 0 ]
+            x[ imin ] = low
+            x[ imax ] = high
+
+            if self.modelForGradient == MODEL_FOR_GRADIENT.SLOWNESS_SQUARED.value:
+                x = np.sqrt( 1 / x )
+            elif self.modelForGradient == MODEL_FOR_GRADIENT.SLOWNESS.value:
+                x = 1 / x
+            elif self.modelForGradient == MODEL_FOR_GRADIENT.VELOCITY.value:
+                pass
+            else:
+                raise ValueError( "Not implemented" )
+
+        startModel = self.bcastFieldFor1RegionWith1CellBlock( x, comm, root, **kwargs )
+        self.setGeosWrapperValueByName( velocityModelName, startModel )
+
+    """
+    Methods for computation and reset of values
+    """
+    def computePartialGradientFor1RegionWith1CellBlock( self, shotId: int, minDepth: float, comm, velocityName: str,
+                                                        gradDirectory="partialGradient", filterGhost=False, **kwargs ):
+        """
+        Compute the partial Gradient
+        WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
+        and that this CellElementRegion contains only one cellBlock.
+
+        Parameters
+        -----------
+            shotId : string
+                Number of the shot as string
+            minDepth : float
+                Depth at which gradient values are kept, otherwise it is set to 0.
+                NOTE : this is done in this routine to avoid storage \
+                    of elementCenter coordinates in the .hdf5 \
+                    but might be problem for WolfeConditions later on \
+                    if minDepth is too large
+            comm : MPI_COMM
+                MPI communicators
+            velocity : str
+                Name of the velocity model in GEOS
+            gradDirectory : str, optional
+                Partial gradient directory \
+                Default is `partialGradient`
+        """
+        rank = comm.Get_rank()
+        root = 0
+
+        # Get local gradient
+        grad = self.getPartialGradientFor1RegionWith1CellBlock( filterGhost, **kwargs )
+        if self.modelForGradient == MODEL_FOR_GRADIENT.SLOWNESS_SQUARED.value:
+            x = self.getVelocityModel( velocityName, filterGhost, **kwargs )
+            grad = -( x * x * x / 2 ) * grad
+        elif self.modelForGradient == MODEL_FOR_GRADIENT.SLOWNESS.value:
+            x = self.getVelocityModel( velocityName, filterGhost=True, **kwargs )
+            grad = -x * x * grad
+        elif self.modelForGradient == MODEL_FOR_GRADIENT.VELOCITY.value:
+            pass
+        else:
+            raise ValueError( "Not implemented" )
+
+        grad = grad.astype( np.float64 )
+
+        zind = np.where( self.getElementCenterFor1RegionWith1CellBlock(
+            filterGhost, **kwargs )[ :, 2 ] < minDepth )[ 0 ]
+        grad[ zind ] = 0.0
+
+        # Gather global gradient
+        gradFull, ntot = self.gatherFieldFor1RegionWith1CellBlock( field=grad, comm=comm, root=root, **kwargs )
+
+        if rank == root:
+            os.makedirs( gradDirectory, exist_ok=True )
+
+            with h5py.File( f"{gradDirectory}/partialGradient_" + shotId + ".hdf5", 'w' ) as h5p:
+
+                h5p.create_dataset( "partialGradient", data=np.zeros( ntot ), chunks=True, maxshape=( ntot, ) )
+                h5p[ "partialGradient" ][ : ] = self.dtWaveField * gradFull
+
+            shutil.move( f"{gradDirectory}/partialGradient_" + shotId + ".hdf5",
+                         f"{gradDirectory}/partialGradient_ready_" + shotId + ".hdf5" )
+
+        comm.Barrier()
+
+    def resetWaveField( self, **kwargs ):
+        """
+        Reinitialize all pressure values on the Wavefield to zero in GEOSX
+        """
+        self.setGeosWrapperValueByTargetKey( "Solvers/" + self.name + "/indexSeismoTrace", value=0 )
+        nodeManagerPath = f"domain/MeshBodies/{self.meshName}/meshLevels/{self.discretization}/nodeManager/"
+
+        if self.type == "AcousticSEM":
+            for ts in ( "nm1", "n", "np1" ):
+                self.setGeosWrapperValueByTargetKey( nodeManagerPath + f"pressure_{ts}", value=0.0 )
+
+        elif self.type == "AcousticFirstOrderSEM":
+            self.setGeosWrapperValueByTargetKey( nodeManagerPath + "pressure_np1", value=0.0 )
+
+            prefix = self._getPrefixPathFor1RegionWith1CellBlock( **kwargs )
+            for component in ( "x", "y", "z" ):
+                self.setGeosWrapperValueByTargetKey( prefix + f"velocity_{component}", value=0.0 )
+
+    def resetPressureAtReceivers( self ):
+        """
+        Reinitialize pressure values at receivers to 0
+        """
+        self.setGeosWrapperValueByTargetKey( "/Solvers/" + self.name + "/" + "pressureNp1AtReceivers", value=0.0 )
