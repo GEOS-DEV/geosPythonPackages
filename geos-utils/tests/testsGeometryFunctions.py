@@ -15,7 +15,7 @@ parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
-import geos_posp.processing.geometryFunctions as fcts
+import geos_utils.geometryFunctions as fcts
 
 basisCanon: tuple[
     npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]
