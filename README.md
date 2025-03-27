@@ -146,6 +146,43 @@ If you would like to contribute to GEOS Python packages, please respect the foll
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
+Any new package must have the following architecture:
+
+```
+package-name
+|-- pyproject.toml
+|-- setup.py
+|-- src
+|   |-- geos
+|       |-- package_name
+|           |-- file1.py
+|           |-- file1.py
+|-- tests
+    |-- test1.py
+    |-- test2.py
+```
+
+The setup.py file is optional. It is required if the package depends on another GEOS Python package located in the root directory. If you want a package1 to depend on package2, follow this [procedure](https://stackoverflow.com/questions/75159453/specifying-local-relative-dependency-in-pyproject-toml):
+
+* in the *package1/pyproject.py*, replace the tag `dependencies = ["external_packageX", "external_packageY",]` with `dynamic = ["dependencies"]`
+* create the *package1/setup.py* file
+* copy the following lines in the *setup.py* and update the dependencies
+  ```
+  from pathlib import Path
+  from setuptools import setup
+
+  # This is where you add any fancy path resolution to the local lib:
+  package_path: str = (Path(__file__).parent.parent / "package2").as_uri()
+
+  setup(
+      install_requires=[
+          "external_packageX",
+          "external_packageY",
+          f"package2 @ {package_path}",
+      ]
+  )
+  ```
+
 
 Release
 -------
