@@ -23,7 +23,41 @@ dependencies = [
     "numpy",
 ]
 
+[project.optional-dependencies]
+build = [
+  "build ~= 1.2"
+]
+dev = [
+    "pylint",
+    "mypy",
+    "black",
+    "sphinx", 
+    "sphinx-rtd-theme", 
+    "sphinx-autodoc-typehints"
+]
+test = [
+    "pytest",
+    "pytest-cov"
+]
+
+
 [project.scripts]
+
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = [".", "src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []
+
+[tool.coverage.run]
+branch = true
+source = ["pybend"]
 
 
 [tool.mypy]

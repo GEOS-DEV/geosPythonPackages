@@ -15,13 +15,13 @@ parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
-import geos_utils.geosUtils as fcts
+import geos_utils.algebraFunctions as fcts
 
 matrix: npt.NDArray[np.float64] = np.array([[11, 21, 31], [21, 22, 23], [31, 23, 33]])
 vector: npt.NDArray[np.float64] = np.array([11, 22, 33, 23, 31, 21])
 
 
-class TestsFunctionsGeosUtils(unittest.TestCase):
+class TestsFunctionsalgebraFunctions(unittest.TestCase):
 
     def test_getAttributeMatrixFromVector(self: Self) -> None:
         """Test conversion from Matrix to Vector for Geos stress."""
