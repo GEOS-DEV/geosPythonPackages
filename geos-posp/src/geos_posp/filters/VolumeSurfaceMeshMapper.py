@@ -24,9 +24,9 @@ from geos_posp.processing.ConnectionSet import (
     ConnectionSetCollection,
 )
 from geos_posp.processing.geometryFunctions import getCellSideAgainstPlane
-from geos_posp.utils.GeosOutputsConstants import PostProcessingOutputsEnum
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.GeosOutputsConstants import PostProcessingOutputsEnum
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     EPSILON,
 )
 

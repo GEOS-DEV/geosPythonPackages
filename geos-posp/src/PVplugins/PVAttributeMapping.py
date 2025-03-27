@@ -41,7 +41,7 @@ from geos_posp.processing.vtkUtils import (
     getNumberOfComponents,
     mergeBlocks,
 )
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback,
 )

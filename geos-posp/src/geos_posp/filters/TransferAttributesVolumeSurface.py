@@ -22,8 +22,8 @@ from geos_posp.processing.vtkUtils import (
     getComponentNames,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import GeosMeshSuffixEnum
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.GeosOutputsConstants import GeosMeshSuffixEnum
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 TransferAttributesVolumeSurface is a vtk filter that allows to transfer volume

@@ -8,66 +8,66 @@ The `geos-utils` python package defines utilities for all GEOS python packages i
 API
 ^^^
 
-geos_utils.ConnectionSet module
+geos.utils.ConnectionSet module
 --------------------------------
 
-.. automodule:: geos_utils.ConnectionSet
+.. automodule:: geos.utils.ConnectionSet
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.enumUnits module
+geos.utils.enumUnits module
 --------------------------------
 
-.. automodule:: geos_utils.enumUnits
+.. automodule:: geos.utils.enumUnits
    :members:
    :undoc-members:
    :show-inheritance:
    
-geos_utils.geometryFunctions module
+geos.utils.geometryFunctions module
 --------------------------------
 
-.. automodule:: geos_utils.geometryFunctions
+.. automodule:: geos.utils.geometryFunctions
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.GeosOutputsConstants module
+geos.utils.GeosOutputsConstants module
 -------------------------------------------
 
-.. automodule:: geos_utils.GeosOutputsConstants
+.. automodule:: geos.utils.GeosOutputsConstants
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.algebraFunctions module
+geos.utils.algebraFunctions module
 -------------------------------------------
 
-.. automodule:: geos_utils.algebraFunctions
+.. automodule:: geos.utils.algebraFunctions
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.Logger module
+geos.utils.Logger module
 ------------------------------
 
-.. automodule:: geos_utils.Logger
+.. automodule:: geos.utils.Logger
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.PhysicalConstants module
+geos.utils.PhysicalConstants module
 -----------------------------------------
 
-.. automodule:: geos_utils.PhysicalConstants
+.. automodule:: geos.utils.PhysicalConstants
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos_utils.UnitRepository module
+geos.utils.UnitRepository module
 -------------------------------------
 
-.. automodule:: geos_utils.UnitRepository
+.. automodule:: geos.utils.UnitRepository
    :members:
    :undoc-members:
    :show-inheritance:

@@ -6,7 +6,7 @@ from typing import Union
 
 from typing_extensions import Self
 
-from geos_utils.enumUnits import Unit, getPropertyUnitEnum, getSIUnits
+from geos.utils.enumUnits import Unit, getPropertyUnitEnum, getSIUnits
 
 
 class UnitRepository:
