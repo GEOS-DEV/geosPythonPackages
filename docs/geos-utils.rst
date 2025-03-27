@@ -25,7 +25,7 @@ geos.utils.enumUnits module
    :show-inheritance:
    
 geos.utils.geometryFunctions module
---------------------------------
+------------------------------------
 
 .. automodule:: geos.utils.geometryFunctions
    :members:
