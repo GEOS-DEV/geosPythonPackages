@@ -19,49 +19,34 @@ Package summary
 
 The next packages are dedicated to pre- and post-process GEOS inputs/outputs. 
 
-    The following packages contain basic utilities used by the other ones:
+The following packages contain basic utilities used by the other ones:
 
-    * `geos-utils`: basic utilities
-    * `geos-geomecanics`: geomechanics functions and data model
-
-
-    The following packages define data models, vtk filters, and user-oriented API:
-
-    * `geos-xml-tools`: xml reader and writer dedicated to GEOS xml file
-    * `hdf5-wrapper`: wrapper to load hdf5 files
-    * `geos-mesh`: general mesh processing tools
-    * `geos-prep`: GEOS pre-processing tools
-    * `geos-posp`: GEOS post-processing tools
-    
-
-    The following packages define hands-on executables that can be used through the command line:
-
-    * `mesh-doctor`: GEOS pre-processing application
-    * `time-history`: load and plot hdf5 files
-    * `geos-xml-viewer`: load GEOS xml file and display geometrical objects (mesh, boxes, wells)
-    * `geos-trame`: web interface to check, display objects, and edit GEOS xml file (see [Trame documentation](https://kitware.github.io/trame/guide/tutorial/))
+* `geos-utils`: basic utilities
+* `geos-geomecanics`: geomechanics functions and data model
 
 
-    The following package defines [Paraview](https://docs.paraview.org/) plugins that wrap GEOS Python tools
+The following packages define data models, vtk filters, and user-oriented API:
 
-    * `geos-pv`
+* `geos-xml-tools`: xml reader and writer dedicated to GEOS xml file
+* `hdf5-wrapper`: wrapper to load hdf5 files
+* `geos-mesh`: general mesh processing tools
+* `geos-prep`: GEOS pre-processing tools
+* `geos-posp`: GEOS post-processing tools
 
 
-See the [documentation](https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/) for additional details about the packages and how to use them.
+The following packages define hands-on executables that can be used through the command line:
+
+* `mesh-doctor`: GEOS pre-processing application
+* `time-history`: load and plot hdf5 files
+* `geos-xml-viewer`: load GEOS xml file and display geometrical objects (mesh, boxes, wells)
+* `geos-trame`: web interface to check, display objects, and edit GEOS xml file (see [Trame documentation](https://kitware.github.io/trame/guide/tutorial/))
 
 
-Installation
--------------
+The following package defines [Paraview](https://docs.paraview.org/) plugins that wrap GEOS Python tools
 
-* *Automatic installation for GEOS developpers:*
+* `geos-pv`
 
-  GEOS Python packages can be automatically installed after having build GEOS by running `make geosx_python_tools` in the GEOS build directory.
-
-* *Manual installation:*
-
-  GEOS Python packages can be manually installed with pip using `python` >= 3.10. In this case, pay attention to package inter-dependencies. Start by installing the basic utilities, then the api and vtk filters, and finally the top level executables.
-
-    GEOS Python packages dependency tree (inter-dependency and main external dependencies) is the following:
+GEOS Python packages dependency tree (inter-dependency and main external dependencies) is the following:
 
     ```
     |-- geos-ats
@@ -113,26 +98,37 @@ Installation
         |-- paraview
     ```
 
-    For the complete installation of GEOS pre- and post-processing packages, run the following commands from the geosPythonPackage directory:
+See the [documentation](https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/) for additional details about the packages and how to use them.
+
+
+Installation
+-------------
+
+* *Automatic installation for GEOS developpers:*
+
+  GEOS Python packages can be automatically installed after having build GEOS by running `make geosx_python_tools` in the GEOS build directory.
+
+* *Manual installation:*
+
+  GEOS Python packages can be manually installed with pip using `python` >= 3.10. 
+
+    To install any package, run the following commands from the geosPythonPackage directory:
 
     ```
     python -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install ./geos-utils
-    python -m pip install ./geos-geomechanics ./time-history ./geos-xml-tools ./geos-mesh
-    python -m pip install ./geos-prep ./geos-posp
-    python -m pip install ./time-history ./mesh-doctor ./geos-xml-viewer ./mesh-doctor
+    python -m pip install ./<PACKAGE_NAME>
     ```
 
-    You can test the installation by running the commands:
+    You can test installed package by running the commands:
 
     ```
     python -m pip install pytest
-    python -m pytest ./*
+    python -m pytest ./<PACKAGE_NAME>
     ```
 
-**NOTE: geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatievly, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).**
+**NOTE: geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).**
 
 
 Contributions
