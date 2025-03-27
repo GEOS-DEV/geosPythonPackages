@@ -4,7 +4,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from geos-geomechanics.processing.MohrCoulomb import MohrCoulomb
+from geos_geomechanics.model.MohrCoulomb import MohrCoulomb
 from geos_posp.utils.geosUtils import getAttributeMatrixFromVector
 from geos_posp.utils.PhysicalConstants import (
     EPSILON,
