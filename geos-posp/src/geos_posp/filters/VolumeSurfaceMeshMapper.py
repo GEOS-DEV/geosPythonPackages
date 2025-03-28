@@ -19,11 +19,11 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
 
-from geos_posp.processing.ConnectionSet import (
+from geos.utils.ConnectionSet import (
     ConnectionSet,
     ConnectionSetCollection,
 )
-from geos_posp.processing.geometryFunctions import getCellSideAgainstPlane
+from geos.utils.geometryFunctions import getCellSideAgainstPlane
 from geos.utils.GeosOutputsConstants import PostProcessingOutputsEnum
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (

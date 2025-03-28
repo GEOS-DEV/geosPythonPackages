@@ -18,13 +18,13 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 import geos_posp.processing.geomechanicsCalculatorFunctions as fcts
-import geos_posp.processing.geometryFunctions as geom
 from geos_posp.processing.vtkUtils import (
     createAttribute,
     getArrayInObject,
     getAttributeSet,
     isAttributeInObject,
 )
+import geos.utils.geometryFunctions as geom
 from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
