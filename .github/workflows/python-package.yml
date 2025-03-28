@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        package-name: ["geos-ats", "geos-mesh", "geos-timehistory", "geos-xml-tools", "hdf5-wrapper", "pygeos-tools"]
+        package-name: ["geos-ats", "geos-mesh", "geos-posp", "geos-prep", "geos-timehistory", "geos-trame", "geos-utils", "geos-xml-tools", "geos-xml-viewer", "hdf5-wrapper", "pygeos-tools"]
 
     steps:
     - uses: actions/checkout@v3
@@ -30,13 +30,17 @@ jobs:
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pytest yapf toml
-        python -m pip install ${{ matrix.package-name }}/
+        python -m pip install pytest pytest-cov yapf toml mypy
+        python -m pip install ./${{ matrix.package-name }}/
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
         yapf -r --diff ${{ matrix.package-name }} --style .style.yapf
-    # - name: Test with pytest
-    #   working-directory: ./${{ matrix.package-name }}
-    #   run: |
-    #     pytest
+    - name: Typing check with mypy
+      #  working-directory: ./${{ matrix.package-name }}
+      run:  |
+        python -m mypy ./${{ matrix.package-name }} --namespace-packages --explicit-package-bases --disallow-subclassing-any --ignore-missing-import
+    - name: Test with pytest
+      working-directory: ./${{ matrix.package-name }}
+      run: |
+        pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
