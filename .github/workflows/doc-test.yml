@@ -10,7 +10,7 @@ jobs:
     - name: Install package
       # install for vtk lib
       run: |
-        apt-get update && apt-get install libgl1
+        sudo apt-get update && apt-get install libgl1
     - name: test doc
       uses: ammaraskar/sphinx-action@dev
       with:
