@@ -1,0 +1,175 @@
+GEOSX version: 0.2.0 (HEAD, sha1: 2e19665)
+  - c++ compiler: gcc 8.3.0
+  - MPI version: Open MPI v2.1.5, package: Open MPI root@pandev07 Distribution, ident: 2.1.5, repo rev: v2.1.4-8-g697c1e9, Aug 15, 2018
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - hypre release version: 2.27.0
+Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
+Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
+Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
+Adding Mesh: VTKMesh, mesh
+Adding Mesh: InternalWell, well_1
+Adding Event: PeriodicEvent, time_steps_1_output
+Adding Event: PeriodicEvent, time_steps_1_applications
+Adding Event: PeriodicEvent, time_steps_2_output
+Adding Event: PeriodicEvent, time_steps_2_applications
+Adding Event: PeriodicEvent, statistics
+Adding Output: VTK, hexdom_well_module_multiphaseWell
+   TableFunction: totalRateTable
+Adding Object CellElementRegion named caprock from ObjectManager::Catalog.
+Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
+Adding Object WellElementRegion named well_1region from ObjectManager::Catalog.
+   TableFunction: fluid_phaseModel1_PhillipsBrineDensity_table
+   TableFunction: fluid_phaseModel1_PhillipsBrineViscosity_table
+   TableFunction: fluid_phaseModel2_SpanWagnerCO2Density_table
+   TableFunction: fluid_phaseModel2_FenghourCO2Viscosity_table
+   TableFunction: fluid_CO2Solubility_table
+   TableFunction: well_1Control_ConstantBHP_table
+   TableFunction: well_1Control_ConstantPhaseRate_table
+   TableFunction: WellControls_OpenStatus_table
+VTKMesh 'mesh': reading mesh from /work206/workrd/users/l1045328/job_GEOS/maillage_tresfin/TPFA/Wtrue/hexdom_Wtrue.vtu
+  reading the dataset...
+  redistributing mesh...
+Generating global Ids from VTK mesh
+  finding neighbor ranks...
+  done!
+VTKMesh 'mesh': generating GEOSX mesh data structure
+  preprocessing...
+  writing nodes...
+  writing cells...
+Importing cell block 3_tetrahedra
+Importing cell block 1_tetrahedra
+Importing cell block 2_tetrahedra
+Importing cell block 3_pyramids
+Importing cell block 1_pyramids
+Importing cell block 2_pyramids
+Importing cell block 2_hexahedra
+Importing cell block 3_hexahedra
+Importing cell block 1_hexahedra
+  writing surfaces...
+Importing surface 2
+Importing surface 3
+Importing surface 1
+  building connectivity maps...
+  done!
+Number of nodes: 2558433
+  Number of elems: 3021450
+          Polygon:  210306
+             C3D4:  304106
+             C3D5:   67546
+             C3D8: 2439492
+Load balancing:  min  avg  max
+(element/rank): 4072 5901 6196
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, caprock, 1_hexahedra
+mesh/Level0/caprock/1_hexahedra/fluid allocated 1 quadrature points
+mesh/Level0/caprock/1_hexahedra/rockregion_1 allocated 1 quadrature points
+mesh/Level0/caprock/1_hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, caprock, 1_pyramids
+mesh/Level0/caprock/1_pyramids/fluid allocated 1 quadrature points
+mesh/Level0/caprock/1_pyramids/rockregion_1 allocated 1 quadrature points
+mesh/Level0/caprock/1_pyramids/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, caprock, 1_tetrahedra
+mesh/Level0/caprock/1_tetrahedra/fluid allocated 1 quadrature points
+mesh/Level0/caprock/1_tetrahedra/rockregion_1 allocated 1 quadrature points
+mesh/Level0/caprock/1_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_hexahedra
+mesh/Level0/reservoir/2_hexahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_hexahedra/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/2_hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_pyramids
+mesh/Level0/reservoir/2_pyramids/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_pyramids/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/2_pyramids/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 2_tetrahedra
+mesh/Level0/reservoir/2_tetrahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/2_tetrahedra/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/2_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_hexahedra
+mesh/Level0/reservoir/3_hexahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_hexahedra/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/3_hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_pyramids
+mesh/Level0/reservoir/3_pyramids/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_pyramids/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/3_pyramids/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, reservoir, 3_tetrahedra
+mesh/Level0/reservoir/3_tetrahedra/fluid allocated 1 quadrature points
+mesh/Level0/reservoir/3_tetrahedra/rockregion allocated 1 quadrature points
+mesh/Level0/reservoir/3_tetrahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = mesh, Level0, well_1region, well_1regionUniqueSubRegion
+mesh/Level0/well_1region/well_1regionUniqueSubRegion/fluid allocated 1 quadrature points
+mesh/Level0/well_1region/well_1regionUniqueSubRegion/relperm allocated 1 quadrature points
+mesh/Level0/well_1region/well_1regionUniqueSubRegion/rockPermregion0 allocated 1 quadrature points
+mesh: importing field data from mesh dataset
+Time: 0s, dt:100s, Cycle: 0
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 1.09e-01 ) ;     ( Rwell ) = ( 1.98e+01 ) ;     ( R ) = ( 1.98e+01 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 2.57e-01 ) ;     ( Rwell ) = ( 1.04e-01 ) ;     ( R ) = ( 2.78e-01 ) ; 
+    Last LinSolve(iter,res) = (   1, 4.85e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 9.81e-02 ) ;     ( Rwell ) = ( 1.84e-02 ) ;     ( R ) = ( 9.98e-02 ) ; 
+    Last LinSolve(iter,res) = (   2, 4.69e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
+    ( Rflow ) = ( 7.50e-03 ) ;     ( Rwell ) = ( 3.96e-04 ) ;     ( R ) = ( 7.51e-03 ) ; 
+    Last LinSolve(iter,res) = (   2, 4.40e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
+    ( Rflow ) = ( 1.65e-04 ) ;     ( Rwell ) = ( 4.54e-05 ) ;     ( R ) = ( 1.71e-04 ) ; 
+    Last LinSolve(iter,res) = (   3, 3.34e-03 ) ; 
+compositionalMultiphaseFlow: Max relative pressure change: 4.89251 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 0.171291
+coupledFlowAndWells: Time-step required will be decreased based on state change.
+compflowStatistics, reservoir: Pressure (min, average, max): 1.24938e+07, 1.25001e+07, 1.31116e+07 Pa
+compflowStatistics, reservoir: Delta pressure (min, max): 0, 0 Pa
+compflowStatistics, reservoir: Temperature (min, average, max): 368.15, 368.15, 368.15 K
+compflowStatistics, reservoir: Total dynamic pore volume: 728.734 rm^3
+compflowStatistics, reservoir: Phase dynamic pore volumes: { 3.94665e-05, 728.734 } rm^3
+compflowStatistics, reservoir: Phase mass: { 0.0113525, 703284 } kg
+compflowStatistics, reservoir: Trapped phase mass (metric 1): { 0.00331405, 210985 } kg
+compflowStatistics, reservoir: Non-trapped phase mass (metric 1): { 0.00803841, 492299 } kg
+compflowStatistics, reservoir: Immobile phase mass (metric 2): { 0, 0 } kg
+compflowStatistics, reservoir: Mobile phase mass (metric 2): { 0.0113525, 703284 } kg
+compflowStatistics, reservoir: Dissolved component mass: { { 0.0113525, 0 }, { 0.0174064, 703284 } } kg
+compflowStatistics, caprock: Pressure (min, average, max): 1.24954e+07, 1.25e+07, 1.25003e+07 Pa
+compflowStatistics, caprock: Delta pressure (min, max): 0, 0 Pa
+compflowStatistics, caprock: Temperature (min, average, max): 368.15, 368.15, 368.15 K
+compflowStatistics, caprock: Total dynamic pore volume: 222.653 rm^3
+compflowStatistics, caprock: Phase dynamic pore volumes: { 0, 222.653 } rm^3
+compflowStatistics, caprock: Phase mass: { 0, 214877 } kg
+compflowStatistics, caprock: Trapped phase mass (metric 1): { 0, 64463.1 } kg
+compflowStatistics, caprock: Non-trapped phase mass (metric 1): { 0, 150414 } kg
+compflowStatistics, caprock: Immobile phase mass (metric 2): { 0, 0 } kg
+compflowStatistics, caprock: Mobile phase mass (metric 2): { 0, 214877 } kg
+compflowStatistics, caprock: Dissolved component mass: { { 0, 0 }, { 2.22653e-08, 214877 } } kg
+well_1Control: BHP (at the specified reference elevation): 23960094.51907003 Pa
+well_1Control: Total rate: 0.00029566997749602594 kg/s; total surface volumetric rate: 2.0000000000000063e-05 sm3/s
+well_1Control: Phase 0 surface volumetric rate: 1.9999999999987377e-05 sm3/s
+well_1Control: Phase 1 surface volumetric rate: 1.2681312543855673e-17 sm3/s
+compflowStatistics: Max phase CFL number: 1.57174
+compflowStatistics: Max component CFL number: 0.540281
+Time: 100s, dt:50.8989s, Cycle: 1
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+    ( Rflow ) = ( 6.46e-02 ) ;     ( Rwell ) = ( 1.19e-03 ) ;     ( R ) = ( 6.46e-02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+    ( Rflow ) = ( 8.01e-03 ) ;     ( Rwell ) = ( 2.37e-03 ) ;     ( R ) = ( 8.35e-03 ) ; 
+    Last LinSolve(iter,res) = (   2, 8.28e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
+    ( Rflow ) = ( 2.42e-04 ) ;     ( Rwell ) = ( 3.66e-05 ) ;     ( R ) = ( 2.44e-04 ) ; 
+    Last LinSolve(iter,res) = (   2, 6.56e-03 ) ; 
+well_1Control: BHP (at the specified reference elevation): 23318529.329811733 Pa
+well_1Control: Total rate: 0.00029566997749602507 kg/s; total surface volumetric rate: 2e-05 sm3/s
+well_1Control: Phase 0 surface volumetric rate: 1.999999999998732e-05 sm3/s
+well_1Control: Phase 1 surface volumetric rate: 1.2681312543888312e-17 sm3/s
+compositionalMultiphaseFlow: Max relative pressure change: 0.0983323 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 0.0741088
+coupledFlowAndWells: Time-step required will be decreased based on state change.
