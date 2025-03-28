@@ -1,4 +1,3 @@
-pandas
 sphinx >= 7.4.7
 sphinx_rtd_theme
 sphinx-argparse >= 0.5.2
@@ -6,8 +5,15 @@ sphinx-autodoc-typehints
 sphinx-design
 # Running CLI programs and capture outputs
 sphinxcontrib-programoutput>=0.17
-# Installing the mesh_doctor requirements to be able to load all the modules and run the help.
+# Installing all package requirements to be able to load all the modules and run the help.
 vtk >= 9.1
 networkx >= 2.4
 tqdm
 numpy
+pandas
+typing_extensions
+matplotlib>=3.9.4
+h5py
+lxml>=4.5.0
+parameterized
+pyvista

@@ -16,14 +16,14 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
 
 from geos_posp.filters.VolumeSurfaceMeshMapper import VolumeSurfaceMeshMapper
-from geos_posp.processing.ConnectionSet import ConnectionSetCollection
 from geos_posp.processing.vtkUtils import (
     getArrayInObject,
     getComponentNames,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import GeosMeshSuffixEnum
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.ConnectionSet import ConnectionSetCollection
+from geos.utils.GeosOutputsConstants import GeosMeshSuffixEnum
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 TransferAttributesVolumeSurface is a vtk filter that allows to transfer volume

@@ -14,8 +14,8 @@ from matplotlib.lines import Line2D  # type: ignore[import-untyped]
 import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
 from geos_posp.processing.MohrCircle import MohrCircle
 from geos_posp.processing.MohrCoulomb import MohrCoulomb
-from geos_posp.utils.enumUnits import Pressure, Unit, convert
-from geos_posp.utils.GeosOutputsConstants import FAILURE_ENVELOPE
+from geos.utils.enumUnits import Pressure, Unit, convert
+from geos.utils.GeosOutputsConstants import FAILURE_ENVELOPE
 from geos_posp.visu.PVUtils.matplotlibOptions import (
     FontStyleEnum,
     FontWeightEnum,

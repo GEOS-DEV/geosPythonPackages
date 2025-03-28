@@ -8,6 +8,16 @@ from typing_extensions import Self
 __doc__ = """
 GeosOutputsConstants module defines usefull constant names such as attribute
 names, domain names, phase types, and the lists of attribute names to process.
+
+.. WARNING::
+    Names may need to be updated when modifications occur in the GEOS code.
+
+    
+.. todo:: 
+
+    If possible, link GEOS names directly with GEOS code instead of redefining 
+    them here.
+
 """
 
 #: Phase separator in Geos output log file.

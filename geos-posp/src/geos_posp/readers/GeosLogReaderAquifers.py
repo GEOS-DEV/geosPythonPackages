@@ -7,7 +7,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 import geos_posp.processing.geosLogReaderFunctions as fcts
-from geos_posp.utils.enumUnits import Unit
+from geos.utils.enumUnits import Unit
 
 
 class GeosLogReaderAquifers:

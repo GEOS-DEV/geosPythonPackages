@@ -35,14 +35,14 @@ from geos_posp.processing.vtkUtils import (
     getAttributeSet,
     mergeBlocks,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+from geos.utils.GeosOutputsConstants import (
     PHASE_SEP,
     FluidPrefixEnum,
     PhaseTypeEnum,
     PostProcessingOutputsEnum,
     getRockSuffixRenaming,
 )
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 GeosBlockMerge module is a vtk filter that allows to merge Geos ranks, rename

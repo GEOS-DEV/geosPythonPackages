@@ -4,7 +4,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from geos_posp.utils.PhysicalConstants import EPSILON
+from geos.utils.PhysicalConstants import EPSILON
 
 __doc__ = """Functions to permform geometry calculations."""
 

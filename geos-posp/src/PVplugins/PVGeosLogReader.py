@@ -42,7 +42,7 @@ from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
 from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
 from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
-from geos_posp.utils.enumUnits import (
+from geos.utils.enumUnits import (
     Mass,
     MassRate,
     Pressure,
@@ -52,7 +52,7 @@ from geos_posp.utils.enumUnits import (
     VolumetricRate,
     enumerationDomainUnit,
 )
-from geos_posp.utils.UnitRepository import UnitRepository
+from geos.utils.UnitRepository import UnitRepository
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback,
 )

@@ -25,8 +25,8 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     smproxy,
 )
 
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,

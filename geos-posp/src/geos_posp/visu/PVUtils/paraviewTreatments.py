@@ -38,7 +38,7 @@ from geos_posp.processing.vtkUtils import (
     getArrayInObject,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )

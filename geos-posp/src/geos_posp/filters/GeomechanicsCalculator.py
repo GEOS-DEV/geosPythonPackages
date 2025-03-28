@@ -23,14 +23,14 @@ from geos_posp.processing.vtkUtils import (
     getComponentNames,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+from geos.utils.GeosOutputsConstants import (
     AttributeEnum,
     ComponentNameEnum,
     GeosMeshOutputsEnum,
     PostProcessingOutputsEnum,
 )
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,

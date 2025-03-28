@@ -18,25 +18,25 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 import geos_posp.processing.geomechanicsCalculatorFunctions as fcts
-import geos_posp.processing.geometryFunctions as geom
 from geos_posp.processing.vtkUtils import (
     createAttribute,
     getArrayInObject,
     getAttributeSet,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+import geos.utils.geometryFunctions as geom
+from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
     PostProcessingOutputsEnum,
     getAttributeToConvertFromLocalToXYZ,
 )
-from geos_posp.utils.geosUtils import (
+from geos.utils.algebraFunctions import (
     getAttributeMatrixFromVector,
     getAttributeVectorFromMatrix,
 )
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
 )
