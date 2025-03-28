@@ -17,7 +17,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPolyData,
 )
 
-import geos_posp.processing.geomechanicsCalculatorFunctions as fcts
+import geos_geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 import geos_posp.processing.geometryFunctions as geom
 from geos_posp.processing.vtkUtils import (
     createAttribute,
