@@ -30,11 +30,11 @@ from geos_posp.processing.vtkUtils import (
     copyAttribute,
     createCellCenterAttribute,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
     getAttributeToTransferFromInitialTime,
 )
-from geos_posp.utils.Logger import ERROR, INFO, Logger, getLogger
+from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.visu.PVUtils.paraviewTreatments import getTimeStepIndex
 
 __doc__ = """

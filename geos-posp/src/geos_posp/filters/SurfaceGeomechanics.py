@@ -25,18 +25,18 @@ from geos_posp.processing.vtkUtils import (
     getAttributeSet,
     isAttributeInObject,
 )
-from geos_posp.utils.GeosOutputsConstants import (
+from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
     PostProcessingOutputsEnum,
     getAttributeToConvertFromLocalToXYZ,
 )
-from geos_posp.utils.geosUtils import (
+from geos.utils.algebraFunctions import (
     getAttributeMatrixFromVector,
     getAttributeVectorFromMatrix,
 )
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
 )

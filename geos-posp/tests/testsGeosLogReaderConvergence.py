@@ -15,7 +15,7 @@ if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
 from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
-from geos_posp.utils.UnitRepository import Unit, UnitRepository
+from geos.utils.UnitRepository import Unit, UnitRepository
 
 unitsObjSI: UnitRepository = UnitRepository()
 conversionFactors: dict[str, Unit] = unitsObjSI.getPropertiesUnit()
