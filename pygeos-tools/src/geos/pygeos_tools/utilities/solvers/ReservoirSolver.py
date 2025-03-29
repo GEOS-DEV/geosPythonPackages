@@ -13,6 +13,7 @@
 # ------------------------------------------------------------------------------------------------------------
 
 import numpy as np
+from typing import Dict, List
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
@@ -22,37 +23,15 @@ class ReservoirSolver( Solver ):
 
     Attributes
     -----------
-        xml : XML
-            XML object containing parameters for GEOSX initialization
-        initialDt : float
-            Time step for the simulation
-        maxTime : float
-            End time of simulation
-        name : str
-            Solver name
-        type : str
-            Type of solver
-            Default is None
-        geosxArgs : GeosxArgs
-            Object containing GEOSX launching options
-        geosx : pygeosx.Group
-            pygeosx initialize instance
-        alreadyInitialized : bool
-            Flag indicating if the initial conditions have been applied yet
-        firstGeosxInit : bool
-            Flag for initialize or reinitialize 
-        collectionTargets : list
-            Output targets for geosx
-        hdf5Targets : list
-            HDF5 output targets for geosx
-        vtkTargets : list
-            VTK output targets for geosx
+        The ones inherited from Solver class
     """
 
-    def __init__( self, initialDt=None, maxTime=None, **kwargs ):
+    def __init__( self, solverType: str, initialDt=None, maxTime=None, **kwargs ):
         """
         Parameters
         -----------
+            solverType : str
+                The solver used in the XML file
             initialDt : float
                 Initial time step \
                 Default is None
@@ -60,144 +39,132 @@ class ReservoirSolver( Solver ):
                 End time of simulation \
                 Default is None
         """
-        super().__init__( **kwargs )
+        super().__init__( solverType, **kwargs )
 
-        self.initialDt = initialDt
-        self.maxTime = maxTime
-
+        self.initialDt: float = initialDt
+        self.maxTime: float = maxTime
         self.isCoupled = kwargs.get( "coupled", False )
-        self.dtSeismic4D = None
 
-    def _setTimeVariables( self ):
-        """Set the time variables attributes"""
-        # Set up variables from xml
-        events = self.xml.events
-        outputs = self.xml.outputs
+    def getDeltaPressures( self ) -> Dict[ str, any ]:
+        """
+        Get the local delta pressure for each CellElementRegion and each cellBlocks of the mesh.
 
-        if self.isCoupled:
-            if self.dtSeismic4D is None:
-                for event in events[ "PeriodicEvent" ]:
-                    if event[ "name" ] == "seismic4D":
-                        self.dtSeismic4D = float( event[ "timeFrequency" ] )
-            else:
-                self.updateTimeVariable( "dtSeismic4D" )
+        Returns
+        --------
+            Dict[ str, np.array ]
+            If your mesh contains 3 regions with 2 cellBlocks in each, the result is:
+            { "region1/block1": np.array, "region1/block2": np.array,
+              "region2/block3": np.array, "region2/block4": np.array,
+              "region3/block5": np.array, "region3/block6": np.array }
+        """
+        deltaPres_with_paths = self.getAllGeosWrapperByName( "deltaPressure", filters=[ self.discretization ] )
+        all_deltaPres: Dict[ str, any ] = dict()
+        for path, deltaPres in deltaPres_with_paths.items():
+            elts: List[ str ] = path.split( "/" )
+            try:
+                position_elementRegionsGroup: int = elts.index( "elementRegionsGroup" )
+                position_elementSubRegions: int = elts.index( "elementSubRegions" )
+                regionName: str = elts[ position_elementRegionsGroup + 1 ]
+                cellBlock: str = elts[ position_elementSubRegions + 1 ]
+                all_deltaPres[ regionName + "/" + cellBlock ] = deltaPres
+            except Exception:
+                all_deltaPres[ path ] = deltaPres
 
-        if self.maxTime is None:
-            self.maxTime = float( events[ "maxTime" ] )
+        return all_deltaPres
+
+    def getPhaseVolumeFractions( self ) -> Dict[ str, any ]:
+        """
+        Get the local phaseVolumeFraction for each CellElementRegion and each cellBlocks of the mesh and each phase.
+
+        Returns
+        --------
+            Dict[ str, np.array ]
+            If your mesh contains 3 regions with 2 cellBlocks in each, and two phases 'oil' and 'gas' give the result:
+            { "region1/block1/oil": np.array, "region1/block1/gas": np.array,
+              "region1/block2/oil": np.array, "region1/block1/gas": np.array,
+              "region2/block3/oil": np.array, "region2/block1/gas": np.array,
+              "region2/block4/oil": np.array, "region2/block1/gas": np.array,
+              "region3/block5/oil": np.array, "region3/block1/gas": np.array,
+              "region3/block6/oil": np.array, "region3/block1/gas": np.array }
+        """
+        phaseNames: List[ str ] = self.xml.getConstitutivePhases()
+        if phaseNames is not None:
+            all_pvf_paths = self.getAllGeosWrapperByName( "phaseVolumeFraction", filters=[ self.discretization ] )
+            all_pvf: Dict[ str, any ] = dict()
+            for path, pvf in all_pvf_paths.items():
+                elts: List[ str ] = path.split( "/" )
+                try:
+                    position_elementRegionsGroup: int = elts.index( "elementRegionsGroup" )
+                    position_elementSubRegions: int = elts.index( "elementSubRegions" )
+                    regionName: str = elts[ position_elementRegionsGroup + 1 ]
+                    cellBlock: str = elts[ position_elementSubRegions + 1 ]
+                    for i, phaseName in enumerate( phaseNames ):
+                        all_pvf[ regionName + "/" + cellBlock + "/" + phaseName ] = np.ascontiguousarray( pvf[ :, i ] )
+                except Exception:
+                    for i, phaseName in enumerate( phaseNames ):
+                        all_pvf[ path + "/" + phaseName ] = np.ascontiguousarray( pvf[ :, i ] )
+            return all_pvf
         else:
-            self.updateTimeVariable( "maxTime" )
+            print( "getPhaseVolumeFractions: No phases defined in the XML so no phaseVolumeFraction available." )
 
-        fvm = self.xml.solvers[ self.type ]
-        if self.initialDt is None:
-            for k, v in fvm.items():
-                if k == "initialDt":
-                    self.initialDt = np.array( v, dtype=float )
+    def getPorosities( self ):
+        """
+        Get the local porosity for each CellElementRegion and its cellBlocks of the mesh.
+
+        Returns
+        --------
+            Dict[ str, np.array ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "burdenPorosity",
+            the last region uses "sandPorosity", the result is:
+            { "region1/block1/burdenPorosity": np.array, "region1/block1/burdenPorosity": np.array,
+              "region1/block2/burdenPorosity": np.array, "region1/block1/burdenPorosity": np.array,
+              "region2/block3/burdenPorosity": np.array, "region2/block1/burdenPorosity": np.array,
+              "region2/block4/burdenPorosity": np.array, "region2/block1/burdenPorosity": np.array,
+              "region3/block5/sandPorosity": np.array, "region3/block1/sandPorosity": np.array,
+              "region3/block6/sandPorosity": np.array, "region3/block1/sandPorosity": np.array }
+        """
+        porosityNames: List[ str ] = self.xml.getPorosityNames()
+        if porosityNames is not None:
+            all_poro: Dict[ str, any ] = dict()
+            for porosityName in porosityNames:
+                all_poro_paths = self.getAllGeosWrapperByName( porosityName,
+                                                               filters=[ self.discretization, "referencePorosity" ] )
+                for path, poro in all_poro_paths.items():
+                    elts: List[ str ] = path.split( "/" )
+                    try:
+                        position_elementRegionsGroup: int = elts.index( "elementRegionsGroup" )
+                        position_elementSubRegions: int = elts.index( "elementSubRegions" )
+                        regionName: str = elts[ position_elementRegionsGroup + 1 ]
+                        cellBlock: str = elts[ position_elementSubRegions + 1 ]
+                        all_poro[ regionName + "/" + cellBlock + "/" + porosityName ] = poro
+                    except Exception:
+                        all_poro[ path + "/" + porosityName ] = poro
+            return all_poro
         else:
-            self.updateTimeVariable( "initialDt" )
+            print( "getPorosities: No Porosity model defined in the XML." )
 
-    def updateTimeVariable( self, variable ):
-        """Overwrite a time variable in GEOS"""
-        if variable == "maxTime":
-            assert hasattr( self, "maxTime" )
-            self.geosx.get_wrapper( "Events/maxTime" ).value()[ 0 ] = self.maxTime
-        elif variable == "initialDt":
-            assert hasattr( self, "initialDt" )
-            self.geosx.get_wrapper( f"/Solvers/{self.name}/initialDt" ).value()[ 0 ] = self.initialDt
-        elif variable == "dtSeismic4D":
-            assert hasattr( self, "dtSeismic4D" )
-            self.geosx.get_wrapper( "Events/seismic4D/timeFrequency" ).value()[ 0 ] = self.dtSeismic4D
-
-    def execute( self, time ):
+    def getPressures( self ) -> Dict[ str, any ]:
         """
-        Do one solver iteration
-
-        Parameters
-        ----------
-            time : float
-                Current time of simulation
-            dt : float
-                Timestep
-        """
-        self.solver.execute( time, self.initialDt )
-
-    def getTimeStep( self ):
-        """
-        Get the value of `initialDt` variable from GEOS
+        Get the local pressure for each CellElementRegion and each cellBlocks of the mesh.
 
         Returns
         --------
-            float
-                initialDt value
+            Dict[ str, np.array ]
+            If your mesh contains 3 regions with 2 cellBlocks in each, the result is:
+            { "region1/block1": np.array, "region1/block2": np.array,
+              "region2/block3": np.array, "region2/block4": np.array,
+              "region3/block5": np.array, "region3/block6": np.array }
         """
-        return self.solver.get_wrapper( "initialDt" ).value()[ 0 ]
-
-    def updateTimeStep( self ):
-        """Update the attribute value with the one from GEOS"""
-        self.initialDt = self.getTimeStep()
-
-    def getPressure( self, **kwargs ):
-        """
-        Get the local pressure
-        
-        Returns
-        --------
-            pressure : numpy array
-                Local pressure
-        """
-        pressure = self.getField( "pressure", **kwargs )
-
-        return pressure
-
-    def getDeltaPressure( self, **kwargs ):
-        """
-        Get the local delta pressure
-        
-        Returns
-        --------
-            deltaPressure : numpy array
-                Local delta pressure
-        """
-        deltaPressure = self.getField( "deltaPressure", **kwargs )
-
-        return deltaPressure
-
-    def getPhaseVolumeFractionGas( self, **kwargs ):
-        """
-        Get the local gas phase volume fraction
-        
-        Returns
-        --------
-            phaseVolumeFractionGas : numpy array
-                Local gas phase volume fraction
-        """
-        phaseVolumeFraction = self.getField( "phaseVolumeFraction", **kwargs )
-        phaseVolumeFractionGas = np.ascontiguousarray( phaseVolumeFraction[ :, 0 ] )
-
-        return phaseVolumeFractionGas
-
-    def getPhaseVolumeFractionWater( self, **kwargs ):
-        """
-        Get the local water phase volume fraction
-        
-        Returns
-        --------
-            phaseVolumeFractionWater : numpy array
-                Local water phase volume fraction
-        """
-        phaseVolumeFraction = self.getField( "phaseVolumeFraction", **kwargs )
-        phaseVolumeFractionWater = np.ascontiguousarray( phaseVolumeFraction[ :, 1 ] )
-
-        return phaseVolumeFractionWater
-
-    def getRockPorosity( self, **kwargs ):
-        """
-        Get the local rock porosity
-        
-        Returns
-        --------
-            rockPorosity : numpy array
-                Local rock porosity
-        """
-        rockPorosity = self.getField( "rockPorosity_referencePorosity", **kwargs )
-
-        return rockPorosity
+        pressures_with_paths = self.getAllGeosWrapperByName( "pressure", filters=[ self.discretization ] )
+        all_pressures: Dict[ str, any ] = dict()
+        for path, pressure in pressures_with_paths.items():
+            elts: List[ str ] = path.split( "/" )
+            try:
+                position_elementRegionsGroup: int = elts.index( "elementRegionsGroup" )
+                position_elementSubRegions: int = elts.index( "elementSubRegions" )
+                regionName: str = elts[ position_elementRegionsGroup + 1 ]
+                cellBlock: str = elts[ position_elementSubRegions + 1 ]
+                all_pressures[ regionName + "/" + cellBlock ] = pressure
+            except Exception:
+                all_pressures[ path ] = pressure
+        return all_pressures

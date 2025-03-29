@@ -17,7 +17,7 @@ from xml.etree import cElementTree as ET, ElementTree
 from xml.etree.ElementTree import Element
 from xmltodict import parse as xmltodictparse
 from re import findall
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set 
 from geos.pygeos_tools.utilities.mesh.InternalMesh import InternalMesh
 from geos.pygeos_tools.utilities.mesh.VtkMesh import VTKMesh
 from geos.utils.errors_handling.classes import required_attributes
@@ -48,9 +48,13 @@ class XML:
             attr: str = "".join( words )
             setattr( self, attr, xml_block )  # creates a new attribute self.mesh = xml_block
 
+        # This buildCouplingSolvers is not useful in the current implementation because coupling solvers are not handled
+        # if hasattr( self, "solvers" ):
+        #     self.buildCouplingSolvers()
+
         self.xmlTimes: Dict[ str, XMLTime ] = None
         if hasattr( self, "events" ):
-            self.updateXMLTimes()
+            self.buildXMLTimes()
 
     def processIncludes( self, root: Element ) -> Element:
         """
@@ -110,6 +114,14 @@ class XML:
         except KeyError:
             raise KeyError( "The CellElementRegion does not exist or the cellBlocks are not defined." )
 
+    @required_attributes( "constitutive" )
+    def getConstitutivePhases( self ) -> Optional[ List[ str ] ]:
+        for model in self.constitutive.values():
+            for name, value in model.items():
+                if name == "phaseNames":
+                    return value.replace( "{", "" ).replace( "}", "" ).replace( " ", "" ).split( "," )
+        print( f"getConstitutivePhases: no phases defined in the XML '{self.filename}'." )
+
     @required_attributes( "mesh" )
     def getMeshObject( self ):
         if "InternalMesh" in self.mesh.keys():
@@ -125,7 +137,7 @@ class XML:
     def getMeshName( self ) -> str:
         """
         Get the mesh 'name' attribute from the xml
-        
+
         Returns
         -------
             str
@@ -176,6 +188,17 @@ class XML:
                 vtkTargets.append( "Outputs/" + vtk[ 'name' ] )
 
         return { "collection": collectionTargets, "hdf5": hdf5Targets, "vtk": vtkTargets }
+
+    @required_attributes( "constitutive" )
+    def getPorosityNames( self ) -> Optional[ List[ str ] ]:
+        porosityNames: Set[ str ] = set()
+        for name, model in self.constitutive.items():
+            if "porosity" in name.lower():
+                porosityNames.add( model[ "name" ] )
+        if len( porosityNames ) > 0:
+            return porosityNames
+        else:
+            print( f"getPorosityNames: No porosity model found in the XML '{self.filename}'." )
 
     @required_attributes( "solvers" )
     def getSolverTypes( self ) -> List[ str ]:
@@ -280,43 +303,29 @@ class XML:
         return self.xmlTimes
 
     """
-    Updates xml attributes
+    Init methods
     """
-    @required_attributes( "geometry" )
-    def updateGeometry( self, boxname, **kwargs ):
-        root: Element = self.tree.getroot()
-        geometry: Element = root.find( "./Geometry//*[@name=" + boxname + "]" )
-
-        for i in len( self.geometry[ geometry.tag ] ):
-            box = self.geometry[ geometry.tag ][ i ]
-            if boxname == box[ "name" ]:
-                break
-
-        for k, v in kwargs.items():
-            if k in geometry.attrib:
-                geometry.set( k, v )
-                self.geometry[ geometry.tag ][ i ].update( { k: str( v ) } )
-
-    @required_attributes( "mesh" )
-    def updateMesh( self, **kwargs ):
-        root = self.tree.getroot()
-        mesh = root.find( "./Mesh//" )
-        for k, v in kwargs.items():
-            if k in mesh.attrib:
-                mesh.set( k, v )
-                self.mesh[ mesh.tag ].update( { k: str( v ) } )
-
     @required_attributes( "solvers" )
-    def updateSolvers( self, solverName: str, **kwargs ):
-        root: Element = self.tree.getroot()
-        solver: Element = root.find( "./Solvers/" + solverName )
-        for k, v in kwargs.items():
-            if k in solver.attrib:
-                solver.set( k, v )
-                self.solvers[ solverName ].update( { k: str( v ) } )
+    def buildCouplingSolvers( self ):
+        """
+        Warning: this method aims at future development to handle coupling solvers.
+        Currently, this method will construct :
+        A dict where - keys are solver types (the XML block type)
+                     - values are a dict where - keys are a Solver attribute "name"
+                                               - values are the Solver type corresponding to these names.
+        """
+        couplingSolvers: Dict[ str, Dict[ str, str ] ] = dict()
+        solverNameToType: Dict[ str, str ] = { s[ "name" ]: t for t, s in self.solvers.items() }
+        for solver_type, solver in self.solvers.items():
+            for param_name, param_value in solver.items():
+                if param_name.lower().endswith( "solvername" ):
+                    if solver_type not in couplingSolvers:
+                        couplingSolvers[ solver_type ] = dict()
+                    couplingSolvers[ solver_type ][ param_value ] = solverNameToType[ param_value ]
+        self.couplingSolvers = couplingSolvers
 
     @required_attributes( "events" )
-    def updateXMLTimes( self ) -> None:
+    def buildXMLTimes( self ) -> None:
         """
         Parses the self.events dict where all the events are stored and for each time related variables,
         creates a dict with the time variable as key and a XMLTime object as value.
@@ -357,6 +366,42 @@ class XML:
                                 xmlTimes[ param ]._add( sub_event_name, sub_event_target, float( sub_event[ param ] ) )
 
         self.xmlTimes = xmlTimes
+
+    """
+    Updates xml attributes
+    """
+    @required_attributes( "geometry" )
+    def updateGeometry( self, boxname, **kwargs ):
+        root: Element = self.tree.getroot()
+        geometry: Element = root.find( "./Geometry//*[@name=" + boxname + "]" )
+
+        for i in len( self.geometry[ geometry.tag ] ):
+            box = self.geometry[ geometry.tag ][ i ]
+            if boxname == box[ "name" ]:
+                break
+
+        for k, v in kwargs.items():
+            if k in geometry.attrib:
+                geometry.set( k, v )
+                self.geometry[ geometry.tag ][ i ].update( { k: str( v ) } )
+
+    @required_attributes( "mesh" )
+    def updateMesh( self, **kwargs ):
+        root = self.tree.getroot()
+        mesh = root.find( "./Mesh//" )
+        for k, v in kwargs.items():
+            if k in mesh.attrib:
+                mesh.set( k, v )
+                self.mesh[ mesh.tag ].update( { k: str( v ) } )
+
+    @required_attributes( "solvers" )
+    def updateSolvers( self, solverName: str, **kwargs ):
+        root: Element = self.tree.getroot()
+        solver: Element = root.find( "./Solvers/" + solverName )
+        for k, v in kwargs.items():
+            if k in solver.attrib:
+                solver.set( k, v )
+                self.solvers[ solverName ].update( { k: str( v ) } )
 
     def exportToXml( self, filename: str = None ):
         if filename is None:

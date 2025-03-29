@@ -228,8 +228,16 @@ class Solver:
         return self.vtkOutputs
 
     """
-    Accessors focusing on Geos fields
+    Accessors focusing on Geos wrappers
     """
+    @required_attributes( "geosx" )
+    def getAllGeosWrapperByName( self, name: str, filters: List[ str ] = list(),
+                                 write_flag=False ) -> Dict[ str, np.array ]:
+        if isinstance( filters, str ):
+            filters = [ filters ]
+        wrapper_paths: List[ str ] = get_all_matching_wrapper_paths( self.geosx, [ name ] + filters )
+        return { path: get_wrapper( self.geosx, path, write_flag ) for path in wrapper_paths }
+
     @required_attributes( "geosx" )
     def getGeosWrapperByName( self, name: str, filters: List[ str ] = list(),
                               write_flag=False ) -> Optional[ np.array ]:
@@ -659,7 +667,7 @@ class Solver:
             time : float
                 Current time of simulation
         """
-        self.solver.execute( time, self.getDt() )
+        self.solver.execute( time, self.dt )
 
     @required_attributes( "solver" )
     def reinitSolver( self ) -> None:
@@ -676,9 +684,8 @@ class Solver:
             time : float
                 Current time of simulation
         """
-        dt: float = self.getDt()
         for vtkOutput in self.vtkOutputs:
-            vtkOutput.output( time, dt )
+            vtkOutput.output( time, self.dt )
 
     """
     Update methods when initializing or reinitializing the solver
