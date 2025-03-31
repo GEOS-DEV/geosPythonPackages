@@ -11,14 +11,6 @@ geos_posp.visu.mohrCircles.functionsMohrCircle module
    :undoc-members:
    :show-inheritance:
 
-geos_posp.visu.mohrCircles.mainMohrCircles module
-----------------------------------------------------
-
-.. automodule:: geos_posp.visu.mohrCircles.mainMohrCircles
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.visu.mohrCircles.plotMohrCircles module
 --------------------------------------------------
 

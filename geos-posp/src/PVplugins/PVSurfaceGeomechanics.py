@@ -36,8 +36,8 @@ from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_ROCK_COHESION,
 )

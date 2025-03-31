@@ -12,7 +12,7 @@ from matplotlib.font_manager import (  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 import geos_posp.visu.pythonViewUtils.functionsFigure2DGenerator as fcts
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 
 
 class Figure2DGenerator:

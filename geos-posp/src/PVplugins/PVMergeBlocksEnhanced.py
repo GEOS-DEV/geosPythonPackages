@@ -30,7 +30,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 from geos_posp.processing.vtkUtils import mergeBlocks
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 Merge filter that keep partial attributes using nan values.
