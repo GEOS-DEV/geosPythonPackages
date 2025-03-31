@@ -139,7 +139,7 @@ python_version = "3.10"
 exclude = [
     'build', # exclude build directory
     'vue-components', # no type checking 
-    'src' # disable mypy check for the whole package corrections are done
+    'src' # disable mypy check for the whole package until corrections are done
 ] 
 # strict = true
 

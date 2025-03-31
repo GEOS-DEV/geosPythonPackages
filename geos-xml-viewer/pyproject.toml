@@ -103,7 +103,7 @@ source = ["src"]
 python_version = "3.10"
 exclude = [
     'build', # exclude build directory
-    'src', # disable mypy check for the whole package corrections are done
+    'src', # disable mypy check for the whole package until corrections are done
     'geos_xml_viewer/algorithms/write_wells.py',
 ] 
 # strict = true

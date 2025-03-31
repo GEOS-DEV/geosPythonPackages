@@ -58,7 +58,7 @@ include-package-data = true
 # results.
 python_version = "3.10"
 exclude = [
-    'src', # disable mypy check for the whole package corrections are done
+    'src', # disable mypy check for the whole package until corrections are done
     'build', # exclude build directory
 ] 
 # strict = true
