@@ -19,7 +19,7 @@ from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
 from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
 from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
-from geos_posp.utils.UnitRepository import Unit, UnitRepository
+from geos.utils.UnitRepository import Unit, UnitRepository
 
 unitsObjSI: UnitRepository = UnitRepository()
 conversionFactors: dict[str, Unit] = unitsObjSI.getPropertiesUnit()

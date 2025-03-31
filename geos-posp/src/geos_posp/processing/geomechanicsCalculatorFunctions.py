@@ -5,8 +5,8 @@ import numpy as np
 import numpy.typing as npt
 
 from geos_posp.processing.MohrCoulomb import MohrCoulomb
-from geos_posp.utils.geosUtils import getAttributeMatrixFromVector
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.algebraFunctions import getAttributeMatrixFromVector
+from geos.utils.PhysicalConstants import (
     EPSILON,
 )
 

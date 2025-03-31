@@ -40,7 +40,7 @@ from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockFromFlatIndex,
 )
 from geos_posp.processing.vtkUtils import isAttributeInObject
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to

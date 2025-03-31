@@ -86,6 +86,8 @@ Packages
 
     geos-timehistory
 
+    geos-utils
+
     geos-xml-tools
 
     pygeos-tools

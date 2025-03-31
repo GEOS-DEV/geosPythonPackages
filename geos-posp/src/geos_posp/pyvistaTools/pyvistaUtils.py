@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 import geos_posp.processing.vtkUtils as vtkUtils
-from geos_posp.utils.GeosOutputsConstants import GeosDomainNameEnum
+from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 
 __doc__ = r"""
 This module contains utilities to process meshes using pyvista.

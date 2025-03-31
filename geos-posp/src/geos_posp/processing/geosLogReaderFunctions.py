@@ -7,7 +7,7 @@ import re
 from copy import deepcopy
 from typing import Any, Union
 
-from geos_posp.utils.enumUnits import Unit, convert
+from geos.utils.enumUnits import Unit, convert
 
 __doc__ = """Functions to read and process Geos log."""
 
