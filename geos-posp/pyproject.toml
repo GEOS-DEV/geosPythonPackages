@@ -68,4 +68,9 @@ filterwarnings = []
 
 [tool.coverage.run]
 branch = true
-source = ["PVplugins", "geos-posp"]
+source = ["geos-posp"]
+omit = [
+    "*/pyvistaUtils/*",
+    "*/visu/*",
+    "*/PVplugins/*",
+]

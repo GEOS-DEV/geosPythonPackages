@@ -93,8 +93,8 @@ addopts = [
 ]
 pythonpath = "src/"
 
-# [tool.coverage.run]
-# source = ["src"]
+[tool.coverage.run]
+source = ["src"]
 
 [tool.bumpversion]
 current_version = "1.0.0"
