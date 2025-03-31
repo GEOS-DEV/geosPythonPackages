@@ -7,12 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Install package
-      # install for vtk lib
-      run: |
-        sudo apt-get update && apt-get install libgl1
-    - name: test doc
-      uses: ammaraskar/sphinx-action@dev
+    - uses: ammaraskar/sphinx-action@dev
       with:
         docs-folder: "docs/"
         build-command: "sphinx-build -b html . _build"
