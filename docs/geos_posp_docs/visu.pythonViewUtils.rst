@@ -20,12 +20,4 @@ geos_posp.visu.pythonViewUtils.functionsFigure2DGenerator module
    :undoc-members:
    :show-inheritance:
 
-geos_posp.visu.pythonViewUtils.mainPythonView module
--------------------------------------------------------
-
-.. automodule:: geos_posp.visu.pythonViewUtils.mainPythonView
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 

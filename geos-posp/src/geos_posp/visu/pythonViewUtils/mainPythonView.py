@@ -34,7 +34,7 @@ try:
         return imageToReturn
 
 except Exception as e:
-    from geos_posp.utils.Logger import getLogger
+    from geos.utils.Logger import getLogger
 
     logger = getLogger("Python View Configurator")
     logger.critical(e, exc_info=True)

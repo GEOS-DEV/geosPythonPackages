@@ -18,8 +18,8 @@ if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
 import geos_geomechanics.processing.geomechanicsCalculatorFunctions as fcts
-from geos_posp.utils import PhysicalConstants
-from geos_posp.utils.geosUtils import getAttributeMatrixFromVector
+from geos.utils import PhysicalConstants
+from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 
 # geomechanical outputs - Testing variables - Unit is GPa
 bulkModulus: npt.NDArray[np.float64] = np.array([9.0, 50.0, 65.0, np.nan, 150.0])

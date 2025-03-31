@@ -48,7 +48,7 @@ from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockFromFlatIndex,
 )
 from geos_posp.processing.vtkUtils import getAttributeSet, mergeBlocks
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback,
 )

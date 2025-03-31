@@ -11,5 +11,3 @@ Processing
    processing
 
    pyvistaTools
-
-   utils
