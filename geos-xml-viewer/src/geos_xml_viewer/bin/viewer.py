@@ -17,9 +17,7 @@ from xsdata.formats.dataclass.parsers.config import ParserConfig
 
 
 def parsing() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Extract Internal wells into VTK files"
-    )
+    parser = argparse.ArgumentParser( description="Extract Internal wells into VTK files" )
 
     parser.add_argument(
         "-xp",
@@ -29,9 +27,7 @@ def parsing() -> argparse.ArgumentParser:
         help="path to xml file.",
         required=True,
     )
-    parser.add_argument(
-        "-vtpc", "--vtpcFilepath", type=str, default="", help="path to .vtpc file."
-    )
+    parser.add_argument( "-vtpc", "--vtpcFilepath", type=str, default="", help="path to .vtpc file." )
     parser.add_argument(
         "--showmesh",
         default=True,
@@ -87,101 +83,100 @@ def parsing() -> argparse.ArgumentParser:
 
 
 class WellViewer:
-    def __init__(self, size: float, amplification: float) -> None:
-        self.input: list[pv.PolyData] = []
-        self.tubes: list[pv.PolyData] = []
+
+    def __init__( self, size: float, amplification: float ) -> None:
+        self.input: list[ pv.PolyData ] = []
+        self.tubes: list[ pv.PolyData ] = []
         self.size: float = size
         self.amplification: float = amplification
         self.STARTING_VALUE: float = 5.0
 
-    def __call__(self, value: float) -> None:
-        self.update(value)
+    def __call__( self, value: float ) -> None:
+        self.update( value )
 
-    def add_mesh(self, mesh: pv.PolyData) -> None:
-        self.input.append(mesh)  # type: ignore
-        radius = self.size * (self.STARTING_VALUE / 100)
+    def add_mesh( self, mesh: pv.PolyData ) -> None:
+        self.input.append( mesh )  # type: ignore
+        radius = self.size * ( self.STARTING_VALUE / 100 )
         self.tubes.append(
-            mesh.tube(
-                radius=radius, n_sides=50
-            )  # .scale([1.0, 1.0, self.amplification], inplace=True)
+            mesh.tube( radius=radius, n_sides=50 )  # .scale([1.0, 1.0, self.amplification], inplace=True)
         )  # type: ignore
 
-    def update(self, value: float) -> None:
-        radius = self.size * (value / 100)
-        for idx, m in enumerate(self.input):
-            self.tubes[idx].copy_from(
-                m.tube(
-                    radius=radius, n_sides=50
-                )  # .scale([1.0, 1.0, self.amplification], inplace=True)
+    def update( self, value: float ) -> None:
+        radius = self.size * ( value / 100 )
+        for idx, m in enumerate( self.input ):
+            self.tubes[ idx ].copy_from(
+                m.tube( radius=radius, n_sides=50 )  # .scale([1.0, 1.0, self.amplification], inplace=True)
             )
 
 
 class PerforationViewer:
-    def __init__(self, size: float) -> None:
-        self.input: list[pv.PointSet] = []
-        self.spheres: list[pv.Sphere] = []
+
+    def __init__( self, size: float ) -> None:
+        self.input: list[ pv.PointSet ] = []
+        self.spheres: list[ pv.Sphere ] = []
         self.size: float = size
         self.STARTING_VALUE: float = 5.0
 
-    def __call__(self, value: float) -> None:
-        self.update(value)
+    def __call__( self, value: float ) -> None:
+        self.update( value )
 
-    def add_mesh(self, mesh: pv.PointSet) -> None:
-        self.input.append(mesh)  # type: ignore
-        radius: float = self.size * (self.STARTING_VALUE / 100)
-        self.spheres.append(pv.Sphere(center=mesh.center, radius=radius))
+    def add_mesh( self, mesh: pv.PointSet ) -> None:
+        self.input.append( mesh )  # type: ignore
+        radius: float = self.size * ( self.STARTING_VALUE / 100 )
+        self.spheres.append( pv.Sphere( center=mesh.center, radius=radius ) )
 
-    def update(self, value: float) -> None:
-        radius: float = self.size * (value / 100)
-        for idx, m in enumerate(self.input):
-            self.spheres[idx].copy_from(pv.Sphere(center=m.center, radius=radius))
+    def update( self, value: float ) -> None:
+        radius: float = self.size * ( value / 100 )
+        for idx, m in enumerate( self.input ):
+            self.spheres[ idx ].copy_from( pv.Sphere( center=m.center, radius=radius ) )
 
 
 class RegionViewer:
-    def __init__(self) -> None:
+
+    def __init__( self ) -> None:
         self.input: pv.UnstructuredGrid = pv.UnstructuredGrid()
         self.mesh: pv.UnstructuredGrid
 
-    def __call__(self, normal: tuple[float], origin: tuple[float]) -> None:
-        self.update_clip(normal, origin)
+    def __call__( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
+        self.update_clip( normal, origin )
 
-    def add_mesh(self, mesh: pv.UnstructuredGrid) -> None:
-        self.input.merge(mesh, inplace=True)  # type: ignore
+    def add_mesh( self, mesh: pv.UnstructuredGrid ) -> None:
+        self.input.merge( mesh, inplace=True )  # type: ignore
         self.mesh = self.input.copy()  # type: ignore
 
-    def update_clip(self, normal: tuple[float], origin: tuple[float]) -> None:
-        self.mesh.copy_from(self.input.clip(normal=normal, origin=origin, crinkle=True))  # type: ignore
+    def update_clip( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
+        self.mesh.copy_from( self.input.clip( normal=normal, origin=origin, crinkle=True ) )  # type: ignore
 
 
 class SetVisibilityCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
-    def __init__(self, actor: vtk.vtkActor) -> None:
+    def __init__( self, actor: vtk.vtkActor ) -> None:
         self.actor = actor
 
-    def __call__(self, state: bool) -> None:
-        self.actor.SetVisibility(state)
+    def __call__( self, state: bool ) -> None:
+        self.actor.SetVisibility( state )
 
 
 class SetVisibilitiesCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
-    def __init__(self) -> None:
-        self.actors: list[vtk.vtkActor] = []
+    def __init__( self ) -> None:
+        self.actors: list[ vtk.vtkActor ] = []
 
-    def add_actor(self, actor: vtk.vtkActor) -> None:
-        self.actors.append(actor)
+    def add_actor( self, actor: vtk.vtkActor ) -> None:
+        self.actors.append( actor )
 
-    def update_visibility(self, state: bool) -> None:
+    def update_visibility( self, state: bool ) -> None:
         for actor in self.actors:
-            actor.SetVisibility(state)
+            actor.SetVisibility( state )
 
-    def __call__(self, state: bool) -> None:
+    def __call__( self, state: bool ) -> None:
         for actor in self.actors:
-            actor.SetVisibility(state)
+            actor.SetVisibility( state )
 
 
-def find_surfaces(xmlFile: str) -> list[str]:
+def find_surfaces( xmlFile: str ) -> list[ str ]:
     """Find all surfaces in xml file."""
     config = ParserConfig(
         base_url=None,
@@ -192,72 +187,72 @@ def find_surfaces(xmlFile: str) -> list[str]:
         fail_on_converter_warnings=True,
     )
 
-    parser = XmlParser(context=XmlContext())  # , config=config)
-    problem = parser.parse(xmlFile, Problem)
+    parser = XmlParser( context=XmlContext() )  # , config=config)
+    problem = parser.parse( xmlFile, Problem )
 
-    used: list[str] = []
+    used: list[ str ] = []
     for f in problem.field_specifications:
         for f2 in f.field_specification:
             names = f2.set_names
-            names = names.replace("{", "[").replace("}", "]")
-            e = names.strip("][").split(",")
-            e = [element.strip() for element in e]
+            names = names.replace( "{", "[" ).replace( "}", "]" )
+            e = names.strip( "][" ).split( "," )
+            e = [ element.strip() for element in e ]
             if "all" in e:
-                e.remove("all")
+                e.remove( "all" )
             if e:
                 used += e
 
     return used
 
 
-def main(args: argparse.Namespace) -> None:
+def main( args: argparse.Namespace ) -> None:
     start_time = time.monotonic()
     pdsc: vtk.vtkPartitionedDataSetCollection
 
     if args.vtpcFilepath != "":
         reader = vtk.vtkXMLPartitionedDataSetCollectionReader()
-        reader.SetFileName(args.vtpcFilepath)
+        reader.SetFileName( args.vtpcFilepath )
         reader.Update()
         pdsc = reader.GetOutput()
     else:
         reader = GeosDeckReader()
-        reader.SetFileName(args.xmlFilepath)
-        reader.SetAttributeName(args.attributeName)
+        reader.SetFileName( args.xmlFilepath )
+        reader.SetAttributeName( args.attributeName )
         reader.Update()
-        pdsc = reader.GetOutputDataObject(0)
+        pdsc = reader.GetOutputDataObject( 0 )
 
     read_time = time.monotonic()
-    print("time elapsed reading files: ", timedelta(seconds=read_time - start_time))
+    print( "time elapsed reading files: ", timedelta( seconds=read_time - start_time ) )
 
     assembly: vtk.vtkDataAssembly = pdsc.GetDataAssembly()
-    root_name: str = assembly.GetNodeName(assembly.GetRootNode())
-    surfaces_used = find_surfaces(args.xmlFilepath)
+    root_name: str = assembly.GetNodeName( assembly.GetRootNode() )
+    surfaces_used = find_surfaces( args.xmlFilepath )
 
-    print("surfaces used as boundary conditionsp", surfaces_used)
+    print( "surfaces used as boundary conditionsp", surfaces_used )
 
-    global_bounds = [0, 0, 0, 0, 0, 0]
+    global_bounds = [ 0, 0, 0, 0, 0, 0 ]
 
-    plotter = pv.Plotter(shape=(2, 2), border=True)
+    plotter = pv.Plotter( shape=( 2, 2 ), border=True )
     ## 1. Region subview
     region_engine = RegionViewer()
     if args.showmesh:
         start = time.monotonic()
-        plotter.subplot(0, 0)
+        plotter.subplot( 0, 0 )
 
-        mesh = assembly.GetFirstNodeByPath("//" + root_name + "/Mesh")
+        mesh = assembly.GetFirstNodeByPath( "//" + root_name + "/Mesh" )
 
-        for sub_node in assembly.GetChildNodes(mesh, False):
-            datasets = assembly.GetDataSetIndices(sub_node, False)
+        for sub_node in assembly.GetChildNodes( mesh, False ):
+            datasets = assembly.GetDataSetIndices( sub_node, False )
             for d in datasets:
-                dataset = pdsc.GetPartitionedDataSet(d)
-                grid = pv.wrap(dataset.GetPartition(0))
+                dataset = pdsc.GetPartitionedDataSet( d )
+                grid = pv.wrap( dataset.GetPartition( 0 ) )
                 # grid.scale([1.0, 1.0, args.Zamplification], inplace=True)
-                region_engine.add_mesh(grid)
+                region_engine.add_mesh( grid )
 
         plotter.add_mesh_clip_plane(
             region_engine.mesh,
             origin=region_engine.mesh.center,
-            normal=[-1, 0, 0],
+            normal=[ -1, 0, 0 ],
             crinkle=True,
             show_edges=True,
             cmap="glasbey_bw",
@@ -269,7 +264,7 @@ def main(args: argparse.Namespace) -> None:
         )
         stop = time.monotonic()
         global_bounds = region_engine.mesh.bounds
-        plotter.add_text("Mesh", font_size=24)
+        plotter.add_text( "Mesh", font_size=24 )
         plotter.background_color = "white"
         plotter.show_bounds(
             grid="back",
@@ -282,69 +277,65 @@ def main(args: argparse.Namespace) -> None:
             use_3d_text=True,
             minor_ticks=True,
         )
-        print("region subplot preparation time: ", timedelta(seconds=stop - start))
+        print( "region subplot preparation time: ", timedelta( seconds=stop - start ) )
 
     # 2. Surfaces subview
     if args.showsurfaces:
         start = time.monotonic()
-        plotter.subplot(0, 1)
+        plotter.subplot( 0, 1 )
 
-        surfaces = assembly.GetFirstNodeByPath("//" + root_name + "/Surfaces")
+        surfaces = assembly.GetFirstNodeByPath( "//" + root_name + "/Surfaces" )
 
         if surfaces > 0:
             Startpos = 12
             size = 35
-            for i, sub_node in enumerate(assembly.GetChildNodes(surfaces, False)):
-                datasets = assembly.GetDataSetIndices(sub_node, False)
+            for i, sub_node in enumerate( assembly.GetChildNodes( surfaces, False ) ):
+                datasets = assembly.GetDataSetIndices( sub_node, False )
                 for d in datasets:
-                    dataset = pdsc.GetPartitionedDataSet(d)
-                    label = assembly.GetAttributeOrDefault(
-                        sub_node, "label", "no label"
-                    )
-                    matches = ["Surface" + s for s in surfaces_used]
-                    if any(x in label for x in matches):
+                    dataset = pdsc.GetPartitionedDataSet( d )
+                    label = assembly.GetAttributeOrDefault( sub_node, "label", "no label" )
+                    matches = [ "Surface" + s for s in surfaces_used ]
+                    if any( x in label for x in matches ):
                         actor = plotter.add_mesh(
                             pv.wrap(
-                                dataset.GetPartition(0)
-                            ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
+                                dataset.GetPartition( 0 ) ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
                             show_edges=True,
-                            color=cc.cm.glasbey_bw(i),  # type: ignore
+                            color=cc.cm.glasbey_bw( i ),  # type: ignore
                         )
-                        callback = SetVisibilityCallback(actor)
+                        callback = SetVisibilityCallback( actor )
                         plotter.add_checkbox_button_widget(
                             callback,
                             value=True,
-                            position=(Startpos, 10.0),
+                            position=( Startpos, 10.0 ),
                             size=size,
                             border_size=1,
-                            color_on=cc.cm.glasbey_bw(i),
-                            color_off=cc.cm.glasbey_bw(i),
+                            color_on=cc.cm.glasbey_bw( i ),
+                            color_off=cc.cm.glasbey_bw( i ),
                             background_color="grey",
                         )
-                        Startpos = Startpos + size + (size // 10)
+                        Startpos = Startpos + size + ( size // 10 )
                     else:
                         actor = plotter.add_mesh(
                             pv.wrap(
-                                dataset.GetPartition(0)
-                            ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
+                                dataset.GetPartition( 0 ) ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
                             show_edges=True,
-                            color=cc.cm.glasbey_bw(i),  # type: ignore
+                            color=cc.cm.glasbey_bw( i ),  # type: ignore
                             opacity=0.2,
                         )
-                        callback = SetVisibilityCallback(actor)
+                        callback = SetVisibilityCallback( actor )
                         plotter.add_checkbox_button_widget(
                             callback,
                             value=True,
-                            position=(Startpos, 10.0),
+                            position=( Startpos, 10.0 ),
                             size=size,
                             border_size=1,
-                            color_on=cc.cm.glasbey_bw(i),
-                            color_off=cc.cm.glasbey_bw(i),
+                            color_on=cc.cm.glasbey_bw( i ),
+                            color_off=cc.cm.glasbey_bw( i ),
                             background_color="grey",
                         )
-                        Startpos = Startpos + size + (size // 10)
+                        Startpos = Startpos + size + ( size // 10 )
 
-        plotter.add_text("Surfaces", font_size=24)
+        plotter.add_text( "Surfaces", font_size=24 )
         plotter.show_bounds(
             bounds=global_bounds,
             grid="back",
@@ -359,95 +350,88 @@ def main(args: argparse.Namespace) -> None:
 
         stop = time.monotonic()
 
-        print("surfaces subplot preparation time: ", timedelta(seconds=stop - start))
+        print( "surfaces subplot preparation time: ", timedelta( seconds=stop - start ) )
 
     # 3. Well subview
     if args.showwells:
         start = time.monotonic()
-        plotter.subplot(1, 0)
+        plotter.subplot( 1, 0 )
 
         bounds = global_bounds
-        xsize = bounds[1] - bounds[0]
-        ysize = bounds[3] - bounds[2]
+        xsize = bounds[ 1 ] - bounds[ 0 ]
+        ysize = bounds[ 3 ] - bounds[ 2 ]
 
-        maxsize = max(xsize, ysize)
+        maxsize = max( xsize, ysize )
 
-        well_engine = WellViewer(maxsize, args.Zamplification)
-        perfo_engine = PerforationViewer(maxsize)
+        well_engine = WellViewer( maxsize, args.Zamplification )
+        perfo_engine = PerforationViewer( maxsize )
 
-        wells = assembly.GetFirstNodeByPath("//" + root_name + "/Wells")
+        wells = assembly.GetFirstNodeByPath( "//" + root_name + "/Wells" )
         if wells > 0:
-            for well in assembly.GetChildNodes(wells, False):
-                sub_nodes = assembly.GetChildNodes(well, False)
+            for well in assembly.GetChildNodes( wells, False ):
+                sub_nodes = assembly.GetChildNodes( well, False )
                 for sub_node in sub_nodes:
-                    if assembly.GetNodeName(sub_node) == "Mesh":
-                        datasets = assembly.GetDataSetIndices(sub_node, False)
+                    if assembly.GetNodeName( sub_node ) == "Mesh":
+                        datasets = assembly.GetDataSetIndices( sub_node, False )
                         for d in datasets:
-                            dataset = pdsc.GetPartitionedDataSet(d)
-                            if dataset.GetPartition(0) is not None:
-                                well_engine.add_mesh(
-                                    pv.wrap(dataset.GetPartition(0))
-                                )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
-                    elif assembly.GetNodeName(sub_node) == "Perforations":
-                        for i, perfos in enumerate(
-                            assembly.GetChildNodes(sub_node, False)
-                        ):
-                            datasets = assembly.GetDataSetIndices(perfos, False)
+                            dataset = pdsc.GetPartitionedDataSet( d )
+                            if dataset.GetPartition( 0 ) is not None:
+                                well_engine.add_mesh( pv.wrap( dataset.GetPartition(
+                                    0 ) ) )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
+                    elif assembly.GetNodeName( sub_node ) == "Perforations":
+                        for i, perfos in enumerate( assembly.GetChildNodes( sub_node, False ) ):
+                            datasets = assembly.GetDataSetIndices( perfos, False )
                             for d in datasets:
-                                dataset = pdsc.GetPartitionedDataSet(d)
-                                if dataset.GetPartition(0) is not None:
+                                dataset = pdsc.GetPartitionedDataSet( d )
+                                if dataset.GetPartition( 0 ) is not None:
                                     pointset = pv.wrap(
-                                        dataset.GetPartition(0)
+                                        dataset.GetPartition( 0 )
                                     )  # .cast_to_pointset().scale([1.0, 1.0, args.Zamplification], inplace=True) #
-                                    perfo_engine.add_mesh(pointset)
+                                    perfo_engine.add_mesh( pointset )
 
-            plotter.add_slider_widget(
-                callback=well_engine.update, rng=[0.1, 10], title="Wells Radius"
-            )
+            plotter.add_slider_widget( callback=well_engine.update, rng=[ 0.1, 10 ], title="Wells Radius" )
 
             well_visibilty: SetVisibilitiesCallback = SetVisibilitiesCallback()
             for m in well_engine.tubes:
-                actor = plotter.add_mesh(m, color=True, show_edges=False)
-                well_visibilty.add_actor(actor)
+                actor = plotter.add_mesh( m, color=True, show_edges=False )
+                well_visibilty.add_actor( actor )
 
             size = 35
             plotter.add_checkbox_button_widget(
                 callback=well_visibilty.update_visibility,
                 value=True,
-                position=(50, 10.0),
+                position=( 50, 10.0 ),
                 size=size,
                 border_size=1,
             )
 
             my_cell_locator = vtk.vtkStaticCellLocator()
-            my_cell_locator.SetDataSet(region_engine.input)
+            my_cell_locator.SetDataSet( region_engine.input )
             my_cell_locator.AutomaticOn()
-            my_cell_locator.SetNumberOfCellsPerNode(20)
+            my_cell_locator.SetNumberOfCellsPerNode( 20 )
 
             my_cell_locator.BuildLocator()
 
-            if len(perfo_engine.spheres) > 0:
+            if len( perfo_engine.spheres ) > 0:
                 Startpos = 12
                 callback: SetVisibilitiesCallback = SetVisibilitiesCallback()
                 for m in perfo_engine.spheres:
-                    actor = plotter.add_mesh(m, color=True, show_edges=False)
-                    callback.add_actor(actor)
+                    actor = plotter.add_mesh( m, color=True, show_edges=False )
+                    callback.add_actor( actor )
                     # render cell containing perforation
-                    cell_id = my_cell_locator.FindCell(m.center)
+                    cell_id = my_cell_locator.FindCell( m.center )
                     if cell_id != -1:
                         id_list = vtk.vtkIdList()
-                        id_list.InsertNextId(cell_id)
+                        id_list.InsertNextId( cell_id )
                         extract = vtk.vtkExtractCells()
-                        extract.SetInputDataObject(region_engine.input)
-                        extract.SetCellList(id_list)
+                        extract.SetInputDataObject( region_engine.input )
+                        extract.SetCellList( id_list )
                         extract.Update()
-                        cell = extract.GetOutputDataObject(0)
+                        cell = extract.GetOutputDataObject( 0 )
 
                         # cell = region_engine.input.extract_cells(cell_id)  # type: ignore
                         plotter.add_mesh(
-                            pv.wrap(cell).scale(
-                                [1.0, 1.0, args.Zamplification], inplace=True
-                            ),
+                            pv.wrap( cell ).scale( [ 1.0, 1.0, args.Zamplification ], inplace=True ),
                             opacity=0.5,
                             color="red",
                             smooth_shading=True,
@@ -457,7 +441,7 @@ def main(args: argparse.Namespace) -> None:
                 plotter.add_checkbox_button_widget(
                     callback=callback.update_visibility,
                     value=True,
-                    position=(Startpos, 10.0),
+                    position=( Startpos, 10.0 ),
                     size=size,
                     border_size=1,
                 )
@@ -465,14 +449,14 @@ def main(args: argparse.Namespace) -> None:
                 plotter.add_slider_widget(
                     callback=perfo_engine.update,
                     starting_value=perfo_engine.STARTING_VALUE,
-                    rng=[0.1, 10],
+                    rng=[ 0.1, 10 ],
                     title=" Perforations\n Radius",
-                    pointb=(0.08, 0.9),
-                    pointa=(0.08, 0.03),
+                    pointb=( 0.08, 0.9 ),
+                    pointa=( 0.08, 0.03 ),
                     # title_height=0.03
                 )
 
-        plotter.add_text("Wells", font_size=24)
+        plotter.add_text( "Wells", font_size=24 )
         plotter.show_bounds(
             bounds=global_bounds,
             grid="back",
@@ -485,29 +469,27 @@ def main(args: argparse.Namespace) -> None:
             minor_ticks=True,
         )
         stop = time.monotonic()
-        print("wells subplot preparation time: ", timedelta(seconds=stop - start))
+        print( "wells subplot preparation time: ", timedelta( seconds=stop - start ) )
 
     ## 5. Box subview
     if args.showboxes:
         start = time.monotonic()
-        plotter.subplot(1, 1)
+        plotter.subplot( 1, 1 )
 
-        boxes = assembly.GetFirstNodeByPath("//" + root_name + "/Boxes")
+        boxes = assembly.GetFirstNodeByPath( "//" + root_name + "/Boxes" )
 
         if boxes > 0:
-            for i, sub_node in enumerate(assembly.GetChildNodes(boxes, False)):
-                datasets = assembly.GetDataSetIndices(sub_node, False)
+            for i, sub_node in enumerate( assembly.GetChildNodes( boxes, False ) ):
+                datasets = assembly.GetDataSetIndices( sub_node, False )
                 for d in datasets:
-                    dataset = pdsc.GetPartitionedDataSet(d)
+                    dataset = pdsc.GetPartitionedDataSet( d )
                     plotter.add_mesh(
-                        pv.wrap(
-                            dataset.GetPartition(0)
-                        ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
+                        pv.wrap( dataset.GetPartition( 0 ) ),  # .scale([1.0, 1.0, args.Zamplification], inplace=True),
                         color="red",
                         show_edges=True,  # type: ignore
                     )
 
-        plotter.add_text("Boxes", font_size=24)
+        plotter.add_text( "Boxes", font_size=24 )
         plotter.show_bounds(
             bounds=global_bounds,
             grid="back",
@@ -521,24 +503,23 @@ def main(args: argparse.Namespace) -> None:
         )
 
         stop = time.monotonic()
-        print("boxes subplot preparation time: ", timedelta(seconds=stop - start))
+        print( "boxes subplot preparation time: ", timedelta( seconds=stop - start ) )
 
     show_time = time.monotonic()
-    print("time elapsed showing data: ", timedelta(seconds=show_time - read_time))
+    print( "time elapsed showing data: ", timedelta( seconds=show_time - read_time ) )
 
-    plotter.link_views(0)  # link all the views
+    plotter.link_views( 0 )  # link all the views
     plotter.show()
 
 
 def run() -> None:
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":
     run()
-
 
 # def get_data_element_index(
 #     assembly: vtk.vtkDataAssembly, name: str
@@ -549,7 +530,6 @@ if __name__ == "__main__":
 #     ds_indices = assembly.GetDataSetIndices(node_id)
 
 #     return ds_indices
-
 
 # class MyCustomRoutine:
 #     def __init__(self, mesh):
@@ -574,7 +554,6 @@ if __name__ == "__main__":
 #         self.mesh.copy_from(self.input.clip(normal=normal, origin=origin, crinkle=True))
 #         self._last_normal = normal
 #         self._last_origin = origin
-
 
 # def distinct_colors(
 #     start: int = 0, stop: int = 20, sat_values=[8 / 10]
@@ -619,7 +598,6 @@ if __name__ == "__main__":
 #     # Use the matplotlib vectorized function to convert hsv to rgb
 #     return mplt.colors.hsv_to_rgb(hsv)
 
-
 # def mainOLD(args: argparse.Namespace) -> None:
 
 # start_time = time.monotonic()
@@ -654,7 +632,6 @@ if __name__ == "__main__":
 #     # for pe in e.periodic_event:
 #     print(type(e.max_time), e.max_time)
 
-
 # used = []
 # for f in problem.field_specifications:
 #     for f2 in f.field_specification:
@@ -673,7 +650,6 @@ if __name__ == "__main__":
 
 # read_time = time.monotonic()
 # print("time elapsed reading files: ", timedelta(seconds=read_time - start_time))
-
 
 # plotter = pv.Plotter(shape=(2, 2), border=True)
 # plotter.background_color = "white"
@@ -826,7 +802,6 @@ if __name__ == "__main__":
 #     scalars=args.attributeName,
 #     # n_colors=n,
 # )
-
 
 # plotter.subplot(1, 0)
 # plotter.add_text("Wells", font_size=24)

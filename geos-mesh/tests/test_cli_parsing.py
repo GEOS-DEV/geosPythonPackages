@@ -46,7 +46,8 @@ def __generate_generate_fractures_parsing_test_data() -> Iterator[ TestCase ]:
                                     field_values_combined=frozenset( ( 0, 1 ) ),
                                     field_values_per_fracture=frozenset( ( 0, 1 ) ),
                                     mesh_VtkOutput=VtkOutput( output=main_mesh, is_data_mode_binary=True ),
-                                    all_fractures_VtkOutput=VtkOutput( output=fracture_mesh, is_data_mode_binary=True ) )
+                                    all_fractures_VtkOutput=VtkOutput( output=fracture_mesh,
+                                                                       is_data_mode_binary=True ) )
         yield TestCase( cli_args, options, exception )
 
 
@@ -65,12 +66,13 @@ def test_display_results():
     # Dummy test for code coverage only. Shame on me!
     display_results( None, None )
 
+
 @pytest.mark.parametrize( "test_case", __generate_generate_fractures_parsing_test_data() )
 def test( test_case: TestCase ):
     if test_case.exception:
         with pytest.raises( SystemExit ):
-            pytest.skip("Test to be fixed")
+            pytest.skip( "Test to be fixed" )
             __f( test_case )
     else:
-        pytest.skip("Test to be fixed")
+        pytest.skip( "Test to be fixed" )
         __f( test_case )

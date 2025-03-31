@@ -6,7 +6,7 @@ from typing import Union, Dict, Any, Iterable, Optional, Tuple
 # Note: I would like to replace Any here with str, float, int, np.ndarray, etc.
 #       However, this heterogeneous pattern causes issues with mypy indexing
 hdf5_get_types = Union[ 'hdf5_wrapper', Any ]
-nested_dict_type = Dict[ str , Any ]
+nested_dict_type = Dict[ str, Any ]
 hdf5_set_types = Union[ 'hdf5_wrapper', nested_dict_type, Any ]
 
 

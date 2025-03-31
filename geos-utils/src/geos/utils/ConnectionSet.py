@@ -13,7 +13,8 @@ structures.
 
 
 class ConnectionSet:
-    def __init__(self: Self, cellIdRef: int, connectedCellIds: dict[int, bool]) -> None:
+
+    def __init__( self: Self, cellIdRef: int, connectedCellIds: dict[ int, bool ] ) -> None:
         """Define connection set data structure.
 
         A ConnectionSet stores information of connection between a reference
@@ -26,9 +27,9 @@ class ConnectionSet:
             connectedCellIds (int): map of connected cell ids with the side.
         """
         self.m_cellIdRef: int = cellIdRef
-        self.m_connectedCellIds: dict[int, bool] = copy.deepcopy(connectedCellIds)
+        self.m_connectedCellIds: dict[ int, bool ] = copy.deepcopy( connectedCellIds )
 
-    def __repr__(self: Self) -> str:
+    def __repr__( self: Self ) -> str:
         """Get the string description of the FaceConnectionSet.
 
         Returns:
@@ -36,7 +37,7 @@ class ConnectionSet:
         """
         return f"{self.m_cellIdRef} - {set(self.m_connectedCellIds.keys())}"
 
-    def __eq__(self: Self, other: object) -> bool:
+    def __eq__( self: Self, other: object ) -> bool:
         """Equality operator.
 
         Equality means equality of cellIdRef and equality of connected cell ids.
@@ -47,26 +48,25 @@ class ConnectionSet:
         Returns:
             bool: True if FaceConnectionSet are equal, False otherwise.
         """
-        if not isinstance(other, type(self)):
+        if not isinstance( other, type( self ) ):
             return False
 
-        connectedCellIds1 = set(self.m_connectedCellIds.keys())
-        connectedCellIds2 = set(other.m_connectedCellIds.keys())
-        if len(connectedCellIds1) != len(connectedCellIds2):
+        connectedCellIds1 = set( self.m_connectedCellIds.keys() )
+        connectedCellIds2 = set( other.m_connectedCellIds.keys() )
+        if len( connectedCellIds1 ) != len( connectedCellIds2 ):
             return False
-        return (self.m_cellIdRef == other.m_cellIdRef) and all(
-            v1 == v2 for v1, v2 in zip(connectedCellIds1, connectedCellIds2)
-        )
+        return ( self.m_cellIdRef == other.m_cellIdRef ) and all(
+            v1 == v2 for v1, v2 in zip( connectedCellIds1, connectedCellIds2 ) )
 
-    def __hash__(self: Self) -> int:
+    def __hash__( self: Self ) -> int:
         """Define hash method.
 
         Returns:
             int: hash value.
         """
-        return hash((self.m_cellIdRef, frozenset(self.m_connectedCellIds.keys())))
+        return hash( ( self.m_cellIdRef, frozenset( self.m_connectedCellIds.keys() ) ) )
 
-    def getCellIdRef(self: Self) -> int:
+    def getCellIdRef( self: Self ) -> int:
         """Get the reference cell id.
 
         Returns:
@@ -74,7 +74,7 @@ class ConnectionSet:
         """
         return self.m_cellIdRef
 
-    def setCellIdRef(self: Self, cellIdRef: int) -> None:
+    def setCellIdRef( self: Self, cellIdRef: int ) -> None:
         """Set the reference cell id.
 
         Args:
@@ -82,7 +82,7 @@ class ConnectionSet:
         """
         self.m_cellIdRef = cellIdRef
 
-    def getConnectedCellIds(self: Self) -> dict[int, bool]:
+    def getConnectedCellIds( self: Self ) -> dict[ int, bool ]:
         """Get connected cell ids.
 
         Returns:
@@ -90,16 +90,16 @@ class ConnectionSet:
         """
         return self.m_connectedCellIds
 
-    def setConnectedCellIds(self: Self, connectedCellIds: dict[int, bool]) -> None:
+    def setConnectedCellIds( self: Self, connectedCellIds: dict[ int, bool ] ) -> None:
         """Set the connected cell ids.
 
         Args:
             connectedCellIds (dict[int, bool]): map of connected cell ids with
                 side.
         """
-        self.m_connectedCellIds = copy.deepcopy(connectedCellIds)
+        self.m_connectedCellIds = copy.deepcopy( connectedCellIds )
 
-    def addConnectedCells(self: Self, connectedCellsToAdd: dict[int, bool]) -> None:
+    def addConnectedCells( self: Self, connectedCellsToAdd: dict[ int, bool ] ) -> None:
         """Add connected cells to the existing map of connected cells.
 
         The addConnectedCells() method adds element(s) to the dictionary if the
@@ -109,27 +109,28 @@ class ConnectionSet:
         Args:
             connectedCellsToAdd (dict[int, bool]): connected cells to add.
         """
-        self.m_connectedCellIds.update(connectedCellsToAdd)
+        self.m_connectedCellIds.update( connectedCellsToAdd )
 
-    def copy(self: Self) -> Self:
+    def copy( self: Self ) -> Self:
         """Create a deep copy of self.
 
         Returns:
             ConnectionSet: copy of ConnectionSet
         """
-        return ConnectionSet(self.getCellIdRef(), self.getConnectedCellIds())  # type: ignore  # noqa: F821
+        return ConnectionSet( self.getCellIdRef(), self.getConnectedCellIds() )  # type: ignore  # noqa: F821
 
 
-class ConnectionSetCollection(MutableSet):
-    def __init__(self: Self) -> None:
+class ConnectionSetCollection( MutableSet ):
+
+    def __init__( self: Self ) -> None:
         """Define a collection of ConnectionSet.
 
         Because ConnectionSet relies on cell unique id, the collection imposes
         uniqueness of reference cell id.
         """
-        self._items: set[ConnectionSet] = set()
+        self._items: set[ ConnectionSet ] = set()
 
-    def __contains__(self: Self, item: object) -> bool:
+    def __contains__( self: Self, item: object ) -> bool:
         """Redefine contains method.
 
         Args:
@@ -138,27 +139,27 @@ class ConnectionSetCollection(MutableSet):
         Returns:
             bool: True if the object is in the collection, False otherwise.
         """
-        if not isinstance(item, ConnectionSet):
+        if not isinstance( item, ConnectionSet ):
             return False
-        return any(obj.getCellIdRef() == item.getCellIdRef() for obj in self._items)
+        return any( obj.getCellIdRef() == item.getCellIdRef() for obj in self._items )
 
-    def __iter__(self: Self) -> Iterator[ConnectionSet]:
+    def __iter__( self: Self ) -> Iterator[ ConnectionSet ]:
         """Iterator on the collection.
 
         Returns:
             Iterator[ConnectionSet]: Iterator of ConnectionSet.
         """
-        return iter(self._items)
+        return iter( self._items )
 
-    def __len__(self: Self) -> int:
+    def __len__( self: Self ) -> int:
         """Get the number of elements of the collection.
 
         Returns:
             int: number of elements
         """
-        return len(self._items)
+        return len( self._items )
 
-    def containsEqual(self: Self, item: ConnectionSet) -> bool:
+    def containsEqual( self: Self, item: ConnectionSet ) -> bool:
         """Test if a ConnectionSet is present in the collection.
 
         Both th reference cell id and connected cell dictionnary must match the input
@@ -167,10 +168,10 @@ class ConnectionSetCollection(MutableSet):
         Args:
             item (ConnectionSet): ConnectionSet to add.
         """
-        connectionSet: Optional[ConnectionSet] = self.get(item.getCellIdRef())
-        return (connectionSet is not None) and (connectionSet == item)
+        connectionSet: Optional[ ConnectionSet ] = self.get( item.getCellIdRef() )
+        return ( connectionSet is not None ) and ( connectionSet == item )
 
-    def containsCellIdRef(self: Self, cellIdRef: int) -> bool:
+    def containsCellIdRef( self: Self, cellIdRef: int ) -> bool:
         """Test if a ConnectionSet with cellIdRef is present in the collection.
 
         Args:
@@ -179,49 +180,49 @@ class ConnectionSetCollection(MutableSet):
         Returns:
             bool: True if a ConnectionSet is present, False otherwise.
         """
-        connectionSet: Optional[ConnectionSet] = self.get(cellIdRef)
+        connectionSet: Optional[ ConnectionSet ] = self.get( cellIdRef )
         return connectionSet is not None
 
-    def add(self: Self, item: ConnectionSet) -> None:
+    def add( self: Self, item: ConnectionSet ) -> None:
         """Add a ConnectionSet to the collection.
 
         Args:
             item (ConnectionSet): ConnectionSet to add.
         """
         assert item not in self, f"ConnectionSet {item} is already in the collection."
-        self._items.add(item.copy())
+        self._items.add( item.copy() )
 
-    def addMultiple(self: Self, items: Iterable[ConnectionSet]) -> None:
+    def addMultiple( self: Self, items: Iterable[ ConnectionSet ] ) -> None:
         """Add an iterable of ConnectionSet to the collection.
 
         Args:
             items (Iterable[ConnectionSet]): list of ConnectionSet to add.
         """
         for item in items:
-            self.add(item)
+            self.add( item )
 
-    def replace(self: Self, item: ConnectionSet) -> None:
+    def replace( self: Self, item: ConnectionSet ) -> None:
         """Replace a ConnectionSet if another one with the same cellIdRef exists.
 
         Args:
             item (ConnectionSet): ConnectionSet to add.
         """
-        self.discardCellIdRef(item.getCellIdRef())
-        self.add(item)
+        self.discardCellIdRef( item.getCellIdRef() )
+        self.add( item )
 
-    def update(self: Self, item: ConnectionSet) -> None:
+    def update( self: Self, item: ConnectionSet ) -> None:
         """Update or add a ConnectionSet to the collection.
 
         Args:
             item (ConnectionSet): ConnectionSet
         """
-        connectionSet: Optional[ConnectionSet] = self.get(item.getCellIdRef())
+        connectionSet: Optional[ ConnectionSet ] = self.get( item.getCellIdRef() )
         if connectionSet is None:
-            self.add(item)
+            self.add( item )
         else:
-            connectionSet.addConnectedCells(item.getConnectedCellIds())
+            connectionSet.addConnectedCells( item.getConnectedCellIds() )
 
-    def get(self: Self, cellIdRef: int) -> Optional[ConnectionSet]:
+    def get( self: Self, cellIdRef: int ) -> Optional[ ConnectionSet ]:
         """Get ConnectionSet from reference cell id.
 
         Args:
@@ -235,7 +236,7 @@ class ConnectionSetCollection(MutableSet):
                 return connectionSet
         return None
 
-    def discard(self: Self, item: ConnectionSet) -> None:
+    def discard( self: Self, item: ConnectionSet ) -> None:
         """Remove a ConnectionSet to the collection.
 
         ConnectionSet is removed if both reference cell id and connected cell dictionnary
@@ -244,19 +245,19 @@ class ConnectionSetCollection(MutableSet):
         Args:
             item (ConnectionSet): ConnectionSet to remove.
         """
-        self._items.discard(item)
+        self._items.discard( item )
 
-    def discardCellIdRef(self: Self, cellIdRef: int) -> None:
+    def discardCellIdRef( self: Self, cellIdRef: int ) -> None:
         """Remove a ConnectionSet to the collection using the reference cell id.
 
         Args:
             cellIdRef (int): reference cell id to remove.
         """
-        item: Optional[ConnectionSet] = self.get(cellIdRef)
+        item: Optional[ ConnectionSet ] = self.get( cellIdRef )
         if item is not None:
-            self.discard(item)
+            self.discard( item )
 
-    def __repr__(self: Self) -> str:
+    def __repr__( self: Self ) -> str:
         """Representation of ConnectionSetCollection.
 
         Returns:
@@ -264,7 +265,7 @@ class ConnectionSetCollection(MutableSet):
         """
         return f"{self.__class__.__name__}({list(self._items)})"
 
-    def getReversedConnectionSetCollection(self: Self) -> Self:
+    def getReversedConnectionSetCollection( self: Self ) -> Self:
         """Get the set of reversed connection set.
 
         Returns:
@@ -273,8 +274,6 @@ class ConnectionSetCollection(MutableSet):
         connectionSetCollection: ConnectionSetCollection = ConnectionSetCollection()
         for face2VolumeCS in self._items:
             for cellId, side in face2VolumeCS.getConnectedCellIds().items():
-                newConnectionSet: ConnectionSet = ConnectionSet(
-                    cellId, {face2VolumeCS.getCellIdRef(): side}
-                )
-                connectionSetCollection.update(newConnectionSet)
+                newConnectionSet: ConnectionSet = ConnectionSet( cellId, { face2VolumeCS.getCellIdRef(): side } )
+                connectionSetCollection.update( newConnectionSet )
         return connectionSetCollection  # type: ignore  # noqa: F821

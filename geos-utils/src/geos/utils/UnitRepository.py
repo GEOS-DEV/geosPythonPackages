@@ -10,9 +10,8 @@ from geos.utils.enumUnits import Unit, getPropertyUnitEnum, getSIUnits
 
 
 class UnitRepository:
-    def __init__(
-        self: Self, userPropertiesUnitChoice: Union[dict[str, int], None] = None
-    ) -> None:
+
+    def __init__( self: Self, userPropertiesUnitChoice: Union[ dict[ str, int ], None ] = None ) -> None:
         """Unit repository.
 
         * Input example : { "pressure": 4, "bhp": 4,"stress": 3, "length": 2, ...}
@@ -30,24 +29,24 @@ class UnitRepository:
 
                 Defaults {}.
         """
-        self.m_userPropsUnitChoice: dict[str, int] = {}
+        self.m_userPropsUnitChoice: dict[ str, int ] = {}
         if userPropertiesUnitChoice is not None:
             self.m_userPropsUnitChoice = userPropertiesUnitChoice
 
-        self.m_propertiesUnit: dict[str, Unit] = getSIUnits()
+        self.m_propertiesUnit: dict[ str, Unit ] = getSIUnits()
         if self.m_userPropsUnitChoice != {}:
             self.initPropertiesUnit()
 
-    def initPropertiesUnit(self: Self) -> None:
+    def initPropertiesUnit( self: Self ) -> None:
         """Initialize the attribute m_propertiesUnit."""
-        propertiesUnit: dict[str, Unit] = getSIUnits()
+        propertiesUnit: dict[ str, Unit ] = getSIUnits()
         for propertyName, userChoice in self.m_userPropsUnitChoice.items():
-            unitEnum: Enum = getPropertyUnitEnum(propertyName)
-            unitObj: Unit = list(unitEnum)[userChoice].value  # type: ignore[call-overload]
-            propertiesUnit[propertyName] = unitObj
+            unitEnum: Enum = getPropertyUnitEnum( propertyName )
+            unitObj: Unit = list( unitEnum )[ userChoice ].value  # type: ignore[call-overload]
+            propertiesUnit[ propertyName ] = unitObj
         self.m_propertiesUnit = propertiesUnit
 
-    def getPropertiesUnit(self: Self) -> dict[str, Unit]:
+    def getPropertiesUnit( self: Self ) -> dict[ str, Unit ]:
         """Access the m_propertiesUnit attribute.
 
         Returns:

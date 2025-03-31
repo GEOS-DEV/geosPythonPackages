@@ -51,14 +51,12 @@ build = [
   "build >= 1.2"
 ]
 dev = [
-    "pylint",
+    "yapf",
     "mypy",
-    "ruff",
-    "black",
     "xmlschema"
 ]
 test = [
-    "coverage", 
+    "pytest-cov", 
     "pytest"
 ]
 

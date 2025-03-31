@@ -8,20 +8,16 @@ from typing import Union
 
 import numpy as np
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase,
-    smdomain,
-    smhint,
-    smproperty,
-    smproxy,
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.dirname(dir_path)
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
-    sys.path.append(parent_dir_path)
+    sys.path.append( parent_dir_path )
 
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
@@ -46,20 +42,19 @@ To use it:
 """
 
 
-@smproxy.filter(name="PVGeomechanicsAnalysis", label="Geos Geomechanics Analysis")
-@smhint.xml("""<ShowInMenu category="3- Geos Geomechanics"/>""")
-@smproperty.input(name="Input", port_index=0)
-@smdomain.datatype(
-    dataTypes=["vtkUnstructuredGrid", "vtkPointSet"], composite_data_supported=True
-)
-class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> None:
+@smproxy.filter( name="PVGeomechanicsAnalysis", label="Geos Geomechanics Analysis" )
+@smhint.xml( """<ShowInMenu category="3- Geos Geomechanics"/>""" )
+@smproperty.input( name="Input", port_index=0 )
+@smdomain.datatype( dataTypes=[ "vtkUnstructuredGrid", "vtkPointSet" ], composite_data_supported=True )
+class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> None:
         """Paraview plugin to compute additional geomechanical outputs.
 
         Input is either a vtkUnstructuredGrid or vtkPointSet with Geos
         geomechanical properties.
         """
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet")
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet" )
 
         # outputs and additional parameters
         self.m_computeAdvancedOutputs: bool = False
@@ -69,9 +64,9 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
         # set m_logger
-        self.m_logger: Logger = getLogger("Geomechanics Analysis Filter")
+        self.m_logger: Logger = getLogger( "Geomechanics Analysis Filter" )
 
-    def SetLogger(self: Self, logger: Logger) -> None:
+    def SetLogger( self: Self, logger: Logger ) -> None:
         """Set filter logger.
 
         Args:
@@ -85,15 +80,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         default_values=DEFAULT_GRAIN_BULK_MODULUS,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference grain bulk modulus to compute Biot coefficient.
                         The unit is Pa. Default is Quartz bulk modulus (i.e., 38GPa).
                     </Documentation>
-                  """
-    )
-    def b01SetGrainBulkModulus(self: Self, value: float) -> None:
+                  """ )
+    def b01SetGrainBulkModulus( self: Self, value: float ) -> None:
         """Set grain bulk modulus.
 
         Args:
@@ -102,7 +95,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_grainBulkModulus = value
         self.Modified()
 
-    def getGrainBulkModulus(self: Self) -> float:
+    def getGrainBulkModulus( self: Self ) -> float:
         """Access to the grain bulk modulus value.
 
         Returns:
@@ -116,15 +109,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         default_values=WATER_DENSITY,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference density to compute specific gravity.
                         The unit is kg/m3. Default is fresh water density (i.e., 1000 kg/m3).
                     </Documentation>
-                  """
-    )
-    def b02SetSpecificDensity(self: Self, value: float) -> None:
+                  """ )
+    def b02SetSpecificDensity( self: Self, value: float ) -> None:
         """Set specific density.
 
         Args:
@@ -133,7 +124,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_specificDensity = value
         self.Modified()
 
-    def getSpecificDensity(self: Self) -> float:
+    def getSpecificDensity( self: Self ) -> float:
         """Access the specific density value.
 
         Returns:
@@ -141,15 +132,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         """
         return self.m_specificDensity
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
                 <PropertyGroup label="Basic output parameters">
                     <Property name="GrainBulkModulus"/>
                     <Property name="SpecificDensity"/>
                 </PropertyGroup>
-                """
-    )
-    def b09GroupBasicOutputParameters(self: Self) -> None:
+                """ )
+    def b09GroupBasicOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
@@ -159,16 +148,14 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         default_values=0,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <BooleanDomain name="AdvancedOutputsUse"/>
                     <Documentation>
                     Check to compute advanced geomechanical outputs including
                     reservoir stress paths and fracture indexes.
                     </Documentation>
-                  """
-    )
-    def c01SetAdvancedOutputs(self: Self, boolean: bool) -> None:
+                  """ )
+    def c01SetAdvancedOutputs( self: Self, boolean: bool ) -> None:
         """Set advanced output calculation option.
 
         Args:
@@ -177,7 +164,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_computeAdvancedOutputs = boolean
         self.Modified()
 
-    def getComputeAdvancedOutputs(self: Self) -> float:
+    def getComputeAdvancedOutputs( self: Self ) -> float:
         """Access the advanced outputs option.
 
         Returns:
@@ -185,15 +172,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         """
         return self.m_computeAdvancedOutputs
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
                     <PropertyGroup
                         label="Advanced output parameters">
                         panel_visibility="default">
                         <Property name="AdvancedOutputsUse"/>
-                    </PropertyGroup>"""
-    )
-    def c09GroupAdvancedOutputsUse(self: Self) -> None:
+                    </PropertyGroup>""" )
+    def c09GroupAdvancedOutputsUse( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
@@ -203,15 +188,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         default_values=DEFAULT_ROCK_COHESION,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference rock cohesion to compute critical pore pressure.
                         The unit is Pa.Default is fractured case (i.e., 0. Pa).
                     </Documentation>
-                  """
-    )
-    def d01SetRockCohesion(self: Self, value: float) -> None:
+                  """ )
+    def d01SetRockCohesion( self: Self, value: float ) -> None:
         """Set rock cohesion.
 
         Args:
@@ -220,7 +203,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_rockCohesion = value
         self.Modified()
 
-    def getRockCohesion(self: Self) -> float:
+    def getRockCohesion( self: Self ) -> float:
         """Get rock cohesion.
 
         Returns:
@@ -234,15 +217,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         default_values=DEFAULT_FRICTION_ANGLE_DEG,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference friction angle to compute critical pore pressure.
                         The unit is °. Default is no friction case (i.e., 0.°).
                     </Documentation>
-                  """
-    )
-    def d02SetFrictionAngle(self: Self, value: float) -> None:
+                  """ )
+    def d02SetFrictionAngle( self: Self, value: float ) -> None:
         """Set frition angle.
 
         Args:
@@ -251,7 +232,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         self.m_frictionAngle = value
         self.Modified()
 
-    def getFrictionAngle(self: Self) -> float:
+    def getFrictionAngle( self: Self ) -> float:
         """Get friction angle in radian.
 
         Returns:
@@ -259,8 +240,7 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         """
         return self.m_frictionAngle * np.pi / 180.0
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
                     <PropertyGroup
                         panel_visibility="advanced">
                         <Property name="RockCohesion"/>
@@ -272,16 +252,15 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
                             value="1" />
                         </Hints>
                     </PropertyGroup>
-                    """
-    )
-    def d09GroupAdvancedOutputParameters(self: Self) -> None:
+                    """ )
+    def d09GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
     def RequestInformation(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -295,13 +274,13 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject(0)  # noqa: F841
+        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
         return 1
 
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
@@ -314,18 +293,18 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore[no-any-return]
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
@@ -339,48 +318,46 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         try:
-            self.m_logger.info(f"Apply filter {__name__}")
+            self.m_logger.info( f"Apply filter {__name__}" )
             from filters.GeomechanicsCalculator import GeomechanicsCalculator
 
-            inData = self.GetInputData(inInfoVec, 0, 0)
+            inData = self.GetInputData( inInfoVec, 0, 0 )
             assert inData is not None
 
-            input: Union[vtkPointSet, vtkUnstructuredGrid]
-            output: Union[vtkPointSet, vtkUnstructuredGrid]
-            if inData.IsA("vtkUnstructuredGrid"):
-                input = vtkUnstructuredGrid.GetData(inInfoVec[0])
-                output = vtkUnstructuredGrid.GetData(outInfoVec)
-            elif inData.IsA("vtkPointSet"):
-                input = vtkPointSet.GetData(inInfoVec[0])
-                output = vtkPointSet.GetData(outInfoVec)
+            input: Union[ vtkPointSet, vtkUnstructuredGrid ]
+            output: Union[ vtkPointSet, vtkUnstructuredGrid ]
+            if inData.IsA( "vtkUnstructuredGrid" ):
+                input = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
+                output = vtkUnstructuredGrid.GetData( outInfoVec )
+            elif inData.IsA( "vtkPointSet" ):
+                input = vtkPointSet.GetData( inInfoVec[ 0 ] )
+                output = vtkPointSet.GetData( outInfoVec )
             else:
-                raise TypeError("Error type")
+                raise TypeError( "Error type" )
 
             assert input is not None, "Input object is null"
             assert output is not None, "Output object is null"
 
             # create new properties
-            geomechanicsCalculatorFilter: GeomechanicsCalculator = (
-                GeomechanicsCalculator()
-            )
-            geomechanicsCalculatorFilter.SetLogger(self.m_logger)
-            geomechanicsCalculatorFilter.SetInputDataObject(input)
+            geomechanicsCalculatorFilter: GeomechanicsCalculator = ( GeomechanicsCalculator() )
+            geomechanicsCalculatorFilter.SetLogger( self.m_logger )
+            geomechanicsCalculatorFilter.SetInputDataObject( input )
             if self.m_computeAdvancedOutputs:
                 geomechanicsCalculatorFilter.computeAdvancedOutputsOn()
             else:
                 geomechanicsCalculatorFilter.computeAdvancedOutputsOff()
-            geomechanicsCalculatorFilter.SetGrainBulkModulus(self.getGrainBulkModulus())
-            geomechanicsCalculatorFilter.SetSpecificDensity(self.getSpecificDensity())
-            geomechanicsCalculatorFilter.SetRockCohesion(self.getRockCohesion())
-            geomechanicsCalculatorFilter.SetFrictionAngle(self.getFrictionAngle())
+            geomechanicsCalculatorFilter.SetGrainBulkModulus( self.getGrainBulkModulus() )
+            geomechanicsCalculatorFilter.SetSpecificDensity( self.getSpecificDensity() )
+            geomechanicsCalculatorFilter.SetRockCohesion( self.getRockCohesion() )
+            geomechanicsCalculatorFilter.SetFrictionAngle( self.getFrictionAngle() )
             geomechanicsCalculatorFilter.Update()
-            output.ShallowCopy(geomechanicsCalculatorFilter.GetOutputDataObject(0))
+            output.ShallowCopy( geomechanicsCalculatorFilter.GetOutputDataObject( 0 ) )
             output.Modified()
 
         except AssertionError as e:
-            self.m_logger.error(f"{__name__} filter execution failed due to:")
-            self.m_logger.error(e)
+            self.m_logger.error( f"{__name__} filter execution failed due to:" )
+            self.m_logger.error( e )
         except Exception as e:
-            self.m_logger.critical(f"{__name__} filter execution failed due to:")
-            self.m_logger.critical(e, exc_info=True)
+            self.m_logger.critical( f"{__name__} filter execution failed due to:" )
+            self.m_logger.critical( e, exc_info=True )
         return 1

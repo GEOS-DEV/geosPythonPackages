@@ -17,8 +17,9 @@ paraview_plugin_version = "0.1.0"
     extensions="xml",
     file_description="XML files",
 )
-class PVGeosDeckReader(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> Self:
+class PVGeosDeckReader( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> Self:
         """Constructor of the reader."""
         VTKPythonAlgorithmBase.__init__(
             self,
@@ -31,10 +32,10 @@ class PVGeosDeckReader(VTKPythonAlgorithmBase):
 
         self.__realAlgorithm = GeosDeckReader()
 
-    @smproperty.stringvector(name="FileName")  # type: ignore
+    @smproperty.stringvector( name="FileName" )  # type: ignore
     @smdomain.filelist()  # type: ignore
-    @smhint.filechooser(extensions="xml", file_description="GEOS XML files")  # type: ignore
-    def SetFileName(self: Self, name: str) -> None:
+    @smhint.filechooser( extensions="xml", file_description="GEOS XML files" )  # type: ignore
+    def SetFileName( self: Self, name: str ) -> None:
         """Specify filename for the file to read.
 
         Args:
@@ -42,14 +43,14 @@ class PVGeosDeckReader(VTKPythonAlgorithmBase):
         """
         if self.__filename != name:
             self.__filename = name
-            self.__realAlgorithm.SetFileName(self.__filename)
+            self.__realAlgorithm.SetFileName( self.__filename )
             self.__realAlgorithm.Update()
             self.Modified()
 
     def RequestData(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """RequestData function of the vtk pipeline.
@@ -66,8 +67,8 @@ class PVGeosDeckReader(VTKPythonAlgorithmBase):
             int: Returns 1 if the pipeline is successful
         """
         if self.__filename is None:
-            raise RuntimeError("No filename specified")
+            raise RuntimeError( "No filename specified" )
 
-        output = vtkPartitionedDataSetCollection.GetData(inInfoVec, 0)
-        output.ShallowCopy(self.__realAlgorithm.GetOutputDataObject(0))
+        output = vtkPartitionedDataSetCollection.GetData( inInfoVec, 0 )
+        output.ShallowCopy( self.__realAlgorithm.GetOutputDataObject( 0 ) )
         return 1

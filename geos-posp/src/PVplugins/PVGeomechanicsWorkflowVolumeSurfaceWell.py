@@ -9,21 +9,15 @@ import numpy as np
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-)
+    vtkMultiBlockDataSet, )
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.dirname(dir_path)
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
-    sys.path.append(parent_dir_path)
-
+    sys.path.append( parent_dir_path )
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase,
-    smdomain,
-    smhint,
-    smproperty,
-    smproxy,
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 
 from geos.utils.Logger import Logger, getLogger
@@ -35,8 +29,7 @@ from geos.utils.PhysicalConstants import (
     WATER_DENSITY,
 )
 from PVplugins.PVExtractMergeBlocksVolumeSurfaceWell import (
-    PVExtractMergeBlocksVolumeSurfaceWell,
-)
+    PVExtractMergeBlocksVolumeSurfaceWell, )
 from PVplugins.PVGeomechanicsAnalysis import PVGeomechanicsAnalysis
 from PVplugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
@@ -69,18 +62,17 @@ To use it:
     name="PVGeomechanicsWorkflowVolumeSurfaceWell",
     label="Geos Geomechanics Workflow - Volume/Surface/Well",
 )
-@smhint.xml(
-    """
+@smhint.xml( """
     <ShowInMenu category="1- Geos Post-Processing Workflows"/>
     <OutputPort index="0" name="VolumeMesh"/>
     <OutputPort index="1" name="Surfaces"/>
     <OutputPort index="2" name="Wells"/>
-    """
-)
-@smproperty.input(name="Input", port_index=0)
-@smdomain.datatype(dataTypes=["vtkMultiBlockDataSet"], composite_data_supported=True)
-class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> None:
+    """ )
+@smproperty.input( name="Input", port_index=0 )
+@smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
+class PVGeomechanicsWorkflowVolumeSurfaceWell( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> None:
         """Paraview plugin to clean and add new outputs Geos output mesh.
 
         To apply in the case of output ".pvd" file contains Volume, Fault and
@@ -107,7 +99,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
         # set logger
-        self.m_logger: Logger = getLogger("Geomechanics Workflow Filter")
+        self.m_logger: Logger = getLogger( "Geomechanics Workflow Filter" )
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -115,15 +107,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         default_values=DEFAULT_GRAIN_BULK_MODULUS,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference grain bulk modulus to compute Biot coefficient.
                         The unit is Pa. Default is Quartz bulk modulus (i.e., 38GPa).
                     </Documentation>
-                  """
-    )
-    def b01SetGrainBulkModulus(self: Self, value: float) -> None:
+                  """ )
+    def b01SetGrainBulkModulus( self: Self, value: float ) -> None:
         """Set grain bulk modulus.
 
         Args:
@@ -132,7 +122,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_grainBulkModulus = value
         self.Modified()
 
-    def getGrainBulkModulus(self: Self) -> float:
+    def getGrainBulkModulus( self: Self ) -> float:
         """Access to the grain bulk modulus value.
 
         Returns:
@@ -146,15 +136,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         default_values=WATER_DENSITY,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference density to compute specific gravity.
                         The unit is kg/m3. Default is fresh water density (i.e., 1000 kg/m3).
                     </Documentation>
-                  """
-    )
-    def b02SetSpecificDensity(self: Self, value: float) -> None:
+                  """ )
+    def b02SetSpecificDensity( self: Self, value: float ) -> None:
         """Set specific density.
 
         Args:
@@ -163,7 +151,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_specificDensity = value
         self.Modified()
 
-    def getSpecificDensity(self: Self) -> float:
+    def getSpecificDensity( self: Self ) -> float:
         """Access the specific density value.
 
         Returns:
@@ -171,15 +159,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         """
         return self.m_specificDensity
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
                 <PropertyGroup label="Basic output parameters">
                     <Property name="GrainBulkModulus"/>
                     <Property name="SpecificDensity"/>
                 </PropertyGroup>
-                """
-    )
-    def b09GroupBasicOutputParameters(self: Self) -> None:
+                """ )
+    def b09GroupBasicOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
@@ -189,15 +175,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         default_values=DEFAULT_ROCK_COHESION,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference rock cohesion to compute critical pore pressure.
                         The unit is Pa.Default is fractured case (i.e., 0. Pa).
                     </Documentation>
-                  """
-    )
-    def d01SetRockCohesion(self: Self, value: float) -> None:
+                  """ )
+    def d01SetRockCohesion( self: Self, value: float ) -> None:
         """Set rock cohesion.
 
         Args:
@@ -206,7 +190,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_rockCohesion = value
         self.Modified()
 
-    def getRockCohesion(self: Self) -> float:
+    def getRockCohesion( self: Self ) -> float:
         """Get rock cohesion.
 
         Returns:
@@ -220,15 +204,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         default_values=DEFAULT_FRICTION_ANGLE_DEG,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <Documentation>
                         Reference friction angle to compute critical pore pressure.
                         The unit is °. Default is 10°.
                     </Documentation>
-                  """
-    )
-    def d02SetFrictionAngle(self: Self, value: float) -> None:
+                  """ )
+    def d02SetFrictionAngle( self: Self, value: float ) -> None:
         """Set frition angle.
 
         Args:
@@ -237,7 +219,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_frictionAngle = value * np.pi / 180.0
         self.Modified()
 
-    def getFrictionAngle(self: Self) -> float:
+    def getFrictionAngle( self: Self ) -> float:
         """Get friction angle in radian.
 
         Returns:
@@ -245,16 +227,14 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         """
         return self.m_frictionAngle
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
         <PropertyGroup
             label="Surface parameters / Advanced volume parameters">
             <Property name="RockCohesion"/>
             <Property name="FrictionAngle"/>
         </PropertyGroup>
-        """
-    )
-    def d09GroupAdvancedOutputParameters(self: Self) -> None:
+        """ )
+    def d09GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
@@ -264,16 +244,14 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         default_values=0,
         panel_visibility="default",
     )
-    @smdomain.xml(
-        """
+    @smdomain.xml( """
                     <BooleanDomain name="AdvancedOutputsUse"/>
                     <Documentation>
                         Check to compute advanced geomechanical outputs including
                         reservoir stress paths and fracture indexes.
                     </Documentation>
-                  """
-    )
-    def e01SetAdvancedOutputs(self: Self, boolean: bool) -> None:
+                  """ )
+    def e01SetAdvancedOutputs( self: Self, boolean: bool ) -> None:
         """Set advanced output calculation option.
 
         Args:
@@ -282,7 +260,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         self.m_computeAdvancedOutputs = boolean
         self.Modified()
 
-    def getComputeAdvancedOutputs(self: Self) -> float:
+    def getComputeAdvancedOutputs( self: Self ) -> float:
         """Access the advanced outputs option.
 
         Returns:
@@ -290,7 +268,7 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         """
         return self.m_computeAdvancedOutputs
 
-    def FillInputPortInformation(self: Self, port: int, info: vtkInformation) -> int:
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
@@ -301,13 +279,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         if port == 0:
-            info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet")
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet" )
         return 1
 
     def RequestInformation(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -321,13 +299,13 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         executive = self.GetExecutive()  # noqa: F841
-        outInfo: vtkInformation = outInfoVec.GetInformationObject(0)  # noqa: F841
+        outInfo: vtkInformation = outInfoVec.GetInformationObject( 0 )  # noqa: F841
         return 1
 
     def RequestData(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
@@ -341,10 +319,10 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         try:
-            input: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData(inInfoVec[0])
-            self.m_volumeMesh = self.GetOutputData(outInfoVec, 0)
-            self.m_surfaceMesh = self.GetOutputData(outInfoVec, 1)
-            self.m_wells = self.GetOutputData(outInfoVec, 2)
+            input: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
+            self.m_volumeMesh = self.GetOutputData( outInfoVec, 0 )
+            self.m_surfaceMesh = self.GetOutputData( outInfoVec, 1 )
+            self.m_wells = self.GetOutputData( outInfoVec, 2 )
 
             assert input is not None, "Input MultiBlockDataSet is null."
             assert self.m_volumeMesh is not None, "Output volume mesh is null."
@@ -360,17 +338,17 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
 
         except AssertionError as e:
             mess: str = "Geomechanics workflow failed due to:"
-            self.m_logger.error(mess)
-            self.m_logger.error(str(e))
+            self.m_logger.error( mess )
+            self.m_logger.error( str( e ) )
             return 0
         except Exception as e:
             mess1: str = "Geomechanics workflow failed due to:"
-            self.m_logger.critical(mess1)
-            self.m_logger.critical(e, exc_info=True)
+            self.m_logger.critical( mess1 )
+            self.m_logger.critical( e, exc_info=True )
             return 0
         return 1
 
-    def doExtractAndMerge(self: Self) -> bool:
+    def doExtractAndMerge( self: Self ) -> bool:
         """Apply block extraction and merge filter.
 
         Args:
@@ -379,53 +357,51 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell(VTKPythonAlgorithmBase):
         Returns:
             bool: True if extraction and merge successfully eneded, False otherwise
         """
-        filter: PVExtractMergeBlocksVolumeSurfaceWell = (
-            PVExtractMergeBlocksVolumeSurfaceWell()
-        )
-        filter.SetInputConnection(self.GetInputConnection(0, 0))
-        filter.SetLogger(self.m_logger)
+        filter: PVExtractMergeBlocksVolumeSurfaceWell = ( PVExtractMergeBlocksVolumeSurfaceWell() )
+        filter.SetInputConnection( self.GetInputConnection( 0, 0 ) )
+        filter.SetLogger( self.m_logger )
         filter.Update()
 
         # recover output objects from PVExtractMergeBlocksVolumeSurfaceWell
-        self.m_volumeMesh.ShallowCopy(filter.GetOutputDataObject(0))
-        self.m_surfaceMesh.ShallowCopy(filter.GetOutputDataObject(1))
-        self.m_wells.ShallowCopy(filter.GetOutputDataObject(2))
+        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        self.m_surfaceMesh.ShallowCopy( filter.GetOutputDataObject( 1 ) )
+        self.m_wells.ShallowCopy( filter.GetOutputDataObject( 2 ) )
         self.m_volumeMesh.Modified()
         self.m_surfaceMesh.Modified()
         self.m_wells.Modified()
         return True
 
-    def computeAdditionalOutputsVolume(self: Self) -> bool:
+    def computeAdditionalOutputsVolume( self: Self ) -> bool:
         """Compute geomechanical outputs on the volume mesh.
 
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
         filter = PVGeomechanicsAnalysis()
-        filter.SetInputDataObject(self.m_volumeMesh)
-        filter.b01SetGrainBulkModulus(self.getGrainBulkModulus())
-        filter.b02SetSpecificDensity(self.getSpecificDensity())
-        filter.d01SetRockCohesion(self.getRockCohesion())
-        filter.d02SetFrictionAngle(self.getFrictionAngle())
-        filter.c01SetAdvancedOutputs(self.m_computeAdvancedOutputs)
-        filter.SetLogger(self.m_logger)
+        filter.SetInputDataObject( self.m_volumeMesh )
+        filter.b01SetGrainBulkModulus( self.getGrainBulkModulus() )
+        filter.b02SetSpecificDensity( self.getSpecificDensity() )
+        filter.d01SetRockCohesion( self.getRockCohesion() )
+        filter.d02SetFrictionAngle( self.getFrictionAngle() )
+        filter.c01SetAdvancedOutputs( self.m_computeAdvancedOutputs )
+        filter.SetLogger( self.m_logger )
         filter.Update()
-        self.m_volumeMesh.ShallowCopy(filter.GetOutputDataObject(0))
+        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_volumeMesh.Modified()
         return True
 
-    def computeSurfaceGeomecanics(self: Self) -> bool:
+    def computeSurfaceGeomecanics( self: Self ) -> bool:
         """Compute surface geomechanics new attributes.
 
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
         filter = PVSurfaceGeomechanics()
-        filter.SetInputDataObject(self.m_surfaceMesh)
-        filter.a01SetRockCohesion(self.getRockCohesion())
-        filter.a02SetFrictionAngle(self.getFrictionAngle())
-        filter.SetLogger(self.m_logger)
+        filter.SetInputDataObject( self.m_surfaceMesh )
+        filter.a01SetRockCohesion( self.getRockCohesion() )
+        filter.a02SetFrictionAngle( self.getFrictionAngle() )
+        filter.SetLogger( self.m_logger )
         filter.Update()
-        self.m_surfaceMesh.ShallowCopy(filter.GetOutputDataObject(0))
+        self.m_surfaceMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_surfaceMesh.Modified()
         return True

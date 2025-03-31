@@ -18,7 +18,7 @@ from geos.mesh.doctor.checks.vtk_utils import (
     to_vtk_id_list, )
 
 
-@pytest.mark.skip("Test to be fixed")
+@pytest.mark.skip( "Test to be fixed" )
 @pytest.mark.parametrize( "base_name", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )
 def test_supported_elements( base_name ) -> None:
     """
@@ -87,7 +87,8 @@ def make_dodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
 
     return p, f
 
-@pytest.mark.skip("Test to be fixed")
+
+@pytest.mark.skip( "Test to be fixed" )
 def test_dodecahedron() -> None:
     """
     Tests that a dodecahedron is not supported by GEOSX.

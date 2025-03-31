@@ -11,37 +11,33 @@ import unittest
 import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
-    sys.path.append(parent_dir_path)
+    sys.path.append( parent_dir_path )
 
 from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.utils.UnitRepository import Unit, UnitRepository
 
 unitsObjSI: UnitRepository = UnitRepository()
-conversionFactors: dict[str, Unit] = unitsObjSI.getPropertiesUnit()
-pathFlowSim: str = os.path.join(dir_path, "Data/job_GEOS_825200.out")
-pathFlowSim2: str = os.path.join(dir_path, "Data/small_job_GEOS_825200.out")
-pathFlowSim8: str = os.path.join(
-    dir_path, "Data/depleted_gas_reservoir_newwell_report.out"
-)
+conversionFactors: dict[ str, Unit ] = unitsObjSI.getPropertiesUnit()
+pathFlowSim: str = os.path.join( dir_path, "Data/job_GEOS_825200.out" )
+pathFlowSim2: str = os.path.join( dir_path, "Data/small_job_GEOS_825200.out" )
+pathFlowSim8: str = os.path.join( dir_path, "Data/depleted_gas_reservoir_newwell_report.out" )
 
 
-class TestsFunctionsGeosLogReader(unittest.TestCase):
+class TestsFunctionsGeosLogReader( unittest.TestCase ):
 
-    def test0_regionsPropertiesKeysSimulation1(self: Self) -> None:
+    def test0_regionsPropertiesKeysSimulation1( self: Self ) -> None:
         """Test case 2 phases, 5 regions, for time steps."""
-        obj: GeosLogReaderFlow = GeosLogReaderFlow(
-            pathFlowSim, conversionFactors, ["CO2", "water"]
-        )
+        obj: GeosLogReaderFlow = GeosLogReaderFlow( pathFlowSim, conversionFactors, [ "CO2", "water" ] )
         self.assertEqual(
             obj.m_regionNames,
-            ["Reservoir", "Caprock", "Overburden", "Underburden", "Salt"],
+            [ "Reservoir", "Caprock", "Overburden", "Underburden", "Salt" ],
         )
-        self.assertEqual(obj.m_computeStatisticsName, "compflowStatistics")
-        self.assertEqual(obj.m_phaseNames, ["CO2", "water"])
-        expected: list[str] = [
+        self.assertEqual( obj.m_computeStatisticsName, "compflowStatistics" )
+        self.assertEqual( obj.m_phaseNames, [ "CO2", "water" ] )
+        expected: list[ str ] = [
             "1:Reservoir__PressureMin",
             "1:Reservoir__PressureAverage",
             "1:Reservoir__PressureMax",
@@ -168,9 +164,9 @@ class TestsFunctionsGeosLogReader(unittest.TestCase):
             "9:Salt__DissolvedMassCO2InWater",
             "9:Salt__DissolvedMassWaterInWater",
         ]
-        obtained: list[str] = list(obj.m_regionsPropertiesValues.keys())
-        self.assertEqual(expected, obtained)
-        expectedTimesteps: list[float] = [
+        obtained: list[ str ] = list( obj.m_regionsPropertiesValues.keys() )
+        self.assertEqual( expected, obtained )
+        expectedTimesteps: list[ float ] = [
             0.0,
             3.1536e07,
             6.3072e07,
@@ -188,60 +184,56 @@ class TestsFunctionsGeosLogReader(unittest.TestCase):
             4.41504e08,
             4.7304e08,
         ]
-        self.assertEqual(obj.m_timesteps, expectedTimesteps)
+        self.assertEqual( obj.m_timesteps, expectedTimesteps )
 
-    def test1_readAllSimulation2(self: Self) -> None:
+    def test1_readAllSimulation2( self: Self ) -> None:
         """Test case 2 phases, 2 regions, for time steps."""
-        obj: GeosLogReaderFlow = GeosLogReaderFlow(
-            pathFlowSim2, conversionFactors, ["CO2", "water"]
-        )
-        self.assertEqual(obj.m_regionNames, ["Reservoir", "Caprock"])
-        self.assertEqual(obj.m_phaseNames, ["CO2", "water"])
-        self.assertEqual(obj.m_computeStatisticsName, "compflowStatistics")
-        regionPropertiesValuesExpected: dict[str, list[float]] = {
-            "1:Reservoir__PressureMin": [1.25e07, 2.80948e07],
-            "1:Reservoir__PressureAverage": [1.25e07, 2.99421e07],
-            "1:Reservoir__PressureMax": [1.25e07, 3.12538e07],
-            "8:Reservoir__MobileCO2Mass": [0.0, 1.3012e07],
-            "8:Reservoir__MobileWaterMass": [6.38235e10, 6.51497e10],
-            "1:Caprock__PressureMin": [1.25e07, 2.76478e07],
-            "1:Caprock__PressureAverage": [1.25e07, 2.89944e07],
-            "1:Caprock__PressureMax": [1.25e07, 2.98486e07],
-            "8:Caprock__MobileCO2Mass": [0.0, 2.19936e07],
-            "8:Caprock__MobileWaterMass": [1.25037e10, 1.27238e10],
+        obj: GeosLogReaderFlow = GeosLogReaderFlow( pathFlowSim2, conversionFactors, [ "CO2", "water" ] )
+        self.assertEqual( obj.m_regionNames, [ "Reservoir", "Caprock" ] )
+        self.assertEqual( obj.m_phaseNames, [ "CO2", "water" ] )
+        self.assertEqual( obj.m_computeStatisticsName, "compflowStatistics" )
+        regionPropertiesValuesExpected: dict[ str, list[ float ] ] = {
+            "1:Reservoir__PressureMin": [ 1.25e07, 2.80948e07 ],
+            "1:Reservoir__PressureAverage": [ 1.25e07, 2.99421e07 ],
+            "1:Reservoir__PressureMax": [ 1.25e07, 3.12538e07 ],
+            "8:Reservoir__MobileCO2Mass": [ 0.0, 1.3012e07 ],
+            "8:Reservoir__MobileWaterMass": [ 6.38235e10, 6.51497e10 ],
+            "1:Caprock__PressureMin": [ 1.25e07, 2.76478e07 ],
+            "1:Caprock__PressureAverage": [ 1.25e07, 2.89944e07 ],
+            "1:Caprock__PressureMax": [ 1.25e07, 2.98486e07 ],
+            "8:Caprock__MobileCO2Mass": [ 0.0, 2.19936e07 ],
+            "8:Caprock__MobileWaterMass": [ 1.25037e10, 1.27238e10 ],
         }
-        self.assertEqual(obj.m_regionsPropertiesValues, regionPropertiesValuesExpected)
-        expectedTimesteps: list[float] = [0.0, 3.1536e07]
-        self.assertEqual(obj.m_timesteps, expectedTimesteps)
+        self.assertEqual( obj.m_regionsPropertiesValues, regionPropertiesValuesExpected )
+        expectedTimesteps: list[ float ] = [ 0.0, 3.1536e07 ]
+        self.assertEqual( obj.m_timesteps, expectedTimesteps )
 
-    def test2_DataframeFlowSimulation2(self: Self) -> None:
+    def test2_DataframeFlowSimulation2( self: Self ) -> None:
         """Test case 2 phases, 2 regions, for dataframe creation."""
-        obj: GeosLogReaderFlow = GeosLogReaderFlow(
-            pathFlowSim2, conversionFactors, ["CO2", "water"]
-        )
-        data: dict[str, list[float]] = {
-            "1:Reservoir__PressureMin__Pa": [1.25e07, 2.80948e07],
-            "1:Reservoir__PressureAverage__Pa": [1.25e07, 2.99421e07],
-            "1:Reservoir__PressureMax__Pa": [1.25e07, 3.12538e07],
-            "8:Reservoir__MobileCO2Mass__kg": [0.0, 1.3012e07],
-            "8:Reservoir__MobileWaterMass__kg": [6.38235e10, 6.51497e10],
-            "1:Caprock__PressureMin__Pa": [1.25e07, 2.76478e07],
-            "1:Caprock__PressureAverage__Pa": [1.25e07, 2.89944e07],
-            "1:Caprock__PressureMax__Pa": [1.25e07, 2.98486e07],
-            "8:Caprock__MobileCO2Mass__kg": [0.0, 2.19936e07],
-            "8:Caprock__MobileWaterMass__kg": [1.25037e10, 1.27238e10],
-            "Time__s": [0.0, 3.1536e07],
+        obj: GeosLogReaderFlow = GeosLogReaderFlow( pathFlowSim2, conversionFactors, [ "CO2", "water" ] )
+        data: dict[ str, list[ float ] ] = {
+            "1:Reservoir__PressureMin__Pa": [ 1.25e07, 2.80948e07 ],
+            "1:Reservoir__PressureAverage__Pa": [ 1.25e07, 2.99421e07 ],
+            "1:Reservoir__PressureMax__Pa": [ 1.25e07, 3.12538e07 ],
+            "8:Reservoir__MobileCO2Mass__kg": [ 0.0, 1.3012e07 ],
+            "8:Reservoir__MobileWaterMass__kg": [ 6.38235e10, 6.51497e10 ],
+            "1:Caprock__PressureMin__Pa": [ 1.25e07, 2.76478e07 ],
+            "1:Caprock__PressureAverage__Pa": [ 1.25e07, 2.89944e07 ],
+            "1:Caprock__PressureMax__Pa": [ 1.25e07, 2.98486e07 ],
+            "8:Caprock__MobileCO2Mass__kg": [ 0.0, 2.19936e07 ],
+            "8:Caprock__MobileWaterMass__kg": [ 1.25037e10, 1.27238e10 ],
+            "Time__s": [ 0.0, 3.1536e07 ],
         }
-        expected: pd.DataFrame = pd.DataFrame(data)
+        expected: pd.DataFrame = pd.DataFrame( data )
         obtained: pd.DataFrame = obj.createDataframe()
-        self.assertTrue(expected.equals(obtained))
+        self.assertTrue( expected.equals( obtained ) )
 
-    def test_depleted_gas_reservoir_newwell_report(self: Self) -> None:
+    def test_depleted_gas_reservoir_newwell_report( self: Self ) -> None:
         """Test case dt is missing."""
-        obj: GeosLogReaderFlow = GeosLogReaderFlow(pathFlowSim8, conversionFactors)
-        self.assertEqual(obj.m_regionNames, ["Region1"])
-        self.assertEqual(obj.m_phaseNames, ["phase0", "phase1"])
-        self.assertEqual(obj.m_computeStatisticsName, "compflowStatistics")
+        obj: GeosLogReaderFlow = GeosLogReaderFlow( pathFlowSim8, conversionFactors )
+        self.assertEqual( obj.m_regionNames, [ "Region1" ] )
+        self.assertEqual( obj.m_phaseNames, [ "phase0", "phase1" ] )
+        self.assertEqual( obj.m_computeStatisticsName, "compflowStatistics" )
 
 
 if __name__ == "__main__":

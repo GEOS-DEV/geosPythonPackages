@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonDataModel import (
 __doc__ = """Functions to explore and process multiblock inspector tree."""
 
 
-def getBlockName(input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]) -> str:
+def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> str:
     """Get the name of input block.
 
     If input is a vtkMultiBlockDataSet or vtkCompositeDataSet, returns the name
@@ -27,15 +27,15 @@ def getBlockName(input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]) -> str
 
     """
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(input)
+    iter.SetDataSet( input )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
     blockName: str = "Block"
     while iter.GetCurrentDataObject() is not None:
-        blockName = iter.GetCurrentMetaData().Get(vtkMultiBlockDataSet.NAME())
+        blockName = iter.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() )
         block: vtkDataObject = iter.GetCurrentDataObject()
         nbBlocks: int = 99
-        if isinstance(block, vtkMultiBlockDataSet):
+        if isinstance( block, vtkMultiBlockDataSet ):
             block1: vtkMultiBlockDataSet = block
             nbBlocks = block1.GetNumberOfBlocks()
 
@@ -47,9 +47,7 @@ def getBlockName(input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]) -> str
     return blockName
 
 
-def getBlockNameFromIndex(
-    input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet], index: int
-) -> str:
+def getBlockNameFromIndex( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ], index: int ) -> str:
     """Get the name of a block from input multiblock and block flat index.
 
     Args:
@@ -61,21 +59,19 @@ def getBlockNameFromIndex(
 
     """
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(input)
+    iter.SetDataSet( input )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
     blockName: str = "Block"
     while iter.GetCurrentDataObject() is not None:
-        blockName = iter.GetCurrentMetaData().Get(vtkMultiBlockDataSet.NAME())
+        blockName = iter.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() )
         if iter.GetCurrentFlatIndex() == index:
             break
         iter.GoToNextItem()
     return blockName
 
 
-def getBlockIndexFromName(
-    input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet], name: str
-) -> int:
+def getBlockIndexFromName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ], name: str ) -> int:
     """Get block flat index from name of node in the vtkMultiBlockDataSet tree.
 
     Args:
@@ -88,12 +84,12 @@ def getBlockIndexFromName(
     blockIndex: int = -1
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(input)
+    iter.SetDataSet( input )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
     found: bool = False
     while iter.GetCurrentDataObject() is not None:
-        blockName: str = iter.GetCurrentMetaData().Get(vtkMultiBlockDataSet.NAME())
+        blockName: str = iter.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() )
         blockIndex = iter.GetCurrentFlatIndex()
         if blockName.lower() == name.lower():
             found = True
@@ -102,9 +98,7 @@ def getBlockIndexFromName(
     return blockIndex if found else -1
 
 
-def getElementaryCompositeBlockIndexes(
-    input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]
-) -> dict[str, int]:
+def getElementaryCompositeBlockIndexes( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> dict[ str, int ]:
     """Get indexes of composite block that contains elementrary blocks.
 
     Args:
@@ -116,30 +110,24 @@ def getElementaryCompositeBlockIndexes(
     """
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(input)
+    iter.SetDataSet( input )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
 
-    elementaryBlockIndexes: dict[str, int] = {}
+    elementaryBlockIndexes: dict[ str, int ] = {}
     while iter.GetCurrentDataObject() is not None:
         curIndex: int = iter.GetCurrentFlatIndex()
-        curName: str = iter.GetCurrentMetaData().Get(vtkMultiBlockDataSet.NAME())
-        curIsComposite = iter.GetCurrentDataObject().IsA("vtkMultiBlockDataSet")
+        curName: str = iter.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() )
+        curIsComposite = iter.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" )
         iter.GoToNextItem()
         nextIsNotNone = iter.GetCurrentDataObject() is not None
-        if (
-            curIsComposite
-            and nextIsNotNone
-            and (not iter.GetCurrentDataObject().IsA("vtkMultiBlockDataSet"))
-        ):
-            elementaryBlockIndexes[curName] = curIndex
+        if ( curIsComposite and nextIsNotNone and ( not iter.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" ) ) ):
+            elementaryBlockIndexes[ curName ] = curIndex
 
     return elementaryBlockIndexes
 
 
-def getBlockElementIndexesFlatten(
-    input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]
-) -> list[int]:
+def getBlockElementIndexesFlatten( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ int ]:
     """Get a flatten list that contains flat indexes of elementary blocks.
 
     Args:
@@ -148,12 +136,10 @@ def getBlockElementIndexesFlatten(
     Returns:
          list[int]: list of flat indexes
     """
-    return [i for li in getBlockElementIndexes(input) for i in li]
+    return [ i for li in getBlockElementIndexes( input ) for i in li ]
 
 
-def getBlockElementIndexes(
-    input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]
-) -> list[list[int]]:
+def getBlockElementIndexes( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ list[ int ] ]:
     """Get a list of list that contains flat indexes of elementary blocks.
 
     Each sublist contains the indexes of elementary blocks that belongs to a
@@ -167,34 +153,33 @@ def getBlockElementIndexes(
     """
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(input)
+    iter.SetDataSet( input )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
 
-    blockElementIndexes: list[list[int]] = []
-    indexes: list[int] = []
+    blockElementIndexes: list[ list[ int ] ] = []
+    indexes: list[ int ] = []
     while iter.GetCurrentDataObject() is not None:
         curIndex: int = iter.GetCurrentFlatIndex()
-        if iter.GetCurrentDataObject().IsA("vtkMultiBlockDataSet"):
+        if iter.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" ):
             # change of parent node, then add the indexes of the previous
             # vtkMultiBlockDataSet if needed
-            if len(indexes) > 0:
-                blockElementIndexes += [indexes]
+            if len( indexes ) > 0:
+                blockElementIndexes += [ indexes ]
             # reinitialize the list of indexes of included blocks
             indexes = []
         else:
-            indexes += [curIndex]
+            indexes += [ curIndex ]
         iter.GoToNextItem()
 
     # add the indexes of the last vtkMultiBlockDataSet if needed
-    if len(indexes) > 0:
-        blockElementIndexes += [indexes]
+    if len( indexes ) > 0:
+        blockElementIndexes += [ indexes ]
     return blockElementIndexes
 
 
-def getBlockFromFlatIndex(
-    multiBlock: Union[vtkMultiBlockDataSet, vtkCompositeDataSet], blockIndex: int
-) -> vtkDataObject:
+def getBlockFromFlatIndex( multiBlock: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+                           blockIndex: int ) -> vtkDataObject:
     """Get the block with blockIndex from input vtkMultiBlockDataSet.
 
     Args:
@@ -207,7 +192,7 @@ def getBlockFromFlatIndex(
     block: vtkDataObject
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(multiBlock)
+    iter.SetDataSet( multiBlock )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
     while iter.GetCurrentDataObject() is not None:
@@ -218,9 +203,7 @@ def getBlockFromFlatIndex(
     return block
 
 
-def getBlockFromName(
-    multiBlock: Union[vtkMultiBlockDataSet, vtkCompositeDataSet], blockName: str
-) -> vtkDataObject:
+def getBlockFromName( multiBlock: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ], blockName: str ) -> vtkDataObject:
     """Get the block named blockName from input vtkMultiBlockDataSet.
 
     Args:
@@ -233,12 +216,12 @@ def getBlockFromName(
     block: vtkDataObject
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet(multiBlock)
+    iter.SetDataSet( multiBlock )
     iter.VisitOnlyLeavesOff()
     iter.GoToFirstItem()
     while iter.GetCurrentDataObject() is not None:
-        if iter.GetCurrentMetaData().Get(vtkMultiBlockDataSet.NAME()) == blockName:
-            block = vtkMultiBlockDataSet.SafeDownCast(iter.GetCurrentDataObject())
+        if iter.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() ) == blockName:
+            block = vtkMultiBlockDataSet.SafeDownCast( iter.GetCurrentDataObject() )
             break
         iter.GoToNextItem()
     return block

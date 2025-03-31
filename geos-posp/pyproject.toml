@@ -41,9 +41,10 @@ Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 [project.optional-dependencies]
 dev = [
    "mypy", 
+   "yapf",
 ]
 test = [
-   "coverage", 
+   "pytest-cov", 
    "pytest"
 ]
 

@@ -48,22 +48,20 @@ To use the filter:
 """
 
 
-class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
+class AttributeMappingFromCellId( VTKPythonAlgorithmBase ):
 
-    def __init__(self: Self) -> None:
+    def __init__( self: Self ) -> None:
         """Map the properties of a source mesh to a receiver mesh."""
-        super().__init__(
-            nInputPorts=2, nOutputPorts=1, outputType="vtkUnstructuredGrid"
-        )
+        super().__init__( nInputPorts=2, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
 
         # Transfer Attribute name
         self.m_transferedAttributeName: str = ""
         # ID Attribute name
         self.m_idAttributeName: str = ""
         # logger
-        self.m_logger: Logger = getLogger("Attribute Mapping From Cell Id Filter")
+        self.m_logger: Logger = getLogger( "Attribute Mapping From Cell Id Filter" )
 
-    def SetLogger(self: Self, logger: Logger) -> None:
+    def SetLogger( self: Self, logger: Logger ) -> None:
         """Set filter logger.
 
         Args:
@@ -72,12 +70,12 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
         self.m_logger = logger
         self.Modified()
 
-    def SetTransferAttributeName(self: Self, name: str) -> None:
+    def SetTransferAttributeName( self: Self, name: str ) -> None:
         """Set Transfer attribute name."""
         self.m_transferedAttributeName = name
         self.Modified()
 
-    def SetIDAttributeName(self: Self, name: str) -> None:
+    def SetIDAttributeName( self: Self, name: str ) -> None:
         """Set ID attribute name."""
         self.m_idAttributeName = name
         self.Modified()
@@ -85,7 +83,7 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
@@ -98,18 +96,18 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore
 
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
@@ -124,27 +122,24 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
         """
 
         try:
-            serverMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData(inInfoVec[0])
-            clientMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData(inInfoVec[1])
-            outData: vtkUnstructuredGrid = self.GetOutputData(outInfoVec, 0)
+            serverMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
+            clientMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( inInfoVec[ 1 ] )
+            outData: vtkUnstructuredGrid = self.GetOutputData( outInfoVec, 0 )
 
             assert serverMesh is not None, "Server mesh is null."
             assert clientMesh is not None, "Client mesh is null."
             assert outData is not None, "Output pipeline is null."
 
-            outData.ShallowCopy(clientMesh)
+            outData.ShallowCopy( clientMesh )
 
-            cellIdMap: npt.NDArray[np.int64] = self.getCellMap(serverMesh, clientMesh)
+            cellIdMap: npt.NDArray[ np.int64 ] = self.getCellMap( serverMesh, clientMesh )
 
-            attributeArrayServer: npt.NDArray[np.float64] = getArrayInObject(
-                serverMesh, self.m_transferedAttributeName, False
-            )
-            attributeArrayClient: npt.NDArray[np.float64] = np.full_like(
-                attributeArrayServer, np.nan
-            )
-            for i in range(serverMesh.GetNumberOfCells()):
-                k: int = cellIdMap[i]
-                attributeArrayClient[k] = attributeArrayServer[i]
+            attributeArrayServer: npt.NDArray[ np.float64 ] = getArrayInObject( serverMesh,
+                                                                                self.m_transferedAttributeName, False )
+            attributeArrayClient: npt.NDArray[ np.float64 ] = np.full_like( attributeArrayServer, np.nan )
+            for i in range( serverMesh.GetNumberOfCells() ):
+                k: int = cellIdMap[ i ]
+                attributeArrayClient[ k ] = attributeArrayServer[ i ]
             createAttribute(
                 clientMesh,
                 attributeArrayClient,
@@ -156,24 +151,21 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
 
         except AssertionError as e:
             mess1: str = "Attribute mapping failed due to:"
-            self.m_logger.error(mess1)
-            self.m_logger.error(e, exc_info=True)
+            self.m_logger.error( mess1 )
+            self.m_logger.error( e, exc_info=True )
             return 0
         except Exception as e:
             mess0: str = "Attribute mapping failed due to:"
-            self.m_logger.critical(mess0)
-            self.m_logger.critical(e, exc_info=True)
+            self.m_logger.critical( mess0 )
+            self.m_logger.critical( e, exc_info=True )
             return 0
-        mess2: str = (
-            f"Attribute {self.m_transferedAttributeName} was successfully transferred."
-        )
-        self.m_logger.info(mess2)
+        mess2: str = ( f"Attribute {self.m_transferedAttributeName} was successfully transferred." )
+        self.m_logger.info( mess2 )
 
         return 1
 
-    def getCellMap(
-        self: Self, serverMesh: vtkUnstructuredGrid, clientMesh: vtkUnstructuredGrid
-    ) -> npt.NDArray[np.int64]:
+    def getCellMap( self: Self, serverMesh: vtkUnstructuredGrid,
+                    clientMesh: vtkUnstructuredGrid ) -> npt.NDArray[ np.int64 ]:
         """Compute the mapping between both mesh from cell ids.
 
         Args:
@@ -185,16 +177,12 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
                 client mesh, the cell index of the server mesh.
 
         """
-        cellIdArrayServer: npt.NDArray[np.int64] = getArrayInObject(
-            serverMesh, self.m_idAttributeName, False
-        ).astype(int)
-        cellIdArrayClient: npt.NDArray[np.int64] = getArrayInObject(
-            clientMesh, self.m_idAttributeName, False
-        ).astype(int)
-        cellMap: npt.NDArray[np.int64] = np.zeros(serverMesh.GetNumberOfCells()).astype(
-            int
-        )
-        for i, cellId in enumerate(cellIdArrayServer):
-            k: int = np.argwhere(cellIdArrayClient == cellId)[0]
-            cellMap[i] = k
+        cellIdArrayServer: npt.NDArray[ np.int64 ] = getArrayInObject( serverMesh, self.m_idAttributeName,
+                                                                       False ).astype( int )
+        cellIdArrayClient: npt.NDArray[ np.int64 ] = getArrayInObject( clientMesh, self.m_idAttributeName,
+                                                                       False ).astype( int )
+        cellMap: npt.NDArray[ np.int64 ] = np.zeros( serverMesh.GetNumberOfCells() ).astype( int )
+        for i, cellId in enumerate( cellIdArrayServer ):
+            k: int = np.argwhere( cellIdArrayClient == cellId )[ 0 ]
+            cellMap[ i ] = k
         return cellMap

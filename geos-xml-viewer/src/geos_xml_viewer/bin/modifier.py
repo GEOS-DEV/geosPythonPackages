@@ -9,15 +9,15 @@ import vtkmodules.all as vtk
 from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
 
 
-def valid_file(param: str) -> str:
-    ext: str = PurePath(param).suffix
+def valid_file( param: str ) -> str:
+    ext: str = PurePath( param ).suffix
     if ext.lower() != ".vtpc":
-        raise argparse.ArgumentTypeError("File must have a .vtpc extension")
+        raise argparse.ArgumentTypeError( "File must have a .vtpc extension" )
     return param
 
 
 def parsing() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Rewrite wells into VTK file")
+    parser = argparse.ArgumentParser( description="Rewrite wells into VTK file" )
 
     parser.add_argument(
         "-xp",
@@ -53,52 +53,52 @@ def parsing() -> argparse.ArgumentParser:
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def main( args: argparse.Namespace ) -> None:
     reader = GeosDeckReader()
-    reader.SetFileName(args.xmlFilepath)
-    reader.SetAttributeName(args.attributeName)
+    reader.SetFileName( args.xmlFilepath )
+    reader.SetAttributeName( args.attributeName )
     reader.Update()
-    pdsc_xml = reader.GetOutputDataObject(0)
+    pdsc_xml = reader.GetOutputDataObject( 0 )
 
     vtpc = vtk.vtkXMLPartitionedDataSetCollectionReader()
-    vtpc.SetFileName(args.vtpc)
+    vtpc.SetFileName( args.vtpc )
     vtpc.Update()
     pdsc_file = vtpc.GetOutput()
 
     # look for xml root node name and wells node id
     assembly_xml: vtk.vtkDataAssembly = pdsc_xml.GetDataAssembly()
-    root_name_xml: str = assembly_xml.GetNodeName(assembly_xml.GetRootNode())
-    wells_xml = assembly_xml.GetFirstNodeByPath("//" + root_name_xml + "/Wells")
+    root_name_xml: str = assembly_xml.GetNodeName( assembly_xml.GetRootNode() )
+    wells_xml = assembly_xml.GetFirstNodeByPath( "//" + root_name_xml + "/Wells" )
 
     # look for vtpc root node name and wells node id
     assembly_file: vtk.vtkDataAssembly = pdsc_file.GetDataAssembly()
-    wells_file = assembly_file.GetFirstNodeByPath("//" + root_name_xml + "/Wells")
+    wells_file = assembly_file.GetFirstNodeByPath( "//" + root_name_xml + "/Wells" )
 
-    print("assembly from vtpc file: ", wells_file)
-    print("wells id from vtpc file: ", wells_file)
-    print("remove dataset indices....")
+    print( "assembly from vtpc file: ", wells_file )
+    print( "wells id from vtpc file: ", wells_file )
+    print( "remove dataset indices...." )
     # remove all well's subnode from file
-    assembly_file.RemoveAllDataSetIndices(wells_file)
-    print("... finished")
-    print("remove nodes...")
-    assembly_file.RemoveNode(wells_file)
-    print("... finished")
-    print(assembly_file)
-    print(wells_xml)
-    assembly_file.AddSubtree(assembly_file.GetRootNode(), assembly_xml, wells_xml)
+    assembly_file.RemoveAllDataSetIndices( wells_file )
+    print( "... finished" )
+    print( "remove nodes..." )
+    assembly_file.RemoveNode( wells_file )
+    print( "... finished" )
+    print( assembly_file )
+    print( wells_xml )
+    assembly_file.AddSubtree( assembly_file.GetRootNode(), assembly_xml, wells_xml )
 
-    print(assembly_file)
+    print( assembly_file )
 
     writer = vtk.vtkXMLPartitionedDataSetCollectionWriter()
-    writer.SetInputData(pdsc_file)
-    writer.SetFileName(args.outputName)
+    writer.SetInputData( pdsc_file )
+    writer.SetFileName( args.outputName )
     writer.Write()
 
 
 def run() -> None:
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":

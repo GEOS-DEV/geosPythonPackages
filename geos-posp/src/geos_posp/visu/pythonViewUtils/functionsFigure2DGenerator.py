@@ -14,15 +14,14 @@ from matplotlib.font_manager import (  # type: ignore[import-untyped]
 )
 
 import geos_posp.processing.geosLogReaderFunctions as fcts
-
 """
 Plotting tools for 2D figure and axes generation.
 """
 
 
 def oneSubplot(
-    df: pd.DataFrame, userChoices: dict[str, Any]
-) -> tuple[figure.Figure, list[axes.Axes], list[lines.Line2D], list[str]]:
+        df: pd.DataFrame,
+        userChoices: dict[ str, Any ] ) -> tuple[ figure.Figure, list[ axes.Axes ], list[ lines.Line2D ], list[ str ] ]:
     """Created a single subplot.
 
     From a dataframe, knowing which curves to plot along which variable,
@@ -38,42 +37,41 @@ def oneSubplot(
         tuple[figure.Figure, list[axes.Axes],
         list[lines.Line2D] , list[str]]: the fig and its list of axes.
     """
-    curveNames: list[str] = userChoices["curveNames"]
-    variableName: str = userChoices["variableName"]
-    curvesAspect: dict[
-        str, tuple[tuple[float, float, float], str, float, str, float]
-    ] = userChoices["curvesAspect"]
-    associatedProperties: dict[str, list[str]] = associatePropertyToAxeType(curveNames)
-    fig, ax = plt.subplots(constrained_layout=True)
-    all_ax: list[axes.Axes] = setupAllAxes(ax, variableName, associatedProperties, True)
-    lineList: list[lines.Line2D] = []
-    labels: list[str] = []
+    curveNames: list[ str ] = userChoices[ "curveNames" ]
+    variableName: str = userChoices[ "variableName" ]
+    curvesAspect: dict[ str, tuple[ tuple[ float, float, float ], str, float, str,
+                                    float ] ] = userChoices[ "curvesAspect" ]
+    associatedProperties: dict[ str, list[ str ] ] = associatePropertyToAxeType( curveNames )
+    fig, ax = plt.subplots( constrained_layout=True )
+    all_ax: list[ axes.Axes ] = setupAllAxes( ax, variableName, associatedProperties, True )
+    lineList: list[ lines.Line2D ] = []
+    labels: list[ str ] = []
     cpt_cmap: int = 0
-    x: npt.NDArray[np.float64] = df[variableName].to_numpy()
-    for cpt_ax, (ax_name, propertyNames) in enumerate(associatedProperties.items()):
-        ax_to_use: axes.Axes = setupAxeToUse(all_ax, cpt_ax, ax_name, False)
+    x: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
+    for cpt_ax, ( ax_name, propertyNames ) in enumerate( associatedProperties.items() ):
+        ax_to_use: axes.Axes = setupAxeToUse( all_ax, cpt_ax, ax_name, False )
         for propName in propertyNames:
-            y: npt.NDArray[np.float64] = df[propName].to_numpy()
-            plotAxe(ax_to_use, x, y, propName, cpt_cmap, curvesAspect)
+            y: npt.NDArray[ np.float64 ] = df[ propName ].to_numpy()
+            plotAxe( ax_to_use, x, y, propName, cpt_cmap, curvesAspect )
             cpt_cmap += 1
         new_lines, new_labels = ax_to_use.get_legend_handles_labels()
         lineList += new_lines  # type: ignore[arg-type]
         labels += new_labels
-    labels, lineList = smartLabelsSorted(labels, lineList, userChoices)
-    if userChoices["displayLegend"]:
+    labels, lineList = smartLabelsSorted( labels, lineList, userChoices )
+    if userChoices[ "displayLegend" ]:
         ax.legend(
             lineList,
             labels,
-            loc=userChoices["legendPosition"],
-            fontsize=userChoices["legendSize"],
+            loc=userChoices[ "legendPosition" ],
+            fontsize=userChoices[ "legendSize" ],
         )
     ax.grid()
-    return (fig, all_ax, lineList, labels)
+    return ( fig, all_ax, lineList, labels )
 
 
 def oneSubplotInverted(
-    df: pd.DataFrame, userChoices: dict[str, Any]
-) -> tuple[figure.Figure, list[axes.Axes], list[lines.Line2D], list[str]]:
+        df: pd.DataFrame,
+        userChoices: dict[ str, Any ] ) -> tuple[ figure.Figure, list[ axes.Axes ], list[ lines.Line2D ], list[ str ] ]:
     """Created a single subplot with inverted X Y axes.
 
     From a dataframe, knowing which curves to plot along which variable,
@@ -89,44 +87,41 @@ def oneSubplotInverted(
         tuple[figure.Figure, list[axes.Axes],
         list[lines.Line2D] , list[str]]: the fig and its list of axes.
     """
-    curveNames: list[str] = userChoices["curveNames"]
-    variableName: str = userChoices["variableName"]
-    curvesAspect: dict[
-        str, tuple[tuple[float, float, float], str, float, str, float]
-    ] = userChoices["curvesAspect"]
-    associatedProperties: dict[str, list[str]] = associatePropertyToAxeType(curveNames)
-    fig, ax = plt.subplots(constrained_layout=True)
-    all_ax: list[axes.Axes] = setupAllAxes(
-        ax, variableName, associatedProperties, False
-    )
-    linesList: list[lines.Line2D] = []
-    labels: list[str] = []
+    curveNames: list[ str ] = userChoices[ "curveNames" ]
+    variableName: str = userChoices[ "variableName" ]
+    curvesAspect: dict[ str, tuple[ tuple[ float, float, float ], str, float, str,
+                                    float ] ] = userChoices[ "curvesAspect" ]
+    associatedProperties: dict[ str, list[ str ] ] = associatePropertyToAxeType( curveNames )
+    fig, ax = plt.subplots( constrained_layout=True )
+    all_ax: list[ axes.Axes ] = setupAllAxes( ax, variableName, associatedProperties, False )
+    linesList: list[ lines.Line2D ] = []
+    labels: list[ str ] = []
     cpt_cmap: int = 0
-    y: npt.NDArray[np.float64] = df[variableName].to_numpy()
-    for cpt_ax, (ax_name, propertyNames) in enumerate(associatedProperties.items()):
-        ax_to_use: axes.Axes = setupAxeToUse(all_ax, cpt_ax, ax_name, True)
+    y: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
+    for cpt_ax, ( ax_name, propertyNames ) in enumerate( associatedProperties.items() ):
+        ax_to_use: axes.Axes = setupAxeToUse( all_ax, cpt_ax, ax_name, True )
         for propName in propertyNames:
-            x: npt.NDArray[np.float64] = df[propName].to_numpy()
-            plotAxe(ax_to_use, x, y, propName, cpt_cmap, curvesAspect)
+            x: npt.NDArray[ np.float64 ] = df[ propName ].to_numpy()
+            plotAxe( ax_to_use, x, y, propName, cpt_cmap, curvesAspect )
             cpt_cmap += 1
         new_lines, new_labels = ax_to_use.get_legend_handles_labels()
         linesList += new_lines  # type: ignore[arg-type]
         labels += new_labels
-    labels, linesList = smartLabelsSorted(labels, linesList, userChoices)
-    if userChoices["displayLegend"]:
+    labels, linesList = smartLabelsSorted( labels, linesList, userChoices )
+    if userChoices[ "displayLegend" ]:
         ax.legend(
             linesList,
             labels,
-            loc=userChoices["legendPosition"],
-            fontsize=userChoices["legendSize"],
+            loc=userChoices[ "legendPosition" ],
+            fontsize=userChoices[ "legendSize" ],
         )
     ax.grid()
-    return (fig, all_ax, linesList, labels)
+    return ( fig, all_ax, linesList, labels )
 
 
 def multipleSubplots(
-    df: pd.DataFrame, userChoices: dict[str, Any]
-) -> tuple[figure.Figure, list[axes.Axes], list[lines.Line2D], list[str]]:
+        df: pd.DataFrame,
+        userChoices: dict[ str, Any ] ) -> tuple[ figure.Figure, list[ axes.Axes ], list[ lines.Line2D ], list[ str ] ]:
     """Created multiple subplots.
 
     From a dataframe, knowing which curves to plot along which variable,
@@ -142,72 +137,66 @@ def multipleSubplots(
         tuple[figure.Figure, list[axes.Axes],
         list[lines.Line2D] , list[str]]: the fig and its list of axes.
     """
-    curveNames: list[str] = userChoices["curveNames"]
-    variableName: str = userChoices["variableName"]
-    curvesAspect: dict[
-        str, tuple[tuple[float, float, float], str, float, str, float]
-    ] = userChoices["curvesAspect"]
-    ratio: float = userChoices["ratio"]
-    assosIdentifiers: dict[str, dict[str, list[str]]] = associationIdentifiers(
-        curveNames
-    )
-    nbr_suplots: int = len(assosIdentifiers.keys())
+    curveNames: list[ str ] = userChoices[ "curveNames" ]
+    variableName: str = userChoices[ "variableName" ]
+    curvesAspect: dict[ str, tuple[ tuple[ float, float, float ], str, float, str,
+                                    float ] ] = userChoices[ "curvesAspect" ]
+    ratio: float = userChoices[ "ratio" ]
+    assosIdentifiers: dict[ str, dict[ str, list[ str ] ] ] = associationIdentifiers( curveNames )
+    nbr_suplots: int = len( assosIdentifiers.keys() )
     # if only one subplots needs to be created
     if nbr_suplots == 1:
-        return oneSubplot(df, userChoices)
+        return oneSubplot( df, userChoices )
 
-    layout: tuple[int, int, int] = smartLayout(nbr_suplots, ratio)
-    fig, axs0 = plt.subplots(layout[0], layout[1], constrained_layout=True)
-    axs: list[axes.Axes] = axs0.flatten().tolist()  # type: ignore[union-attr]
-    for i in range(layout[2]):
-        fig.delaxes(axs[-(i + 1)])
-    all_lines: list[lines.Line2D] = []
-    all_labels: list[str] = []
+    layout: tuple[ int, int, int ] = smartLayout( nbr_suplots, ratio )
+    fig, axs0 = plt.subplots( layout[ 0 ], layout[ 1 ], constrained_layout=True )
+    axs: list[ axes.Axes ] = axs0.flatten().tolist()  # type: ignore[union-attr]
+    for i in range( layout[ 2 ] ):
+        fig.delaxes( axs[ -( i + 1 ) ] )
+    all_lines: list[ lines.Line2D ] = []
+    all_labels: list[ str ] = []
     # first loop for subplots
-    propertiesExtremas: dict[str, tuple[float, float]] = (
-        findExtremasPropertiesForAssociatedIdentifiers(df, assosIdentifiers, True)
-    )
-    for j, identifier in enumerate(assosIdentifiers.keys()):
-        first_ax: axes.Axes = axs[j]
-        associatedProperties: dict[str, list[str]] = assosIdentifiers[identifier]
-        all_ax: list[axes.Axes] = setupAllAxes(
-            first_ax, variableName, associatedProperties, True
-        )
-        axs += all_ax[1:]
-        linesList: list[lines.Line2D] = []
-        labels: list[str] = []
+    propertiesExtremas: dict[ str, tuple[ float, float ] ] = ( findExtremasPropertiesForAssociatedIdentifiers(
+        df, assosIdentifiers, True ) )
+    for j, identifier in enumerate( assosIdentifiers.keys() ):
+        first_ax: axes.Axes = axs[ j ]
+        associatedProperties: dict[ str, list[ str ] ] = assosIdentifiers[ identifier ]
+        all_ax: list[ axes.Axes ] = setupAllAxes( first_ax, variableName, associatedProperties, True )
+        axs += all_ax[ 1: ]
+        linesList: list[ lines.Line2D ] = []
+        labels: list[ str ] = []
         cpt_cmap: int = 0
-        x: npt.NDArray[np.float64] = df[variableName].to_numpy()
+        x: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
         # second loop for axes per subplot
-        for cpt_ax, (ax_name, propertyNames) in enumerate(associatedProperties.items()):
-            ax_to_use: axes.Axes = setupAxeToUse(all_ax, cpt_ax, ax_name, False)
+        for cpt_ax, ( ax_name, propertyNames ) in enumerate( associatedProperties.items() ):
+            ax_to_use: axes.Axes = setupAxeToUse( all_ax, cpt_ax, ax_name, False )
             for propName in propertyNames:
-                y: npt.NDArray[np.float64] = df[propName].to_numpy()
-                plotAxe(ax_to_use, x, y, propName, cpt_cmap, curvesAspect)
-                ax_to_use.set_ylim(*propertiesExtremas[ax_name])
+                y: npt.NDArray[ np.float64 ] = df[ propName ].to_numpy()
+                plotAxe( ax_to_use, x, y, propName, cpt_cmap, curvesAspect )
+                ax_to_use.set_ylim( *propertiesExtremas[ ax_name ] )
                 cpt_cmap += 1
             new_lines, new_labels = ax_to_use.get_legend_handles_labels()
             linesList += new_lines  # type: ignore[arg-type]
             all_lines += new_lines  # type: ignore[arg-type]
             labels += new_labels
             all_labels += new_labels
-        labels, linesList = smartLabelsSorted(labels, linesList, userChoices)
-        if userChoices["displayLegend"]:
+        labels, linesList = smartLabelsSorted( labels, linesList, userChoices )
+        if userChoices[ "displayLegend" ]:
             first_ax.legend(
                 linesList,
                 labels,
-                loc=userChoices["legendPosition"],
-                fontsize=userChoices["legendSize"],
+                loc=userChoices[ "legendPosition" ],
+                fontsize=userChoices[ "legendSize" ],
             )
-        if userChoices["displayTitle"]:
-            first_ax.set_title(identifier, fontsize=10)
+        if userChoices[ "displayTitle" ]:
+            first_ax.set_title( identifier, fontsize=10 )
         first_ax.grid()
-    return (fig, axs, all_lines, all_labels)
+    return ( fig, axs, all_lines, all_labels )
 
 
 def multipleSubplotsInverted(
-    df: pd.DataFrame, userChoices: dict[str, Any]
-) -> tuple[figure.Figure, list[axes.Axes], list[lines.Line2D], list[str]]:
+        df: pd.DataFrame,
+        userChoices: dict[ str, Any ] ) -> tuple[ figure.Figure, list[ axes.Axes ], list[ lines.Line2D ], list[ str ] ]:
     """Created multiple subplots with inverted X Y axes.
 
     From a dataframe, knowing which curves to plot along which variable,
@@ -223,75 +212,69 @@ def multipleSubplotsInverted(
         tuple[figure.Figure, list[axes.Axes],
         list[lines.Line2D] , list[str]]: the fig and its list of axes.
     """
-    curveNames: list[str] = userChoices["curveNames"]
-    variableName: str = userChoices["variableName"]
-    curvesAspect: dict[
-        str, tuple[tuple[float, float, float], str, float, str, float]
-    ] = userChoices["curvesAspect"]
-    ratio: float = userChoices["ratio"]
-    assosIdentifiers: dict[str, dict[str, list[str]]] = associationIdentifiers(
-        curveNames
-    )
-    nbr_suplots: int = len(assosIdentifiers.keys())
+    curveNames: list[ str ] = userChoices[ "curveNames" ]
+    variableName: str = userChoices[ "variableName" ]
+    curvesAspect: dict[ str, tuple[ tuple[ float, float, float ], str, float, str,
+                                    float ] ] = userChoices[ "curvesAspect" ]
+    ratio: float = userChoices[ "ratio" ]
+    assosIdentifiers: dict[ str, dict[ str, list[ str ] ] ] = associationIdentifiers( curveNames )
+    nbr_suplots: int = len( assosIdentifiers.keys() )
     # if only one subplots needs to be created
     if nbr_suplots == 1:
-        return oneSubplotInverted(df, userChoices)
+        return oneSubplotInverted( df, userChoices )
 
-    layout: tuple[int, int, int] = smartLayout(nbr_suplots, ratio)
-    fig, axs0 = plt.subplots(layout[0], layout[1], constrained_layout=True)
-    axs: list[axes.Axes] = axs0.flatten().tolist()  # type: ignore[union-attr]
-    for i in range(layout[2]):
-        fig.delaxes(axs[-(i + 1)])
-    all_lines: list[lines.Line2D] = []
-    all_labels: list[str] = []
+    layout: tuple[ int, int, int ] = smartLayout( nbr_suplots, ratio )
+    fig, axs0 = plt.subplots( layout[ 0 ], layout[ 1 ], constrained_layout=True )
+    axs: list[ axes.Axes ] = axs0.flatten().tolist()  # type: ignore[union-attr]
+    for i in range( layout[ 2 ] ):
+        fig.delaxes( axs[ -( i + 1 ) ] )
+    all_lines: list[ lines.Line2D ] = []
+    all_labels: list[ str ] = []
     # first loop for subplots
-    propertiesExtremas: dict[str, tuple[float, float]] = (
-        findExtremasPropertiesForAssociatedIdentifiers(df, assosIdentifiers, True)
-    )
-    for j, identifier in enumerate(assosIdentifiers.keys()):
-        first_ax: axes.Axes = axs[j]
-        associatedProperties: dict[str, list[str]] = assosIdentifiers[identifier]
-        all_ax: list[axes.Axes] = setupAllAxes(
-            first_ax, variableName, associatedProperties, False
-        )
-        axs += all_ax[1:]
-        linesList: list[lines.Line2D] = []
-        labels: list[str] = []
+    propertiesExtremas: dict[ str, tuple[ float, float ] ] = ( findExtremasPropertiesForAssociatedIdentifiers(
+        df, assosIdentifiers, True ) )
+    for j, identifier in enumerate( assosIdentifiers.keys() ):
+        first_ax: axes.Axes = axs[ j ]
+        associatedProperties: dict[ str, list[ str ] ] = assosIdentifiers[ identifier ]
+        all_ax: list[ axes.Axes ] = setupAllAxes( first_ax, variableName, associatedProperties, False )
+        axs += all_ax[ 1: ]
+        linesList: list[ lines.Line2D ] = []
+        labels: list[ str ] = []
         cpt_cmap: int = 0
-        y: npt.NDArray[np.float64] = df[variableName].to_numpy()
+        y: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
         # second loop for axes per subplot
-        for cpt_ax, (ax_name, propertyNames) in enumerate(associatedProperties.items()):
-            ax_to_use: axes.Axes = setupAxeToUse(all_ax, cpt_ax, ax_name, True)
+        for cpt_ax, ( ax_name, propertyNames ) in enumerate( associatedProperties.items() ):
+            ax_to_use: axes.Axes = setupAxeToUse( all_ax, cpt_ax, ax_name, True )
             for propName in propertyNames:
-                x: npt.NDArray[np.float64] = df[propName].to_numpy()
-                plotAxe(ax_to_use, x, y, propName, cpt_cmap, curvesAspect)
-                ax_to_use.set_xlim(propertiesExtremas[ax_name])
+                x: npt.NDArray[ np.float64 ] = df[ propName ].to_numpy()
+                plotAxe( ax_to_use, x, y, propName, cpt_cmap, curvesAspect )
+                ax_to_use.set_xlim( propertiesExtremas[ ax_name ] )
                 cpt_cmap += 1
             new_lines, new_labels = ax_to_use.get_legend_handles_labels()
             linesList += new_lines  # type: ignore[arg-type]
             all_lines += new_lines  # type: ignore[arg-type]
             labels += new_labels
             all_labels += new_labels
-        labels, linesList = smartLabelsSorted(labels, linesList, userChoices)
-        if userChoices["displayLegend"]:
+        labels, linesList = smartLabelsSorted( labels, linesList, userChoices )
+        if userChoices[ "displayLegend" ]:
             first_ax.legend(
                 linesList,
                 labels,
-                loc=userChoices["legendPosition"],
-                fontsize=userChoices["legendSize"],
+                loc=userChoices[ "legendPosition" ],
+                fontsize=userChoices[ "legendSize" ],
             )
-        if userChoices["displayTitle"]:
-            first_ax.set_title(identifier, fontsize=10)
+        if userChoices[ "displayTitle" ]:
+            first_ax.set_title( identifier, fontsize=10 )
         first_ax.grid()
-    return (fig, axs, all_lines, all_labels)
+    return ( fig, axs, all_lines, all_labels )
 
 
 def setupAllAxes(
     first_ax: axes.Axes,
     variableName: str,
-    associatedProperties: dict[str, list[str]],
+    associatedProperties: dict[ str, list[ str ] ],
     axisX: bool,
-) -> list[axes.Axes]:
+) -> list[ axes.Axes ]:
     """Modify axis name and ticks avec X or Y axis of all subplots.
 
     Args:
@@ -303,40 +286,34 @@ def setupAllAxes(
     Returns:
         list[axes.Axes]: modified subplots
     """
-    all_ax: list[axes.Axes] = [first_ax]
+    all_ax: list[ axes.Axes ] = [ first_ax ]
     if axisX:
-        first_ax.set_xlabel(variableName)
-        first_ax.ticklabel_format(
-            style="sci", axis="x", scilimits=(0, 0), useMathText=True
-        )
-        for i in range(1, len(associatedProperties.keys())):
+        first_ax.set_xlabel( variableName )
+        first_ax.ticklabel_format( style="sci", axis="x", scilimits=( 0, 0 ), useMathText=True )
+        for i in range( 1, len( associatedProperties.keys() ) ):
             second_ax = first_ax.twinx()
-            assert isinstance(second_ax, axes.Axes)
-            all_ax.append(second_ax)
-            all_ax[i].spines["right"].set_position(("axes", 1 + 0.07 * (i - 1)))
-            all_ax[i].tick_params(axis="y", which="both", left=False, right=True)
-            all_ax[i].yaxis.set_ticks_position("right")
-            all_ax[i].yaxis.offsetText.set_position((1.04 + 0.07 * (i - 1), 0))
-        first_ax.yaxis.offsetText.set_position((-0.04, 0))
+            assert isinstance( second_ax, axes.Axes )
+            all_ax.append( second_ax )
+            all_ax[ i ].spines[ "right" ].set_position( ( "axes", 1 + 0.07 * ( i - 1 ) ) )
+            all_ax[ i ].tick_params( axis="y", which="both", left=False, right=True )
+            all_ax[ i ].yaxis.set_ticks_position( "right" )
+            all_ax[ i ].yaxis.offsetText.set_position( ( 1.04 + 0.07 * ( i - 1 ), 0 ) )
+        first_ax.yaxis.offsetText.set_position( ( -0.04, 0 ) )
     else:
-        first_ax.set_ylabel(variableName)
-        first_ax.ticklabel_format(
-            style="sci", axis="y", scilimits=(0, 0), useMathText=True
-        )
-        for i in range(1, len(associatedProperties.keys())):
+        first_ax.set_ylabel( variableName )
+        first_ax.ticklabel_format( style="sci", axis="y", scilimits=( 0, 0 ), useMathText=True )
+        for i in range( 1, len( associatedProperties.keys() ) ):
             second_ax = first_ax.twiny()
-            assert isinstance(second_ax, axes.Axes)
-            all_ax.append(second_ax)
-            all_ax[i].spines["bottom"].set_position(("axes", -0.08 * i))
-            all_ax[i].xaxis.set_label_position("bottom")
-            all_ax[i].tick_params(axis="x", which="both", bottom=True, top=False)
-            all_ax[i].xaxis.set_ticks_position("bottom")
+            assert isinstance( second_ax, axes.Axes )
+            all_ax.append( second_ax )
+            all_ax[ i ].spines[ "bottom" ].set_position( ( "axes", -0.08 * i ) )
+            all_ax[ i ].xaxis.set_label_position( "bottom" )
+            all_ax[ i ].tick_params( axis="x", which="both", bottom=True, top=False )
+            all_ax[ i ].xaxis.set_ticks_position( "bottom" )
     return all_ax
 
 
-def setupAxeToUse(
-    all_ax: list[axes.Axes], axeId: int, ax_name: str, axisX: bool
-) -> axes.Axes:
+def setupAxeToUse( all_ax: list[ axes.Axes ], axeId: int, ax_name: str, axisX: bool ) -> axes.Axes:
     """Modify axis name and ticks avec X or Y axis of subplot axeId in all_ax.
 
     Args:
@@ -348,27 +325,23 @@ def setupAxeToUse(
     Returns:
         axes.Axes: modified subplot
     """
-    ax_to_use: axes.Axes = all_ax[axeId]
+    ax_to_use: axes.Axes = all_ax[ axeId ]
     if axisX:
-        ax_to_use.set_xlabel(ax_name)
-        ax_to_use.ticklabel_format(
-            style="sci", axis="x", scilimits=(0, 0), useMathText=True
-        )
+        ax_to_use.set_xlabel( ax_name )
+        ax_to_use.ticklabel_format( style="sci", axis="x", scilimits=( 0, 0 ), useMathText=True )
     else:
-        ax_to_use.set_ylabel(ax_name)
-        ax_to_use.ticklabel_format(
-            style="sci", axis="y", scilimits=(0, 0), useMathText=True
-        )
+        ax_to_use.set_ylabel( ax_name )
+        ax_to_use.ticklabel_format( style="sci", axis="y", scilimits=( 0, 0 ), useMathText=True )
     return ax_to_use
 
 
 def plotAxe(
     ax_to_use: axes.Axes,
-    x: npt.NDArray[np.float64],
-    y: npt.NDArray[np.float64],
+    x: npt.NDArray[ np.float64 ],
+    y: npt.NDArray[ np.float64 ],
     propertyName: str,
     cpt_cmap: int,
-    curvesAspect: dict[str, tuple[tuple[float, float, float], str, float, str, float]],
+    curvesAspect: dict[ str, tuple[ tuple[ float, float, float ], str, float, str, float ] ],
 ) -> None:
     """Plot x, y data using input ax_to_use according to curvesAspect.
 
@@ -381,31 +354,27 @@ def plotAxe(
         curvesAspect (dict[str, tuple[tuple[float, float, float],str, float, str, float]]):
             user choices on curve aspect
     """
-    cmap = plt.rcParams["axes.prop_cycle"].by_key()["color"][cpt_cmap % 10]
-    mask = np.logical_and(np.isnan(x), np.isnan(y))
+    cmap = plt.rcParams[ "axes.prop_cycle" ].by_key()[ "color" ][ cpt_cmap % 10 ]
+    mask = np.logical_and( np.isnan( x ), np.isnan( y ) )
     not_mask = ~mask
     # Plot only when x and y values are not nan values
     if propertyName in curvesAspect:
-        asp: tuple[tuple[float, float, float], str, float, str, float] = curvesAspect[
-            propertyName
-        ]
+        asp: tuple[ tuple[ float, float, float ], str, float, str, float ] = curvesAspect[ propertyName ]
         ax_to_use.plot(
-            x[not_mask],
-            y[not_mask],
+            x[ not_mask ],
+            y[ not_mask ],
             label=propertyName,
-            color=asp[0],
-            linestyle=asp[1],
-            linewidth=asp[2],
-            marker=asp[3],
-            markersize=asp[4],
+            color=asp[ 0 ],
+            linestyle=asp[ 1 ],
+            linewidth=asp[ 2 ],
+            marker=asp[ 3 ],
+            markersize=asp[ 4 ],
         )
     else:
-        ax_to_use.plot(x[not_mask], y[not_mask], label=propertyName, color=cmap)
+        ax_to_use.plot( x[ not_mask ], y[ not_mask ], label=propertyName, color=cmap )
 
 
-def getExtremaAllAxes(
-    axes: list[axes.Axes],
-) -> tuple[tuple[float, float], tuple[float, float]]:
+def getExtremaAllAxes( axes: list[ axes.Axes ], ) -> tuple[ tuple[ float, float ], tuple[ float, float ] ]:
     """Gets the limits of both X and Y axis as a 2x2 element tuple.
 
     Args:
@@ -414,11 +383,11 @@ def getExtremaAllAxes(
     Returns:
         tuple[tuple[float, float], tuple[float, float]]:: ((xMin, xMax), (yMin, yMax))
     """
-    assert len(axes) > 0
-    xMin, xMax, yMin, yMax = getAxeLimits(axes[0])
-    if len(axes) > 1:
-        for i in range(1, len(axes)):
-            x1, x2, y1, y2 = getAxeLimits(axes[i])
+    assert len( axes ) > 0
+    xMin, xMax, yMin, yMax = getAxeLimits( axes[ 0 ] )
+    if len( axes ) > 1:
+        for i in range( 1, len( axes ) ):
+            x1, x2, y1, y2 = getAxeLimits( axes[ i ] )
             if x1 < xMin:
                 xMin = x1
             if x2 > xMax:
@@ -427,10 +396,10 @@ def getExtremaAllAxes(
                 yMin = y1
             if y2 > yMax:
                 yMax = y2
-    return ((xMin, xMax), (yMin, yMax))
+    return ( ( xMin, xMax ), ( yMin, yMax ) )
 
 
-def getAxeLimits(ax: axes.Axes) -> tuple[float, float, float, float]:
+def getAxeLimits( ax: axes.Axes ) -> tuple[ float, float, float, float ]:
     """Gets the limits of both X and Y axis as a 4 element tuple.
 
     Args:
@@ -441,15 +410,15 @@ def getAxeLimits(ax: axes.Axes) -> tuple[float, float, float, float]:
     """
     xMin, xMax = ax.get_xlim()
     yMin, yMax = ax.get_ylim()
-    return (xMin, xMax, yMin, yMax)
+    return ( xMin, xMax, yMin, yMax )
 
 
 def findExtremasPropertiesForAssociatedIdentifiers(
     df: pd.DataFrame,
-    associatedIdentifiers: dict[str, dict[str, list[str]]],
+    associatedIdentifiers: dict[ str, dict[ str, list[ str ] ] ],
     offsetPlotting: bool = False,
     offsetPercentage: int = 5,
-) -> dict[str, tuple[float, float]]:
+) -> dict[ str, tuple[ float, float ] ]:
     """Find min and max of all properties linked to a same identifier.
 
     Using an associatedIdentifiers dict containing associatedProperties dict,
@@ -476,35 +445,34 @@ def findExtremasPropertiesForAssociatedIdentifiers(
         "SurfaceVolumetricRateWater (m3/s)": (minAllWells, maxAllWells)
         }
     """
-    extremasProperties: dict[str, tuple[float, float]] = {}
+    extremasProperties: dict[ str, tuple[ float, float ] ] = {}
     # first we need to find the extrema for each property type per region
-    propertyTypesExtremas: dict[str, list[tuple[float, float]]] = {}
+    propertyTypesExtremas: dict[ str, list[ tuple[ float, float ] ] ] = {}
     for associatedProperties in associatedIdentifiers.values():
-        extremasPerProperty: dict[str, tuple[float, float]] = (
-            findExtremasAssociatedProperties(df, associatedProperties)
-        )
+        extremasPerProperty: dict[ str,
+                                   tuple[ float,
+                                          float ] ] = ( findExtremasAssociatedProperties( df, associatedProperties ) )
         for propertyType, extremaFound in extremasPerProperty.items():
             if propertyType not in propertyTypesExtremas:
-                propertyTypesExtremas[propertyType] = [extremaFound]
+                propertyTypesExtremas[ propertyType ] = [ extremaFound ]
             else:
-                propertyTypesExtremas[propertyType].append(extremaFound)
+                propertyTypesExtremas[ propertyType ].append( extremaFound )
     # then, once all extrema have been found for all regions, we need to figure out
     # which extrema per property type is the most extreme one
     for propertyType in propertyTypesExtremas:
-        values: list[tuple[float, float]] = propertyTypesExtremas[propertyType]
-        minValues: list[float] = [values[i][0] for i in range(len(values))]
-        maxValues: list[float] = [values[i][1] for i in range(len(values))]
-        lowest, highest = (min(minValues), max(maxValues))
+        values: list[ tuple[ float, float ] ] = propertyTypesExtremas[ propertyType ]
+        minValues: list[ float ] = [ values[ i ][ 0 ] for i in range( len( values ) ) ]
+        maxValues: list[ float ] = [ values[ i ][ 1 ] for i in range( len( values ) ) ]
+        lowest, highest = ( min( minValues ), max( maxValues ) )
         if offsetPlotting:
-            offset: float = (highest - lowest) / 100 * offsetPercentage
-            lowest, highest = (lowest - offset, highest + offset)
-        extremasProperties[propertyType] = (lowest, highest)
+            offset: float = ( highest - lowest ) / 100 * offsetPercentage
+            lowest, highest = ( lowest - offset, highest + offset )
+        extremasProperties[ propertyType ] = ( lowest, highest )
     return extremasProperties
 
 
 def findExtremasAssociatedProperties(
-    df: pd.DataFrame, associatedProperties: dict[str, list[str]]
-) -> dict[str, tuple[float, float]]:
+        df: pd.DataFrame, associatedProperties: dict[ str, list[ str ] ] ) -> dict[ str, tuple[ float, float ] ]:
     """Find the min and max of properties.
 
     Using an associatedProperties dict containing property types
@@ -527,19 +495,19 @@ def findExtremasAssociatedProperties(
         "Mass (kg)": (minMass, maxMass)
         }
     """
-    extremasProperties: dict[str, tuple[float, float]] = {}
+    extremasProperties: dict[ str, tuple[ float, float ] ] = {}
     for propertyType, propertyNames in associatedProperties.items():
-        minValues = np.empty(len(propertyNames))
-        maxValues = np.empty(len(propertyNames))
-        for i, propertyName in enumerate(propertyNames):
-            values: npt.NDArray[np.float64] = df[propertyName].to_numpy()
-            minValues[i] = np.nanmin(values)
-            maxValues[i] = np.nanmax(values)
-        extrema: tuple[float, float] = (
-            float(np.min(minValues)),
-            float(np.max(maxValues)),
+        minValues = np.empty( len( propertyNames ) )
+        maxValues = np.empty( len( propertyNames ) )
+        for i, propertyName in enumerate( propertyNames ):
+            values: npt.NDArray[ np.float64 ] = df[ propertyName ].to_numpy()
+            minValues[ i ] = np.nanmin( values )
+            maxValues[ i ] = np.nanmax( values )
+        extrema: tuple[ float, float ] = (
+            float( np.min( minValues ) ),
+            float( np.max( maxValues ) ),
         )
-        extremasProperties[propertyType] = extrema
+        extremasProperties[ propertyType ] = extrema
     return extremasProperties
 
 
@@ -548,7 +516,7 @@ Utils for treatment of the data
 """
 
 
-def associatePropertyToAxeType(propertyNames: list[str]) -> dict[str, list[str]]:
+def associatePropertyToAxeType( propertyNames: list[ str ] ) -> dict[ str, list[ str ] ]:
     """Identify property types.
 
     From a list of property names, identify if each of this property
@@ -565,8 +533,8 @@ def associatePropertyToAxeType(propertyNames: list[str]) -> dict[str, list[str]]
             "Mass (kg)": ["CO2__Mass__kg__Source1",
             "Water__Mass__kg__Source1"] }
     """
-    propertyIds: list[str] = fcts.identifyProperties(propertyNames)
-    associationTable: dict[str, str] = {
+    propertyIds: list[ str ] = fcts.identifyProperties( propertyNames )
+    associationTable: dict[ str, str ] = {
         "0": "Pressure",
         "1": "Pressure",
         "2": "Temperature",
@@ -608,36 +576,36 @@ def associatePropertyToAxeType(propertyNames: list[str]) -> dict[str, list[str]]
         "38": "Time",
         "39": "Time",
     }
-    associatedPropertyToAxeType: dict[str, list[str]] = {}
-    noUnitProperties: list[str] = [
+    associatedPropertyToAxeType: dict[ str, list[ str ] ] = {}
+    noUnitProperties: list[ str ] = [
         "Iterations",
         "Porosity",
         "Ratio",
         "Fraction",
         "OedometricModulus",
     ]
-    for i, propId in enumerate(propertyIds):
-        idProp: str = propId.split(":")[0]
-        propNoId: str = propId.split(":")[1]
-        associatedType: str = associationTable[idProp]
+    for i, propId in enumerate( propertyIds ):
+        idProp: str = propId.split( ":" )[ 0 ]
+        propNoId: str = propId.split( ":" )[ 1 ]
+        associatedType: str = associationTable[ idProp ]
         if associatedType in noUnitProperties:
             axeName: str = associatedType
         else:
-            propIdElts: list[str] = propNoId.split("__")
+            propIdElts: list[ str ] = propNoId.split( "__" )
             # no unit was found
-            if len(propIdElts) <= 2:
+            if len( propIdElts ) <= 2:
                 axeName = associatedType
             # there is a unit
             else:
-                unit: str = propIdElts[-2]
+                unit: str = propIdElts[ -2 ]
                 axeName = associatedType + " (" + unit + ")"
         if axeName not in associatedPropertyToAxeType:
-            associatedPropertyToAxeType[axeName] = []
-        associatedPropertyToAxeType[axeName].append(propertyNames[i])
+            associatedPropertyToAxeType[ axeName ] = []
+        associatedPropertyToAxeType[ axeName ].append( propertyNames[ i ] )
     return associatedPropertyToAxeType
 
 
-def propertiesPerIdentifier(propertyNames: list[str]) -> dict[str, list[str]]:
+def propertiesPerIdentifier( propertyNames: list[ str ] ) -> dict[ str, list[ str ] ]:
     """Extract identifiers with associatied properties.
 
     From a list of property names, extracts the identifier (name of the
@@ -675,17 +643,17 @@ def propertiesPerIdentifier(propertyNames: list[str]) -> dict[str, list[str]]:
                     ]
                 }
     """
-    propsPerIdentfier: dict[str, list[str]] = {}
+    propsPerIdentfier: dict[ str, list[ str ] ] = {}
     for propertyName in propertyNames:
-        elements: list[str] = propertyName.split("__")
-        identifier: str = elements[0]
+        elements: list[ str ] = propertyName.split( "__" )
+        identifier: str = elements[ 0 ]
         if identifier not in propsPerIdentfier:
-            propsPerIdentfier[identifier] = []
-        propsPerIdentfier[identifier].append(propertyName)
+            propsPerIdentfier[ identifier ] = []
+        propsPerIdentfier[ identifier ].append( propertyName )
     return propsPerIdentfier
 
 
-def associationIdentifiers(propertyNames: list[str]) -> dict[str, dict[str, list[str]]]:
+def associationIdentifiers( propertyNames: list[ str ] ) -> dict[ str, dict[ str, list[ str ] ] ]:
     """Extract identifiers with associatied curves.
 
     From a list of property names, extracts the identifier (name of the
@@ -783,17 +751,15 @@ def associationIdentifiers(propertyNames: list[str]) -> dict[str, dict[str, list
                     }
                 }
     """
-    propsPerIdentfier: dict[str, list[str]] = propertiesPerIdentifier(propertyNames)
-    assosIdentifier: dict[str, dict[str, list[str]]] = {}
+    propsPerIdentfier: dict[ str, list[ str ] ] = propertiesPerIdentifier( propertyNames )
+    assosIdentifier: dict[ str, dict[ str, list[ str ] ] ] = {}
     for ident, propNames in propsPerIdentfier.items():
-        assosPropsToAxeType: dict[str, list[str]] = associatePropertyToAxeType(
-            propNames
-        )
-        assosIdentifier[ident] = assosPropsToAxeType
+        assosPropsToAxeType: dict[ str, list[ str ] ] = associatePropertyToAxeType( propNames )
+        assosIdentifier[ ident ] = assosPropsToAxeType
     return assosIdentifier
 
 
-def buildFontTitle(userChoices: dict[str, Any]) -> FontProperties:
+def buildFontTitle( userChoices: dict[ str, Any ] ) -> FontProperties:
     """Builds a Fontproperties object according to user choices on title.
 
     Args:
@@ -804,15 +770,15 @@ def buildFontTitle(userChoices: dict[str, Any]) -> FontProperties:
     """
     fontTitle: FontProperties = FontProperties()
     if "titleStyle" in userChoices:
-        fontTitle.set_style(userChoices["titleStyle"])
+        fontTitle.set_style( userChoices[ "titleStyle" ] )
     if "titleWeight" in userChoices:
-        fontTitle.set_weight(userChoices["titleWeight"])
+        fontTitle.set_weight( userChoices[ "titleWeight" ] )
     if "titleSize" in userChoices:
-        fontTitle.set_size(userChoices["titleSize"])
+        fontTitle.set_size( userChoices[ "titleSize" ] )
     return fontTitle
 
 
-def buildFontVariable(userChoices: dict[str, Any]) -> FontProperties:
+def buildFontVariable( userChoices: dict[ str, Any ] ) -> FontProperties:
     """Builds a Fontproperties object according to user choices on variables.
 
     Args:
@@ -823,15 +789,15 @@ def buildFontVariable(userChoices: dict[str, Any]) -> FontProperties:
     """
     fontVariable: FontProperties = FontProperties()
     if "variableStyle" in userChoices:
-        fontVariable.set_style(userChoices["variableStyle"])
+        fontVariable.set_style( userChoices[ "variableStyle" ] )
     if "variableWeight" in userChoices:
-        fontVariable.set_weight(userChoices["variableWeight"])
+        fontVariable.set_weight( userChoices[ "variableWeight" ] )
     if "variableSize" in userChoices:
-        fontVariable.set_size(userChoices["variableSize"])
+        fontVariable.set_size( userChoices[ "variableSize" ] )
     return fontVariable
 
 
-def buildFontCurves(userChoices: dict[str, Any]) -> FontProperties:
+def buildFontCurves( userChoices: dict[ str, Any ] ) -> FontProperties:
     """Builds a Fontproperties object according to user choices on curves.
 
     Args:
@@ -842,17 +808,16 @@ def buildFontCurves(userChoices: dict[str, Any]) -> FontProperties:
     """
     fontCurves: FontProperties = FontProperties()
     if "curvesStyle" in userChoices:
-        fontCurves.set_style(userChoices["curvesStyle"])
+        fontCurves.set_style( userChoices[ "curvesStyle" ] )
     if "curvesWeight" in userChoices:
-        fontCurves.set_weight(userChoices["curvesWeight"])
+        fontCurves.set_weight( userChoices[ "curvesWeight" ] )
     if "curvesSize" in userChoices:
-        fontCurves.set_size(userChoices["curvesSize"])
+        fontCurves.set_size( userChoices[ "curvesSize" ] )
     return fontCurves
 
 
-def customizeLines(
-    userChoices: dict[str, Any], labels: list[str], linesList: list[lines.Line2D]
-) -> list[lines.Line2D]:
+def customizeLines( userChoices: dict[ str, Any ], labels: list[ str ],
+                    linesList: list[ lines.Line2D ] ) -> list[ lines.Line2D ]:
     """Customize lines according to user choices.
 
     By applying the user choices, we modify or not the list of lines
@@ -867,24 +832,20 @@ def customizeLines(
         list[lines.Line2D]: list of lines object modified.
     """
     if "linesModified" in userChoices:
-        linesModifs: dict[str, dict[str, Any]] = userChoices["linesModified"]
-        linesChanged: list[lines.Line2D] = []
-        for i, label in enumerate(labels):
+        linesModifs: dict[ str, dict[ str, Any ] ] = userChoices[ "linesModified" ]
+        linesChanged: list[ lines.Line2D ] = []
+        for i, label in enumerate( labels ):
             if label in linesModifs:
-                lineChanged: lines.Line2D = applyCustomizationOnLine(
-                    linesList[i], linesModifs[label]
-                )
-                linesChanged.append(lineChanged)
+                lineChanged: lines.Line2D = applyCustomizationOnLine( linesList[ i ], linesModifs[ label ] )
+                linesChanged.append( lineChanged )
             else:
-                linesChanged.append(linesList[i])
+                linesChanged.append( linesList[ i ] )
         return linesChanged
     else:
         return linesList
 
 
-def applyCustomizationOnLine(
-    line: lines.Line2D, parameters: dict[str, Any]
-) -> lines.Line2D:
+def applyCustomizationOnLine( line: lines.Line2D, parameters: dict[ str, Any ] ) -> lines.Line2D:
     """Apply modification methods on a line from parameters.
 
     Args:
@@ -901,15 +862,15 @@ def applyCustomizationOnLine(
         lines.Line2D: Line2D object modified.
     """
     if "linestyle" in parameters:
-        line.set_linestyle(parameters["linestyle"])
+        line.set_linestyle( parameters[ "linestyle" ] )
     if "linewidth" in parameters:
-        line.set_linewidth(parameters["linewidth"])
+        line.set_linewidth( parameters[ "linewidth" ] )
     if "color" in parameters:
-        line.set_color(parameters["color"])
+        line.set_color( parameters[ "color" ] )
     if "marker" in parameters:
-        line.set_marker(parameters["marker"])
+        line.set_marker( parameters[ "marker" ] )
     if "markersize" in parameters:
-        line.set_markersize(parameters["markersize"])
+        line.set_markersize( parameters[ "markersize" ] )
     return line
 
 
@@ -918,7 +879,7 @@ Layout tools for layering subplots in a figure
 """
 
 
-def isprime(x: int) -> bool:
+def isprime( x: int ) -> bool:
     """Checks if a number is primer or not.
 
     Args:
@@ -928,13 +889,13 @@ def isprime(x: int) -> bool:
         bool: True if prime, False if not.
     """
     if x < 0:
-        print("Invalid number entry, needs to be positive int")
+        print( "Invalid number entry, needs to be positive int" )
         return False
 
-    return all(x % n != 0 for n in range(2, int(x**0.5) + 1))
+    return all( x % n != 0 for n in range( 2, int( x**0.5 ) + 1 ) )
 
 
-def findClosestPairIntegers(x: int) -> tuple[int, int]:
+def findClosestPairIntegers( x: int ) -> tuple[ int, int ]:
     """Get the pair of integers that multiply the closest to input value.
 
     Finds the closest pair of integers that when multiplied together,
@@ -947,22 +908,22 @@ def findClosestPairIntegers(x: int) -> tuple[int, int]:
         tuple[int, int]: (highest int, lowest int)
     """
     if x < 4:
-        return (x, 1)
-    while isprime(x):
+        return ( x, 1 )
+    while isprime( x ):
         x += 1
-    N: int = round(math.sqrt(x))
+    N: int = round( math.sqrt( x ) )
     while x > N:
         if x % N == 0:
             M = x // N
-            highest = max(M, N)
-            lowest = min(M, N)
-            return (highest, lowest)
+            highest = max( M, N )
+            lowest = min( M, N )
+            return ( highest, lowest )
         else:
             N += 1
-    return (x, 1)
+    return ( x, 1 )
 
 
-def smartLayout(x: int, ratio: float) -> tuple[int, int, int]:
+def smartLayout( x: int, ratio: float ) -> tuple[ int, int, int ]:
     """Return the best layout according to the number of subplots.
 
     For multiple subplots, we need to have a layout that can adapt to
@@ -976,19 +937,19 @@ def smartLayout(x: int, ratio: float) -> tuple[int, int, int]:
     Returns:
         tuple[int]: (nbr_rows, nbr_columns, number of axes to remove)
     """
-    pair: tuple[int, int] = findClosestPairIntegers(x)
-    nbrAxesToRemove: int = pair[0] * pair[1] - x
+    pair: tuple[ int, int ] = findClosestPairIntegers( x )
+    nbrAxesToRemove: int = pair[ 0 ] * pair[ 1 ] - x
     if ratio < 1:
-        return (pair[0], pair[1], nbrAxesToRemove)
+        return ( pair[ 0 ], pair[ 1 ], nbrAxesToRemove )
     else:
-        return (pair[1], pair[0], nbrAxesToRemove)
+        return ( pair[ 1 ], pair[ 0 ], nbrAxesToRemove )
 
 
 """
 Legend tools
 """
 
-commonAssociations: dict[str, str] = {
+commonAssociations: dict[ str, str ] = {
     "pressuremin": "Pmin",
     "pressureMax": "Pmax",
     "pressureaverage": "Pavg",
@@ -1038,7 +999,7 @@ commonAssociations: dict[str, str] = {
     "newtoniter": "NI",
 }
 
-phasesAssociations: dict[str, str] = {
+phasesAssociations: dict[ str, str ] = {
     "dissolvedmass": " IN ",
     "immobile": "IMOB ",
     "mobile": "MOB ",
@@ -1049,9 +1010,8 @@ phasesAssociations: dict[str, str] = {
 }
 
 
-def smartLabelsSorted(
-    labels: list[str], lines: list[lines.Line2D], userChoices: dict[str, Any]
-) -> tuple[list[str], list[lines.Line2D]]:
+def smartLabelsSorted( labels: list[ str ], lines: list[ lines.Line2D ],
+                       userChoices: dict[ str, Any ] ) -> tuple[ list[ str ], list[ lines.Line2D ] ]:
     """Shorten all legend labels and sort them.
 
     To improve readability of the legend for an axe in ParaView, we can apply the
@@ -1069,21 +1029,21 @@ def smartLabelsSorted(
         tuple[list[str], list[lines.Line2D]]: Improved labels and sorted labels / lines like
         (["Region1 Pmin", "Region1 Tavg"], [line2, line1])
     """
-    smartLabels: list[str] = [smartLabel(label, userChoices) for label in labels]
+    smartLabels: list[ str ] = [ smartLabel( label, userChoices ) for label in labels ]
     # I need the labels to be ordered alphabetically for better readability of the legend
     # Therefore, if I sort smartLabels, I need to also sort lines with the same order.
     # But this can only be done if there are no duplicates of labels in smartLabels.
     # If a duplicate is found, "sorted" will try to sort with line which has no comparison built in
     # which will throw an error.
-    if len(set(smartLabels)) == len(smartLabels):
-        sortedBothLists = sorted(zip(smartLabels, lines))
-        sortedLabels, sortedLines = zip(*sortedBothLists)
-        return (list(sortedLabels), list(sortedLines))
+    if len( set( smartLabels ) ) == len( smartLabels ):
+        sortedBothLists = sorted( zip( smartLabels, lines ) )
+        sortedLabels, sortedLines = zip( *sortedBothLists )
+        return ( list( sortedLabels ), list( sortedLines ) )
     else:
-        return (smartLabels, lines)
+        return ( smartLabels, lines )
 
 
-def smartLabel(label: str, userChoices: dict[str, Any]) -> str:
+def smartLabel( label: str, userChoices: dict[ str, Any ] ) -> str:
     """Shorten label according to user choices.
 
     Labels name can tend to be too long. Therefore, we need to reduce the size of the label.
@@ -1100,25 +1060,25 @@ def smartLabel(label: str, userChoices: dict[str, Any]) -> str:
         "Reservoir phaseName0 in phaseName1 job123456.out"
     """
     # first step is to abbreviate the label to reduce its size
-    smartLabel: str = abbreviateLabel(label)
+    smartLabel: str = abbreviateLabel( label )
     # When only one source is used as input, there is no need to precise which one is used
     # in the label so the job name is useless. Same when removeJobName option is selected by user.
-    inputNames: list[str] = userChoices["inputNames"]
-    removeJobName: bool = userChoices["removeJobName"]
-    if len(inputNames) > 1 and not removeJobName:
-        jobName: str = findJobName(label)
+    inputNames: list[ str ] = userChoices[ "inputNames" ]
+    removeJobName: bool = userChoices[ "removeJobName" ]
+    if len( inputNames ) > 1 and not removeJobName:
+        jobName: str = findJobName( label )
         smartLabel += " " + jobName
     # When the user chooses to split the plot into subplots to plot by region or well,
     # this identifier name will appear as a title of the subplot so no need to use it.
     # Same applies when user decides to remove regions.
-    plotRegions: bool = userChoices["plotRegions"]
-    removeRegions: bool = userChoices["removeRegions"]
+    plotRegions: bool = userChoices[ "plotRegions" ]
+    removeRegions: bool = userChoices[ "removeRegions" ]
     if not plotRegions and not removeRegions:
-        smartLabel = findIdentifier(label) + " " + smartLabel
+        smartLabel = findIdentifier( label ) + " " + smartLabel
     return smartLabel
 
 
-def abbreviateLabel(label: str) -> str:
+def abbreviateLabel( label: str ) -> str:
     """Get the abbreviation of the label according to reservoir nomenclature.
 
     When using labels to plot, the name can tend to be too long. Therefore, to respect
@@ -1135,20 +1095,20 @@ def abbreviateLabel(label: str) -> str:
     """
     for commonAsso in commonAssociations:
         if commonAsso in label.lower():
-            return commonAssociations[commonAsso]
+            return commonAssociations[ commonAsso ]
     for phaseAsso in phasesAssociations:
         if phaseAsso in label.lower():
-            phases: list[str] = findPhasesLabel(label)
-            phase0: str = "" if len(phases) < 1 else phases[0]
-            phase1: str = "" if len(phases) < 2 else phases[1]
+            phases: list[ str ] = findPhasesLabel( label )
+            phase0: str = "" if len( phases ) < 1 else phases[ 0 ]
+            phase1: str = "" if len( phases ) < 2 else phases[ 1 ]
             if phaseAsso == "dissolvedmass":
-                return phase0 + phasesAssociations[phaseAsso] + phase1
+                return phase0 + phasesAssociations[ phaseAsso ] + phase1
             else:
-                return phasesAssociations[phaseAsso] + phase0
+                return phasesAssociations[ phaseAsso ] + phase0
     return label
 
 
-def findIdentifier(label: str) -> str:
+def findIdentifier( label: str ) -> str:
     """Find identifier inside the label.
 
     When looking at a label, it may contain or not an identifier at the beginning of it.
@@ -1164,15 +1124,15 @@ def findIdentifier(label: str) -> str:
     """
     identifier: str = ""
     if "__" not in label:
-        print("Invalid label, cannot search identifier when no '__' in label.")
+        print( "Invalid label, cannot search identifier when no '__' in label." )
         return identifier
-    subParts: list[str] = label.split("__")
-    if len(subParts) == 4:
-        identifier = subParts[0]
+    subParts: list[ str ] = label.split( "__" )
+    if len( subParts ) == 4:
+        identifier = subParts[ 0 ]
     return identifier
 
 
-def findJobName(label: str) -> str:
+def findJobName( label: str ) -> str:
     """Find the Geos job name at the end of the label.
 
     When looking at a label, it may contain or not a job name at the end of it.
@@ -1187,15 +1147,15 @@ def findJobName(label: str) -> str:
     """
     jobName: str = ""
     if "__" not in label:
-        print("Invalid label, cannot search jobName when no '__' in label.")
+        print( "Invalid label, cannot search jobName when no '__' in label." )
         return jobName
-    subParts: list[str] = label.split("__")
-    if len(subParts) == 4:
-        jobName = subParts[3]
+    subParts: list[ str ] = label.split( "__" )
+    if len( subParts ) == 4:
+        jobName = subParts[ 3 ]
     return jobName
 
 
-def findPhasesLabel(label: str) -> list[str]:
+def findPhasesLabel( label: str ) -> list[ str ]:
     """Find phase name inside label.
 
     When looking at a label, it may contain or not patterns that indicates
@@ -1209,33 +1169,33 @@ def findPhasesLabel(label: str) -> list[str]:
     Returns:
         list[str]: [phaseName0, phaseName1]
     """
-    phases: list[str] = []
+    phases: list[ str ] = []
     lowLabel: str = label.lower()
     indexStart: int = 0
     indexEnd: int = 0
     if "__" not in label:
-        print("Invalid label, cannot search phases when no '__' in label.")
+        print( "Invalid label, cannot search phases when no '__' in label." )
         return phases
     if "dissolvedmass" in lowLabel:
-        indexStart = lowLabel.index("dissolvedmass") + len("dissolvedmass")
-        indexEnd = lowLabel.rfind("__")
-        phasesSubstring: str = lowLabel[indexStart:indexEnd]
-        phases = phasesSubstring.split("in")
-        phases = [phase.capitalize() for phase in phases]
+        indexStart = lowLabel.index( "dissolvedmass" ) + len( "dissolvedmass" )
+        indexEnd = lowLabel.rfind( "__" )
+        phasesSubstring: str = lowLabel[ indexStart:indexEnd ]
+        phases = phasesSubstring.split( "in" )
+        phases = [ phase.capitalize() for phase in phases ]
     else:
         if "dynamicporevolume" in lowLabel:
-            indexStart = lowLabel.index("__") + 2
-            indexEnd = lowLabel.index("dynamicporevolume")
+            indexStart = lowLabel.index( "__" ) + 2
+            indexEnd = lowLabel.index( "dynamicporevolume" )
         else:
-            for pattern in ["nontrapped", "trapped", "immobile", "mobile", "rate"]:
+            for pattern in [ "nontrapped", "trapped", "immobile", "mobile", "rate" ]:
                 if pattern in lowLabel:
-                    indexStart = lowLabel.index(pattern) + len(pattern)
-                    indexEnd = lowLabel.rfind("mass")
+                    indexStart = lowLabel.index( pattern ) + len( pattern )
+                    indexEnd = lowLabel.rfind( "mass" )
                     if indexEnd < 0:
-                        indexEnd = indexStart + lowLabel[indexStart:].find("__")
+                        indexEnd = indexStart + lowLabel[ indexStart: ].find( "__" )
                     break
         if indexStart < indexEnd:
-            phases = [lowLabel[indexStart:indexEnd].capitalize()]
+            phases = [ lowLabel[ indexStart:indexEnd ].capitalize() ]
     return phases
 
 
@@ -1271,7 +1231,6 @@ Under this is the first version of smartLabels without abbreviations.
 #     sortedLabels, sortedLines = zip(*sortedBothLists)
 #     return (sortedLabels, sortedLines)
 
-
 # def smartLegendLabel(labelName: str, userChoices: dict[str, Any], regionName="") -> str:
 #     """When plotting legend label, the label format can be improved by removing some
 #     overwhelming / repetitive prefixe / suffixe and have a shorter label.
@@ -1303,7 +1262,6 @@ Under this is the first version of smartLabels without abbreviations.
 #     smartLabel = smartLabel.replace("__", " ")
 #     return smartLabel
 
-
 # def removeJobNameInLegendLabel(legendLabel: str, inputNames: list[str]) -> str:
 #     """When plotting legends, the name of the job is by default at the end of
 #     the label. Therefore, it can increase tremendously the size of the legend
@@ -1323,7 +1281,6 @@ Under this is the first version of smartLabels without abbreviations.
 #             jobIndex: int = legendLabel.index(pattern)
 #             return legendLabel[:jobIndex]
 #     return legendLabel
-
 
 # def removeIdentifierInLegendLabel(legendLabel: str, regionName="") -> str:
 #     """When plotting legends, the name of the region is by default at the
@@ -1346,16 +1303,12 @@ Under this is the first version of smartLabels without abbreviations.
 #     if legendLabel.startswith(pattern):
 #         return legendLabel[len(pattern):]
 #     return legendLabel
-
-
 """
 Other 2D tools for simplest figures
 """
 
 
-def basicFigure(
-    df: pd.DataFrame, variableName: str, curveName: str
-) -> tuple[figure.Figure, axes.Axes]:
+def basicFigure( df: pd.DataFrame, variableName: str, curveName: str ) -> tuple[ figure.Figure, axes.Axes ]:
     """Creates a plot.
 
     Generates a figure and axes objects from matplotlib that plots
@@ -1371,18 +1324,16 @@ def basicFigure(
         tuple[figure.Figure, axes.Axes]: the fig and the ax.
     """
     fig, ax = plt.subplots()
-    x: npt.NDArray[np.float64] = df[variableName].to_numpy()
-    y: npt.NDArray[np.float64] = df[curveName].to_numpy()
-    ax.plot(x, y, label=curveName)
-    ax.set_xlabel(variableName)
-    ax.set_ylabel(curveName)
-    ax.legend(loc="best")
-    return (fig, ax)
+    x: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
+    y: npt.NDArray[ np.float64 ] = df[ curveName ].to_numpy()
+    ax.plot( x, y, label=curveName )
+    ax.set_xlabel( variableName )
+    ax.set_ylabel( curveName )
+    ax.legend( loc="best" )
+    return ( fig, ax )
 
 
-def invertedBasicFigure(
-    df: pd.DataFrame, variableName: str, curveName: str
-) -> tuple[figure.Figure, axes.Axes]:
+def invertedBasicFigure( df: pd.DataFrame, variableName: str, curveName: str ) -> tuple[ figure.Figure, axes.Axes ]:
     """Creates a plot with inverted XY axis.
 
     Generates a figure and axes objects from matplotlib that plots
@@ -1398,16 +1349,16 @@ def invertedBasicFigure(
         tuple[figure.Figure, axes.Axes]: the fig and the ax.
     """
     fig, ax = plt.subplots()
-    x: npt.NDArray[np.float64] = df[curveName].to_numpy()
-    y: npt.NDArray[np.float64] = df[variableName].to_numpy()
-    ax.plot(x, y, label=variableName)
-    ax.set_xlabel(curveName)
-    ax.set_ylabel(variableName)
-    ax.legend(loc="best")
-    return (fig, ax)
+    x: npt.NDArray[ np.float64 ] = df[ curveName ].to_numpy()
+    y: npt.NDArray[ np.float64 ] = df[ variableName ].to_numpy()
+    ax.plot( x, y, label=variableName )
+    ax.set_xlabel( curveName )
+    ax.set_ylabel( variableName )
+    ax.legend( loc="best" )
+    return ( fig, ax )
 
 
-def adjust_subplots(fig: figure.Figure, invertXY: bool) -> figure.Figure:
+def adjust_subplots( fig: figure.Figure, invertXY: bool ) -> figure.Figure:
     """Adjust the size of the subplot in the fig.
 
     Args:
@@ -1418,7 +1369,7 @@ def adjust_subplots(fig: figure.Figure, invertXY: bool) -> figure.Figure:
         figure.Figure: Matplotlib figure with adjustements
     """
     if invertXY:
-        fig.subplots_adjust(left=0.05, right=0.98, top=0.9, bottom=0.2)
+        fig.subplots_adjust( left=0.05, right=0.98, top=0.9, bottom=0.2 )
     else:
-        fig.subplots_adjust(left=0.06, right=0.94, top=0.95, bottom=0.08)
+        fig.subplots_adjust( left=0.06, right=0.94, top=0.95, bottom=0.08 )
     return fig

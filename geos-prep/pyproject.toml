@@ -40,7 +40,7 @@ requires-python = ">= 3.9"
 
 [project.optional-dependencies]
 dev = ["black", "ruff", "mypy", "sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"]
-test = ["coverage", "pytest"]
+test = ["pytest-cov", "pytest"]
 
 [tool.bumpversion]
 current_version = "1.0.0"

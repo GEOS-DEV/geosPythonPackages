@@ -28,16 +28,12 @@ build = [
   "build ~= 1.2"
 ]
 dev = [
-    "pylint",
+    "yapf",
     "mypy",
-    "black",
-    "sphinx", 
-    "sphinx-rtd-theme", 
-    "sphinx-autodoc-typehints"
 ]
 test = [
     "pytest",
-    "coverage"
+    "pytest-cov"
 ]
 
 
