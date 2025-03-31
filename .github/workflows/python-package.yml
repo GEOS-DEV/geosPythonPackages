@@ -39,7 +39,7 @@ jobs:
     - name: Typing check with mypy
       #  working-directory: ./${{ matrix.package-name }}
       run:  |
-        python -m mypy ./${{ matrix.package-name }} --namespace-packages --explicit-package-bases --disallow-subclassing-any --ignore-missing-import
+        python -m mypy ./${{ matrix.package-name }} --config-file ./${{ matrix.package-name }}/pyproject.toml --check-untyped-defs
     - name: Test with pytest
       working-directory: ./${{ matrix.package-name }}
       run: |

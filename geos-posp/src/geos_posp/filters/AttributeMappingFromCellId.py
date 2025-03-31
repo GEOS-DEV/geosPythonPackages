@@ -104,7 +104,7 @@ class AttributeMappingFromCellId(VTKPythonAlgorithmBase):
         if outData is None or (not outData.IsA(inData.GetClassName())):
             outData = inData.NewInstance()
             outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore[no-any-return]
+        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore
 
     def RequestData(
         self: Self,

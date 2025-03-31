@@ -36,7 +36,7 @@ def getBlockName(input: Union[vtkMultiBlockDataSet, vtkCompositeDataSet]) -> str
         block: vtkDataObject = iter.GetCurrentDataObject()
         nbBlocks: int = 99
         if isinstance(block, vtkMultiBlockDataSet):
-            block1: vtkMultiBlockDataSet = cast(vtkMultiBlockDataSet, block)
+            block1: vtkMultiBlockDataSet = block
             nbBlocks = block1.GetNumberOfBlocks()
 
         # stop if multiple children

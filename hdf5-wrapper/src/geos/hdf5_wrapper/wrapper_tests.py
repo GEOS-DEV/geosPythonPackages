@@ -34,9 +34,9 @@ class Testhdf5_wrapper( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
-        cls.test_dir = 'wrapper_tests'
-        os.makedirs( cls.test_dir, exist_ok=True )
-        cls.test_dict = build_test_dict()
+        cls.test_dir = 'wrapper_tests' # type: ignore[attr-defined]
+        os.makedirs( cls.test_dir, exist_ok=True ) # type: ignore[attr-defined]
+        cls.test_dict = build_test_dict() # type: ignore[attr-defined]
 
     def compare_wrapper_dict( self, x, y ):
         kx = x.keys()
@@ -54,31 +54,31 @@ class Testhdf5_wrapper( unittest.TestCase ):
             tx, ty = type( vx ), type( vy )
             if ( ( tx != ty )
                  and not ( isinstance( vx, ( dict, hdf5_wrapper ) ) and isinstance( vy, ( dict, hdf5_wrapper ) ) ) ):
-                self.assertTrue( np.issubdtype( tx, ty ) )
+                self.assertTrue( np.issubdtype( tx, ty ) ) # type: ignore[unreachable]
 
             if isinstance( vx, ( dict, hdf5_wrapper ) ):
                 self.compare_wrapper_dict( vx, vy )
             else:
-                if isinstance( vx, np.ndarray ):
+                if isinstance( vx, np.ndarray ): # type: ignore[unreachable]
                     self.assertTrue( np.shape( vx ) == np.shape( vy ) )
                     self.assertTrue( ( vx == vy ).all() )
                 else:
                     self.assertTrue( vx == vy )
 
     def test_a_insert_write( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ), mode='w' )
-        data.insert( self.test_dict )
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ), mode='w' ) # type: ignore[attr-defined]
+        data.insert( self.test_dict ) # type: ignore[attr-defined]
 
     def test_b_manual_write( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ), mode='w' )
-        for k, v in self.test_dict.items():
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ), mode='w' ) # type: ignore[attr-defined]
+        for k, v in self.test_dict.items(): # type: ignore[attr-defined]
             data[ k ] = v
 
     def test_c_link_write( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ), mode='w' )
-        for k, v in self.test_dict.items():
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ), mode='w' ) # type: ignore[attr-defined]
+        for k, v in self.test_dict.items(): # type: ignore[attr-defined]
             if ( 'child' in k ):
-                child_path = os.path.join( self.test_dir, 'test_%s.hdf5' % ( k ) )
+                child_path = os.path.join( self.test_dir, 'test_%s.hdf5' % ( k ) ) # type: ignore[attr-defined]
                 data_child = hdf5_wrapper( child_path, mode='w' )
                 data_child.insert( v )
                 data.link( k, child_path )
@@ -86,21 +86,21 @@ class Testhdf5_wrapper( unittest.TestCase ):
                 data[ k ] = v
 
     def test_d_compare_wrapper( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) )
-        self.compare_wrapper_dict( self.test_dict, data )
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) ) # type: ignore[attr-defined]
+        self.compare_wrapper_dict( self.test_dict, data ) # type: ignore[attr-defined]
 
     def test_e_compare_wrapper_copy( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) )
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) ) # type: ignore[attr-defined]
         tmp = data.copy()
-        self.compare_wrapper_dict( self.test_dict, tmp )
+        self.compare_wrapper_dict( self.test_dict, tmp ) # type: ignore[attr-defined]
 
     def test_f_compare_wrapper( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ) )
-        self.compare_wrapper_dict( self.test_dict, data )
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ) ) # type: ignore[attr-defined]
+        self.compare_wrapper_dict( self.test_dict, data ) # type: ignore[attr-defined]
 
     def test_g_compare_wrapper( self ):
-        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ) )
-        self.compare_wrapper_dict( self.test_dict, data )
+        data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ) ) # type: ignore[attr-defined]
+        self.compare_wrapper_dict( self.test_dict, data ) # type: ignore[attr-defined]
 
 
 def main():

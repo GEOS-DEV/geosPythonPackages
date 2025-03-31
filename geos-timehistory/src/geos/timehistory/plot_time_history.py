@@ -65,7 +65,7 @@ def getHistorySeries( database, variable, setname, indices=None, components=None
 
     if indices is not None:
         if type( indices ) is int:
-            indices = list( indices )
+            indices = [indices]
         if isiterable( indices ):
             oob_idxs = list( filter( lambda idx: not 0 <= idx < data_series.shape[ 1 ], indices ) )
             if len( oob_idxs ) > 0:
@@ -79,7 +79,7 @@ def getHistorySeries( database, variable, setname, indices=None, components=None
 
     if components is not None:
         if type( components ) is int:
-            components = list( components )
+            components = [ components ]
         if isiterable( components ):
             oob_comps = list( filter( lambda comp: not 0 <= comp < data_series.shape[ 2 ], components ) )
             if len( oob_comps ) > 0:

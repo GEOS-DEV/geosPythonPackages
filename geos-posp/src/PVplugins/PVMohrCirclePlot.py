@@ -123,7 +123,7 @@ class PVMohrCirclePlot(VTKPythonAlgorithmBase):
         self.m_timeStepsDAS: vtkDAS = vtkDAS()
         self.m_timeStepsDAS.AddObserver(
             0, createModifiedCallback(self)
-        )  # type: ignore[arg-type]
+        )  
 
         #: list of all mohr circles
         self.m_mohrCircles: list[MohrCircle] = []

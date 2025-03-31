@@ -95,5 +95,5 @@ class MohrCoulomb:
         )
         stressNormal: npt.NDArray[np.float64] = np.linspace(
             sigmaMin, stressNormalMax, n
-        )
+        ).astype(np.float64)
         return (stressNormal, np.array(self.computeShearStress(stressNormal)))

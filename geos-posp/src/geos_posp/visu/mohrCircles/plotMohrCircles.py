@@ -86,7 +86,7 @@ def _plotMohrCircles(
         annotate (bool): if True, display min and max normal stress.
     """
     nbPts: int = 361
-    ang: npt.NDArray[np.float64] = np.linspace(0.0, np.pi, nbPts)
+    ang: npt.NDArray[np.float64] = np.linspace(0.0, np.pi, nbPts).astype(np.float64)
     for mohrCircle in mohrCircles:
         radius: float = mohrCircle.getCircleRadius()
         xCoords = mohrCircle.getCircleCenter() + radius * np.cos(ang)
