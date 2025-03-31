@@ -31,7 +31,9 @@ dependencies = [
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
 python_version = "3.10"
-#exclude = [] 
+exclude = [
+    'build', # exclude build directory
+] 
 # strict = true
 
 warn_unreachable = true

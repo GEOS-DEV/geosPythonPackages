@@ -66,4 +66,6 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 allow_redefinition = true
-#exclude = [] 
+exclude = [
+    'build', # exclude build directory
+] 
