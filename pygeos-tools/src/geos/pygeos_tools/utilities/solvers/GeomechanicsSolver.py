@@ -11,7 +11,9 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
+import numpy.typing as npt
+from typing import Dict, List
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
@@ -21,37 +23,15 @@ class GeomechanicsSolver( Solver ):
 
     Attributes
     -----------
-        xml : XML
-            XML object containing parameters for GEOSX initialization
-        initialDt : float
-            Time step for the simulation
-        maxTime : float
-            End time of simulation
-        name : str
-            Solver name
-        type : str
-            Type of solver
-            Default is None
-        geosxArgs : GeosxArgs
-            Object containing GEOSX launching options
-        geosx : pygeosx.Group
-            pygeosx initialize instance
-        alreadyInitialized : bool
-            Flag indicating if the initial conditions have been applied yet
-        firstGeosxInit : bool
-            Flag for initialize or reinitialize 
-        collectionTargets : list
-            Output targets for geosx
-        hdf5Targets : list
-            HDF5 output targets for geosx
-        vtkTargets : list
-            VTK output targets for geosx
+        The ones inherited from Solver class
     """
 
-    def __init__( self, dt=None, maxTime=None, **kwargs ):
+    def __init__( self: Self, solverType: str, dt: float = None, maxTime: float = None, **kwargs ):
         """
         Parameters
         -----------
+            solverType : str
+                The solver used in the XML file
             initialDt : float
                 Initial time step \
                 Default is None
@@ -59,41 +39,128 @@ class GeomechanicsSolver( Solver ):
                 End time of simulation \
                 Default is None
         """
-        super().__init__( **kwargs )
-
+        super().__init__( solverType, **kwargs )
         self.dt = dt
         self.maxTime = maxTime
 
-    def _setTimeVariables( self ):
-        """Set the time variables attributes"""
-        # Set up variables from xml
-        events = self.xml.events
+    def initialize( self, rank: int = 0, xml=None ):
+        super().initialize( rank, xml )
 
-        if self.maxTime is None:
-            self.maxTime = float( events[ "maxTime" ] )
-        else:
-            self.updateTimeVariable( "maxTime" )
+    """
+    Accessors
+    """
+    def getConstitutiveModelData( self, modelName: str ) -> Dict[ str, npt.NDArray ]:
+        """
+        Get the local constitutive model data for each CellElementRegion and its cellBlocks of the mesh.
 
-        if self.dt is None:
-            for event in events[ "PeriodicEvent" ]:
-                if isinstance( event, dict ):
-                    poroName = "poromechanicsSolver"
-                    if event[ "target" ] == "/Solvers/" + poroName:
-                        self.dt = float( event[ 'forceDt' ] )
-                else:
-                    if event == "target" and events[ "PeriodicEvent" ][ "target" ] == "/Solvers/" + self.name:
-                        self.dt = float( events[ "PeriodicEvent" ][ "forceDt" ] )
-        else:
-            self.updateTimeVariable( "dt" )
+        Returns
+        --------
+            Dict[ str, npt.NDArray ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using the constituve
+            "model1", the last region uses "model2", the result is:
+            { "region1/block1/model1": npt.NDArray, "region1/block1/model1": npt.NDArray,
+              "region1/block2/model1": npt.NDArray, "region1/block1/model1": npt.NDArray,
+              "region2/block3/model1": npt.NDArray, "region2/block1/model1": npt.NDArray,
+              "region2/block4/model1": npt.NDArray, "region2/block1/model1": npt.NDArray,
+              "region3/block5/model2": npt.NDArray, "region3/block1/model2": npt.NDArray,
+              "region3/block6/model2": npt.NDArray, "region3/block1/model2": npt.NDArray }
+        """
+        model_paths = self.getAllGeosWrapperByName( modelName, filters=[ self.discretization, "elementRegionsGroup",
+                                                                         "elementSubRegions", "ConstitutiveModels" ] )
+        all_data: Dict[ str, any ] = dict()
+        for path, model in model_paths.items():
+            elts: List[ str ] = path.split( "/" )
+            try:
+                position_elementRegionsGroup: int = elts.index( "elementRegionsGroup" )
+                position_elementSubRegions: int = elts.index( "elementSubRegions" )
+                position_rockType: int = elts.index( "ConstitutiveModels" )
+                regionName: str = elts[ position_elementRegionsGroup + 1 ]
+                cellBlock: str = elts[ position_elementSubRegions + 1 ]
+                rockType: str = elts[ position_rockType + 1 ]
+                all_data[ regionName + "/" + cellBlock + "/" + rockType ] = model
+            except Exception:
+                all_data[ path ] = model
+        return all_data
 
-    def updateTimeVariable( self, variable ):
-        """Overwrite a time variable in GEOS"""
-        if variable == "maxTime":
-            assert hasattr( self, "maxTime" )
-            self.geosx.get_wrapper( "Events/maxTime" ).value()[ 0 ] = self.maxTime
-        elif variable == "dt":
-            assert hasattr( self, "dt" )
-            self.geosx.get_wrapper( "Events/solverApplications/forceDt" ).value()[ 0 ]
+    def getBulkModulus( self ) -> Dict[ str, npt.NDArray ]:
+        """
+        Get the local bulk modulus for each CellElementRegion and its cellBlocks of the mesh.
 
-    def initialize( self, rank=0, xml=None ):
-        super().initialize( rank, xml, stype="SinglePhasePoromechanics" )
+        Returns
+        --------
+            Dict[ str, npt.NDArray ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "shale",
+            the last region uses "sand", the result is:
+            { "region1/block1/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region1/block2/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region2/block3/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region2/block4/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region3/block5/sand": npt.NDArray, "region3/block1/sand": npt.NDArray,
+              "region3/block6/sand": npt.NDArray, "region3/block1/sand": npt.NDArray }
+        """
+        return self.getConstitutiveModelData( "bulkModulus" )
+
+    def getDensities( self ) -> Dict[ str, npt.NDArray ]:
+        """
+        Get the local density for each CellElementRegion and its cellBlocks of the mesh.
+
+        Returns
+        --------
+            Dict[ str, npt.NDArray ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "shale",
+            the last region uses "sand", the result is:
+            { "region1/block1/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region1/block2/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region2/block3/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region2/block4/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region3/block5/sand": npt.NDArray, "region3/block1/sand": npt.NDArray,
+              "region3/block6/sand": npt.NDArray, "region3/block1/sand": npt.NDArray }
+        """
+        return self.getConstitutiveModelData( "density" )
+
+    def getShearModulus( self ) -> Dict[ str, npt.NDArray ]:
+        """
+        Get the local shear modulus for each CellElementRegion and its cellBlocks of the mesh.
+
+        Returns
+        --------
+            Dict[ str, npt.NDArray ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "shale",
+            the last region uses "sand", the result is:
+            { "region1/block1/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region1/block2/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region2/block3/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region2/block4/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region3/block5/sand": npt.NDArray, "region3/block1/sand": npt.NDArray,
+              "region3/block6/sand": npt.NDArray, "region3/block1/sand": npt.NDArray }
+        """
+        return self.getConstitutiveModelData( "shearModulus" )
+
+    def getStresses( self ) -> Dict[ str, npt.NDArray ]:
+        """
+        Get the local stresses for each CellElementRegion and its cellBlocks of the mesh.
+
+        Returns
+        --------
+            Dict[ str, npt.NDArray ]
+            If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "shale",
+            the last region uses "sand", the result is:
+            { "region1/block1/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region1/block2/shale": npt.NDArray, "region1/block1/shale": npt.NDArray,
+              "region2/block3/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region2/block4/shale": npt.NDArray, "region2/block1/shale": npt.NDArray,
+              "region3/block5/sand": npt.NDArray, "region3/block1/sand": npt.NDArray,
+              "region3/block6/sand": npt.NDArray, "region3/block1/sand": npt.NDArray }
+        """
+        return self.getConstitutiveModelData( "stress" )
+
+    def getTotalDisplacement( self ) -> npt.NDArray:
+        """
+        Get the local totalDipslacements from the nodes.
+
+        Returns
+        --------
+            npt.NDArray of totalDipslacements, shape = ( number of nodes, 3 )
+
+        """
+        return self.getGeosWrapperByName( "totalDisplacement", filters=[ self.discretization ] )
