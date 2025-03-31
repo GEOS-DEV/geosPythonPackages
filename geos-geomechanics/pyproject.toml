@@ -21,10 +21,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python"
 ]
-dependencies = [
-    "numpy",
-    "typing_extensions",
-]
 dynamic = ["dependencies"]
 requires-python = ">= 3.9"
 
@@ -62,7 +58,7 @@ filterwarnings = []
 
 [tool.coverage.run]
 branch = true
-source = ["geos_geomechanics"]
+source = ["geos/geomechanics"]
 
 
 [tool.mypy]
