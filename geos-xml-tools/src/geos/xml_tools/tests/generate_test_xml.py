@@ -2,7 +2,7 @@
 
 from lxml import etree as ElementTree
 import os
-from geosx_xml_tools import xml_formatter
+from geos.xml_tools import xml_formatter
 
 
 def generate_test_xml_files( root_dir ):

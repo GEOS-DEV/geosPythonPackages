@@ -7,7 +7,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from checks.self_intersecting_elements import Options, __check
+from geos.mesh.doctor.checks.self_intersecting_elements import Options, __check
 
 
 def test_jumbled_hex():

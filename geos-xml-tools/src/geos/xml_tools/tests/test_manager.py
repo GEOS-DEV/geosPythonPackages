@@ -2,8 +2,8 @@ import unittest
 import re
 import os
 import filecmp
-from geosx_xml_tools import regex_tools, unit_manager, xml_processor
-from geosx_xml_tools.tests import generate_test_xml
+from geos.xml_tools import regex_tools, unit_manager, xml_processor
+from geos.xml_tools.tests import generate_test_xml
 import argparse
 from parameterized import parameterized
 

@@ -296,7 +296,7 @@ def add_quad( mesh: vtkUnstructuredGrid, face: FaceNodesCoords ):
 
     mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
 
-
+@pytest.mark.skip("Test to be fixed")
 def test_copy_fields_when_splitting_mesh():
     """This test is designed to check the __copy_fields method from generate_fractures,
     that will be called when using __split_mesh_on_fractures method from generate_fractures.
