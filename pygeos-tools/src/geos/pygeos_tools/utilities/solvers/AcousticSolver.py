@@ -11,13 +11,13 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 import h5py
 import os
 import numpy as np
-import pygeosx
+import numpy.typing as npt
 import shutil
 from typing import Optional
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.WaveSolver import WaveSolver
 from geos.utils.errors_handling.classes import required_attributes
 from geos.utils.pygeos.solvers import MODEL_FOR_GRADIENT
@@ -34,15 +34,15 @@ class AcousticSolver( WaveSolver ):
         modelForGradient : str
             Gradient model used
     """
-    def __init__( self,
+    def __init__( self: Self,
                   solverType: str = "AcousticSEM",
-                  dt=None,
-                  minTime=0,
-                  maxTime=None,
-                  dtSeismo=None,
-                  dtWaveField=None,
-                  sourceType=None,
-                  sourceFreq=None,
+                  dt: float = None,
+                  minTime: float = 0.0,
+                  maxTime: float = None,
+                  dtSeismo: float = None,
+                  dtWaveField: float = None,
+                  sourceType: str = None,
+                  sourceFreq: float = None,
                   **kwargs ):
         """
         Parameters
@@ -81,7 +81,7 @@ class AcousticSolver( WaveSolver ):
                           **kwargs )
         self.modelForGradient: str = None
 
-    def __repr__( self ):
+    def __repr__( self: Self ):
         string_list = []
         string_list.append( "Solver type : " + type( self ).__name__ + "\n" )
         string_list.append( "dt : " + str( self.dt ) + "\n" )
@@ -97,7 +97,7 @@ class AcousticSolver( WaveSolver ):
     """
     Accessors
     """
-    def getFullPressureAtReceivers( self, comm ):
+    def getFullPressureAtReceivers( self: Self, comm ) -> npt.NDArray[ np.float64 ]:
         """
         Return all pressures at receivers values on all ranks
         Note that for a too large 2d array this may not work.
@@ -121,14 +121,15 @@ class AcousticSolver( WaveSolver ):
         pressure = comm.bcast( pressure, root=0 )
         return pressure
 
-    def getFullWaveFieldAtReceivers( self, comm ):
+    def getFullWaveFieldAtReceivers( self: Self, comm ) -> npt.NDArray[ np.float64 ]:
         return self.getFullPressureAtReceivers( comm )[ :, :-1 ]
 
     @required_attributes( "modelForGradient" )
-    def getModelForGradient( self ) -> str:
+    def getModelForGradient( self: Self ) -> str:
         return self.modelForGradient
 
-    def getPartialGradientFor1RegionWith1CellBlock( self, filterGhost=False, **kwargs ) -> Optional[ np.array ]:
+    def getPartialGradientFor1RegionWith1CellBlock( self: Self, filterGhost=False,
+                                                    **kwargs ) -> Optional[  npt.NDArray[ np.float64 ] ]:
         """
         Get the local rank gradient value
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -154,7 +155,7 @@ class AcousticSolver( WaveSolver ):
         else:
             print( "getPartialGradientFor1RegionWith1CellBlock: No partialGradient was found." )
 
-    def getPressureAtReceivers( self ):
+    def getPressureAtReceivers( self: Self ) -> npt.NDArray[ np.float64 ]:
         """
         Get the pressure values at receivers coordinates
 
@@ -164,13 +165,13 @@ class AcousticSolver( WaveSolver ):
         """
         return self.getGeosWrapperByName( "pressureNp1AtReceivers", ["Solvers"] )
 
-    def getWaveField( self ):
+    def getWaveField( self: Self ) -> npt.NDArray[ np.float64 ]:
         return self.getPressureAtReceivers()[ :, :-1 ]
 
     """
     Mutators
     """
-    def setModelForGradient( self, modelForGradient: str ) -> None:
+    def setModelForGradient( self: Self, modelForGradient: str ) -> None:
         f"""
         Set the model for the gradient
 
@@ -189,7 +190,7 @@ class AcousticSolver( WaveSolver ):
     """
     Update methods
     """
-    def updateDensityModel( self, density ):
+    def updateDensityModel( self: Self, density: npt.NDArray ) -> None:
         """
         Update density values in GEOS
 
@@ -200,7 +201,7 @@ class AcousticSolver( WaveSolver ):
         """
         self.setGeosWrapperValueByName( "acousticDensity", value=density, filters=[ self.discretization ] )
 
-    def updateVelocityModel( self, vel ):
+    def updateVelocityModel( self: Self, vel: npt.NDArray ) -> None:
         """
         Update velocity value in GEOS
 
@@ -211,8 +212,8 @@ class AcousticSolver( WaveSolver ):
         """
         self.setGeosWrapperValueByName( "acousticVelocity", value=vel, filters=[ self.discretization ] )
 
-    def updateVelocityModelFromHDF5( self, filename: str, low: float, high: float, comm, velocityModelName: str,
-                                     **kwargs ):
+    def updateVelocityModelFromHDF5( self: Self, filename: str, low: float, high: float, comm, velocityModelName: str,
+                                     **kwargs ) -> None:
         """
         Update velocity model
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -257,8 +258,9 @@ class AcousticSolver( WaveSolver ):
     """
     Methods for computation and reset of values
     """
-    def computePartialGradientFor1RegionWith1CellBlock( self, shotId: int, minDepth: float, comm, velocityName: str,
-                                                        gradDirectory="partialGradient", filterGhost=False, **kwargs ):
+    def computePartialGradientFor1RegionWith1CellBlock( self: Self, shotId: int, minDepth: float, comm,
+                                                        velocityName: str, gradDirectory="partialGradient",
+                                                        filterGhost: bool = False, **kwargs ) -> None:
         """
         Compute the partial Gradient
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -320,7 +322,7 @@ class AcousticSolver( WaveSolver ):
 
         comm.Barrier()
 
-    def resetWaveField( self, **kwargs ):
+    def resetWaveField( self: Self, **kwargs ) -> None:
         """
         Reinitialize all pressure values on the Wavefield to zero in GEOSX
         """
@@ -338,7 +340,7 @@ class AcousticSolver( WaveSolver ):
             for component in ( "x", "y", "z" ):
                 self.setGeosWrapperValueByTargetKey( prefix + f"velocity_{component}", value=0.0 )
 
-    def resetPressureAtReceivers( self ):
+    def resetPressureAtReceivers( self: Self ) -> None:
         """
         Reinitialize pressure values at receivers to 0
         """

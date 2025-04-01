@@ -11,8 +11,9 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
-import pygeosx
+import numpy.typing as npt
+from typing import Tuple, Union
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.WaveSolver import WaveSolver
 
 
@@ -25,15 +26,15 @@ class ElasticSolver( WaveSolver ):
         The ones inherited from WaveSolver class
     """
 
-    def __init__( self,
+    def __init__( self: Self,
                   solverType: str = "ElasticSEM",
-                  dt=None,
-                  minTime=0,
-                  maxTime=None,
-                  dtSeismo=None,
-                  dtWaveField=None,
-                  sourceType=None,
-                  sourceFreq=None,
+                  dt: float = None,
+                  minTime: float = 0.0,
+                  maxTime: float = None,
+                  dtSeismo: float = None,
+                  dtWaveField: float = None,
+                  sourceType: str = None,
+                  sourceFreq: float = None,
                   **kwargs ):
         """
         Parameters
@@ -71,7 +72,7 @@ class ElasticSolver( WaveSolver ):
                           sourceFreq=sourceFreq,
                           **kwargs )
 
-    def __repr__( self ):
+    def __repr__( self: Self ):
         string_list = []
         string_list.append( "Solver type : " + type( self ).__name__ + "\n" )
         string_list.append( "dt : " + str( self.dt ) + "\n" )
@@ -84,7 +85,7 @@ class ElasticSolver( WaveSolver ):
 
         return rep
 
-    def initialize( self, rank=0, xml=None ):
+    def initialize( self: Self, rank: int = 0, xml=None ) -> None:
         super().initialize( rank, xml )
         try:
             useDAS = self.xml.getAttribute( parentElement=self.type, attributeTag="useDAS" )
@@ -104,7 +105,7 @@ class ElasticSolver( WaveSolver ):
     """
     Accessors
     """
-    def getAllDisplacementAtReceivers( self ):
+    def getAllDisplacementAtReceivers( self: Self ) -> Tuple[ npt.NDArray, npt.NDArray, npt.NDArray ]:
         """
         Get the displacement for the x, y and z directions at all time step and all receivers coordinates
 
@@ -117,13 +118,13 @@ class ElasticSolver( WaveSolver ):
             displacementZ : numpy array
                 Component Z of the displacement
         """
-        displacementX = self.getDisplacementAtReceivers( "X" )
-        displacementY = self.getDisplacementAtReceivers( "Y" )
-        displacementZ = self.getDisplacementAtReceivers( "Z" )
+        displacementX: npt.NDArray = self.getDisplacementAtReceivers( "X" )
+        displacementY: npt.NDArray = self.getDisplacementAtReceivers( "Y" )
+        displacementZ: npt.NDArray = self.getDisplacementAtReceivers( "Z" )
 
         return displacementX, displacementY, displacementZ
 
-    def getDASSignalAtReceivers( self ):
+    def getDASSignalAtReceivers( self: Self ) -> npt.NDArray:
         """
         Get the DAS signal values at receivers coordinates
 
@@ -135,11 +136,11 @@ class ElasticSolver( WaveSolver ):
         if self.type != "ElasticSEM":
             raise TypeError( f"DAS signal not implemented for solver of type {self.type}." )
         else:
-            dassignal = self.getGeosWrapperByName( "dasSignalNp1AtReceivers" )
+            dassignal: npt.NDArray = self.getGeosWrapperByName( "dasSignalNp1AtReceivers" )
 
         return dassignal
 
-    def getDisplacementAtReceivers( self, component="X" ):
+    def getDisplacementAtReceivers( self: Self, component: str = "X" ) -> npt.NDArray:
         """
         Get the displacement values at receivers coordinates for a given direction
 
@@ -150,26 +151,26 @@ class ElasticSolver( WaveSolver ):
         """
         assert component.upper() in ( "X", "Y", "Z" )
         if self.type == "ElasticFirstOrderSEM":
-            displacement = self.getGeosWrapperByName( f"displacement{component.lower()}Np1AtReceivers" )
+            displacement: npt.NDArray = self.getGeosWrapperByName( f"displacement{component.lower()}Np1AtReceivers" )
         elif self.type == "ElasticSEM":
             displacement = self.getGeosWrapperByName( f"displacement{component.upper()}Np1AtReceivers" )
 
         return displacement
 
-    def getWaveField( self ):
+    def getWaveField( self: Self ) -> Union[ npt.NDArray, Tuple[ npt.NDArray, npt.NDArray, npt.NDArray ] ]:
         if self.useDAS:
             return self.getDASSignalAtReceivers()
         else:
             return self.getAllDisplacementAtReceivers()
 
     # TODO
-    # def getFullWaveFieldAtReceivers( self, comm ):
+    # def getFullWaveFieldAtReceivers( self: Self, comm ):
     #     print( "This method is not implemented yet" )
 
     """
     Update methods
     """
-    def updateDensityModel( self, density ):
+    def updateDensityModel( self: Self, density: npt.NDArray ) -> None:
         """
         Update density values in GEOS
 
@@ -180,7 +181,7 @@ class ElasticSolver( WaveSolver ):
         """
         self.setGeosWrapperValueByName( "elasticDensity", value=density, filters=[ self.discretization ] )
 
-    def updateVelocityModel( self, vel, component ):
+    def updateVelocityModel( self: Self, vel: npt.NDArray, component: str ) -> None:
         """
         Update velocity value in GEOS
 
@@ -197,7 +198,7 @@ class ElasticSolver( WaveSolver ):
     """
     Methods for reset of values
     """
-    def resetWaveField( self, **kwargs ):
+    def resetWaveField( self: Self, **kwargs ) -> None:
         """Reinitialize all displacement values on the Wavefield to zero in GEOSX"""
 
         self.setGeosWrapperValueByTargetKey( "Solvers/" + self.name + "/indexSeismoTrace", value=0 )
@@ -219,7 +220,7 @@ class ElasticSolver( WaveSolver ):
                     cc = c + component[ j ]
                 self.setGeosWrapperValueByTargetKey( prefix + f"stresstensor{cc}", value=0.0 )
 
-    def resetDisplacementAtReceivers( self ):
+    def resetDisplacementAtReceivers( self: Self ) -> None:
         """Reinitialize displacement values at receivers to 0
         """
         for component in ( "X", "Y", "Z" ):

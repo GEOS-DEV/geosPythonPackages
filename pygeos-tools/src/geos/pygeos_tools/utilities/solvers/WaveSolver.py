@@ -13,8 +13,11 @@
 # ------------------------------------------------------------------------------------------------------------
 
 import numpy as np
+import numpy.typing as npt
 import pygeosx
 from scipy.fftpack import fftfreq, ifft, fft
+from typing import List, Union
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
@@ -43,15 +46,15 @@ class WaveSolver( Solver ):
         sourceFreq : float
             Frequency of the source
     """
-    def __init__( self,
+    def __init__( self: Self,
                   solverType: str,
-                  dt=None,
-                  minTime=0.0,
-                  maxTime=None,
-                  dtSeismo=None,
-                  dtWaveField=None,
-                  sourceType=None,
-                  sourceFreq=None,
+                  dt: float = None,
+                  minTime: float = 0.0,
+                  maxTime: float = None,
+                  dtSeismo: float = None,
+                  dtWaveField: float = None,
+                  sourceType: str = None,
+                  sourceFreq: float = None,
                   **kwargs ):
         """
         Parameters
@@ -92,8 +95,8 @@ class WaveSolver( Solver ):
         self.sourceType: str = sourceType
         self.sourceFreq: float = sourceFreq
 
-    def __repr__( self ):
-        string_list = []
+    def __repr__( self: Self ):
+        string_list: List[ str ] = list()
         string_list.append( "Solver type : " + self.type + "\n" )
         string_list.append( "dt : " + str( self.dt ) + "\n" )
         string_list.append( "maxTime : " + str( self.maxTime ) + "\n" )
@@ -105,7 +108,7 @@ class WaveSolver( Solver ):
 
         return rep
 
-    def initialize( self, rank: int = 0, xml=None ) -> None:
+    def initialize( self: Self, rank: int = 0, xml=None ) -> None:
         """
         Initialization or reinitialization of GEOSX
 
@@ -123,7 +126,7 @@ class WaveSolver( Solver ):
     """
     Accessors
     """
-    def getVelocityModel( self, velocityName: str, filterGhost=False, **kwargs ) -> np.array:
+    def getVelocityModel( self: Self, velocityName: str, filterGhost: bool = False, **kwargs ) -> npt.NDArray:
         """
         Get the velocity values
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -157,7 +160,7 @@ class WaveSolver( Solver ):
     """
     Mutators
     """
-    def setSourceAndReceivers( self, sourcesCoords=[], receiversCoords=[] ) -> None:
+    def setSourceAndReceivers( self: Self, sourcesCoords: List = [], receiversCoords: List = [] ) -> None:
         """
         Update sources and receivers positions in GEOS
 
@@ -188,7 +191,7 @@ class WaveSolver( Solver ):
 
         self.solver.reinit()
 
-    def setSourceFrequency( self, freq ) -> None:
+    def setSourceFrequency( self: Self, freq: float ) -> None:
         """
         Overwrite GEOSX source frequency and set self.sourceFreq
 
@@ -200,7 +203,7 @@ class WaveSolver( Solver ):
         self.setGeosWrapperValueByTargetKey( "/Solvers/" + self.name + "/timeSourceFrequency", freq )
         self.sourceFreq = freq
 
-    def setSourceValue( self, value ) -> None:
+    def setSourceValue( self: Self, value: Union[ npt.NDArray, List ] ) -> None:
         """
         Set the value of the source in GEOS
 
@@ -222,7 +225,7 @@ class WaveSolver( Solver ):
     """
     Update method
     """
-    def updateSourceProperties( self ) -> None:
+    def updateSourceProperties( self: Self ) -> None:
         """
         Updates the frequency and type of source to match the XML
         """
@@ -250,7 +253,7 @@ class WaveSolver( Solver ):
     """
     Utils
     """
-    def evaluateSource( self ) -> None:
+    def evaluateSource( self: Self ) -> None:
         """
         Evaluate source and update on GEOS
         Only ricker order {0 - 4} accepted
@@ -306,7 +309,7 @@ class WaveSolver( Solver ):
         self.setSourceValue( sourceValue )
         self.sourceValue = sourceValue
 
-    def filterSource( self, fmax ) -> None:
+    def filterSource( self: Self, fmax: Union[ str, float ] ) -> None:
         """
         Filter the source value and give the value to GEOSX. Note that is can also modify the start and end time of
         simulation to avoid discontinuity.
@@ -379,7 +382,7 @@ class WaveSolver( Solver ):
         self.setGeosWrapperValueByTargetKey( "Events/minTime", self.minTimeSim )
         self.sourceValue = np.real( y[ max( i1 - d, 0 ):min( i4 + d, n ), : ] )
 
-    def outputWaveField( self, time ) -> None:
+    def outputWaveField( self: Self, time: float ) -> None:
         """
         Trigger the wavefield output
 

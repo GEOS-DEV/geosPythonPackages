@@ -11,9 +11,10 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 import numpy as np
+import numpy.typing as npt
 from typing import Dict, List
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
@@ -26,7 +27,7 @@ class ReservoirSolver( Solver ):
         The ones inherited from Solver class
     """
 
-    def __init__( self, solverType: str, initialDt=None, maxTime=None, **kwargs ):
+    def __init__( self: Self, solverType: str, initialDt: float = None, maxTime: float = None, **kwargs ):
         """
         Parameters
         -----------
@@ -45,20 +46,20 @@ class ReservoirSolver( Solver ):
         self.maxTime: float = maxTime
         self.isCoupled = kwargs.get( "coupled", False )
 
-    def getDeltaPressures( self ) -> Dict[ str, any ]:
+    def getDeltaPressures( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local delta pressure for each CellElementRegion and each cellBlocks of the mesh.
 
         Returns
         --------
-            Dict[ str, np.array ]
+            Dict[ str, npt.NDArray ]
             If your mesh contains 3 regions with 2 cellBlocks in each, the result is:
-            { "region1/block1": np.array, "region1/block2": np.array,
-              "region2/block3": np.array, "region2/block4": np.array,
-              "region3/block5": np.array, "region3/block6": np.array }
+            { "region1/block1": npt.NDArray, "region1/block2": npt.NDArray,
+              "region2/block3": npt.NDArray, "region2/block4": npt.NDArray,
+              "region3/block5": npt.NDArray, "region3/block6": npt.NDArray }
         """
         deltaPres_with_paths = self.getAllGeosWrapperByName( "deltaPressure", filters=[ self.discretization ] )
-        all_deltaPres: Dict[ str, any ] = dict()
+        all_deltaPres: Dict[ str, npt.NDArray ] = dict()
         for path, deltaPres in deltaPres_with_paths.items():
             elts: List[ str ] = path.split( "/" )
             try:
@@ -72,25 +73,25 @@ class ReservoirSolver( Solver ):
 
         return all_deltaPres
 
-    def getPhaseVolumeFractions( self ) -> Dict[ str, any ]:
+    def getPhaseVolumeFractions( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local phaseVolumeFraction for each CellElementRegion and each cellBlocks of the mesh and each phase.
 
         Returns
         --------
-            Dict[ str, np.array ]
+            Dict[ str, npt.NDArray ]
             If your mesh contains 3 regions with 2 cellBlocks in each, and two phases 'oil' and 'gas' give the result:
-            { "region1/block1/oil": np.array, "region1/block1/gas": np.array,
-              "region1/block2/oil": np.array, "region1/block1/gas": np.array,
-              "region2/block3/oil": np.array, "region2/block1/gas": np.array,
-              "region2/block4/oil": np.array, "region2/block1/gas": np.array,
-              "region3/block5/oil": np.array, "region3/block1/gas": np.array,
-              "region3/block6/oil": np.array, "region3/block1/gas": np.array }
+            { "region1/block1/oil": npt.NDArray, "region1/block1/gas": npt.NDArray,
+              "region1/block2/oil": npt.NDArray, "region1/block1/gas": npt.NDArray,
+              "region2/block3/oil": npt.NDArray, "region2/block1/gas": npt.NDArray,
+              "region2/block4/oil": npt.NDArray, "region2/block1/gas": npt.NDArray,
+              "region3/block5/oil": npt.NDArray, "region3/block1/gas": npt.NDArray,
+              "region3/block6/oil": npt.NDArray, "region3/block1/gas": npt.NDArray }
         """
         phaseNames: List[ str ] = self.xml.getConstitutivePhases()
         if phaseNames is not None:
             all_pvf_paths = self.getAllGeosWrapperByName( "phaseVolumeFraction", filters=[ self.discretization ] )
-            all_pvf: Dict[ str, any ] = dict()
+            all_pvf: Dict[ str, npt.NDArray ] = dict()
             for path, pvf in all_pvf_paths.items():
                 elts: List[ str ] = path.split( "/" )
                 try:
@@ -107,25 +108,25 @@ class ReservoirSolver( Solver ):
         else:
             print( "getPhaseVolumeFractions: No phases defined in the XML so no phaseVolumeFraction available." )
 
-    def getPorosities( self ):
+    def getPorosities( self: Self ):
         """
         Get the local porosity for each CellElementRegion and its cellBlocks of the mesh.
 
         Returns
         --------
-            Dict[ str, np.array ]
+            Dict[ str, npt.NDArray ]
             If your mesh contains 3 regions with 2 cellBlocks in each. The first 2 regions are using "burdenPorosity",
             the last region uses "sandPorosity", the result is:
-            { "region1/block1/burdenPorosity": np.array, "region1/block1/burdenPorosity": np.array,
-              "region1/block2/burdenPorosity": np.array, "region1/block1/burdenPorosity": np.array,
-              "region2/block3/burdenPorosity": np.array, "region2/block1/burdenPorosity": np.array,
-              "region2/block4/burdenPorosity": np.array, "region2/block1/burdenPorosity": np.array,
-              "region3/block5/sandPorosity": np.array, "region3/block1/sandPorosity": np.array,
-              "region3/block6/sandPorosity": np.array, "region3/block1/sandPorosity": np.array }
+            { "region1/block1/burdenPorosity": npt.NDArray, "region1/block1/burdenPorosity": npt.NDArray,
+              "region1/block2/burdenPorosity": npt.NDArray, "region1/block1/burdenPorosity": npt.NDArray,
+              "region2/block3/burdenPorosity": npt.NDArray, "region2/block1/burdenPorosity": npt.NDArray,
+              "region2/block4/burdenPorosity": npt.NDArray, "region2/block1/burdenPorosity": npt.NDArray,
+              "region3/block5/sandPorosity": npt.NDArray, "region3/block1/sandPorosity": npt.NDArray,
+              "region3/block6/sandPorosity": npt.NDArray, "region3/block1/sandPorosity": npt.NDArray }
         """
         porosityNames: List[ str ] = self.xml.getPorosityNames()
         if porosityNames is not None:
-            all_poro: Dict[ str, any ] = dict()
+            all_poro: Dict[ str, npt.NDArray ] = dict()
             for porosityName in porosityNames:
                 all_poro_paths = self.getAllGeosWrapperByName( porosityName,
                                                                filters=[ self.discretization, "referencePorosity" ] )
@@ -143,20 +144,20 @@ class ReservoirSolver( Solver ):
         else:
             print( "getPorosities: No Porosity model defined in the XML." )
 
-    def getPressures( self ) -> Dict[ str, any ]:
+    def getPressures( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local pressure for each CellElementRegion and each cellBlocks of the mesh.
 
         Returns
         --------
-            Dict[ str, np.array ]
+            Dict[ str, npt.NDArray ]
             If your mesh contains 3 regions with 2 cellBlocks in each, the result is:
-            { "region1/block1": np.array, "region1/block2": np.array,
-              "region2/block3": np.array, "region2/block4": np.array,
-              "region3/block5": np.array, "region3/block6": np.array }
+            { "region1/block1": npt.NDArray, "region1/block2": npt.NDArray,
+              "region2/block3": npt.NDArray, "region2/block4": npt.NDArray,
+              "region3/block5": npt.NDArray, "region3/block6": npt.NDArray }
         """
         pressures_with_paths = self.getAllGeosWrapperByName( "pressure", filters=[ self.discretization ] )
-        all_pressures: Dict[ str, any ] = dict()
+        all_pressures: Dict[ str, npt.NDArray ] = dict()
         for path, pressure in pressures_with_paths.items():
             elts: List[ str ] = path.split( "/" )
             try:

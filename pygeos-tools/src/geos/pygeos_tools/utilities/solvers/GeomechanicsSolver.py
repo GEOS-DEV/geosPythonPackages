@@ -43,13 +43,13 @@ class GeomechanicsSolver( Solver ):
         self.dt = dt
         self.maxTime = maxTime
 
-    def initialize( self, rank: int = 0, xml=None ):
+    def initialize( self: Self, rank: int = 0, xml=None ) -> None:
         super().initialize( rank, xml )
 
     """
     Accessors
     """
-    def getConstitutiveModelData( self, modelName: str ) -> Dict[ str, npt.NDArray ]:
+    def getConstitutiveModelData( self: Self, modelName: str ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local constitutive model data for each CellElementRegion and its cellBlocks of the mesh.
 
@@ -82,7 +82,7 @@ class GeomechanicsSolver( Solver ):
                 all_data[ path ] = model
         return all_data
 
-    def getBulkModulus( self ) -> Dict[ str, npt.NDArray ]:
+    def getBulkModulus( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local bulk modulus for each CellElementRegion and its cellBlocks of the mesh.
 
@@ -100,7 +100,7 @@ class GeomechanicsSolver( Solver ):
         """
         return self.getConstitutiveModelData( "bulkModulus" )
 
-    def getDensities( self ) -> Dict[ str, npt.NDArray ]:
+    def getDensities( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local density for each CellElementRegion and its cellBlocks of the mesh.
 
@@ -118,7 +118,7 @@ class GeomechanicsSolver( Solver ):
         """
         return self.getConstitutiveModelData( "density" )
 
-    def getShearModulus( self ) -> Dict[ str, npt.NDArray ]:
+    def getShearModulus( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local shear modulus for each CellElementRegion and its cellBlocks of the mesh.
 
@@ -136,7 +136,7 @@ class GeomechanicsSolver( Solver ):
         """
         return self.getConstitutiveModelData( "shearModulus" )
 
-    def getStresses( self ) -> Dict[ str, npt.NDArray ]:
+    def getStresses( self: Self ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local stresses for each CellElementRegion and its cellBlocks of the mesh.
 
@@ -154,7 +154,7 @@ class GeomechanicsSolver( Solver ):
         """
         return self.getConstitutiveModelData( "stress" )
 
-    def getTotalDisplacement( self ) -> npt.NDArray:
+    def getTotalDisplacement( self: Self ) -> npt.NDArray:
         """
         Get the local totalDipslacements from the nodes.
 

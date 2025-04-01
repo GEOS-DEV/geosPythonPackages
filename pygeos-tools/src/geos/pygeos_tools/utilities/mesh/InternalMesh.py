@@ -12,7 +12,10 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
 
-from numpy import arange, zeros
+import numpy as np
+import numpy.typing as npt
+from typing import Dict, List
+from typing_extensions import Self
 
 
 class InternalMesh:
@@ -35,8 +38,8 @@ class InternalMesh:
             Mesh order
         cellBlockNames : str
             Names of each mesh block
-        cellBounds : 
-        elementTypes : 
+        cellBounds : npt.NDArray
+        elementTypes : List[ str ]
             Element types of each mesh block
         numberOfCells : int
             Total number of cells
@@ -46,7 +49,7 @@ class InternalMesh:
             Dict containing the mesh field specifications
     """
 
-    def __init__( self, xml ):
+    def __init__( self: Self, xml ):
         """
         Parameters
         ----------
@@ -54,40 +57,35 @@ class InternalMesh:
                 XML object containing the information on the mesh
         """
         self.xml = xml
+        mesh: Dict = xml.mesh[ "InternalMesh" ]
 
-        mesh = xml.mesh[ "InternalMesh" ]
-        elementRegion = xml.elementRegions[ "CellElementRegion" ]
-        fieldSpecifications = xml.fieldSpecifications
+        xCoords: List[ int ] = list( eval( mesh[ "xCoords" ] ) )
+        yCoords: List[ int ] = list( eval( mesh[ "yCoords" ] ) )
+        zCoords: List[ int ] = list( eval( mesh[ "zCoords" ] ) )
 
-        name = mesh[ "name" ]
+        self.bounds: List[ List[ float ] ] = [ [ xCoords[ 0 ], xCoords[ -1 ] ], [ yCoords[ 0 ], yCoords[ -1 ] ],
+                                               [ zCoords[ 0 ], zCoords[ -1 ] ] ]
 
-        xCoords = list( eval( mesh[ "xCoords" ] ) )
-        yCoords = list( eval( mesh[ "yCoords" ] ) )
-        zCoords = list( eval( mesh[ "zCoords" ] ) )
+        nxStr: str = mesh[ "nx" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
+        nyStr: str = mesh[ "ny" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
+        nzStr: str = mesh[ "nz" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
 
-        self.bounds = [ [ xCoords[ 0 ], xCoords[ -1 ] ], [ yCoords[ 0 ], yCoords[ -1 ] ],
-                        [ zCoords[ 0 ], zCoords[ -1 ] ] ]
+        nx: List[ int ] = [ eval( nx ) for nx in nxStr ]
+        ny: List[ int ] = [ eval( ny ) for ny in nyStr ]
+        nz: List[ int ] = [ eval( nz ) for nz in nzStr ]
 
-        nxStr = mesh[ "nx" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
-        nyStr = mesh[ "ny" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
-        nzStr = mesh[ "nz" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
+        self.nx: List[ int ] = nx
+        self.ny: List[ int ] = ny
+        self.nz: List[ int ] = nz
 
-        nx = [ eval( nx ) for nx in nxStr ]
-        ny = [ eval( ny ) for ny in nyStr ]
-        nz = [ eval( nz ) for nz in nzStr ]
-
-        self.nx = nx
-        self.ny = ny
-        self.nz = nz
-
-        order = 1
-        self.order = order
+        order: int = 1
+        self.order: int = order
 
         self.cellBlockNames = mesh[ "cellBlockNames" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
 
-        xlayers = []
-        ylayers = []
-        zlayers = []
+        xlayers: List[ List[ float ] ] = list()
+        ylayers: List[ List[ float ] ] = list()
+        zlayers: List[ List[ float ] ] = list()
         for i in range( len( nx ) ):
             xlayers.append( [ xCoords[ i ], xCoords[ i + 1 ] ] )
         for i in range( len( ny ) ):
@@ -95,49 +93,52 @@ class InternalMesh:
         for i in range( len( nz ) ):
             zlayers.append( [ zCoords[ i ], zCoords[ i + 1 ] ] )
 
-        self.layers = [ xlayers, ylayers, zlayers ]
+        self.layers: List[ List[ List[ float ] ] ] = [ xlayers, ylayers, zlayers ]
 
-        xCellsBounds = zeros( sum( nx ) + 1 )
-        yCellsBounds = zeros( sum( ny ) + 1 )
-        zCellsBounds = zeros( sum( nz ) + 1 )
+        xCellsBounds: npt.NDArray = np.zeros( sum( nx ) + 1 )
+        yCellsBounds: npt.NDArray = np.zeros( sum( ny ) + 1 )
+        zCellsBounds: npt.NDArray = np.zeros( sum( nz ) + 1 )
 
         for i in range( len( nx ) ):
-            xstep = ( xlayers[ i ][ 1 ] - xlayers[ i ][ 0 ] ) / nx[ i ]
+            xstep: int = ( xlayers[ i ][ 1 ] - xlayers[ i ][ 0 ] ) / nx[ i ]
             if i == 0:
-                xCellsBounds[ 0:nx[ i ] ] = arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ], xstep )
+                xCellsBounds[ 0:nx[ i ] ] = np.arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ], xstep )
             else:
-                xCellsBounds[ nx[ i - 1 ]:sum( nx[ 0:i + 1 ] ) ] = arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ], xstep )
+                xCellsBounds[ nx[ i - 1 ]:sum( nx[ 0:i + 1 ] ) ] = np.arange( xlayers[ i ][ 0 ], xlayers[ i ][ 1 ],
+                                                                              xstep )
         xCellsBounds[ nx[ -1 ] ] = xlayers[ i ][ 1 ]
 
         for i in range( len( ny ) ):
-            ystep = ( ylayers[ i ][ 1 ] - ylayers[ i ][ 0 ] ) / ny[ i ]
+            ystep: int = ( ylayers[ i ][ 1 ] - ylayers[ i ][ 0 ] ) / ny[ i ]
             if i == 0:
-                yCellsBounds[ 0:ny[ i ] ] = arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ], ystep )
+                yCellsBounds[ 0:ny[ i ] ] = np.arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ], ystep )
             else:
-                xCellsBounds[ ny[ i - 1 ]:sum( ny[ 0:i + 1 ] ) ] = arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ], ystep )
+                xCellsBounds[ ny[ i - 1 ]:sum( ny[ 0:i + 1 ] ) ] = np.arange( ylayers[ i ][ 0 ], ylayers[ i ][ 1 ],
+                                                                              ystep )
         yCellsBounds[ ny[ -1 ] ] = ylayers[ i ][ 1 ]
 
         for i in range( len( nz ) ):
-            zstep = ( zlayers[ i ][ 1 ] - zlayers[ i ][ 0 ] ) / nz[ i ]
+            zstep: int = ( zlayers[ i ][ 1 ] - zlayers[ i ][ 0 ] ) / nz[ i ]
             if i == 0:
-                zCellsBounds[ 0:nz[ i ] ] = arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ], zstep )
+                zCellsBounds[ 0:nz[ i ] ] = np.arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ], zstep )
             else:
-                zCellsBounds[ nz[ i - 1 ]:sum( nz[ 0:i + 1 ] ) ] = arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ], zstep )
+                zCellsBounds[ nz[ i - 1 ]:sum( nz[ 0:i + 1 ] ) ] = np.arange( zlayers[ i ][ 0 ], zlayers[ i ][ 1 ],
+                                                                              zstep )
         zCellsBounds[ nz[ -1 ] ] = zlayers[ i ][ 1 ]
 
-        self.cellBounds = [ xCellsBounds, yCellsBounds, zCellsBounds ]
+        self.cellBounds: List[ npt.NDArray ] = [ xCellsBounds, yCellsBounds, zCellsBounds ]
 
-        elementTypes = mesh[ "elementTypes" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
+        elementTypes: str = mesh[ "elementTypes" ].strip( '' ).replace( '{', '' ).replace( '}', '' ).split( ',' )
 
-        self.elementTypes = []
+        self.elementTypes: List[ str ] = list()
         for type in elementTypes:
             if type == "C3D8":
                 self.elementTypes.append( "Hexahedron" )
             else:
                 self.elementTypes.append( type )
 
-        self.numberOfCells = sum( nx ) * sum( ny ) * sum( nz )
-        self.numberOfPoints = ( sum( nx ) + 1 ) * ( sum( ny ) + 1 ) * ( sum( nz ) + 1 )
+        self.numberOfCells: int = sum( nx ) * sum( ny ) * sum( nz )
+        self.numberOfPoints: int = ( sum( nx ) + 1 ) * ( sum( ny ) + 1 ) * ( sum( nz ) + 1 )
 
-        self.fieldSpecifications = xml.fieldSpecifications
-        self.isSet = True
+        self.fieldSpecifications: Dict[ str, any ] = xml.fieldSpecifications
+        self.isSet: bool = True

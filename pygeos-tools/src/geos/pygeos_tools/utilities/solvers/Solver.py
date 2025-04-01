@@ -13,10 +13,12 @@
 # ------------------------------------------------------------------------------------------------------------
 from mpi4py import MPI
 import numpy as np
+import numpy.typing as npt
 import os
 import pygeosx
 import sys
 from typing import Dict, List, Optional, Union
+from typing_extensions import Self
 from geos.pygeos_tools.wrapper import ( find_first_difference_between_wrapper_paths, get_all_matching_wrapper_paths,
                                         get_wrapper )
 from geos.pygeos_tools.utilities.input.Xml import XML
@@ -67,7 +69,7 @@ class Solver:
         xml : XML
             XML object
     """
-    def __init__( self, solverType: str, **kwargs ):
+    def __init__( self: Self, solverType: str, **kwargs ):
         self.alreadyInitialized: bool = False
         argv = kwargs.get( "geosx_argv", sys.argv )
         self.geosxArgs = GeosxArgs( argv )
@@ -99,7 +101,7 @@ class Solver:
         self.vtkOutputs: List[ pygeosx.Group ] = None
         self.vtkTargets: List[ str ] = None
 
-    def initialize( self, rank: int = 0, xml: XML = None ) -> None:
+    def initialize( self: Self, rank: int = 0, xml: XML = None ) -> None:
         """
         Initialization or reinitialization of GEOS that will update these parameters:
         - the solver name stored in self.name
@@ -148,8 +150,8 @@ class Solver:
     """
     Accessors from pygeosx and xml
     """
-    @required_attributes( 'xml' )
-    def _getCellBlocks( self ) -> List[ str ]:
+    @required_attributes( "xml" )
+    def _getCellBlocks( self: Self ) -> List[ str ]:
         """
         Get the cell blocks names from the xml
 
@@ -160,7 +162,7 @@ class Solver:
         """
         return self.xml.getCellBlocks()
 
-    def _getGEOSState( self ) -> int:
+    def _getGEOSState( self: Self ) -> int:
         f"""
         Return the current GEOS state
 
@@ -175,72 +177,72 @@ class Solver:
     """
     Accessors for solver attributes
     """
-    @required_attributes( 'collections' )
-    def getCollections( self ) -> List[ pygeosx.Group ]:
+    @required_attributes( "collections" )
+    def getCollections( self: Self ) -> List[ pygeosx.Group ]:
         return self.collections
 
-    @required_attributes( 'discretization' )
-    def getDiscretization( self ) -> str:
+    @required_attributes( "discretization" )
+    def getDiscretization( self: Self ) -> str:
         return self.discretization
 
-    @required_attributes( 'dt' )
-    def getDt( self ) -> float:
+    @required_attributes( "dt" )
+    def getDt( self: Self ) -> float:
         return self.dt
 
-    @required_attributes( 'geosx' )
-    def getGeosx( self ) -> pygeosx.Group:
+    @required_attributes( "geosx" )
+    def getGeosx( self: Self ) -> pygeosx.Group:
         return self.geosx
 
-    @required_attributes( 'hdf5Outputs' )
-    def getHdf5Outputs( self ) -> List[ pygeosx.Group ]:
+    @required_attributes( "hdf5Outputs" )
+    def getHdf5Outputs( self: Self ) -> List[ pygeosx.Group ]:
         return self.hdf5Outputs
 
-    @required_attributes( 'maxTime' )
-    def getMaxTime( self ) -> float:
+    @required_attributes( "maxTime" )
+    def getMaxTime( self: Self ) -> float:
         return self.maxTime
 
-    @required_attributes( 'meshName' )
-    def getMeshName( self ) -> str:
+    @required_attributes( "meshName" )
+    def getMeshName( self: Self ) -> str:
         return self.meshName
 
-    @required_attributes( 'minTime' )
-    def getMinTime( self ) -> float:
+    @required_attributes( "minTime" )
+    def getMinTime( self: Self ) -> float:
         return self.minTime
 
-    @required_attributes( 'name' )
-    def getName( self ) -> str:
+    @required_attributes( "name" )
+    def getName( self: Self ) -> str:
         return self.name
 
-    @required_attributes( 'targetRegions' )
-    def getTargetRegions( self ) -> List[ str ]:
+    @required_attributes( "targetRegions" )
+    def getTargetRegions( self: Self ) -> List[ str ]:
         return self.targetRegions
 
-    @required_attributes( 'timeVariables' )
-    def getTimeVariables( self ) -> Dict[ str, float ]:
+    @required_attributes( "timeVariables" )
+    def getTimeVariables( self: Self ) -> Dict[ str, float ]:
         return self.timeVariables
 
-    @required_attributes( 'type' )
-    def getType( self ) -> str:
+    @required_attributes( "type" )
+    def getType( self: Self ) -> str:
         return self.type
 
-    @required_attributes( 'vtkOutputs' )
-    def getVtkOutputs( self ) -> List[ pygeosx.Group ]:
+    @required_attributes( "vtkOutputs" )
+    def getVtkOutputs( self: Self ) -> List[ pygeosx.Group ]:
         return self.vtkOutputs
 
     """
     Accessors focusing on Geos wrappers
     """
     @required_attributes( "geosx" )
-    def getAllGeosWrapperByName( self, name: str, filters: List[ str ] = list(),
-                                 write_flag=False ) -> Dict[ str, np.array ]:
+    def getAllGeosWrapperByName( self: Self, name: str, filters: List[ str ] = list(),
+                                 write_flag: bool = False ) -> Dict[ str, npt.NDArray ]:
         if isinstance( filters, str ):
             filters = [ filters ]
         wrapper_paths: List[ str ] = get_all_matching_wrapper_paths( self.geosx, [ name ] + filters )
         return { path: get_wrapper( self.geosx, path, write_flag ) for path in wrapper_paths }
 
     @required_attributes( "geosx" )
-    def getGeosWrapperByName( self, name: str, filters: List[ str ] = list(),
-                              write_flag=False ) -> Optional[ np.array ]:
+    def getGeosWrapperByName( self: Self, name: str, filters: List[ str ] = list(),
+                              write_flag=False ) -> Optional[ npt.NDArray ]:
         """
         Get the requested wrapper as numpy array and restrict the research with filters.
         For example, if multiple "PeriodicEvent" blocks are defined with a "forceDt", getGeosWrapperByName("forceDt")
@@ -259,7 +261,7 @@ class Solver:
 
         Returns
         -------
-            field : np.array
+            field : npt.NDArray
                 Field requested
         """
         if isinstance( filters, str ):
@@ -277,9 +279,9 @@ class Solver:
                    f" {differences}." )
 
     @required_attributes( "geosx" )
-    def getGeosWrapperByTargetKey( self, target_key: str, write_flag=False ) -> None:
+    def getGeosWrapperByTargetKey( self: Self, target_key: str, write_flag: bool = False ) -> Optional[ npt.NDArray ]:
         """
-        Set the value of a self.geosx wrapper using the complete path or target_key.
+        Get the requested wrapper as numpy array using a target_key which is the complete path to the wrapper.
 
         Parameters
         ----------
@@ -293,7 +295,8 @@ class Solver:
         except KeyError:
             print( f"The target_key used '{target_key}' does not represent the path to a wrapper." )
 
-    def _getPrefixPathFor1RegionWith1CellBlock( self, targetRegion=None, meshName=None, cellBlock=None ) -> str:
+    def _getPrefixPathFor1RegionWith1CellBlock( self: Self, targetRegion: str = None, meshName: str = None,
+                                                cellBlock: str = None ) -> str:
         """
         Return the prefix path to get wrappers or fields in GEOS.
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -333,7 +336,8 @@ class Solver:
                                "ElementRegions/elementRegionsGroup", targetRegion, "elementSubRegions", cellBlock, "" )
         return prefix
 
-    def _getWrapperNamesReachableWithPrefix( self, targetRegion=None, meshName=None, cellBlock=None ) -> List[ str ]:
+    def _getWrapperNamesReachableWithPrefix( self: Self, targetRegion: str = None, meshName: str = None,
+                                             cellBlock: str = None ) -> List[ str ]:
         """
         Return the prefix path to get wrappers or fields in GEOS.
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -371,7 +375,7 @@ class Solver:
             self._wrapperNamesReachableWithPrefix = wrap_names
             return wrap_names
 
-    def getSolverFieldWithPrefix( self, fieldName, **kwargs ):
+    def getSolverFieldWithPrefix( self: Self, fieldName: str, **kwargs ) -> npt.NDArray:
         """
         Get the requested field as numpy array.
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -384,10 +388,10 @@ class Solver:
 
         Returns
         -------
-            field : np.array
+            field : npt.NDArray
                 Field requested
         """
-        prefix = self._getPrefixPathFor1RegionWith1CellBlock( **kwargs )
+        prefix: str = self._getPrefixPathFor1RegionWith1CellBlock( **kwargs )
         try:
             return get_wrapper( self.solver, prefix + fieldName )
         except KeyError:
@@ -395,7 +399,7 @@ class Solver:
             print( f"No wrapper named '{fieldName}'found at the the target '{prefix}'. The available ones are"
                    f" '{wrap_names}'." )
 
-    def getElementCenterFor1RegionWith1CellBlock( self, filterGhost=False, **kwargs ) -> np.ndarray:
+    def getElementCenterFor1RegionWith1CellBlock( self: Self, filterGhost: bool = False, **kwargs ) -> npt.NDArray:
         """
         Get element center position as numpy array
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -403,7 +407,7 @@ class Solver:
 
         Parameters
         -----------
-            filterGhost : str
+            filterGhost : bool
 
         Returns
         -------
@@ -424,7 +428,7 @@ class Solver:
         else:
             print( "getElementCenterFor1RegionWith1CellBlock: No elementCenter was found." )
 
-    def getElementCenterZFor1RegionWith1CellBlock( self, filterGhost=False, **kwargs ) -> np.array:
+    def getElementCenterZFor1RegionWith1CellBlock( self: Self, filterGhost=False, **kwargs ) -> npt.NDArray:
         """
         Get the z coordinate of the element center
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -446,7 +450,7 @@ class Solver:
         else:
             print( "getElementCenterZFor1RegionWith1CellBlock: No elementCenter was found." )
 
-    def getGhostRankFor1RegionWith1CellBlock( self, **kwargs ) -> Optional[ np.array ]:
+    def getGhostRankFor1RegionWith1CellBlock( self: Self, **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Get the local ghost ranks
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -459,7 +463,7 @@ class Solver:
 
         Returns
         -------
-            ghostRank : array-like
+            ghostRank : npt.NDArray
                 Local ghost ranks
         """
         ghostRank = self.getSolverFieldWithPrefix( "ghostRank", **kwargs )
@@ -468,7 +472,8 @@ class Solver:
         else:
             print( "getGhostRankFor1RegionWith1CellBlock: No ghostRank was found." )
 
-    def getLocalToGlobalMapFor1RegionWith1CellBlock( self, filterGhost=False, **kwargs ) -> Optional[ np.array ]:
+    def getLocalToGlobalMapFor1RegionWith1CellBlock( self: Self, filterGhost=False,
+                                                     **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Get the local rank element id list
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -500,19 +505,19 @@ class Solver:
     """
     Mutators
     """
-    def setDt( self, value: float ) -> None:
+    def setDt( self: Self, value: float ) -> None:
         self.dt = value
 
     @required_attributes( "timeVariables" )
-    def setDtFromTimeVariable( self, timeVariable: str ) -> None:
+    def setDtFromTimeVariable( self: Self, timeVariable: str ) -> None:
         try:
             self.dt = self.timeVariables[ timeVariable ]
         except KeyError:
-            raise ValueError( f"The time variable '{timeVariable}' does not exist amongst the current timeVariables" + 
+            raise ValueError( f"The time variable '{timeVariable}' does not exist amongst the current timeVariables" +
                               f" '{list( self.timeVariables.keys() )}'. Cannot change dt." )
 
     @required_attributes( "geosx" )
-    def setGeosWrapperValueByName( self, name: str, value: Union[ float, np.array ],
+    def setGeosWrapperValueByName( self: Self, name: str, value: Union[ float, npt.NDArray ],
                                    filters: List[ str ] = list() ) -> None:
         """
         Set the value of a self.geosx wrapper using the name of the wrapper.
@@ -521,7 +526,7 @@ class Solver:
         ----------
             name : str
                 Name of the wrapper to find.
-            value (Union[ float, np.array ])
+            value (Union[ float, npt.NDArray ])
                 Value to set the wrapper.
             filters : list(str)
                 Keywords that can be used to restrict more the research of field in GEOS.
@@ -537,12 +542,12 @@ class Solver:
                             " wrapper either does not exist or the filters are invalid." )
         else:
             differences: List[ str ] = find_first_difference_between_wrapper_paths( wrapper_paths )
-            raise KeyError( f"Multiple wrappers with the same name '{name}' have been found. Cannot decide between" + 
+            raise KeyError( f"Multiple wrappers with the same name '{name}' have been found. Cannot decide between" +
                             f" all choices: {wrapper_paths}. Specify more filters to choose which one to use. Given" +
                             f" examples are: {differences}." )
 
     @required_attributes( "geosx" )
-    def setGeosWrapperValueByTargetKey( self, target_key: str, value: Union[ float, np.array ] ) -> None:
+    def setGeosWrapperValueByTargetKey( self: Self, target_key: str, value: Union[ float, npt.NDArray ] ) -> None:
         """
         Set the value of a self.geosx wrapper using the complete path or target_key.
 
@@ -550,7 +555,7 @@ class Solver:
         ----------
             target_key : str
                 Key for the target wrapper
-            value : Union[ float, np.array ]
+            value : Union[ float, npt.NDArray ]
                 Value to set the wrapper.
         """
         try:
@@ -561,7 +566,7 @@ class Solver:
                             f" change the value specified '{value}'." )
 
     @required_attributes( "hdf5Outputs" )
-    def setHdf5OutputsName( self, directory: str, filenames: List[ str ], reinit=False ) -> None:
+    def setHdf5OutputsName( self: Self, directory: str, filenames: List[ str ], reinit: bool = False ) -> None:
         """
         Overwrite GEOSX hdf5 Outputs paths that have been read in the XML.
 
@@ -583,14 +588,14 @@ class Solver:
         else:
             raise ValueError( "No HDF5 Outputs specified in XML." )
 
-    def setMinTime( self, new_minTime: float ) -> None:
+    def setMinTime( self: Self, new_minTime: float ) -> None:
         self.minTime = new_minTime
 
-    def setMaxTime( self, new_maxTime: float ) -> None:
+    def setMaxTime( self: Self, new_maxTime: float ) -> None:
         self.maxTime = new_maxTime
 
     @required_attributes( "vtkOutputs" )
-    def setVtkOutputsName( self, directory: str ) -> None:
+    def setVtkOutputsName( self: Self, directory: str ) -> None:
         """
         Overwrite GEOSX vtk Outputs paths that have been read in the XML.
 
@@ -607,7 +612,7 @@ class Solver:
             raise ValueError( "No VTK Output specified in XML." )
 
     @required_attributes( "timeVariables" )
-    def setTimeVariable( self, timeVariable: str, value: float ) -> None:
+    def setTimeVariable( self: Self, timeVariable: str, value: float ) -> None:
         """
         Overwrite a XML time variable or set a new one.
 
@@ -619,7 +624,7 @@ class Solver:
         """
         self.timeVariables[ timeVariable ] = value
 
-    def setXml( self, xml: XML ) -> None:
+    def setXml( self: Self, xml: XML ) -> None:
         """
         Sets the new XML object.
 
@@ -633,12 +638,12 @@ class Solver:
     """
     PYGEOSX methods
     """
-    def applyInitialConditions( self ) -> None:
+    def applyInitialConditions( self: Self ) -> None:
         """Apply the initial conditions after GEOS (re)initialization"""
         if self._getGEOSState() == GEOS_STATE.INITIALIZED.value:
             pygeosx.apply_initial_conditions()
 
-    def finalize( self ) -> None:
+    def finalize( self: Self ) -> None:
         """Terminate GEOSX"""
         pygeosx._finalize()
 
@@ -646,7 +651,7 @@ class Solver:
     PYGEOSX solver methods
     """
     @required_attributes( "solver" )
-    def cleanup( self, time: float ) -> None:
+    def cleanup( self: Self, time: float ) -> None:
         """
         Finalize simulation. Also triggers write of leftover seismogram data
 
@@ -658,7 +663,7 @@ class Solver:
         self.solver.cleanup( time )
 
     @required_attributes( "solver" )
-    def execute( self, time: float ) -> None:
+    def execute( self: Self, time: float ) -> None:
         """
         Do one solver iteration
 
@@ -670,12 +675,12 @@ class Solver:
         self.solver.execute( time, self.dt )
 
     @required_attributes( "solver" )
-    def reinitSolver( self ) -> None:
+    def reinitSolver( self: Self ) -> None:
         """Reinitialize Solver"""
         self.solver.reinit()
 
     @required_attributes( "vtkOutputs" )
-    def outputVtk( self, time: float ) -> None:
+    def outputVtk( self: Self, time: float ) -> None:
         """
         Trigger the VTK output
 
@@ -691,14 +696,14 @@ class Solver:
     Update methods when initializing or reinitializing the solver
     """
     @required_attributes( "xml" )
-    def updateDiscretization( self ) -> None:
+    def updateDiscretization( self: Self ) -> None:
         """
         Change the self.discretization when the XML has been updated.
         """
         self.discretization = self.xml.getSolverDiscretizations( self.type )[ 0 ]
 
     @required_attributes( "xml" )
-    def updateOutputs( self ) -> None:
+    def updateOutputs( self: Self ) -> None:
         """
         Change the outputs when the XML has been updated.
         """
@@ -724,21 +729,21 @@ class Solver:
             raise ValueError( "xml.getOutputTargets() is out of date." )
 
     @required_attributes( "xml" )
-    def updateMeshName( self ) -> None:
+    def updateMeshName( self: Self ) -> None:
         """
         Change the self.meshName when the XML has been updated.
         """
         self.meshName = self.xml.getMeshName()
 
     @required_attributes( "geosx" )
-    def updateSolverGroup( self ) -> None:
+    def updateSolverGroup( self: Self ) -> None:
         """
         Change the solver pygeosx.Group for self.solver when the XML has been updated.
         """
         self.solver = self.geosx.get_group( "/Solvers/" + self.name )
 
     @required_attributes( "xml" )
-    def updateSolverName( self ) -> str:
+    def updateSolverName( self: Self ) -> str:
         """
         Change the solver name when the XML has been updated.
         """
@@ -747,14 +752,14 @@ class Solver:
         self.name = self.xml.getSolverNames( self.type )[ 0 ]
 
     @required_attributes( "xml" )
-    def updateTargetRegions( self ) -> None:
+    def updateTargetRegions( self: Self ) -> None:
         """
         Change the self.targetRegions when the XML has been updated.
         """
         self.targetRegions = self.xml.getSolverTargetRegions( self.type )[ 0 ]
 
     @required_attributes( "xml" )
-    def updateTimeVariables( self ) -> None:
+    def updateTimeVariables( self: Self ) -> None:
         """
         Change the self.timeVariables when the XML has been updated.
         This is more complex than just calling the function getXMLTimes from the XML class.
@@ -777,7 +782,8 @@ class Solver:
     """
     Utils
     """
-    def bcastFieldFor1RegionWith1CellBlock( self, fullField: np.array, comm, root=0, **kwargs ) -> Optional[ np.array ]:
+    def bcastFieldFor1RegionWith1CellBlock( self: Self, fullField: npt.NDArray, comm, root=0,
+                                            **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Broadcast a field to local ranks with GEOS local to global map
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -842,7 +848,7 @@ class Solver:
             if localToGlobalMap is None:
                 print( "bcastFieldFor1RegionWith1CellBlock: No localToGlobalMap was found to cast the fields." )
 
-    def filterGhostRankFor1RegionWith1CellBlock( self, field, **kwargs ) -> Optional[ np.array ]:
+    def filterGhostRankFor1RegionWith1CellBlock( self: Self, field: npt.NDArray, **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Filter the ghost rank from a GEOS field
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -865,7 +871,8 @@ class Solver:
         else:
             print( "filterGhostRankFor1RegionWith1CellBlock: No ghostRank was found to be filtered." )
 
-    def gatherFieldFor1RegionWith1CellBlock( self, field: np.array, comm, root=0, **kwargs  ) -> Optional[ np.array ]:
+    def gatherFieldFor1RegionWith1CellBlock( self: Self, field: npt.NDArray, comm, root=0,
+                                             **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Gather a full GEOS field from all local ranks
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file

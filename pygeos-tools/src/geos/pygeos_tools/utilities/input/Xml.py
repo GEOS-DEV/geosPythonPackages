@@ -17,7 +17,8 @@ from xml.etree import cElementTree as ET, ElementTree
 from xml.etree.ElementTree import Element
 from xmltodict import parse as xmltodictparse
 from re import findall
-from typing import Dict, List, Optional, Set 
+from typing import Dict, List, Optional, Set, Union
+from typing_extensions import Self
 from geos.pygeos_tools.utilities.mesh.InternalMesh import InternalMesh
 from geos.pygeos_tools.utilities.mesh.VtkMesh import VTKMesh
 from geos.utils.errors_handling.classes import required_attributes
@@ -26,7 +27,7 @@ from geos.utils.xml.XMLTime import XMLTime
 
 class XML:
 
-    def __init__( self, xmlFile: str ):
+    def __init__( self: Self, xmlFile: str ):
         """
         Parameters
         -----------
@@ -56,7 +57,7 @@ class XML:
         if hasattr( self, "events" ):
             self.buildXMLTimes()
 
-    def processIncludes( self, root: Element ) -> Element:
+    def processIncludes( self: Self, root: Element ) -> Element:
         """
         Process any <Included> elements by merging the referenced XML files into the main XML tree.
 
@@ -90,7 +91,7 @@ class XML:
     """
     Accessors
     """
-    def getAttribute( self, parentElement, attributeTag ):
+    def getAttribute( self: Self, parentElement, attributeTag: str ):
         if parentElement == "root":
             pElement = self.tree.find( f"./[@{attributeTag}]" )
         else:
@@ -99,7 +100,7 @@ class XML:
         return pElement.get( attributeTag )
 
     @required_attributes( "elementRegions" )
-    def getCellBlocks( self ) -> List[ str ]:
+    def getCellBlocks( self: Self ) -> List[ str ]:
         """
         Get the cell blocks names from the XML
 
@@ -115,7 +116,7 @@ class XML:
             raise KeyError( "The CellElementRegion does not exist or the cellBlocks are not defined." )
 
     @required_attributes( "constitutive" )
-    def getConstitutivePhases( self ) -> Optional[ List[ str ] ]:
+    def getConstitutivePhases( self: Self ) -> Optional[ List[ str ] ]:
         for model in self.constitutive.values():
             for name, value in model.items():
                 if name == "phaseNames":
@@ -123,7 +124,7 @@ class XML:
         print( f"getConstitutivePhases: no phases defined in the XML '{self.filename}'." )
 
     @required_attributes( "mesh" )
-    def getMeshObject( self ):
+    def getMeshObject( self: Self ) -> Union[ InternalMesh, VTKMesh ]:
         if "InternalMesh" in self.mesh.keys():
             return InternalMesh( self )  #  Not working properly for now
 
@@ -134,7 +135,7 @@ class XML:
             return VTKMesh( vtkFile )
 
     @required_attributes( "mesh" )
-    def getMeshName( self ) -> str:
+    def getMeshName( self: Self ) -> str:
         """
         Get the mesh 'name' attribute from the xml
 
@@ -161,7 +162,7 @@ class XML:
                 raise KeyError( f"The mesh '{mesh}' does not have a name attribute." )
 
     @required_attributes( "outputs" )
-    def getOutputTargets( self ) -> Dict[ str, List[ str ] ]:
+    def getOutputTargets( self: Self ) -> Dict[ str, List[ str ] ]:
         outputs: Dict[ str, Dict[ str, str ] ] = self.outputs
         # Set the targets
         collectionTargets = list()
@@ -190,7 +191,7 @@ class XML:
         return { "collection": collectionTargets, "hdf5": hdf5Targets, "vtk": vtkTargets }
 
     @required_attributes( "constitutive" )
-    def getPorosityNames( self ) -> Optional[ List[ str ] ]:
+    def getPorosityNames( self: Self ) -> Optional[ List[ str ] ]:
         porosityNames: Set[ str ] = set()
         for name, model in self.constitutive.items():
             if "porosity" in name.lower():
@@ -201,7 +202,7 @@ class XML:
             print( f"getPorosityNames: No porosity model found in the XML '{self.filename}'." )
 
     @required_attributes( "solvers" )
-    def getSolverTypes( self ) -> List[ str ]:
+    def getSolverTypes( self: Self ) -> List[ str ]:
         """
         Get the solver types from the XML
 
@@ -214,7 +215,7 @@ class XML:
             raise ValueError( f"You must provide a Solver in the XML '{self.filename}'." )
         return solverTypes
 
-    def getSolverTypeDependantParameters( self, param_name: str, stype: str = None ) -> List[ str ]:
+    def getSolverTypeDependantParameters( self: Self, param_name: str, stype: str = None ) -> List[ str ]:
         """
         Get the solver parameter from the XML
 
@@ -241,7 +242,7 @@ class XML:
         except KeyError:
             raise KeyError( f"One solver does not have a '{param_name}' parameter defined." )
 
-    def getSolverNames( self, stype: str = None ) -> List[ str ]:
+    def getSolverNames( self: Self, stype: str = None ) -> List[ str ]:
         """
         Get the solver names from the XML
 
@@ -255,7 +256,7 @@ class XML:
         """
         return self.getSolverTypeDependantParameters( "name", stype )
 
-    def getSolverDiscretizations( self, stype: str = None ) -> List[ str ]:
+    def getSolverDiscretizations( self: Self, stype: str = None ) -> List[ str ]:
         """
         Get the solver discretizations from the XML
 
@@ -269,7 +270,7 @@ class XML:
         """
         return self.getSolverTypeDependantParameters( "discretization", stype )
 
-    def getSolverTargetRegions( self, stype: str = None ) -> List[ str ]:
+    def getSolverTargetRegions( self: Self, stype: str = None ) -> List[ str ]:
         """
         Get the solver target regions from the XML
 
@@ -286,7 +287,7 @@ class XML:
         targetRegions: List[ str ] = [ t.strip( "{ }" ).split( "," ) for t in targetRegionsRaw ]
         return targetRegions
 
-    def getSourcesAndReceivers( self ):
+    def getSourcesAndReceivers( self: Self ):
         solverType: List[ str ] = self.getSolverTypes()
         if len( solverType ) > 1:
             pass
@@ -299,14 +300,14 @@ class XML:
         return src, rcv
 
     @required_attributes( "xmlTimes" )
-    def getXMLTimes( self ) -> Dict[ str, XMLTime ]:
+    def getXMLTimes( self: Self ) -> Dict[ str, XMLTime ]:
         return self.xmlTimes
 
     """
     Init methods
     """
     @required_attributes( "solvers" )
-    def buildCouplingSolvers( self ):
+    def buildCouplingSolvers( self: Self ) -> None:
         """
         Warning: this method aims at future development to handle coupling solvers.
         Currently, this method will construct :
@@ -325,7 +326,7 @@ class XML:
         self.couplingSolvers = couplingSolvers
 
     @required_attributes( "events" )
-    def buildXMLTimes( self ) -> None:
+    def buildXMLTimes( self: Self ) -> None:
         """
         Parses the self.events dict where all the events are stored and for each time related variables,
         creates a dict with the time variable as key and a XMLTime object as value.
@@ -371,7 +372,7 @@ class XML:
     Updates xml attributes
     """
     @required_attributes( "geometry" )
-    def updateGeometry( self, boxname, **kwargs ):
+    def updateGeometry( self: Self, boxname: str, **kwargs ) -> None:
         root: Element = self.tree.getroot()
         geometry: Element = root.find( "./Geometry//*[@name=" + boxname + "]" )
 
@@ -386,7 +387,7 @@ class XML:
                 self.geometry[ geometry.tag ][ i ].update( { k: str( v ) } )
 
     @required_attributes( "mesh" )
-    def updateMesh( self, **kwargs ):
+    def updateMesh( self: Self, **kwargs ) -> None:
         root = self.tree.getroot()
         mesh = root.find( "./Mesh//" )
         for k, v in kwargs.items():
@@ -395,7 +396,7 @@ class XML:
                 self.mesh[ mesh.tag ].update( { k: str( v ) } )
 
     @required_attributes( "solvers" )
-    def updateSolvers( self, solverName: str, **kwargs ):
+    def updateSolvers( self: Self, solverName: str, **kwargs ) -> None:
         root: Element = self.tree.getroot()
         solver: Element = root.find( "./Solvers/" + solverName )
         for k, v in kwargs.items():
@@ -403,7 +404,7 @@ class XML:
                 solver.set( k, v )
                 self.solvers[ solverName ].update( { k: str( v ) } )
 
-    def exportToXml( self, filename: str = None ):
+    def exportToXml( self: Self, filename: str = None ) -> None:
         if filename is None:
             self.tree.write( self.filename )
         else:

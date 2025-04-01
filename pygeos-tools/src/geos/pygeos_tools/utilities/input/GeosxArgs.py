@@ -11,15 +11,16 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
-import sys
 import argparse
+import sys
+from typing import Dict, List
+from typing_extensions import Self
 
 
 class GeosxArgs:
-    """ 
+    """
     Class containing the main argument in command line for GEOSX
-    
+
     Attributes
     ----------
         cmdline : list of str
@@ -28,28 +29,28 @@ class GeosxArgs:
             Dict containing GEOSX main options
     """
 
-    def __init__( self, args=sys.argv.copy() ):
+    def __init__( self: Self, args=sys.argv.copy() ):
         """
         Parameters
         ----------
             args : list of str
                 List corresponding to a splitted submission line with options
         """
-        self.cmdline: list[ str ] = args
-        self.options: dict[ str, str ] = self.optionsParser()
+        self.cmdline: List[ str ] = args
+        self.options: Dict[ str, str ] = self.optionsParser()
 
-    def optionsParser( self, cmdline: list[ str ] = list() ):
+    def optionsParser( self: Self, cmdline: List[ str ] = list() ) -> Dict[ str, any ]:
         """
         Return a dict with useful geosx options parsed from a list/submission line.
 
         Parameters
         ----------
             cmdline : list of str
-                List corresponding to a splitted GEOSX submission line          
+                List corresponding to a splitted GEOSX submission line
 
         Returns
         --------
-            dict : 
+            dict :
                 Dict containing GEOSX main options
         """
         if not cmdline:
@@ -114,7 +115,7 @@ class GeosxArgs:
 
         return vars( parser.parse_known_args( cmdline )[ 0 ] )
 
-    def updateArg( self, optionName: str = None, newValue: str = None ):
+    def updateArg( self: Self, optionName: str = None, newValue: str = None ) -> bool:
         """
         Update the GEOSX initialization arguments
 
@@ -124,7 +125,7 @@ class GeosxArgs:
                 Name of the option to update
             newValue : str
                 New value for the argument to be updated.
-        
+
         Returns
         -------
             bool : True if the option has been (found and) updated. False otherwise.
@@ -136,7 +137,7 @@ class GeosxArgs:
 
         return False
 
-    def getCommandLine( self ):
+    def getCommandLine( self: Self ) -> List[ str ]:
         """
         Return the command line specific to GEOSX initialization
 
@@ -145,7 +146,7 @@ class GeosxArgs:
             cl : list of str
                 List containing all the options requested
         """
-        cl: list[ str ] = [ "" ]
+        cl: List[ str ] = [ "" ]
         for opt, val in self.options.items():
             if val is not None:
                 ab = GeosxAbbrevOption().getAbbrv( opt )
@@ -159,14 +160,14 @@ class GeosxArgs:
 class GeosxAbbrevOption:
     """
     Class containing GEOSX command line options abbreviations
-    
+
     Attributes
     ----------
         abbrvDict : dict
             Dict containing lists of abbreviations for GEOSX command line options
     """
 
-    def __init__( self ):
+    def __init__( self: Self ):
         self.abbrvDict = {
             "xml": ( "--input", "-i" ),
             "restart": ( "--restart", "r" ),
@@ -182,10 +183,10 @@ class GeosxAbbrevOption:
             "pause_for": ( "--pause-for" )
         }
 
-    def getAbbrv( self, optionName: str = None ):
+    def getAbbrv( self: Self, optionName: str = None ) -> str:
         """
         Returns the abbreviation corresponding to the requested option
-        
+
         Parameters
         ----------
             optionName : str
@@ -197,10 +198,10 @@ class GeosxAbbrevOption:
         """
         return self.abbrvDict[ optionName ][ -1 ]
 
-    def getAllAbbrv( self, optionName: str = None ):
+    def getAllAbbrv( self: Self, optionName: str = None ) -> List[ str ]:
         """
         Returns the abbreviation corresponding to the requested option
-        
+
         Parameters
         ----------
             optionName : str
