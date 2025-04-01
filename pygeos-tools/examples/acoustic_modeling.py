@@ -32,7 +32,7 @@ def parse_workflow_parameters( pfile ):
     with open( pfile, "r" ) as f:
         hdrStr = f.read()
 
-    hdrList = []
+    hdrList = list()
     for fl in hdrStr.split( '\n' ):
         l = fl.split( "#" )[ 0 ]
         if l:
@@ -99,27 +99,28 @@ def main():
         acquisition = None
     acquisition = comm.bcast( acquisition, root=0 )
 
-    solver = AcousticSolver( dt, minTime, maxTime, dtSeismo, sourceType, sourceFreq )
+    solver = AcousticSolver( solverType="AcousticSEM", dt=dt, minTime=minTime, maxTime=maxTime, dtSeismo=dtSeismo,
+                             sourceType=sourceType, sourceFreq=sourceFreq )
 
-    for ishot, shot in enumerate( acquisition.shots ):
+    for shot in acquisition.shots:
         xmlshot = shot.xml
         rank = comm.Get_rank()
 
         solver.initialize( rank, xmlshot )
         solver.applyInitialConditions()
 
-        solver.updateSourceAndReceivers( shot.getSourceCoords(), shot.getReceiverCoords() )
-        solver.updateVtkOutputsName( directory=f"Shot{shot.id}" )
+        solver.setSourceAndReceivers( shot.getSourceCoords(), shot.getReceiverCoords() )
+        solver.setVtkOutputsName( directory=f"Shot{shot.id}" )
 
-        t = 0
-        cycle = 0
-        while t < solver.maxTime:
+        time: float = 0.0
+        cycle: int = 0
+        while time < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
-                print( f"time = {t:.3f}s, dt = {solver.dt:.4f}, iter = {cycle+1}" )
-            solver.execute( t )
+                print( f"time = {time:.3f}s, dt= {solver.dt:.4f}, iter = {cycle+1}" )
+            solver.execute( time )
             if cycle % 50 == 0:
-                solver.outputVtk( t )
-            t += solver.dt
+                solver.outputVtk( time )
+            time += solver.dt
             cycle += 1
 
         shot.flag = "Done"

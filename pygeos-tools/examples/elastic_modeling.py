@@ -37,18 +37,21 @@ def main():
 
     solver = ElasticSolver()
 
-    for ishot, shot in enumerate( acqui.shots ):
+    for shot in acqui.shots:
         xmlshot = shot.xml
         rank = comm.Get_rank()
 
         solver.initialize( rank, xmlshot )
         solver.applyInitialConditions()
 
-        solver.updateSourceAndReceivers( shot.getSourceCoords(), shot.getReceiverCoords() )
-        solver.updateVtkOutputsName( directory=f"Shot{shot.id}" )
+        solver.setSourceAndReceivers( shot.getSourceCoords(), shot.getReceiverCoords() )
+        solver.setVtkOutputsName( directory=f"Shot{shot.id}" )
+        solver.setDtFromTimeVariable( "forceDt" )  # because is defined in the XML
+        solver.setMaxTime( solver.getTimeVariables()[ "maxTime" ] )
 
-        t = 0
-        cycle = 0
+        t: float = 0.0
+        cycle: int = 0
+
         while t < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
                 print( f"time = {t:.3f}s, dt = {solver.dt:.4f}, iter = {cycle+1}" )
