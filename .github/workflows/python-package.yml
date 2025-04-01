@@ -34,7 +34,6 @@ jobs:
           echo "This is not a Pull-Request, skipping"
 
   build:
-
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
