@@ -57,8 +57,10 @@ class TestParameterRegex( unittest.TestCase ):
                              [ '$foo$*1.234/$bar$', '4.56e7*1.234/4.56e7', True ] ] )
     def test_parameter_regex( self, parameterInput, expectedValue, expect_fail=False ):
         try:
-            result = re.sub( regex_tools.patterns[ 'parameters' ], self.regexHandler,  # type: ignore[attr-defined]
-                             parameterInput ) 
+            result = re.sub(
+                regex_tools.patterns[ 'parameters' ],
+                self.regexHandler,  # type: ignore[attr-defined]
+                parameterInput )
             self.assertTrue( ( result == expectedValue ) != expect_fail )
         except Exception:
             self.assertTrue( expect_fail )

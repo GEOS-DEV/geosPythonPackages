@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 import yaml
 from pydantic import BaseModel
@@ -11,7 +11,7 @@ from trame_simput import get_simput_manager
 from typing import Any
 
 
-class Renderable( StrEnum ):
+class Renderable( Enum ):
     VTKMESH = "VTKMesh"
     INTERNALMESH = "InternalMesh"
     INTERNALWELL = "InternalWell"
