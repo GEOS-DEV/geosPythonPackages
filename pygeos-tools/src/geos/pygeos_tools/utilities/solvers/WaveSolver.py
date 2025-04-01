@@ -21,6 +21,14 @@ from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
+__doc__ = """
+WaveSolver class which is the base class for every AcousticSolver and ElasticSolver classes, and inherits the Solver
+capabilities.
+
+This adds more methods to the Solver class to handle seismic sources and receivers.
+"""
+
+
 class WaveSolver( Solver ):
     """
     WaveSolver Object containing methods useful for simulation using wave solvers in GEOS

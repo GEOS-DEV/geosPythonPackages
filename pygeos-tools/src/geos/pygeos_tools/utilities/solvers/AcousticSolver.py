@@ -23,6 +23,14 @@ from geos.utils.errors_handling.classes import required_attributes
 from geos.utils.pygeos.solvers import MODEL_FOR_GRADIENT
 
 
+__doc__ = """
+AcousticSolver class inherits from WaveSolver class.
+
+This adds method to read / set pressures at receiver, compute partial gradients and accessors for Density and Velocity
+models.
+"""
+
+
 class AcousticSolver( WaveSolver ):
     """
     AcousticSolver Object containing all methods to run AcousticSEM simulation with GEOSX
@@ -97,7 +105,7 @@ class AcousticSolver( WaveSolver ):
     """
     Accessors
     """
-    def getFullPressureAtReceivers( self: Self, comm ) -> npt.NDArray[ np.float64 ]:
+    def getFullPressureAtReceivers( self: Self, comm ) -> npt.NDArray:
         """
         Return all pressures at receivers values on all ranks
         Note that for a too large 2d array this may not work.
@@ -121,7 +129,7 @@ class AcousticSolver( WaveSolver ):
         pressure = comm.bcast( pressure, root=0 )
         return pressure
 
-    def getFullWaveFieldAtReceivers( self: Self, comm ) -> npt.NDArray[ np.float64 ]:
+    def getFullWaveFieldAtReceivers( self: Self, comm ) -> npt.NDArray:
         return self.getFullPressureAtReceivers( comm )[ :, :-1 ]
 
     @required_attributes( "modelForGradient" )
@@ -129,7 +137,7 @@ class AcousticSolver( WaveSolver ):
         return self.modelForGradient
 
     def getPartialGradientFor1RegionWith1CellBlock( self: Self, filterGhost=False,
-                                                    **kwargs ) -> Optional[  npt.NDArray[ np.float64 ] ]:
+                                                    **kwargs ) -> Optional[  npt.NDArray ]:
         """
         Get the local rank gradient value
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -155,7 +163,7 @@ class AcousticSolver( WaveSolver ):
         else:
             print( "getPartialGradientFor1RegionWith1CellBlock: No partialGradient was found." )
 
-    def getPressureAtReceivers( self: Self ) -> npt.NDArray[ np.float64 ]:
+    def getPressureAtReceivers( self: Self ) -> npt.NDArray:
         """
         Get the pressure values at receivers coordinates
 
@@ -165,7 +173,7 @@ class AcousticSolver( WaveSolver ):
         """
         return self.getGeosWrapperByName( "pressureNp1AtReceivers", ["Solvers"] )
 
-    def getWaveField( self: Self ) -> npt.NDArray[ np.float64 ]:
+    def getWaveField( self: Self ) -> npt.NDArray:
         return self.getPressureAtReceivers()[ :, :-1 ]
 
     """

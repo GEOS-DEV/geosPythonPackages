@@ -28,6 +28,21 @@ from geos.utils.pygeos.solvers import GEOS_STATE
 from geos.utils.xml.XMLTime import XMLTime
 
 
+__doc__ = """
+Solver class which is the base class for every other **Solver classes.
+The driving methods for pygeosx such as initialize and execute, and get/set methods for pygeosx wrappers are defined.
+
+.. WARNING::
+    This does not handle coupled solvers simulations.
+
+    Methods ending with the name "For1RegionWith1CellBlock" are designed to only work when dealing with mesh containing
+    only hexahedral elements and only 1 CellElementRegion. In every other cases, do not use these methods.
+
+.. todo::
+    If possible, add the capabilities to handle coupled solvers.
+"""
+
+
 class Solver:
     """
     Solver class containing the main methods of a GEOS solver
@@ -106,6 +121,9 @@ class Solver:
         Initialization or reinitialization of GEOS that will update these parameters:
         - the solver name stored in self.name
         - the solver pygeosx.Group stored in self.solver
+        - the discretization used by the solver
+        - the name of the mesh
+        - the regions targeted by the solver
         - the different possible outputs which are self.collections, self.hdf5Outputs, self.vtkOutputs
         - the available time variables defined in the XML and that are relevant to the current solver
 

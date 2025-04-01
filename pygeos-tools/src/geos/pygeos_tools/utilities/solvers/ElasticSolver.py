@@ -17,6 +17,13 @@ from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.WaveSolver import WaveSolver
 
 
+__doc__ = """
+AcousticSolver class inherits from WaveSolver class.
+
+This adds method to read / set displacements at receiver.
+"""
+
+
 class ElasticSolver( WaveSolver ):
     """
     ElasticSolver Object containing all methods to run ElasticSEM simulation with GEOSX

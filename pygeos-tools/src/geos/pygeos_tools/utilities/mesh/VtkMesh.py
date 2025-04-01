@@ -27,6 +27,15 @@ from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
 
 
+__doc__ = """
+VTKMesh class uses a VTK filepath to read, extract data and write a new VTK file.
+Along with wrapping of VTK methods to extract geometry data and arrays, this class also allows you to extract
+geometrically a subset of the original mesh.
+
+The input and output VTK file types handled currently are .vtu .vts .pvts .pvtu.
+"""
+
+
 class VTKMesh:
     """
     VTK format Mesh. Now handling .vtu .vts .pvts .pvtu

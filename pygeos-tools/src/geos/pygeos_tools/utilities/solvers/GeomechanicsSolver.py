@@ -17,6 +17,13 @@ from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
+__doc__ = """
+AcousticSolver class inherits from Solver class.
+
+This adds accessor methods for stresses, displacements and geomechanics parameters.
+"""
+
+
 class GeomechanicsSolver( Solver ):
     """
     Geomechanics solver object containing methods to run geomechanics simulations in GEOS

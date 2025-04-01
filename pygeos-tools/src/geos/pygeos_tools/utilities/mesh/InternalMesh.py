@@ -18,6 +18,12 @@ from typing import Dict, List
 from typing_extensions import Self
 
 
+__doc__ = """
+InternalMesh class uses a XML object from input/Xml.py that needs to have parsed a GEOS xml file where an 'InternalMesh'
+block has been defined. This class gathers all the geometric informaion defined.
+"""
+
+
 class InternalMesh:
     """
     GEOSX Internal Mesh
@@ -57,7 +63,10 @@ class InternalMesh:
                 XML object containing the information on the mesh
         """
         self.xml = xml
-        mesh: Dict = xml.mesh[ "InternalMesh" ]
+        try:
+            mesh: Dict = xml.mesh[ "InternalMesh" ]
+        except KeyError:
+            raise KeyError( f"The XML file '{self.xml.filename}' does not contain an 'InternalMesh' block." )
 
         xCoords: List[ int ] = list( eval( mesh[ "xCoords" ] ) )
         yCoords: List[ int ] = list( eval( mesh[ "yCoords" ] ) )

@@ -4,6 +4,13 @@ from geos.pygeos_tools.utilities.input import XML
 from geos.pygeos_tools.utilities.solvers import GeomechanicsSolver
 
 
+__doc__ = """
+This is an example of how to set and run your GEOS simulation when using the GeomechanicsSolver.
+The suggested example with this script could be the beam bending test case provided by GEOS:
+'/path/to/your/geos/code/inputFiles/solidMechanics/beamBending_smoke.xml'.
+"""
+
+
 def parse_args():
     """Get arguments
 

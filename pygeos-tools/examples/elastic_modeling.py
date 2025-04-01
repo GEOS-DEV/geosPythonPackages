@@ -6,6 +6,12 @@ from geos.pygeos_tools.utilities.output import SeismicTraceOutput
 from mpi4py import MPI
 
 
+__doc__ = """
+This is an example of how to set and run your GEOS simulation when using the ElasticSolver.
+The suggested example with this script could be to use a XML file with the "ElasticSEM" solver.
+"""
+
+
 def parse_args():
     """Get arguments
 

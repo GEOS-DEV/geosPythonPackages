@@ -18,6 +18,13 @@ from typing_extensions import Self
 from geos.pygeos_tools.utilities.solvers.Solver import Solver
 
 
+__doc__ = """
+ReservoirSolver class inherits from Solver class.
+
+This adds accessor methods for pressure, phase volume fractions and porosities.
+"""
+
+
 class ReservoirSolver( Solver ):
     """
     Reservoir solver object containing methods to run reservoir simulations in GEOS

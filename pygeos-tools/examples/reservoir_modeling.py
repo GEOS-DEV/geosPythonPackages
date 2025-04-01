@@ -4,6 +4,13 @@ from geos.pygeos_tools.utilities.input import XML
 from geos.pygeos_tools.utilities.solvers import ReservoirSolver
 
 
+__doc__ = """
+This is an example of how to set and run your GEOS simulation when using the ReservoirSolver.
+The suggested example with this script could be the 2 phases 1D test case provided by GEOS:
+'/path/to/your/geos/code/inputFiles/compositionalMultiphaseFlow/2ph_cap_1d_ihu.xml'.
+"""
+
+
 def parse_args():
     """Get arguments
 

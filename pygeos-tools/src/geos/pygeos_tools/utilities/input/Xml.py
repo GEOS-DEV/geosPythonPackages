@@ -25,6 +25,21 @@ from geos.utils.errors_handling.classes import required_attributes
 from geos.utils.xml.XMLTime import XMLTime
 
 
+__doc__ = """
+XML class parses a GEOS xml file and stores all its blocks as arguments.
+This implies that if you have blocks such as Events, Solvers, NumericalMethods ... the class will have 'events',
+'solvers', 'numericalmethods' arguments.
+
+This class also provides methods to handle time properties and outputs for a specific GEOS solver.
+
+.. WARNING::
+    This does not handle correctly XML files using coupled solvers.
+
+.. todo::
+    If possible, add the capabilities to handle coupled solvers.
+"""
+
+
 class XML:
 
     def __init__( self: Self, xmlFile: str ):

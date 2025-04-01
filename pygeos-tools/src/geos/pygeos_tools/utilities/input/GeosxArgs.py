@@ -17,6 +17,14 @@ from typing import Dict, List
 from typing_extensions import Self
 
 
+__doc__ = """
+GeosxArgs class handles the arguments passed to GEOS to start the simulation.
+
+.. todo::
+    If possible, change the name GeosxArgs to GeosArgs when 'pygeosx' will be named 'pygeos'.
+"""
+
+
 class GeosxArgs:
     """
     Class containing the main argument in command line for GEOSX
