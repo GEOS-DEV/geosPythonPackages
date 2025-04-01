@@ -2,7 +2,7 @@ Geomechanics models
 ======================
 This 
 
-geos_geomechanics.model.MohrCircle module
+geos.geomechanics.model.MohrCircle module
 ------------------------------------------
 
 .. automodule:: geos.geomechanics.model.MohrCircle
@@ -10,7 +10,7 @@ geos_geomechanics.model.MohrCircle module
    :undoc-members:
    :show-inheritance:
 
-geos_geomechanics.model.MohrCoulomb module
+geos.geomechanics.model.MohrCoulomb module
 -------------------------------------------
 
 .. automodule:: geos.geomechanics.model.MohrCoulomb
