@@ -7,8 +7,8 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from geos_geomechanics.model.MohrCircle import MohrCircle
-from geos_geomechanics.model.MohrCoulomb import MohrCoulomb
+from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
 from geos_posp.visu.mohrCircles import (
     MOHR_CIRCLE_ANALYSIS_MAIN,
     MOHR_CIRCLE_PATH,

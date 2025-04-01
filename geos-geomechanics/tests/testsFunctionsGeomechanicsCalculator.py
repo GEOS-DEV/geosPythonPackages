@@ -17,7 +17,7 @@ parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
-import geos_geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils import PhysicalConstants
 from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 

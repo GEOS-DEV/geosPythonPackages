@@ -15,8 +15,8 @@ parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
-from geos_geomechanics.model.MohrCircle import MohrCircle
-from geos_geomechanics.model.MohrCoulomb import MohrCoulomb
+from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
 
 circleId = "12453"
 stressVector: npt.NDArray[np.float64] = np.array([1.8, 2.5, 5.2, 0.3, 0.4, 0.1])

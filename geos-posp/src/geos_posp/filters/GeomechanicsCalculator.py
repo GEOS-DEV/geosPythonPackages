@@ -16,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 
-import geos_geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos_posp.processing.vtkUtils import (
     createAttribute,
     getArrayInObject,
