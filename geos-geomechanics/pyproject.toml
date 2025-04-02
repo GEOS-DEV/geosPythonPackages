@@ -22,23 +22,18 @@ classifiers = [
     "Programming Language :: Python"
 ]
 dynamic = ["dependencies"]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 
 [project.optional-dependencies]
 build = [
   "build ~= 1.2"
 ]
 dev = [
-    "pylint",
+    "yapf",
     "mypy",
-    "black",
-    "sphinx", 
-    "sphinx-rtd-theme", 
-    "sphinx-autodoc-typehints"
 ]
 test = [
    "pytest",
-   "pytest-cov"
 ]
 
 [project.scripts]
@@ -47,7 +42,7 @@ test = [
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 console_output_style = "count"
-pythonpath = [".", "src"]
+pythonpath = ["src"]
 python_classes = "Test"
 python_files = "test*.py"
 python_functions = "test*"
@@ -58,10 +53,4 @@ filterwarnings = []
 
 [tool.coverage.run]
 branch = true
-source = ["geos/geomechanics"]
-
-
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
+source = ["src/geos"]
