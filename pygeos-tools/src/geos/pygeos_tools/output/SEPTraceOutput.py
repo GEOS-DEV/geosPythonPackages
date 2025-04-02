@@ -1,7 +1,10 @@
 import os
 import numpy as np
-from geos.pygeos_tools.model.SepModel import SEPModel
+import numpy.typing as npt
 from mpi4py import MPI
+from typing import Dict
+from typing_extensions import Self
+from geos.pygeos_tools.model.SepModel import SEPModel
 
 
 class SEPTraceOutput:
@@ -27,7 +30,8 @@ class SEPTraceOutput:
             Gathered data
     """
 
-    def __init__( self, seismo, rootname="seismoTrace_shot", directory="./", tIncluded=True, **kwargs ):
+    def __init__( self: Self, seismo: npt.NDArray, rootname: str = "seismoTrace_shot", directory: str = "./",
+                  tIncluded: bool = True, **kwargs ):
         """
         Parameters
         ----------
@@ -43,20 +47,20 @@ class SEPTraceOutput:
                 Whether time is included in seismos \
                 Default is True
         """
-        self.format = ".H"
-        self.directory = directory
-        self.rootname = rootname
-        self.head = os.path.join( self.directory, self.rootname + self.format )
+        self.format: str = ".H"
+        self.directory: str = directory
+        self.rootname: str = rootname
+        self.head: str = os.path.join( self.directory, self.rootname + self.format )
 
         if tIncluded:
             self.data, self.time = seismo[ :, :-1 ], seismo[ :, -1 ]
         else:
-            self.data = seismo
-            self.time = None
+            self.data: npt.NDArray = seismo
+            self.time: float = None
 
-        self.gdata = None
+        self.gdata: npt.NDArray = None
 
-    def gather( self, comm=MPI.COMM_WORLD, root=None, verbose=False ):
+    def gather( self: Self, comm=MPI.COMM_WORLD, root: int = None, verbose: bool = False ) -> None:
         """
         Gather the seismic traces on the root rank
 
@@ -107,7 +111,7 @@ class SEPTraceOutput:
         if verbose and rank == root:
             print( f"Sismos Min : {self.gdata.min()} - Max : {self.gdata.max()}" )
 
-    def export( self, dt=None, comm=MPI.COMM_WORLD, **kwargs ):
+    def export( self: Self, dt: float = None, comm=MPI.COMM_WORLD, **kwargs ):
         """
         Export the sismo traces in .H file
 
@@ -144,7 +148,7 @@ class SEPTraceOutput:
                 raise ValueError( "Timestep `dt` required for seismic traces output" )
 
             _, head = os.path.split( self.head )
-            dictSEP = {
+            dictSEP: Dict[ str, any ] = {
                 "head": head,
                 "bin": head + "@",
                 "label1": "\"TIME\"",

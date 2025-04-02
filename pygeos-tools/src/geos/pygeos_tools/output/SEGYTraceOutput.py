@@ -1,7 +1,11 @@
 import os
 import numpy as np
+import numpy.typing as npt
 import segyio
 from mpi4py import MPI
+from typing import List
+from typing_extensions import Self
+from geos.pygeos_tools.acquisition_library.Shot import Coordinates3D
 
 
 class SEGYTraceOutput:
@@ -24,7 +28,8 @@ class SEGYTraceOutput:
             Default is None
     """
 
-    def __init__( self, seismo, rootname="seismoTrace_shot", directory="./", **kwargs ):
+    def __init__( self: Self, seismo: npt.NDArray, rootname: str = "seismoTrace_shot", directory: str = "./",
+                  **kwargs ):
         """
         Parameters
         -----------
@@ -36,24 +41,23 @@ class SEGYTraceOutput:
                 Output directory \
                 Default is current dir
         """
-        self.format = ".sgy"
-        self.directory = directory
-        self.rootname = rootname
+        self.format: str = ".sgy"
+        self.directory: str = directory
+        self.rootname: str = rootname
+        self.filename: str = os.path.join( self.directory, self.rootname + self.format )
+        self.data: npt.NDArray = seismo
+        self.time: float = None
 
-        self.filename = os.path.join( self.directory, self.rootname + self.format )
-
-        self.data = seismo
-        self.time = None
-
-    def export( self, receiverCoords, sourceCoords, dt=None, comm=MPI.COMM_WORLD, **kwargs ):
+    def export( self: Self, receiverCoords: List[ Coordinates3D ], sourceCoords: List[ Coordinates3D ],
+                dt: float = None, comm=MPI.COMM_WORLD, **kwargs ) -> None:
         """
         Export the seismic traces to .sgy file
 
         Parameters
         -----------
-            receiverCoords : list of list of float
+            receiverCoords : list of Coordinates3D
                 Coordinates of the receivers
-            sourceCoords : list of list of floats
+            sourceCoords : list of Coordinates3D
                 Coordinates of the source(s)
             dt : float, optional
                 Time step in seconds \
@@ -63,7 +67,7 @@ class SEGYTraceOutput:
                 MPI communicator
         """
         rank = comm.Get_rank()
-        nsamples = self.data.shape[ 0 ]
+        nsamples: int = self.data.shape[ 0 ]
 
         if self.data.shape[ 1 ] == len( receiverCoords ) + 1:
             self.data, self.time = self.data[ :, :-1 ], self.data[ :, -1 ]
@@ -106,7 +110,7 @@ class SEGYTraceOutput:
         # Save data
         with segyio.open( self.filename, 'r+', ignore_geometry=True ) as f:
             for i in range( len( receiverCoords ) ):
-                if any( self.data[ 1:, i ] ) == True:
+                if any( self.data[ 1:, i ] ):
                     f.trace[ i ] = np.ascontiguousarray( self.data[ :, i ], dtype=np.float32 )
 
         if rank == 0:

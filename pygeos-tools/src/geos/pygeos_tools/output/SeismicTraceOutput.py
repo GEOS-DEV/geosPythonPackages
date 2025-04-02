@@ -1,3 +1,5 @@
+import numpy.typing as npt
+from typing_extensions import Self
 from geos.pygeos_tools.output.SEPTraceOutput import SEPTraceOutput
 from geos.pygeos_tools.output.SEGYTraceOutput import SEGYTraceOutput
 
@@ -15,7 +17,7 @@ class SeismicTraceOutput:
             "SEP" or "SEGY"
     """
 
-    def __init__( self, seismo, format, **kwargs ):
+    def __init__( self: Self, seismo: npt.NDArray, format: str, **kwargs ):
         """
         Parameters
         -----------
@@ -25,10 +27,10 @@ class SeismicTraceOutput:
                 Output format \
                 "SEP" or "SEGY"
         """
-        self.data = seismo
-        self.format = format
+        self.data: npt.NDArray = seismo
+        self.format: str = format
 
-    def export( self, **kwargs ):
+    def export( self: Self, **kwargs ) -> None:
         """
         Save the seismic traces in the requested format
         """
