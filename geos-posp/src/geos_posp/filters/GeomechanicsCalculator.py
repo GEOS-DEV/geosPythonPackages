@@ -50,7 +50,7 @@ To use the filter:
 .. code-block:: python
 
     import numpy as np
-    from filters.GeomechanicsCalculator import GeomechanicsCalculator
+    from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
 
     # filter inputs
     logger :Logger

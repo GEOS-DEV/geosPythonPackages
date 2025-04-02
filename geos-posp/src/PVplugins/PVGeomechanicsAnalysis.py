@@ -18,6 +18,8 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 
+from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.dirname(dir_path)
 if parent_dir_path not in sys.path:
@@ -342,7 +344,6 @@ class PVGeomechanicsAnalysis(VTKPythonAlgorithmBase):
         """
         try:
             self.m_logger.info(f"Apply filter {__name__}")
-            from filters.GeomechanicsCalculator import GeomechanicsCalculator
 
             inData = self.GetInputData(inInfoVec, 0, 0)
             assert inData is not None
