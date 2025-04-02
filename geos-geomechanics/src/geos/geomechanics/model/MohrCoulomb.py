@@ -37,7 +37,8 @@ To use the object:
 
 
 class MohrCoulomb:
-    def __init__(self: Self, rockCohesion: float, frictionAngle: float) -> None:
+
+    def __init__( self: Self, rockCohesion: float, frictionAngle: float ) -> None:
         """Define Mohr-Coulomb failure envelop.
 
         Args:
@@ -47,13 +48,13 @@ class MohrCoulomb:
         # rock cohesion
         self.m_rockCohesion = rockCohesion
         # failure envelop slope
-        self.m_slope: float = np.tan(frictionAngle)
+        self.m_slope: float = np.tan( frictionAngle )
         # intersection of failure envelop and abscissa axis
         self.m_sigmaMin: float = -rockCohesion / self.m_slope
 
     def computeShearStress(
-        self: Self, stressNormal0: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+            self: Self,
+            stressNormal0: Union[ float, npt.NDArray[ np.float64 ] ] ) -> Union[ float, npt.NDArray[ np.float64 ] ]:
         """Compute shear stress from normal stress.
 
         Args:
@@ -63,16 +64,16 @@ class MohrCoulomb:
         Returns:
             float | npt.NDArray[np.float64]): shear stress value.
         """
-        stressNormal: npt.NDArray[np.float64] = np.array(stressNormal0)
-        tau: npt.NDArray[np.float64] = self.m_slope * stressNormal + self.m_rockCohesion
+        stressNormal: npt.NDArray[ np.float64 ] = np.array( stressNormal0 )
+        tau: npt.NDArray[ np.float64 ] = self.m_slope * stressNormal + self.m_rockCohesion
         return tau
 
     def computeFailureEnvelop(
         self: Self,
         stressNormalMax: float,
-        stressNormalMin: Union[float, None] = None,
+        stressNormalMin: Union[ float, None ] = None,
         n: int = 100,
-    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
         """Compute the envelope failure between min and max normal stress.
 
         Args:
@@ -90,10 +91,6 @@ class MohrCoulomb:
             envelop coordinates where first element is the abscissa and second
             element is the ordinates.
         """
-        sigmaMin: float = (
-            self.m_sigmaMin if stressNormalMin is None else stressNormalMin
-        )
-        stressNormal: npt.NDArray[np.float64] = np.linspace(
-            sigmaMin, stressNormalMax, n
-        )
-        return (stressNormal, np.array(self.computeShearStress(stressNormal)))
+        sigmaMin: float = ( self.m_sigmaMin if stressNormalMin is None else stressNormalMin )
+        stressNormal: npt.NDArray[ np.float64 ] = np.linspace( sigmaMin, stressNormalMax, n )
+        return ( stressNormal, np.array( self.computeShearStress( stressNormal ) ) )

@@ -7,15 +7,12 @@ import numpy.typing as npt
 from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
 from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 from geos.utils.PhysicalConstants import (
-    EPSILON,
-)
+    EPSILON, )
 
 __doc__ = """Functions to compute additional geomechanical properties."""
 
 
-def specificGravity(
-    density: npt.NDArray[np.float64], specificDensity: float
-) -> npt.NDArray[np.float64]:
+def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float ) -> npt.NDArray[ np.float64 ]:
     r"""Compute the specific gravity.
 
     .. math::
@@ -31,15 +28,14 @@ def specificGravity(
     """
     assert density is not None, "Density data must be defined"
 
-    if abs(specificDensity) < EPSILON:
-        return np.full_like(density, np.nan)
+    if abs( specificDensity ) < EPSILON:
+        return np.full_like( density, np.nan )
     return density / specificDensity
 
 
 # https://en.wikipedia.org/wiki/Elastic_modulus
-def youngModulus(
-    bulkModulus: npt.NDArray[np.float64], shearModulus: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def youngModulus( bulkModulus: npt.NDArray[ np.float64 ],
+                  shearModulus: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute Young modulus.
 
     .. math::
@@ -56,22 +52,19 @@ def youngModulus(
     assert bulkModulus is not None, "Bulk modulus must be defined"
     assert shearModulus is not None, "Shear modulus must be defined"
     # manage division by 0 by replacing with nan
-    assert bulkModulus.size == shearModulus.size, (
-        "Bulk modulus array and Shear modulus array"
-        + " sizes (i.e., number of cells) must be equal."
-    )
+    assert bulkModulus.size == shearModulus.size, ( "Bulk modulus array and Shear modulus array" +
+                                                    " sizes (i.e., number of cells) must be equal." )
 
-    den: npt.NDArray[np.float64] = 3.0 * bulkModulus + shearModulus
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    young: npt.NDArray[np.float64] = 9.0 * bulkModulus * shearModulus / den
-    young[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 3.0 * bulkModulus + shearModulus
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    young: npt.NDArray[ np.float64 ] = 9.0 * bulkModulus * shearModulus / den
+    young[ mask ] = np.nan
     return young
 
 
-def poissonRatio(
-    bulkModulus: npt.NDArray[np.float64], shearModulus: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def poissonRatio( bulkModulus: npt.NDArray[ np.float64 ],
+                  shearModulus: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute Poisson's ratio.
 
     .. math::
@@ -87,22 +80,19 @@ def poissonRatio(
     """
     assert bulkModulus is not None, "Bulk modulus must be defined"
     assert shearModulus is not None, "Shear modulus must be defined"
-    assert bulkModulus.size == shearModulus.size, (
-        "Bulk modulus array and Shear modulus array"
-        + " sizes (i.e., number of cells) must be equal."
-    )
+    assert bulkModulus.size == shearModulus.size, ( "Bulk modulus array and Shear modulus array" +
+                                                    " sizes (i.e., number of cells) must be equal." )
     # manage division by 0 by replacing with nan
-    den: npt.NDArray[np.float64] = 2.0 * (3.0 * bulkModulus + shearModulus)
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    poisson: npt.NDArray[np.float64] = (3.0 * bulkModulus - 2.0 * shearModulus) / den
-    poisson[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 2.0 * ( 3.0 * bulkModulus + shearModulus )
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    poisson: npt.NDArray[ np.float64 ] = ( 3.0 * bulkModulus - 2.0 * shearModulus ) / den
+    poisson[ mask ] = np.nan
     return poisson
 
 
-def bulkModulus(
-    youngModulus: npt.NDArray[np.float64], poissonRatio: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def bulkModulus( youngModulus: npt.NDArray[ np.float64 ],
+                 poissonRatio: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute bulk Modulus from young modulus and poisson ratio.
 
     .. math::
@@ -119,17 +109,16 @@ def bulkModulus(
     assert poissonRatio is not None, "Poisson's ratio must be defined"
     assert youngModulus is not None, "Young modulus must be defined"
 
-    den: npt.NDArray[np.float64] = 3.0 * (1.0 - 2.0 * poissonRatio)
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    bulkMod: npt.NDArray[np.float64] = youngModulus / den
-    bulkMod[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 3.0 * ( 1.0 - 2.0 * poissonRatio )
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    bulkMod: npt.NDArray[ np.float64 ] = youngModulus / den
+    bulkMod[ mask ] = np.nan
     return bulkMod
 
 
-def shearModulus(
-    youngModulus: npt.NDArray[np.float64], poissonRatio: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def shearModulus( youngModulus: npt.NDArray[ np.float64 ],
+                  poissonRatio: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute shear Modulus from young modulus and poisson ratio.
 
     .. math::
@@ -146,17 +135,16 @@ def shearModulus(
     assert poissonRatio is not None, "Poisson's ratio must be defined"
     assert youngModulus is not None, "Young modulus must be defined"
 
-    den: npt.NDArray[np.float64] = 2.0 * (1.0 + poissonRatio)
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    shearMod: npt.NDArray[np.float64] = youngModulus / den
-    shearMod[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 2.0 * ( 1.0 + poissonRatio )
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    shearMod: npt.NDArray[ np.float64 ] = youngModulus / den
+    shearMod[ mask ] = np.nan
     return shearMod
 
 
-def lambdaCoefficient(
-    youngModulus: npt.NDArray[np.float64], poissonRatio: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def lambdaCoefficient( youngModulus: npt.NDArray[ np.float64 ],
+                       poissonRatio: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute lambda coefficient from young modulus and Poisson ratio.
 
     .. math::
@@ -170,18 +158,17 @@ def lambdaCoefficient(
         npt.NDArray[np.float64]: lambda coefficient (:math:`\lambda`)
 
     """
-    lambdaCoeff: npt.NDArray[np.float64] = poissonRatio * youngModulus
-    den: npt.NDArray[np.float64] = (1.0 + poissonRatio) * (1.0 - 2.0 * poissonRatio)
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
+    lambdaCoeff: npt.NDArray[ np.float64 ] = poissonRatio * youngModulus
+    den: npt.NDArray[ np.float64 ] = ( 1.0 + poissonRatio ) * ( 1.0 - 2.0 * poissonRatio )
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
     lambdaCoeff /= den
-    lambdaCoeff[mask] = np.nan
+    lambdaCoeff[ mask ] = np.nan
     return lambdaCoeff
 
 
-def oedometricModulus(
-    Edef: npt.NDArray[np.float64], poissonRatio: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def oedometricModulus( Edef: npt.NDArray[ np.float64 ],
+                       poissonRatio: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute Oedometric modulus.
 
     .. math::
@@ -198,25 +185,19 @@ def oedometricModulus(
     assert poissonRatio is not None, "Poisson's ratio must be defined"
     assert Edef is not None, "Deformation modulus must be defined"
 
-    assert Edef.size == poissonRatio.size, (
-        "Deformation modulus array and Poisson's"
-        + " ratio array sizes (i.e., number of cells) must be equal."
-    )
-    den: npt.NDArray[np.float64] = 1.0 - (2.0 * poissonRatio * poissonRatio) / (
-        1.0 - poissonRatio
-    )
+    assert Edef.size == poissonRatio.size, ( "Deformation modulus array and Poisson's" +
+                                             " ratio array sizes (i.e., number of cells) must be equal." )
+    den: npt.NDArray[ np.float64 ] = 1.0 - ( 2.0 * poissonRatio * poissonRatio ) / ( 1.0 - poissonRatio )
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    EodMod: npt.NDArray[np.float64] = Edef / den
-    EodMod[mask] = np.nan
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    EodMod: npt.NDArray[ np.float64 ] = Edef / den
+    EodMod[ mask ] = np.nan
     return EodMod
 
 
-def biotCoefficient(
-    Kgrain: float, bulkModulus: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def biotCoefficient( Kgrain: float, bulkModulus: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute Biot coefficient.
 
     .. math::
@@ -233,19 +214,19 @@ def biotCoefficient(
     assert bulkModulus is not None, "Bulk modulus must be defined"
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(Kgrain) < EPSILON
-    den: npt.NDArray[np.float64] = np.copy(Kgrain)
-    den[mask] = 1.0
-    biot: npt.NDArray[np.float64] = 1.0 - bulkModulus / den
-    biot[mask] = np.nan
+    mask: npt.NDArray[ np.bool_ ] = np.abs( Kgrain ) < EPSILON
+    den: npt.NDArray[ np.float64 ] = np.copy( Kgrain )
+    den[ mask ] = 1.0
+    biot: npt.NDArray[ np.float64 ] = 1.0 - bulkModulus / den
+    biot[ mask ] = np.nan
     return biot
 
 
 def totalStress(
-    effectiveStress: npt.NDArray[np.float64],
-    biot: npt.NDArray[np.float64],
-    pressure: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    effectiveStress: npt.NDArray[ np.float64 ],
+    biot: npt.NDArray[ np.float64 ],
+    pressure: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute total stress from effective stress, pressure, and Biot coeff.
 
     .. math::
@@ -265,27 +246,22 @@ def totalStress(
     assert biot is not None, "Biot coefficient must be defined"
     assert pressure is not None, "Pressure must be defined"
 
-    assert effectiveStress.shape[0] == biot.size, (
-        "Biot coefficient array and "
-        + "effective stress sizes (i.e., number of cells) must be equal."
-    )
-    assert biot.size == pressure.size, (
-        "Biot coefficient array and pressure array"
-        + "sizes (i.e., number of cells) must be equal."
-    )
+    assert effectiveStress.shape[ 0 ] == biot.size, ( "Biot coefficient array and " +
+                                                      "effective stress sizes (i.e., number of cells) must be equal." )
+    assert biot.size == pressure.size, ( "Biot coefficient array and pressure array" +
+                                         "sizes (i.e., number of cells) must be equal." )
 
-    totalStress: npt.NDArray[np.float64] = np.copy(effectiveStress)
+    totalStress: npt.NDArray[ np.float64 ] = np.copy( effectiveStress )
     # pore pressure has an effect on normal stresses only
     # (cf. https://dnicolasespinoza.github.io/node5.html)
-    nb: int = totalStress.shape[1] if totalStress.shape[1] < 4 else 3
-    for j in range(nb):
-        totalStress[:, j] = effectiveStress[:, j] - biot * pressure
+    nb: int = totalStress.shape[ 1 ] if totalStress.shape[ 1 ] < 4 else 3
+    for j in range( nb ):
+        totalStress[ :, j ] = effectiveStress[ :, j ] - biot * pressure
     return totalStress
 
 
-def stressRatio(
-    horizontalStress: npt.NDArray[np.float64], verticalStress: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def stressRatio( horizontalStress: npt.NDArray[ np.float64 ],
+                 verticalStress: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute horizontal to vertical stress ratio.
 
     .. math::
@@ -305,22 +281,19 @@ def stressRatio(
     assert verticalStress is not None, "Vertical stress must be defined"
 
     assert horizontalStress.size == verticalStress.size, (
-        "Horizontal stress array "
-        + "and vertical stress array sizes (i.e., number of cells) must be equal."
-    )
+        "Horizontal stress array " + "and vertical stress array sizes (i.e., number of cells) must be equal." )
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(verticalStress) < EPSILON
-    verticalStress2: npt.NDArray[np.float64] = np.copy(verticalStress)
-    verticalStress2[mask] = 1.0
-    ratio: npt.NDArray[np.float64] = horizontalStress / verticalStress2
-    ratio[mask] = np.nan
+    mask: npt.NDArray[ np.bool_ ] = np.abs( verticalStress ) < EPSILON
+    verticalStress2: npt.NDArray[ np.float64 ] = np.copy( verticalStress )
+    verticalStress2[ mask ] = 1.0
+    ratio: npt.NDArray[ np.float64 ] = horizontalStress / verticalStress2
+    ratio[ mask ] = np.nan
     return ratio
 
 
-def lithostaticStress(
-    depth: npt.NDArray[np.float64], density: npt.NDArray[np.float64], gravity: float
-) -> npt.NDArray[np.float64]:
+def lithostaticStress( depth: npt.NDArray[ np.float64 ], density: npt.NDArray[ np.float64 ],
+                       gravity: float ) -> npt.NDArray[ np.float64 ]:
     """Compute the lithostatic stress.
 
     Args:
@@ -349,19 +322,17 @@ def lithostaticStress(
     assert depth is not None, "Depth must be defined"
     assert density is not None, "Density must be defined"
 
-    assert depth.size == density.size, (
-        "Depth array "
-        + "and density array sizes (i.e., number of cells) must be equal."
-    )
+    assert depth.size == density.size, ( "Depth array " +
+                                         "and density array sizes (i.e., number of cells) must be equal." )
     # use -1*depth to agree with Geos convention (i.e., compression with negative stress)
     return -depth * density * gravity
 
 
 def elasticStrainFromBulkShear(
-    deltaEffectiveStress: npt.NDArray[np.float64],
-    bulkModulus: npt.NDArray[np.float64],
-    shearModulus: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    deltaEffectiveStress: npt.NDArray[ np.float64 ],
+    bulkModulus: npt.NDArray[ np.float64 ],
+    shearModulus: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute elastic strain from Bulk and Shear moduli.
 
     See documentation on https://dnicolasespinoza.github.io/node5.html.
@@ -392,46 +363,34 @@ def elasticStrainFromBulkShear(
         npt.NDArray[np.float64]: elastic strain (:math:`\epsilon`)
 
     """
-    assert (
-        deltaEffectiveStress is not None
-    ), "Effective stress variation must be defined"
+    assert ( deltaEffectiveStress is not None ), "Effective stress variation must be defined"
     assert bulkModulus is not None, "Bulk modulus must be defined"
     assert shearModulus is not None, "Shear modulus must be defined"
 
-    assert deltaEffectiveStress.shape[0] == bulkModulus.size, (
-        "Effective stress variation "
-        + " and bulk modulus array sizes (i.e., number of cells) must be equal."
-    )
+    assert deltaEffectiveStress.shape[ 0 ] == bulkModulus.size, (
+        "Effective stress variation " + " and bulk modulus array sizes (i.e., number of cells) must be equal." )
     assert shearModulus.size == bulkModulus.size, (
-        "Shear modulus "
-        + "and bulk modulus array sizes (i.e., number of cells) must be equal."
-    )
-    assert deltaEffectiveStress.shape[1] == 6, (
-        "Effective stress variation " + "number of components must be equal to 6."
-    )
+        "Shear modulus " + "and bulk modulus array sizes (i.e., number of cells) must be equal." )
+    assert deltaEffectiveStress.shape[ 1 ] == 6, ( "Effective stress variation " +
+                                                   "number of components must be equal to 6." )
 
-    elasticStrain: npt.NDArray[np.float64] = np.full_like(deltaEffectiveStress, np.nan)
-    for i, stressVector in enumerate(deltaEffectiveStress):
-        stiffnessTensor: npt.NDArray[np.float64] = shearModulus[i] * np.identity(
-            6, dtype=float
-        )
-        for k in range(3):
-            for m in range(3):
-                val: float = (
-                    (bulkModulus[i] + 4.0 / 3.0 * shearModulus[i])
-                    if k == m
-                    else (bulkModulus[i] - 2.0 / 3.0 * shearModulus[i])
-                )
-                stiffnessTensor[k, m] = val
-        elasticStrain[i] = stressVector @ np.linalg.inv(stiffnessTensor)
+    elasticStrain: npt.NDArray[ np.float64 ] = np.full_like( deltaEffectiveStress, np.nan )
+    for i, stressVector in enumerate( deltaEffectiveStress ):
+        stiffnessTensor: npt.NDArray[ np.float64 ] = shearModulus[ i ] * np.identity( 6, dtype=float )
+        for k in range( 3 ):
+            for m in range( 3 ):
+                val: float = ( ( bulkModulus[ i ] + 4.0 / 3.0 * shearModulus[ i ] ) if k == m else
+                               ( bulkModulus[ i ] - 2.0 / 3.0 * shearModulus[ i ] ) )
+                stiffnessTensor[ k, m ] = val
+        elasticStrain[ i ] = stressVector @ np.linalg.inv( stiffnessTensor )
     return elasticStrain
 
 
 def elasticStrainFromYoungPoisson(
-    deltaEffectiveStress: npt.NDArray[np.float64],
-    youngModulus: npt.NDArray[np.float64],
-    poissonRatio: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    deltaEffectiveStress: npt.NDArray[ np.float64 ],
+    youngModulus: npt.NDArray[ np.float64 ],
+    poissonRatio: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute elastic strain from Young modulus and Poisson ratio.
 
     See documentation on https://dnicolasespinoza.github.io/node5.html.
@@ -462,47 +421,34 @@ def elasticStrainFromYoungPoisson(
         npt.NDArray[np.float64]: elastic strain (:math:`\epsilon`)
 
     """
-    assert (
-        deltaEffectiveStress is not None
-    ), "Effective stress variation must be defined"
+    assert ( deltaEffectiveStress is not None ), "Effective stress variation must be defined"
     assert youngModulus is not None, "Bulk modulus must be defined"
     assert poissonRatio is not None, "Shear modulus must be defined"
 
-    assert deltaEffectiveStress.shape[0] == youngModulus.size, (
-        "Effective stress variation "
-        + " and bulk modulus array sizes (i.e., number of cells) must be equal."
-    )
+    assert deltaEffectiveStress.shape[ 0 ] == youngModulus.size, (
+        "Effective stress variation " + " and bulk modulus array sizes (i.e., number of cells) must be equal." )
     assert poissonRatio.size == youngModulus.size, (
-        "Shear modulus "
-        + "and bulk modulus array sizes (i.e., number of cells) must be equal."
-    )
-    assert deltaEffectiveStress.shape[1] == 6, (
-        "Effective stress variation " + "number of components must be equal to 6."
-    )
+        "Shear modulus " + "and bulk modulus array sizes (i.e., number of cells) must be equal." )
+    assert deltaEffectiveStress.shape[ 1 ] == 6, ( "Effective stress variation " +
+                                                   "number of components must be equal to 6." )
 
     # use of Lamé's equations
-    lambdaCoeff: npt.NDArray[np.float64] = lambdaCoefficient(youngModulus, poissonRatio)
-    shearMod: npt.NDArray[np.float64] = shearModulus(youngModulus, poissonRatio)
+    lambdaCoeff: npt.NDArray[ np.float64 ] = lambdaCoefficient( youngModulus, poissonRatio )
+    shearMod: npt.NDArray[ np.float64 ] = shearModulus( youngModulus, poissonRatio )
 
-    elasticStrain: npt.NDArray[np.float64] = np.full_like(deltaEffectiveStress, np.nan)
-    for i, deltaStressVector in enumerate(deltaEffectiveStress):
-        stiffnessTensor: npt.NDArray[np.float64] = shearMod[i] * np.identity(
-            6, dtype=float
-        )
-        for k in range(3):
-            for m in range(3):
-                val: float = (
-                    (lambdaCoeff[i] + 2.0 * shearMod[i]) if k == m else (lambdaCoeff[i])
-                )
-                stiffnessTensor[k, m] = val
+    elasticStrain: npt.NDArray[ np.float64 ] = np.full_like( deltaEffectiveStress, np.nan )
+    for i, deltaStressVector in enumerate( deltaEffectiveStress ):
+        stiffnessTensor: npt.NDArray[ np.float64 ] = shearMod[ i ] * np.identity( 6, dtype=float )
+        for k in range( 3 ):
+            for m in range( 3 ):
+                val: float = ( ( lambdaCoeff[ i ] + 2.0 * shearMod[ i ] ) if k == m else ( lambdaCoeff[ i ] ) )
+                stiffnessTensor[ k, m ] = val
 
-        elasticStrain[i] = deltaStressVector @ np.linalg.inv(stiffnessTensor)
+        elasticStrain[ i ] = deltaStressVector @ np.linalg.inv( stiffnessTensor )
     return elasticStrain
 
 
-def deviatoricStressPathOed(
-    poissonRatio: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+def deviatoricStressPathOed( poissonRatio: npt.NDArray[ np.float64 ], ) -> npt.NDArray[ np.float64 ]:
     r"""Compute the Deviatoric Stress Path parameter in oedometric conditions.
 
     This parameter corresponds to the ratio between horizontal and vertical
@@ -522,17 +468,16 @@ def deviatoricStressPathOed(
     assert poissonRatio is not None, "Poisson's ratio must be defined"
 
     # manage division by 0 by replacing with nan
-    den: npt.NDArray[np.float64] = 1 - poissonRatio
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    ratio: npt.NDArray[np.float64] = poissonRatio / den
-    ratio[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 1 - poissonRatio
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    ratio: npt.NDArray[ np.float64 ] = poissonRatio / den
+    ratio[ mask ] = np.nan
     return ratio
 
 
-def reservoirStressPathReal(
-    deltaStress: npt.NDArray[np.float64], deltaPressure: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def reservoirStressPathReal( deltaStress: npt.NDArray[ np.float64 ],
+                             deltaPressure: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute real reservoir stress path.
 
     .. math::
@@ -551,27 +496,24 @@ def reservoirStressPathReal(
     assert deltaPressure is not None, "Pressure deviation must be defined"
     assert deltaStress is not None, "Stress deviation must be defined"
 
-    assert deltaStress.shape[0] == deltaPressure.size, (
-        "Total stress array and pressure variation "
-        + "array sizes (i.e., number of cells) must be equal."
-    )
+    assert deltaStress.shape[ 0 ] == deltaPressure.size, ( "Total stress array and pressure variation " +
+                                                           "array sizes (i.e., number of cells) must be equal." )
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(deltaPressure) < EPSILON
-    den: npt.NDArray[np.float64] = np.copy(deltaPressure)
-    den[mask] = 1.0
+    mask: npt.NDArray[ np.bool_ ] = np.abs( deltaPressure ) < EPSILON
+    den: npt.NDArray[ np.float64 ] = np.copy( deltaPressure )
+    den[ mask ] = 1.0
     # use -1 to agree with Geos convention (i.e., compression with negative stress)
     # take the xx, yy, and zz components only
-    rsp: npt.NDArray[np.float64] = np.copy(deltaStress[:, :3])
-    for j in range(rsp.shape[1]):
-        rsp[:, j] /= den
-        rsp[mask, j] = np.nan
+    rsp: npt.NDArray[ np.float64 ] = np.copy( deltaStress[ :, :3 ] )
+    for j in range( rsp.shape[ 1 ] ):
+        rsp[ :, j ] /= den
+        rsp[ mask, j ] = np.nan
     return rsp
 
 
-def reservoirStressPathOed(
-    biotCoefficient: npt.NDArray[np.float64], poissonRatio: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def reservoirStressPathOed( biotCoefficient: npt.NDArray[ np.float64 ],
+                            poissonRatio: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute reservoir stress path in oedometric conditions.
 
     .. math::
@@ -589,22 +531,19 @@ def reservoirStressPathOed(
     assert poissonRatio is not None, "Poisson's ratio must be defined"
 
     assert biotCoefficient.size == poissonRatio.size, (
-        "Biot coefficient array and "
-        + "Poisson's ratio array sizes (i.e., number of cells) must be equal."
-    )
+        "Biot coefficient array and " + "Poisson's ratio array sizes (i.e., number of cells) must be equal." )
 
     # manage division by 0 by replacing with nan
-    den: npt.NDArray[np.float64] = 1.0 - poissonRatio
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
-    rsp: npt.NDArray[np.float64] = biotCoefficient * (1.0 - 2.0 * poissonRatio) / den
-    rsp[mask] = np.nan
+    den: npt.NDArray[ np.float64 ] = 1.0 - poissonRatio
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
+    rsp: npt.NDArray[ np.float64 ] = biotCoefficient * ( 1.0 - 2.0 * poissonRatio ) / den
+    rsp[ mask ] = np.nan
     return rsp
 
 
-def criticalTotalStressRatio(
-    pressure: npt.NDArray[np.float64], verticalStress: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def criticalTotalStressRatio( pressure: npt.NDArray[ np.float64 ],
+                              verticalStress: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute critical total stress ratio.
 
     Corresponds to the fracture index from Lemgruber-Traby et al (2024).
@@ -631,22 +570,19 @@ def criticalTotalStressRatio(
     assert verticalStress is not None, "Vertical stress must be defined"
 
     assert pressure.size == verticalStress.size, (
-        "pressure array and "
-        + "vertical stress array sizes (i.e., number of cells) must be equal."
-    )
+        "pressure array and " + "vertical stress array sizes (i.e., number of cells) must be equal." )
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(verticalStress) < EPSILON
+    mask: npt.NDArray[ np.bool_ ] = np.abs( verticalStress ) < EPSILON
     # use -1 to agree with Geos convention (i.e., compression with negative stress)
-    verticalStress2: npt.NDArray[np.float64] = -1.0 * np.copy(verticalStress)
-    verticalStress2[mask] = 1.0
-    fi: npt.NDArray[np.float64] = pressure / verticalStress2
-    fi[mask] = np.nan
+    verticalStress2: npt.NDArray[ np.float64 ] = -1.0 * np.copy( verticalStress )
+    verticalStress2[ mask ] = 1.0
+    fi: npt.NDArray[ np.float64 ] = pressure / verticalStress2
+    fi[ mask ] = np.nan
     return fi
 
 
-def totalStressRatioThreshold(
-    pressure: npt.NDArray[np.float64], horizontalStress: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def totalStressRatioThreshold( pressure: npt.NDArray[ np.float64 ],
+                               horizontalStress: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute total stress ratio threshold.
 
     Corresponds to the fracture threshold from Lemgruber-Traby et al (2024).
@@ -673,25 +609,23 @@ def totalStressRatioThreshold(
     assert horizontalStress is not None, "Horizontal stress must be defined"
 
     assert pressure.size == horizontalStress.size, (
-        "pressure array and "
-        + "horizontal stress array sizes (i.e., number of cells) must be equal."
-    )
+        "pressure array and " + "horizontal stress array sizes (i.e., number of cells) must be equal." )
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(horizontalStress) < EPSILON
+    mask: npt.NDArray[ np.bool_ ] = np.abs( horizontalStress ) < EPSILON
     # use -1 to agree with Geos convention (i.e., compression with negative stress)
-    horizontalStress2: npt.NDArray[np.float64] = -1.0 * np.copy(horizontalStress)
-    horizontalStress2[mask] = 1.0
-    ft: npt.NDArray[np.float64] = pressure / horizontalStress2
-    ft[mask] = np.nan
+    horizontalStress2: npt.NDArray[ np.float64 ] = -1.0 * np.copy( horizontalStress )
+    horizontalStress2[ mask ] = 1.0
+    ft: npt.NDArray[ np.float64 ] = pressure / horizontalStress2
+    ft[ mask ] = np.nan
     return ft
 
 
 def criticalPorePressure(
-    stressVector: npt.NDArray[np.float64],
+    stressVector: npt.NDArray[ np.float64 ],
     rockCohesion: float,
     frictionAngle: float = 0.0,
-) -> npt.NDArray[np.float64]:
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute the critical pore pressure.
 
     Fracturing can occur in areas where Critical pore pressure is greater than
@@ -717,34 +651,27 @@ def criticalPorePressure(
 
     """
     assert stressVector is not None, "Stress vector must be defined"
-    assert stressVector.shape[1] == 6, "Stress vector must be of size 6."
+    assert stressVector.shape[ 1 ] == 6, "Stress vector must be of size 6."
 
-    assert (frictionAngle >= 0.0) and (frictionAngle < np.pi / 2.0), (
-        "Fristion angle " + "must range between 0 and pi/2."
-    )
+    assert ( frictionAngle >= 0.0 ) and ( frictionAngle < np.pi / 2.0 ), ( "Fristion angle " +
+                                                                           "must range between 0 and pi/2." )
 
-    minimumPrincipalStress: npt.NDArray[np.float64] = np.full(
-        stressVector.shape[0], np.nan
-    )
-    maximumPrincipalStress: npt.NDArray[np.float64] = np.copy(minimumPrincipalStress)
-    for i in range(minimumPrincipalStress.shape[0]):
-        p3, p2, p1 = computeStressPrincipalComponentsFromStressVector(stressVector[i])
-        minimumPrincipalStress[i] = p3
-        maximumPrincipalStress[i] = p1
+    minimumPrincipalStress: npt.NDArray[ np.float64 ] = np.full( stressVector.shape[ 0 ], np.nan )
+    maximumPrincipalStress: npt.NDArray[ np.float64 ] = np.copy( minimumPrincipalStress )
+    for i in range( minimumPrincipalStress.shape[ 0 ] ):
+        p3, p2, p1 = computeStressPrincipalComponentsFromStressVector( stressVector[ i ] )
+        minimumPrincipalStress[ i ] = p3
+        maximumPrincipalStress[ i ] = p1
 
     # assertion frictionAngle < np.pi/2., so sin(frictionAngle) != 1
-    cohesiveTerm: npt.NDArray[np.float64] = (
-        rockCohesion * np.cos(frictionAngle) / (1 - np.sin(frictionAngle))
-    )
-    residualTerm: npt.NDArray[np.float64] = (
-        3 * minimumPrincipalStress - maximumPrincipalStress
-    ) / 2.0
+    cohesiveTerm: npt.NDArray[ np.float64 ] = ( rockCohesion * np.cos( frictionAngle ) /
+                                                ( 1 - np.sin( frictionAngle ) ) )
+    residualTerm: npt.NDArray[ np.float64 ] = ( 3 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
     return cohesiveTerm + residualTerm
 
 
-def criticalPorePressureThreshold(
-    pressure: npt.NDArray[np.float64], criticalPorePressure: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
+def criticalPorePressureThreshold( pressure: npt.NDArray[ np.float64 ],
+                                   criticalPorePressure: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
     r"""Compute the critical pore pressure threshold.
 
     Defined as the ratio between pressure and critical pore pressure.
@@ -766,24 +693,22 @@ def criticalPorePressureThreshold(
     assert criticalPorePressure is not None, "Critical pore pressure must be defined"
 
     assert pressure.size == criticalPorePressure.size, (
-        "Pressure array and critical"
-        + " pore pressure array sizes (i.e., number of cells) must be equal."
-    )
+        "Pressure array and critical" + " pore pressure array sizes (i.e., number of cells) must be equal." )
 
     # manage division by 0 by replacing with nan
-    mask: npt.NDArray[np.bool_] = np.abs(criticalPorePressure) < EPSILON
-    den = np.copy(criticalPorePressure)
-    den[mask] = 1.0
-    index: npt.NDArray[np.float64] = pressure / den
-    index[mask] = np.nan
+    mask: npt.NDArray[ np.bool_ ] = np.abs( criticalPorePressure ) < EPSILON
+    den = np.copy( criticalPorePressure )
+    den[ mask ] = 1.0
+    index: npt.NDArray[ np.float64 ] = pressure / den
+    index[ mask ] = np.nan
     return index
 
 
 def compressibilityOed(
-    shearModulus: npt.NDArray[np.float64],
-    bulkModulus: npt.NDArray[np.float64],
-    porosity: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    shearModulus: npt.NDArray[ np.float64 ],
+    bulkModulus: npt.NDArray[ np.float64 ],
+    porosity: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute compressibility from elastic moduli and porosity.
 
     Compressibility formula is:
@@ -803,25 +728,25 @@ def compressibilityOed(
     assert bulkModulus is not None, "Bulk modulus must be defined"
     assert shearModulus is not None, "Shear modulus must be defined"
     assert porosity is not None, "Porosity must be defined"
-    mask1: npt.NDArray[np.bool_] = np.abs(porosity) < EPSILON
-    den1: npt.NDArray[np.float64] = np.copy(porosity)
-    den1[mask1] = 1.0
+    mask1: npt.NDArray[ np.bool_ ] = np.abs( porosity ) < EPSILON
+    den1: npt.NDArray[ np.float64 ] = np.copy( porosity )
+    den1[ mask1 ] = 1.0
 
-    den2: npt.NDArray[np.float64] = 3.0 * bulkModulus + 4.0 * shearModulus
-    mask2: npt.NDArray[np.bool_] = np.abs(den2) < EPSILON
-    den2[mask2] = 1.0
+    den2: npt.NDArray[ np.float64 ] = 3.0 * bulkModulus + 4.0 * shearModulus
+    mask2: npt.NDArray[ np.bool_ ] = np.abs( den2 ) < EPSILON
+    den2[ mask2 ] = 1.0
 
-    comprOed: npt.NDArray[np.float64] = 1.0 / den1 * 3.0 / den2
-    comprOed[mask1] = np.nan
-    comprOed[mask2] = np.nan
+    comprOed: npt.NDArray[ np.float64 ] = 1.0 / den1 * 3.0 / den2
+    comprOed[ mask1 ] = np.nan
+    comprOed[ mask2 ] = np.nan
     return comprOed
 
 
 def compressibilityReal(
-    deltaPressure: npt.NDArray[np.float64],
-    porosity: npt.NDArray[np.float64],
-    porosityInitial: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    deltaPressure: npt.NDArray[ np.float64 ],
+    porosity: npt.NDArray[ np.float64 ],
+    porosityInitial: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute compressibility from elastic moduli and porosity.
 
     Compressibility formula is:
@@ -844,21 +769,21 @@ def compressibilityReal(
     assert porosity is not None, "Porosity must be defined"
     assert porosityInitial is not None, "Initial porosity must be defined"
 
-    den: npt.NDArray[np.float64] = deltaPressure * porosityInitial
-    mask: npt.NDArray[np.bool_] = np.abs(den) < EPSILON
-    den[mask] = 1.0
+    den: npt.NDArray[ np.float64 ] = deltaPressure * porosityInitial
+    mask: npt.NDArray[ np.bool_ ] = np.abs( den ) < EPSILON
+    den[ mask ] = 1.0
 
-    comprReal: npt.NDArray[np.float64] = (porosity - porosityInitial) / den
-    comprReal[mask] = np.nan
+    comprReal: npt.NDArray[ np.float64 ] = ( porosity - porosityInitial ) / den
+    comprReal[ mask ] = np.nan
     return comprReal
 
 
 def compressibility(
-    poissonRatio: npt.NDArray[np.float64],
-    bulkModulus: npt.NDArray[np.float64],
-    biotCoefficient: npt.NDArray[np.float64],
-    porosity: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    poissonRatio: npt.NDArray[ np.float64 ],
+    bulkModulus: npt.NDArray[ np.float64 ],
+    biotCoefficient: npt.NDArray[ np.float64 ],
+    porosity: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
     r"""Compute compressibility from elastic moduli, biot coefficient and porosity.
 
     Compressibility formula is:
@@ -881,34 +806,27 @@ def compressibility(
     assert biotCoefficient is not None, "Biot coefficient must be defined"
     assert porosity is not None, "Porosity must be defined"
 
-    term1: npt.NDArray[np.float64] = 1.0 - 2.0 * poissonRatio
+    term1: npt.NDArray[ np.float64 ] = 1.0 - 2.0 * poissonRatio
 
-    mask: npt.NDArray[np.bool_] = (np.abs(bulkModulus) < EPSILON) * (
-        np.abs(porosity) < EPSILON
-    )
-    denFac1: npt.NDArray[np.float64] = porosity * bulkModulus
-    term1[mask] = 1.0
+    mask: npt.NDArray[ np.bool_ ] = ( np.abs( bulkModulus ) < EPSILON ) * ( np.abs( porosity ) < EPSILON )
+    denFac1: npt.NDArray[ np.float64 ] = porosity * bulkModulus
+    term1[ mask ] = 1.0
     term1 /= denFac1
 
-    term2M1: npt.NDArray[np.float64] = (
-        biotCoefficient * biotCoefficient * (1 + poissonRatio)
-    )
-    denTerm2M1: npt.NDArray[np.float64] = 1 - poissonRatio
-    mask2: npt.NDArray[np.bool_] = np.abs(denTerm2M1) < EPSILON
-    denTerm2M1[mask2] = 1.0
+    term2M1: npt.NDArray[ np.float64 ] = ( biotCoefficient * biotCoefficient * ( 1 + poissonRatio ) )
+    denTerm2M1: npt.NDArray[ np.float64 ] = 1 - poissonRatio
+    mask2: npt.NDArray[ np.bool_ ] = np.abs( denTerm2M1 ) < EPSILON
+    denTerm2M1[ mask2 ] = 1.0
     term2M1 /= denTerm2M1
-    term2M1[mask2] = np.nan
+    term2M1[ mask2 ] = np.nan
 
-    term2M2: npt.NDArray[np.float64] = (
-        3.0 * (biotCoefficient - porosity) * (1 - biotCoefficient)
-    )
-    term2: npt.NDArray[np.float64] = term2M1 + term2M2
+    term2M2: npt.NDArray[ np.float64 ] = ( 3.0 * ( biotCoefficient - porosity ) * ( 1 - biotCoefficient ) )
+    term2: npt.NDArray[ np.float64 ] = term2M1 + term2M2
     return term1 * term2
 
 
-def shearCapacityUtilization(
-    traction: npt.NDArray[np.float64], rockCohesion: float, frictionAngle: float
-) -> npt.NDArray[np.float64]:
+def shearCapacityUtilization( traction: npt.NDArray[ np.float64 ], rockCohesion: float,
+                              frictionAngle: float ) -> npt.NDArray[ np.float64 ]:
     r"""Compute shear capacity utilization (SCU).
 
     .. math::
@@ -927,27 +845,26 @@ def shearCapacityUtilization(
 
     """
     assert traction is not None, "Traction must be defined"
-    assert traction.shape[1] == 3, "Traction vector must have 3 components."
+    assert traction.shape[ 1 ] == 3, "Traction vector must have 3 components."
 
-    scu: npt.NDArray[np.float64] = np.full(traction.shape[0], np.nan)
-    for i, tractionVec in enumerate(traction):
+    scu: npt.NDArray[ np.float64 ] = np.full( traction.shape[ 0 ], np.nan )
+    for i, tractionVec in enumerate( traction ):
         # use -1 to agree with Geos convention (i.e., compression with negative stress)
-        stressNormal: npt.NDArray[np.float64] = -1.0 * tractionVec[0]
+        stressNormal: npt.NDArray[ np.float64 ] = -1.0 * tractionVec[ 0 ]
 
         # compute failure envelope
-        mohrCoulomb: MohrCoulomb = MohrCoulomb(rockCohesion, frictionAngle)
-        tauFailure: float = float(mohrCoulomb.computeShearStress(stressNormal))
+        mohrCoulomb: MohrCoulomb = MohrCoulomb( rockCohesion, frictionAngle )
+        tauFailure: float = float( mohrCoulomb.computeShearStress( stressNormal ) )
         scu_i: float = np.nan
         if tauFailure > 0:
-            scu_i = np.abs(tractionVec[1]) / tauFailure
+            scu_i = np.abs( tractionVec[ 1 ] ) / tauFailure
         # compute SCU
-        scu[i] = scu_i
+        scu[ i ] = scu_i
     return scu
 
 
 def computeStressPrincipalComponentsFromStressVector(
-    stressVector: npt.NDArray[np.float64],
-) -> tuple[float, float, float]:
+    stressVector: npt.NDArray[ np.float64 ], ) -> tuple[ float, float, float ]:
     """Compute stress principal components from stress vector.
 
     Args:
@@ -959,13 +876,11 @@ def computeStressPrincipalComponentsFromStressVector(
 
     """
     assert stressVector.size == 6, "Stress vector dimension is wrong."
-    stressTensor: npt.NDArray[np.float64] = getAttributeMatrixFromVector(stressVector)
-    return computeStressPrincipalComponents(stressTensor)
+    stressTensor: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( stressVector )
+    return computeStressPrincipalComponents( stressTensor )
 
 
-def computeStressPrincipalComponents(
-    stressTensor: npt.NDArray[np.float64],
-) -> tuple[float, float, float]:
+def computeStressPrincipalComponents( stressTensor: npt.NDArray[ np.float64 ], ) -> tuple[ float, float, float ]:
     """Compute stress principal components.
 
     Args:
@@ -977,15 +892,14 @@ def computeStressPrincipalComponents(
 
     """
     # get eigen values
-    e_val, e_vec = np.linalg.eig(stressTensor)
+    e_val, e_vec = np.linalg.eig( stressTensor )
     # sort principal stresses from smallest to largest
-    p3, p2, p1 = np.sort(e_val)
-    return (p3, p2, p1)
+    p3, p2, p1 = np.sort( e_val )
+    return ( p3, p2, p1 )
 
 
-def computeNormalShearStress(
-    stressTensor: npt.NDArray[np.float64], directionVector: npt.NDArray[np.float64]
-) -> tuple[float, float]:
+def computeNormalShearStress( stressTensor: npt.NDArray[ np.float64 ],
+                              directionVector: npt.NDArray[ np.float64 ] ) -> tuple[ float, float ]:
     """Compute normal and shear stress according to stress tensor and direction.
 
     Args:
@@ -996,16 +910,16 @@ def computeNormalShearStress(
         tuple[float, float]: normal and shear stresses.
 
     """
-    assert stressTensor.shape == (3, 3), "Stress tensor must be 3x3 matrix."
+    assert stressTensor.shape == ( 3, 3 ), "Stress tensor must be 3x3 matrix."
     assert directionVector.size == 3, "Direction vector must have 3 components"
 
     # normalization of direction vector
-    directionVector = directionVector / np.linalg.norm(directionVector)
+    directionVector = directionVector / np.linalg.norm( directionVector )
     # stress vector
-    T: npt.NDArray[np.float64] = np.dot(stressTensor, directionVector)
+    T: npt.NDArray[ np.float64 ] = np.dot( stressTensor, directionVector )
     # normal stress
-    sigmaN: float = np.dot(T, directionVector)
+    sigmaN: float = np.dot( T, directionVector )
     # shear stress
-    tauVec: npt.NDArray[np.float64] = T - np.dot(sigmaN, directionVector)
-    tau: float = float(np.linalg.norm(tauVec))
-    return (sigmaN, tau)
+    tauVec: npt.NDArray[ np.float64 ] = T - np.dot( sigmaN, directionVector )
+    tau: float = float( np.linalg.norm( tauVec ) )
+    return ( sigmaN, tau )

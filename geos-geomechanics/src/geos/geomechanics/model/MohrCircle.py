@@ -6,8 +6,7 @@ import numpy.typing as npt
 from typing_extensions import Self
 
 from geos.geomechanics.processing.geomechanicsCalculatorFunctions import (
-    computeStressPrincipalComponentsFromStressVector,
-)
+    computeStressPrincipalComponentsFromStressVector, )
 
 __doc__ = """
 MohrCircle module define the Mohr's circle parameters.
@@ -43,7 +42,8 @@ To use the object:
 
 
 class MohrCircle:
-    def __init__(self: Self, circleId: str) -> None:
+
+    def __init__( self: Self, circleId: str ) -> None:
         """Compute Mohr's Circle from input stress.
 
         Args:
@@ -55,15 +55,15 @@ class MohrCircle:
         self.m_p2: float = 0.0
         self.m_p3: float = 0.0
 
-    def __str__(self: Self) -> str:
+    def __str__( self: Self ) -> str:
         """Overload of __str__ method."""
         return self.m_circleId
 
-    def __repr__(self: Self) -> str:
+    def __repr__( self: Self ) -> str:
         """Overload of __repr__ method."""
         return self.m_circleId
 
-    def setCircleId(self: Self, circleId: str) -> None:
+    def setCircleId( self: Self, circleId: str ) -> None:
         """Set circle Id variable.
 
         Args:
@@ -71,7 +71,7 @@ class MohrCircle:
         """
         self.m_circleId = circleId
 
-    def getCircleId(self: Self) -> str:
+    def getCircleId( self: Self ) -> str:
         """Access the Id of the Mohr circle.
 
         Returns:
@@ -79,19 +79,19 @@ class MohrCircle:
         """
         return self.m_circleId
 
-    def getCircleRadius(self: Self) -> float:
+    def getCircleRadius( self: Self ) -> float:
         """Compute and return Mohr's circle radius from principal components."""
-        return (self.m_p1 - self.m_p3) / 2.0
+        return ( self.m_p1 - self.m_p3 ) / 2.0
 
-    def getCircleCenter(self: Self) -> float:
+    def getCircleCenter( self: Self ) -> float:
         """Compute and return Mohr's circle center from principal components."""
-        return (self.m_p1 + self.m_p3) / 2.0
+        return ( self.m_p1 + self.m_p3 ) / 2.0
 
-    def getPrincipalComponents(self: Self) -> tuple[float, float, float]:
+    def getPrincipalComponents( self: Self ) -> tuple[ float, float, float ]:
         """Get Moh's circle principal components."""
-        return (self.m_p3, self.m_p2, self.m_p1)
+        return ( self.m_p3, self.m_p2, self.m_p1 )
 
-    def setPrincipalComponents(self: Self, p3: float, p2: float, p1: float) -> None:
+    def setPrincipalComponents( self: Self, p3: float, p2: float, p1: float ) -> None:
         """Set principal components.
 
         Args:
@@ -99,14 +99,12 @@ class MohrCircle:
             p2 (float): second component.
             p1 (float): third component. Must be the greatest.
         """
-        assert (p3 <= p2) and (p2 <= p1), "Component order is wrong."
+        assert ( p3 <= p2 ) and ( p2 <= p1 ), "Component order is wrong."
         self.m_p3 = p3
         self.m_p2 = p2
         self.m_p1 = p1
 
-    def computePrincipalComponents(
-        self: Self, stressVector: npt.NDArray[np.float64]
-    ) -> None:
+    def computePrincipalComponents( self: Self, stressVector: npt.NDArray[ np.float64 ] ) -> None:
         """Calculate principal components.
 
         Args:
@@ -114,6 +112,4 @@ class MohrCircle:
                 Stress vector must follow GEOS convention (XX, YY, ZZ, YZ, XZ, XY)
         """
         # get stress principal components
-        self.m_p3, self.m_p2, self.m_p1 = (
-            computeStressPrincipalComponentsFromStressVector(stressVector)
-        )
+        self.m_p3, self.m_p2, self.m_p1 = ( computeStressPrincipalComponentsFromStressVector( stressVector ) )
