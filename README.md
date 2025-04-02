@@ -190,12 +190,12 @@ The *setup.py* file is optional. It is required if the package depends on anothe
 Release
 -------
 
-For release details and restrictions, please read the [LICENSE](https://github.com/GEOS-DEV/LICENSE) file.
+For release details and restrictions, please read the [LICENSE](https://github.com/GEOS-DEV/GEOS/LICENSE) file.
 
-For copyrights, please read the [COPYRIGHT](https://github.com/GEOS-DEV/COPYRIGHT ) file.
+For copyrights, please read the [COPYRIGHT](https://github.com/GEOS-DEV/GEOS/COPYRIGHT ) file.
 
-For contributors, please read the [CONTRIBUTORS](https://github.com/GEOS-DEV/CONTRIBUTORS ) file.
+For contributors, please read the [CONTRIBUTORS](https://github.com/GEOS-DEV/GEOS/CONTRIBUTORS ) file.
 
-For acknowledgements, please read the [ACKNOWLEDGEMENTS](https://github.com/GEOS-DEV/ACKNOWLEDGEMENTS ) file.
+For acknowledgements, please read the [ACKNOWLEDGEMENTS](https://github.com/GEOS-DEV/GEOS/ACKNOWLEDGEMENTS ) file.
 
-For notice, please read the [NOTICE](https://github.com/GEOS-DEV/NOTICE ) file.
+For notice, please read the [NOTICE](https://github.com/GEOS-DEV/GEOS/NOTICE ) file.
