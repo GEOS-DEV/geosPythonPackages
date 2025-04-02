@@ -36,7 +36,11 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos_utils.GeosOutputsConstants import (
+from geos_posp.processing.vtkUtils import (
+    getArrayInObject,
+    isAttributeInObject,
+)
+from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )

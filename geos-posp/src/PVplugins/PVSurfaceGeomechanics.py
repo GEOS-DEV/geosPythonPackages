@@ -13,6 +13,8 @@ parent_dir_path = os.path.dirname(dir_path)
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
+import PVplugins #required to update sys path
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase,
     smdomain,
@@ -36,8 +38,8 @@ from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos_posp.utils.Logger import Logger, getLogger
-from geos_posp.utils.PhysicalConstants import (
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_ROCK_COHESION,
 )

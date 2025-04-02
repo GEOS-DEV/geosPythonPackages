@@ -17,6 +17,8 @@ parent_dir_path = os.path.dirname(dir_path)
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
+import PVplugins #required to update sys path
+
 import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase,
@@ -38,11 +40,14 @@ from geos_pv.geosLogReaderUtils.geosLogReaderFunctions import (
     identifyProperties,
     transformUserChoiceToListPhases,
 )
+
 from geos_pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
 from geos_pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos_pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
 from geos_pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
-from geos_utils.enumUnits import (
+from geos.utils.enumUnits import (
+
+
     Mass,
     MassRate,
     Pressure,
@@ -52,10 +57,11 @@ from geos_utils.enumUnits import (
     VolumetricRate,
     enumerationDomainUnit,
 )
-from geos_utils.UnitRepository import UnitRepository
+
+from geos.utils.UnitRepository import UnitRepository
 from geos_pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback,
-)
+)  
 from geos_pv.utils.paraviewTreatments import (
     strListToEnumerationDomainXml,
 )

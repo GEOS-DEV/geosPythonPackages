@@ -5,8 +5,8 @@ GEOS Post-Processing tools
    :maxdepth: 5
    :caption: Contents:
 
-   ./posp_rst/home.rst
+   ./geos_posp_docs/home.rst
 
-   ./posp_rst/modules.rst
+   ./geos_posp_docs/modules.rst
 
-   ./posp_rst/visualization.rst
+   ./geos_posp_docs/visualization.rst

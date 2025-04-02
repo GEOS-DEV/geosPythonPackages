@@ -15,6 +15,8 @@ parent_dir_path = os.path.dirname(dir_path)
 if parent_dir_path not in sys.path:
     sys.path.append(parent_dir_path)
 
+import PVplugins #required to update sys path
+
 import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase,
@@ -40,7 +42,7 @@ from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockFromFlatIndex,
 )
 from geos_posp.processing.vtkUtils import isAttributeInObject
-from geos_posp.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to
