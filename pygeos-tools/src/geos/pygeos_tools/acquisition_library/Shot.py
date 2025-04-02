@@ -1,4 +1,10 @@
 import numpy as np
+from typing import Iterable, List, Optional, Union
+from typing_extensions import Self
+from geos.pygeos_tools.input.Xml import XML
+
+
+Coordinates3D = Iterable[ float, float, float ]
 
 
 class Shot:
@@ -21,7 +27,7 @@ class Shot:
             xml input file of the shot
     """
 
-    def __init__( self, sourceSet=None, receiverSet=None, shotId=None ):
+    def __init__( self: Self, sourceSet=None, receiverSet=None, shotId: str = None ):
         """ Constructor of Shot
 
         Parameters
@@ -50,18 +56,25 @@ class Shot:
         self.id = shotId
         self.mesh = None
 
-    def __eq__( self, other ):
+    def __eq__( self: Self, other ):
         if isinstance( self, other.__class__ ):
             if self.sources == other.sources and self.receivers == other.receivers:
                 return True
 
         return False
 
-    def __repr__( self ):
+    def __repr__( self: Self ):
         return 'Source position : \n' + str( self.sources ) + ' \n\n' + 'Receivers positions : \n' + str(
             self.receivers ) + '\n\n'
 
-    def getSourceList( self ):
+    """
+    Accessors
+    """
+    def getMesh( self: Self ):
+        """Get the mesh"""
+        return self.mesh
+
+    def getSourceList( self: Self ) -> List:
         """
         Return the list of all sources in the Shot configuration
 
@@ -72,7 +85,7 @@ class Shot:
         """
         return self.sources.getList()
 
-    def getSourceCoords( self ):
+    def getSourceCoords( self: Self ) -> List[ Coordinates3D ]:
         """
         Return the list of all sources coordinates in the Shot configuration
 
@@ -83,18 +96,7 @@ class Shot:
         """
         return self.sources.getSourceCoords()
 
-    def getReceiverList( self ):
-        """
-        Return the list of all receivers in the Shot configuration
-
-        Returns
-        --------
-            list of Receiver
-                list of all the sources
-        """
-        return self.receivers.getList()
-
-    def getReceiverCoords( self ):
+    def getReceiverCoords( self: Self ) -> List[ Coordinates3D ]:
         """
         Return the list of all receivers coordinates in the Shot configuration
 
@@ -105,7 +107,21 @@ class Shot:
         """
         return self.receivers.getReceiverCoords()
 
-    def setXml( self, xml ):
+    def getReceiverList( self: Self ) -> List:
+        """
+        Return the list of all receivers in the Shot configuration
+
+        Returns
+        --------
+            list of Receiver
+                list of all the sources
+        """
+        return self.receivers.getList()
+
+    """
+    Mutators
+    """
+    def setXml( self: Self, xml: XML ):
         """
         Set the Xml for the shot
 
@@ -114,12 +130,12 @@ class Shot:
             xml : XML
                 XML object corresponding to the GEOS xml input file
         """
-        self.xml = xml
+        self.xml: XML = xml
 
-    def setMesh( self, mesh ):
+    def setMesh( self: Self, mesh ):
         """
         Set the mesh
-        
+
         Parameters
         -----------
             mesh : Mesh
@@ -127,14 +143,10 @@ class Shot:
         """
         self.mesh = mesh
 
-    def loadMesh( self ):
+    def loadMesh( self: Self ):
         """Load the mesh and set its properties"""
         if self.mesh and not self.mesh.isSet:
-            self.mesh.setMeshProperties()
-
-    def getMesh( self ):
-        """Get the mesh"""
-        return self.mesh
+            self.mesh.updateMeshProperties()
 
 
 class ShotPoint:
@@ -147,7 +159,7 @@ class ShotPoint:
             Coordinates of the shot point
     """
 
-    def __init__( self, x, y, z ):
+    def __init__( self: Self, x, y, z ):
         """
         Parameters
         -----------
@@ -158,24 +170,77 @@ class ShotPoint:
             z : str, int or float
                 z coordinate
         """
-        self.updatePosition( x, y, z )
+        self.setPosition( x, y, z )  # defines the self.coords attribute
 
-    def __str__( self ):
+    def __str__( self: Self ):
         return f'Position of Shot point : {self.coords}'
 
-    def __repr__( self ):
-        return f'ShotPoint({self.coords[0]}, {self.coords[1]}, {self.coords[2]})'
+    def __repr__( self: Self ):
+        return f'ShotPoint({self.coords[ 0 ]}, {self.coords[ 1 ]}, {self.coords[ 2 ]})'
 
-    def __eq__( self, other ):
+    def __eq__( self: Self, other ):
         if isinstance( self, other.__class__ ):
             if self.coords == other.coords:
                 return True
 
         return False
 
-    def updateCoordinate( self, coord, value ):
+    """
+    Accessors
+    """
+    def getPosition( self: Self ) -> List:
         """
-        Update one of the coordinates
+        Return the position coordinates
+
+        Returns
+        -----------
+            list
+                Coordinates
+        """
+        return self.coords
+
+    @property
+    def x( self: Self ) -> float:
+        """
+        Get the x position
+
+        Returns
+        --------
+            float
+                X coordinate
+        """
+        return self.coords[ 0 ]
+
+    @property
+    def y( self: Self ) -> float:
+        """
+        Get the y position
+
+        Returns
+        --------
+            float
+                Y coordinate
+        """
+        return self.coords[ 1 ]
+
+    @property
+    def z( self: Self ) -> float:
+        """
+        Get the z position
+
+        Returns
+        --------
+            float
+                Z coordinate
+        """
+        return self.coords[ 2 ]
+
+    """
+    Mutators
+    """
+    def setCoordinate( self: Self, coord: int, value: Union[ int, float ] ) -> None:
+        """
+        Set one of the coordinates
 
         Parameters
         -----------
@@ -190,20 +255,9 @@ class ShotPoint:
 
         self.coords[ coord ] = value
 
-    def getPosition( self ):
+    def setPosition( self: Self, x, y, z ) -> None:
         """
-        Return the position coordinates
-
-        Returns
-        -----------
-            list
-                Coordinates    
-        """
-        return self.coords
-
-    def updatePosition( self, x, y, z ):
-        """
-        Update all the coordinates
+        Set all the coordinates
 
         Parameters
         -----------
@@ -214,62 +268,24 @@ class ShotPoint:
             str( c ).replace( ".", "", 1 ).isdigit() or isinstance( c, float ) or isinstance( c, int )
             for c in ( x, y, z ) ), "Only numeric values are accepted"
 
-        self.coords = [ float( c ) for c in ( x, y, z ) ]
+        self.coords: Coordinates3D = [ float( c ) for c in ( x, y, z ) ]
 
-    def x( self ):
-        """
-        Get the x position
-
-        Returns
-        --------
-            float
-                X coordinate
-        """
-        return self.coords[ 0 ]
-
-    def y( self ):
-        """
-        Get the y position
-
-        Returns
-        --------
-            float
-                Y coordinate
-        """
-        return self.coords[ 1 ]
-
-    def z( self ):
-        """
-        Get the z position
-
-        Returns
-        --------
-            float
-                Z coordinate
-        """
-        return self.coords[ 2 ]
-
-    def isinBounds( self, bounds ):
+    def isinBounds( self: Self, b ) -> bool:
         """
         Check if the receiver is in the bounds
-        
+
         Parameters
         -----------
-            bounds : list or array of len 6
+            b : list or array of len 6
                 Bounds of format \
                 (xmin, xmax, ymin, ymax, zmin, zmax)
-        
+
         Returns
         --------
             bool
                 True if receiver is in bounds, False otherwise
         """
-        if self.x() >= bounds[0] and self.x() <= bounds[1] \
-        and self.y() >= bounds[2] and self.y() <= bounds[3] \
-        and self.z() >= bounds[4] and self.z() <= bounds[5]:
-            return True
-        else:
-            return False
+        return ( b[ 0 ] <= self.x() <= b[ 1 ] and b[ 2 ] <= self.y() <= b[ 3 ] and b[ 4 ] <= self.z() <= b[ 5 ] )
 
 
 class Receiver( ShotPoint ):
@@ -281,7 +297,7 @@ class Receiver( ShotPoint ):
             Coordinates of the receiver
     """
 
-    def __init__( self, x, y, z ):
+    def __init__( self: Self, x, y, z ):
         """Constructor for the receiver
 
         Parameters
@@ -291,11 +307,11 @@ class Receiver( ShotPoint ):
         """
         super().__init__( x, y, z )
 
-    def __str__( self ):
+    def __str__( self: Self ):
         return f'Position of Receiver : {self.coords}'
 
-    def __repr__( self ):
-        return f'Receiver({self.coords[0]}, {self.coords[1]}, {self.coords[2]})'
+    def __repr__( self: Self ):
+        return f'Receiver({self.coords[ 0 ]}, {self.coords[ 1 ]}, {self.coords[ 2 ]})'
 
 
 class Source( ShotPoint ):
@@ -307,7 +323,7 @@ class Source( ShotPoint ):
             Coordinates of the source
     """
 
-    def __init__( self, x, y, z ):
+    def __init__( self: Self, x, y, z ):
         """Constructor for the point source
 
         Parameters
@@ -317,11 +333,11 @@ class Source( ShotPoint ):
         """
         super().__init__( x, y, z )
 
-    def __str__( self ):
+    def __str__( self: Self ):
         return f'Position of Source : {self.coords}'
 
-    def __repr__( self ):
-        return f'Source({self.coords[0]}, {self.coords[1]}, {self.coords[2]})'
+    def __repr__( self: Self ):
+        return f'Source({self.coords[ 0 ]}, {self.coords[ 1 ]}, {self.coords[ 2 ]})'
 
 
 class ShotPointSet:
@@ -336,7 +352,7 @@ class ShotPointSet:
             Number of ShotPoint in the set
     """
 
-    def __init__( self, shotPointList=None ):
+    def __init__( self: Self, shotPointList: List[ ShotPoint ] = None ):
         """
         Parameters
         -----------
@@ -344,9 +360,9 @@ class ShotPointSet:
                 List of ShotPoint \
                 Default is None
         """
-        self.updateList( shotPointList )
+        self.updateList( shotPointList )  # defines the self.list and self.number attributes
 
-    def __eq__( self, other ):
+    def __eq__( self: Self, other ):
         if isinstance( self, other.__class__ ):
             if self.number == other.number:
                 for sp1 in self.list:
@@ -356,7 +372,7 @@ class ShotPointSet:
 
         return False
 
-    def getList( self ):
+    def getList( self: Self ) -> List[ ShotPoint ]:
         """
         Return the list of Shot points in the set
 
@@ -367,7 +383,7 @@ class ShotPointSet:
         """
         return self.list
 
-    def updateList( self, newList=None ):
+    def updateList( self: Self, newList: List[ ShotPoint ] = None ) -> None:
         """
         Update the full list with a new one
 
@@ -378,7 +394,7 @@ class ShotPointSet:
                 Default is empty list (reset)
         """
         if newList is None:
-            self.list = []
+            self.list = list()
         else:
             assert ( isinstance( newList, list ) or isinstance( newList, tuple ) )
             assert all( isinstance( sp, ShotPoint )
@@ -386,9 +402,9 @@ class ShotPointSet:
 
             self.list = list( newList )
 
-        self.number = len( self.list )
+        self.number: int = len( self.list )
 
-    def append( self, shotPoint=None ):
+    def append( self: Self, shotPoint: ShotPoint = None ) -> None:
         """
         Append a new shot point to the set
 
@@ -403,7 +419,7 @@ class ShotPointSet:
             self.list.append( shotPoint )
             self.number += 1
 
-    def appendSet( self, shotPointSet ):
+    def appendSet( self: Self, shotPointSet ) -> None:
         """
         Append a list or a set of Shot Points to the existing one
 
@@ -435,7 +451,7 @@ class ReceiverSet( ShotPointSet ):
             Number of Receivers
     """
 
-    def __init__( self, receiverList=None ):
+    def __init__( self: Self, receiverList: List[ Receiver ] = None ):
         """Constructor for the receiver set
 
         Parameters
@@ -445,43 +461,16 @@ class ReceiverSet( ShotPointSet ):
         """
         super().__init__( receiverList )
 
-    def __repr__( self ):
+    def __repr__( self: Self ):
         if self.number >= 10:
             return str( self.list[ 0:4 ] )[ :-1 ] + '...' + '\n' + str( self.list[ -4: ] )[ 1: ]
         else:
             return str( self.list )
 
-    def keepReceiversWithinBounds( self, bounds ):
-        """
-        Filter the list to keep only the ones in the given bounds
-
-        Parameters
-        -----------
-            bounds : list or array of len 6
-                Bounds of format \
-                (xmin, xmax, ymin, ymax, zmin, zmax)
-        """
-        newList = []
-
-        for receiver in self.list:
-            if receiver.isinBounds( bounds ):
-                newList.append( receiver )
-
-        self.updateList( newList )
-
-    def append( self, receiver ):
-        """
-        Append a new receiver to the receiver set
-
-        Parameters
-        ----------
-            receiver : Receiver
-                Receiver to be added
-        """
-        assert isinstance( receiver, Receiver )
-        super().append( receiver )
-
-    def getReceiver( self, i ):
+    """
+    Accessors
+    """
+    def getReceiver( self: Self, i ) -> int:
         """
         Get a specific receiver from the set with its index
 
@@ -495,17 +484,46 @@ class ReceiverSet( ShotPointSet ):
         else:
             raise IndexError( "The receiver set is smaller than the index requested" )
 
-    def getReceiverCoords( self ):
+    def getReceiverCoords( self: Self ) -> List[ Coordinates3D ]:
         """
         Get the coordinates of all the receivers
 
         Returns
         --------
-            receiverCoords : list of list of float
+            receiverCoords : list of Coordinates3D
                 List of all the receivers positions
         """
-        receiverCoords = [ receiver.coords for receiver in self.getList() ]
-        return receiverCoords
+        return [ receiver.coords for receiver in self.getList() ]
+
+    def keepReceiversWithinBounds( self: Self, bounds ) -> None:
+        """
+        Filter the list to keep only the ones in the given bounds
+
+        Parameters
+        -----------
+            bounds : list or array of len 6
+                Bounds of format \
+                (xmin, xmax, ymin, ymax, zmin, zmax)
+        """
+        newList: List = list()
+
+        for receiver in self.list:
+            if receiver.isinBounds( bounds ):
+                newList.append( receiver )
+
+        self.updateList( newList )
+
+    def append( self: Self, receiver ) -> None:
+        """
+        Append a new receiver to the receiver set
+
+        Parameters
+        ----------
+            receiver : Receiver
+                Receiver to be added
+        """
+        assert isinstance( receiver, Receiver )
+        super().append( receiver )
 
 
 class SourceSet( ShotPointSet ):
@@ -520,7 +538,7 @@ class SourceSet( ShotPointSet ):
             Number of sources
     """
 
-    def __init__( self, sourceList=None ):
+    def __init__( self: Self, sourceList=None ):
         """Constructor for the source set
 
         Parameters
@@ -530,25 +548,28 @@ class SourceSet( ShotPointSet ):
         """
         super().__init__( sourceList )
 
-    def __repr__( self ):
+    def __repr__( self: Self ):
         if self.number >= 10:
             return str( self.list[ 0:4 ] )[ :-1 ] + '...' + '\n' + str( self.list[ -4: ] )[ 1: ]
         else:
             return str( self.list )
 
-    def append( self, source ):
+    """
+    Accessors
+    """
+    def getCenter( self: Self ) -> Optional[ Coordinates3D ]:
         """
-        Append a new source to the source set
+        Get the position of the center of the SourceSet
 
-        Parameters
-        ----------
-            source : Source
-                Source to be added
+        Returns
+        --------
+            center : tuple or None
+                Central position of the source set
         """
-        assert isinstance( source, Source )
-        super().append( source )
+        if self.number > 0:
+            return tuple( np.mean( np.array( self.getSourceCoords() ), axis=0 ) )
 
-    def getSource( self, i ):
+    def getSource( self: Self, i ) -> int:
         """
         Get a specific source from the set with its index
 
@@ -562,30 +583,25 @@ class SourceSet( ShotPointSet ):
         else:
             raise IndexError( "The source set is smaller than the index requested" )
 
-    def getSourceCoords( self ):
+    def getSourceCoords( self: Self ) -> List[ Coordinates3D ]:
         """
         Get the coordinates of all the sources
 
         Returns
         --------
-            sourceCoords : list of list of float
+            sourceCoords : list of Coordinates3D
                 List of all the source positions
         """
-        sourceCoords = [ source.coords for source in self.getList() ]
-        return sourceCoords
+        return [ source.coords for source in self.getList() ]
 
-    def getCenter( self ):
+    def append( self: Self, source ) -> None:
         """
-        Get the position of the center of the SourceSet
-        
-        Returns
-        --------
-            center : tuple or None
-                Central position of the source set
+        Append a new source to the source set
+
+        Parameters
+        ----------
+            source : Source
+                Source to be added
         """
-        center = None
-
-        if self.number > 0:
-            center = tuple( np.mean( np.array( self.getSourceCoords() ), axis=0 ) )
-
-        return center
+        assert isinstance( source, Source )
+        super().append( source )

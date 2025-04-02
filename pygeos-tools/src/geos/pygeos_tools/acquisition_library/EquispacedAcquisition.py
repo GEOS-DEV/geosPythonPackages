@@ -1,8 +1,9 @@
 import numpy as np
 from copy import deepcopy
-
+from typing import List, Tuple
+from typing_extensions import Self
 from geos.pygeos_tools.acquisition_library.Acquisition import Acquisition
-from geos.pygeos_tools.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
+from geos.pygeos_tools.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot, Coordinates3D
 
 
 class EQUISPACEDAcquisition( Acquisition ):
@@ -12,7 +13,7 @@ class EQUISPACEDAcquisition( Acquisition ):
     The receiver set is the same for all shots
     """
 
-    def __init__( self, xml, dt=None, **kwargs ):
+    def __init__( self: Self, xml, dt: float = None, **kwargs ):
         """
         Parameters
         -----------
@@ -37,7 +38,7 @@ class EQUISPACEDAcquisition( Acquisition ):
         super().__init__( xml, dt, **kwargs )
         self.type = "equispacedAcquisition"
 
-    def acquisition_method( self,
+    def acquisition_method( self: Self,
                             startFirstSourceLine,
                             endFirstSourceLine,
                             startFirstReceiversLine,
@@ -50,7 +51,7 @@ class EQUISPACEDAcquisition( Acquisition ):
                             sourcesPerLine=1,
                             numberOfReceiverLines=1,
                             receiversPerLine=1,
-                            **kwargs ):
+                            **kwargs ) -> None:
         """
         Set the shots configurations
 
@@ -126,9 +127,9 @@ class EQUISPACEDAcquisition( Acquisition ):
             receiverSet.appendSet( deepcopy( receiverSet_temp ) )
 
         # Define all sources positions
-        xs = []
-        ys = []
-        zs = []
+        xs = list()
+        ys = list()
+        zs = list()
         for n in range( numberOfSourceLines ):
             if isinstance( sourcesPerLine, int ):
                 numberOfSources = sourcesPerLine
@@ -145,7 +146,7 @@ class EQUISPACEDAcquisition( Acquisition ):
 
         # Define all shots configuration
         # 1 source = 1 shot
-        shots = []
+        shots: List[ Shot ] = list()
         for i in range( len( xs ) ):
             sourceSet = SourceSet()
 
@@ -156,45 +157,46 @@ class EQUISPACEDAcquisition( Acquisition ):
 
             shots.append( deepcopy( shot ) )
 
-        self.shots = shots
+        self.shots: List[ Shot ] = shots
 
-    def __generateListOfEquiPositions( self, firstLinePosition, lastLinePosition, numberOfLines ):
+    def __generateListOfEquiPositions( self: Self, firstLinePosition: Coordinates3D, lastLinePosition: Coordinates3D,
+                                       numberOfLines: int ) -> List[ Coordinates3D ]:
         """
         Generate a list of equispaced lines start or end positions
 
         Parameters
         -----------
-            firstLinePosition : float
+            firstLinePosition : Coordinates3D
                 Coordinates of the first line point
-            lastLinePosition : float
+            lastLinePosition : Coordinates3D
                 Coordinates of the last line point
             numberOfLines : int
                 Number of equispaced lines
 
         Returns
         --------
-            positions : list of list of float
+            positions : list of Coordinates3D
                 Equispaced coordinates as required
         """
         assert len( firstLinePosition ) == len( lastLinePosition )
 
-        positions = [ [ x, y, z ]
-                      for x, y, z in zip( np.linspace( firstLinePosition[ 0 ], lastLinePosition[ 0 ], numberOfLines ),
-                                          np.linspace( firstLinePosition[ 1 ], lastLinePosition[ 1 ], numberOfLines ),
-                                          np.linspace( firstLinePosition[ 2 ], lastLinePosition[ 2 ], numberOfLines ) )
-                     ]
+        positions = [ [ x, y, z ] for x, y, z in zip(
+            np.linspace( firstLinePosition[ 0 ], lastLinePosition[ 0 ], numberOfLines ),
+            np.linspace( firstLinePosition[ 1 ], lastLinePosition[ 1 ], numberOfLines ),
+            np.linspace( firstLinePosition[ 2 ], lastLinePosition[ 2 ], numberOfLines ) ) ]
 
         return positions
 
-    def __generateEquiPositionsWithinLine( self, startPosition, endPosition, numberOfPositions ):
+    def __generateEquiPositionsWithinLine( self: Self, startPosition: Coordinates3D, endPosition: Coordinates3D,
+                                           numberOfPositions: int ) -> Tuple[ List[ float ] ]:
         """
         Generate the x, y, z equispaced coordinates within a line
 
         Parameters
         -----------
-            startPosition : float
+            startPosition : Coordinates3D
                 Coordinates of the start position
-            lastLinePosition : float
+            lastLinePosition : Coordinates3D
                 Coordinates of the end position
             numberOfPositions : int
                 Number of equispaced points on the line

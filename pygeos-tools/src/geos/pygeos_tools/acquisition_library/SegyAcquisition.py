@@ -3,7 +3,8 @@ import sys
 import glob
 import numpy as np
 import segyio
-
+from typing import List
+from typing_extensions import Self
 from geos.pygeos_tools.acquisition_library.Acquisition import Acquisition
 from geos.pygeos_tools.acquisition_library.Shot import Source, SourceSet, Receiver, ReceiverSet, Shot
 
@@ -13,7 +14,7 @@ class SEGYAcquisition( Acquisition ):
     Acquisition defined from the reading of segy files containing the positions of the sources and receivers
     """
 
-    def __init__( self, xml, dt=None, **kwargs ):
+    def __init__( self: Self, xml, dt: float = None, **kwargs ):
         """
         Parameters
         -----------
@@ -28,7 +29,7 @@ class SEGYAcquisition( Acquisition ):
         super().__init__( xml, dt, **kwargs )
         self.type = "segyAcquisition"
 
-    def acquisition_method( self, segdir, **kwargs ):
+    def acquisition_method( self: Self, segdir: str, **kwargs ):
         """
         Set the shots configurations
 
@@ -73,10 +74,10 @@ class SEGYAcquisition( Acquisition ):
                 if os.path.join( segdir, f ) in segfiles:
                     segfiles.remove( os.path.join( segdir, f ) )
 
-        ishot = 1
-        shots = []
+        ishot: int = 1
+        shots: List[ Shot ] = list()
         for segfile in sorted( segfiles ):
-            receiverList = []
+            receiverList = list()
 
             with segyio.open( segfile, 'r', ignore_geometry=True ) as f:
                 scalarXY = float( f.header[ 0 ][ 71 ] )
@@ -106,4 +107,4 @@ class SEGYAcquisition( Acquisition ):
 
             ishot += 1
 
-        self.shots = shots
+        self.shots: List[ Shot ] = shots
