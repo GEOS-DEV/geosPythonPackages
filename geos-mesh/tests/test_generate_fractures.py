@@ -10,7 +10,6 @@ from geos.mesh.doctor.checks.generate_fractures import ( __split_mesh_on_fractur
                                                          Coordinates3D, IDMapping )
 from utils.src.geos.utils.vtk.helpers import to_vtk_id_list
 
-
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
 

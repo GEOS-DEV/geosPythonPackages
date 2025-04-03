@@ -3,7 +3,6 @@ import logging
 import textwrap
 from geos.utils.vtk.io import VtkOutput
 
-
 __OUTPUT_FILE = "output"
 __OUTPUT_BINARY_MODE = "data-mode"
 __OUTPUT_BINARY_MODE_VALUES = "binary", "ascii"

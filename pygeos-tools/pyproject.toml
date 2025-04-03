@@ -20,7 +20,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 
 dependencies = [
     "matplotlib",
@@ -42,6 +42,6 @@ Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
