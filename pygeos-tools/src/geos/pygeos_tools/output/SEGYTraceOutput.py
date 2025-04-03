@@ -2,10 +2,12 @@ import os
 import numpy as np
 import numpy.typing as npt
 import segyio
-from mpi4py import MPI
 from typing import List
 from typing_extensions import Self
 from geos.pygeos_tools.acquisition_library.Shot import Coordinates3D
+import mpi4py
+mpi4py.rc.initialize = False
+from mpi4py import MPI
 
 
 class SEGYTraceOutput:

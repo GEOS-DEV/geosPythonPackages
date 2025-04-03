@@ -1,7 +1,7 @@
 import logging
 from copy import deepcopy
 from numpy import argsort, array
-from typing import Iterator, Optional
+from typing import Iterator, Optional, List
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkFieldData
@@ -30,7 +30,7 @@ def vtk_iter( l ) -> Iterator[ any ]:
             yield l.GetCellType( i )
 
 
-def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) -> bool:
     """Checks if a mesh contains at least a data arrays within its cell, field or point data
     having a certain name. If so, returns True, else False.
 
@@ -73,7 +73,7 @@ def getFieldType( data: vtkFieldData ) -> str:
         return "vtkFieldData"
 
 
-def getArrayNames( data: vtkFieldData ) -> list[ str ]:
+def getArrayNames( data: vtkFieldData ) -> List[ str ]:
     if not data.IsA( "vtkFieldData" ):
         raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
@@ -91,7 +91,7 @@ def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArra
 
 
 def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
-    array_names: list[ str ] = getArrayNames( data )
+    array_names: List[ str ] = getArrayNames( data )
     for name in array_names:
         if name.startswith("Global") and name.endswith("Ids"):
             return getCopyArrayByName( data, name )
@@ -114,7 +114,7 @@ def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> 
     arr: array = vtk_to_numpy( getArrayByName( data, name ) )
     if arr is not None:
         if sorted:
-            array_names: list[ str ] = getArrayNames( data )
+            array_names: List[ str ] = getArrayNames( data )
             sortArrayByGlobalIds( data, arr, array_names )
         return arr
     return None

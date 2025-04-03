@@ -1,10 +1,12 @@
 import sys
 import numpy as np
-from mpi4py import MPI
 import matplotlib.pyplot as plt
 import pylvarray
 import pygeosx
 from typing import Dict, List, Union
+import mpi4py
+mpi4py.rc.initialize = False
+from mpi4py import MPI
 
 
 # Get the MPI rank

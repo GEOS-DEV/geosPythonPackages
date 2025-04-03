@@ -1,10 +1,12 @@
 import os
 import numpy as np
 import numpy.typing as npt
-from mpi4py import MPI
 from typing import Dict
 from typing_extensions import Self
 from geos.pygeos_tools.model.SepModel import SEPModel
+import mpi4py
+mpi4py.rc.initialize = False
+from mpi4py import MPI
 
 
 class SEPTraceOutput:
