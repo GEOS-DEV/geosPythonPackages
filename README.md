@@ -173,12 +173,12 @@ dependencies = [
 Release
 -------
 
-For release details and restrictions, please read the [LICENSE](https://github.com/GEOS-DEV/LICENSE) file.
+For release details and restrictions, please read the [LICENSE](https://github.com/GEOS-DEV/GEOS/blob/develop/LICENSE) file.
 
-For copyrights, please read the [COPYRIGHT](https://github.com/GEOS-DEV/COPYRIGHT ) file.
+For copyrights, please read the [COPYRIGHT](https://github.com/GEOS-DEV/GEOS/blob/develop/COPYRIGHT ) file.
 
-For contributors, please read the [CONTRIBUTORS](https://github.com/GEOS-DEV/CONTRIBUTORS ) file.
+For contributors, please read the [CONTRIBUTORS](https://github.com/GEOS-DEV/GEOS/blob/develop/CONTRIBUTORS ) file.
 
-For acknowledgements, please read the [ACKNOWLEDGEMENTS](https://github.com/GEOS-DEV/ACKNOWLEDGEMENTS ) file.
+For acknowledgements, please read the [ACKNOWLEDGEMENTS](https://github.com/GEOS-DEV/GEOS/blob/develop/ACKNOWLEDGEMENTS ) file.
 
-For notice, please read the [NOTICE](https://github.com/GEOS-DEV/NOTICE ) file.
+For notice, please read the [NOTICE](https://github.com/GEOS-DEV/GEOS/blob/develop/NOTICE ) file.
