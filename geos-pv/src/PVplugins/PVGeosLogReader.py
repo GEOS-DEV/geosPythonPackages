@@ -15,8 +15,9 @@ from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent
-sys.path.insert( 0, str(geos_pv_path / "src") )
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+
 update_paths()
 
 import vtkmodules.util.numpy_support as vnp
@@ -146,8 +147,9 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
             self.m_propertiesWells.AddArray( prop )
 
         self.m_propertiesAquifers: vtkDAS = vtkDAS()
-        self.m_propertiesAquifers.AddObserver( "ModifiedEvent",
-                                               createModifiedCallback( self ) )  # type: ignore[arg-type]
+        self.m_propertiesAquifers.AddObserver(
+            "ModifiedEvent",  # type: ignore[arg-type]
+            createModifiedCallback( self ) )
         propsAquifers: list[ str ] = [
             "Volume",
             "VolumetricRate",
