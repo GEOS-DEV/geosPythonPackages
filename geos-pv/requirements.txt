@@ -1,5 +1,5 @@
-"geos-geomechanics"
-"geos-mesh"
-"geos-posp"
-"geos-prep"
-"geos-utils"
+geos-geomechanics
+geos-mesh
+geos-posp
+geos-prep
+geos-utils

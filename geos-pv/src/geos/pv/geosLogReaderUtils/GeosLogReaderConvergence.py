@@ -6,8 +6,8 @@ from io import TextIOBase
 import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
-import geos_pv.geosLogReaderUtils.geosLogReaderFunctions as fcts
-from geos_utils.enumUnits import Unit
+import geos.pv.geosLogReaderUtils.geosLogReaderFunctions as fcts
+from geos.utils.enumUnits import Unit
 
 
 class GeosLogReaderConvergence:

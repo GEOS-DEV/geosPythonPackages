@@ -20,11 +20,9 @@ requires-python = ">=3.10"
 
 dynamic = ["dependencies"]
 
-dependencies = [
-    "typing_extensions",
-    "pandas",
-    "numpy",
-]
+[project.optional-dependencies]
+# dependency to use if install together with paraview
+paraview = ["paraview"]
 
 [project.scripts]
 
