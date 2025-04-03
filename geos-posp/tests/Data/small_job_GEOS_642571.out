@@ -1,0 +1,245 @@
+Num ranks: 250
+MKL max threads: 1
+GEOSX version: 0.2.0 (feature/dkachuma/allow-negative-pressure-with-errors, sha1: d15a5d5)
+  - c++ compiler: gcc 8.3.0
+  - MPI version: Open MPI v2.1.5, package: Open MPI root@pandev07 Distribution, ident: 2.1.5, repo rev: v2.1.4-8-g697c1e9, Aug 15, 2018
+  - HDF5 version: 1.12.1
+  - Conduit version: 0.8.2
+  - VTK version: 9.1.0
+  - RAJA version: 2022.3.0
+  - umpire version: 2022.3.0
+  -  adiak version: ..
+  - caliper version: 2.8.0
+  - METIS version: 5.1.0
+  - PARAMETIS version: 4.0.3
+  - scotch version: 6.0.9
+  - superlu_dist version: 6.3.0
+  - suitesparse version: 5.7.9
+  - hypre release version: 2.27.0
+Started at 2023-06-09 16:18:46
+Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
+Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
+Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
+Adding Mesh: VTKMesh, SyntheticMesh
+Adding Mesh: InternalWell, well_1
+Adding Geometric Object: Box, aquifer1
+Adding Geometric Object: Box, aquifer2
+Adding Geometric Object: Box, aquifer3
+Adding Geometric Object: Box, aquifer4
+Adding Event: PeriodicEvent, outputInjectionPeriod
+Adding Event: PeriodicEvent, outputPostInjectionPeriod
+Adding Event: PeriodicEvent, statistics
+Adding Event: PeriodicEvent, solverApplicationsInjectionPeriod
+Adding Event: PeriodicEvent, solverApplicationsPostInjectionPeriod1
+Adding Event: PeriodicEvent, solverApplicationsPostInjectionPeriod2
+Adding Output: VTK, vtkOutputReference
+   TableFunction: WATVD
+   TableFunction: CO2VD
+   TableFunction: TEMPVD
+   TableFunction: totalRateTable
+   TableFunction: RELPERM.KRW
+   TableFunction: RELPERM.KRG.DRAINAGE
+   TableFunction: RELPERM.KRG.IMBIBITION
+Adding Object CellElementRegion named Reservoir from ObjectManager::Catalog.
+Adding Object WellElementRegion named wellRegion from ObjectManager::Catalog.
+   TableFunction: fluid_phaseModel1_PhillipsBrineDensity_table
+   TableFunction: fluid_phaseModel1_PhillipsBrineViscosity_table
+   TableFunction: fluid_phaseModel2_SpanWagnerCO2Density_table
+   TableFunction: fluid_phaseModel2_FenghourCO2Viscosity_table
+   TableFunction: fluid_CO2Solubility_table
+   TableFunction: aquifer1_pressureInfluence_table
+   TableFunction: aquifer2_pressureInfluence_table
+   TableFunction: aquifer3_pressureInfluence_table
+   TableFunction: aquifer4_pressureInfluence_table
+   TableFunction: wellControls_ConstantBHP_table
+   TableFunction: wellControls_ConstantPhaseRate_table
+   TableFunction: WellControls_OpenStatus_table
+VTKMesh 'SyntheticMesh': reading mesh from /work206/workrd/users/l1092630/Test_Raymond_structuré/ReferenceMesh.vtu
+Generating global Ids from VTK mesh
+VTKMesh 'SyntheticMesh': generating GEOSX mesh data structure
+Importing cell block hexahedra
+Number of nodes: 8200851
+  Number of elems: 8000000
+             C3D8: 8000000
+Load balancing:   min   avg   max
+(element/rank): 26230 32000 33498
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, Reservoir, hexahedra
+SyntheticMesh/Level0/Reservoir/hexahedra/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/Reservoir/hexahedra/rock_reservoir allocated 1 quadrature points
+SyntheticMesh/Level0/Reservoir/hexahedra/relperm allocated 1 quadrature points
+regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = SyntheticMesh, Level0, wellRegion, wellRegionUniqueSubRegion
+SyntheticMesh/Level0/wellRegion/wellRegionUniqueSubRegion/fluid allocated 1 quadrature points
+SyntheticMesh/Level0/wellRegion/wellRegionUniqueSubRegion/relperm allocated 1 quadrature points
+SyntheticMesh: importing field data from mesh dataset
+Rank 177: Perforation at (2586610,33512700,3045); perforated element center: (2586633.375,33512713,3045.7802124023438); transmissibility: 2.3771304734308088e-12 Pa.s.rm^3/s/Pa
+   TableFunction: INITIALISATION_hexahedra_water_table
+Time: 0s, dt:100s, Cycle: 0
+compflowStatistics, Reservoir: Pressure (min, average, max): 2.86419e+07, 2.93341e+07, 3.006e+07 Pa
+compflowStatistics, Reservoir: Delta pressure (min, max): 0, 0 Pa
+compflowStatistics, Reservoir: Temperature (min, average, max): 366.483, 366.483, 366.483 K
+compflowStatistics, Reservoir: Total dynamic pore volume: 1.00462e+11 rm^3
+compflowStatistics, Reservoir: Phase dynamic pore volumes: { 0, 1.00462e+11 } rm^3
+compflowStatistics, Reservoir: Phase mass: { 0, 9.83123e+13 } kg
+compflowStatistics, Reservoir: Trapped phase mass (metric 1): { 0, 3.24431e+13 } kg
+compflowStatistics, Reservoir: Non-trapped phase mass (metric 1): { 0, 6.58692e+13 } kg
+compflowStatistics, Reservoir: Immobile phase mass (metric 2): { 0, 0 } kg
+compflowStatistics, Reservoir: Mobile phase mass (metric 2): { 0, 9.83123e+13 } kg
+compflowStatistics, Reservoir: Dissolved component mass: { { 0, 0 }, { 0, 9.83123e+13 } } kg
+compflowStatistics: Max phase CFL number: 8.16102e-11
+compflowStatistics: Max component CFL number: 8.16102e-11
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 0 kg/s, which corresponds to a total surface volumetric rate of 0 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 0 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 0 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 31711363.90586692 Pa
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 18290.4251297056 kg/s, which corresponds to a total surface volumetric rate of 9790.274374448885 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 9790.274374448149 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 7.367585776885482e-10 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 31711363.90586692 Pa
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 100s, the <Aquifer> boundary condition 'aquifer1' is applied to the face set 'aquifer1' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14692.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 100s, the <Aquifer> boundary condition 'aquifer2' is applied to the face set 'aquifer2' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 100s, the <Aquifer> boundary condition 'aquifer3' is applied to the face set 'aquifer3' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14220.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 100s, the <Aquifer> boundary condition 'aquifer4' is applied to the face set 'aquifer4' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+    ( Rflow ) = ( 1.34e-04 ) ;     ( Rwell ) = ( 3.77e+02 ) ;     ( R ) = ( 3.77e+02 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 48.32778944100937 kg/s, which corresponds to a total surface volumetric rate of 25.86830624126073 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 25.868306241258782 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 1.9466968733035026e-12 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 37094617.068262696 Pa
+    ( Rflow ) = ( 1.91e-05 ) ;     ( Rwell ) = ( 1.29e-04 ) ;     ( R ) = ( 1.31e-04 ) ; 
+    Last LinSolve(iter,res) = (   1, 1.11e-04 ) ; 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 100s, the <Aquifer> boundary condition 'aquifer1' produces a flux of -0.6181975187076816 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 100s, the <Aquifer> boundary condition 'aquifer2' produces a flux of -0.6180843994083122 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 100s, the <Aquifer> boundary condition 'aquifer3' produces a flux of -0.618090355732848 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 100s, the <Aquifer> boundary condition 'aquifer4' produces a flux of -0.6181996097752541 kg (or moles if useMass=0). 
+compositionalMultiphaseFlow: Max relative pressure change: 0.076635 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 1.90681e-08
+coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be increased.
+Time: 100s, dt:200s, Cycle: 1
+wellControls: BHP (at the specified reference elevation): 37094617.068262696 Pa
+wellControls: Total rate: 48.32778944100937 kg/s; total surface volumetric rate: 25.86830624126073 sm3/s
+wellControls: Phase 0 surface volumetric rate: 25.868306241258782 sm3/s
+wellControls: Phase 1 surface volumetric rate: 1.9466968733035026e-12 sm3/s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 48.32778944100937 kg/s, which corresponds to a total surface volumetric rate of 25.86830624126073 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 25.868306241258782 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 1.9466968733035026e-12 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 37094617.068262696 Pa
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 300s, the <Aquifer> boundary condition 'aquifer1' is applied to the face set 'aquifer1' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14692.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 300s, the <Aquifer> boundary condition 'aquifer2' is applied to the face set 'aquifer2' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 300s, the <Aquifer> boundary condition 'aquifer3' is applied to the face set 'aquifer3' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14220.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 300s, the <Aquifer> boundary condition 'aquifer4' is applied to the face set 'aquifer4' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+    ( Rflow ) = ( 8.15e-04 ) ;     ( Rwell ) = ( 8.66e-05 ) ;     ( R ) = ( 8.19e-04 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 48.3273106298979 kg/s, which corresponds to a total surface volumetric rate of 25.86804994912309 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 25.868049949121144 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 1.9466775862619354e-12 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 36934158.13373236 Pa
+    ( Rflow ) = ( 2.24e-06 ) ;     ( Rwell ) = ( 6.04e-07 ) ;     ( R ) = ( 2.32e-06 ) ; 
+    Last LinSolve(iter,res) = (   3, 5.35e-03 ) ; 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 300s, the <Aquifer> boundary condition 'aquifer1' produces a flux of -0.9277628658291136 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 300s, the <Aquifer> boundary condition 'aquifer2' produces a flux of -0.9275930970753377 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 300s, the <Aquifer> boundary condition 'aquifer3' produces a flux of -0.9276020230175535 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 300s, the <Aquifer> boundary condition 'aquifer4' produces a flux of -0.9277658630941507 kg (or moles if useMass=0). 
+compositionalMultiphaseFlow: Max relative pressure change: 0.0510061 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 7.51713e-08
+coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be increased.
+Time: 300s, dt:400s, Cycle: 2
+wellControls: BHP (at the specified reference elevation): 36934158.13373236 Pa
+wellControls: Total rate: 48.3273106298979 kg/s; total surface volumetric rate: 25.86804994912309 sm3/s
+wellControls: Phase 0 surface volumetric rate: 25.868049949121144 sm3/s
+wellControls: Phase 1 surface volumetric rate: 1.9466775862619354e-12 sm3/s
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 48.3273106298979 kg/s, which corresponds to a total surface volumetric rate of 25.86804994912309 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 25.868049949121144 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 1.9466775862619354e-12 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 36934158.13373236 Pa
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 700s, the <Aquifer> boundary condition 'aquifer1' is applied to the face set 'aquifer1' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14692.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 700s, the <Aquifer> boundary condition 'aquifer2' is applied to the face set 'aquifer2' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 700s, the <Aquifer> boundary condition 'aquifer3' is applied to the face set 'aquifer3' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 14220.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+CompositionalMultiphaseFVM compositionalMultiphaseFlow: at time 700s, the <Aquifer> boundary condition 'aquifer4' is applied to the face set 'aquifer4' in 'faceManager'. 
+The scale of this boundary condition is 0 and multiplies the value of the provided function (if any). 
+The total number of target faces (including ghost faces) is 19998.
+Note that if this number is equal to zero, the boundary condition will not be applied on this face set.
+    ( Rflow ) = ( 1.58e-03 ) ;     ( Rwell ) = ( 3.25e-06 ) ;     ( R ) = ( 1.58e-03 ) ; 
+    Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
+Rank 177: wellControls: surface density computed with P_surface = 101325 Pa and T_surface = 288.71 K
+Rank 177: wellControls: The total fluid density at surface conditions is 1.8682239567708956 kg/sm3. 
+The total rate is 48.32731072494112 kg/s, which corresponds to a total surface volumetric rate of 25.868049999996657 sm3/s
+Rank 177: wellControls: The density of phase 0 at surface conditions is 1.868223956694465 kg/sm3. 
+The phase surface volumetric rate is 25.86804999999471 sm3/s
+Rank 177: wellControls: The density of phase 1 at surface conditions is 1017.5050421623865 kg/sm3. 
+The phase surface volumetric rate is 1.946677590090179e-12 sm3/s
+Rank 177: wellControls: BHP (at the specified reference elevation): 36936280.88209122 Pa
+    ( Rflow ) = ( 3.39e-06 ) ;     ( Rwell ) = ( 2.72e-09 ) ;     ( R ) = ( 3.39e-06 ) ; 
+    Last LinSolve(iter,res) = (   3, 3.57e-03 ) ; 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 700s, the <Aquifer> boundary condition 'aquifer1' produces a flux of -1.5571182320345898 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 700s, the <Aquifer> boundary condition 'aquifer2' produces a flux of -1.5568332821949953 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 700s, the <Aquifer> boundary condition 'aquifer3' produces a flux of -1.55684825159388 kg (or moles if useMass=0). 
+FlowSolverBase compositionalMultiphaseFlow (SimuDeck_aquifer_pression_meme.xml, l.28): at time 700s, the <Aquifer> boundary condition 'aquifer4' produces a flux of -1.5571231793720164 kg (or moles if useMass=0). 
+compositionalMultiphaseFlow: Max relative pressure change: 0.0438584 %
+compositionalMultiphaseFlow: Max absolute phase volume fraction change: 2.97145e-07
+coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be increased.
+Umpire            HOST sum across ranks:   48.5 GB
+Umpire            HOST         rank max:  219.2 MB
+Finished at 2023-06-09 20:09:54
+total time            03:51:08.108
+initialization time   00:08:32.981
+run time              03:41:33.966

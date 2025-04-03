@@ -14,18 +14,18 @@
 #
 import os
 import sys
-import shutil
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-xml-tools', 'geos-mesh', 'geos-ats', 'hdf5-wrapper', 'pygeos-tools', 'geos-timehistory' )
+python_modules = ( 'geos-ats', 'geos-mesh', 'geos-posp', 'geos-timehistory', 'geos-utils', 'geos-xml-tools', 
+                   'hdf5-wrapper', 'pygeos-tools' )
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
 # -- Project information -----------------------------------------------------
 
 project = u'GEOS Python Packages'
-copyright = u'2018-2021 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
+copyright = u'2018-2024 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
 author = u'GEOS Contributors'
 
 # The short X.Y version
@@ -42,12 +42,16 @@ release = u''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx_design', 'sphinx.ext.todo', 'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.imgmath',
-    'sphinxarg.ext', 'sphinx.ext.napoleon', 'sphinxcontrib.programoutput'
-]
+extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
+               'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
+               'sphinx.ext.todo', 'sphinx.ext.viewcode' ]
 
-autodoc_mock_imports = [ "pygeosx", "pylvarray", "meshio", "lxml", "mpi4py", "h5py", "ats", "scipy" ]
+autoclass_content = 'both'
+autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pylvarray", "meshio", "mpi4py", "scipy" ]
+autodoc_typehints = 'none'
+autodoc_typehints_format = 'short'
+suppress_warnings = [""]
+typehints_defaults = 'braces'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -68,27 +72,25 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = [ u'_build', 'Thumbs.db', '.DS_Store', 'cmake/*' ]
+exclude_patterns = [ u'_build', 'Thumbs.db', '.DS_Store', 'cmake/*', '' ]
 
 todo_include_todos = True
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# -- Theme options ----------------------------------------------
-extensions += [
-    'sphinx_rtd_theme',
-]
-
+html_css_files = [ 'theme_overrides.css' ]
 html_theme = "sphinx_rtd_theme"
-
 html_theme_options = { 'navigation_depth': -1, 'collapse_navigation': False }
-
+html_sidebars = {
+    "**": [
+        "about.html",
+        "navigation.html",
+        "relations.html",  # needs 'show_related': True theme option to display
+        "searchbox.html",
+    ]
+}
 html_static_path = [ './_static' ]
-
-html_css_files = [
-    'theme_overrides.css',
-]
 
 # -- Options for HTMLHelp output ---------------------------------------------
 # Output file base name for HTML help builder.

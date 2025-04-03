@@ -74,7 +74,7 @@ Packages
 
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 5
 
     hdf5-wrapper
 
@@ -82,8 +82,12 @@ Packages
 
     geos-mesh
 
+    geos-posp
+
+    geos-timehistory
+
+    geos-utils
+
     geos-xml-tools
 
     pygeos-tools
-
-    geos-timehistory
