@@ -87,13 +87,6 @@ PVplugins.PVGeomechanicsWorkflowVolumeWell module
    :members:
    :undoc-members:
 
-PVplugins.PVGeosLogReader module
---------------------------------
-
-.. automodule:: PVplugins.PVGeosLogReader
-   :members:
-   :undoc-members:
-
 PVplugins.PVMergeBlocksEnhanced module
 --------------------------------------
 
@@ -105,13 +98,6 @@ PVplugins.PVMohrCirclePlot module
 ---------------------------------
 
 .. automodule:: PVplugins.PVMohrCirclePlot
-   :members:
-   :undoc-members:
-
-PVplugins.PVPythonViewConfigurator module
------------------------------------------
-
-.. automodule:: PVplugins.PVPythonViewConfigurator
    :members:
    :undoc-members:
 
