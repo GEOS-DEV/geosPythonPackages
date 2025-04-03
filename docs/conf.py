@@ -18,7 +18,7 @@ import sys
 # Add python modules to be documented
 python_root = '..'
 python_modules = ( 'geos-ats', 'geos-mesh', 'geos-posp', 'geos-timehistory', 'geos-utils', 'geos-xml-tools', 
-                   'hdf5-wrapper', 'pygeos-tools' )
+                   'hdf5-wrapper', 'pygeos-tools', 'geos-pv' )
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
@@ -47,7 +47,7 @@ extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcont
                'sphinx.ext.todo', 'sphinx.ext.viewcode' ]
 
 autoclass_content = 'both'
-autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pylvarray", "meshio", "mpi4py", "scipy" ]
+autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pylvarray", "meshio", "mpi4py", "scipy", "pandas", "matplotlib" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
 suppress_warnings = [""]
