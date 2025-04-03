@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import sys
+from pathlib import Path
 from enum import Enum
 from typing import Union, cast
 
@@ -12,12 +13,11 @@ import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
-
-import PVplugins  #required to update sys path
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+sys.path.insert( 0, str(geos_pv_path / "src") )
+from geos.pv.utils.config import update_paths
+update_paths()
 
 import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -32,15 +32,15 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import vtkTable
 
-from geos_pv.geosLogReaderUtils.geosLogReaderFunctions import (
+from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import (
     identifyProperties,
     transformUserChoiceToListPhases,
 )
 
-from geos_pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
-from geos_pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
-from geos_pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
-from geos_pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
+from geos.pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
+from geos.pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
+from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
+from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.enumUnits import (
     Mass,
     MassRate,
@@ -53,9 +53,9 @@ from geos.utils.enumUnits import (
 )
 
 from geos.utils.UnitRepository import UnitRepository
-from geos_pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
+from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
-from geos_pv.utils.paraviewTreatments import (
+from geos.pv.utils.paraviewTreatments import (
     strListToEnumerationDomainXml, )
 
 __doc__ = """
