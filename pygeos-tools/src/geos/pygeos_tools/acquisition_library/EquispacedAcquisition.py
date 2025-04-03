@@ -180,10 +180,11 @@ class EQUISPACEDAcquisition( Acquisition ):
         """
         assert len( firstLinePosition ) == len( lastLinePosition )
 
-        positions = [ [ x, y, z ] for x, y, z in zip(
-            np.linspace( firstLinePosition[ 0 ], lastLinePosition[ 0 ], numberOfLines ),
-            np.linspace( firstLinePosition[ 1 ], lastLinePosition[ 1 ], numberOfLines ),
-            np.linspace( firstLinePosition[ 2 ], lastLinePosition[ 2 ], numberOfLines ) ) ]
+        positions = [ [ x, y, z ]
+                      for x, y, z in zip( np.linspace( firstLinePosition[ 0 ], lastLinePosition[ 0 ], numberOfLines ),
+                                          np.linspace( firstLinePosition[ 1 ], lastLinePosition[ 1 ], numberOfLines ),
+                                          np.linspace( firstLinePosition[ 2 ], lastLinePosition[ 2 ], numberOfLines ) )
+                     ]
 
         return positions
 

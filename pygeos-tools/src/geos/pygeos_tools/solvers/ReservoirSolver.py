@@ -17,7 +17,6 @@ from typing import Dict, List
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.Solver import Solver
 
-
 __doc__ = """
 ReservoirSolver class inherits from Solver class.
 

@@ -16,7 +16,6 @@ import sys
 from typing import Dict, List
 from typing_extensions import Self
 
-
 __doc__ = """
 GeosxArgs class handles the arguments passed to GEOS to start the simulation.
 

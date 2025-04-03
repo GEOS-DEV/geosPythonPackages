@@ -16,7 +16,6 @@ from typing import Dict, List
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.Solver import Solver
 
-
 __doc__ = """
 AcousticSolver class inherits from Solver class.
 
@@ -56,6 +55,7 @@ class GeomechanicsSolver( Solver ):
     """
     Accessors
     """
+
     def getConstitutiveModelData( self: Self, modelName: str ) -> Dict[ str, npt.NDArray ]:
         """
         Get the local constitutive model data for each CellElementRegion and its cellBlocks of the mesh.
@@ -72,8 +72,9 @@ class GeomechanicsSolver( Solver ):
               "region3/block5/model2": npt.NDArray, "region3/block1/model2": npt.NDArray,
               "region3/block6/model2": npt.NDArray, "region3/block1/model2": npt.NDArray }
         """
-        model_paths = self.getAllGeosWrapperByName( modelName, filters=[ self.discretization, "elementRegionsGroup",
-                                                                         "elementSubRegions", "ConstitutiveModels" ] )
+        model_paths = self.getAllGeosWrapperByName(
+            modelName,
+            filters=[ self.discretization, "elementRegionsGroup", "elementSubRegions", "ConstitutiveModels" ] )
         all_data: Dict[ str, any ] = dict()
         for path, model in model_paths.items():
             elts: List[ str ] = path.split( "/" )

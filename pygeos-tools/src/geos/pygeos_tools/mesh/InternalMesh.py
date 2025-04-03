@@ -17,7 +17,6 @@ import numpy.typing as npt
 from typing import Dict, List
 from typing_extensions import Self
 
-
 __doc__ = """
 InternalMesh class uses a XML object from input/Xml.py that needs to have parsed a GEOS xml file where an 'InternalMesh'
 block has been defined. This class gathers all the geometric informaion defined.

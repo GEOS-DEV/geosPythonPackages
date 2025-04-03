@@ -4,9 +4,9 @@ from geos.pygeos_tools.acquisition_library.Acquisition import Acquisition
 from geos.pygeos_tools.solvers import ElasticSolver
 from geos.pygeos_tools.output import SeismicTraceOutput
 import mpi4py
+
 mpi4py.rc.initialize = False
 from mpi4py import MPI
-
 
 __doc__ = """
 This is an example of how to set and run your GEOS simulation when using the ElasticSolver.
@@ -29,11 +29,10 @@ def parse_args():
 
 def main():
 
-    if MPI.Is_initialized():
-        print("MPI initialized")
-    else:
-        print("MPI not initialized. Initializing...")
+    if not MPI.Is_initialized():
+        print( "MPI not initialized. Initializing..." )
         MPI.Init()
+        print( "MPI initialized" )
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()

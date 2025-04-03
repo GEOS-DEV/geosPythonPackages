@@ -26,7 +26,6 @@ from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkFieldData, vtkImage
 from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
 
-
 __doc__ = """
 VTKMesh class uses a VTK filepath to read, extract data and write a new VTK file.
 Along with wrapping of VTK methods to extract geometry data and arrays, this class also allows you to extract
@@ -78,6 +77,7 @@ class VTKMesh:
     """
     Mesh reading, writing and extraction
     """
+
     @required_attributes( "meshFile" )
     def read( self: Self ) -> vtkPointSet:
         """Read information from the VTK file
@@ -175,6 +175,7 @@ class VTKMesh:
     """
     Accessors
     """
+
     def getArray( self: Self, name: str, dtype: str = "cell", copy: bool = False, sorted: bool = False ) -> npt.NDArray:
         """
         Return a cell or point data array. If the file is a pvtu, the array is sorted with global ids
@@ -357,6 +358,7 @@ class VTKMesh:
     """
     Update methods
     """
+
     def updateCellLocator( self: Self ):
         """Set the cell locator"""
         if not self.isSet:
@@ -379,8 +381,9 @@ class VTKMesh:
     """
     Interpolation
     """
-    def interpolateValues( self: Self, centers: Iterable[ Iterable[ float ] ],
-                           name: str, values: npt.NDArray ) -> npt.NDArray:
+
+    def interpolateValues( self: Self, centers: Iterable[ Iterable[ float ] ], name: str,
+                           values: npt.NDArray ) -> npt.NDArray:
         """
         Interpolate the given cell data over the given points
 

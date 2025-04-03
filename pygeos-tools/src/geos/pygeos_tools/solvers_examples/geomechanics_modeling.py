@@ -3,7 +3,6 @@ from mpi4py import MPI
 from geos.pygeos_tools.input import XML
 from geos.pygeos_tools.solvers import GeomechanicsSolver
 
-
 __doc__ = """
 This is an example of how to set and run your GEOS simulation when using the GeomechanicsSolver.
 The suggested example with this script could be the beam bending test case provided by GEOS:

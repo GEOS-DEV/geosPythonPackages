@@ -20,7 +20,6 @@ from typing import List, Union
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.Solver import Solver
 
-
 __doc__ = """
 WaveSolver class which is the base class for every AcousticSolver and ElasticSolver classes, and inherits the Solver
 capabilities.
@@ -54,6 +53,7 @@ class WaveSolver( Solver ):
         sourceFreq : float
             Frequency of the source
     """
+
     def __init__( self: Self,
                   solverType: str,
                   dt: float = None,
@@ -134,6 +134,7 @@ class WaveSolver( Solver ):
     """
     Accessors
     """
+
     def getVelocityModel( self: Self, velocityName: str, filterGhost: bool = False, **kwargs ) -> npt.NDArray:
         """
         Get the velocity values
@@ -168,6 +169,7 @@ class WaveSolver( Solver ):
     """
     Mutators
     """
+
     def setSourceAndReceivers( self: Self, sourcesCoords: List = [], receiversCoords: List = [] ) -> None:
         """
         Update sources and receivers positions in GEOS
@@ -233,6 +235,7 @@ class WaveSolver( Solver ):
     """
     Update method
     """
+
     def updateSourceProperties( self: Self ) -> None:
         """
         Updates the frequency and type of source to match the XML
@@ -261,6 +264,7 @@ class WaveSolver( Solver ):
     """
     Utils
     """
+
     def evaluateSource( self: Self ) -> None:
         """
         Evaluate source and update on GEOS

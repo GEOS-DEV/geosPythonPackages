@@ -57,6 +57,7 @@ class Acquisition:
     """
     Accessors
     """
+
     def getMesh( self: Self ):
         """
         Get the mesh associated to the acquisition
@@ -84,6 +85,7 @@ class Acquisition:
     """
     Mutators
     """
+
     def setMesh( self: Self, mesh ) -> None:
         """Set the mesh associated to the acquisition"""
         self.mesh = mesh
@@ -144,7 +146,11 @@ class Acquisition:
 
         self.shots: List[ Shot ] = shots
 
-    def limitedAperture( self: Self, dist1: float = None, dist2: float = None, dist3: float = None, comm=None,
+    def limitedAperture( self: Self,
+                         dist1: float = None,
+                         dist2: float = None,
+                         dist3: float = None,
+                         comm=None,
                          export: bool = True ) -> None:
         """
         Redefine each shot mesh to correspond to a limited aperture configuration.

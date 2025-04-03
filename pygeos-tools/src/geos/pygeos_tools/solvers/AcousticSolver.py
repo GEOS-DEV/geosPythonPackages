@@ -22,7 +22,6 @@ from geos.pygeos_tools.solvers.WaveSolver import WaveSolver
 from geos.utils.errors_handling.classes import required_attributes
 from geos.utils.pygeos.solvers import MODEL_FOR_GRADIENT
 
-
 __doc__ = """
 AcousticSolver class inherits from WaveSolver class.
 
@@ -42,6 +41,7 @@ class AcousticSolver( WaveSolver ):
         modelForGradient : str
             Gradient model used
     """
+
     def __init__( self: Self,
                   solverType: str = "AcousticSEM",
                   dt: float = None,
@@ -105,6 +105,7 @@ class AcousticSolver( WaveSolver ):
     """
     Accessors
     """
+
     def getFullPressureAtReceivers( self: Self, comm ) -> npt.NDArray:
         """
         Return all pressures at receivers values on all ranks
@@ -136,8 +137,9 @@ class AcousticSolver( WaveSolver ):
     def getModelForGradient( self: Self ) -> str:
         return self.modelForGradient
 
-    def getPartialGradientFor1RegionWith1CellBlock( self: Self, filterGhost=False,
-                                                    **kwargs ) -> Optional[  npt.NDArray ]:
+    def getPartialGradientFor1RegionWith1CellBlock( self: Self,
+                                                    filterGhost=False,
+                                                    **kwargs ) -> Optional[ npt.NDArray ]:
         """
         Get the local rank gradient value
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -171,7 +173,7 @@ class AcousticSolver( WaveSolver ):
         ------
             numpy Array : Array containing the pressure values at all time step at all receivers coordinates
         """
-        return self.getGeosWrapperByName( "pressureNp1AtReceivers", ["Solvers"] )
+        return self.getGeosWrapperByName( "pressureNp1AtReceivers", [ "Solvers" ] )
 
     def getWaveField( self: Self ) -> npt.NDArray:
         return self.getPressureAtReceivers()[ :, :-1 ]
@@ -179,6 +181,7 @@ class AcousticSolver( WaveSolver ):
     """
     Mutators
     """
+
     def setModelForGradient( self: Self, modelForGradient: str ) -> None:
         f"""
         Set the model for the gradient
@@ -198,6 +201,7 @@ class AcousticSolver( WaveSolver ):
     """
     Update methods
     """
+
     def updateDensityModel( self: Self, density: npt.NDArray ) -> None:
         """
         Update density values in GEOS
@@ -266,9 +270,15 @@ class AcousticSolver( WaveSolver ):
     """
     Methods for computation and reset of values
     """
-    def computePartialGradientFor1RegionWith1CellBlock( self: Self, shotId: int, minDepth: float, comm,
-                                                        velocityName: str, gradDirectory="partialGradient",
-                                                        filterGhost: bool = False, **kwargs ) -> None:
+
+    def computePartialGradientFor1RegionWith1CellBlock( self: Self,
+                                                        shotId: int,
+                                                        minDepth: float,
+                                                        comm,
+                                                        velocityName: str,
+                                                        gradDirectory="partialGradient",
+                                                        filterGhost: bool = False,
+                                                        **kwargs ) -> None:
         """
         Compute the partial Gradient
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -310,8 +320,8 @@ class AcousticSolver( WaveSolver ):
 
         grad = grad.astype( np.float64 )
 
-        zind = np.where( self.getElementCenterFor1RegionWith1CellBlock(
-            filterGhost, **kwargs )[ :, 2 ] < minDepth )[ 0 ]
+        zind = np.where( self.getElementCenterFor1RegionWith1CellBlock( filterGhost, **kwargs )[ :,
+                                                                                                 2 ] < minDepth )[ 0 ]
         grad[ zind ] = 0.0
 
         # Gather global gradient

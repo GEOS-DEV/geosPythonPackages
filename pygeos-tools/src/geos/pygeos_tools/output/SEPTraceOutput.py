@@ -5,6 +5,7 @@ from typing import Dict
 from typing_extensions import Self
 from geos.pygeos_tools.model.SepModel import SEPModel
 import mpi4py
+
 mpi4py.rc.initialize = False
 from mpi4py import MPI
 
@@ -32,8 +33,12 @@ class SEPTraceOutput:
             Gathered data
     """
 
-    def __init__( self: Self, seismo: npt.NDArray, rootname: str = "seismoTrace_shot", directory: str = "./",
-                  tIncluded: bool = True, **kwargs ):
+    def __init__( self: Self,
+                  seismo: npt.NDArray,
+                  rootname: str = "seismoTrace_shot",
+                  directory: str = "./",
+                  tIncluded: bool = True,
+                  **kwargs ):
         """
         Parameters
         ----------

@@ -24,7 +24,6 @@ from geos.pygeos_tools.mesh.VtkMesh import VTKMesh
 from geos.utils.errors_handling.classes import required_attributes
 from geos.utils.xml.XMLTime import XMLTime
 
-
 __doc__ = """
 XML class parses a GEOS xml file and stores all its blocks as arguments.
 This implies that if you have blocks such as Events, Solvers, NumericalMethods ... the class will have 'events',
@@ -106,6 +105,7 @@ class XML:
     """
     Accessors
     """
+
     def getAttribute( self: Self, parentElement, attributeTag: str ):
         if parentElement == "root":
             pElement = self.tree.find( f"./[@{attributeTag}]" )
@@ -321,6 +321,7 @@ class XML:
     """
     Init methods
     """
+
     @required_attributes( "solvers" )
     def buildCouplingSolvers( self: Self ) -> None:
         """
@@ -354,8 +355,9 @@ class XML:
         xmlTimes: Dict[ str, XMLTime ] = dict()
         min_max: Set[ str ] = { "minTime", "maxTime" }
         event_types: Set[ str ] = { "PeriodicEvent", "HaltEvent", "SoloEvent" }
-        time_params: Set[ str ] = { "beginTime", "endTime", "finalDtStretch", "forceDt", "maxEventDt", "maxRuntime",
-                                    "timeFrequency" }
+        time_params: Set[ str ] = {
+            "beginTime", "endTime", "finalDtStretch", "forceDt", "maxEventDt", "maxRuntime", "timeFrequency"
+        }
         for event_type, event in self.events.items():
             if event_type in min_max:
                 xmlTimes[ event_type ] = XMLTime( event_type, "Events", "Events", float( event ) )
@@ -386,6 +388,7 @@ class XML:
     """
     Updates xml attributes
     """
+
     @required_attributes( "geometry" )
     def updateGeometry( self: Self, boxname: str, **kwargs ) -> None:
         root: Element = self.tree.getroot()

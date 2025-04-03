@@ -6,6 +6,7 @@ from typing import List
 from typing_extensions import Self
 from geos.pygeos_tools.acquisition_library.Shot import Coordinates3D
 import mpi4py
+
 mpi4py.rc.initialize = False
 from mpi4py import MPI
 
@@ -30,7 +31,10 @@ class SEGYTraceOutput:
             Default is None
     """
 
-    def __init__( self: Self, seismo: npt.NDArray, rootname: str = "seismoTrace_shot", directory: str = "./",
+    def __init__( self: Self,
+                  seismo: npt.NDArray,
+                  rootname: str = "seismoTrace_shot",
+                  directory: str = "./",
                   **kwargs ):
         """
         Parameters
@@ -50,8 +54,12 @@ class SEGYTraceOutput:
         self.data: npt.NDArray = seismo
         self.time: float = None
 
-    def export( self: Self, receiverCoords: List[ Coordinates3D ], sourceCoords: List[ Coordinates3D ],
-                dt: float = None, comm=MPI.COMM_WORLD, **kwargs ) -> None:
+    def export( self: Self,
+                receiverCoords: List[ Coordinates3D ],
+                sourceCoords: List[ Coordinates3D ],
+                dt: float = None,
+                comm=MPI.COMM_WORLD,
+                **kwargs ) -> None:
         """
         Export the seismic traces to .sgy file
 

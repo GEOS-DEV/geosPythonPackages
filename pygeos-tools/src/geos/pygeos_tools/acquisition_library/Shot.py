@@ -3,7 +3,6 @@ from typing import Iterable, List, Optional, Union
 from typing_extensions import Self
 from geos.pygeos_tools.input.Xml import XML
 
-
 Coordinates3D = Iterable[ float, float, float ]
 
 
@@ -70,6 +69,7 @@ class Shot:
     """
     Accessors
     """
+
     def getMesh( self: Self ):
         """Get the mesh"""
         return self.mesh
@@ -121,6 +121,7 @@ class Shot:
     """
     Mutators
     """
+
     def setXml( self: Self, xml: XML ):
         """
         Set the Xml for the shot
@@ -188,6 +189,7 @@ class ShotPoint:
     """
     Accessors
     """
+
     def getPosition( self: Self ) -> List:
         """
         Return the position coordinates
@@ -238,6 +240,7 @@ class ShotPoint:
     """
     Mutators
     """
+
     def setCoordinate( self: Self, coord: int, value: Union[ int, float ] ) -> None:
         """
         Set one of the coordinates
@@ -470,6 +473,7 @@ class ReceiverSet( ShotPointSet ):
     """
     Accessors
     """
+
     def getReceiver( self: Self, i ) -> int:
         """
         Get a specific receiver from the set with its index
@@ -557,6 +561,7 @@ class SourceSet( ShotPointSet ):
     """
     Accessors
     """
+
     def getCenter( self: Self ) -> Optional[ Coordinates3D ]:
         """
         Get the position of the center of the SourceSet

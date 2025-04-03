@@ -3,7 +3,6 @@ from mpi4py import MPI
 from geos.pygeos_tools.input import XML
 from geos.pygeos_tools.solvers import ReservoirSolver
 
-
 __doc__ = """
 This is an example of how to set and run your GEOS simulation when using the ReservoirSolver.
 The suggested example with this script could be the 2 phases 1D test case provided by GEOS:

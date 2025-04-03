@@ -5,9 +5,9 @@ import pylvarray
 import pygeosx
 from typing import Dict, List, Union
 import mpi4py
+
 mpi4py.rc.initialize = False
 from mpi4py import MPI
-
 
 # Get the MPI rank
 comm = MPI.COMM_WORLD
@@ -181,7 +181,10 @@ def get_global_value_range( problem: pygeosx.Group, key: str ) -> np.ndarray:
     return global_min, global_max
 
 
-def print_global_value_range( problem: pygeosx.Group, key: str, header: str, scale: float = 1.0,
+def print_global_value_range( problem: pygeosx.Group,
+                              key: str,
+                              header: str,
+                              scale: float = 1.0,
                               precision: str = '%1.4f' ) -> tuple[ str, str ]:
     """
     Print the range of a target value across all processes
@@ -227,7 +230,10 @@ def set_wrapper_to_value( problem: pygeosx.Group, target_key: str, value: float 
     local_values[...] = value
 
 
-def set_wrapper_with_function( problem: pygeosx.Group, target_key: str, input_keys: Union[ str, List[ str ] ], fn: any,
+def set_wrapper_with_function( problem: pygeosx.Group,
+                               target_key: str,
+                               input_keys: Union[ str, List[ str ] ],
+                               fn: any,
                                target_index: int = -1 ) -> None:
     """
     Set the value of a wrapper using a function
@@ -276,8 +282,11 @@ def set_wrapper_with_function( problem: pygeosx.Group, target_key: str, input_ke
                          ( str( M ), str( N ), target_index ) )
 
 
-def search_datastructure_wrappers_recursive( group: pygeosx.Group, filters: List[ str ], matching_paths: List[ str ],
-                                             level: int = 0, group_path: List[ str ] = list() ) -> None:
+def search_datastructure_wrappers_recursive( group: pygeosx.Group,
+                                             filters: List[ str ],
+                                             matching_paths: List[ str ],
+                                             level: int = 0,
+                                             group_path: List[ str ] = list() ) -> None:
     """
     Recursively search the group and its children for wrappers that match the filters
 
@@ -403,7 +412,9 @@ def run_queries( problem: pygeosx.Group, records: Dict[ str, Dict[ str, str ] ] 
     sys.stdout.flush()
 
 
-def plot_history( records: Dict[ str, Dict[ str, str ] ], output_root: str = '.', save_figures: bool = True,
+def plot_history( records: Dict[ str, Dict[ str, str ] ],
+                  output_root: str = '.',
+                  save_figures: bool = True,
                   show_figures: bool = True ) -> None:
     """
     Plot the time-histories for the records structure.

@@ -861,8 +861,7 @@ class PVTKModel:
         if not bijk and not bn:
             raise ValueError(
                 "The block identification is required. You can set bijk = (ni, nj, nk) the block ids for each dimension"
-                ", or bn = int, the id on the total number of blocks"
-            )
+                ", or bn = int, the id on the total number of blocks" )
 
         if not bijk and bn:
             nijk = self.getAllBlocksIndices()

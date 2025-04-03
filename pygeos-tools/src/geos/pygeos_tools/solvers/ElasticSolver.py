@@ -16,7 +16,6 @@ from typing import Tuple, Union
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.WaveSolver import WaveSolver
 
-
 __doc__ = """
 AcousticSolver class inherits from WaveSolver class.
 
@@ -112,6 +111,7 @@ class ElasticSolver( WaveSolver ):
     """
     Accessors
     """
+
     def getAllDisplacementAtReceivers( self: Self ) -> Tuple[ npt.NDArray, npt.NDArray, npt.NDArray ]:
         """
         Get the displacement for the x, y and z directions at all time step and all receivers coordinates
@@ -173,10 +173,10 @@ class ElasticSolver( WaveSolver ):
     # TODO
     # def getFullWaveFieldAtReceivers( self: Self, comm ):
     #     print( "This method is not implemented yet" )
-
     """
     Update methods
     """
+
     def updateDensityModel( self: Self, density: npt.NDArray ) -> None:
         """
         Update density values in GEOS
@@ -205,6 +205,7 @@ class ElasticSolver( WaveSolver ):
     """
     Methods for reset of values
     """
+
     def resetWaveField( self: Self, **kwargs ) -> None:
         """Reinitialize all displacement values on the Wavefield to zero in GEOSX"""
 
