@@ -84,6 +84,8 @@ Packages
 
     geos-posp
 
+    geos-geomechanics
+
     geos-timehistory
 
     geos-utils
