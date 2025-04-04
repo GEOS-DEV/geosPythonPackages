@@ -36,7 +36,7 @@ import PVplugins #required to update sys path
 
 import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
 import geos_posp.visu.PVUtils.paraviewTreatments as pvt
-from geos_posp.processing.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos_posp.processing.vtkUtils import getArrayInObject, mergeBlocks
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import (
