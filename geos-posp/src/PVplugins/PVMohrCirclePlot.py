@@ -27,12 +27,9 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
 import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
 import geos_posp.visu.PVUtils.paraviewTreatments as pvt
 from geos.geomechanics.model.MohrCircle import MohrCircle
-from geos_posp.processing.vtkUtils import getArrayInObject, mergeBlocks
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import (
     FAILURE_ENVELOPE,
@@ -44,6 +41,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
 )
+from geos_posp.processing.vtkUtils import getArrayInObject, mergeBlocks
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos_posp.visu.PVUtils.DisplayOrganizationParaview import (
@@ -798,12 +796,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             list[MohrCircle]: list of MohrCircles for the current time step.
         """
         # get mesh and merge if needed
-        meshMerged: vtkUnstructuredGrid
-        if isinstance( mesh, vtkMultiBlockDataSet ):
-            meshMerged = mergeBlocks( mesh )
-        else:
-            meshMerged = mesh
-
+        meshMerged: vtkUnstructuredGrid = mergeBlocks( mesh ) if isinstance( mesh, vtkMultiBlockDataSet ) else mesh
         assert meshMerged is not None, "Input data is undefined"
 
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( meshMerged,

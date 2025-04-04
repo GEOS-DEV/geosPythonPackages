@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
 # type: ignore
+# ruff: noqa
 try:
     import matplotlib.pyplot as plt
     from paraview import python_view

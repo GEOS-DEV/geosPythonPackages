@@ -2,15 +2,12 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-import sys
 import unittest
 
+import geos.utils.algebraFunctions as fcts
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
-
-import geos.utils.algebraFunctions as fcts
 
 matrix: npt.NDArray[ np.float64 ] = np.array( [ [ 11, 21, 31 ], [ 21, 22, 23 ], [ 31, 23, 33 ] ] )
 vector: npt.NDArray[ np.float64 ] = np.array( [ 11, 22, 33, 23, 31, 21 ] )

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
-import numpy as np
-import numpy.typing as npt
 from typing import Any
 
+import numpy as np
+import numpy.typing as npt
 from geos.utils.PhysicalConstants import EPSILON
 
 __doc__ = """Functions to permform geometry calculations."""

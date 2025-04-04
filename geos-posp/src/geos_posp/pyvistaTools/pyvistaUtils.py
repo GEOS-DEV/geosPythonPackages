@@ -8,12 +8,12 @@ import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 import pyvista as pv  # type: ignore[import-not-found]
 import vtkmodules.util.numpy_support as vnp
+from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 
 import geos_posp.processing.vtkUtils as vtkUtils
-from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 
 __doc__ = r"""
 This module contains utilities to process meshes using pyvista.
@@ -56,12 +56,8 @@ def loadDataSet(
         assert volMesh is not None, "Volumic mesh was not found."
 
         # Merge volume block
-        mergedMesh: pv.UnstructuredGrid
-        if isinstance( volMesh, pv.MultiBlock ):
-            mergedMesh = volMesh.combine( merge_points=True )
-        else:
-            mergedMesh = volMesh
-
+        mergedMesh: pv.UnstructuredGrid = volMesh.combine(
+            merge_points=True ) if isinstance( volMesh, pv.MultiBlock ) else volMesh
         assert mergedMesh is not None, "Merged mesh is undefined."
 
         # extract data

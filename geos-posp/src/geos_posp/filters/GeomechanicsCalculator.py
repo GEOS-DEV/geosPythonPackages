@@ -4,25 +4,9 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 from typing import Union
 
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import Self
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet,
-    vtkPointSet,
-    vtkUnstructuredGrid,
-)
-from vtkmodules.vtkFiltersCore import vtkCellCenters
-
-import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
-from geos_posp.processing.vtkUtils import (
-    createAttribute,
-    getArrayInObject,
-    getComponentNames,
-    isAttributeInObject,
-)
 from geos.utils.GeosOutputsConstants import (
     AttributeEnum,
     ComponentNameEnum,
@@ -36,6 +20,22 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     GRAVITY,
     WATER_DENSITY,
+)
+from typing_extensions import Self
+from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import (
+    vtkDataSet,
+    vtkPointSet,
+    vtkUnstructuredGrid,
+)
+from vtkmodules.vtkFiltersCore import vtkCellCenters
+
+from geos_posp.processing.vtkUtils import (
+    createAttribute,
+    getArrayInObject,
+    getComponentNames,
+    isAttributeInObject,
 )
 
 __doc__ = """
@@ -961,12 +961,8 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             density: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, densityAttributeName,
                                                                    self.m_attributeOnPoints )
             try:
-                depth: npt.NDArray[ np.float64 ]
-                if self.m_attributeOnPoints:
-                    depth = self.computeDepthAlongLine()
-                else:
-                    depth = self.computeDepthInMesh()
-
+                depth: npt.NDArray[ np.float64 ] = self.computeDepthAlongLine(
+                ) if self.m_attributeOnPoints else self.computeDepthInMesh()
                 assert depth is not None, "Depth is undefined."
                 assert density is not None, ( f"{densityAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 

@@ -17,29 +17,7 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
 import vtkmodules.util.numpy_support as vnp
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
-from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
-from vtkmodules.vtkCommonCore import (
-    vtkDoubleArray,
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import vtkTable
-
-from geos_posp.processing.geosLogReaderFunctions import (
-    identifyProperties,
-    transformUserChoiceToListPhases,
-)
-from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
-from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
-from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
-from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.enumUnits import (
     Mass,
     MassRate,
@@ -51,10 +29,29 @@ from geos.utils.enumUnits import (
     enumerationDomainUnit,
 )
 from geos.utils.UnitRepository import UnitRepository
+from geos_posp.processing.geosLogReaderFunctions import (
+    identifyProperties,
+    transformUserChoiceToListPhases,
+)
+from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
+from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
+from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
+from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos_posp.visu.PVUtils.paraviewTreatments import (
     strListToEnumerationDomainXml, )
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
+from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
+from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
+from vtkmodules.vtkCommonCore import (
+    vtkDoubleArray,
+    vtkInformation,
+    vtkInformationVector,
+)
+from vtkmodules.vtkCommonDataModel import vtkTable
 
 __doc__ = """
 GeosLogRePVGeosLogReaderader is a Paraview plugin that allows to read Geos output log.

@@ -1036,8 +1036,8 @@ def smartLabelsSorted( labels: list[ str ], lines: list[ lines.Line2D ],
     # If a duplicate is found, "sorted" will try to sort with line which has no comparison built in
     # which will throw an error.
     if len( set( smartLabels ) ) == len( smartLabels ):
-        sortedBothLists = sorted( zip( smartLabels, lines ) )
-        sortedLabels, sortedLines = zip( *sortedBothLists )
+        sortedBothLists = sorted( zip( smartLabels, lines, strict=False ) )
+        sortedLabels, sortedLines = zip( *sortedBothLists, strict=False )
         return ( list( sortedLabels ), list( sortedLines ) )
     else:
         return ( smartLabels, lines )

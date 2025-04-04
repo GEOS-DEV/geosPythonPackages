@@ -2,16 +2,13 @@
 # # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-import sys
 import unittest
-
-from typing_extensions import Self
 
 from geos.utils.ConnectionSet import (
     ConnectionSet,
     ConnectionSetCollection,
 )
+from typing_extensions import Self
 
 faceId1: int = 1
 faceId2: int = 2

@@ -6,9 +6,9 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
+
 from geos_posp.visu.mohrCircles import (
     MOHR_CIRCLE_ANALYSIS_MAIN,
     MOHR_CIRCLE_PATH,
@@ -116,7 +116,7 @@ def createMohrCircleAtTimeStep(
         * False is Geos convention (compression is negative)
         * True is usual convention (compression is positive)
 
-            Returns:
+    Returns:
         list[MohrCircle]: list of MohrCircle objects.
     """
     assert stressArray.shape[ 1 ] == 6, "Stress vector must be of size 6."

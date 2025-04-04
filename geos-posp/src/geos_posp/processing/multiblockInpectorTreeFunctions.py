@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
-from typing import Union, cast
+from typing import Union
 
 from vtkmodules.vtkCommonDataModel import (
     vtkCompositeDataSet,

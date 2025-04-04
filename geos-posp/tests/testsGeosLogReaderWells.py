@@ -16,9 +16,8 @@ if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
 import pandas as pd  # type: ignore[import-untyped]
-
-from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.UnitRepository import Unit, UnitRepository
+from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
 
 unitsObjSI = UnitRepository()
 conversionFactors: dict[ str, Unit ] = unitsObjSI.getPropertiesUnit()
@@ -132,7 +131,7 @@ class TestsGeosLogReaderWells( unittest.TestCase ):
             [ 0.00027756801176732497, 0.00027731846270264457 ],
             [ 0.0, 3.1536e07 ],
         ]
-        for column_name, value in zip( columns_name, values ):
+        for column_name, value in zip( columns_name, values, strict=False ):
             expectedDF[ column_name ] = value
         obtainedDF: pd.DataFrame = obj.createDataframe()
         self.assertEqual( list( obtainedDF.columns ), columns_name )
@@ -207,7 +206,7 @@ class TestsGeosLogReaderWells( unittest.TestCase ):
             [ 1.2681312543855673e-17, 1.2681312543888312e-17 ],
             [ 0.0, 100.0 ],
         ]
-        for column_name, value in zip( columns_name, values ):
+        for column_name, value in zip( columns_name, values, strict=False ):
             expectedDF[ column_name ] = value
         obtainedDF: pd.DataFrame = obj.createDataframe()
         self.assertEqual( list( obtainedDF.columns ), columns_name )

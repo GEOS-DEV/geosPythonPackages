@@ -4,9 +4,8 @@
 from enum import Enum
 from typing import Union
 
-from typing_extensions import Self
-
 from geos.utils.enumUnits import Unit, getPropertyUnitEnum, getSIUnits
+from typing_extensions import Self
 
 
 class UnitRepository:

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from setuptools import setup
 
 # This is where you add any fancy path resolution to the local lib:

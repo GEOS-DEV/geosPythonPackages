@@ -2,9 +2,26 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+import geos.utils.geometryFunctions as geom
 import numpy as np
 import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
+from geos.utils.algebraFunctions import (
+    getAttributeMatrixFromVector,
+    getAttributeVectorFromMatrix,
+)
+from geos.utils.GeosOutputsConstants import (
+    ComponentNameEnum,
+    GeosMeshOutputsEnum,
+    PostProcessingOutputsEnum,
+    getAttributeToConvertFromLocalToXYZ,
+)
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
+    DEFAULT_FRICTION_ANGLE_RAD,
+    DEFAULT_ROCK_COHESION,
+)
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -16,29 +33,11 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 
-import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
-
 from geos_posp.processing.vtkUtils import (
     createAttribute,
     getArrayInObject,
     getAttributeSet,
     isAttributeInObject,
-)
-import geos.utils.geometryFunctions as geom
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-    getAttributeToConvertFromLocalToXYZ,
-)
-from geos.utils.algebraFunctions import (
-    getAttributeMatrixFromVector,
-    getAttributeVectorFromMatrix,
-)
-from geos.utils.Logger import Logger, getLogger
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_ROCK_COHESION,
 )
 
 __doc__ = """

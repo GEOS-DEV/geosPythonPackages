@@ -8,6 +8,10 @@ from typing import Any, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
+from geos.utils.GeosOutputsConstants import (
+    ComponentNameEnum,
+    GeosMeshOutputsEnum,
+)
 from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
     vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
@@ -31,10 +35,6 @@ from vtkmodules.vtkCommonDataModel import (
 from geos_posp.processing.vtkUtils import (
     getArrayInObject,
     isAttributeInObject,
-)
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
 )
 
 # valid sources for Python view configurator
@@ -533,7 +533,7 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
     animationScene.GoToFirst()
     source = FindSource( sourceName )
     dataset: vtkDataObject = servermanager.Fetch( source )
-    assert dataset is not None, f"Dataset is undefined."
+    assert dataset is not None, "Dataset is undefined."
     dataset2: vtkUnstructuredGrid = mergeFilterPV( dataset )
     time: str = str( animationScene.TimeKeeper.Time )
     dfPerTimestep: dict[ str, pd.DataFrame ] = { time: vtkToDataframe( dataset2 ) }

@@ -14,20 +14,6 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
-from paraview.simple import (  # type: ignore[import-not-found]
-    GetActiveSource, GetActiveView, Render, Show, servermanager,
-)
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
-    vtkInformation,
-    vtkInformationVector,
-)
-
 import geos_posp.visu.PVUtils.paraviewTreatments as pvt
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
@@ -41,6 +27,17 @@ from geos_posp.visu.PVUtils.matplotlibOptions import (
     MarkerStyleEnum,
     OptionSelectionEnum,
     optionEnumToXml,
+)
+from paraview.simple import (  # type: ignore[import-not-found]
+    GetActiveSource, GetActiveView, Render, Show, servermanager,
+)
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
+from vtkmodules.vtkCommonCore import (
+    vtkDataArraySelection,
+    vtkInformation,
+    vtkInformationVector,
 )
 
 __doc__ = """

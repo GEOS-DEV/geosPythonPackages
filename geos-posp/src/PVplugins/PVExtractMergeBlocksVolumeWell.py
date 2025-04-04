@@ -19,19 +19,17 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
+from geos.utils.GeosOutputsConstants import (
+    GeosMeshOutputsEnum,
+    getAttributeToTransferFromInitialTime,
+)
+from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos_posp.processing.vtkUtils import (
     copyAttribute,
     createCellCenterAttribute,
 )
-from geos.utils.GeosOutputsConstants import (
-    GeosMeshOutputsEnum,
-    getAttributeToTransferFromInitialTime,
-)
-from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.visu.PVUtils.paraviewTreatments import getTimeStepIndex
 
 __doc__ = """

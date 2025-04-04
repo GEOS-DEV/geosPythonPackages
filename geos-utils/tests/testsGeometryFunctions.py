@@ -2,15 +2,12 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-import sys
 import unittest
 
+import geos.utils.geometryFunctions as fcts
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
-
-import geos.utils.geometryFunctions as fcts
 
 basisCanon: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                    npt.NDArray[ np.float64 ] ] = ( np.array( [ 1.0, 0.0, 0.0 ] ), np.array( [ 0.0, 1.0, 0.0 ] ),

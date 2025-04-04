@@ -14,8 +14,8 @@ parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos.utils.UnitRepository import Unit, UnitRepository
+from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
 
 unitsObjSI: UnitRepository = UnitRepository()
 conversionFactors: dict[ str, Unit ] = unitsObjSI.getPropertiesUnit()
@@ -59,7 +59,7 @@ class TestsFunctionsGeosLogReaderConvergence( unittest.TestCase ):
             [ 0.0, 8600.0, 25724.3 ],
             [ 8600.0, 17124.3, 34165.3 ],
         ]
-        for column_name, value in zip( columns_name, values ):
+        for column_name, value in zip( columns_name, values, strict=False ):
             expectedDF[ column_name ] = value
         obtainedDF: pd.DataFrame = obj.createDataframe()
         self.assertEqual( list( obtainedDF.columns ), columns_name )

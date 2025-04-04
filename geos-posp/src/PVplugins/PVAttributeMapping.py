@@ -4,16 +4,27 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import sys
+from typing import Union
 
-from typing_extensions import Self, Union
+from typing_extensions import Self
 
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
+from geos.utils.Logger import Logger, getLogger
+from geos_posp.filters.AttributeMappingFromCellCoords import (
+    AttributeMappingFromCellCoords, )
+from geos_posp.processing.vtkUtils import (
+    fillPartialAttributes,
+    getAttributeSet,
+    getNumberOfComponents,
+    mergeBlocks,
+)
+from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
+    createModifiedCallback, )
+from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -29,19 +40,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
 )
-
-from geos_posp.filters.AttributeMappingFromCellCoords import (
-    AttributeMappingFromCellCoords, )
-from geos_posp.processing.vtkUtils import (
-    fillPartialAttributes,
-    getAttributeSet,
-    getNumberOfComponents,
-    mergeBlocks,
-)
-from geos.utils.Logger import Logger, getLogger
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
 
 __doc__ = """
 Map the attributes from a source mesh to a client mesh.
@@ -176,7 +174,6 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-
         self.m_logger.info( f"Apply filter {__name__}" )
         try:
             serverMesh: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet,
@@ -214,7 +211,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
                                   "Use either vtkUnstructuredGrid or vtkMultiBlockDataSet" )
 
             outData.Modified()
-            mess: str = f"Attributes were successfully transferred ."
+            mess: str = "Attributes were successfully transferred ."
             self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "Attribute transfer failed due to:"

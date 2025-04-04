@@ -7,6 +7,7 @@ from collections.abc import MutableSequence
 
 import numpy as np
 import numpy.typing as npt
+from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -26,7 +27,6 @@ from geos_posp.processing.vtkUtils import (
     createEmptyAttribute,
     getVtkArrayInObject,
 )
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 AttributeMappingFromCellCoords module is a vtk filter that map two identical mesh (or a mesh is
@@ -147,7 +147,6 @@ class AttributeMappingFromCellCoords( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-
         try:
             self.m_serverMesh = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
             clientMesh = vtkUnstructuredGrid.GetData( inInfoVec[ 1 ] )

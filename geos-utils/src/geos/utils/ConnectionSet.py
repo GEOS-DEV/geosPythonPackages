@@ -2,10 +2,10 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 import copy
-from collections.abc import MutableSet
-from typing import Iterable, Optional
+from collections.abc import Iterable, Iterator, MutableSet
+from typing import Optional
 
-from typing_extensions import Iterator, Self
+from typing_extensions import Self
 
 __doc__ = """ Defines connection set and connection set collection data
 structures.
@@ -56,7 +56,7 @@ class ConnectionSet:
         if len( connectedCellIds1 ) != len( connectedCellIds2 ):
             return False
         return ( self.m_cellIdRef == other.m_cellIdRef ) and all(
-            v1 == v2 for v1, v2 in zip( connectedCellIds1, connectedCellIds2 ) )
+            v1 == v2 for v1, v2 in zip( connectedCellIds1, connectedCellIds2, strict=False ) )
 
     def __hash__( self: Self ) -> int:
         """Define hash method.

@@ -15,8 +15,8 @@ parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-from geos_posp.processing import geosLogReaderFunctions as utils
 from geos.utils.enumUnits import Unit, getSIUnits
+from geos_posp.processing import geosLogReaderFunctions as utils
 
 
 class TestsFunctionsGeosLogReader( unittest.TestCase ):
