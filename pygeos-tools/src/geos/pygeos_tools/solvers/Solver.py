@@ -24,7 +24,7 @@ from geos.pygeos_tools.wrapper import ( find_first_difference_between_wrapper_pa
 from geos.pygeos_tools.input.Xml import XML
 from geos.pygeos_tools.input.GeosxArgs import GeosxArgs
 from geos.utils.errors_handling.classes import required_attributes
-from geos.utils.pygeos.solvers import GEOS_STATE
+from geos.pygeos_tools.solvers.helpers import GEOS_STATE
 from geos.utils.xml.XMLTime import XMLTime
 
 __doc__ = """
@@ -811,7 +811,7 @@ class Solver:
             timeVariables[ "maxTime" ] = xmlTimes[ "maxTime" ].getValues()[ 0 ]
         for param, xmlTime in xmlTimes.items():
             value: float = xmlTime.getSolverValue( self.name )
-            if value is not None:
+            if value != 0.0:
                 timeVariables[ param ] = value
         self.timeVariables = timeVariables
 

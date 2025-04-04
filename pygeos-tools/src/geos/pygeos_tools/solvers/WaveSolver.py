@@ -11,7 +11,6 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 import numpy as np
 import numpy.typing as npt
 import pygeosx

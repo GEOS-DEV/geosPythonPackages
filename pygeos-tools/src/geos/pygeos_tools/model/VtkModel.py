@@ -11,7 +11,6 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 import os
 import sys
 import numpy as np

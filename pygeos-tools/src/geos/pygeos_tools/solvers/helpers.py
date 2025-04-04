@@ -14,18 +14,6 @@
 from enum import Enum
 
 
-class StrEnum(str, Enum):
-    """
-    StrEnum class that inherits from both str and Enum.
-    This allows enum members to behave like strings.
-    """
-    def __str__(self) -> str:
-        return self.value
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}.{self.name}"
-
-
 class GEOS_STATE( Enum ):
     """This class needs to be up to date with the implementation of getState in pygeosx.cpp.
 
@@ -38,7 +26,7 @@ class GEOS_STATE( Enum ):
     COMPLETED = 3
 
 
-class MODEL_FOR_GRADIENT( StrEnum ):
+class MODEL_FOR_GRADIENT( Enum ):
     """This class needs to be up to date with the model for gradient available.
     This refers to inversion parameters.
     """

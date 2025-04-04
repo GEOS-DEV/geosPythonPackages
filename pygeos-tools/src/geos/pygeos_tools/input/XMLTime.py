@@ -1,4 +1,29 @@
-from typing import List, Optional
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# Copyright (c) 2019-     INRIA project-team Makutu
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
+from typing import List
+
+__doc__ = """
+The XMLTime class allows for better handling of time variables stored in a GEOS XML file.
+Time variables represent all the keywords used in GEOS to specify time related operations such as 'forceDt',
+'timeFrequency', 'maxTime' ...
+
+When looking at events, multiple of them can contain the similar time variables. This class will have the name of that
+time variable and will store 3 types of data:
+- events: the paths leading to all events in the GEOS simulation that contains this time variable
+- targets: the "target" keyword for each of these events
+- values: the value given in each event
+"""
 
 
 class XMLTime:
@@ -18,7 +43,7 @@ class XMLTime:
     def getName( self ) -> str:
         return self.name
 
-    def getSolverValue( self, solverName: str ) -> Optional[ float ]:
+    def getSolverValue( self, solverName: str ) -> float:
         """
         If one or multiple targets contain the '/Solvers/' filter, returns the value associated with it.
 
@@ -32,8 +57,8 @@ class XMLTime:
         for i, target in enumerate( self.targets ):
             if identifier in target and target.endswith( solverName ):
                 return self.values[ i ]
-        print( f"The solver '{solverName}' does not exist in the targets '{self.targets}' of XMLTime '{self.name}'." +
-               " Cannot return a value." )
+        print( f"The solver '{solverName}' does not exist in the targets '{self.targets}' of XMLTime '{self.name}'." )
+        return 0.0
 
     def getTargets( self ) -> List[ str ]:
         return self.targets

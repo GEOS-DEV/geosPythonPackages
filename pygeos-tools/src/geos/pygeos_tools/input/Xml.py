@@ -11,7 +11,6 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 import os
 from xml.etree import cElementTree as ET, ElementTree
 from xml.etree.ElementTree import Element
@@ -22,7 +21,7 @@ from typing_extensions import Self
 from geos.pygeos_tools.mesh.InternalMesh import InternalMesh
 from geos.pygeos_tools.mesh.VtkMesh import VTKMesh
 from geos.utils.errors_handling.classes import required_attributes
-from geos.utils.xml.XMLTime import XMLTime
+from geos.pygeos_tools.input.XMLTime import XMLTime
 
 __doc__ = """
 XML class parses a GEOS xml file and stores all its blocks as arguments.

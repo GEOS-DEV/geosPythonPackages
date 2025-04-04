@@ -20,7 +20,7 @@ from typing import Optional
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.WaveSolver import WaveSolver
 from geos.utils.errors_handling.classes import required_attributes
-from geos.utils.pygeos.solvers import MODEL_FOR_GRADIENT
+from geos.pygeos_tools.solvers.helpers import MODEL_FOR_GRADIENT
 
 __doc__ = """
 AcousticSolver class inherits from WaveSolver class.
@@ -193,7 +193,7 @@ class AcousticSolver( WaveSolver ):
                 {list( MODEL_FOR_GRADIENT.__members__.keys() )}
         """
         if modelForGradient in MODEL_FOR_GRADIENT.__members__:
-            self.modelForGradient = MODEL_FOR_GRADIENT[ modelForGradient ]
+            self.modelForGradient = MODEL_FOR_GRADIENT[ modelForGradient ].value
         else:
             raise ValueError( f"The model for gradient chosen '{modelForGradient}' is not implemented. The available" +
                               f" ones are '{list( MODEL_FOR_GRADIENT.__members__.keys() )}'." )

@@ -11,7 +11,6 @@
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
-
 from os import path
 import numpy.typing as npt
 from typing import Iterable, Tuple

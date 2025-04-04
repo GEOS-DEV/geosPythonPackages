@@ -6,18 +6,18 @@ This packages consists of utilities for handling the two principal arguments of 
 - 
 
 
-pygeos_tools.input.GeosxArgs module
+geos.pygeos_tools.input.GeosxArgs module
 -----------------------------------
 
-.. automodule:: pygeos_tools.input.GeosxArgs
+.. automodule:: geos.pygeos_tools.input.GeosxArgs
    :members:
    :undoc-members:
    :show-inheritance:
 
-pygeos_tools.input.Xml module
+geos.pygeos_tools.input.Xml module
 -----------------------------
 
-.. automodule:: pygeos_tools.input.Xml
+.. automodule:: geos.pygeos_tools.input.Xml
    :members:
    :undoc-members:
    :show-inheritance:
