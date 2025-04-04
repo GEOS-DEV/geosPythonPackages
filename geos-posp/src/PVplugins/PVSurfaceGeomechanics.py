@@ -34,7 +34,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 from geos_posp.filters.SurfaceGeomechanics import SurfaceGeomechanics
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInpectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
