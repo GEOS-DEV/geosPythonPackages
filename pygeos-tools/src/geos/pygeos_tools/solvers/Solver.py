@@ -19,16 +19,16 @@ import pygeosx
 import sys
 from typing import Dict, List, Optional, Union
 from typing_extensions import Self
+from geos.pygeos_tools.input.GeosxArgs import GeosxArgs
+from geos.pygeos_tools.input.Xml import XML
+from geos.pygeos_tools.input.XMLTime import XMLTime
+from geos.pygeos_tools.solvers.helpers import GEOS_STATE
 from geos.pygeos_tools.wrapper import ( find_first_difference_between_wrapper_paths, get_all_matching_wrapper_paths,
                                         get_wrapper )
-from geos.pygeos_tools.input.Xml import XML
-from geos.pygeos_tools.input.GeosxArgs import GeosxArgs
 from geos.utils.errors_handling.classes import required_attributes
-from geos.pygeos_tools.solvers.helpers import GEOS_STATE
-from geos.utils.xml.XMLTime import XMLTime
 
 __doc__ = """
-Solver class which is the base class for every other **Solver classes.
+Solver class which is the base class for every other OtherSolver classes.
 The driving methods for pygeosx such as initialize and execute, and get/set methods for pygeosx wrappers are defined.
 
 .. WARNING::

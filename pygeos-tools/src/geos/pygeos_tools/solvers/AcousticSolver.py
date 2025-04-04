@@ -18,9 +18,9 @@ import numpy.typing as npt
 import shutil
 from typing import Optional
 from typing_extensions import Self
+from geos.pygeos_tools.solvers.helpers import MODEL_FOR_GRADIENT
 from geos.pygeos_tools.solvers.WaveSolver import WaveSolver
 from geos.utils.errors_handling.classes import required_attributes
-from geos.pygeos_tools.solvers.helpers import MODEL_FOR_GRADIENT
 
 __doc__ = """
 AcousticSolver class inherits from WaveSolver class.

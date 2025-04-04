@@ -5,7 +5,7 @@ This packages consists of utilities for seismic acquisition.
 
 
 geos.pygeos_tools.model.pyevtk_tools module
---------------------------------------
+-------------------------------------------
 
 .. automodule:: geos.pygeos_tools.model.pyevtk_tools
    :members:
@@ -13,7 +13,7 @@ geos.pygeos_tools.model.pyevtk_tools module
    :show-inheritance:
 
 geos.pygeos_tools.model.SepModel module
-----------------------------------
+---------------------------------------
 
 .. automodule:: geos.pygeos_tools.model.SepModel
    :members:
@@ -21,7 +21,7 @@ geos.pygeos_tools.model.SepModel module
    :show-inheritance:
 
 geos.pygeos_tools.model.VtkModel module
-----------------------------------
+---------------------------------------
 
 .. automodule:: geos.pygeos_tools.model.VtkModel
    :members:

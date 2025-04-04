@@ -5,7 +5,7 @@ This packages consists of utilities for seismic acquisition.
 
 
 geos.pygeos_tools.mesh.InternalMesh module
--------------------------------------
+------------------------------------------
 
 .. automodule:: geos.pygeos_tools.mesh.InternalMesh
    :members:
@@ -13,7 +13,7 @@ geos.pygeos_tools.mesh.InternalMesh module
    :show-inheritance:
 
 geos.pygeos_tools.mesh.VtkMesh module
---------------------------------
+-------------------------------------
 
 .. automodule:: geos.pygeos_tools.mesh.VtkMesh
    :members:

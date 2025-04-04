@@ -5,7 +5,7 @@ This packages consists of utilities for seismic acquisition.
 
 
 geos.pygeos_tools.output.SEGYTraceOutput module
-------------------------------------------
+-----------------------------------------------
 
 .. automodule:: geos.pygeos_tools.output.SEGYTraceOutput
    :members:
@@ -13,7 +13,7 @@ geos.pygeos_tools.output.SEGYTraceOutput module
    :show-inheritance:
 
 geos.pygeos_tools.output.SeismicTraceOutput module
----------------------------------------------
+--------------------------------------------------
 
 .. automodule:: geos.pygeos_tools.output.SeismicTraceOutput
    :members:
@@ -21,7 +21,7 @@ geos.pygeos_tools.output.SeismicTraceOutput module
    :show-inheritance:
 
 geos.pygeos_tools.output.SEPTraceOutput module
------------------------------------------
+----------------------------------------------
 
 .. automodule:: geos.pygeos_tools.output.SEPTraceOutput
    :members:

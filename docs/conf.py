@@ -47,7 +47,8 @@ extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcont
                'sphinx.ext.todo', 'sphinx.ext.viewcode' ]
 
 autoclass_content = 'both'
-autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pylvarray", "meshio", "mpi4py", "scipy" ]
+autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pyevtk", "pylvarray", "meshio", "mpi4py",
+                         "numba", "scipy", "segyio", "xmltodict" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
 suppress_warnings = [""]

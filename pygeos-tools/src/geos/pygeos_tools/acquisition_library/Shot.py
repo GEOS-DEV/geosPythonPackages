@@ -16,7 +16,7 @@ from typing import Iterable, List, Optional, Union
 from typing_extensions import Self
 from geos.pygeos_tools.input.Xml import XML
 
-Coordinates3D = Iterable[ float, float, float ]
+Coordinates3D = Iterable[ float ]
 
 
 class Shot:
