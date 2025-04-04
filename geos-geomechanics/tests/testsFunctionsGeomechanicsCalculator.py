@@ -247,9 +247,9 @@ class TestsFunctionsGeomechanicsCalculator( unittest.TestCase ):
 
         # calculation
         obtained: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization( traction, rockCohesion, frictionAngle )
-        expected: npt.NDArray[ np.float64 ] = np.array( [ 0.899, 0.923, 0.982, 1.004, 1.048 ] )
+        expected: list[ float ] = [ 0.899, 0.923, 0.982, 1.004, 1.048 ]
 
-        self.assertSequenceEqual( np.round( obtained, 3 ).flatten().tolist(), expected.tolist() )
+        self.assertSequenceEqual( np.round( obtained, 3 ).flatten().tolist(), expected )
 
     def test_computeStressPrincipalComponents( self: Self ) -> None:
         """Test calculation of stress principal components from stress tensor."""

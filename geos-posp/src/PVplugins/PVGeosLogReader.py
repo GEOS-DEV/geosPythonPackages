@@ -144,8 +144,9 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
             self.m_propertiesWells.AddArray( prop )
 
         self.m_propertiesAquifers: vtkDAS = vtkDAS()
-        self.m_propertiesAquifers.AddObserver( "ModifiedEvent",
-                                               createModifiedCallback( self ) )  # type: ignore[arg-type]
+        self.m_propertiesAquifers.AddObserver(
+            "ModifiedEvent",  # type: ignore[arg-type]
+            createModifiedCallback( self ) )
         propsAquifers: list[ str ] = [
             "Volume",
             "VolumetricRate",

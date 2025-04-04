@@ -925,4 +925,3 @@ def computeNormalShearStress( stressTensor: npt.NDArray[ np.float64 ],
     tauVec: npt.NDArray[ np.float64 ] = T - np.dot( sigmaN, directionVector )
     tau: float = float( np.linalg.norm( tauVec ) )
     return ( sigmaN, tau )
-

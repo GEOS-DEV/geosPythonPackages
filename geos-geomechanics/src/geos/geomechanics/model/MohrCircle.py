@@ -113,4 +113,3 @@ class MohrCircle:
         """
         # get stress principal components
         self.m_p3, self.m_p2, self.m_p1 = ( computeStressPrincipalComponentsFromStressVector( stressVector ) )
-
