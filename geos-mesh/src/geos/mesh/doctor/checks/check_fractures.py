@@ -1,14 +1,14 @@
 import logging
 import numpy
 from dataclasses import dataclass
-from typing import Collection, Iterable, Sequence
 from tqdm import tqdm
+from typing import Collection, Iterable, Sequence
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from geos.mesh.doctor.checks.vtk_utils import vtk_iter
 from geos.mesh.doctor.checks.generate_fractures import Coordinates3D
+from geos.mesh.vtk.helpers import vtk_iter
 
 
 @dataclass( frozen=True )

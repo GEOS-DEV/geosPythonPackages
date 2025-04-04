@@ -1,20 +1,8 @@
 from dataclasses import dataclass
-import logging
-from typing import (
-    List,
-    Dict,
-    Set,
-    FrozenSet,
-)
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-
-from . import vtk_utils
-from .vtk_utils import (
-    to_vtk_id_list,
-    VtkOutput,
-)
+from typing import Dict, FrozenSet, List, Set
+from vtkmodules.vtkCommonCore import vtkIdList
+from geos.mesh.vtk.helpers import to_vtk_id_list
+from geos.mesh.vtk.io import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )
@@ -55,11 +43,11 @@ def __check( mesh, options: Options ) -> Result:
             cells.ReplaceCellAtId( cell_idx, to_vtk_id_list( new_support_point_ids ) )
         else:
             unchanged_cell_types.add( cell_type )
-    is_written_error = vtk_utils.write_mesh( output_mesh, options.vtk_output )
+    is_written_error = write_mesh( output_mesh, options.vtk_output )
     return Result( output=options.vtk_output.output if not is_written_error else "",
                    unchanged_cell_types=frozenset( unchanged_cell_types ) )
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )

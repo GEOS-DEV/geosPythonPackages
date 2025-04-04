@@ -1,13 +1,6 @@
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_VERTEX,
-    vtkCellArray,
-    vtkUnstructuredGrid,
-    vtkVertex,
-)
-
-from checks.generate_global_ids import __build_global_ids
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkUnstructuredGrid, vtkVertex, VTK_VERTEX
+from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
 
 
 def test_generate_global_ids():

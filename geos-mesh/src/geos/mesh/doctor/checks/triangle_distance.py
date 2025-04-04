@@ -1,9 +1,8 @@
 import itertools
 from math import sqrt
-from typing import Tuple, Union
-
 import numpy
 from numpy.linalg import norm
+from typing import Tuple, Union
 
 
 def __div_clamp( num: float, den: float ) -> float:

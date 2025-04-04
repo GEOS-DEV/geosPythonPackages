@@ -1,12 +1,7 @@
 from dataclasses import dataclass
 import logging
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdTypeArray, )
-
-from . import vtk_utils
-from .vtk_utils import (
-    VtkOutput, )
+from vtkmodules.vtkCommonCore import vtkIdTypeArray
+from geos.mesh.vtk.io import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )
@@ -52,13 +47,13 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
 
 def __check( mesh, options: Options ) -> Result:
     __build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
-    vtk_utils.write_mesh( mesh, options.vtk_output )
+    write_mesh( mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
     try:
-        mesh = vtk_utils.read_mesh( vtk_input_file )
+        mesh = read_mesh( vtk_input_file )
         return __check( mesh, options )
     except BaseException as e:
         logging.error( e )
