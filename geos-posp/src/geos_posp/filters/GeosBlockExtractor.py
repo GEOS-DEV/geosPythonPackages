@@ -6,10 +6,10 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInpectorTreeFunctions import (
     getBlockIndexFromName,
 )
-from geos_posp.processing.vtkUtils import extractBlock
+from geos.mesh.processing.vtkUtils import extractBlock
 from geos.utils.GeosOutputsConstants import (
     GeosDomainNameEnum,
     OutputObjectEnum,

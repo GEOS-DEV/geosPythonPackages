@@ -45,11 +45,11 @@ from vtkmodules.vtkCommonDataModel import (
 from geos_posp.filters.TransferAttributesVolumeSurface import (
     TransferAttributesVolumeSurface,
 )
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInpectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos_posp.processing.vtkUtils import getAttributeSet, mergeBlocks
+from geos.mesh.vtkUtils import getAttributeSet, mergeBlocks
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback,

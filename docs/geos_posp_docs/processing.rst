@@ -36,18 +36,18 @@ geos_posp.processing.MohrCoulomb module
    :undoc-members:
    :show-inheritance:
 
-geos_posp.processing.multiblockInpectorTreeFunctions module
+geos.mesh.multiblockInpectorTreeFunctions module
 ---------------------------------------------------------------
 
-.. automodule:: geos_posp.processing.multiblockInpectorTreeFunctions
+.. automodule:: geos.mesh.multiblockInpectorTreeFunctions
    :members:
    :undoc-members:
    :show-inheritance:
    
-geos_posp.processing.vtkUtils module
+geos.mesh.vtkUtils module
 ----------------------------------------
 
-.. automodule:: geos_posp.processing.vtkUtils
+.. automodule:: geos.mesh.vtkUtils
    :members:
    :undoc-members:
    :show-inheritance:
