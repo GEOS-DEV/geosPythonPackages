@@ -8,7 +8,7 @@ from xmlschema import XMLSchema
 
 
 def parsing() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Validate xsd schema")
+    parser = argparse.ArgumentParser( description="Validate xsd schema" )
 
     parser.add_argument(
         "--xsdFilepath",
@@ -27,22 +27,22 @@ def parsing() -> argparse.ArgumentParser:
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
-    XMLSchema.meta_schema.validate(args.xsdFilepath)
-    obj = XMLSchema.meta_schema.decode(args.xsdFilepath)
+def main( args: argparse.Namespace ) -> None:
+    XMLSchema.meta_schema.validate( args.xsdFilepath )
+    obj = XMLSchema.meta_schema.decode( args.xsdFilepath )
 
     if args.xmlFilepath:
-        schema = XMLSchema(args.xsdFilepath)
-        schema.validate(args.xmlFilepath)
+        schema = XMLSchema( args.xsdFilepath )
+        schema.validate( args.xmlFilepath )
 
     else:
-        print("No xml file provided")
+        print( "No xml file provided" )
 
 
 def run() -> None:
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":
