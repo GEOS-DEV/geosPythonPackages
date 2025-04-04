@@ -7,7 +7,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
 from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
-from geos.utils.vtk.io import VtkOutput, write_mesh
+from geos.mesh.vtk.io import VtkOutput, write_mesh
 
 
 @dataclass( frozen=True )

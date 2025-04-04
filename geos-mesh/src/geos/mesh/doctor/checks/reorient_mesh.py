@@ -8,7 +8,7 @@ from vtkmodules.vtkCommonDataModel import ( VTK_POLYHEDRON, VTK_TRIANGLE, vtkCel
                                             vtkUnstructuredGrid, vtkTetra )
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream, build_face_to_face_connectivity_through_edges
-from geos.utils.vtk.helpers import to_vtk_id_list
+from geos.mesh.vtk.helpers import to_vtk_id_list
 
 
 def __compute_volume( mesh_points: vtkPoints, face_stream: FaceStream ) -> float:

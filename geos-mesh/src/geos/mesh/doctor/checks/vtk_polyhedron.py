@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import networkx
 from typing import Collection, Dict, FrozenSet, Iterable, List, Sequence, Tuple
 from vtkmodules.vtkCommonCore import vtkIdList
-from geos.utils.vtk.helpers import vtk_iter
+from geos.mesh.vtk.helpers import vtk_iter
 
 
 @dataclass( frozen=True )

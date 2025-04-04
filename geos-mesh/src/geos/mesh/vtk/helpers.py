@@ -15,19 +15,19 @@ def to_vtk_id_list( data ) -> vtkIdList:
     return result
 
 
-def vtk_iter( l ) -> Iterator[ any ]:
+def vtk_iter( vtkContainer ) -> Iterator[ any ]:
     """
     Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins
     python containers.
-    :param l: A vtk container.
+    :param vtkContainer: A vtk container.
     :return: The iterator.
     """
-    if hasattr( l, "GetNumberOfIds" ):
-        for i in range( l.GetNumberOfIds() ):
-            yield l.GetId( i )
-    elif hasattr( l, "GetNumberOfTypes" ):
-        for i in range( l.GetNumberOfTypes() ):
-            yield l.GetCellType( i )
+    if hasattr( vtkContainer, "GetNumberOfIds" ):
+        for i in range( vtkContainer.GetNumberOfIds() ):
+            yield vtkContainer.GetId( i )
+    elif hasattr( vtkContainer, "GetNumberOfTypes" ):
+        for i in range( vtkContainer.GetNumberOfTypes() ):
+            yield vtkContainer.GetCellType( i )
 
 
 def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) -> bool:
@@ -95,7 +95,7 @@ def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
     for name in array_names:
         if name.startswith("Global") and name.endswith("Ids"):
             return getCopyArrayByName( data, name )
-    logging.warning( f"No GlobalIds array was found." )
+    logging.warning( "No GlobalIds array was found." )
 
 
 def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[ array ]:
@@ -107,10 +107,10 @@ def sortArrayByGlobalIds( data: vtkFieldData, arr: array ) -> None:
     if globalids is not None:
         arr = arr[ argsort( globalids ) ]
     else:
-        logging.warning( f"No sorting was performed." )
+        logging.warning( "No sorting was performed." )
 
 
-def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> Optional[ array ]:
+def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ array ]:
     arr: array = vtk_to_numpy( getArrayByName( data, name ) )
     if arr is not None:
         if sorted:
@@ -120,5 +120,5 @@ def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> 
     return None
 
 
-def getCopyNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool=False ) -> Optional[ array ]:
+def getCopyNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ array ]:
     return deepcopy( getNumpyArrayByName( data, name, sorted=sorted ) )

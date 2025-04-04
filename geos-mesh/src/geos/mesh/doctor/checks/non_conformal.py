@@ -14,8 +14,8 @@ from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter, vtkLinearExtrusionFilter
 from geos.mesh.doctor.checks import reorient_mesh
 from geos.mesh.doctor.checks import triangle_distance
-from geos.utils.vtk.helpers import vtk_iter
-from geos.utils.vtk.io import read_mesh
+from geos.mesh.vtk.helpers import vtk_iter
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
