@@ -38,6 +38,7 @@ dependencies = [
     "pandas >= 2.2",
     "typing_extensions >= 4.12",
     "geos-utils @ file:./geos-utils",
+    "geos-geomechanics @ file:./geos-geomechanics",
 ]
 
 
