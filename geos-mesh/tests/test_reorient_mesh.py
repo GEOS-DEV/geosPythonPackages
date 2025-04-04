@@ -6,7 +6,7 @@ from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
 from geos.mesh.doctor.checks.reorient_mesh import reorient_mesh
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
-from utils.src.geos.utils.vtk.helpers import to_vtk_id_list, vtk_iter
+from geos.mesh.vtk.helpers import to_vtk_id_list, vtk_iter
 
 
 @dataclass( frozen=True )
