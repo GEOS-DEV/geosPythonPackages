@@ -11,3 +11,4 @@ for m in python_modules:
     m_path = os.path.abspath( os.path.join( dir_path, python_root, m, 'src' ) )
     if m_path not in sys.path:
         sys.path.insert( 0, m_path )
+

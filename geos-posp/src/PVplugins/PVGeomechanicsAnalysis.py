@@ -14,6 +14,7 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 
+
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
@@ -21,6 +22,7 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
+from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
@@ -320,8 +322,12 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         try:
+<<<<<<< HEAD
             self.m_logger.info( f"Apply filter {__name__}" )
             from filters.GeomechanicsCalculator import GeomechanicsCalculator
+=======
+            self.m_logger.info(f"Apply filter {__name__}")
+>>>>>>> main
 
             inData = self.GetInputData( inInfoVec, 0, 0 )
             assert inData is not None

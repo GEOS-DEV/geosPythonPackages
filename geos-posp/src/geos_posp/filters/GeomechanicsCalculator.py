@@ -16,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 
-import geos_posp.processing.geomechanicsCalculatorFunctions as fcts
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos_posp.processing.vtkUtils import (
     createAttribute,
     getArrayInObject,
@@ -50,7 +50,7 @@ To use the filter:
 .. code-block:: python
 
     import numpy as np
-    from filters.GeomechanicsCalculator import GeomechanicsCalculator
+    from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
 
     # filter inputs
     logger :Logger
