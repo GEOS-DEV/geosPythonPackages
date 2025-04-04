@@ -142,7 +142,7 @@ If you would like to contribute to GEOS Python packages, please respect the foll
 
 1. Create a new branch named from this template: `[CONTRIBUTOR]/[TYPE]/[TITLE]` where CONTRIBUTOR is the name of the contributor, TYPE is the type of contribution among 'feature', 'refactor', 'doc', 'ci', TITLE is a short title for the branch.
 1. Add your code trying to integrate into the current code architecture.
-1. Push the branch, open a new PR, and add reviewers
+1. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
@@ -185,6 +185,19 @@ The *setup.py* file is optional. It is required if the package depends on anothe
       ]
   )
   ```
+
+If you want to add new Paraview plugins, create the plugins in the `geos-pv/src/PVplugins` directory. 
+If the plugin depends on another GEOS python package, add the package name to `geos-pv/requirements.txt` and the following lines to the top of your plugin:
+
+```
+import sys
+from pathlib import Path
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+sys.path.insert( 0, str(geos_pv_path / "src") )
+from geos.pv.utils.config import update_paths
+update_paths()
+```
 
 
 Release

@@ -22,10 +22,10 @@ circles and Mohr-Coulomb failure envelope.
 
 def buildPythonViewScript(
     dir_path: str,
-    mohrCircles: list[MohrCircle],
+    mohrCircles: list[ MohrCircle ],
     rockCohesion: float,
     frictionAngle: float,
-    userChoices: dict[str, Any],
+    userChoices: dict[ str, Any ],
 ) -> str:
     """Builds the Python script used to launch the Python View.
 
@@ -45,29 +45,24 @@ def buildPythonViewScript(
     Returns:
         str: Complete Python View script.
     """
-    pathPythonViewScript: str = os.path.join(
-        dir_path, MOHR_CIRCLE_PATH, MOHR_CIRCLE_ANALYSIS_MAIN
-    )
+    pathPythonViewScript: str = os.path.join( dir_path, MOHR_CIRCLE_PATH, MOHR_CIRCLE_ANALYSIS_MAIN )
 
-    mohrCircleParams: list[tuple[str, float, float, float]] = [
-        (mohrCircle.getCircleId(), *(mohrCircle.getPrincipalComponents()))
-        for mohrCircle in mohrCircles
-    ]
+    mohrCircleParams: list[ tuple[ str, float, float,
+                                   float ] ] = [ ( mohrCircle.getCircleId(), *( mohrCircle.getPrincipalComponents() ) )
+                                                 for mohrCircle in mohrCircles ]
 
     script: str = ""
     script += f"mohrCircleParams = {mohrCircleParams}\n"
     script += f"rockCohesion = {rockCohesion}\n"
     script += f"frictionAngle = {frictionAngle}\n"
     script += f"userChoices = {userChoices}\n\n\n"
-    with open(pathPythonViewScript) as file:
+    with open( pathPythonViewScript ) as file:
         fileContents = file.read()
         script += fileContents
     return script
 
 
-def findAnnotateTuples(
-    mohrCircle: MohrCircle,
-) -> tuple[str, str, tuple[float, float], tuple[float, float]]:
+def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ float, float ], tuple[ float, float ] ]:
     """Get the values and location of min and max normal stress or Mohr's circle.
 
     Args:
@@ -83,12 +78,12 @@ def findAnnotateTuples(
     xMaxDisplay: str = f"{p1:.2E}"
     xMinDisplay: str = f"{p3:.2E}"
     yPosition: float = 0.0
-    xyMax: tuple[float, float] = (p1, yPosition)
-    xyMin: tuple[float, float] = (p3, yPosition)
-    return (xMaxDisplay, xMinDisplay, xyMax, xyMin)
+    xyMax: tuple[ float, float ] = ( p1, yPosition )
+    xyMin: tuple[ float, float ] = ( p3, yPosition )
+    return ( xMaxDisplay, xMinDisplay, xyMax, xyMin )
 
 
-def getMohrCircleId(cellId: str, timeStep: str) -> str:
+def getMohrCircleId( cellId: str, timeStep: str ) -> str:
     """Get Mohr's circle ID from cell id and time step.
 
     Args:
@@ -103,11 +98,11 @@ def getMohrCircleId(cellId: str, timeStep: str) -> str:
 
 
 def createMohrCircleAtTimeStep(
-    stressArray: npt.NDArray[np.float64],
-    cellIds: list[str],
+    stressArray: npt.NDArray[ np.float64 ],
+    cellIds: list[ str ],
     timeStep: str,
     convention: bool,
-) -> list[MohrCircle]:
+) -> list[ MohrCircle ]:
     """Create MohrCircle object(s) at a given time step for all cell ids.
 
     Args:
@@ -124,20 +119,19 @@ def createMohrCircleAtTimeStep(
             Returns:
         list[MohrCircle]: list of MohrCircle objects.
     """
-    assert stressArray.shape[1] == 6, "Stress vector must be of size 6."
-    mohrCircles: list[MohrCircle] = []
+    assert stressArray.shape[ 1 ] == 6, "Stress vector must be of size 6."
+    mohrCircles: list[ MohrCircle ] = []
     sign: float = 1.0 if convention else -1.0
-    for i, cellId in enumerate(cellIds):
-        ide: str = getMohrCircleId(cellId, timeStep)
-        mohrCircle: MohrCircle = MohrCircle(ide)
-        mohrCircle.computePrincipalComponents(stressArray[i] * sign)
-        mohrCircles.append(mohrCircle)
+    for i, cellId in enumerate( cellIds ):
+        ide: str = getMohrCircleId( cellId, timeStep )
+        mohrCircle: MohrCircle = MohrCircle( ide )
+        mohrCircle.computePrincipalComponents( stressArray[ i ] * sign )
+        mohrCircles.append( mohrCircle )
     return mohrCircles
 
 
 def createMohrCirclesFromPrincipalComponents(
-    mohrCircleParams: list[tuple[str, float, float, float]]
-) -> list[MohrCircle]:
+        mohrCircleParams: list[ tuple[ str, float, float, float ] ] ) -> list[ MohrCircle ]:
     """Create Mohr's circle objects from principal components.
 
     Args:
@@ -147,15 +141,15 @@ def createMohrCirclesFromPrincipalComponents(
     Returns:
         list[MohrCircle]: list of Mohr's circle objects.
     """
-    mohrCircles: list[MohrCircle] = []
+    mohrCircles: list[ MohrCircle ] = []
     for circleId, p3, p2, p1 in mohrCircleParams:
-        mohrCircle: MohrCircle = MohrCircle(circleId)
-        mohrCircle.setPrincipalComponents(p3, p2, p1)
-        mohrCircles.append(mohrCircle)
+        mohrCircle: MohrCircle = MohrCircle( circleId )
+        mohrCircle.setPrincipalComponents( p3, p2, p1 )
+        mohrCircles.append( mohrCircle )
     return mohrCircles
 
 
-def createMohrCoulombEnvelope(rockCohesion: float, frictionAngle: float) -> MohrCoulomb:
+def createMohrCoulombEnvelope( rockCohesion: float, frictionAngle: float ) -> MohrCoulomb:
     """Create MohrCoulomb object from user parameters.
 
     Args:
@@ -166,4 +160,4 @@ def createMohrCoulombEnvelope(rockCohesion: float, frictionAngle: float) -> Mohr
     Returns:
         MohrCoulomb: MohrCoulomb object.
     """
-    return MohrCoulomb(rockCohesion, frictionAngle)
+    return MohrCoulomb( rockCohesion, frictionAngle )

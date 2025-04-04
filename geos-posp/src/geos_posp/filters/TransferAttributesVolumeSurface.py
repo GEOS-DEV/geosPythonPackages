@@ -61,14 +61,15 @@ To use it:
 """
 
 
-class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> None:
+class TransferAttributesVolumeSurface( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> None:
         """Vtk filter to transfer attributes from volume to surface mesh.
 
         Input volume is vtkUnstructuredGrid and input, output surface mesh
         is vtkPolyData, and the list of names of the attributes to transfer.
         """
-        super().__init__(nInputPorts=2, nOutputPorts=1, outputType="vtkPolyData")
+        super().__init__( nInputPorts=2, nOutputPorts=1, outputType="vtkPolyData" )
 
         #: input volume mesh attributes are from
         self.m_volumeMesh: vtkUnstructuredGrid
@@ -77,15 +78,13 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         #: output surface mesh
         self.m_outputSurfaceMesh: vtkPolyData
         #: set of attribute names to transfer
-        self.m_attributeNames: set[str] = set()
+        self.m_attributeNames: set[ str ] = set()
         #: create attribute names
-        self.m_newAttributeNames: set[str] = set()
+        self.m_newAttributeNames: set[ str ] = set()
         # logger
-        self.m_logger: Logger = getLogger(
-            "Attribute Transfer from Volume to Surface Filter"
-        )
+        self.m_logger: Logger = getLogger( "Attribute Transfer from Volume to Surface Filter" )
 
-    def GetAttributeNamesToTransfer(self: Self) -> set[str]:
+    def GetAttributeNamesToTransfer( self: Self ) -> set[ str ]:
         """Get the set of attribute names to transfer from volume to surface.
 
         Returns:
@@ -93,7 +92,7 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
         return self.m_attributeNames
 
-    def SetAttributeNamesToTransfer(self: Self, names: set[str]) -> None:
+    def SetAttributeNamesToTransfer( self: Self, names: set[ str ] ) -> None:
         """Set the set of attribute names to transfer from volume to surface.
 
         Args:
@@ -101,7 +100,7 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
         self.m_attributeNames = names
 
-    def GetNewAttributeNames(self: Self) -> set[str]:
+    def GetNewAttributeNames( self: Self ) -> set[ str ]:
         """Get the set of attribute names created in the output surface.
 
         Returns:
@@ -109,7 +108,7 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
         return self.m_newAttributeNames
 
-    def FillInputPortInformation(self: Self, port: int, info: vtkInformation) -> int:
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
@@ -120,15 +119,15 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         if port == 0:
-            info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid")
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
         else:
-            info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData")
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData" )
         return 1
 
     def RequestInformation(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -142,13 +141,13 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject(0)  # noqa: F841
+        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
         return 1
 
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
@@ -161,20 +160,20 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData1 = self.GetInputData(inInfoVec, 0, 0)
-        inData2 = self.GetInputData(inInfoVec, 1, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData1 = self.GetInputData( inInfoVec, 0, 0 )
+        inData2 = self.GetInputData( inInfoVec, 1, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData1 is not None
         assert inData2 is not None
-        if outData is None or (not outData.IsA(inData1.GetClassName())):
+        if outData is None or ( not outData.IsA( inData1.GetClassName() ) ):
             outData = inData1.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore[no-any-return]
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
@@ -189,31 +188,31 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
         try:
             # input volume mesh
-            self.m_volumeMesh = vtkUnstructuredGrid.GetData(inInfoVec[0])
+            self.m_volumeMesh = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
             # input surface
-            self.m_surfaceMesh = vtkPolyData.GetData(inInfoVec[1])
+            self.m_surfaceMesh = vtkPolyData.GetData( inInfoVec[ 1 ] )
             # output volume mesh
-            self.m_outputSurfaceMesh = self.GetOutputData(outInfoVec, 0)
-            self.m_outputSurfaceMesh.ShallowCopy(self.m_surfaceMesh)
+            self.m_outputSurfaceMesh = self.GetOutputData( outInfoVec, 0 )
+            self.m_outputSurfaceMesh.ShallowCopy( self.m_surfaceMesh )
 
             # compute cell adjacency mapping
             meshMap: ConnectionSetCollection = self.getMeshMapping()
             # do transfer of attributes
-            self.doTransferAttributes(meshMap)
-            self.m_logger.info("Attribute transfer was successfully computed.")
+            self.doTransferAttributes( meshMap )
+            self.m_logger.info( "Attribute transfer was successfully computed." )
         except AssertionError as e:
             mess: str = "Attribute transfer failed due to:"
-            self.m_logger.error(mess)
-            self.m_logger.error(e, exc_info=True)
+            self.m_logger.error( mess )
+            self.m_logger.error( e, exc_info=True )
             return 0
         except Exception as e:
             mess0: str = "Attribute transfer failed due to:"
-            self.m_logger.critical(mess0)
-            self.m_logger.critical(e, exc_info=True)
+            self.m_logger.critical( mess0 )
+            self.m_logger.critical( e, exc_info=True )
             return 0
         return 1
 
-    def getMeshMapping(self: Self) -> ConnectionSetCollection:
+    def getMeshMapping( self: Self ) -> ConnectionSetCollection:
         """Compute cell mapping between volume and surface mesh.
 
         Returns:
@@ -222,13 +221,13 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
 
         filter: VolumeSurfaceMeshMapper = VolumeSurfaceMeshMapper()
-        filter.AddInputDataObject(0, self.m_volumeMesh)
-        filter.AddInputDataObject(1, self.m_surfaceMesh)
-        filter.SetCreateAttribute(False)
+        filter.AddInputDataObject( 0, self.m_volumeMesh )
+        filter.AddInputDataObject( 1, self.m_surfaceMesh )
+        filter.SetCreateAttribute( False )
         filter.Update()
         return filter.GetSurfaceToVolumeConnectionSets()
 
-    def doTransferAttributes(self: Self, meshMap: ConnectionSetCollection) -> bool:
+    def doTransferAttributes( self: Self, meshMap: ConnectionSetCollection ) -> bool:
         """Transfer all attributes from the set of attribute names.
 
         Except on boundaries, surfaces are bounded by cells along each side.
@@ -245,9 +244,9 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
         """
         for attributeName in self.m_attributeNames:
             # negative side attribute
-            self.transferAttribute(attributeName, False, meshMap)
+            self.transferAttribute( attributeName, False, meshMap )
             # positive side attribute
-            self.transferAttribute(attributeName, True, meshMap)
+            self.transferAttribute( attributeName, True, meshMap )
         return True
 
     def transferAttribute(
@@ -272,53 +271,37 @@ class TransferAttributesVolumeSurface(VTKPythonAlgorithmBase):
             bool: True if transfer successfully ended, False otherwise.
         """
         # get volume mesh attribute
-        if isAttributeInObject(self.m_volumeMesh, attributeName, False):
-            attr: npt.NDArray[np.float64] = getArrayInObject(
-                self.m_volumeMesh, attributeName, False
-            )
-            attrComponentNames: tuple[str, ...] = getComponentNames(
-                self.m_volumeMesh, attributeName, False
-            )
+        if isAttributeInObject( self.m_volumeMesh, attributeName, False ):
+            attr: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_volumeMesh, attributeName, False )
+            attrComponentNames: tuple[ str, ...] = getComponentNames( self.m_volumeMesh, attributeName, False )
             # creates attribute arrays on the surface
             nbFaces: int = self.m_surfaceMesh.GetNumberOfCells()
-            nbComponents: int = (
-                len(attrComponentNames) if len(attrComponentNames) > 0 else 1
-            )
-            suffix: str = (
-                GeosMeshSuffixEnum.SURFACE_PLUS_SUFFIX.value
-                if surfaceSide
-                else GeosMeshSuffixEnum.SURFACE_MINUS_SUFFIX.value
-            )
+            nbComponents: int = ( len( attrComponentNames ) if len( attrComponentNames ) > 0 else 1 )
+            suffix: str = ( GeosMeshSuffixEnum.SURFACE_PLUS_SUFFIX.value
+                            if surfaceSide else GeosMeshSuffixEnum.SURFACE_MINUS_SUFFIX.value )
             surfaceAttributeName: str = attributeName + suffix
-            attributeValues: npt.NDArray[np.float64] = np.full(
-                (nbFaces, nbComponents), np.nan
-            )
+            attributeValues: npt.NDArray[ np.float64 ] = np.full( ( nbFaces, nbComponents ), np.nan )
 
             # for each face of the surface
             for connectionSet in meshMap:
                 # for each cell of the volume mesh
                 for cellId, side in connectionSet.getConnectedCellIds().items():
                     if side == surfaceSide:
-                        attributeValues[connectionSet.getCellIdRef()] = attr[cellId]
+                        attributeValues[ connectionSet.getCellIdRef() ] = attr[ cellId ]
 
-            surfaceAttribute: vtkDataArray = vnp.numpy_to_vtk(
-                attributeValues, deep=True, array_type=VTK_DOUBLE
-            )
-            surfaceAttribute.SetName(surfaceAttributeName)
+            surfaceAttribute: vtkDataArray = vnp.numpy_to_vtk( attributeValues, deep=True, array_type=VTK_DOUBLE )
+            surfaceAttribute.SetName( surfaceAttributeName )
             if surfaceAttribute.GetNumberOfComponents() > 1:
-                for i in range(surfaceAttribute.GetNumberOfComponents()):
-                    surfaceAttribute.SetComponentName(i, attrComponentNames[i])
+                for i in range( surfaceAttribute.GetNumberOfComponents() ):
+                    surfaceAttribute.SetComponentName( i, attrComponentNames[ i ] )
 
-            self.m_outputSurfaceMesh.GetCellData().AddArray(surfaceAttribute)
+            self.m_outputSurfaceMesh.GetCellData().AddArray( surfaceAttribute )
             self.m_outputSurfaceMesh.GetCellData().Modified()
             self.m_outputSurfaceMesh.Modified()
 
             # add new attribute names to the set
-            self.m_newAttributeNames.add(surfaceAttributeName)
+            self.m_newAttributeNames.add( surfaceAttributeName )
         else:
-            self.m_logger.warning(
-                f"{attributeName} was skipped since it not"
-                + " in the input volume mesh."
-            )
+            self.m_logger.warning( f"{attributeName} was skipped since it not" + " in the input volume mesh." )
 
         return True
