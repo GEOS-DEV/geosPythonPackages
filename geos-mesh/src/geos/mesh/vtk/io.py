@@ -92,8 +92,13 @@ def read_mesh( vtk_input_file: str ) -> vtkPointSet:
         logging.error( err_msg )
         raise ValueError( err_msg )
     file_extension = os.path.splitext( vtk_input_file )[ -1 ]
-    extension_to_reader = { ".vtk": __read_vtk, ".vts": __read_vts, ".vtu": __read_vtu, ".pvtu": __read_pvtu,
-                            ".pvts": __read_pvts }
+    extension_to_reader = {
+        ".vtk": __read_vtk,
+        ".vts": __read_vts,
+        ".vtu": __read_vtu,
+        ".pvtu": __read_pvtu,
+        ".pvts": __read_pvts
+    }
     # Testing first the reader that should match
     if file_extension in extension_to_reader:
         output_mesh = extension_to_reader.pop( file_extension )( vtk_input_file )

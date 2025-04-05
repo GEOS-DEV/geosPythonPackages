@@ -9,7 +9,7 @@ from geos_xml_viewer.algorithms.deck import SimulationDeck, read, format_xml
 from lxml import etree as ElementTree  # type: ignore[import-untyped]
 
 
-def valid_file(param: str) -> str:
+def valid_file( param: str ) -> str:
     """File validation function for argparse for .vtpc files.
 
     Args:
@@ -21,9 +21,9 @@ def valid_file(param: str) -> str:
     Returns:
         str: filepath to a.vtpc
     """
-    ext: str = PurePath(param).suffix
+    ext: str = PurePath( param ).suffix
     if ext.lower() != ".vtpc":
-        raise argparse.ArgumentTypeError("File must have a .vtpc extension")
+        raise argparse.ArgumentTypeError( "File must have a .vtpc extension" )
     return param
 
 
@@ -33,9 +33,7 @@ def parsing() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: argument list
     """
-    parser = argparse.ArgumentParser(
-        description="Extract Internal wells into VTK files"
-    )
+    parser = argparse.ArgumentParser( description="Extract Internal wells into VTK files" )
 
     parser.add_argument(
         "-xp",
@@ -57,58 +55,54 @@ def parsing() -> argparse.ArgumentParser:
     return parser
 
 
-def split_by_components(simulation_deck: SimulationDeck, deck_name: str) -> None:
+def split_by_components( simulation_deck: SimulationDeck, deck_name: str ) -> None:
     # Top-level elements
-    top_elements = simulation_deck.xml_root.findall("./")
+    top_elements = simulation_deck.xml_root.findall( "./" )
 
     # create root document
-    output_root = ElementTree.Element("Problem")
+    output_root = ElementTree.Element( "Problem" )
 
-    includes = ElementTree.SubElement(output_root, "Included")
+    includes = ElementTree.SubElement( output_root, "Included" )
     for t in top_elements:
-        ElementTree.SubElement(
-            includes, "File", attrib={"name": deck_name + "_" + t.tag + ".xml"}
-        )
+        ElementTree.SubElement( includes, "File", attrib={ "name": deck_name + "_" + t.tag + ".xml" } )
 
-    tree = ElementTree.ElementTree(output_root)
-    ElementTree.indent(tree)
+    tree = ElementTree.ElementTree( output_root )
+    ElementTree.indent( tree )
 
     # create files for top elements
     for f in top_elements:
-        subtree_root = ElementTree.Element("Problem")
-        subtree_root.append(f)
+        subtree_root = ElementTree.Element( "Problem" )
+        subtree_root.append( f )
 
-        subtree = ElementTree.ElementTree(subtree_root)
+        subtree = ElementTree.ElementTree( subtree_root )
 
-        ElementTree.indent(subtree)
+        ElementTree.indent( subtree )
         filename = deck_name + "_" + f.tag + ".xml"
-        with open(filename, "wb") as files:
+        with open( filename, "wb" ) as files:
             # format_xml(subtree)
-            subtree.write(
-                files, encoding="UTF-8", xml_declaration=True, pretty_print=True
-            )
+            subtree.write( files, encoding="UTF-8", xml_declaration=True, pretty_print=True )
 
     filename = deck_name + ".xml"
-    with open(filename, "wb") as files:
+    with open( filename, "wb" ) as files:
         # tree = format_xml(tree)
-        tree.write(files, encoding="UTF-8", xml_declaration=True, pretty_print=True)
+        tree.write( files, encoding="UTF-8", xml_declaration=True, pretty_print=True )
 
 
-def main(args: argparse.Namespace) -> None:
+def main( args: argparse.Namespace ) -> None:
     """Main function that reads the xml file and writes a PartiotionedDataSetCollection file.
 
     Args:
         args (argparse.Namespace): list of arguments
     """
-    simulation_deck: SimulationDeck = read(args.xmlFilepath)
-    split_by_components(simulation_deck, args.deckName)
+    simulation_deck: SimulationDeck = read( args.xmlFilepath )
+    split_by_components( simulation_deck, args.deckName )
 
 
 def run() -> None:
     """Parses the arguments and runs the main function."""
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":

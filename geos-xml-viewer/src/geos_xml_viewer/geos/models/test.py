@@ -13,17 +13,18 @@ class integer:
     value: np.int32
 
 
-class integerConverter(Converter):
-    def deserialize(self, value: str, **kwargs) -> integer:
-        return integer(value)
+class integerConverter( Converter ):
 
-    def serialize(self, value: integer, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> integer:
+        return integer( value )
+
+    def serialize( self, value: integer, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(integer, integerConverter())
+converter.register_converter( integer, integerConverter() )
 
 
 @dataclass
@@ -31,17 +32,18 @@ class real32:
     value: np.float32
 
 
-class real32Converter(Converter):
-    def deserialize(self, value: str, **kwargs) -> real32:
-        return real32(value)
+class real32Converter( Converter ):
 
-    def serialize(self, value: real32, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> real32:
+        return real32( value )
+
+    def serialize( self, value: real32, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(real32, real32Converter())
+converter.register_converter( real32, real32Converter() )
 
 
 @dataclass
@@ -49,18 +51,19 @@ class real64:
     value: np.float64
 
 
-class real64Converter(Converter):
-    def deserialize(self, value: str, **kwargs) -> real64:
-        print("deserialize")
-        return real64(value=np.float64(value))
+class real64Converter( Converter ):
 
-    def serialize(self, value: real64, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> real64:
+        print( "deserialize" )
+        return real64( value=np.float64( value ) )
+
+    def serialize( self, value: real64, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(real64, real64Converter())
+converter.register_converter( real64, real64Converter() )
 
 
 @dataclass
@@ -68,24 +71,25 @@ class globalIndex:
     value: np.int64
 
 
-class globalIndexConverter(Converter):
-    def deserialize(self, value: str, **kwargs) -> globalIndex:
-        return globalIndex(value)
+class globalIndexConverter( Converter ):
 
-    def serialize(self, value: globalIndex, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> globalIndex:
+        return globalIndex( value )
 
-
-converter.register_converter(globalIndex, globalIndexConverter())
+    def serialize( self, value: globalIndex, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-def custom_class_factory(clazz, params):
+converter.register_converter( globalIndex, globalIndexConverter() )
+
+
+def custom_class_factory( clazz, params ):
     if clazz is real64:
-        return clazz(**{k: v for k, v in params.items()})
+        return clazz( **{ k: v for k, v in params.items() } )
 
-    return clazz(**params)
+    return clazz( **params )
 
 
 # @dataclass

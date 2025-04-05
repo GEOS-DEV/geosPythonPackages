@@ -93,7 +93,7 @@ def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArra
 def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
     array_names: List[ str ] = getArrayNames( data )
     for name in array_names:
-        if name.startswith("Global") and name.endswith("Ids"):
+        if name.startswith( "Global" ) and name.endswith( "Ids" ):
             return getCopyArrayByName( data, name )
     logging.warning( "No GlobalIds array was found." )
 

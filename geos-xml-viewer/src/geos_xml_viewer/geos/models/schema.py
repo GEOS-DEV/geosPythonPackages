@@ -14,17 +14,18 @@ class integer:
     value: np.int32
 
 
-class integerConverter(Converter):
-    def deserialize(self, value: str, **kwargs) -> integer:
-        return integer(value)
+class integerConverter( Converter ):
 
-    def serialize(self, value: integer, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> integer:
+        return integer( value )
+
+    def serialize( self, value: integer, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(integer, integerConverter())
+converter.register_converter( integer, integerConverter() )
 
 
 @dataclass
@@ -32,35 +33,37 @@ class real32:
     value: np.float32
 
 
-class real32Converter(Converter):
-    def deserialize(self, value: str, **kwargs) -> real32:
-        return real32(value)
+class real32Converter( Converter ):
 
-    def serialize(self, value: real32, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> real32:
+        return real32( value )
+
+    def serialize( self, value: real32, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(real32, real32Converter())
+converter.register_converter( real32, real32Converter() )
 
 
 @dataclass
 class real64:
-    value: np.float64 = field(metadata={"decoder": np.float64})
+    value: np.float64 = field( metadata={ "decoder": np.float64 } )
 
 
-class real64Converter(Converter):
-    def deserialize(self, value: str, **kwargs) -> real64:
-        return real64(value=np.float64(value))
+class real64Converter( Converter ):
 
-    def serialize(self, value: real64, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> real64:
+        return real64( value=np.float64( value ) )
+
+    def serialize( self, value: real64, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-converter.register_converter(real64, real64Converter())
+converter.register_converter( real64, real64Converter() )
 
 
 @dataclass
@@ -68,24 +71,25 @@ class globalIndex:
     value: np.int64
 
 
-class globalIndexConverter(Converter):
-    def deserialize(self, value: str, **kwargs) -> globalIndex:
-        return globalIndex(value)
+class globalIndexConverter( Converter ):
 
-    def serialize(self, value: globalIndex, **kwargs) -> str:
-        if kwargs["format"]:
-            return kwargs["format"].format(value)
-        return str(value)
+    def deserialize( self, value: str, **kwargs ) -> globalIndex:
+        return globalIndex( value )
 
-
-converter.register_converter(globalIndex, globalIndexConverter())
+    def serialize( self, value: globalIndex, **kwargs ) -> str:
+        if kwargs[ "format" ]:
+            return kwargs[ "format" ].format( value )
+        return str( value )
 
 
-def custom_class_factory(clazz, params):
+converter.register_converter( globalIndex, globalIndexConverter() )
+
+
+def custom_class_factory( clazz, params ):
     if clazz is real64:
-        return clazz(**{k: v for k, v in params.items()})
+        return clazz( **{ k: v for k, v in params.items() } )
 
-    return clazz(**params)
+    return clazz( **params )
 
 
 # @dataclass
@@ -112,7 +116,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    aquifer_angle: Optional[str] = field(
+    aquifer_angle: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferAngle",
@@ -121,7 +125,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_elevation: Optional[str] = field(
+    aquifer_elevation: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferElevation",
@@ -130,7 +134,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_initial_pressure: Optional[str] = field(
+    aquifer_initial_pressure: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferInitialPressure",
@@ -139,7 +143,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_inner_radius: Optional[str] = field(
+    aquifer_inner_radius: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferInnerRadius",
@@ -148,7 +152,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_permeability: Optional[str] = field(
+    aquifer_permeability: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferPermeability",
@@ -157,7 +161,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_porosity: Optional[str] = field(
+    aquifer_porosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferPorosity",
@@ -166,7 +170,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_thickness: Optional[str] = field(
+    aquifer_thickness: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferThickness",
@@ -175,7 +179,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_total_compressibility: Optional[str] = field(
+    aquifer_total_compressibility: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferTotalCompressibility",
@@ -184,7 +188,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    aquifer_water_density: Optional[str] = field(
+    aquifer_water_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferWaterDensity",
@@ -196,9 +200,12 @@ class AquiferType:
     aquifer_water_phase_component_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "aquiferWaterPhaseComponentFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "aquiferWaterPhaseComponentFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     aquifer_water_phase_component_names: str = field(
@@ -209,7 +216,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    aquifer_water_viscosity: Optional[str] = field(
+    aquifer_water_viscosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "aquiferWaterViscosity",
@@ -218,7 +225,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -237,8 +244,10 @@ class AquiferType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -249,7 +258,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -273,7 +282,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    pressure_influence_function_name: Optional[str] = field(
+    pressure_influence_function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "pressureInfluenceFunctionName",
@@ -288,7 +297,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -297,7 +306,7 @@ class AquiferType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -317,7 +326,7 @@ class BiotPorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_reference_porosity: Optional[str] = field(
+    default_reference_porosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultReferencePorosity",
@@ -326,7 +335,7 @@ class BiotPorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    grain_bulk_modulus: Optional[str] = field(
+    grain_bulk_modulus: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "grainBulkModulus",
@@ -335,7 +344,7 @@ class BiotPorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -355,13 +364,17 @@ class BlackOilFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    component_molar_weight: Optional[str] = field(
+    component_molar_weight: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -388,7 +401,7 @@ class BlackOilFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -397,13 +410,17 @@ class BlackOilFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    surface_densities: Optional[str] = field(
+    surface_densities: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "surfaceDensities",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "surfaceDensities",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     table_files: str = field(
@@ -446,7 +463,7 @@ class BlackOilFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -458,7 +475,7 @@ class BlackOilFluidType:
 
 @dataclass
 class BlueprintType:
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -490,7 +507,7 @@ class BlueprintType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -509,25 +526,33 @@ class BoxType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    x_max: Optional[str] = field(
+    x_max: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "xMax",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMax",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    x_min: Optional[str] = field(
+    x_min: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "xMin",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMin",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -542,28 +567,37 @@ class BrooksCoreyBakerRelativePermeabilityType:
     gas_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "gasOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -575,20 +609,26 @@ class BrooksCoreyBakerRelativePermeabilityType:
     water_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "waterOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -611,28 +651,37 @@ class BrooksCoreyCapillaryPressureType:
     phase_cap_pressure_exponent_inv: str = field(
         default="{2}",
         metadata={
-            "name": "phaseCapPressureExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_entry_pressure: str = field(
         default="{1}",
         metadata={
-            "name": "phaseEntryPressure",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseEntryPressure",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -641,7 +690,7 @@ class BrooksCoreyCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -656,12 +705,15 @@ class BrooksCoreyRelativePermeabilityType:
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -673,20 +725,26 @@ class BrooksCoreyRelativePermeabilityType:
     phase_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "phaseRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "phaseRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -701,28 +759,37 @@ class BrooksCoreyStone2RelativePermeabilityType:
     gas_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "gasOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -734,20 +801,26 @@ class BrooksCoreyStone2RelativePermeabilityType:
     water_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "waterOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -759,6 +832,7 @@ class BrooksCoreyStone2RelativePermeabilityType:
 
 @dataclass
 class Co2BrineEzrokhiFluidType:
+
     class Meta:
         name = "CO2BrineEzrokhiFluidType"
 
@@ -773,9 +847,12 @@ class Co2BrineEzrokhiFluidType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -786,7 +863,7 @@ class Co2BrineEzrokhiFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -811,7 +888,7 @@ class Co2BrineEzrokhiFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -820,7 +897,7 @@ class Co2BrineEzrokhiFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -832,6 +909,7 @@ class Co2BrineEzrokhiFluidType:
 
 @dataclass
 class Co2BrineEzrokhiThermalFluidType:
+
     class Meta:
         name = "CO2BrineEzrokhiThermalFluidType"
 
@@ -846,9 +924,12 @@ class Co2BrineEzrokhiThermalFluidType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -859,7 +940,7 @@ class Co2BrineEzrokhiThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -884,7 +965,7 @@ class Co2BrineEzrokhiThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -893,7 +974,7 @@ class Co2BrineEzrokhiThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -905,6 +986,7 @@ class Co2BrineEzrokhiThermalFluidType:
 
 @dataclass
 class Co2BrinePhillipsFluidType:
+
     class Meta:
         name = "CO2BrinePhillipsFluidType"
 
@@ -919,9 +1001,12 @@ class Co2BrinePhillipsFluidType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -932,7 +1017,7 @@ class Co2BrinePhillipsFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -957,7 +1042,7 @@ class Co2BrinePhillipsFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -966,7 +1051,7 @@ class Co2BrinePhillipsFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -978,6 +1063,7 @@ class Co2BrinePhillipsFluidType:
 
 @dataclass
 class Co2BrinePhillipsThermalFluidType:
+
     class Meta:
         name = "CO2BrinePhillipsThermalFluidType"
 
@@ -992,9 +1078,12 @@ class Co2BrinePhillipsThermalFluidType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -1005,7 +1094,7 @@ class Co2BrinePhillipsThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -1030,7 +1119,7 @@ class Co2BrinePhillipsThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -1039,7 +1128,7 @@ class Co2BrinePhillipsThermalFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1054,11 +1143,13 @@ class CarmanKozenyPermeabilityType:
     anisotropy: str = field(
         default="{1,1,1}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    particle_diameter: Optional[str] = field(
+    particle_diameter: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "particleDiameter",
@@ -1067,7 +1158,7 @@ class CarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    sphericity: Optional[str] = field(
+    sphericity: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1075,7 +1166,7 @@ class CarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1087,7 +1178,7 @@ class CarmanKozenyPermeabilityType:
 
 @dataclass
 class CellElementRegionType:
-    cell_blocks: Optional[str] = field(
+    cell_blocks: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "cellBlocks",
@@ -1104,7 +1195,7 @@ class CellElementRegionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    material_list: Optional[str] = field(
+    material_list: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "materialList",
@@ -1113,7 +1204,7 @@ class CellElementRegionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    mesh_body: Optional[str] = field(
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -1121,7 +1212,7 @@ class CellElementRegionType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1133,7 +1224,7 @@ class CellElementRegionType:
 
 @dataclass
 class CeramicDamageType:
-    compressive_strength: Optional[str] = field(
+    compressive_strength: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "compressiveStrength",
@@ -1142,7 +1233,7 @@ class CeramicDamageType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    crack_speed: Optional[str] = field(
+    crack_speed: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "crackSpeed",
@@ -1159,7 +1250,7 @@ class CeramicDamageType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -1200,7 +1291,7 @@ class CeramicDamageType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    maximum_strength: Optional[str] = field(
+    maximum_strength: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maximumStrength",
@@ -1209,7 +1300,7 @@ class CeramicDamageType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    tensile_strength: Optional[str] = field(
+    tensile_strength: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "tensileStrength",
@@ -1218,7 +1309,7 @@ class CeramicDamageType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1230,10 +1321,11 @@ class CeramicDamageType:
 
 @dataclass
 class ChomboIotype:
+
     class Meta:
         name = "ChomboIOType"
 
-    begin_cycle: Optional[str] = field(
+    begin_cycle: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "beginCycle",
@@ -1242,7 +1334,7 @@ class ChomboIotype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -1258,7 +1350,7 @@ class ChomboIotype:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    output_path: Optional[str] = field(
+    output_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "outputPath",
@@ -1283,7 +1375,7 @@ class ChomboIotype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    wait_for_input: Optional[str] = field(
+    wait_for_input: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "waitForInput",
@@ -1292,7 +1384,7 @@ class ChomboIotype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1304,7 +1396,7 @@ class ChomboIotype:
 
 @dataclass
 class CompositeFunctionType:
-    expression: Optional[str] = field(
+    expression: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1335,7 +1427,7 @@ class CompositeFunctionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1355,51 +1447,70 @@ class CompositionalMultiphaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    component_acentric_factor: Optional[str] = field(
+    component_acentric_factor: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    component_critical_pressure: Optional[str] = field(
+    component_critical_pressure: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_critical_temperature: Optional[str] = field(
+    component_critical_temperature: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_molar_weight: Optional[str] = field(
+    component_molar_weight: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_names: Optional[str] = field(
+    component_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "componentNames",
@@ -1411,12 +1522,15 @@ class CompositionalMultiphaseFluidType:
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    equations_of_state: Optional[str] = field(
+    equations_of_state: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "equationsOfState",
@@ -1425,7 +1539,7 @@ class CompositionalMultiphaseFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -1434,7 +1548,7 @@ class CompositionalMultiphaseFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1454,7 +1568,7 @@ class CompositionalMultiphaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    perform_stress_initialization: Optional[str] = field(
+    perform_stress_initialization: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "performStressInitialization",
@@ -1463,7 +1577,7 @@ class CompositionalMultiphaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -1472,7 +1586,7 @@ class CompositionalMultiphaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1500,7 +1614,7 @@ class CompositionalMultiphaseStatisticsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -1525,7 +1639,7 @@ class CompositionalMultiphaseStatisticsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1545,59 +1659,81 @@ class CompositonalTwoPhaseFluidPengRobinsonType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    component_acentric_factor: Optional[str] = field(
+    component_acentric_factor: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    component_critical_pressure: Optional[str] = field(
+    component_critical_pressure: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_critical_temperature: Optional[str] = field(
+    component_critical_temperature: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_critical_volume: str = field(
         default="{0}",
         metadata={
-            "name": "componentCriticalVolume",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalVolume",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_molar_weight: Optional[str] = field(
+    component_molar_weight: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_names: Optional[str] = field(
+    component_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "componentNames",
@@ -1609,12 +1745,15 @@ class CompositonalTwoPhaseFluidPengRobinsonType:
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -1623,7 +1762,7 @@ class CompositonalTwoPhaseFluidPengRobinsonType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1643,59 +1782,81 @@ class CompositonalTwoPhaseFluidSoaveRedlichKwongType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    component_acentric_factor: Optional[str] = field(
+    component_acentric_factor: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    component_critical_pressure: Optional[str] = field(
+    component_critical_pressure: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_critical_temperature: Optional[str] = field(
+    component_critical_temperature: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_critical_volume: str = field(
         default="{0}",
         metadata={
-            "name": "componentCriticalVolume",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalVolume",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_molar_weight: Optional[str] = field(
+    component_molar_weight: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    component_names: Optional[str] = field(
+    component_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "componentNames",
@@ -1707,12 +1868,15 @@ class CompositonalTwoPhaseFluidSoaveRedlichKwongType:
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -1721,7 +1885,7 @@ class CompositonalTwoPhaseFluidSoaveRedlichKwongType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1740,7 +1904,7 @@ class CompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -1749,7 +1913,7 @@ class CompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_viscosity: Optional[str] = field(
+    default_viscosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultViscosity",
@@ -1805,7 +1969,7 @@ class CompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|exponential|linear|quadratic",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1817,7 +1981,7 @@ class CompressibleSinglePhaseFluidType:
 
 @dataclass
 class CompressibleSolidCarmanKozenyPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -1826,7 +1990,7 @@ class CompressibleSolidCarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -1835,7 +1999,7 @@ class CompressibleSolidCarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1843,7 +2007,7 @@ class CompressibleSolidCarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -1852,7 +2016,7 @@ class CompressibleSolidCarmanKozenyPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1864,7 +2028,7 @@ class CompressibleSolidCarmanKozenyPermeabilityType:
 
 @dataclass
 class CompressibleSolidConstantPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -1873,7 +2037,7 @@ class CompressibleSolidConstantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -1882,7 +2046,7 @@ class CompressibleSolidConstantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1890,7 +2054,7 @@ class CompressibleSolidConstantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -1899,7 +2063,7 @@ class CompressibleSolidConstantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1911,7 +2075,7 @@ class CompressibleSolidConstantPermeabilityType:
 
 @dataclass
 class CompressibleSolidExponentialDecayPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -1920,7 +2084,7 @@ class CompressibleSolidExponentialDecayPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -1929,7 +2093,7 @@ class CompressibleSolidExponentialDecayPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1937,7 +2101,7 @@ class CompressibleSolidExponentialDecayPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -1946,7 +2110,7 @@ class CompressibleSolidExponentialDecayPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1958,7 +2122,7 @@ class CompressibleSolidExponentialDecayPermeabilityType:
 
 @dataclass
 class CompressibleSolidParallelPlatesPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -1967,7 +2131,7 @@ class CompressibleSolidParallelPlatesPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -1976,7 +2140,7 @@ class CompressibleSolidParallelPlatesPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1984,7 +2148,7 @@ class CompressibleSolidParallelPlatesPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -1993,7 +2157,7 @@ class CompressibleSolidParallelPlatesPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2005,7 +2169,7 @@ class CompressibleSolidParallelPlatesPermeabilityType:
 
 @dataclass
 class CompressibleSolidSlipDependentPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -2014,7 +2178,7 @@ class CompressibleSolidSlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -2023,7 +2187,7 @@ class CompressibleSolidSlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -2031,7 +2195,7 @@ class CompressibleSolidSlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -2040,7 +2204,7 @@ class CompressibleSolidSlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2052,7 +2216,7 @@ class CompressibleSolidSlipDependentPermeabilityType:
 
 @dataclass
 class CompressibleSolidWillisRichardsPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -2061,7 +2225,7 @@ class CompressibleSolidWillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -2070,7 +2234,7 @@ class CompressibleSolidWillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -2078,7 +2242,7 @@ class CompressibleSolidWillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -2087,7 +2251,7 @@ class CompressibleSolidWillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2102,21 +2266,28 @@ class ConstantDiffusionType:
     default_phase_diffusivity_multipliers: str = field(
         default="{1}",
         metadata={
-            "name": "defaultPhaseDiffusivityMultipliers",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultPhaseDiffusivityMultipliers",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    diffusivity_components: Optional[str] = field(
+    diffusivity_components: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "diffusivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "diffusivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -2125,7 +2296,7 @@ class ConstantDiffusionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2137,16 +2308,20 @@ class ConstantDiffusionType:
 
 @dataclass
 class ConstantPermeabilityType:
-    permeability_components: Optional[str] = field(
+    permeability_components: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "permeabilityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "permeabilityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2158,7 +2333,7 @@ class ConstantPermeabilityType:
 
 @dataclass
 class CoulombType:
-    aperture_table_name: Optional[str] = field(
+    aperture_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "apertureTableName",
@@ -2175,7 +2350,7 @@ class CoulombType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    cohesion: Optional[str] = field(
+    cohesion: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2191,7 +2366,7 @@ class CoulombType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    friction_coefficient: Optional[str] = field(
+    friction_coefficient: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "frictionCoefficient",
@@ -2216,7 +2391,7 @@ class CoulombType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2228,37 +2403,50 @@ class CoulombType:
 
 @dataclass
 class CustomPolarObjectType:
-    center: Optional[str] = field(
+    center: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    coefficients: Optional[str] = field(
+    coefficients: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    length_vector: Optional[str] = field(
+    length_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    normal: Optional[str] = field(
+    normal: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     tolerance: str = field(
@@ -2268,16 +2456,20 @@ class CustomPolarObjectType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    width_vector: Optional[str] = field(
+    width_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2289,13 +2481,17 @@ class CustomPolarObjectType:
 
 @dataclass
 class CylinderType:
-    first_face_center: Optional[str] = field(
+    first_face_center: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "firstFaceCenter",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "firstFaceCenter",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     inner_radius: str = field(
@@ -2306,7 +2502,7 @@ class CylinderType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    outer_radius: Optional[str] = field(
+    outer_radius: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "outerRadius",
@@ -2315,16 +2511,20 @@ class CylinderType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    second_face_center: Optional[str] = field(
+    second_face_center: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "secondFaceCenter",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "secondFaceCenter",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2344,7 +2544,7 @@ class DamageElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_fracture_energy: Optional[str] = field(
+    critical_fracture_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalFractureEnergy",
@@ -2353,7 +2553,7 @@ class DamageElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_strain_energy: Optional[str] = field(
+    critical_strain_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalStrainEnergy",
@@ -2370,7 +2570,7 @@ class DamageElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -2435,7 +2635,7 @@ class DamageElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    length_scale: Optional[str] = field(
+    length_scale: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "lengthScale",
@@ -2452,7 +2652,7 @@ class DamageElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2472,7 +2672,7 @@ class DamageSpectralElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_fracture_energy: Optional[str] = field(
+    critical_fracture_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalFractureEnergy",
@@ -2481,7 +2681,7 @@ class DamageSpectralElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_strain_energy: Optional[str] = field(
+    critical_strain_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalStrainEnergy",
@@ -2498,7 +2698,7 @@ class DamageSpectralElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -2563,7 +2763,7 @@ class DamageSpectralElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    length_scale: Optional[str] = field(
+    length_scale: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "lengthScale",
@@ -2580,7 +2780,7 @@ class DamageSpectralElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2600,7 +2800,7 @@ class DamageVolDevElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_fracture_energy: Optional[str] = field(
+    critical_fracture_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalFractureEnergy",
@@ -2609,7 +2809,7 @@ class DamageVolDevElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    critical_strain_energy: Optional[str] = field(
+    critical_strain_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "criticalStrainEnergy",
@@ -2626,7 +2826,7 @@ class DamageVolDevElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -2691,7 +2891,7 @@ class DamageVolDevElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    length_scale: Optional[str] = field(
+    length_scale: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "lengthScale",
@@ -2708,7 +2908,7 @@ class DamageVolDevElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2728,13 +2928,17 @@ class DeadOilFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    component_molar_weight: Optional[str] = field(
+    component_molar_weight: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -2761,7 +2965,7 @@ class DeadOilFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -2770,13 +2974,17 @@ class DeadOilFluidType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    surface_densities: Optional[str] = field(
+    surface_densities: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "surfaceDensities",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "surfaceDensities",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     table_files: str = field(
@@ -2819,7 +3027,7 @@ class DeadOilFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2847,7 +3055,7 @@ class DelftEggType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -2920,7 +3128,7 @@ class DelftEggType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -2932,7 +3140,7 @@ class DelftEggType:
 
 @dataclass
 class DirichletType:
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -2958,8 +3166,10 @@ class DirichletType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -2970,7 +3180,7 @@ class DirichletType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -2978,7 +3188,7 @@ class DirichletType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -3002,7 +3212,7 @@ class DirichletType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -3017,7 +3227,7 @@ class DirichletType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -3026,7 +3236,7 @@ class DirichletType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3038,32 +3248,42 @@ class DirichletType:
 
 @dataclass
 class DiscType:
-    center: Optional[str] = field(
+    center: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    length_vector: Optional[str] = field(
+    length_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    normal: Optional[str] = field(
+    normal: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    radius: Optional[str] = field(
+    radius: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3078,16 +3298,20 @@ class DiscType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    width_vector: Optional[str] = field(
+    width_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3115,7 +3339,7 @@ class DruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3180,7 +3404,7 @@ class DruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3192,7 +3416,7 @@ class DruckerPragerType:
 
 @dataclass
 class ElasticIsotropicPressureDependentType:
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3241,7 +3465,7 @@ class ElasticIsotropicPressureDependentType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3261,7 +3485,7 @@ class ElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3302,7 +3526,7 @@ class ElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3386,7 +3610,7 @@ class ElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3475,7 +3699,7 @@ class ElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3527,7 +3751,7 @@ class ElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3584,7 +3808,7 @@ class ElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3596,7 +3820,7 @@ class ElasticTransverseIsotropicType:
 
 @dataclass
 class ExponentialDecayPermeabilityType:
-    empirical_constant: Optional[str] = field(
+    empirical_constant: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "empiricalConstant",
@@ -3605,16 +3829,20 @@ class ExponentialDecayPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    initial_permeability: Optional[str] = field(
+    initial_permeability: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "initialPermeability",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "initialPermeability",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3642,7 +3870,7 @@ class ExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -3715,7 +3943,7 @@ class ExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3727,7 +3955,7 @@ class ExtendedDruckerPragerType:
 
 @dataclass
 class FieldSpecificationType:
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -3753,8 +3981,10 @@ class FieldSpecificationType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -3765,7 +3995,7 @@ class FieldSpecificationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -3773,7 +4003,7 @@ class FieldSpecificationType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -3797,7 +4027,7 @@ class FieldSpecificationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -3812,7 +4042,7 @@ class FieldSpecificationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -3821,7 +4051,7 @@ class FieldSpecificationType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3833,7 +4063,7 @@ class FieldSpecificationType:
 
 @dataclass
 class FileType:
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3852,7 +4082,7 @@ class FiniteElementSpaceType:
             "pattern": r".*[\[\]`$].*|default|SEM",
         },
     )
-    order: Optional[str] = field(
+    order: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3868,7 +4098,7 @@ class FiniteElementSpaceType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3880,7 +4110,7 @@ class FiniteElementSpaceType:
 
 @dataclass
 class FrictionlessContactType:
-    aperture_table_name: Optional[str] = field(
+    aperture_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "apertureTableName",
@@ -3921,7 +4151,7 @@ class FrictionlessContactType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3933,7 +4163,7 @@ class FrictionlessContactType:
 
 @dataclass
 class HybridMimeticDiscretizationType:
-    inner_product_type: Optional[str] = field(
+    inner_product_type: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "innerProductType",
@@ -3942,7 +4172,7 @@ class HybridMimeticDiscretizationType:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3954,7 +4184,7 @@ class HybridMimeticDiscretizationType:
 
 @dataclass
 class HydrostaticEquilibriumType:
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -3986,7 +4216,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    datum_elevation: Optional[str] = field(
+    datum_elevation: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "datumElevation",
@@ -3995,7 +4225,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    datum_pressure: Optional[str] = field(
+    datum_pressure: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "datumPressure",
@@ -4007,8 +4237,10 @@ class HydrostaticEquilibriumType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     elevation_increment_in_hydrostatic_pressure_table: str = field(
@@ -4035,7 +4267,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -4043,7 +4275,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    initial_phase_name: Optional[str] = field(
+    initial_phase_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "initialPhaseName",
@@ -4067,7 +4299,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -4082,7 +4314,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    temperature_vs_elevation_table_name: Optional[str] = field(
+    temperature_vs_elevation_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "temperatureVsElevationTableName",
@@ -4090,7 +4322,7 @@ class HydrostaticEquilibriumType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4102,10 +4334,11 @@ class HydrostaticEquilibriumType:
 
 @dataclass
 class JfunctionCapillaryPressureType:
+
     class Meta:
         name = "JFunctionCapillaryPressureType"
 
-    non_wetting_intermediate_jfunction_table_name: Optional[str] = field(
+    non_wetting_intermediate_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "nonWettingIntermediateJFunctionTableName",
@@ -4121,7 +4354,7 @@ class JfunctionCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    permeability_direction: Optional[str] = field(
+    permeability_direction: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityDirection",
@@ -4138,7 +4371,7 @@ class JfunctionCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -4155,7 +4388,7 @@ class JfunctionCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    wetting_intermediate_jfunction_table_name: Optional[str] = field(
+    wetting_intermediate_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingIntermediateJFunctionTableName",
@@ -4171,7 +4404,7 @@ class JfunctionCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    wetting_non_wetting_jfunction_table_name: Optional[str] = field(
+    wetting_non_wetting_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingNonWettingJFunctionTableName",
@@ -4187,7 +4420,7 @@ class JfunctionCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4199,7 +4432,7 @@ class JfunctionCapillaryPressureType:
 
 @dataclass
 class LinearIsotropicDispersionType:
-    longitudinal_dispersivity: Optional[str] = field(
+    longitudinal_dispersivity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "longitudinalDispersivity",
@@ -4208,7 +4441,7 @@ class LinearIsotropicDispersionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4239,9 +4472,12 @@ class LinearSolverParametersType:
     amg_aggressive_interp_type: str = field(
         default="multipass",
         metadata={
-            "name": "amgAggressiveInterpType",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass",
+            "name":
+            "amgAggressiveInterpType",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass",
         },
     )
     amg_coarse_solver: str = field(
@@ -4271,9 +4507,12 @@ class LinearSolverParametersType:
     amg_interpolation_type: str = field(
         default="extendedI",
         metadata={
-            "name": "amgInterpolationType",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE",
+            "name":
+            "amgInterpolationType",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE",
         },
     )
     amg_null_space_type: str = field(
@@ -4455,9 +4694,12 @@ class LinearSolverParametersType:
     preconditioner_type: str = field(
         default="iluk",
         metadata={
-            "name": "preconditionerType",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs",
+            "name":
+            "preconditionerType",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs",
         },
     )
     solver_type: str = field(
@@ -4488,7 +4730,7 @@ class ModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -4553,7 +4795,7 @@ class ModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4565,7 +4807,7 @@ class ModifiedCamClayType:
 
 @dataclass
 class MultiPhaseConstantThermalConductivityType:
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -4574,16 +4816,20 @@ class MultiPhaseConstantThermalConductivityType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    thermal_conductivity_components: Optional[str] = field(
+    thermal_conductivity_components: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "thermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4595,7 +4841,7 @@ class MultiPhaseConstantThermalConductivityType:
 
 @dataclass
 class MultiPhaseVolumeWeightedThermalConductivityType:
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -4604,25 +4850,33 @@ class MultiPhaseVolumeWeightedThermalConductivityType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_thermal_conductivity: Optional[str] = field(
+    phase_thermal_conductivity: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "phaseThermalConductivity",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseThermalConductivity",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    rock_thermal_conductivity_components: Optional[str] = field(
+    rock_thermal_conductivity_components: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "rockThermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "rockThermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4642,7 +4896,7 @@ class MultiphasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    perform_stress_initialization: Optional[str] = field(
+    perform_stress_initialization: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "performStressInitialization",
@@ -4651,7 +4905,7 @@ class MultiphasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -4660,7 +4914,7 @@ class MultiphasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4680,7 +4934,7 @@ class MultivariableTableFunctionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4887,7 +5141,7 @@ class NonlinearSolverParametersType:
 
 @dataclass
 class NullModelType:
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -4899,10 +5153,11 @@ class NullModelType:
 
 @dataclass
 class Pmltype:
+
     class Meta:
         name = "PMLType"
 
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -4928,8 +5183,10 @@ class Pmltype:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -4940,7 +5197,7 @@ class Pmltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -4956,7 +5213,7 @@ class Pmltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -4978,7 +5235,7 @@ class Pmltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -4990,52 +5247,70 @@ class Pmltype:
     thickness_max_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "thicknessMaxXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thicknessMaxXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     thickness_min_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "thicknessMinXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thicknessMinXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     wave_speed_max_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "waveSpeedMaxXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "waveSpeedMaxXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     wave_speed_min_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "waveSpeedMinXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "waveSpeedMinXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     x_max: str = field(
         default="{3.40282e+38,3.40282e+38,3.40282e+38}",
         metadata={
-            "name": "xMax",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMax",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     x_min: str = field(
         default="{-3.40282e+38,-3.40282e+38,-3.40282e+38}",
         metadata={
-            "name": "xMin",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMin",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5047,6 +5322,7 @@ class Pmltype:
 
 @dataclass
 class PvtdriverType:
+
     class Meta:
         name = "PVTDriverType"
 
@@ -5057,16 +5333,20 @@ class PvtdriverType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    feed_composition: Optional[str] = field(
+    feed_composition: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "feedComposition",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "feedComposition",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    fluid: Optional[str] = field(
+    fluid: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5105,7 +5385,7 @@ class PvtdriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    pressure_control: Optional[str] = field(
+    pressure_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "pressureControl",
@@ -5114,7 +5394,7 @@ class PvtdriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    steps: Optional[str] = field(
+    steps: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5122,7 +5402,7 @@ class PvtdriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    temperature_control: Optional[str] = field(
+    temperature_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "temperatureControl",
@@ -5131,7 +5411,7 @@ class PvtdriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5151,7 +5431,7 @@ class PackCollectionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -5160,7 +5440,7 @@ class PackCollectionType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -5185,7 +5465,7 @@ class PackCollectionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5205,7 +5485,7 @@ class ParallelPlatesPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5217,7 +5497,7 @@ class ParallelPlatesPermeabilityType:
 
 @dataclass
 class ParameterType:
-    value: Optional[str] = field(
+    value: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5225,7 +5505,7 @@ class ParameterType:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5285,7 +5565,7 @@ class ParticleFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    particle_settling_model: Optional[str] = field(
+    particle_settling_model: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "particleSettlingModel",
@@ -5325,7 +5605,7 @@ class ParticleFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5337,7 +5617,7 @@ class ParticleFluidType:
 
 @dataclass
 class ParticleMeshType:
-    header_file: Optional[str] = field(
+    header_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "headerFile",
@@ -5346,7 +5626,7 @@ class ParticleMeshType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    particle_block_names: Optional[str] = field(
+    particle_block_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "particleBlockNames",
@@ -5355,7 +5635,7 @@ class ParticleMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    particle_file: Optional[str] = field(
+    particle_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "particleFile",
@@ -5364,7 +5644,7 @@ class ParticleMeshType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    particle_types: Optional[str] = field(
+    particle_types: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "particleTypes",
@@ -5373,7 +5653,7 @@ class ParticleMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5385,7 +5665,7 @@ class ParticleMeshType:
 
 @dataclass
 class ParticleRegionType:
-    material_list: Optional[str] = field(
+    material_list: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "materialList",
@@ -5394,7 +5674,7 @@ class ParticleRegionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    mesh_body: Optional[str] = field(
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -5410,7 +5690,7 @@ class ParticleRegionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5430,7 +5710,7 @@ class PerfectlyPlasticType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -5479,7 +5759,7 @@ class PerfectlyPlasticType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5491,7 +5771,7 @@ class PerfectlyPlasticType:
 
 @dataclass
 class PerforationType:
-    distance_from_head: Optional[str] = field(
+    distance_from_head: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "distanceFromHead",
@@ -5515,7 +5795,7 @@ class PerforationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5527,7 +5807,7 @@ class PerforationType:
 
 @dataclass
 class PermeabilityBaseType:
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5539,7 +5819,7 @@ class PermeabilityBaseType:
 
 @dataclass
 class PorousDelftEggType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5548,7 +5828,7 @@ class PorousDelftEggType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5557,7 +5837,7 @@ class PorousDelftEggType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5565,7 +5845,7 @@ class PorousDelftEggType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5574,7 +5854,7 @@ class PorousDelftEggType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5586,7 +5866,7 @@ class PorousDelftEggType:
 
 @dataclass
 class PorousDruckerPragerType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5595,7 +5875,7 @@ class PorousDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5604,7 +5884,7 @@ class PorousDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5612,7 +5892,7 @@ class PorousDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5621,7 +5901,7 @@ class PorousDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5633,7 +5913,7 @@ class PorousDruckerPragerType:
 
 @dataclass
 class PorousElasticIsotropicType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5642,7 +5922,7 @@ class PorousElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5651,7 +5931,7 @@ class PorousElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5659,7 +5939,7 @@ class PorousElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5668,7 +5948,7 @@ class PorousElasticIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5680,7 +5960,7 @@ class PorousElasticIsotropicType:
 
 @dataclass
 class PorousElasticOrthotropicType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5689,7 +5969,7 @@ class PorousElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5698,7 +5978,7 @@ class PorousElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5706,7 +5986,7 @@ class PorousElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5715,7 +5995,7 @@ class PorousElasticOrthotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5727,7 +6007,7 @@ class PorousElasticOrthotropicType:
 
 @dataclass
 class PorousElasticTransverseIsotropicType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5736,7 +6016,7 @@ class PorousElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5745,7 +6025,7 @@ class PorousElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5753,7 +6033,7 @@ class PorousElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5762,7 +6042,7 @@ class PorousElasticTransverseIsotropicType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5774,7 +6054,7 @@ class PorousElasticTransverseIsotropicType:
 
 @dataclass
 class PorousExtendedDruckerPragerType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5783,7 +6063,7 @@ class PorousExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5792,7 +6072,7 @@ class PorousExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5800,7 +6080,7 @@ class PorousExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5809,7 +6089,7 @@ class PorousExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5821,7 +6101,7 @@ class PorousExtendedDruckerPragerType:
 
 @dataclass
 class PorousModifiedCamClayType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -5830,7 +6110,7 @@ class PorousModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -5839,7 +6119,7 @@ class PorousModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5847,7 +6127,7 @@ class PorousModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -5856,7 +6136,7 @@ class PorousModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5868,7 +6148,7 @@ class PorousModifiedCamClayType:
 
 @dataclass
 class PressurePorosityType:
-    compressibility: Optional[str] = field(
+    compressibility: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5876,7 +6156,7 @@ class PressurePorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_reference_porosity: Optional[str] = field(
+    default_reference_porosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultReferencePorosity",
@@ -5885,7 +6165,7 @@ class PressurePorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    reference_pressure: Optional[str] = field(
+    reference_pressure: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "referencePressure",
@@ -5894,7 +6174,7 @@ class PressurePorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5906,7 +6186,7 @@ class PressurePorosityType:
 
 @dataclass
 class ProppantPermeabilityType:
-    max_proppant_concentration: Optional[str] = field(
+    max_proppant_concentration: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maxProppantConcentration",
@@ -5915,7 +6195,7 @@ class ProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    proppant_diameter: Optional[str] = field(
+    proppant_diameter: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "proppantDiameter",
@@ -5924,7 +6204,7 @@ class ProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5936,7 +6216,7 @@ class ProppantPermeabilityType:
 
 @dataclass
 class ProppantPorosityType:
-    default_reference_porosity: Optional[str] = field(
+    default_reference_porosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultReferencePorosity",
@@ -5945,7 +6225,7 @@ class ProppantPorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    max_proppant_concentration: Optional[str] = field(
+    max_proppant_concentration: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maxProppantConcentration",
@@ -5954,7 +6234,7 @@ class ProppantPorosityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -5984,41 +6264,56 @@ class ProppantSlurryFluidType:
     default_component_density: str = field(
         default="{0}",
         metadata={
-            "name": "defaultComponentDensity",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultComponentDensity",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     default_component_viscosity: str = field(
         default="{0}",
         metadata={
-            "name": "defaultComponentViscosity",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultComponentViscosity",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     default_compressibility: str = field(
         default="{0}",
         metadata={
-            "name": "defaultCompressibility",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultCompressibility",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     flow_behavior_index: str = field(
         default="{0}",
         metadata={
-            "name": "flowBehaviorIndex",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "flowBehaviorIndex",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     flow_consistency_index: str = field(
         default="{0}",
         metadata={
-            "name": "flowConsistencyIndex",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "flowConsistencyIndex",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     max_proppant_concentration: str = field(
@@ -6061,7 +6356,7 @@ class ProppantSlurryFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6073,7 +6368,7 @@ class ProppantSlurryFluidType:
 
 @dataclass
 class ProppantSolidProppantPermeabilityType:
-    permeability_model_name: Optional[str] = field(
+    permeability_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "permeabilityModelName",
@@ -6082,7 +6377,7 @@ class ProppantSolidProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    porosity_model_name: Optional[str] = field(
+    porosity_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "porosityModelName",
@@ -6091,7 +6386,7 @@ class ProppantSolidProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_internal_energy_model_name: Optional[str] = field(
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6099,7 +6394,7 @@ class ProppantSolidProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: Optional[str] = field(
+    solid_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidModelName",
@@ -6108,7 +6403,7 @@ class ProppantSolidProppantPermeabilityType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6120,7 +6415,7 @@ class ProppantSolidProppantPermeabilityType:
 
 @dataclass
 class PythonType:
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6136,7 +6431,7 @@ class PythonType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6159,9 +6454,12 @@ class ReactiveBrineThermalType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -6180,7 +6478,7 @@ class ReactiveBrineThermalType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -6189,7 +6487,7 @@ class ReactiveBrineThermalType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6212,9 +6510,12 @@ class ReactiveBrineType:
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -6233,7 +6534,7 @@ class ReactiveBrineType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_pvtpara_files: Optional[str] = field(
+    phase_pvtpara_files: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phasePVTParaFiles",
@@ -6242,7 +6543,7 @@ class ReactiveBrineType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^*?<>\|:\";,\s]+\s*,\s*)*[^*?<>\|:\";,\s]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6261,16 +6562,20 @@ class ReactiveFluidDriverType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    feed_composition: Optional[str] = field(
+    feed_composition: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "feedComposition",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "feedComposition",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    fluid: Optional[str] = field(
+    fluid: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6293,7 +6598,7 @@ class ReactiveFluidDriverType:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    pressure_control: Optional[str] = field(
+    pressure_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "pressureControl",
@@ -6302,7 +6607,7 @@ class ReactiveFluidDriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    steps: Optional[str] = field(
+    steps: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6310,7 +6615,7 @@ class ReactiveFluidDriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    temperature_control: Optional[str] = field(
+    temperature_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "temperatureControl",
@@ -6319,7 +6624,7 @@ class ReactiveFluidDriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6331,37 +6636,50 @@ class ReactiveFluidDriverType:
 
 @dataclass
 class RectangleType:
-    dimensions: Optional[str] = field(
+    dimensions: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    length_vector: Optional[str] = field(
+    length_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    normal: Optional[str] = field(
+    normal: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    origin: Optional[str] = field(
+    origin: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     tolerance: str = field(
@@ -6371,16 +6689,20 @@ class RectangleType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    width_vector: Optional[str] = field(
+    width_vector: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6414,7 +6736,7 @@ class RelpermDriverType:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    relperm: Optional[str] = field(
+    relperm: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6422,7 +6744,7 @@ class RelpermDriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    steps: Optional[str] = field(
+    steps: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6430,7 +6752,7 @@ class RelpermDriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6442,7 +6764,7 @@ class RelpermDriverType:
 
 @dataclass
 class RestartType:
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6458,7 +6780,7 @@ class RestartType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6470,14 +6792,14 @@ class RestartType:
 
 @dataclass
 class RunType:
-    args: Optional[str] = field(
+    args: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    auto_partition: Optional[str] = field(
+    auto_partition: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "autoPartition",
@@ -6493,7 +6815,7 @@ class RunType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6516,14 +6838,14 @@ class RunType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    scaling: Optional[str] = field(
+    scaling: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    tasks_per_node: Optional[str] = field(
+    tasks_per_node: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "tasksPerNode",
@@ -6552,7 +6874,7 @@ class RunType:
 
 @dataclass
 class SiloType:
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6632,7 +6954,7 @@ class SiloType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6644,16 +6966,20 @@ class SiloType:
 
 @dataclass
 class SinglePhaseConstantThermalConductivityType:
-    thermal_conductivity_components: Optional[str] = field(
+    thermal_conductivity_components: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "thermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6673,7 +6999,7 @@ class SinglePhasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    perform_stress_initialization: Optional[str] = field(
+    perform_stress_initialization: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "performStressInitialization",
@@ -6682,7 +7008,7 @@ class SinglePhasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -6691,7 +7017,7 @@ class SinglePhasePoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6711,7 +7037,7 @@ class SinglePhaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    perform_stress_initialization: Optional[str] = field(
+    perform_stress_initialization: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "performStressInitialization",
@@ -6720,7 +7046,7 @@ class SinglePhaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -6729,7 +7055,7 @@ class SinglePhaseReservoirPoromechanicsInitializationType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6741,7 +7067,7 @@ class SinglePhaseReservoirPoromechanicsInitializationType:
 
 @dataclass
 class SinglePhaseStatisticsType:
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -6758,7 +7084,7 @@ class SinglePhaseStatisticsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6770,16 +7096,20 @@ class SinglePhaseStatisticsType:
 
 @dataclass
 class SlipDependentPermeabilityType:
-    initial_permeability: Optional[str] = field(
+    initial_permeability: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "initialPermeability",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "initialPermeability",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    max_perm_multiplier: Optional[str] = field(
+    max_perm_multiplier: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maxPermMultiplier",
@@ -6788,7 +7118,7 @@ class SlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    shear_disp_threshold: Optional[str] = field(
+    shear_disp_threshold: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "shearDispThreshold",
@@ -6797,7 +7127,7 @@ class SlipDependentPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6809,7 +7139,7 @@ class SlipDependentPermeabilityType:
 
 @dataclass
 class SolidInternalEnergyType:
-    reference_internal_energy: Optional[str] = field(
+    reference_internal_energy: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "referenceInternalEnergy",
@@ -6818,7 +7148,7 @@ class SolidInternalEnergyType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    reference_temperature: Optional[str] = field(
+    reference_temperature: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "referenceTemperature",
@@ -6827,7 +7157,7 @@ class SolidInternalEnergyType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    volumetric_heat_capacity: Optional[str] = field(
+    volumetric_heat_capacity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "volumetricHeatCapacity",
@@ -6836,7 +7166,7 @@ class SolidInternalEnergyType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6872,7 +7202,7 @@ class SolidMechanicsStateResetType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -6881,7 +7211,7 @@ class SolidMechanicsStateResetType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6901,7 +7231,7 @@ class SolidMechanicsStatisticsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -6910,7 +7240,7 @@ class SolidMechanicsStatisticsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -6922,7 +7252,7 @@ class SolidMechanicsStatisticsType:
 
 @dataclass
 class SoloEventType:
-    halt_event: list["HaltEventType"] = field(
+    halt_event: list[ "HaltEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -6930,7 +7260,7 @@ class SoloEventType:
             "namespace": "",
         },
     )
-    periodic_event: list["PeriodicEventType"] = field(
+    periodic_event: list[ "PeriodicEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -6938,7 +7268,7 @@ class SoloEventType:
             "namespace": "",
         },
     )
-    solo_event: list["SoloEventType"] = field(
+    solo_event: list[ "SoloEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -6994,7 +7324,7 @@ class SoloEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target: Optional[str] = field(
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7033,7 +7363,7 @@ class SoloEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7045,7 +7375,7 @@ class SoloEventType:
 
 @dataclass
 class SourceFluxType:
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -7071,8 +7401,10 @@ class SourceFluxType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -7083,7 +7415,7 @@ class SourceFluxType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -7107,7 +7439,7 @@ class SourceFluxType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -7122,7 +7454,7 @@ class SourceFluxType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -7131,7 +7463,7 @@ class SourceFluxType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7143,7 +7475,7 @@ class SourceFluxType:
 
 @dataclass
 class SurfaceElementRegionType:
-    default_aperture: Optional[str] = field(
+    default_aperture: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultAperture",
@@ -7160,7 +7492,7 @@ class SurfaceElementRegionType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    material_list: Optional[str] = field(
+    material_list: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "materialList",
@@ -7169,7 +7501,7 @@ class SurfaceElementRegionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    mesh_body: Optional[str] = field(
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -7185,7 +7517,7 @@ class SurfaceElementRegionType:
             "pattern": r".*[\[\]`$].*|faceElement|embeddedElement",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7197,7 +7529,7 @@ class SurfaceElementRegionType:
 
 @dataclass
 class SymbolicFunctionType:
-    expression: Optional[str] = field(
+    expression: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7213,7 +7545,7 @@ class SymbolicFunctionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    variable_names: Optional[str] = field(
+    variable_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "variableNames",
@@ -7222,7 +7554,7 @@ class SymbolicFunctionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7234,7 +7566,7 @@ class SymbolicFunctionType:
 
 @dataclass
 class TableCapillaryPressureType:
-    non_wetting_intermediate_cap_pressure_table_name: Optional[str] = field(
+    non_wetting_intermediate_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "nonWettingIntermediateCapPressureTableName",
@@ -7242,7 +7574,7 @@ class TableCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -7251,7 +7583,7 @@ class TableCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    wetting_intermediate_cap_pressure_table_name: Optional[str] = field(
+    wetting_intermediate_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingIntermediateCapPressureTableName",
@@ -7259,7 +7591,7 @@ class TableCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    wetting_non_wetting_cap_pressure_table_name: Optional[str] = field(
+    wetting_non_wetting_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingNonWettingCapPressureTableName",
@@ -7267,7 +7599,7 @@ class TableCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7290,8 +7622,10 @@ class TableFunctionType:
     coordinates: str = field(
         default="{0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     input_var_names: str = field(
@@ -7312,11 +7646,13 @@ class TableFunctionType:
     values: str = field(
         default="{0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    voxel_file: Optional[str] = field(
+    voxel_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "voxelFile",
@@ -7324,7 +7660,7 @@ class TableFunctionType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7360,7 +7696,7 @@ class TableRelativePermeabilityHysteresisType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    imbibition_non_wetting_rel_perm_table_name: Optional[str] = field(
+    imbibition_non_wetting_rel_perm_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "imbibitionNonWettingRelPermTableName",
@@ -7368,7 +7704,7 @@ class TableRelativePermeabilityHysteresisType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    imbibition_wetting_rel_perm_table_name: Optional[str] = field(
+    imbibition_wetting_rel_perm_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "imbibitionWettingRelPermTableName",
@@ -7400,7 +7736,7 @@ class TableRelativePermeabilityHysteresisType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -7417,7 +7753,7 @@ class TableRelativePermeabilityHysteresisType:
             "pattern": r".*[\[\]`$].*|BAKER|STONEII",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7437,7 +7773,7 @@ class TableRelativePermeabilityType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -7470,7 +7806,7 @@ class TableRelativePermeabilityType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7489,7 +7825,7 @@ class ThermalCompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -7498,7 +7834,7 @@ class ThermalCompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_viscosity: Optional[str] = field(
+    default_viscosity: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultViscosity",
@@ -7594,7 +7930,7 @@ class ThermalCompressibleSinglePhaseFluidType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7606,23 +7942,29 @@ class ThermalCompressibleSinglePhaseFluidType:
 
 @dataclass
 class ThickPlaneType:
-    normal: Optional[str] = field(
+    normal: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    origin: Optional[str] = field(
+    origin: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    thickness: Optional[str] = field(
+    thickness: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7630,7 +7972,7 @@ class ThickPlaneType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7642,7 +7984,7 @@ class ThickPlaneType:
 
 @dataclass
 class TimeHistoryType:
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -7672,7 +8014,7 @@ class TimeHistoryType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    sources: Optional[str] = field(
+    sources: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7680,7 +8022,7 @@ class TimeHistoryType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7692,7 +8034,7 @@ class TimeHistoryType:
 
 @dataclass
 class TractionType:
-    bc_application_table_name: Optional[str] = field(
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -7711,8 +8053,10 @@ class TractionType:
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -7723,7 +8067,7 @@ class TractionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -7742,9 +8086,12 @@ class TractionType:
     input_stress: str = field(
         default="{0,0,0,0,0,0}",
         metadata={
-            "name": "inputStress",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "inputStress",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -7755,7 +8102,7 @@ class TractionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -7770,7 +8117,7 @@ class TractionType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    set_names: Optional[str] = field(
+    set_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "setNames",
@@ -7787,7 +8134,7 @@ class TractionType:
             "pattern": r".*[\[\]`$].*|vector|normal|stress",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7799,7 +8146,7 @@ class TractionType:
 
 @dataclass
 class TriaxialDriverType:
-    axial_control: Optional[str] = field(
+    axial_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "axialControl",
@@ -7815,7 +8162,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[^*?<>\|:\";,\s]*\s*",
         },
     )
-    initial_stress: Optional[str] = field(
+    initial_stress: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "initialStress",
@@ -7832,7 +8179,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    material: Optional[str] = field(
+    material: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7840,7 +8187,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    mode: Optional[str] = field(
+    mode: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7855,7 +8202,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    radial_control: Optional[str] = field(
+    radial_control: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "radialControl",
@@ -7864,7 +8211,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    steps: Optional[str] = field(
+    steps: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7872,7 +8219,7 @@ class TriaxialDriverType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7916,7 +8263,7 @@ class TwoPointFluxApproximationType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -7928,10 +8275,11 @@ class TwoPointFluxApproximationType:
 
 @dataclass
 class Vtktype:
+
     class Meta:
         name = "VTKType"
 
-    child_directory: Optional[str] = field(
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -8026,7 +8374,7 @@ class Vtktype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8041,28 +8389,37 @@ class VanGenuchtenBakerRelativePermeabilityType:
     gas_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "gasOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -8074,20 +8431,26 @@ class VanGenuchtenBakerRelativePermeabilityType:
     water_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "waterOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8110,28 +8473,37 @@ class VanGenuchtenCapillaryPressureType:
     phase_cap_pressure_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "phaseCapPressureExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_cap_pressure_multiplier: str = field(
         default="{1}",
         metadata={
-            "name": "phaseCapPressureMultiplier",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureMultiplier",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -8140,7 +8512,7 @@ class VanGenuchtenCapillaryPressureType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8155,28 +8527,37 @@ class VanGenuchtenStone2RelativePermeabilityType:
     gas_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "gasOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    phase_names: Optional[str] = field(
+    phase_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "phaseNames",
@@ -8188,20 +8569,26 @@ class VanGenuchtenStone2RelativePermeabilityType:
     water_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "waterOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8229,7 +8616,7 @@ class ViscoDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -8294,7 +8681,7 @@ class ViscoDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    relaxation_time: Optional[str] = field(
+    relaxation_time: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "relaxationTime",
@@ -8303,7 +8690,7 @@ class ViscoDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8331,7 +8718,7 @@ class ViscoExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -8404,7 +8791,7 @@ class ViscoExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    relaxation_time: Optional[str] = field(
+    relaxation_time: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "relaxationTime",
@@ -8413,7 +8800,7 @@ class ViscoExtendedDruckerPragerType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8433,7 +8820,7 @@ class ViscoModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    default_density: Optional[str] = field(
+    default_density: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "defaultDensity",
@@ -8498,7 +8885,7 @@ class ViscoModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    relaxation_time: Optional[str] = field(
+    relaxation_time: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "relaxationTime",
@@ -8507,7 +8894,7 @@ class ViscoModifiedCamClayType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8519,7 +8906,7 @@ class ViscoModifiedCamClayType:
 
 @dataclass
 class WellControlsType:
-    control: Optional[str] = field(
+    control: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8546,9 +8933,12 @@ class WellControlsType:
     injection_stream: str = field(
         default="{-1}",
         metadata={
-            "name": "injectionStream",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "injectionStream",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     injection_temperature: str = field(
@@ -8567,7 +8957,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    reference_elevation: Optional[str] = field(
+    reference_elevation: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "referenceElevation",
@@ -8576,7 +8966,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    status_table_name: Optional[str] = field(
+    status_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "statusTableName",
@@ -8608,7 +8998,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_bhptable_name: Optional[str] = field(
+    target_bhptable_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetBHPTableName",
@@ -8616,7 +9006,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_phase_name: Optional[str] = field(
+    target_phase_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetPhaseName",
@@ -8632,7 +9022,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_phase_rate_table_name: Optional[str] = field(
+    target_phase_rate_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetPhaseRateTableName",
@@ -8648,7 +9038,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_total_rate_table_name: Optional[str] = field(
+    target_total_rate_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetTotalRateTableName",
@@ -8656,7 +9046,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    type_value: Optional[str] = field(
+    type_value: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "type",
@@ -8673,7 +9063,7 @@ class WellControlsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8685,7 +9075,7 @@ class WellControlsType:
 
 @dataclass
 class WellElementRegionType:
-    material_list: Optional[str] = field(
+    material_list: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "materialList",
@@ -8694,7 +9084,7 @@ class WellElementRegionType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    mesh_body: Optional[str] = field(
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -8702,7 +9092,7 @@ class WellElementRegionType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8714,7 +9104,7 @@ class WellElementRegionType:
 
 @dataclass
 class WillisRichardsPermeabilityType:
-    dilation_coefficient: Optional[str] = field(
+    dilation_coefficient: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "dilationCoefficient",
@@ -8723,7 +9113,7 @@ class WillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    max_frac_aperture: Optional[str] = field(
+    max_frac_aperture: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maxFracAperture",
@@ -8732,7 +9122,7 @@ class WillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    ref_closure_stress: Optional[str] = field(
+    ref_closure_stress: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "refClosureStress",
@@ -8741,7 +9131,7 @@ class WillisRichardsPermeabilityType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8753,10 +9143,11 @@ class WillisRichardsPermeabilityType:
 
 @dataclass
 class AcousticFirstOrderSemtype:
+
     class Meta:
         name = "AcousticFirstOrderSEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -8764,7 +9155,7 @@ class AcousticFirstOrderSemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -8780,7 +9171,7 @@ class AcousticFirstOrderSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8846,9 +9237,12 @@ class AcousticFirstOrderSemtype:
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -8870,9 +9264,12 @@ class AcousticFirstOrderSemtype:
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -8902,12 +9299,15 @@ class AcousticFirstOrderSemtype:
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -8932,7 +9332,7 @@ class AcousticFirstOrderSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -8944,10 +9344,11 @@ class AcousticFirstOrderSemtype:
 
 @dataclass
 class AcousticSemtype:
+
     class Meta:
         name = "AcousticSEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -8955,7 +9356,7 @@ class AcousticSemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -8971,7 +9372,7 @@ class AcousticSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9037,9 +9438,12 @@ class AcousticSemtype:
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -9061,9 +9465,12 @@ class AcousticSemtype:
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -9093,12 +9500,15 @@ class AcousticSemtype:
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9123,7 +9533,7 @@ class AcousticSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9135,10 +9545,11 @@ class AcousticSemtype:
 
 @dataclass
 class AcousticVtisemtype:
+
     class Meta:
         name = "AcousticVTISEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9146,7 +9557,7 @@ class AcousticVtisemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9162,7 +9573,7 @@ class AcousticVtisemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9228,9 +9639,12 @@ class AcousticVtisemtype:
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -9252,9 +9666,12 @@ class AcousticVtisemtype:
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -9284,12 +9701,15 @@ class AcousticVtisemtype:
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9314,7 +9734,7 @@ class AcousticVtisemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9326,10 +9746,11 @@ class AcousticVtisemtype:
 
 @dataclass
 class CompositionalMultiphaseFvmtype:
+
     class Meta:
         name = "CompositionalMultiphaseFVMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9337,7 +9758,7 @@ class CompositionalMultiphaseFvmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9385,7 +9806,7 @@ class CompositionalMultiphaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9513,7 +9934,7 @@ class CompositionalMultiphaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9538,7 +9959,7 @@ class CompositionalMultiphaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    temperature: Optional[str] = field(
+    temperature: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9578,7 +9999,7 @@ class CompositionalMultiphaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9590,10 +10011,11 @@ class CompositionalMultiphaseFvmtype:
 
 @dataclass
 class CompositionalMultiphaseHybridFvmtype:
+
     class Meta:
         name = "CompositionalMultiphaseHybridFVMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9601,7 +10023,7 @@ class CompositionalMultiphaseHybridFvmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9633,7 +10055,7 @@ class CompositionalMultiphaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9729,7 +10151,7 @@ class CompositionalMultiphaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9754,7 +10176,7 @@ class CompositionalMultiphaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    temperature: Optional[str] = field(
+    temperature: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9786,7 +10208,7 @@ class CompositionalMultiphaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9798,7 +10220,7 @@ class CompositionalMultiphaseHybridFvmtype:
 
 @dataclass
 class CompositionalMultiphaseReservoirPoromechanicsType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9806,7 +10228,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9846,7 +10268,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    reservoir_and_wells_solver_name: Optional[str] = field(
+    reservoir_and_wells_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "reservoirAndWellsSolverName",
@@ -9855,7 +10277,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -9888,7 +10310,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|None|Global|Local",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9897,7 +10319,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9909,7 +10331,7 @@ class CompositionalMultiphaseReservoirPoromechanicsType:
 
 @dataclass
 class CompositionalMultiphaseReservoirType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9917,7 +10339,7 @@ class CompositionalMultiphaseReservoirType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9933,7 +10355,7 @@ class CompositionalMultiphaseReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -9958,7 +10380,7 @@ class CompositionalMultiphaseReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -9967,7 +10389,7 @@ class CompositionalMultiphaseReservoirType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    well_solver_name: Optional[str] = field(
+    well_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellSolverName",
@@ -9976,7 +10398,7 @@ class CompositionalMultiphaseReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -9988,7 +10410,7 @@ class CompositionalMultiphaseReservoirType:
 
 @dataclass
 class CompositionalMultiphaseWellType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9996,7 +10418,7 @@ class CompositionalMultiphaseWellType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10004,7 +10426,7 @@ class CompositionalMultiphaseWellType:
             "namespace": "",
         },
     )
-    well_controls: list[WellControlsType] = field(
+    well_controls: list[ WellControlsType ] = field(
         default_factory=list,
         metadata={
             "name": "WellControls",
@@ -10068,7 +10490,7 @@ class CompositionalMultiphaseWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -10085,7 +10507,7 @@ class CompositionalMultiphaseWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -10097,7 +10519,7 @@ class CompositionalMultiphaseWellType:
 
 @dataclass
 class ConstitutiveType:
-    biot_porosity: list[BiotPorosityType] = field(
+    biot_porosity: list[ BiotPorosityType ] = field(
         default_factory=list,
         metadata={
             "name": "BiotPorosity",
@@ -10105,7 +10527,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    black_oil_fluid: list[BlackOilFluidType] = field(
+    black_oil_fluid: list[ BlackOilFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "BlackOilFluid",
@@ -10113,9 +10535,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    brooks_corey_baker_relative_permeability: list[
-        BrooksCoreyBakerRelativePermeabilityType
-    ] = field(
+    brooks_corey_baker_relative_permeability: list[ BrooksCoreyBakerRelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyBakerRelativePermeability",
@@ -10123,7 +10543,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    brooks_corey_capillary_pressure: list[BrooksCoreyCapillaryPressureType] = field(
+    brooks_corey_capillary_pressure: list[ BrooksCoreyCapillaryPressureType ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyCapillaryPressure",
@@ -10131,9 +10551,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    brooks_corey_relative_permeability: list[
-        BrooksCoreyRelativePermeabilityType
-    ] = field(
+    brooks_corey_relative_permeability: list[ BrooksCoreyRelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyRelativePermeability",
@@ -10141,9 +10559,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    brooks_corey_stone2_relative_permeability: list[
-        BrooksCoreyStone2RelativePermeabilityType
-    ] = field(
+    brooks_corey_stone2_relative_permeability: list[ BrooksCoreyStone2RelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyStone2RelativePermeability",
@@ -10151,7 +10567,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    co2_brine_ezrokhi_fluid: list[Co2BrineEzrokhiFluidType] = field(
+    co2_brine_ezrokhi_fluid: list[ Co2BrineEzrokhiFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrineEzrokhiFluid",
@@ -10159,7 +10575,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    co2_brine_ezrokhi_thermal_fluid: list[Co2BrineEzrokhiThermalFluidType] = field(
+    co2_brine_ezrokhi_thermal_fluid: list[ Co2BrineEzrokhiThermalFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrineEzrokhiThermalFluid",
@@ -10167,7 +10583,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    co2_brine_phillips_fluid: list[Co2BrinePhillipsFluidType] = field(
+    co2_brine_phillips_fluid: list[ Co2BrinePhillipsFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrinePhillipsFluid",
@@ -10175,7 +10591,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    co2_brine_phillips_thermal_fluid: list[Co2BrinePhillipsThermalFluidType] = field(
+    co2_brine_phillips_thermal_fluid: list[ Co2BrinePhillipsThermalFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrinePhillipsThermalFluid",
@@ -10183,7 +10599,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    carman_kozeny_permeability: list[CarmanKozenyPermeabilityType] = field(
+    carman_kozeny_permeability: list[ CarmanKozenyPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CarmanKozenyPermeability",
@@ -10191,7 +10607,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    ceramic_damage: list[CeramicDamageType] = field(
+    ceramic_damage: list[ CeramicDamageType ] = field(
         default_factory=list,
         metadata={
             "name": "CeramicDamage",
@@ -10199,7 +10615,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compositional_multiphase_fluid: list[CompositionalMultiphaseFluidType] = field(
+    compositional_multiphase_fluid: list[ CompositionalMultiphaseFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseFluid",
@@ -10207,9 +10623,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compositonal_two_phase_fluid_peng_robinson: list[
-        CompositonalTwoPhaseFluidPengRobinsonType
-    ] = field(
+    compositonal_two_phase_fluid_peng_robinson: list[ CompositonalTwoPhaseFluidPengRobinsonType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositonalTwoPhaseFluidPengRobinson",
@@ -10217,9 +10631,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compositonal_two_phase_fluid_soave_redlich_kwong: list[
-        CompositonalTwoPhaseFluidSoaveRedlichKwongType
-    ] = field(
+    compositonal_two_phase_fluid_soave_redlich_kwong: list[ CompositonalTwoPhaseFluidSoaveRedlichKwongType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositonalTwoPhaseFluidSoaveRedlichKwong",
@@ -10227,7 +10639,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compressible_single_phase_fluid: list[CompressibleSinglePhaseFluidType] = field(
+    compressible_single_phase_fluid: list[ CompressibleSinglePhaseFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSinglePhaseFluid",
@@ -10235,9 +10647,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compressible_solid_carman_kozeny_permeability: list[
-        CompressibleSolidCarmanKozenyPermeabilityType
-    ] = field(
+    compressible_solid_carman_kozeny_permeability: list[ CompressibleSolidCarmanKozenyPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidCarmanKozenyPermeability",
@@ -10245,9 +10655,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compressible_solid_constant_permeability: list[
-        CompressibleSolidConstantPermeabilityType
-    ] = field(
+    compressible_solid_constant_permeability: list[ CompressibleSolidConstantPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidConstantPermeability",
@@ -10256,18 +10664,15 @@ class ConstitutiveType:
         },
     )
     compressible_solid_exponential_decay_permeability: list[
-        CompressibleSolidExponentialDecayPermeabilityType
-    ] = field(
-        default_factory=list,
-        metadata={
-            "name": "CompressibleSolidExponentialDecayPermeability",
-            "type": "Element",
-            "namespace": "",
-        },
-    )
-    compressible_solid_parallel_plates_permeability: list[
-        CompressibleSolidParallelPlatesPermeabilityType
-    ] = field(
+        CompressibleSolidExponentialDecayPermeabilityType ] = field(
+            default_factory=list,
+            metadata={
+                "name": "CompressibleSolidExponentialDecayPermeability",
+                "type": "Element",
+                "namespace": "",
+            },
+        )
+    compressible_solid_parallel_plates_permeability: list[ CompressibleSolidParallelPlatesPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidParallelPlatesPermeability",
@@ -10275,9 +10680,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compressible_solid_slip_dependent_permeability: list[
-        CompressibleSolidSlipDependentPermeabilityType
-    ] = field(
+    compressible_solid_slip_dependent_permeability: list[ CompressibleSolidSlipDependentPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidSlipDependentPermeability",
@@ -10285,9 +10688,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    compressible_solid_willis_richards_permeability: list[
-        CompressibleSolidWillisRichardsPermeabilityType
-    ] = field(
+    compressible_solid_willis_richards_permeability: list[ CompressibleSolidWillisRichardsPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidWillisRichardsPermeability",
@@ -10295,7 +10696,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    constant_diffusion: list[ConstantDiffusionType] = field(
+    constant_diffusion: list[ ConstantDiffusionType ] = field(
         default_factory=list,
         metadata={
             "name": "ConstantDiffusion",
@@ -10303,7 +10704,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    constant_permeability: list[ConstantPermeabilityType] = field(
+    constant_permeability: list[ ConstantPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "ConstantPermeability",
@@ -10311,7 +10712,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    coulomb: list[CoulombType] = field(
+    coulomb: list[ CoulombType ] = field(
         default_factory=list,
         metadata={
             "name": "Coulomb",
@@ -10319,7 +10720,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    damage_elastic_isotropic: list[DamageElasticIsotropicType] = field(
+    damage_elastic_isotropic: list[ DamageElasticIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "DamageElasticIsotropic",
@@ -10327,7 +10728,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    damage_spectral_elastic_isotropic: list[DamageSpectralElasticIsotropicType] = field(
+    damage_spectral_elastic_isotropic: list[ DamageSpectralElasticIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "DamageSpectralElasticIsotropic",
@@ -10335,7 +10736,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    damage_vol_dev_elastic_isotropic: list[DamageVolDevElasticIsotropicType] = field(
+    damage_vol_dev_elastic_isotropic: list[ DamageVolDevElasticIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "DamageVolDevElasticIsotropic",
@@ -10343,7 +10744,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    dead_oil_fluid: list[DeadOilFluidType] = field(
+    dead_oil_fluid: list[ DeadOilFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "DeadOilFluid",
@@ -10351,7 +10752,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    delft_egg: list[DelftEggType] = field(
+    delft_egg: list[ DelftEggType ] = field(
         default_factory=list,
         metadata={
             "name": "DelftEgg",
@@ -10359,7 +10760,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    drucker_prager: list[DruckerPragerType] = field(
+    drucker_prager: list[ DruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "DruckerPrager",
@@ -10367,7 +10768,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    elastic_isotropic: list[ElasticIsotropicType] = field(
+    elastic_isotropic: list[ ElasticIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticIsotropic",
@@ -10375,9 +10776,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    elastic_isotropic_pressure_dependent: list[
-        ElasticIsotropicPressureDependentType
-    ] = field(
+    elastic_isotropic_pressure_dependent: list[ ElasticIsotropicPressureDependentType ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticIsotropicPressureDependent",
@@ -10385,7 +10784,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    elastic_orthotropic: list[ElasticOrthotropicType] = field(
+    elastic_orthotropic: list[ ElasticOrthotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticOrthotropic",
@@ -10393,7 +10792,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    elastic_transverse_isotropic: list[ElasticTransverseIsotropicType] = field(
+    elastic_transverse_isotropic: list[ ElasticTransverseIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticTransverseIsotropic",
@@ -10401,7 +10800,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    exponential_decay_permeability: list[ExponentialDecayPermeabilityType] = field(
+    exponential_decay_permeability: list[ ExponentialDecayPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "ExponentialDecayPermeability",
@@ -10409,7 +10808,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    extended_drucker_prager: list[ExtendedDruckerPragerType] = field(
+    extended_drucker_prager: list[ ExtendedDruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "ExtendedDruckerPrager",
@@ -10417,7 +10816,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    frictionless_contact: list[FrictionlessContactType] = field(
+    frictionless_contact: list[ FrictionlessContactType ] = field(
         default_factory=list,
         metadata={
             "name": "FrictionlessContact",
@@ -10425,7 +10824,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    jfunction_capillary_pressure: list[JfunctionCapillaryPressureType] = field(
+    jfunction_capillary_pressure: list[ JfunctionCapillaryPressureType ] = field(
         default_factory=list,
         metadata={
             "name": "JFunctionCapillaryPressure",
@@ -10433,7 +10832,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    linear_isotropic_dispersion: list[LinearIsotropicDispersionType] = field(
+    linear_isotropic_dispersion: list[ LinearIsotropicDispersionType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearIsotropicDispersion",
@@ -10441,7 +10840,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    modified_cam_clay: list[ModifiedCamClayType] = field(
+    modified_cam_clay: list[ ModifiedCamClayType ] = field(
         default_factory=list,
         metadata={
             "name": "ModifiedCamClay",
@@ -10449,9 +10848,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    multi_phase_constant_thermal_conductivity: list[
-        MultiPhaseConstantThermalConductivityType
-    ] = field(
+    multi_phase_constant_thermal_conductivity: list[ MultiPhaseConstantThermalConductivityType ] = field(
         default_factory=list,
         metadata={
             "name": "MultiPhaseConstantThermalConductivity",
@@ -10459,9 +10856,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    multi_phase_volume_weighted_thermal_conductivity: list[
-        MultiPhaseVolumeWeightedThermalConductivityType
-    ] = field(
+    multi_phase_volume_weighted_thermal_conductivity: list[ MultiPhaseVolumeWeightedThermalConductivityType ] = field(
         default_factory=list,
         metadata={
             "name": "MultiPhaseVolumeWeightedThermalConductivity",
@@ -10469,7 +10864,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    null_model: list[NullModelType] = field(
+    null_model: list[ NullModelType ] = field(
         default_factory=list,
         metadata={
             "name": "NullModel",
@@ -10477,7 +10872,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    parallel_plates_permeability: list[ParallelPlatesPermeabilityType] = field(
+    parallel_plates_permeability: list[ ParallelPlatesPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "ParallelPlatesPermeability",
@@ -10485,7 +10880,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    particle_fluid: list[ParticleFluidType] = field(
+    particle_fluid: list[ ParticleFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleFluid",
@@ -10493,7 +10888,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    perfectly_plastic: list[PerfectlyPlasticType] = field(
+    perfectly_plastic: list[ PerfectlyPlasticType ] = field(
         default_factory=list,
         metadata={
             "name": "PerfectlyPlastic",
@@ -10501,7 +10896,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    permeability_base: list[PermeabilityBaseType] = field(
+    permeability_base: list[ PermeabilityBaseType ] = field(
         default_factory=list,
         metadata={
             "name": "PermeabilityBase",
@@ -10509,7 +10904,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_delft_egg: list[PorousDelftEggType] = field(
+    porous_delft_egg: list[ PorousDelftEggType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDelftEgg",
@@ -10517,7 +10912,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_drucker_prager: list[PorousDruckerPragerType] = field(
+    porous_drucker_prager: list[ PorousDruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDruckerPrager",
@@ -10525,7 +10920,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_elastic_isotropic: list[PorousElasticIsotropicType] = field(
+    porous_elastic_isotropic: list[ PorousElasticIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticIsotropic",
@@ -10533,7 +10928,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_elastic_orthotropic: list[PorousElasticOrthotropicType] = field(
+    porous_elastic_orthotropic: list[ PorousElasticOrthotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticOrthotropic",
@@ -10541,9 +10936,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_elastic_transverse_isotropic: list[
-        PorousElasticTransverseIsotropicType
-    ] = field(
+    porous_elastic_transverse_isotropic: list[ PorousElasticTransverseIsotropicType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticTransverseIsotropic",
@@ -10551,7 +10944,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_extended_drucker_prager: list[PorousExtendedDruckerPragerType] = field(
+    porous_extended_drucker_prager: list[ PorousExtendedDruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousExtendedDruckerPrager",
@@ -10559,7 +10952,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    porous_modified_cam_clay: list[PorousModifiedCamClayType] = field(
+    porous_modified_cam_clay: list[ PorousModifiedCamClayType ] = field(
         default_factory=list,
         metadata={
             "name": "PorousModifiedCamClay",
@@ -10567,7 +10960,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    pressure_porosity: list[PressurePorosityType] = field(
+    pressure_porosity: list[ PressurePorosityType ] = field(
         default_factory=list,
         metadata={
             "name": "PressurePorosity",
@@ -10575,7 +10968,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    proppant_permeability: list[ProppantPermeabilityType] = field(
+    proppant_permeability: list[ ProppantPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantPermeability",
@@ -10583,7 +10976,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    proppant_porosity: list[ProppantPorosityType] = field(
+    proppant_porosity: list[ ProppantPorosityType ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantPorosity",
@@ -10591,7 +10984,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    proppant_slurry_fluid: list[ProppantSlurryFluidType] = field(
+    proppant_slurry_fluid: list[ ProppantSlurryFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantSlurryFluid",
@@ -10599,9 +10992,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    proppant_solid_proppant_permeability: list[
-        ProppantSolidProppantPermeabilityType
-    ] = field(
+    proppant_solid_proppant_permeability: list[ ProppantSolidProppantPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantSolidProppantPermeability",
@@ -10609,7 +11000,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    reactive_brine: list[ReactiveBrineType] = field(
+    reactive_brine: list[ ReactiveBrineType ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveBrine",
@@ -10617,7 +11008,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    reactive_brine_thermal: list[ReactiveBrineThermalType] = field(
+    reactive_brine_thermal: list[ ReactiveBrineThermalType ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveBrineThermal",
@@ -10625,9 +11016,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    single_phase_constant_thermal_conductivity: list[
-        SinglePhaseConstantThermalConductivityType
-    ] = field(
+    single_phase_constant_thermal_conductivity: list[ SinglePhaseConstantThermalConductivityType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseConstantThermalConductivity",
@@ -10635,7 +11024,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    slip_dependent_permeability: list[SlipDependentPermeabilityType] = field(
+    slip_dependent_permeability: list[ SlipDependentPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "SlipDependentPermeability",
@@ -10643,7 +11032,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    solid_internal_energy: list[SolidInternalEnergyType] = field(
+    solid_internal_energy: list[ SolidInternalEnergyType ] = field(
         default_factory=list,
         metadata={
             "name": "SolidInternalEnergy",
@@ -10651,7 +11040,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    table_capillary_pressure: list[TableCapillaryPressureType] = field(
+    table_capillary_pressure: list[ TableCapillaryPressureType ] = field(
         default_factory=list,
         metadata={
             "name": "TableCapillaryPressure",
@@ -10659,7 +11048,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    table_relative_permeability: list[TableRelativePermeabilityType] = field(
+    table_relative_permeability: list[ TableRelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "TableRelativePermeability",
@@ -10667,9 +11056,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    table_relative_permeability_hysteresis: list[
-        TableRelativePermeabilityHysteresisType
-    ] = field(
+    table_relative_permeability_hysteresis: list[ TableRelativePermeabilityHysteresisType ] = field(
         default_factory=list,
         metadata={
             "name": "TableRelativePermeabilityHysteresis",
@@ -10677,9 +11064,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    thermal_compressible_single_phase_fluid: list[
-        ThermalCompressibleSinglePhaseFluidType
-    ] = field(
+    thermal_compressible_single_phase_fluid: list[ ThermalCompressibleSinglePhaseFluidType ] = field(
         default_factory=list,
         metadata={
             "name": "ThermalCompressibleSinglePhaseFluid",
@@ -10687,9 +11072,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    van_genuchten_baker_relative_permeability: list[
-        VanGenuchtenBakerRelativePermeabilityType
-    ] = field(
+    van_genuchten_baker_relative_permeability: list[ VanGenuchtenBakerRelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenBakerRelativePermeability",
@@ -10697,7 +11080,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    van_genuchten_capillary_pressure: list[VanGenuchtenCapillaryPressureType] = field(
+    van_genuchten_capillary_pressure: list[ VanGenuchtenCapillaryPressureType ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenCapillaryPressure",
@@ -10705,9 +11088,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    van_genuchten_stone2_relative_permeability: list[
-        VanGenuchtenStone2RelativePermeabilityType
-    ] = field(
+    van_genuchten_stone2_relative_permeability: list[ VanGenuchtenStone2RelativePermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenStone2RelativePermeability",
@@ -10715,7 +11096,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    visco_drucker_prager: list[ViscoDruckerPragerType] = field(
+    visco_drucker_prager: list[ ViscoDruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoDruckerPrager",
@@ -10723,7 +11104,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    visco_extended_drucker_prager: list[ViscoExtendedDruckerPragerType] = field(
+    visco_extended_drucker_prager: list[ ViscoExtendedDruckerPragerType ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoExtendedDruckerPrager",
@@ -10731,7 +11112,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    visco_modified_cam_clay: list[ViscoModifiedCamClayType] = field(
+    visco_modified_cam_clay: list[ ViscoModifiedCamClayType ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoModifiedCamClay",
@@ -10739,7 +11120,7 @@ class ConstitutiveType:
             "namespace": "",
         },
     )
-    willis_richards_permeability: list[WillisRichardsPermeabilityType] = field(
+    willis_richards_permeability: list[ WillisRichardsPermeabilityType ] = field(
         default_factory=list,
         metadata={
             "name": "WillisRichardsPermeability",
@@ -10751,10 +11132,11 @@ class ConstitutiveType:
 
 @dataclass
 class ElasticFirstOrderSemtype:
+
     class Meta:
         name = "ElasticFirstOrderSEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -10762,7 +11144,7 @@ class ElasticFirstOrderSemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10778,7 +11160,7 @@ class ElasticFirstOrderSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -10844,9 +11226,12 @@ class ElasticFirstOrderSemtype:
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -10868,9 +11253,12 @@ class ElasticFirstOrderSemtype:
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -10900,12 +11288,15 @@ class ElasticFirstOrderSemtype:
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -10930,7 +11321,7 @@ class ElasticFirstOrderSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -10942,10 +11333,11 @@ class ElasticFirstOrderSemtype:
 
 @dataclass
 class ElasticSemtype:
+
     class Meta:
         name = "ElasticSEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -10953,7 +11345,7 @@ class ElasticSemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10969,7 +11361,7 @@ class ElasticSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11035,9 +11427,12 @@ class ElasticSemtype:
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -11059,9 +11454,12 @@ class ElasticSemtype:
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -11091,28 +11489,37 @@ class ElasticSemtype:
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     source_force: str = field(
         default="{0,0,0}",
         metadata={
-            "name": "sourceForce",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "sourceForce",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     source_moment: str = field(
         default="{1,1,1,0,0,0}",
         metadata={
-            "name": "sourceMoment",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "sourceMoment",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11137,7 +11544,7 @@ class ElasticSemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11149,7 +11556,7 @@ class ElasticSemtype:
 
 @dataclass
 class ElementRegionsType:
-    cell_element_region: list[CellElementRegionType] = field(
+    cell_element_region: list[ CellElementRegionType ] = field(
         default_factory=list,
         metadata={
             "name": "CellElementRegion",
@@ -11157,7 +11564,7 @@ class ElementRegionsType:
             "namespace": "",
         },
     )
-    surface_element_region: list[SurfaceElementRegionType] = field(
+    surface_element_region: list[ SurfaceElementRegionType ] = field(
         default_factory=list,
         metadata={
             "name": "SurfaceElementRegion",
@@ -11165,7 +11572,7 @@ class ElementRegionsType:
             "namespace": "",
         },
     )
-    well_element_region: list[WellElementRegionType] = field(
+    well_element_region: list[ WellElementRegionType ] = field(
         default_factory=list,
         metadata={
             "name": "WellElementRegion",
@@ -11177,7 +11584,7 @@ class ElementRegionsType:
 
 @dataclass
 class EmbeddedSurfaceGeneratorType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11185,7 +11592,7 @@ class EmbeddedSurfaceGeneratorType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11201,7 +11608,7 @@ class EmbeddedSurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11241,7 +11648,7 @@ class EmbeddedSurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_objects: Optional[str] = field(
+    target_objects: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetObjects",
@@ -11250,7 +11657,7 @@ class EmbeddedSurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11259,7 +11666,7 @@ class EmbeddedSurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11271,7 +11678,7 @@ class EmbeddedSurfaceGeneratorType:
 
 @dataclass
 class FieldSpecificationsType:
-    aquifer: list[AquiferType] = field(
+    aquifer: list[ AquiferType ] = field(
         default_factory=list,
         metadata={
             "name": "Aquifer",
@@ -11279,7 +11686,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    dirichlet: list[DirichletType] = field(
+    dirichlet: list[ DirichletType ] = field(
         default_factory=list,
         metadata={
             "name": "Dirichlet",
@@ -11287,7 +11694,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    field_specification: list[FieldSpecificationType] = field(
+    field_specification: list[ FieldSpecificationType ] = field(
         default_factory=list,
         metadata={
             "name": "FieldSpecification",
@@ -11295,7 +11702,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    hydrostatic_equilibrium: list[HydrostaticEquilibriumType] = field(
+    hydrostatic_equilibrium: list[ HydrostaticEquilibriumType ] = field(
         default_factory=list,
         metadata={
             "name": "HydrostaticEquilibrium",
@@ -11303,7 +11710,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    pml: list[Pmltype] = field(
+    pml: list[ Pmltype ] = field(
         default_factory=list,
         metadata={
             "name": "PML",
@@ -11311,7 +11718,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    source_flux: list[SourceFluxType] = field(
+    source_flux: list[ SourceFluxType ] = field(
         default_factory=list,
         metadata={
             "name": "SourceFlux",
@@ -11319,7 +11726,7 @@ class FieldSpecificationsType:
             "namespace": "",
         },
     )
-    traction: list[TractionType] = field(
+    traction: list[ TractionType ] = field(
         default_factory=list,
         metadata={
             "name": "Traction",
@@ -11331,7 +11738,7 @@ class FieldSpecificationsType:
 
 @dataclass
 class FiniteElementsType:
-    finite_element_space: list[FiniteElementSpaceType] = field(
+    finite_element_space: list[ FiniteElementSpaceType ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteElementSpace",
@@ -11339,7 +11746,7 @@ class FiniteElementsType:
             "namespace": "",
         },
     )
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11347,7 +11754,7 @@ class FiniteElementsType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11359,7 +11766,7 @@ class FiniteElementsType:
 
 @dataclass
 class FiniteVolumeType:
-    hybrid_mimetic_discretization: list[HybridMimeticDiscretizationType] = field(
+    hybrid_mimetic_discretization: list[ HybridMimeticDiscretizationType ] = field(
         default_factory=list,
         metadata={
             "name": "HybridMimeticDiscretization",
@@ -11367,7 +11774,7 @@ class FiniteVolumeType:
             "namespace": "",
         },
     )
-    two_point_flux_approximation: list[TwoPointFluxApproximationType] = field(
+    two_point_flux_approximation: list[ TwoPointFluxApproximationType ] = field(
         default_factory=list,
         metadata={
             "name": "TwoPointFluxApproximation",
@@ -11379,7 +11786,7 @@ class FiniteVolumeType:
 
 @dataclass
 class FlowProppantTransportType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11387,7 +11794,7 @@ class FlowProppantTransportType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11403,7 +11810,7 @@ class FlowProppantTransportType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -11428,7 +11835,7 @@ class FlowProppantTransportType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    proppant_solver_name: Optional[str] = field(
+    proppant_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "proppantSolverName",
@@ -11437,7 +11844,7 @@ class FlowProppantTransportType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11446,7 +11853,7 @@ class FlowProppantTransportType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11458,7 +11865,7 @@ class FlowProppantTransportType:
 
 @dataclass
 class FunctionsType:
-    composite_function: list[CompositeFunctionType] = field(
+    composite_function: list[ CompositeFunctionType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositeFunction",
@@ -11466,7 +11873,7 @@ class FunctionsType:
             "namespace": "",
         },
     )
-    multivariable_table_function: list[MultivariableTableFunctionType] = field(
+    multivariable_table_function: list[ MultivariableTableFunctionType ] = field(
         default_factory=list,
         metadata={
             "name": "MultivariableTableFunction",
@@ -11474,7 +11881,7 @@ class FunctionsType:
             "namespace": "",
         },
     )
-    symbolic_function: list[SymbolicFunctionType] = field(
+    symbolic_function: list[ SymbolicFunctionType ] = field(
         default_factory=list,
         metadata={
             "name": "SymbolicFunction",
@@ -11482,7 +11889,7 @@ class FunctionsType:
             "namespace": "",
         },
     )
-    table_function: list[TableFunctionType] = field(
+    table_function: list[ TableFunctionType ] = field(
         default_factory=list,
         metadata={
             "name": "TableFunction",
@@ -11494,7 +11901,7 @@ class FunctionsType:
 
 @dataclass
 class GeometryType:
-    box: list[BoxType] = field(
+    box: list[ BoxType ] = field(
         default_factory=list,
         metadata={
             "name": "Box",
@@ -11502,7 +11909,7 @@ class GeometryType:
             "namespace": "",
         },
     )
-    custom_polar_object: list[CustomPolarObjectType] = field(
+    custom_polar_object: list[ CustomPolarObjectType ] = field(
         default_factory=list,
         metadata={
             "name": "CustomPolarObject",
@@ -11510,7 +11917,7 @@ class GeometryType:
             "namespace": "",
         },
     )
-    cylinder: list[CylinderType] = field(
+    cylinder: list[ CylinderType ] = field(
         default_factory=list,
         metadata={
             "name": "Cylinder",
@@ -11518,7 +11925,7 @@ class GeometryType:
             "namespace": "",
         },
     )
-    disc: list[DiscType] = field(
+    disc: list[ DiscType ] = field(
         default_factory=list,
         metadata={
             "name": "Disc",
@@ -11526,7 +11933,7 @@ class GeometryType:
             "namespace": "",
         },
     )
-    rectangle: list[RectangleType] = field(
+    rectangle: list[ RectangleType ] = field(
         default_factory=list,
         metadata={
             "name": "Rectangle",
@@ -11534,7 +11941,7 @@ class GeometryType:
             "namespace": "",
         },
     )
-    thick_plane: list[ThickPlaneType] = field(
+    thick_plane: list[ ThickPlaneType ] = field(
         default_factory=list,
         metadata={
             "name": "ThickPlane",
@@ -11546,7 +11953,7 @@ class GeometryType:
 
 @dataclass
 class HydrofractureType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11554,7 +11961,7 @@ class HydrofractureType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11570,7 +11977,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    contact_relation_name: Optional[str] = field(
+    contact_relation_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "contactRelationName",
@@ -11579,7 +11986,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -11628,7 +12035,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -11637,7 +12044,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    surface_generator_name: Optional[str] = field(
+    surface_generator_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "surfaceGeneratorName",
@@ -11646,7 +12053,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11655,7 +12062,7 @@ class HydrofractureType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11667,7 +12074,7 @@ class HydrofractureType:
 
 @dataclass
 class IncludedType:
-    file: list[FileType] = field(
+    file: list[ FileType ] = field(
         default_factory=list,
         metadata={
             "name": "File",
@@ -11679,7 +12086,7 @@ class IncludedType:
 
 @dataclass
 class InternalWellType:
-    perforation: list[PerforationType] = field(
+    perforation: list[ PerforationType ] = field(
         default_factory=list,
         metadata={
             "name": "Perforation",
@@ -11711,7 +12118,7 @@ class InternalWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    num_elements_per_segment: Optional[str] = field(
+    num_elements_per_segment: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "numElementsPerSegment",
@@ -11720,25 +12127,33 @@ class InternalWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    polyline_node_coords: Optional[str] = field(
+    polyline_node_coords: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "polylineNodeCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "polylineNodeCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
-    polyline_segment_conn: Optional[str] = field(
+    polyline_segment_conn: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "polylineSegmentConn",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*",
+            "name":
+            "polylineSegmentConn",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*",
         },
     )
-    radius: Optional[str] = field(
+    radius: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11746,7 +12161,7 @@ class InternalWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    well_controls_name: Optional[str] = field(
+    well_controls_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellControlsName",
@@ -11755,7 +12170,7 @@ class InternalWellType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    well_region_name: Optional[str] = field(
+    well_region_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellRegionName",
@@ -11764,7 +12179,7 @@ class InternalWellType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11776,7 +12191,7 @@ class InternalWellType:
 
 @dataclass
 class LagrangianContactType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11784,7 +12199,7 @@ class LagrangianContactType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11800,7 +12215,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    contact_relation_name: Optional[str] = field(
+    contact_relation_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "contactRelationName",
@@ -11809,7 +12224,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11817,7 +12232,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    fracture_region_name: Optional[str] = field(
+    fracture_region_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fractureRegionName",
@@ -11842,7 +12257,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -11851,7 +12266,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    stabilization_name: Optional[str] = field(
+    stabilization_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "stabilizationName",
@@ -11860,7 +12275,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11869,7 +12284,7 @@ class LagrangianContactType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11881,10 +12296,11 @@ class LagrangianContactType:
 
 @dataclass
 class LaplaceFemtype:
+
     class Meta:
         name = "LaplaceFEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11892,7 +12308,7 @@ class LaplaceFemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11908,7 +12324,7 @@ class LaplaceFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11916,7 +12332,7 @@ class LaplaceFemtype:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -11941,7 +12357,7 @@ class LaplaceFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -11950,7 +12366,7 @@ class LaplaceFemtype:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    time_integration_option: Optional[str] = field(
+    time_integration_option: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "timeIntegrationOption",
@@ -11959,7 +12375,7 @@ class LaplaceFemtype:
             "pattern": r".*[\[\]`$].*|SteadyState|ImplicitTransient",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -11971,7 +12387,7 @@ class LaplaceFemtype:
 
 @dataclass
 class MultiphasePoromechanicsReservoirType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11979,7 +12395,7 @@ class MultiphasePoromechanicsReservoirType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12011,7 +12427,7 @@ class MultiphasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -12020,7 +12436,7 @@ class MultiphasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12029,7 +12445,7 @@ class MultiphasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    well_solver_name: Optional[str] = field(
+    well_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellSolverName",
@@ -12038,7 +12454,7 @@ class MultiphasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12050,7 +12466,7 @@ class MultiphasePoromechanicsReservoirType:
 
 @dataclass
 class MultiphasePoromechanicsType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12058,7 +12474,7 @@ class MultiphasePoromechanicsType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12074,7 +12490,7 @@ class MultiphasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -12107,7 +12523,7 @@ class MultiphasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -12140,7 +12556,7 @@ class MultiphasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|None|Global|Local",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12149,7 +12565,7 @@ class MultiphasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12161,7 +12577,7 @@ class MultiphasePoromechanicsType:
 
 @dataclass
 class OutputsType:
-    blueprint: list[BlueprintType] = field(
+    blueprint: list[ BlueprintType ] = field(
         default_factory=list,
         metadata={
             "name": "Blueprint",
@@ -12169,7 +12585,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    chombo_io: list[ChomboIotype] = field(
+    chombo_io: list[ ChomboIotype ] = field(
         default_factory=list,
         metadata={
             "name": "ChomboIO",
@@ -12177,7 +12593,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    python: list[PythonType] = field(
+    python: list[ PythonType ] = field(
         default_factory=list,
         metadata={
             "name": "Python",
@@ -12185,7 +12601,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    restart: list[RestartType] = field(
+    restart: list[ RestartType ] = field(
         default_factory=list,
         metadata={
             "name": "Restart",
@@ -12193,7 +12609,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    silo: list[SiloType] = field(
+    silo: list[ SiloType ] = field(
         default_factory=list,
         metadata={
             "name": "Silo",
@@ -12201,7 +12617,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    time_history: list[TimeHistoryType] = field(
+    time_history: list[ TimeHistoryType ] = field(
         default_factory=list,
         metadata={
             "name": "TimeHistory",
@@ -12209,7 +12625,7 @@ class OutputsType:
             "namespace": "",
         },
     )
-    vtk: list[Vtktype] = field(
+    vtk: list[ Vtktype ] = field(
         default_factory=list,
         metadata={
             "name": "VTK",
@@ -12221,7 +12637,7 @@ class OutputsType:
 
 @dataclass
 class ParametersType:
-    parameter: list[ParameterType] = field(
+    parameter: list[ ParameterType ] = field(
         default_factory=list,
         metadata={
             "name": "Parameter",
@@ -12233,7 +12649,7 @@ class ParametersType:
 
 @dataclass
 class ParticleRegionsType:
-    particle_region: list[ParticleRegionType] = field(
+    particle_region: list[ ParticleRegionType ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleRegion",
@@ -12245,7 +12661,7 @@ class ParticleRegionsType:
 
 @dataclass
 class PeriodicEventType:
-    halt_event: list["HaltEventType"] = field(
+    halt_event: list[ "HaltEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -12253,7 +12669,7 @@ class PeriodicEventType:
             "namespace": "",
         },
     )
-    periodic_event: list["PeriodicEventType"] = field(
+    periodic_event: list[ "PeriodicEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -12261,7 +12677,7 @@ class PeriodicEventType:
             "namespace": "",
         },
     )
-    solo_event: list[SoloEventType] = field(
+    solo_event: list[ SoloEventType ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -12309,7 +12725,7 @@ class PeriodicEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function: Optional[str] = field(
+    function: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12332,7 +12748,7 @@ class PeriodicEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    object_value: Optional[str] = field(
+    object_value: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "object",
@@ -12340,7 +12756,7 @@ class PeriodicEventType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    set: Optional[str] = field(
+    set: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12354,7 +12770,7 @@ class PeriodicEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target: Optional[str] = field(
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12392,7 +12808,7 @@ class PeriodicEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12404,10 +12820,11 @@ class PeriodicEventType:
 
 @dataclass
 class PhaseFieldDamageFemtype:
+
     class Meta:
         name = "PhaseFieldDamageFEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12415,7 +12832,7 @@ class PhaseFieldDamageFemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12439,7 +12856,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12447,7 +12864,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -12472,7 +12889,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    local_dissipation: Optional[str] = field(
+    local_dissipation: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "localDissipation",
@@ -12489,7 +12906,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12498,7 +12915,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    time_integration_option: Optional[str] = field(
+    time_integration_option: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "timeIntegrationOption",
@@ -12507,7 +12924,7 @@ class PhaseFieldDamageFemtype:
             "pattern": r".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12519,7 +12936,7 @@ class PhaseFieldDamageFemtype:
 
 @dataclass
 class PhaseFieldFractureType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12527,7 +12944,7 @@ class PhaseFieldFractureType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12543,7 +12960,7 @@ class PhaseFieldFractureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    damage_solver_name: Optional[str] = field(
+    damage_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "damageSolverName",
@@ -12568,7 +12985,7 @@ class PhaseFieldFractureType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -12577,7 +12994,7 @@ class PhaseFieldFractureType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12586,7 +13003,7 @@ class PhaseFieldFractureType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12598,7 +13015,7 @@ class PhaseFieldFractureType:
 
 @dataclass
 class ProppantTransportType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12606,7 +13023,7 @@ class ProppantTransportType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12646,7 +13063,7 @@ class ProppantTransportType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12718,7 +13135,7 @@ class ProppantTransportType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12735,7 +13152,7 @@ class ProppantTransportType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12747,10 +13164,11 @@ class ProppantTransportType:
 
 @dataclass
 class ReactiveCompositionalMultiphaseObltype:
+
     class Meta:
         name = "ReactiveCompositionalMultiphaseOBLType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12758,7 +13176,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12766,7 +13184,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "namespace": "",
         },
     )
-    obloperators_table_file: Optional[str] = field(
+    obloperators_table_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "OBLOperatorsTableFile",
@@ -12807,7 +13225,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12815,7 +13233,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    enable_energy_balance: Optional[str] = field(
+    enable_energy_balance: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "enableEnergyBalance",
@@ -12864,7 +13282,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    num_components: Optional[str] = field(
+    num_components: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "numComponents",
@@ -12873,7 +13291,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    num_phases: Optional[str] = field(
+    num_phases: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "numPhases",
@@ -12890,7 +13308,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -12915,7 +13333,7 @@ class ReactiveCompositionalMultiphaseObltype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12927,10 +13345,11 @@ class ReactiveCompositionalMultiphaseObltype:
 
 @dataclass
 class SinglePhaseFvmtype:
+
     class Meta:
         name = "SinglePhaseFVMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12938,7 +13357,7 @@ class SinglePhaseFvmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12962,7 +13381,7 @@ class SinglePhaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13002,7 +13421,7 @@ class SinglePhaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13018,7 +13437,7 @@ class SinglePhaseFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13030,10 +13449,11 @@ class SinglePhaseFvmtype:
 
 @dataclass
 class SinglePhaseHybridFvmtype:
+
     class Meta:
         name = "SinglePhaseHybridFVMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13041,7 +13461,7 @@ class SinglePhaseHybridFvmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13065,7 +13485,7 @@ class SinglePhaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13105,7 +13525,7 @@ class SinglePhaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13121,7 +13541,7 @@ class SinglePhaseHybridFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13133,7 +13553,7 @@ class SinglePhaseHybridFvmtype:
 
 @dataclass
 class SinglePhasePoromechanicsConformingFracturesType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13141,7 +13561,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13149,7 +13569,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
             "namespace": "",
         },
     )
-    lagrangian_contact_solver_name: Optional[str] = field(
+    lagrangian_contact_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "LagrangianContactSolverName",
@@ -13190,7 +13610,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -13199,7 +13619,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13208,7 +13628,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13220,7 +13640,7 @@ class SinglePhasePoromechanicsConformingFracturesType:
 
 @dataclass
 class SinglePhasePoromechanicsEmbeddedFracturesType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13228,7 +13648,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13244,7 +13664,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -13253,7 +13673,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    fractures_solver_name: Optional[str] = field(
+    fractures_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fracturesSolverName",
@@ -13286,7 +13706,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -13295,7 +13715,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13304,7 +13724,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13316,7 +13736,7 @@ class SinglePhasePoromechanicsEmbeddedFracturesType:
 
 @dataclass
 class SinglePhasePoromechanicsReservoirType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13324,7 +13744,7 @@ class SinglePhasePoromechanicsReservoirType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13356,7 +13776,7 @@ class SinglePhasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    poromechanics_solver_name: Optional[str] = field(
+    poromechanics_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "poromechanicsSolverName",
@@ -13365,7 +13785,7 @@ class SinglePhasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13374,7 +13794,7 @@ class SinglePhasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    well_solver_name: Optional[str] = field(
+    well_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellSolverName",
@@ -13383,7 +13803,7 @@ class SinglePhasePoromechanicsReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13395,7 +13815,7 @@ class SinglePhasePoromechanicsReservoirType:
 
 @dataclass
 class SinglePhasePoromechanicsType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13403,7 +13823,7 @@ class SinglePhasePoromechanicsType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13419,7 +13839,7 @@ class SinglePhasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -13452,7 +13872,7 @@ class SinglePhasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -13461,7 +13881,7 @@ class SinglePhasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13470,7 +13890,7 @@ class SinglePhasePoromechanicsType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13482,10 +13902,11 @@ class SinglePhasePoromechanicsType:
 
 @dataclass
 class SinglePhaseProppantFvmtype:
+
     class Meta:
         name = "SinglePhaseProppantFVMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13493,7 +13914,7 @@ class SinglePhaseProppantFvmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13517,7 +13938,7 @@ class SinglePhaseProppantFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13557,7 +13978,7 @@ class SinglePhaseProppantFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13573,7 +13994,7 @@ class SinglePhaseProppantFvmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13585,7 +14006,7 @@ class SinglePhaseProppantFvmtype:
 
 @dataclass
 class SinglePhaseReservoirPoromechanicsType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13593,7 +14014,7 @@ class SinglePhaseReservoirPoromechanicsType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13633,7 +14054,7 @@ class SinglePhaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    reservoir_and_wells_solver_name: Optional[str] = field(
+    reservoir_and_wells_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "reservoirAndWellsSolverName",
@@ -13642,7 +14063,7 @@ class SinglePhaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -13651,7 +14072,7 @@ class SinglePhaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13660,7 +14081,7 @@ class SinglePhaseReservoirPoromechanicsType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13672,7 +14093,7 @@ class SinglePhaseReservoirPoromechanicsType:
 
 @dataclass
 class SinglePhaseReservoirType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13680,7 +14101,7 @@ class SinglePhaseReservoirType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13696,7 +14117,7 @@ class SinglePhaseReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: Optional[str] = field(
+    flow_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flowSolverName",
@@ -13721,7 +14142,7 @@ class SinglePhaseReservoirType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13730,7 +14151,7 @@ class SinglePhaseReservoirType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    well_solver_name: Optional[str] = field(
+    well_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wellSolverName",
@@ -13739,7 +14160,7 @@ class SinglePhaseReservoirType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13751,7 +14172,7 @@ class SinglePhaseReservoirType:
 
 @dataclass
 class SinglePhaseWellType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13759,7 +14180,7 @@ class SinglePhaseWellType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13767,7 +14188,7 @@ class SinglePhaseWellType:
             "namespace": "",
         },
     )
-    well_controls: list[WellControlsType] = field(
+    well_controls: list[ WellControlsType ] = field(
         default_factory=list,
         metadata={
             "name": "WellControls",
@@ -13799,7 +14220,7 @@ class SinglePhaseWellType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13808,7 +14229,7 @@ class SinglePhaseWellType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13820,7 +14241,7 @@ class SinglePhaseWellType:
 
 @dataclass
 class SolidMechanicsEmbeddedFracturesType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13828,7 +14249,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13844,7 +14265,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    contact_relation_name: Optional[str] = field(
+    contact_relation_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "contactRelationName",
@@ -13853,7 +14274,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    fracture_region_name: Optional[str] = field(
+    fracture_region_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fractureRegionName",
@@ -13878,7 +14299,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: Optional[str] = field(
+    solid_solver_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidSolverName",
@@ -13887,7 +14308,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -13904,7 +14325,7 @@ class SolidMechanicsEmbeddedFracturesType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -13916,10 +14337,11 @@ class SolidMechanicsEmbeddedFracturesType:
 
 @dataclass
 class SolidMechanicsLagrangianSsletype:
+
     class Meta:
         name = "SolidMechanicsLagrangianSSLEType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13927,7 +14349,7 @@ class SolidMechanicsLagrangianSsletype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13951,7 +14373,7 @@ class SolidMechanicsLagrangianSsletype:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14023,7 +14445,7 @@ class SolidMechanicsLagrangianSsletype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    surface_generator_name: Optional[str] = field(
+    surface_generator_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "surfaceGeneratorName",
@@ -14031,7 +14453,7 @@ class SolidMechanicsLagrangianSsletype:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -14048,7 +14470,7 @@ class SolidMechanicsLagrangianSsletype:
             "pattern": r".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14060,10 +14482,11 @@ class SolidMechanicsLagrangianSsletype:
 
 @dataclass
 class SolidMechanicsLagrangianFemtype:
+
     class Meta:
         name = "SolidMechanics_LagrangianFEMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14071,7 +14494,7 @@ class SolidMechanicsLagrangianFemtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14095,7 +14518,7 @@ class SolidMechanicsLagrangianFemtype:
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14167,7 +14590,7 @@ class SolidMechanicsLagrangianFemtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    surface_generator_name: Optional[str] = field(
+    surface_generator_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "surfaceGeneratorName",
@@ -14175,7 +14598,7 @@ class SolidMechanicsLagrangianFemtype:
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -14192,7 +14615,7 @@ class SolidMechanicsLagrangianFemtype:
             "pattern": r".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14204,10 +14627,11 @@ class SolidMechanicsLagrangianFemtype:
 
 @dataclass
 class SolidMechanicsMpmtype:
+
     class Meta:
         name = "SolidMechanics_MPMType"
 
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14215,7 +14639,7 @@ class SolidMechanicsMpmtype:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14271,7 +14695,7 @@ class SolidMechanicsMpmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    discretization: Optional[str] = field(
+    discretization: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14287,7 +14711,7 @@ class SolidMechanicsMpmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    f_table_path: Optional[str] = field(
+    f_table_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fTablePath",
@@ -14391,7 +14815,7 @@ class SolidMechanicsMpmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -14424,7 +14848,7 @@ class SolidMechanicsMpmtype:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14436,7 +14860,7 @@ class SolidMechanicsMpmtype:
 
 @dataclass
 class SurfaceGeneratorType:
-    linear_solver_parameters: list[LinearSolverParametersType] = field(
+    linear_solver_parameters: list[ LinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14444,7 +14868,7 @@ class SurfaceGeneratorType:
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+    nonlinear_solver_parameters: list[ NonlinearSolverParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14500,7 +14924,7 @@ class SurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    rock_toughness: Optional[str] = field(
+    rock_toughness: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "rockToughness",
@@ -14509,7 +14933,7 @@ class SurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_regions: Optional[str] = field(
+    target_regions: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetRegions",
@@ -14518,7 +14942,7 @@ class SurfaceGeneratorType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14531,18 +14955,15 @@ class SurfaceGeneratorType:
 @dataclass
 class TasksType:
     compositional_multiphase_reservoir_poromechanics_initialization: list[
-        CompositionalMultiphaseReservoirPoromechanicsInitializationType
-    ] = field(
-        default_factory=list,
-        metadata={
-            "name": "CompositionalMultiphaseReservoirPoromechanicsInitialization",
-            "type": "Element",
-            "namespace": "",
-        },
-    )
-    compositional_multiphase_statistics: list[
-        CompositionalMultiphaseStatisticsType
-    ] = field(
+        CompositionalMultiphaseReservoirPoromechanicsInitializationType ] = field(
+            default_factory=list,
+            metadata={
+                "name": "CompositionalMultiphaseReservoirPoromechanicsInitialization",
+                "type": "Element",
+                "namespace": "",
+            },
+        )
+    compositional_multiphase_statistics: list[ CompositionalMultiphaseStatisticsType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseStatistics",
@@ -14550,9 +14971,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    multiphase_poromechanics_initialization: list[
-        MultiphasePoromechanicsInitializationType
-    ] = field(
+    multiphase_poromechanics_initialization: list[ MultiphasePoromechanicsInitializationType ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanicsInitialization",
@@ -14560,7 +14979,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    pvtdriver: list[PvtdriverType] = field(
+    pvtdriver: list[ PvtdriverType ] = field(
         default_factory=list,
         metadata={
             "name": "PVTDriver",
@@ -14568,7 +14987,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    pack_collection: list[PackCollectionType] = field(
+    pack_collection: list[ PackCollectionType ] = field(
         default_factory=list,
         metadata={
             "name": "PackCollection",
@@ -14576,7 +14995,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    reactive_fluid_driver: list[ReactiveFluidDriverType] = field(
+    reactive_fluid_driver: list[ ReactiveFluidDriverType ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveFluidDriver",
@@ -14584,7 +15003,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    relperm_driver: list[RelpermDriverType] = field(
+    relperm_driver: list[ RelpermDriverType ] = field(
         default_factory=list,
         metadata={
             "name": "RelpermDriver",
@@ -14592,9 +15011,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    single_phase_poromechanics_initialization: list[
-        SinglePhasePoromechanicsInitializationType
-    ] = field(
+    single_phase_poromechanics_initialization: list[ SinglePhasePoromechanicsInitializationType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsInitialization",
@@ -14603,16 +15020,15 @@ class TasksType:
         },
     )
     single_phase_reservoir_poromechanics_initialization: list[
-        SinglePhaseReservoirPoromechanicsInitializationType
-    ] = field(
-        default_factory=list,
-        metadata={
-            "name": "SinglePhaseReservoirPoromechanicsInitialization",
-            "type": "Element",
-            "namespace": "",
-        },
-    )
-    single_phase_statistics: list[SinglePhaseStatisticsType] = field(
+        SinglePhaseReservoirPoromechanicsInitializationType ] = field(
+            default_factory=list,
+            metadata={
+                "name": "SinglePhaseReservoirPoromechanicsInitialization",
+                "type": "Element",
+                "namespace": "",
+            },
+        )
+    single_phase_statistics: list[ SinglePhaseStatisticsType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseStatistics",
@@ -14620,7 +15036,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    solid_mechanics_state_reset: list[SolidMechanicsStateResetType] = field(
+    solid_mechanics_state_reset: list[ SolidMechanicsStateResetType ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsStateReset",
@@ -14628,7 +15044,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    solid_mechanics_statistics: list[SolidMechanicsStatisticsType] = field(
+    solid_mechanics_statistics: list[ SolidMechanicsStatisticsType ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsStatistics",
@@ -14636,7 +15052,7 @@ class TasksType:
             "namespace": "",
         },
     )
-    triaxial_driver: list[TriaxialDriverType] = field(
+    triaxial_driver: list[ TriaxialDriverType ] = field(
         default_factory=list,
         metadata={
             "name": "TriaxialDriver",
@@ -14648,10 +15064,11 @@ class TasksType:
 
 @dataclass
 class CrusherType:
+
     class Meta:
         name = "crusherType"
 
-    run: list[RunType] = field(
+    run: list[ RunType ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -14663,10 +15080,11 @@ class CrusherType:
 
 @dataclass
 class LassenType:
+
     class Meta:
         name = "lassenType"
 
-    run: list[RunType] = field(
+    run: list[ RunType ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -14678,10 +15096,11 @@ class LassenType:
 
 @dataclass
 class QuartzType:
+
     class Meta:
         name = "quartzType"
 
-    run: list[RunType] = field(
+    run: list[ RunType ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -14693,21 +15112,21 @@ class QuartzType:
 
 @dataclass
 class BenchmarksType:
-    crusher: list[CrusherType] = field(
+    crusher: list[ CrusherType ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
             "namespace": "",
         },
     )
-    lassen: list[LassenType] = field(
+    lassen: list[ LassenType ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
             "namespace": "",
         },
     )
-    quartz: list[QuartzType] = field(
+    quartz: list[ QuartzType ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
@@ -14718,7 +15137,7 @@ class BenchmarksType:
 
 @dataclass
 class HaltEventType:
-    halt_event: list["HaltEventType"] = field(
+    halt_event: list[ "HaltEventType" ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -14726,7 +15145,7 @@ class HaltEventType:
             "namespace": "",
         },
     )
-    periodic_event: list[PeriodicEventType] = field(
+    periodic_event: list[ PeriodicEventType ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -14734,7 +15153,7 @@ class HaltEventType:
             "namespace": "",
         },
     )
-    solo_event: list[SoloEventType] = field(
+    solo_event: list[ SoloEventType ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -14790,7 +15209,7 @@ class HaltEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    max_runtime: Optional[str] = field(
+    max_runtime: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "maxRuntime",
@@ -14799,7 +15218,7 @@ class HaltEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target: Optional[str] = field(
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14814,7 +15233,7 @@ class HaltEventType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14826,7 +15245,7 @@ class HaltEventType:
 
 @dataclass
 class InternalMeshType:
-    internal_well: list[InternalWellType] = field(
+    internal_well: list[ InternalWellType ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -14834,7 +15253,7 @@ class InternalMeshType:
             "namespace": "",
         },
     )
-    cell_block_names: Optional[str] = field(
+    cell_block_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "cellBlockNames",
@@ -14843,7 +15262,7 @@ class InternalMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    element_types: Optional[str] = field(
+    element_types: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "elementTypes",
@@ -14852,7 +15271,7 @@ class InternalMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    nx: Optional[str] = field(
+    nx: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14860,7 +15279,7 @@ class InternalMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    ny: Optional[str] = field(
+    ny: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14868,7 +15287,7 @@ class InternalMeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    nz: Optional[str] = field(
+    nz: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14895,55 +15314,76 @@ class InternalMeshType:
     x_bias: str = field(
         default="{1}",
         metadata={
-            "name": "xBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "xBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    x_coords: Optional[str] = field(
+    x_coords: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "xCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "xCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     y_bias: str = field(
         default="{1}",
         metadata={
-            "name": "yBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "yBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    y_coords: Optional[str] = field(
+    y_coords: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "yCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "yCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     z_bias: str = field(
         default="{1}",
         metadata={
-            "name": "zBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    z_coords: Optional[str] = field(
+    z_coords: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "zCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -14955,7 +15395,7 @@ class InternalMeshType:
 
 @dataclass
 class InternalWellboreType:
-    internal_well: list[InternalWellType] = field(
+    internal_well: list[ InternalWellType ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -14966,9 +15406,12 @@ class InternalWellboreType:
     auto_space_radial_elems: str = field(
         default="{-1}",
         metadata={
-            "name": "autoSpaceRadialElems",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "autoSpaceRadialElems",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     cartesian_mapping_inner_radius: str = field(
@@ -14979,7 +15422,7 @@ class InternalWellboreType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    cell_block_names: Optional[str] = field(
+    cell_block_names: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "cellBlockNames",
@@ -14988,7 +15431,7 @@ class InternalWellboreType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    element_types: Optional[str] = field(
+    element_types: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "elementTypes",
@@ -15000,12 +15443,15 @@ class InternalWellboreType:
     hard_radial_coords: str = field(
         default="{0}",
         metadata={
-            "name": "hardRadialCoords",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "hardRadialCoords",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    nr: Optional[str] = field(
+    nr: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15013,7 +15459,7 @@ class InternalWellboreType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    nt: Optional[str] = field(
+    nt: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15021,7 +15467,7 @@ class InternalWellboreType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    nz: Optional[str] = field(
+    nz: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15040,32 +15486,43 @@ class InternalWellboreType:
     r_bias: str = field(
         default="{-0.8}",
         metadata={
-            "name": "rBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "rBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    radius: Optional[str] = field(
+    radius: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    theta: Optional[str] = field(
+    theta: Optional[ str ] = field(
         default=None,
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     trajectory: str = field(
         default="{{0}}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     triangle_pattern: str = field(
@@ -15087,37 +15544,50 @@ class InternalWellboreType:
     x_bias: str = field(
         default="{1}",
         metadata={
-            "name": "xBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "xBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     y_bias: str = field(
         default="{1}",
         metadata={
-            "name": "yBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "yBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     z_bias: str = field(
         default="{1}",
         metadata={
-            "name": "zBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    z_coords: Optional[str] = field(
+    z_coords: Optional[ str ] = field(
         default=None,
         metadata={
-            "name": "zCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15129,7 +15599,7 @@ class InternalWellboreType:
 
 @dataclass
 class NumericalMethodsType:
-    finite_elements: list[FiniteElementsType] = field(
+    finite_elements: list[ FiniteElementsType ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteElements",
@@ -15137,7 +15607,7 @@ class NumericalMethodsType:
             "namespace": "",
         },
     )
-    finite_volume: list[FiniteVolumeType] = field(
+    finite_volume: list[ FiniteVolumeType ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteVolume",
@@ -15149,7 +15619,7 @@ class NumericalMethodsType:
 
 @dataclass
 class SolversType:
-    acoustic_first_order_sem: list[AcousticFirstOrderSemtype] = field(
+    acoustic_first_order_sem: list[ AcousticFirstOrderSemtype ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticFirstOrderSEM",
@@ -15157,7 +15627,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    acoustic_sem: list[AcousticSemtype] = field(
+    acoustic_sem: list[ AcousticSemtype ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticSEM",
@@ -15165,7 +15635,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    acoustic_vtisem: list[AcousticVtisemtype] = field(
+    acoustic_vtisem: list[ AcousticVtisemtype ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticVTISEM",
@@ -15173,7 +15643,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    compositional_multiphase_fvm: list[CompositionalMultiphaseFvmtype] = field(
+    compositional_multiphase_fvm: list[ CompositionalMultiphaseFvmtype ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseFVM",
@@ -15181,9 +15651,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    compositional_multiphase_hybrid_fvm: list[
-        CompositionalMultiphaseHybridFvmtype
-    ] = field(
+    compositional_multiphase_hybrid_fvm: list[ CompositionalMultiphaseHybridFvmtype ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseHybridFVM",
@@ -15191,9 +15659,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    compositional_multiphase_reservoir: list[
-        CompositionalMultiphaseReservoirType
-    ] = field(
+    compositional_multiphase_reservoir: list[ CompositionalMultiphaseReservoirType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseReservoir",
@@ -15201,9 +15667,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    compositional_multiphase_reservoir_poromechanics: list[
-        CompositionalMultiphaseReservoirPoromechanicsType
-    ] = field(
+    compositional_multiphase_reservoir_poromechanics: list[ CompositionalMultiphaseReservoirPoromechanicsType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseReservoirPoromechanics",
@@ -15211,7 +15675,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    compositional_multiphase_well: list[CompositionalMultiphaseWellType] = field(
+    compositional_multiphase_well: list[ CompositionalMultiphaseWellType ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseWell",
@@ -15219,7 +15683,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    elastic_first_order_sem: list[ElasticFirstOrderSemtype] = field(
+    elastic_first_order_sem: list[ ElasticFirstOrderSemtype ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticFirstOrderSEM",
@@ -15227,7 +15691,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    elastic_sem: list[ElasticSemtype] = field(
+    elastic_sem: list[ ElasticSemtype ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticSEM",
@@ -15235,7 +15699,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    embedded_surface_generator: list[EmbeddedSurfaceGeneratorType] = field(
+    embedded_surface_generator: list[ EmbeddedSurfaceGeneratorType ] = field(
         default_factory=list,
         metadata={
             "name": "EmbeddedSurfaceGenerator",
@@ -15243,7 +15707,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    flow_proppant_transport: list[FlowProppantTransportType] = field(
+    flow_proppant_transport: list[ FlowProppantTransportType ] = field(
         default_factory=list,
         metadata={
             "name": "FlowProppantTransport",
@@ -15251,7 +15715,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    hydrofracture: list[HydrofractureType] = field(
+    hydrofracture: list[ HydrofractureType ] = field(
         default_factory=list,
         metadata={
             "name": "Hydrofracture",
@@ -15259,7 +15723,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    lagrangian_contact: list[LagrangianContactType] = field(
+    lagrangian_contact: list[ LagrangianContactType ] = field(
         default_factory=list,
         metadata={
             "name": "LagrangianContact",
@@ -15267,7 +15731,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    laplace_fem: list[LaplaceFemtype] = field(
+    laplace_fem: list[ LaplaceFemtype ] = field(
         default_factory=list,
         metadata={
             "name": "LaplaceFEM",
@@ -15275,7 +15739,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    multiphase_poromechanics: list[MultiphasePoromechanicsType] = field(
+    multiphase_poromechanics: list[ MultiphasePoromechanicsType ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanics",
@@ -15283,9 +15747,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    multiphase_poromechanics_reservoir: list[
-        MultiphasePoromechanicsReservoirType
-    ] = field(
+    multiphase_poromechanics_reservoir: list[ MultiphasePoromechanicsReservoirType ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanicsReservoir",
@@ -15293,7 +15755,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    phase_field_damage_fem: list[PhaseFieldDamageFemtype] = field(
+    phase_field_damage_fem: list[ PhaseFieldDamageFemtype ] = field(
         default_factory=list,
         metadata={
             "name": "PhaseFieldDamageFEM",
@@ -15301,7 +15763,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    phase_field_fracture: list[PhaseFieldFractureType] = field(
+    phase_field_fracture: list[ PhaseFieldFractureType ] = field(
         default_factory=list,
         metadata={
             "name": "PhaseFieldFracture",
@@ -15309,7 +15771,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    proppant_transport: list[ProppantTransportType] = field(
+    proppant_transport: list[ ProppantTransportType ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantTransport",
@@ -15317,9 +15779,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    reactive_compositional_multiphase_obl: list[
-        ReactiveCompositionalMultiphaseObltype
-    ] = field(
+    reactive_compositional_multiphase_obl: list[ ReactiveCompositionalMultiphaseObltype ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveCompositionalMultiphaseOBL",
@@ -15327,7 +15787,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_fvm: list[SinglePhaseFvmtype] = field(
+    single_phase_fvm: list[ SinglePhaseFvmtype ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseFVM",
@@ -15335,7 +15795,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_hybrid_fvm: list[SinglePhaseHybridFvmtype] = field(
+    single_phase_hybrid_fvm: list[ SinglePhaseHybridFvmtype ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseHybridFVM",
@@ -15343,7 +15803,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_poromechanics: list[SinglePhasePoromechanicsType] = field(
+    single_phase_poromechanics: list[ SinglePhasePoromechanicsType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanics",
@@ -15351,9 +15811,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_poromechanics_conforming_fractures: list[
-        SinglePhasePoromechanicsConformingFracturesType
-    ] = field(
+    single_phase_poromechanics_conforming_fractures: list[ SinglePhasePoromechanicsConformingFracturesType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsConformingFractures",
@@ -15361,9 +15819,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_poromechanics_embedded_fractures: list[
-        SinglePhasePoromechanicsEmbeddedFracturesType
-    ] = field(
+    single_phase_poromechanics_embedded_fractures: list[ SinglePhasePoromechanicsEmbeddedFracturesType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsEmbeddedFractures",
@@ -15371,9 +15827,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_poromechanics_reservoir: list[
-        SinglePhasePoromechanicsReservoirType
-    ] = field(
+    single_phase_poromechanics_reservoir: list[ SinglePhasePoromechanicsReservoirType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsReservoir",
@@ -15381,7 +15835,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_proppant_fvm: list[SinglePhaseProppantFvmtype] = field(
+    single_phase_proppant_fvm: list[ SinglePhaseProppantFvmtype ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseProppantFVM",
@@ -15389,7 +15843,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_reservoir: list[SinglePhaseReservoirType] = field(
+    single_phase_reservoir: list[ SinglePhaseReservoirType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseReservoir",
@@ -15397,9 +15851,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_reservoir_poromechanics: list[
-        SinglePhaseReservoirPoromechanicsType
-    ] = field(
+    single_phase_reservoir_poromechanics: list[ SinglePhaseReservoirPoromechanicsType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseReservoirPoromechanics",
@@ -15407,7 +15859,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    single_phase_well: list[SinglePhaseWellType] = field(
+    single_phase_well: list[ SinglePhaseWellType ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseWell",
@@ -15415,9 +15867,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    solid_mechanics_embedded_fractures: list[
-        SolidMechanicsEmbeddedFracturesType
-    ] = field(
+    solid_mechanics_embedded_fractures: list[ SolidMechanicsEmbeddedFracturesType ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsEmbeddedFractures",
@@ -15425,7 +15875,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    solid_mechanics_lagrangian_ssle: list[SolidMechanicsLagrangianSsletype] = field(
+    solid_mechanics_lagrangian_ssle: list[ SolidMechanicsLagrangianSsletype ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsLagrangianSSLE",
@@ -15433,7 +15883,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    solid_mechanics_lagrangian_fem: list[SolidMechanicsLagrangianFemtype] = field(
+    solid_mechanics_lagrangian_fem: list[ SolidMechanicsLagrangianFemtype ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanics_LagrangianFEM",
@@ -15441,7 +15891,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    solid_mechanics_mpm: list[SolidMechanicsMpmtype] = field(
+    solid_mechanics_mpm: list[ SolidMechanicsMpmtype ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanics_MPM",
@@ -15449,7 +15899,7 @@ class SolversType:
             "namespace": "",
         },
     )
-    surface_generator: list[SurfaceGeneratorType] = field(
+    surface_generator: list[ SurfaceGeneratorType ] = field(
         default_factory=list,
         metadata={
             "name": "SurfaceGenerator",
@@ -15460,19 +15910,23 @@ class SolversType:
     gravity_vector: str = field(
         default="{0,0,-9.81}",
         metadata={
-            "name": "gravityVector",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "gravityVector",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
 
 
 @dataclass
 class VtkmeshType:
+
     class Meta:
         name = "VTKMeshType"
 
-    internal_well: list[InternalWellType] = field(
+    internal_well: list[ InternalWellType ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -15504,7 +15958,7 @@ class VtkmeshType:
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    file: Optional[str] = field(
+    file: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15563,8 +16017,10 @@ class VtkmeshType:
     scale: str = field(
         default="{1,1,1}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     surfacic_fields_in_geosx: str = field(
@@ -15586,8 +16042,10 @@ class VtkmeshType:
     translate: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     use_global_ids: str = field(
@@ -15598,7 +16056,7 @@ class VtkmeshType:
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: Optional[str] = field(
+    name: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15610,7 +16068,7 @@ class VtkmeshType:
 
 @dataclass
 class EventsType:
-    halt_event: list[HaltEventType] = field(
+    halt_event: list[ HaltEventType ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -15618,7 +16076,7 @@ class EventsType:
             "namespace": "",
         },
     )
-    periodic_event: list[PeriodicEventType] = field(
+    periodic_event: list[ PeriodicEventType ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -15626,7 +16084,7 @@ class EventsType:
             "namespace": "",
         },
     )
-    solo_event: list[SoloEventType] = field(
+    solo_event: list[ SoloEventType ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -15678,7 +16136,7 @@ class EventsType:
 
 @dataclass
 class MeshType:
-    internal_mesh: list[InternalMeshType] = field(
+    internal_mesh: list[ InternalMeshType ] = field(
         default_factory=list,
         metadata={
             "name": "InternalMesh",
@@ -15686,7 +16144,7 @@ class MeshType:
             "namespace": "",
         },
     )
-    internal_wellbore: list[InternalWellboreType] = field(
+    internal_wellbore: list[ InternalWellboreType ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWellbore",
@@ -15694,7 +16152,7 @@ class MeshType:
             "namespace": "",
         },
     )
-    particle_mesh: list[ParticleMeshType] = field(
+    particle_mesh: list[ ParticleMeshType ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleMesh",
@@ -15702,7 +16160,7 @@ class MeshType:
             "namespace": "",
         },
     )
-    vtkmesh: list[VtkmeshType] = field(
+    vtkmesh: list[ VtkmeshType ] = field(
         default_factory=list,
         metadata={
             "name": "VTKMesh",
@@ -15714,7 +16172,7 @@ class MeshType:
 
 @dataclass
 class ProblemType:
-    events: list[EventsType] = field(
+    events: list[ EventsType ] = field(
         default_factory=list,
         metadata={
             "name": "Events",
@@ -15722,7 +16180,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    field_specifications: list[FieldSpecificationsType] = field(
+    field_specifications: list[ FieldSpecificationsType ] = field(
         default_factory=list,
         metadata={
             "name": "FieldSpecifications",
@@ -15730,7 +16188,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    functions: list[FunctionsType] = field(
+    functions: list[ FunctionsType ] = field(
         default_factory=list,
         metadata={
             "name": "Functions",
@@ -15738,7 +16196,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    geometry: list[GeometryType] = field(
+    geometry: list[ GeometryType ] = field(
         default_factory=list,
         metadata={
             "name": "Geometry",
@@ -15746,7 +16204,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    mesh: list[MeshType] = field(
+    mesh: list[ MeshType ] = field(
         default_factory=list,
         metadata={
             "name": "Mesh",
@@ -15754,7 +16212,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    numerical_methods: list[NumericalMethodsType] = field(
+    numerical_methods: list[ NumericalMethodsType ] = field(
         default_factory=list,
         metadata={
             "name": "NumericalMethods",
@@ -15762,7 +16220,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    outputs: list[OutputsType] = field(
+    outputs: list[ OutputsType ] = field(
         default_factory=list,
         metadata={
             "name": "Outputs",
@@ -15770,7 +16228,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    solvers: list[SolversType] = field(
+    solvers: list[ SolversType ] = field(
         default_factory=list,
         metadata={
             "name": "Solvers",
@@ -15778,7 +16236,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    tasks: list[TasksType] = field(
+    tasks: list[ TasksType ] = field(
         default_factory=list,
         metadata={
             "name": "Tasks",
@@ -15786,7 +16244,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    constitutive: list[ConstitutiveType] = field(
+    constitutive: list[ ConstitutiveType ] = field(
         default_factory=list,
         metadata={
             "name": "Constitutive",
@@ -15794,7 +16252,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    element_regions: list[ElementRegionsType] = field(
+    element_regions: list[ ElementRegionsType ] = field(
         default_factory=list,
         metadata={
             "name": "ElementRegions",
@@ -15802,7 +16260,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    particle_regions: list[ParticleRegionsType] = field(
+    particle_regions: list[ ParticleRegionsType ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleRegions",
@@ -15810,7 +16268,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    included: list[IncludedType] = field(
+    included: list[ IncludedType ] = field(
         default_factory=list,
         metadata={
             "name": "Included",
@@ -15818,7 +16276,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    parameters: list[ParametersType] = field(
+    parameters: list[ ParametersType ] = field(
         default_factory=list,
         metadata={
             "name": "Parameters",
@@ -15826,7 +16284,7 @@ class ProblemType:
             "namespace": "",
         },
     )
-    benchmarks: list[BenchmarksType] = field(
+    benchmarks: list[ BenchmarksType ] = field(
         default_factory=list,
         metadata={
             "name": "Benchmarks",
@@ -15837,5 +16295,5 @@ class ProblemType:
 
 
 @dataclass
-class Problem(ProblemType):
+class Problem( ProblemType ):
     pass

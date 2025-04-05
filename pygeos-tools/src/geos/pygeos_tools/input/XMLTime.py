@@ -37,6 +37,7 @@ class XMLTime:
     """
     Accessors
     """
+
     def getEvents( self ) -> List[ str ]:
         return self.events
 
@@ -69,6 +70,7 @@ class XMLTime:
     """
     Mutators
     """
+
     def _add( self, new_event: str, new_target: str, new_value: float ) -> None:
         if new_event not in self.events:
             self.events.append( new_event )
@@ -92,6 +94,7 @@ class XMLTime:
     """
     Utils
     """
+
     def hasEvent( self, event: str ) -> int:
         """
         Checks if the given event exists in the list of events.

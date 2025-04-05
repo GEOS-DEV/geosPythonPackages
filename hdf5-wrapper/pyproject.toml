@@ -21,7 +21,4 @@ dependencies = [
 [project.scripts]
     hdf5_wrapper_tests = "geos.hdf5_wrapper.wrapper_tests:main"
 
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
+

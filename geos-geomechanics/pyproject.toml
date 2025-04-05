@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geos_geomechanics*"]
+exclude = ['tests*']
+
+[project]
+name = "geos-geomechanics"
+version = "0.1.0"
+description = "Geomechanics models and processing tools"
+authors = [{name = "GEOS contributors" }]
+maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python"
+]
+dynamic = ["dependencies"]
+requires-python = ">= 3.10"
+
+[project.optional-dependencies]
+build = [
+  "build ~= 1.2"
+]
+dev = [
+    "yapf",
+    "mypy",
+]
+test = [
+   "pytest",
+]
+
+[project.scripts]
+
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = ["src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []
+
+
+[tool.coverage.run]
+branch = true
+source = ["src/geos"]

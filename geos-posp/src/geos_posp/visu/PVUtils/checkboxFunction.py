@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Alexandre Benedicto
 # ruff: noqa
 # type: ignore
-def createModifiedCallback(anobject):
+def createModifiedCallback( anobject ):
     """Helper for the creation and use of vtkDataArraySelection in ParaView.
 
     Args:
@@ -11,10 +11,10 @@ def createModifiedCallback(anobject):
     """
     import weakref
 
-    weakref_obj = weakref.ref(anobject)
+    weakref_obj = weakref.ref( anobject )
     anobject = None
 
-    def _markmodified(*args, **kwars):
+    def _markmodified( *args, **kwars ):
         o = weakref_obj()
         if o is not None:
             o.Modified()

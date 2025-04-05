@@ -7,11 +7,10 @@ from pathlib import PurePath
 
 from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
 from vtkmodules.vtkIOParallelXML import (
-    vtkXMLPartitionedDataSetCollectionWriter,
-)
+    vtkXMLPartitionedDataSetCollectionWriter, )
 
 
-def valid_file(param: str) -> str:
+def valid_file( param: str ) -> str:
     """File validation function for argparse for .vtpc files.
 
     Args:
@@ -23,9 +22,9 @@ def valid_file(param: str) -> str:
     Returns:
         str: filepath to a.vtpc
     """
-    ext: str = PurePath(param).suffix
+    ext: str = PurePath( param ).suffix
     if ext.lower() != ".vtpc":
-        raise argparse.ArgumentTypeError("File must have a .vtpc extension")
+        raise argparse.ArgumentTypeError( "File must have a .vtpc extension" )
     return param
 
 
@@ -35,9 +34,7 @@ def parsing() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: argument list
     """
-    parser = argparse.ArgumentParser(
-        description="Extract Internal wells into VTK files"
-    )
+    parser = argparse.ArgumentParser( description="Extract Internal wells into VTK files" )
 
     parser.add_argument(
         "-xp",
@@ -66,18 +63,18 @@ def parsing() -> argparse.ArgumentParser:
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def main( args: argparse.Namespace ) -> None:
     """Main function that reads the xml file and writes a PartiotionedDataSetCollection file.
 
     Args:
         args (argparse.Namespace): list of arguments
     """
     reader = GeosDeckReader()
-    reader.SetFileName(args.xmlFilepath)
-    reader.SetAttributeName(args.attributeName)
+    reader.SetFileName( args.xmlFilepath )
+    reader.SetAttributeName( args.attributeName )
     writer = vtkXMLPartitionedDataSetCollectionWriter()
-    writer.SetInputConnection(reader.GetOutputPort())
-    writer.SetFileName(args.outputName)
+    writer.SetInputConnection( reader.GetOutputPort() )
+    writer.SetFileName( args.outputName )
     writer.Write()
 
 
@@ -85,7 +82,7 @@ def run() -> None:
     """Parses the arguments and runs the main function."""
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":

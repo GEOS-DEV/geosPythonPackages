@@ -17,8 +17,8 @@ import sys
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-ats', 'geos-mesh', 'geos-posp', 'geos-timehistory', 'geos-utils', 'geos-xml-tools', 
-                   'hdf5-wrapper', 'pygeos-tools' )
+python_modules = ( 'geos-ats', 'geos-mesh', 'geos-posp', 'geos-timehistory', 'geos-utils', 'geos-xml-tools', 'hdf5-wrapper', 'pygeos-tools', 'geos-geomechanics' )
+
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
@@ -42,16 +42,17 @@ release = u''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [ 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
-               'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
-               'sphinx.ext.todo', 'sphinx.ext.viewcode' ]
+extensions = [
+    'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput', 'sphinx.ext.autodoc',
+    'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon', 'sphinx.ext.todo', 'sphinx.ext.viewcode'
+]
 
 autoclass_content = 'both'
 autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pyevtk", "pylvarray", "meshio", "mpi4py",
                          "numba", "scipy", "segyio", "xmltodict" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
-suppress_warnings = [""]
+suppress_warnings = [ "" ]
 typehints_defaults = 'braces'
 
 # The suffix(es) of source filenames.

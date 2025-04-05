@@ -6,10 +6,10 @@ from geos_trame.app.core import GeosTrame
 from trame.app import get_server
 from pathlib import Path
 
-root_path = Path(__file__).parent.parent.absolute().__str__()
+root_path = Path( __file__ ).parent.parent.absolute().__str__()
 file_name = root_path + "/data/singlePhaseFlow/FieldCaseTutorial3_smoke.xml"
 
-server = enable_testing(get_server(client_type="vue3"), "message")
-app = GeosTrame(server, file_name)
+server = enable_testing( get_server( client_type="vue3" ), "message" )
+app = GeosTrame( server, file_name )
 
 app.server.start()

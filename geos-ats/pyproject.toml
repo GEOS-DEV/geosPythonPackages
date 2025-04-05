@@ -26,6 +26,7 @@ dependencies = [
     "pyyaml",
     "tqdm",
     "requests",
+    "scipy",
     "GitPython",
     "google-cloud-storage",
     "pip-system-certs",
@@ -50,3 +51,22 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "*" = ["*.js", "*.css", "*.zip"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+console_output_style = "count"
+python_classes = "Test"
+python_files = "tests_*.py"
+python_functions = "tests*"
+testpaths = ["tests"]
+pythonpath = [
+    "src",
+]
+norecursedirs = "bin"
+filterwarnings = []
+
+[tool.coverage.run]
+branch = true
+source = ["src/geos/"]

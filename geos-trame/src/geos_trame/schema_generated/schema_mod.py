@@ -10,11 +10,12 @@ from pydantic import BaseModel, ConfigDict
 from xsdata_pydantic.fields import field
 
 
-class Aquifer(BaseModel):
+class Aquifer( BaseModel ):
+
     class Meta:
         name = "Aquifer"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     allow_all_phases_into_aquifer: str = field(
         default="0",
         metadata={
@@ -29,78 +30,72 @@ class Aquifer(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_elevation: str = field(
         metadata={
             "name": "aquiferElevation",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_initial_pressure: str = field(
         metadata={
             "name": "aquiferInitialPressure",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_inner_radius: str = field(
         metadata={
             "name": "aquiferInnerRadius",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_permeability: str = field(
         metadata={
             "name": "aquiferPermeability",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_porosity: str = field(
         metadata={
             "name": "aquiferPorosity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_thickness: str = field(
         metadata={
             "name": "aquiferThickness",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_total_compressibility: str = field(
         metadata={
             "name": "aquiferTotalCompressibility",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_water_density: str = field(
         metadata={
             "name": "aquiferWaterDensity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     aquifer_water_phase_component_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "aquiferWaterPhaseComponentFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "aquiferWaterPhaseComponentFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     aquifer_water_phase_component_names: str = field(
@@ -117,9 +112,8 @@ class Aquifer(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    bc_application_table_name: Optional[str] = field(
+        } )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -138,8 +132,10 @@ class Aquifer(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -150,7 +146,7 @@ class Aquifer(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -174,7 +170,7 @@ class Aquifer(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    pressure_influence_function_name: Optional[str] = field(
+    pressure_influence_function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "pressureInfluenceFunctionName",
@@ -195,22 +191,20 @@ class Aquifer(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BiotPorosity(BaseModel):
+class BiotPorosity( BaseModel ):
+
     class Meta:
         name = "BiotPorosity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_porosity_tec: str = field(
         default="0",
         metadata={
@@ -225,16 +219,14 @@ class BiotPorosity(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     grain_bulk_modulus: str = field(
         metadata={
             "name": "grainBulkModulus",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     use_uniaxial_fixed_stress: str = field(
         default="0",
         metadata={
@@ -243,20 +235,19 @@ class BiotPorosity(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BlackOilFluid(BaseModel):
+class BlackOilFluid( BaseModel ):
+
     class Meta:
         name = "BlackOilFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -267,12 +258,15 @@ class BlackOilFluid(BaseModel):
     )
     component_molar_weight: str = field(
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_names: str = field(
         default="{}",
         metadata={
@@ -303,16 +297,18 @@ class BlackOilFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     surface_densities: str = field(
         metadata={
-            "name": "surfaceDensities",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "surfaceDensities",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     table_files: str = field(
         default="{}",
         metadata={
@@ -353,21 +349,20 @@ class BlackOilFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Blueprint(BaseModel):
+class Blueprint( BaseModel ):
+
     class Meta:
         name = "Blueprint"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -399,20 +394,19 @@ class Blueprint(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Box(BaseModel):
+class Box( BaseModel ):
+
     class Meta:
         name = "Box"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     strike: str = field(
         default="-90",
         metadata={
@@ -422,56 +416,70 @@ class Box(BaseModel):
     )
     x_max: str = field(
         metadata={
-            "name": "xMax",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "xMax",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     x_min: str = field(
         metadata={
-            "name": "xMin",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "xMin",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BrooksCoreyBakerRelativePermeability(BaseModel):
+class BrooksCoreyBakerRelativePermeability( BaseModel ):
+
     class Meta:
         name = "BrooksCoreyBakerRelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     gas_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "gasOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -480,38 +488,42 @@ class BrooksCoreyBakerRelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     water_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "waterOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BrooksCoreyCapillaryPressure(BaseModel):
+class BrooksCoreyCapillaryPressure( BaseModel ):
+
     class Meta:
         name = "BrooksCoreyCapillaryPressure"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     cap_pressure_epsilon: str = field(
         default="1e-06",
         metadata={
@@ -523,25 +535,34 @@ class BrooksCoreyCapillaryPressure(BaseModel):
     phase_cap_pressure_exponent_inv: str = field(
         default="{2}",
         metadata={
-            "name": "phaseCapPressureExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_entry_pressure: str = field(
         default="{1}",
         metadata={
-            "name": "phaseEntryPressure",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseEntryPressure",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -550,28 +571,29 @@ class BrooksCoreyCapillaryPressure(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BrooksCoreyRelativePermeability(BaseModel):
+class BrooksCoreyRelativePermeability( BaseModel ):
+
     class Meta:
         name = "BrooksCoreyRelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -580,60 +602,73 @@ class BrooksCoreyRelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     phase_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "phaseRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "phaseRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class BrooksCoreyStone2RelativePermeability(BaseModel):
+class BrooksCoreyStone2RelativePermeability( BaseModel ):
+
     class Meta:
         name = "BrooksCoreyStone2RelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     gas_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "gasOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -642,38 +677,42 @@ class BrooksCoreyStone2RelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     water_oil_rel_perm_exponent: str = field(
         default="{1}",
         metadata={
-            "name": "waterOilRelPermExponent",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponent",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Co2BrineEzrokhiFluid(BaseModel):
+class Co2BrineEzrokhiFluid( BaseModel ):
+
     class Meta:
         name = "CO2BrineEzrokhiFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -685,9 +724,12 @@ class Co2BrineEzrokhiFluid(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -698,7 +740,7 @@ class Co2BrineEzrokhiFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -728,8 +770,7 @@ class Co2BrineEzrokhiFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
+        } )
     solubility_table_names: str = field(
         default="{}",
         metadata={
@@ -738,20 +779,19 @@ class Co2BrineEzrokhiFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Co2BrineEzrokhiThermalFluid(BaseModel):
+class Co2BrineEzrokhiThermalFluid( BaseModel ):
+
     class Meta:
         name = "CO2BrineEzrokhiThermalFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -763,9 +803,12 @@ class Co2BrineEzrokhiThermalFluid(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -776,7 +819,7 @@ class Co2BrineEzrokhiThermalFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -806,8 +849,7 @@ class Co2BrineEzrokhiThermalFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
+        } )
     solubility_table_names: str = field(
         default="{}",
         metadata={
@@ -816,20 +858,19 @@ class Co2BrineEzrokhiThermalFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Co2BrinePhillipsFluid(BaseModel):
+class Co2BrinePhillipsFluid( BaseModel ):
+
     class Meta:
         name = "CO2BrinePhillipsFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -841,9 +882,12 @@ class Co2BrinePhillipsFluid(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -854,7 +898,7 @@ class Co2BrinePhillipsFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -884,8 +928,7 @@ class Co2BrinePhillipsFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
+        } )
     solubility_table_names: str = field(
         default="{}",
         metadata={
@@ -894,20 +937,19 @@ class Co2BrinePhillipsFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Co2BrinePhillipsThermalFluid(BaseModel):
+class Co2BrinePhillipsThermalFluid( BaseModel ):
+
     class Meta:
         name = "CO2BrinePhillipsThermalFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -919,9 +961,12 @@ class Co2BrinePhillipsThermalFluid(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -932,7 +977,7 @@ class Co2BrinePhillipsThermalFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    flash_model_para_file: Optional[str] = field(
+    flash_model_para_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "flashModelParaFile",
@@ -962,8 +1007,7 @@ class Co2BrinePhillipsThermalFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
+        } )
     solubility_table_names: str = field(
         default="{}",
         metadata={
@@ -972,25 +1016,26 @@ class Co2BrinePhillipsThermalFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CarmanKozenyPermeability(BaseModel):
+class CarmanKozenyPermeability( BaseModel ):
+
     class Meta:
         name = "CarmanKozenyPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     anisotropy: str = field(
         default="{1,1,1}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     particle_diameter: str = field(
@@ -999,37 +1044,33 @@ class CarmanKozenyPermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     sphericity: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CellElementRegion(BaseModel):
+class CellElementRegion( BaseModel ):
+
     class Meta:
         name = "CellElementRegion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     cell_blocks: str = field(
         metadata={
             "name": "cellBlocks",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     coarsening_ratio: str = field(
         default="0",
         metadata={
@@ -1044,9 +1085,8 @@ class CellElementRegion(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    mesh_body: Optional[str] = field(
+        } )
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -1054,36 +1094,33 @@ class CellElementRegion(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CeramicDamage(BaseModel):
+class CeramicDamage( BaseModel ):
+
     class Meta:
         name = "CeramicDamage"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressive_strength: str = field(
         metadata={
             "name": "compressiveStrength",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     crack_speed: str = field(
         metadata={
             "name": "crackSpeed",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -1098,8 +1135,7 @@ class CeramicDamage(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -1138,39 +1174,35 @@ class CeramicDamage(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     tensile_strength: str = field(
         metadata={
             "name": "tensileStrength",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ChomboIo(BaseModel):
+class ChomboIo( BaseModel ):
+
     class Meta:
         name = "ChomboIO"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     begin_cycle: str = field(
         metadata={
             "name": "beginCycle",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    child_directory: Optional[str] = field(
+        } )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -1186,14 +1218,12 @@ class ChomboIo(BaseModel):
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    output_path: str = field(
-        metadata={
-            "name": "outputPath",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
+    output_path: str = field( metadata={
+        "name": "outputPath",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
     parallel_threads: str = field(
         default="1",
         metadata={
@@ -1210,29 +1240,26 @@ class ChomboIo(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    wait_for_input: str = field(
-        metadata={
-            "name": "waitForInput",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    wait_for_input: str = field( metadata={
+        "name": "waitForInput",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositeFunction(BaseModel):
+class CompositeFunction( BaseModel ):
+
     class Meta:
         name = "CompositeFunction"
 
-    model_config = ConfigDict(defer_build=True)
-    expression: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    expression: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -1263,20 +1290,19 @@ class CompositeFunction(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseFluid(BaseModel):
+class CompositionalMultiphaseFluid( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -1287,58 +1313,75 @@ class CompositionalMultiphaseFluid(BaseModel):
     )
     component_acentric_factor: str = field(
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     component_critical_pressure: str = field(
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_critical_temperature: str = field(
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_molar_weight: str = field(
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_names: str = field(
         metadata={
             "name": "componentNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     equations_of_state: str = field(
@@ -1347,30 +1390,27 @@ class CompositionalMultiphaseFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     phase_names: str = field(
         metadata={
             "name": "phaseNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseReservoirPoromechanicsInitialization(BaseModel):
+class CompositionalMultiphaseReservoirPoromechanicsInitialization( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseReservoirPoromechanicsInitialization"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     log_level: str = field(
         default="0",
         metadata={
@@ -1385,30 +1425,27 @@ class CompositionalMultiphaseReservoirPoromechanicsInitialization(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+        } )
     poromechanics_solver_name: str = field(
         metadata={
             "name": "poromechanicsSolverName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseStatistics(BaseModel):
+class CompositionalMultiphaseStatistics( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseStatistics"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compute_cflnumbers: str = field(
         default="0",
         metadata={
@@ -1425,14 +1462,12 @@ class CompositionalMultiphaseStatistics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -1457,20 +1492,19 @@ class CompositionalMultiphaseStatistics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositonalTwoPhaseFluidPengRobinson(BaseModel):
+class CompositonalTwoPhaseFluidPengRobinson( BaseModel ):
+
     class Meta:
         name = "CompositonalTwoPhaseFluidPengRobinson"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -1481,66 +1515,86 @@ class CompositonalTwoPhaseFluidPengRobinson(BaseModel):
     )
     component_acentric_factor: str = field(
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     component_critical_pressure: str = field(
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_critical_temperature: str = field(
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_critical_volume: str = field(
         default="{0}",
         metadata={
-            "name": "componentCriticalVolume",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalVolume",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_molar_weight: str = field(
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_names: str = field(
         metadata={
             "name": "componentNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -1549,22 +1603,20 @@ class CompositonalTwoPhaseFluidPengRobinson(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositonalTwoPhaseFluidSoaveRedlichKwong(BaseModel):
+class CompositonalTwoPhaseFluidSoaveRedlichKwong( BaseModel ):
+
     class Meta:
         name = "CompositonalTwoPhaseFluidSoaveRedlichKwong"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -1575,66 +1627,86 @@ class CompositonalTwoPhaseFluidSoaveRedlichKwong(BaseModel):
     )
     component_acentric_factor: str = field(
         metadata={
-            "name": "componentAcentricFactor",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentAcentricFactor",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_binary_coeff: str = field(
         default="{{0}}",
         metadata={
-            "name": "componentBinaryCoeff",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "componentBinaryCoeff",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     component_critical_pressure: str = field(
         metadata={
-            "name": "componentCriticalPressure",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalPressure",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_critical_temperature: str = field(
         metadata={
-            "name": "componentCriticalTemperature",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentCriticalTemperature",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_critical_volume: str = field(
         default="{0}",
         metadata={
-            "name": "componentCriticalVolume",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentCriticalVolume",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_molar_weight: str = field(
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_names: str = field(
         metadata={
             "name": "componentNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     component_volume_shift: str = field(
         default="{0}",
         metadata={
-            "name": "componentVolumeShift",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentVolumeShift",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -1643,22 +1715,20 @@ class CompositonalTwoPhaseFluidSoaveRedlichKwong(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSinglePhaseFluid(BaseModel):
+class CompressibleSinglePhaseFluid( BaseModel ):
+
     class Meta:
         name = "CompressibleSinglePhaseFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressibility: str = field(
         default="0",
         metadata={
@@ -1672,16 +1742,14 @@ class CompressibleSinglePhaseFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_viscosity: str = field(
         metadata={
             "name": "defaultViscosity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     density_model_type: str = field(
         default="linear",
         metadata={
@@ -1729,37 +1797,33 @@ class CompressibleSinglePhaseFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|exponential|linear|quadratic",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidCarmanKozenyPermeability(BaseModel):
+class CompressibleSolidCarmanKozenyPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidCarmanKozenyPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1767,45 +1831,39 @@ class CompressibleSolidCarmanKozenyPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidConstantPermeability(BaseModel):
+class CompressibleSolidConstantPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidConstantPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1813,45 +1871,39 @@ class CompressibleSolidConstantPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidExponentialDecayPermeability(BaseModel):
+class CompressibleSolidExponentialDecayPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidExponentialDecayPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1859,45 +1911,39 @@ class CompressibleSolidExponentialDecayPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidParallelPlatesPermeability(BaseModel):
+class CompressibleSolidParallelPlatesPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidParallelPlatesPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1905,45 +1951,39 @@ class CompressibleSolidParallelPlatesPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidSlipDependentPermeability(BaseModel):
+class CompressibleSolidSlipDependentPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidSlipDependentPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1951,45 +1991,39 @@ class CompressibleSolidSlipDependentPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompressibleSolidWillisRichardsPermeability(BaseModel):
+class CompressibleSolidWillisRichardsPermeability( BaseModel ):
+
     class Meta:
         name = "CompressibleSolidWillisRichardsPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -1997,96 +2031,97 @@ class CompressibleSolidWillisRichardsPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ConstantDiffusion(BaseModel):
+class ConstantDiffusion( BaseModel ):
+
     class Meta:
         name = "ConstantDiffusion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_phase_diffusivity_multipliers: str = field(
         default="{1}",
         metadata={
-            "name": "defaultPhaseDiffusivityMultipliers",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultPhaseDiffusivityMultipliers",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     diffusivity_components: str = field(
         metadata={
-            "name": "diffusivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "diffusivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     phase_names: str = field(
         metadata={
             "name": "phaseNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ConstantPermeability(BaseModel):
+class ConstantPermeability( BaseModel ):
+
     class Meta:
         name = "ConstantPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_components: str = field(
         metadata={
-            "name": "permeabilityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "permeabilityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Coulomb(BaseModel):
+class Coulomb( BaseModel ):
+
     class Meta:
         name = "Coulomb"
 
-    model_config = ConfigDict(defer_build=True)
-    aperture_table_name: str = field(
-        metadata={
-            "name": "apertureTableName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    aperture_table_name: str = field( metadata={
+        "name": "apertureTableName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     aperture_tolerance: str = field(
         default="1e-09",
         metadata={
@@ -2100,8 +2135,7 @@ class Coulomb(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     displacement_jump_threshold: str = field(
         default="2.22045e-16",
         metadata={
@@ -2116,8 +2150,7 @@ class Coulomb(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     penalty_stiffness: str = field(
         default="0",
         metadata={
@@ -2134,49 +2167,57 @@ class Coulomb(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CustomPolarObject(BaseModel):
+class CustomPolarObject( BaseModel ):
+
     class Meta:
         name = "CustomPolarObject"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     center: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     coefficients: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     length_vector: str = field(
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     normal: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     tolerance: str = field(
         default="1e-05",
         metadata={
@@ -2186,34 +2227,39 @@ class CustomPolarObject(BaseModel):
     )
     width_vector: str = field(
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Cylinder(BaseModel):
+class Cylinder( BaseModel ):
+
     class Meta:
         name = "Cylinder"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     first_face_center: str = field(
         metadata={
-            "name": "firstFaceCenter",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "firstFaceCenter",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     inner_radius: str = field(
         default="-1",
         metadata={
@@ -2228,30 +2274,31 @@ class Cylinder(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     second_face_center: str = field(
         metadata={
-            "name": "secondFaceCenter",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "secondFaceCenter",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DamageElasticIsotropic(BaseModel):
+class DamageElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "DamageElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressive_strength: str = field(
         default="0",
         metadata={
@@ -2266,16 +2313,14 @@ class DamageElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     critical_strain_energy: str = field(
         metadata={
             "name": "criticalStrainEnergy",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -2290,8 +2335,7 @@ class DamageElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -2354,8 +2398,7 @@ class DamageElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     tensile_strength: str = field(
         default="0",
         metadata={
@@ -2364,20 +2407,19 @@ class DamageElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DamageSpectralElasticIsotropic(BaseModel):
+class DamageSpectralElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "DamageSpectralElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressive_strength: str = field(
         default="0",
         metadata={
@@ -2392,16 +2434,14 @@ class DamageSpectralElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     critical_strain_energy: str = field(
         metadata={
             "name": "criticalStrainEnergy",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -2416,8 +2456,7 @@ class DamageSpectralElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -2480,8 +2519,7 @@ class DamageSpectralElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     tensile_strength: str = field(
         default="0",
         metadata={
@@ -2490,20 +2528,19 @@ class DamageSpectralElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DamageVolDevElasticIsotropic(BaseModel):
+class DamageVolDevElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "DamageVolDevElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressive_strength: str = field(
         default="0",
         metadata={
@@ -2518,16 +2555,14 @@ class DamageVolDevElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     critical_strain_energy: str = field(
         metadata={
             "name": "criticalStrainEnergy",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -2542,8 +2577,7 @@ class DamageVolDevElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -2606,8 +2640,7 @@ class DamageVolDevElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     tensile_strength: str = field(
         default="0",
         metadata={
@@ -2616,20 +2649,19 @@ class DamageVolDevElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DeadOilFluid(BaseModel):
+class DeadOilFluid( BaseModel ):
+
     class Meta:
         name = "DeadOilFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -2640,12 +2672,15 @@ class DeadOilFluid(BaseModel):
     )
     component_molar_weight: str = field(
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     component_names: str = field(
         default="{}",
         metadata={
@@ -2676,16 +2711,18 @@ class DeadOilFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     surface_densities: str = field(
         metadata={
-            "name": "surfaceDensities",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "surfaceDensities",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     table_files: str = field(
         default="{}",
         metadata={
@@ -2726,20 +2763,19 @@ class DeadOilFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DelftEgg(BaseModel):
+class DelftEgg( BaseModel ):
+
     class Meta:
         name = "DelftEgg"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -2762,8 +2798,7 @@ class DelftEgg(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -2828,21 +2863,20 @@ class DelftEgg(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Dirichlet(BaseModel):
+class Dirichlet( BaseModel ):
+
     class Meta:
         name = "Dirichlet"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -2868,8 +2902,10 @@ class Dirichlet(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -2880,7 +2916,7 @@ class Dirichlet(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -2888,7 +2924,7 @@ class Dirichlet(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -2912,7 +2948,7 @@ class Dirichlet(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -2933,51 +2969,55 @@ class Dirichlet(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Disc(BaseModel):
+class Disc( BaseModel ):
+
     class Meta:
         name = "Disc"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     center: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     length_vector: str = field(
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     normal: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     radius: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     tolerance: str = field(
         default="1e-05",
         metadata={
@@ -2987,26 +3027,28 @@ class Disc(BaseModel):
     )
     width_vector: str = field(
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class DruckerPrager(BaseModel):
+class DruckerPrager( BaseModel ):
+
     class Meta:
         name = "DruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -3029,8 +3071,7 @@ class DruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_dilation_angle: str = field(
         default="30",
         metadata={
@@ -3087,28 +3128,26 @@ class DruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElasticIsotropicPressureDependent(BaseModel):
+class ElasticIsotropicPressureDependent( BaseModel ):
+
     class Meta:
         name = "ElasticIsotropicPressureDependent"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_density: str = field(
         metadata={
             "name": "defaultDensity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -3149,20 +3188,19 @@ class ElasticIsotropicPressureDependent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElasticIsotropic(BaseModel):
+class ElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "ElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -3177,8 +3215,7 @@ class ElasticIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -3211,20 +3248,19 @@ class ElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElasticOrthotropic(BaseModel):
+class ElasticOrthotropic( BaseModel ):
+
     class Meta:
         name = "ElasticOrthotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_c11: str = field(
         default="-1",
         metadata={
@@ -3303,8 +3339,7 @@ class ElasticOrthotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -3385,20 +3420,19 @@ class ElasticOrthotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElasticTransverseIsotropic(BaseModel):
+class ElasticTransverseIsotropic( BaseModel ):
+
     class Meta:
         name = "ElasticTransverseIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_c11: str = field(
         default="-1",
         metadata={
@@ -3445,8 +3479,7 @@ class ElasticTransverseIsotropic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -3495,50 +3528,50 @@ class ElasticTransverseIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ExponentialDecayPermeability(BaseModel):
+class ExponentialDecayPermeability( BaseModel ):
+
     class Meta:
         name = "ExponentialDecayPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     empirical_constant: str = field(
         metadata={
             "name": "empiricalConstant",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     initial_permeability: str = field(
         metadata={
-            "name": "initialPermeability",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "initialPermeability",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ExtendedDruckerPrager(BaseModel):
+class ExtendedDruckerPrager( BaseModel ):
+
     class Meta:
         name = "ExtendedDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -3561,8 +3594,7 @@ class ExtendedDruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_dilation_ratio: str = field(
         default="1",
         metadata={
@@ -3627,21 +3659,20 @@ class ExtendedDruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class FieldSpecification(BaseModel):
+class FieldSpecification( BaseModel ):
+
     class Meta:
         name = "FieldSpecification"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -3667,8 +3698,10 @@ class FieldSpecification(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -3679,7 +3712,7 @@ class FieldSpecification(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    field_name: Optional[str] = field(
+    field_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fieldName",
@@ -3687,7 +3720,7 @@ class FieldSpecification(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -3711,7 +3744,7 @@ class FieldSpecification(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -3732,36 +3765,33 @@ class FieldSpecification(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class File(BaseModel):
+class File( BaseModel ):
+
     class Meta:
         name = "File"
 
-    model_config = ConfigDict(defer_build=True)
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
+    } )
 
 
-class FiniteElementSpace(BaseModel):
+class FiniteElementSpace( BaseModel ):
+
     class Meta:
         name = "FiniteElementSpace"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     formulation: str = field(
         default="default",
         metadata={
@@ -3769,13 +3799,11 @@ class FiniteElementSpace(BaseModel):
             "pattern": r".*[\[\]`$].*|default|SEM",
         },
     )
-    order: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    order: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     use_virtual_elements: str = field(
         default="0",
         metadata={
@@ -3784,28 +3812,25 @@ class FiniteElementSpace(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class FrictionlessContact(BaseModel):
+class FrictionlessContact( BaseModel ):
+
     class Meta:
         name = "FrictionlessContact"
 
-    model_config = ConfigDict(defer_build=True)
-    aperture_table_name: str = field(
-        metadata={
-            "name": "apertureTableName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    aperture_table_name: str = field( metadata={
+        "name": "apertureTableName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     aperture_tolerance: str = field(
         default="1e-09",
         metadata={
@@ -3838,21 +3863,20 @@ class FrictionlessContact(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class HaltEvent(BaseModel):
+class HaltEvent( BaseModel ):
+
     class Meta:
         name = "HaltEvent"
 
-    model_config = ConfigDict(defer_build=True)
-    halt_event: List["HaltEvent"] = field(
+    model_config = ConfigDict( defer_build=True )
+    halt_event: List[ "HaltEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -3860,7 +3884,7 @@ class HaltEvent(BaseModel):
             "namespace": "",
         },
     )
-    periodic_event: List["PeriodicEvent"] = field(
+    periodic_event: List[ "PeriodicEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -3868,7 +3892,7 @@ class HaltEvent(BaseModel):
             "namespace": "",
         },
     )
-    solo_event: List["SoloEvent"] = field(
+    solo_event: List[ "SoloEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -3930,9 +3954,8 @@ class HaltEvent(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    target: Optional[str] = field(
+        } )
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -3947,43 +3970,39 @@ class HaltEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class HybridMimeticDiscretization(BaseModel):
+class HybridMimeticDiscretization( BaseModel ):
+
     class Meta:
         name = "HybridMimeticDiscretization"
 
-    model_config = ConfigDict(defer_build=True)
-    inner_product_type: str = field(
-        metadata={
-            "name": "innerProduct",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    inner_product_type: str = field( metadata={
+        "name": "innerProduct",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class HydrostaticEquilibrium(BaseModel):
+class HydrostaticEquilibrium( BaseModel ):
+
     class Meta:
         name = "HydrostaticEquilibrium"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -4021,21 +4040,21 @@ class HydrostaticEquilibrium(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     datum_pressure: str = field(
         metadata={
             "name": "datumPressure",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     elevation_increment_in_hydrostatic_pressure_table: str = field(
@@ -4062,7 +4081,7 @@ class HydrostaticEquilibrium(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -4070,7 +4089,7 @@ class HydrostaticEquilibrium(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    initial_phase_name: Optional[str] = field(
+    initial_phase_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "initialPhaseName",
@@ -4094,7 +4113,7 @@ class HydrostaticEquilibrium(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -4109,7 +4128,7 @@ class HydrostaticEquilibrium(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    temperature_vs_elevation_table_name: Optional[str] = field(
+    temperature_vs_elevation_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "temperatureVsElevationTableName",
@@ -4117,21 +4136,20 @@ class HydrostaticEquilibrium(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class JfunctionCapillaryPressure(BaseModel):
+class JfunctionCapillaryPressure( BaseModel ):
+
     class Meta:
         name = "JFunctionCapillaryPressure"
 
-    model_config = ConfigDict(defer_build=True)
-    non_wetting_intermediate_jfunction_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    non_wetting_intermediate_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "nonWettingIntermediateJFunctionTableName",
@@ -4147,14 +4165,12 @@ class JfunctionCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    permeability_direction: str = field(
-        metadata={
-            "name": "permeabilityDirection",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|XY|X|Y|Z",
-        }
-    )
+    permeability_direction: str = field( metadata={
+        "name": "permeabilityDirection",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|XY|X|Y|Z",
+    } )
     permeability_exponent: str = field(
         default="0.5",
         metadata={
@@ -4169,8 +4185,7 @@ class JfunctionCapillaryPressure(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     porosity_exponent: str = field(
         default="0.5",
         metadata={
@@ -4179,7 +4194,7 @@ class JfunctionCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    wetting_intermediate_jfunction_table_name: Optional[str] = field(
+    wetting_intermediate_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingIntermediateJFunctionTableName",
@@ -4195,7 +4210,7 @@ class JfunctionCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    wetting_non_wetting_jfunction_table_name: Optional[str] = field(
+    wetting_non_wetting_jfunction_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingNonWettingJFunctionTableName",
@@ -4211,42 +4226,39 @@ class JfunctionCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class LinearIsotropicDispersion(BaseModel):
+class LinearIsotropicDispersion( BaseModel ):
+
     class Meta:
         name = "LinearIsotropicDispersion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     longitudinal_dispersivity: str = field(
         metadata={
             "name": "longitudinalDispersivity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class LinearSolverParameters(BaseModel):
+class LinearSolverParameters( BaseModel ):
+
     class Meta:
         name = "LinearSolverParameters"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     amg_aggressive_coarsening_levels: str = field(
         default="0",
         metadata={
@@ -4266,9 +4278,12 @@ class LinearSolverParameters(BaseModel):
     amg_aggressive_interp_type: str = field(
         default="multipass",
         metadata={
-            "name": "amgAggressiveInterp",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass",
+            "name":
+            "amgAggressiveInterp",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass",
         },
     )
     amg_coarse_solver: str = field(
@@ -4298,9 +4313,12 @@ class LinearSolverParameters(BaseModel):
     amg_interpolation_type: str = field(
         default="extendedI",
         metadata={
-            "name": "amgInterpolation",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE",
+            "name":
+            "amgInterpolation",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE",
         },
     )
     amg_null_space_type: str = field(
@@ -4482,9 +4500,12 @@ class LinearSolverParameters(BaseModel):
     preconditioner_type: str = field(
         default="iluk",
         metadata={
-            "name": "preconditioner",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs",
+            "name":
+            "preconditioner",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs",
         },
     )
     solver_type: str = field(
@@ -4505,11 +4526,12 @@ class LinearSolverParameters(BaseModel):
     )
 
 
-class ModifiedCamClay(BaseModel):
+class ModifiedCamClay( BaseModel ):
+
     class Meta:
         name = "ModifiedCamClay"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_csl_slope: str = field(
         default="1",
         metadata={
@@ -4524,8 +4546,7 @@ class ModifiedCamClay(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -4582,88 +4603,92 @@ class ModifiedCamClay(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultiPhaseConstantThermalConductivity(BaseModel):
+class MultiPhaseConstantThermalConductivity( BaseModel ):
+
     class Meta:
         name = "MultiPhaseConstantThermalConductivity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     phase_names: str = field(
         metadata={
             "name": "phaseNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     thermal_conductivity_components: str = field(
         metadata={
-            "name": "thermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "thermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultiPhaseVolumeWeightedThermalConductivity(BaseModel):
+class MultiPhaseVolumeWeightedThermalConductivity( BaseModel ):
+
     class Meta:
         name = "MultiPhaseVolumeWeightedThermalConductivity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     phase_names: str = field(
         metadata={
             "name": "phaseNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     phase_thermal_conductivity: str = field(
         metadata={
-            "name": "phaseThermalConductivity",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "phaseThermalConductivity",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     rock_thermal_conductivity_components: str = field(
         metadata={
-            "name": "rockThermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "rockThermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultiphasePoromechanicsInitialization(BaseModel):
+class MultiphasePoromechanicsInitialization( BaseModel ):
+
     class Meta:
         name = "MultiphasePoromechanicsInitialization"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     log_level: str = field(
         default="0",
         metadata={
@@ -4678,30 +4703,27 @@ class MultiphasePoromechanicsInitialization(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+        } )
     poromechanics_solver_name: str = field(
         metadata={
             "name": "poromechanicsSolverName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultivariableTableFunction(BaseModel):
+class MultivariableTableFunction( BaseModel ):
+
     class Meta:
         name = "MultivariableTableFunction"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     input_var_names: str = field(
         default="{}",
         metadata={
@@ -4710,20 +4732,19 @@ class MultivariableTableFunction(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class NonlinearSolverParameters(BaseModel):
+class NonlinearSolverParameters( BaseModel ):
+
     class Meta:
         name = "NonlinearSolverParameters"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     allow_non_converged: str = field(
         default="0",
         metadata={
@@ -4925,26 +4946,26 @@ class NonlinearSolverParameters(BaseModel):
     )
 
 
-class NullModel(BaseModel):
+class NullModel( BaseModel ):
+
     class Meta:
         name = "NullModel"
 
-    model_config = ConfigDict(defer_build=True)
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Pml(BaseModel):
+class Pml( BaseModel ):
+
     class Meta:
         name = "PML"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -4970,8 +4991,10 @@ class Pml(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -4982,7 +5005,7 @@ class Pml(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -4998,7 +5021,7 @@ class Pml(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -5026,70 +5049,86 @@ class Pml(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     thickness_max_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "thicknessMaxXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thicknessMaxXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     thickness_min_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "thicknessMinXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "thicknessMinXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     wave_speed_max_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "waveSpeedMaxXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "waveSpeedMaxXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     wave_speed_min_xyz: str = field(
         default="{-1,-1,-1}",
         metadata={
-            "name": "waveSpeedMinXYZ",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "waveSpeedMinXYZ",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     x_max: str = field(
         default="{3.40282e+38,3.40282e+38,3.40282e+38}",
         metadata={
-            "name": "xMax",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMax",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     x_min: str = field(
         default="{-3.40282e+38,-3.40282e+38,-3.40282e+38}",
         metadata={
-            "name": "xMin",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "xMin",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Pvtdriver(BaseModel):
+class Pvtdriver( BaseModel ):
+
     class Meta:
         name = "PVTDriver"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     baseline: str = field(
         default="none",
         metadata={
@@ -5099,19 +5138,20 @@ class Pvtdriver(BaseModel):
     )
     feed_composition: str = field(
         metadata={
-            "name": "feedComposition",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
-    fluid: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+            "name":
+            "feedComposition",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
+    fluid: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -5143,43 +5183,37 @@ class Pvtdriver(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    pressure_control: str = field(
-        metadata={
-            "name": "pressureControl",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    steps: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    pressure_control: str = field( metadata={
+        "name": "pressureControl",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    steps: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     temperature_control: str = field(
         metadata={
             "name": "temperatureControl",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PackCollection(BaseModel):
+class PackCollection( BaseModel ):
+
     class Meta:
         name = "PackCollection"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     disable_coord_collection: str = field(
         default="0",
         metadata={
@@ -5188,22 +5222,18 @@ class PackCollection(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    field_name: str = field(
-        metadata={
-            "name": "fieldName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    object_path: str = field(
-        metadata={
-            "name": "objectPath",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    field_name: str = field( metadata={
+        "name": "fieldName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    object_path: str = field( metadata={
+        "name": "objectPath",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     only_on_set_change: str = field(
         default="0",
         metadata={
@@ -5220,20 +5250,19 @@ class PackCollection(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ParallelPlatesPermeability(BaseModel):
+class ParallelPlatesPermeability( BaseModel ):
+
     class Meta:
         name = "ParallelPlatesPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     transversal_permeability: str = field(
         default="-1",
         metadata={
@@ -5242,41 +5271,37 @@ class ParallelPlatesPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Parameter(BaseModel):
+class Parameter( BaseModel ):
+
     class Meta:
         name = "Parameter"
 
-    model_config = ConfigDict(defer_build=True)
-    value: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    value: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ParticleFluid(BaseModel):
+class ParticleFluid( BaseModel ):
+
     class Meta:
         name = "ParticleFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     collision_alpha: str = field(
         default="1.27",
         metadata={
@@ -5331,8 +5356,7 @@ class ParticleFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|Stokes|Intermediate|Turbulence",
-        }
-    )
+        } )
     proppant_density: str = field(
         default="1400",
         metadata={
@@ -5364,75 +5388,66 @@ class ParticleFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ParticleMesh(BaseModel):
+class ParticleMesh( BaseModel ):
+
     class Meta:
         name = "ParticleMesh"
 
-    model_config = ConfigDict(defer_build=True)
-    header_file: str = field(
-        metadata={
-            "name": "headerFile",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    header_file: str = field( metadata={
+        "name": "headerFile",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
+    } )
     particle_block_names: str = field(
         metadata={
             "name": "particleBlockNames",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
-    particle_file: str = field(
-        metadata={
-            "name": "particleFile",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+        } )
+    particle_file: str = field( metadata={
+        "name": "particleFile",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
+    } )
     particle_types: str = field(
         metadata={
             "name": "particleTypes",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ParticleRegion(BaseModel):
+class ParticleRegion( BaseModel ):
+
     class Meta:
         name = "ParticleRegion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     material_list: str = field(
         metadata={
             "name": "materialList",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
-    mesh_body: Optional[str] = field(
+        } )
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -5448,20 +5463,19 @@ class ParticleRegion(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PerfectlyPlastic(BaseModel):
+class PerfectlyPlastic( BaseModel ):
+
     class Meta:
         name = "PerfectlyPlastic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -5476,8 +5490,7 @@ class PerfectlyPlastic(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -5518,28 +5531,26 @@ class PerfectlyPlastic(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Perforation(BaseModel):
+class Perforation( BaseModel ):
+
     class Meta:
         name = "Perforation"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     distance_from_head: str = field(
         metadata={
             "name": "distanceFromHead",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     skin_factor: str = field(
         default="0",
         metadata={
@@ -5555,51 +5566,46 @@ class Perforation(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PermeabilityBase(BaseModel):
+class PermeabilityBase( BaseModel ):
+
     class Meta:
         name = "PermeabilityBase"
 
-    model_config = ConfigDict(defer_build=True)
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousDamageElasticIsotropic(BaseModel):
+class PorousDamageElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "PorousDamageElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5607,45 +5613,39 @@ class PorousDamageElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousDamageSpectralElasticIsotropic(BaseModel):
+class PorousDamageSpectralElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "PorousDamageSpectralElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5653,45 +5653,39 @@ class PorousDamageSpectralElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousDamageVolDevElasticIsotropic(BaseModel):
+class PorousDamageVolDevElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "PorousDamageVolDevElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5699,45 +5693,39 @@ class PorousDamageVolDevElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousDelftEgg(BaseModel):
+class PorousDelftEgg( BaseModel ):
+
     class Meta:
         name = "PorousDelftEgg"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5745,45 +5733,39 @@ class PorousDelftEgg(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousDruckerPrager(BaseModel):
+class PorousDruckerPrager( BaseModel ):
+
     class Meta:
         name = "PorousDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5791,45 +5773,39 @@ class PorousDruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousElasticIsotropic(BaseModel):
+class PorousElasticIsotropic( BaseModel ):
+
     class Meta:
         name = "PorousElasticIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5837,45 +5813,39 @@ class PorousElasticIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousElasticOrthotropic(BaseModel):
+class PorousElasticOrthotropic( BaseModel ):
+
     class Meta:
         name = "PorousElasticOrthotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5883,45 +5853,39 @@ class PorousElasticOrthotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousElasticTransverseIsotropic(BaseModel):
+class PorousElasticTransverseIsotropic( BaseModel ):
+
     class Meta:
         name = "PorousElasticTransverseIsotropic"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5929,45 +5893,39 @@ class PorousElasticTransverseIsotropic(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousExtendedDruckerPrager(BaseModel):
+class PorousExtendedDruckerPrager( BaseModel ):
+
     class Meta:
         name = "PorousExtendedDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -5975,45 +5933,39 @@ class PorousExtendedDruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousModifiedCamClay(BaseModel):
+class PorousModifiedCamClay( BaseModel ):
+
     class Meta:
         name = "PorousModifiedCamClay"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6021,45 +5973,39 @@ class PorousModifiedCamClay(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousViscoDruckerPrager(BaseModel):
+class PorousViscoDruckerPrager( BaseModel ):
+
     class Meta:
         name = "PorousViscoDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6067,45 +6013,39 @@ class PorousViscoDruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousViscoExtendedDruckerPrager(BaseModel):
+class PorousViscoExtendedDruckerPrager( BaseModel ):
+
     class Meta:
         name = "PorousViscoExtendedDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6113,45 +6053,39 @@ class PorousViscoExtendedDruckerPrager(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PorousViscoModifiedCamClay(BaseModel):
+class PorousViscoModifiedCamClay( BaseModel ):
+
     class Meta:
         name = "PorousViscoModifiedCamClay"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6159,125 +6093,112 @@ class PorousViscoModifiedCamClay(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PressurePorosity(BaseModel):
+class PressurePorosity( BaseModel ):
+
     class Meta:
         name = "PressurePorosity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressibility: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_reference_porosity: str = field(
         metadata={
             "name": "defaultReferencePorosity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     reference_pressure: str = field(
         metadata={
             "name": "referencePressure",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ProppantPermeability(BaseModel):
+class ProppantPermeability( BaseModel ):
+
     class Meta:
         name = "ProppantPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     max_proppant_concentration: str = field(
         metadata={
             "name": "maxProppantConcentration",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     proppant_diameter: str = field(
         metadata={
             "name": "proppantDiameter",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ProppantPorosity(BaseModel):
+class ProppantPorosity( BaseModel ):
+
     class Meta:
         name = "ProppantPorosity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_reference_porosity: str = field(
         metadata={
             "name": "defaultReferencePorosity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     max_proppant_concentration: str = field(
         metadata={
             "name": "maxProppantConcentration",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ProppantSlurryFluid(BaseModel):
+class ProppantSlurryFluid( BaseModel ):
+
     class Meta:
         name = "ProppantSlurryFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     component_names: str = field(
         default="{}",
         metadata={
@@ -6296,41 +6217,56 @@ class ProppantSlurryFluid(BaseModel):
     default_component_density: str = field(
         default="{0}",
         metadata={
-            "name": "defaultComponentDensity",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultComponentDensity",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     default_component_viscosity: str = field(
         default="{0}",
         metadata={
-            "name": "defaultComponentViscosity",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultComponentViscosity",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     default_compressibility: str = field(
         default="{0}",
         metadata={
-            "name": "defaultCompressibility",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "defaultCompressibility",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     flow_behavior_index: str = field(
         default="{0}",
         metadata={
-            "name": "flowBehaviorIndex",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "flowBehaviorIndex",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     flow_consistency_index: str = field(
         default="{0}",
         metadata={
-            "name": "flowConsistencyIndex",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "flowConsistencyIndex",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     max_proppant_concentration: str = field(
@@ -6373,37 +6309,33 @@ class ProppantSlurryFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ProppantSolidProppantPermeability(BaseModel):
+class ProppantSolidProppantPermeability( BaseModel ):
+
     class Meta:
         name = "ProppantSolidProppantPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     permeability_model_name: str = field(
         metadata={
             "name": "permeabilityModelName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    porosity_model_name: str = field(
-        metadata={
-            "name": "porosityModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_internal_energy_model_name: Optional[str] = field(
+        } )
+    porosity_model_name: str = field( metadata={
+        "name": "porosityModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    solid_internal_energy_model_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "solidInternalEnergyModelName",
@@ -6411,29 +6343,26 @@ class ProppantSolidProppantPermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    solid_model_name: str = field(
-        metadata={
-            "name": "solidModelName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_model_name: str = field( metadata={
+        "name": "solidModelName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Python(BaseModel):
+class Python( BaseModel ):
+
     class Meta:
         name = "Python"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6449,20 +6378,19 @@ class Python(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ReactiveBrineThermal(BaseModel):
+class ReactiveBrineThermal( BaseModel ):
+
     class Meta:
         name = "ReactiveBrineThermal"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -6474,9 +6402,12 @@ class ReactiveBrineThermal(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -6501,22 +6432,20 @@ class ReactiveBrineThermal(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ReactiveBrine(BaseModel):
+class ReactiveBrine( BaseModel ):
+
     class Meta:
         name = "ReactiveBrine"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     check_pvttables_ranges: str = field(
         default="1",
         metadata={
@@ -6528,9 +6457,12 @@ class ReactiveBrine(BaseModel):
     component_molar_weight: str = field(
         default="{0}",
         metadata={
-            "name": "componentMolarWeight",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "componentMolarWeight",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     component_names: str = field(
@@ -6555,22 +6487,20 @@ class ReactiveBrine(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|\s*\{\s*(([^*?<>\|:";,\s]+\s*,\s*)*[^*?<>\|:";,\s]+\s*)?\}\s*',
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ReactiveFluidDriver(BaseModel):
+class ReactiveFluidDriver( BaseModel ):
+
     class Meta:
         name = "ReactiveFluidDriver"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     baseline: str = field(
         default="none",
         metadata={
@@ -6580,19 +6510,20 @@ class ReactiveFluidDriver(BaseModel):
     )
     feed_composition: str = field(
         metadata={
-            "name": "feedComposition",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
-    fluid: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+            "name":
+            "feedComposition",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
+    fluid: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -6608,72 +6539,75 @@ class ReactiveFluidDriver(BaseModel):
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    pressure_control: str = field(
-        metadata={
-            "name": "pressureControl",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    steps: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    pressure_control: str = field( metadata={
+        "name": "pressureControl",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    steps: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     temperature_control: str = field(
         metadata={
             "name": "temperatureControl",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Rectangle(BaseModel):
+class Rectangle( BaseModel ):
+
     class Meta:
         name = "Rectangle"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     dimensions: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     length_vector: str = field(
         metadata={
-            "name": "lengthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "lengthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     normal: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     origin: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     tolerance: str = field(
         default="1e-05",
         metadata={
@@ -6683,26 +6617,28 @@ class Rectangle(BaseModel):
     )
     width_vector: str = field(
         metadata={
-            "name": "widthVector",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "widthVector",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class RelpermDriver(BaseModel):
+class RelpermDriver( BaseModel ):
+
     class Meta:
         name = "RelpermDriver"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     baseline: str = field(
         default="none",
         metadata={
@@ -6725,35 +6661,30 @@ class RelpermDriver(BaseModel):
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    relperm: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    steps: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    relperm: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    steps: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Restart(BaseModel):
+class Restart( BaseModel ):
+
     class Meta:
         name = "Restart"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6769,28 +6700,27 @@ class Restart(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Run(BaseModel):
+class Run( BaseModel ):
+
     class Meta:
         name = "Run"
 
-    model_config = ConfigDict(defer_build=True)
-    args: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    args: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    auto_partition: Optional[str] = field(
+    auto_partition: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "autoPartition",
@@ -6806,13 +6736,11 @@ class Run(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
     nodes: str = field(
         default="0",
         metadata={
@@ -6828,21 +6756,19 @@ class Run(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
         },
     )
-    scaling: Optional[str] = field(
+    scaling: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    tasks_per_node: str = field(
-        metadata={
-            "name": "tasksPerNode",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    tasks_per_node: str = field( metadata={
+        "name": "tasksPerNode",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     threads_per_task: str = field(
         default="0",
         metadata={
@@ -6861,12 +6787,13 @@ class Run(BaseModel):
     )
 
 
-class Silo(BaseModel):
+class Silo( BaseModel ):
+
     class Meta:
         name = "Silo"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -6946,42 +6873,43 @@ class Silo(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseConstantThermalConductivity(BaseModel):
+class SinglePhaseConstantThermalConductivity( BaseModel ):
+
     class Meta:
         name = "SinglePhaseConstantThermalConductivity"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     thermal_conductivity_components: str = field(
         metadata={
-            "name": "thermalConductivityComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "thermalConductivityComponents",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhasePoromechanicsInitialization(BaseModel):
+class SinglePhasePoromechanicsInitialization( BaseModel ):
+
     class Meta:
         name = "SinglePhasePoromechanicsInitialization"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     log_level: str = field(
         default="0",
         metadata={
@@ -6996,30 +6924,27 @@ class SinglePhasePoromechanicsInitialization(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+        } )
     poromechanics_solver_name: str = field(
         metadata={
             "name": "poromechanicsSolverName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseReservoirPoromechanicsInitialization(BaseModel):
+class SinglePhaseReservoirPoromechanicsInitialization( BaseModel ):
+
     class Meta:
         name = "SinglePhaseReservoirPoromechanicsInitialization"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     log_level: str = field(
         default="0",
         metadata={
@@ -7034,38 +6959,33 @@ class SinglePhaseReservoirPoromechanicsInitialization(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+        } )
     poromechanics_solver_name: str = field(
         metadata={
             "name": "poromechanicsSolverName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseStatistics(BaseModel):
+class SinglePhaseStatistics( BaseModel ):
+
     class Meta:
         name = "SinglePhaseStatistics"
 
-    model_config = ConfigDict(defer_build=True)
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -7082,96 +7002,91 @@ class SinglePhaseStatistics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SlipDependentPermeability(BaseModel):
+class SlipDependentPermeability( BaseModel ):
+
     class Meta:
         name = "SlipDependentPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     initial_permeability: str = field(
         metadata={
-            "name": "initialPermeability",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "name":
+            "initialPermeability",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     max_perm_multiplier: str = field(
         metadata={
             "name": "maxPermMultiplier",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     shear_disp_threshold: str = field(
         metadata={
             "name": "shearDispThreshold",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidInternalEnergy(BaseModel):
+class SolidInternalEnergy( BaseModel ):
+
     class Meta:
         name = "SolidInternalEnergy"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     reference_internal_energy: str = field(
         metadata={
             "name": "referenceInternalEnergy",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     reference_temperature: str = field(
         metadata={
             "name": "referenceTemperature",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     volumetric_heat_capacity: str = field(
         metadata={
             "name": "volumetricHeatCapacity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsStateReset(BaseModel):
+class SolidMechanicsStateReset( BaseModel ):
+
     class Meta:
         name = "SolidMechanicsStateReset"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     disable_inelasticity: str = field(
         default="0",
         metadata={
@@ -7196,28 +7111,25 @@ class SolidMechanicsStateReset(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsStatistics(BaseModel):
+class SolidMechanicsStatistics( BaseModel ):
+
     class Meta:
         name = "SolidMechanicsStatistics"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     log_level: str = field(
         default="0",
         metadata={
@@ -7226,14 +7138,12 @@ class SolidMechanicsStatistics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     write_csv: str = field(
         default="0",
         metadata={
@@ -7242,21 +7152,20 @@ class SolidMechanicsStatistics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SourceFlux(BaseModel):
+class SourceFlux( BaseModel ):
+
     class Meta:
         name = "SourceFlux"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -7282,8 +7191,10 @@ class SourceFlux(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -7294,7 +7205,7 @@ class SourceFlux(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -7318,7 +7229,7 @@ class SourceFlux(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -7339,30 +7250,27 @@ class SourceFlux(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SurfaceElementRegion(BaseModel):
+class SurfaceElementRegion( BaseModel ):
+
     class Meta:
         name = "SurfaceElementRegion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_aperture: str = field(
         metadata={
             "name": "defaultAperture",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     face_block: str = field(
         default="FractureSubRegion",
         metadata={
@@ -7377,9 +7285,8 @@ class SurfaceElementRegion(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    mesh_body: Optional[str] = field(
+        } )
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -7395,27 +7302,24 @@ class SurfaceElementRegion(BaseModel):
             "pattern": r".*[\[\]`$].*|faceElement|embeddedElement",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SymbolicFunction(BaseModel):
+class SymbolicFunction( BaseModel ):
+
     class Meta:
         name = "SymbolicFunction"
 
-    model_config = ConfigDict(defer_build=True)
-    expression: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    expression: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
     input_var_names: str = field(
         default="{}",
         metadata={
@@ -7430,23 +7334,21 @@ class SymbolicFunction(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TableCapillaryPressure(BaseModel):
+class TableCapillaryPressure( BaseModel ):
+
     class Meta:
         name = "TableCapillaryPressure"
 
-    model_config = ConfigDict(defer_build=True)
-    non_wetting_intermediate_cap_pressure_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    non_wetting_intermediate_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "nonWettingIntermediateCapPressureTableName",
@@ -7460,9 +7362,8 @@ class TableCapillaryPressure(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    wetting_intermediate_cap_pressure_table_name: Optional[str] = field(
+        } )
+    wetting_intermediate_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingIntermediateCapPressureTableName",
@@ -7470,7 +7371,7 @@ class TableCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    wetting_non_wetting_cap_pressure_table_name: Optional[str] = field(
+    wetting_non_wetting_cap_pressure_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "wettingNonWettingCapPressureTableName",
@@ -7478,20 +7379,19 @@ class TableCapillaryPressure(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TableFunction(BaseModel):
+class TableFunction( BaseModel ):
+
     class Meta:
         name = "TableFunction"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     coordinate_files: str = field(
         default="{}",
         metadata={
@@ -7503,8 +7403,10 @@ class TableFunction(BaseModel):
     coordinates: str = field(
         default="{0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     input_var_names: str = field(
@@ -7525,11 +7427,13 @@ class TableFunction(BaseModel):
     values: str = field(
         default="{0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    voxel_file: Optional[str] = field(
+    voxel_file: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "voxelFile",
@@ -7537,20 +7441,19 @@ class TableFunction(BaseModel):
             "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TableRelativePermeabilityHysteresis(BaseModel):
+class TableRelativePermeabilityHysteresis( BaseModel ):
+
     class Meta:
         name = "TableRelativePermeabilityHysteresis"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     drainage_non_wetting_intermediate_rel_perm_table_names: str = field(
         default="{}",
         metadata={
@@ -7575,7 +7478,7 @@ class TableRelativePermeabilityHysteresis(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    imbibition_non_wetting_rel_perm_table_name: Optional[str] = field(
+    imbibition_non_wetting_rel_perm_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "imbibitionNonWettingRelPermTableName",
@@ -7583,7 +7486,7 @@ class TableRelativePermeabilityHysteresis(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    imbibition_wetting_rel_perm_table_name: Optional[str] = field(
+    imbibition_wetting_rel_perm_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "imbibitionWettingRelPermTableName",
@@ -7621,8 +7524,7 @@ class TableRelativePermeabilityHysteresis(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     three_phase_interpolator: str = field(
         default="BAKER",
         metadata={
@@ -7631,20 +7533,19 @@ class TableRelativePermeabilityHysteresis(BaseModel):
             "pattern": r".*[\[\]`$].*|BAKER|STONEII",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TableRelativePermeability(BaseModel):
+class TableRelativePermeability( BaseModel ):
+
     class Meta:
         name = "TableRelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     non_wetting_intermediate_rel_perm_table_names: str = field(
         default="{}",
         metadata={
@@ -7659,8 +7560,7 @@ class TableRelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     three_phase_interpolator: str = field(
         default="BAKER",
         metadata={
@@ -7685,20 +7585,19 @@ class TableRelativePermeability(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ThermalCompressibleSinglePhaseFluid(BaseModel):
+class ThermalCompressibleSinglePhaseFluid( BaseModel ):
+
     class Meta:
         name = "ThermalCompressibleSinglePhaseFluid"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compressibility: str = field(
         default="0",
         metadata={
@@ -7712,16 +7611,14 @@ class ThermalCompressibleSinglePhaseFluid(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_viscosity: str = field(
         metadata={
             "name": "defaultViscosity",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     density_model_type: str = field(
         default="linear",
         metadata={
@@ -7809,56 +7706,57 @@ class ThermalCompressibleSinglePhaseFluid(BaseModel):
             "pattern": r".*[\[\]`$].*|exponential|linear|quadratic",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ThickPlane(BaseModel):
+class ThickPlane( BaseModel ):
+
     class Meta:
         name = "ThickPlane"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     normal: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     origin: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+        } )
     thickness: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TimeHistory(BaseModel):
+class TimeHistory( BaseModel ):
+
     class Meta:
         name = "TimeHistory"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -7893,23 +7791,21 @@ class TimeHistory(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Traction(BaseModel):
+class Traction( BaseModel ):
+
     class Meta:
         name = "Traction"
 
-    model_config = ConfigDict(defer_build=True)
-    bc_application_table_name: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    bc_application_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "bcApplicationTableName",
@@ -7928,8 +7824,10 @@ class Traction(BaseModel):
     direction: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     end_time: str = field(
@@ -7940,7 +7838,7 @@ class Traction(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function_name: Optional[str] = field(
+    function_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "functionName",
@@ -7959,9 +7857,12 @@ class Traction(BaseModel):
     input_stress: str = field(
         default="{0,0,0,0,0,0}",
         metadata={
-            "name": "inputStress",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "inputStress",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     log_level: str = field(
@@ -7972,7 +7873,7 @@ class Traction(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    object_path: Optional[str] = field(
+    object_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "objectPath",
@@ -7993,8 +7894,7 @@ class Traction(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     traction_type: str = field(
         default="vector",
         metadata={
@@ -8003,28 +7903,25 @@ class Traction(BaseModel):
             "pattern": r".*[\[\]`$].*|vector|normal|stress",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TriaxialDriver(BaseModel):
+class TriaxialDriver( BaseModel ):
+
     class Meta:
         name = "TriaxialDriver"
 
-    model_config = ConfigDict(defer_build=True)
-    axial_control: str = field(
-        metadata={
-            "name": "axialControl",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    axial_control: str = field( metadata={
+        "name": "axialControl",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     baseline: str = field(
         default="none",
         metadata={
@@ -8038,8 +7935,7 @@ class TriaxialDriver(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     log_level: str = field(
         default="0",
         metadata={
@@ -8048,20 +7944,16 @@ class TriaxialDriver(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    material: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    mode: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|mixedControl|strainControl|stressControl",
-        }
-    )
+    material: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    mode: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|mixedControl|strainControl|stressControl",
+    } )
     output: str = field(
         default="none",
         metadata={
@@ -8069,35 +7961,30 @@ class TriaxialDriver(BaseModel):
             "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
         },
     )
-    radial_control: str = field(
-        metadata={
-            "name": "radialControl",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    steps: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    radial_control: str = field( metadata={
+        "name": "radialControl",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    steps: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class TwoPointFluxApproximation(BaseModel):
+class TwoPointFluxApproximation( BaseModel ):
+
     class Meta:
         name = "TwoPointFluxApproximation"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     area_rel_tol: str = field(
         default="1e-08",
         metadata={
@@ -8130,21 +8017,20 @@ class TwoPointFluxApproximation(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Vtk(BaseModel):
+class Vtk( BaseModel ):
+
     class Meta:
         name = "VTK"
 
-    model_config = ConfigDict(defer_build=True)
-    child_directory: Optional[str] = field(
+    model_config = ConfigDict( defer_build=True )
+    child_directory: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "childDirectory",
@@ -8239,42 +8125,50 @@ class Vtk(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class VanGenuchtenBakerRelativePermeability(BaseModel):
+class VanGenuchtenBakerRelativePermeability( BaseModel ):
+
     class Meta:
         name = "VanGenuchtenBakerRelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     gas_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "gasOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -8283,38 +8177,42 @@ class VanGenuchtenBakerRelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     water_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "waterOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class VanGenuchtenCapillaryPressure(BaseModel):
+class VanGenuchtenCapillaryPressure( BaseModel ):
+
     class Meta:
         name = "VanGenuchtenCapillaryPressure"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     cap_pressure_epsilon: str = field(
         default="1e-06",
         metadata={
@@ -8326,25 +8224,34 @@ class VanGenuchtenCapillaryPressure(BaseModel):
     phase_cap_pressure_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "phaseCapPressureExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_cap_pressure_multiplier: str = field(
         default="{1}",
         metadata={
-            "name": "phaseCapPressureMultiplier",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseCapPressureMultiplier",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -8353,44 +8260,51 @@ class VanGenuchtenCapillaryPressure(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class VanGenuchtenStone2RelativePermeability(BaseModel):
+class VanGenuchtenStone2RelativePermeability( BaseModel ):
+
     class Meta:
         name = "VanGenuchtenStone2RelativePermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     gas_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "gasOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     gas_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "gasOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "gasOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_min_volume_fraction: str = field(
         default="{0}",
         metadata={
-            "name": "phaseMinVolumeFraction",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "phaseMinVolumeFraction",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     phase_names: str = field(
@@ -8399,38 +8313,42 @@ class VanGenuchtenStone2RelativePermeability(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     water_oil_rel_perm_exponent_inv: str = field(
         default="{0.5}",
         metadata={
-            "name": "waterOilRelPermExponentInv",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermExponentInv",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     water_oil_rel_perm_max_value: str = field(
         default="{0}",
         metadata={
-            "name": "waterOilRelPermMaxValue",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "waterOilRelPermMaxValue",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ViscoDruckerPrager(BaseModel):
+class ViscoDruckerPrager( BaseModel ):
+
     class Meta:
         name = "ViscoDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -8453,8 +8371,7 @@ class ViscoDruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_dilation_angle: str = field(
         default="30",
         metadata={
@@ -8517,22 +8434,20 @@ class ViscoDruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ViscoExtendedDruckerPrager(BaseModel):
+class ViscoExtendedDruckerPrager( BaseModel ):
+
     class Meta:
         name = "ViscoExtendedDruckerPrager"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_bulk_modulus: str = field(
         default="-1",
         metadata={
@@ -8555,8 +8470,7 @@ class ViscoExtendedDruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_dilation_ratio: str = field(
         default="1",
         metadata={
@@ -8627,22 +8541,20 @@ class ViscoExtendedDruckerPrager(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ViscoModifiedCamClay(BaseModel):
+class ViscoModifiedCamClay( BaseModel ):
+
     class Meta:
         name = "ViscoModifiedCamClay"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     default_csl_slope: str = field(
         default="1",
         metadata={
@@ -8657,8 +8569,7 @@ class ViscoModifiedCamClay(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     default_drained_linear_tec: str = field(
         default="0",
         metadata={
@@ -8721,29 +8632,25 @@ class ViscoModifiedCamClay(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class WellControls(BaseModel):
+class WellControls( BaseModel ):
+
     class Meta:
         name = "WellControls"
 
-    model_config = ConfigDict(defer_build=True)
-    control: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized",
-        }
-    )
+    model_config = ConfigDict( defer_build=True )
+    control: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized",
+    } )
     enable_crossflow: str = field(
         default="1",
         metadata={
@@ -8763,9 +8670,12 @@ class WellControls(BaseModel):
     injection_stream: str = field(
         default="{-1}",
         metadata={
-            "name": "injectionStream",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "injectionStream",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     injection_temperature: str = field(
@@ -8790,9 +8700,8 @@ class WellControls(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    status_table_name: Optional[str] = field(
+        } )
+    status_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "statusTableName",
@@ -8824,7 +8733,7 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_bhptable_name: Optional[str] = field(
+    target_bhptable_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetBHPTableName",
@@ -8832,7 +8741,7 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    target_phase_name: Optional[str] = field(
+    target_phase_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetPhaseName",
@@ -8848,7 +8757,7 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_phase_rate_table_name: Optional[str] = field(
+    target_phase_rate_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetPhaseRateTableName",
@@ -8864,7 +8773,7 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target_total_rate_table_name: Optional[str] = field(
+    target_total_rate_table_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "targetTotalRateTableName",
@@ -8872,14 +8781,12 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    type_value: str = field(
-        metadata={
-            "name": "type",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|producer|injector",
-        }
-    )
+    type_value: str = field( metadata={
+        "name": "type",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|producer|injector",
+    } )
     use_surface_conditions: str = field(
         default="0",
         metadata={
@@ -8888,29 +8795,27 @@ class WellControls(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class WellElementRegion(BaseModel):
+class WellElementRegion( BaseModel ):
+
     class Meta:
         name = "WellElementRegion"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     material_list: str = field(
         metadata={
             "name": "materialList",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    mesh_body: Optional[str] = field(
+        } )
+    mesh_body: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "meshBody",
@@ -8918,59 +8823,54 @@ class WellElementRegion(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class WillisRichardsPermeability(BaseModel):
+class WillisRichardsPermeability( BaseModel ):
+
     class Meta:
         name = "WillisRichardsPermeability"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     dilation_coefficient: str = field(
         metadata={
             "name": "dilationCoefficient",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     max_frac_aperture: str = field(
         metadata={
             "name": "maxFracAperture",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     ref_closure_stress: str = field(
         metadata={
             "name": "refClosureStress",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class AcousticElasticSem(BaseModel):
+class AcousticElasticSem( BaseModel ):
+
     class Meta:
         name = "AcousticElasticSEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -8978,7 +8878,7 @@ class AcousticElasticSem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -8992,8 +8892,7 @@ class AcousticElasticSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
     cfl_factor: str = field(
         default="0.5",
         metadata={
@@ -9002,21 +8901,17 @@ class AcousticElasticSem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    elastic_solver_name: str = field(
-        metadata={
-            "name": "elasticSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    elastic_solver_name: str = field( metadata={
+        "name": "elasticSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -9039,23 +8934,21 @@ class AcousticElasticSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class AcousticFirstOrderSem(BaseModel):
+class AcousticFirstOrderSem( BaseModel ):
+
     class Meta:
         name = "AcousticFirstOrderSEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9063,7 +8956,7 @@ class AcousticFirstOrderSem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9079,13 +8972,11 @@ class AcousticFirstOrderSem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     dt_seismo_trace: str = field(
         default="0",
         metadata={
@@ -9144,9 +9035,12 @@ class AcousticFirstOrderSem(BaseModel):
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     linear_dassamples: str = field(
@@ -9176,9 +9070,12 @@ class AcousticFirstOrderSem(BaseModel):
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -9208,9 +9105,12 @@ class AcousticFirstOrderSem(BaseModel):
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     target_regions: str = field(
@@ -9219,8 +9119,7 @@ class AcousticFirstOrderSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_source_delay: str = field(
         default="-1",
         metadata={
@@ -9245,21 +9144,20 @@ class AcousticFirstOrderSem(BaseModel):
             "pattern": r".*[\[\]`$].*|none|dipole|strainIntegration",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class AcousticSem(BaseModel):
+class AcousticSem( BaseModel ):
+
     class Meta:
         name = "AcousticSEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9267,7 +9165,7 @@ class AcousticSem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9283,13 +9181,11 @@ class AcousticSem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     dt_seismo_trace: str = field(
         default="0",
         metadata={
@@ -9348,9 +9244,12 @@ class AcousticSem(BaseModel):
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     linear_dassamples: str = field(
@@ -9380,9 +9279,12 @@ class AcousticSem(BaseModel):
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -9412,9 +9314,12 @@ class AcousticSem(BaseModel):
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     target_regions: str = field(
@@ -9423,8 +9328,7 @@ class AcousticSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_source_delay: str = field(
         default="-1",
         metadata={
@@ -9449,21 +9353,20 @@ class AcousticSem(BaseModel):
             "pattern": r".*[\[\]`$].*|none|dipole|strainIntegration",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class AcousticVtisem(BaseModel):
+class AcousticVtisem( BaseModel ):
+
     class Meta:
         name = "AcousticVTISEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9471,7 +9374,7 @@ class AcousticVtisem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9487,13 +9390,11 @@ class AcousticVtisem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     dt_seismo_trace: str = field(
         default="0",
         metadata={
@@ -9552,9 +9453,12 @@ class AcousticVtisem(BaseModel):
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     linear_dassamples: str = field(
@@ -9584,9 +9488,12 @@ class AcousticVtisem(BaseModel):
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -9616,9 +9523,12 @@ class AcousticVtisem(BaseModel):
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     target_regions: str = field(
@@ -9627,8 +9537,7 @@ class AcousticVtisem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_source_delay: str = field(
         default="-1",
         metadata={
@@ -9653,21 +9562,20 @@ class AcousticVtisem(BaseModel):
             "pattern": r".*[\[\]`$].*|none|dipole|strainIntegration",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseFvm(BaseModel):
+class CompositionalMultiphaseFvm( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseFVM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9675,7 +9583,7 @@ class CompositionalMultiphaseFvm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9723,13 +9631,11 @@ class CompositionalMultiphaseFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -9880,8 +9786,7 @@ class CompositionalMultiphaseFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     target_relative_pressure_change_in_time_step: str = field(
         default="0.2",
         metadata={
@@ -9903,8 +9808,7 @@ class CompositionalMultiphaseFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     use_dbc: str = field(
         default="0",
         metadata={
@@ -9937,21 +9841,20 @@ class CompositionalMultiphaseFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseHybridFvm(BaseModel):
+class CompositionalMultiphaseHybridFvm( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseHybridFVM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -9959,7 +9862,7 @@ class CompositionalMultiphaseHybridFvm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -9991,13 +9894,11 @@ class CompositionalMultiphaseHybridFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -10116,8 +10017,7 @@ class CompositionalMultiphaseHybridFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     target_relative_pressure_change_in_time_step: str = field(
         default="0.2",
         metadata={
@@ -10139,8 +10039,7 @@ class CompositionalMultiphaseHybridFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     use_mass: str = field(
         default="0",
         metadata={
@@ -10165,21 +10064,20 @@ class CompositionalMultiphaseHybridFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseReservoirPoromechanics(BaseModel):
+class CompositionalMultiphaseReservoirPoromechanics( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseReservoirPoromechanics"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -10187,7 +10085,7 @@ class CompositionalMultiphaseReservoirPoromechanics(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10233,16 +10131,13 @@ class CompositionalMultiphaseReservoirPoromechanics(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     stabilization_multiplier: str = field(
         default="1",
         metadata={
@@ -10273,23 +10168,21 @@ class CompositionalMultiphaseReservoirPoromechanics(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseReservoir(BaseModel):
+class CompositionalMultiphaseReservoir( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseReservoir"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -10297,7 +10190,7 @@ class CompositionalMultiphaseReservoir(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10313,14 +10206,12 @@ class CompositionalMultiphaseReservoir(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -10343,31 +10234,27 @@ class CompositionalMultiphaseReservoir(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    well_solver_name: str = field(
-        metadata={
-            "name": "wellSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_solver_name: str = field( metadata={
+        "name": "wellSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class CompositionalMultiphaseWell(BaseModel):
+class CompositionalMultiphaseWell( BaseModel ):
+
     class Meta:
         name = "CompositionalMultiphaseWell"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -10375,7 +10262,7 @@ class CompositionalMultiphaseWell(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -10383,7 +10270,7 @@ class CompositionalMultiphaseWell(BaseModel):
             "namespace": "",
         },
     )
-    well_controls: List[WellControls] = field(
+    well_controls: List[ WellControls ] = field(
         default_factory=list,
         metadata={
             "name": "WellControls",
@@ -10453,8 +10340,7 @@ class CompositionalMultiphaseWell(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     use_mass: str = field(
         default="0",
         metadata={
@@ -10471,21 +10357,20 @@ class CompositionalMultiphaseWell(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Constitutive(BaseModel):
+class Constitutive( BaseModel ):
+
     class Meta:
         name = "Constitutive"
 
-    model_config = ConfigDict(defer_build=True)
-    biot_porosity: List[BiotPorosity] = field(
+    model_config = ConfigDict( defer_build=True )
+    biot_porosity: List[ BiotPorosity ] = field(
         default_factory=list,
         metadata={
             "name": "BiotPorosity",
@@ -10493,7 +10378,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    black_oil_fluid: List[BlackOilFluid] = field(
+    black_oil_fluid: List[ BlackOilFluid ] = field(
         default_factory=list,
         metadata={
             "name": "BlackOilFluid",
@@ -10501,9 +10386,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    brooks_corey_baker_relative_permeability: List[
-        BrooksCoreyBakerRelativePermeability
-    ] = field(
+    brooks_corey_baker_relative_permeability: List[ BrooksCoreyBakerRelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyBakerRelativePermeability",
@@ -10511,7 +10394,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    brooks_corey_capillary_pressure: List[BrooksCoreyCapillaryPressure] = field(
+    brooks_corey_capillary_pressure: List[ BrooksCoreyCapillaryPressure ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyCapillaryPressure",
@@ -10519,7 +10402,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    brooks_corey_relative_permeability: List[BrooksCoreyRelativePermeability] = field(
+    brooks_corey_relative_permeability: List[ BrooksCoreyRelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyRelativePermeability",
@@ -10527,9 +10410,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    brooks_corey_stone2_relative_permeability: List[
-        BrooksCoreyStone2RelativePermeability
-    ] = field(
+    brooks_corey_stone2_relative_permeability: List[ BrooksCoreyStone2RelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "BrooksCoreyStone2RelativePermeability",
@@ -10537,7 +10418,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    co2_brine_ezrokhi_fluid: List[Co2BrineEzrokhiFluid] = field(
+    co2_brine_ezrokhi_fluid: List[ Co2BrineEzrokhiFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrineEzrokhiFluid",
@@ -10545,7 +10426,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    co2_brine_ezrokhi_thermal_fluid: List[Co2BrineEzrokhiThermalFluid] = field(
+    co2_brine_ezrokhi_thermal_fluid: List[ Co2BrineEzrokhiThermalFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrineEzrokhiThermalFluid",
@@ -10553,7 +10434,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    co2_brine_phillips_fluid: List[Co2BrinePhillipsFluid] = field(
+    co2_brine_phillips_fluid: List[ Co2BrinePhillipsFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrinePhillipsFluid",
@@ -10561,7 +10442,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    co2_brine_phillips_thermal_fluid: List[Co2BrinePhillipsThermalFluid] = field(
+    co2_brine_phillips_thermal_fluid: List[ Co2BrinePhillipsThermalFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CO2BrinePhillipsThermalFluid",
@@ -10569,7 +10450,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    carman_kozeny_permeability: List[CarmanKozenyPermeability] = field(
+    carman_kozeny_permeability: List[ CarmanKozenyPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CarmanKozenyPermeability",
@@ -10577,7 +10458,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    ceramic_damage: List[CeramicDamage] = field(
+    ceramic_damage: List[ CeramicDamage ] = field(
         default_factory=list,
         metadata={
             "name": "CeramicDamage",
@@ -10585,7 +10466,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_fluid: List[CompositionalMultiphaseFluid] = field(
+    compositional_multiphase_fluid: List[ CompositionalMultiphaseFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseFluid",
@@ -10593,9 +10474,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compositonal_two_phase_fluid_peng_robinson: List[
-        CompositonalTwoPhaseFluidPengRobinson
-    ] = field(
+    compositonal_two_phase_fluid_peng_robinson: List[ CompositonalTwoPhaseFluidPengRobinson ] = field(
         default_factory=list,
         metadata={
             "name": "CompositonalTwoPhaseFluidPengRobinson",
@@ -10603,9 +10482,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compositonal_two_phase_fluid_soave_redlich_kwong: List[
-        CompositonalTwoPhaseFluidSoaveRedlichKwong
-    ] = field(
+    compositonal_two_phase_fluid_soave_redlich_kwong: List[ CompositonalTwoPhaseFluidSoaveRedlichKwong ] = field(
         default_factory=list,
         metadata={
             "name": "CompositonalTwoPhaseFluidSoaveRedlichKwong",
@@ -10613,7 +10490,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_single_phase_fluid: List[CompressibleSinglePhaseFluid] = field(
+    compressible_single_phase_fluid: List[ CompressibleSinglePhaseFluid ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSinglePhaseFluid",
@@ -10621,9 +10498,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_carman_kozeny_permeability: List[
-        CompressibleSolidCarmanKozenyPermeability
-    ] = field(
+    compressible_solid_carman_kozeny_permeability: List[ CompressibleSolidCarmanKozenyPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidCarmanKozenyPermeability",
@@ -10631,9 +10506,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_constant_permeability: List[
-        CompressibleSolidConstantPermeability
-    ] = field(
+    compressible_solid_constant_permeability: List[ CompressibleSolidConstantPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidConstantPermeability",
@@ -10641,9 +10514,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_exponential_decay_permeability: List[
-        CompressibleSolidExponentialDecayPermeability
-    ] = field(
+    compressible_solid_exponential_decay_permeability: List[ CompressibleSolidExponentialDecayPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidExponentialDecayPermeability",
@@ -10651,9 +10522,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_parallel_plates_permeability: List[
-        CompressibleSolidParallelPlatesPermeability
-    ] = field(
+    compressible_solid_parallel_plates_permeability: List[ CompressibleSolidParallelPlatesPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidParallelPlatesPermeability",
@@ -10661,9 +10530,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_slip_dependent_permeability: List[
-        CompressibleSolidSlipDependentPermeability
-    ] = field(
+    compressible_solid_slip_dependent_permeability: List[ CompressibleSolidSlipDependentPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidSlipDependentPermeability",
@@ -10671,9 +10538,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    compressible_solid_willis_richards_permeability: List[
-        CompressibleSolidWillisRichardsPermeability
-    ] = field(
+    compressible_solid_willis_richards_permeability: List[ CompressibleSolidWillisRichardsPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "CompressibleSolidWillisRichardsPermeability",
@@ -10681,7 +10546,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    constant_diffusion: List[ConstantDiffusion] = field(
+    constant_diffusion: List[ ConstantDiffusion ] = field(
         default_factory=list,
         metadata={
             "name": "ConstantDiffusion",
@@ -10689,7 +10554,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    constant_permeability: List[ConstantPermeability] = field(
+    constant_permeability: List[ ConstantPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "ConstantPermeability",
@@ -10697,7 +10562,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    coulomb: List[Coulomb] = field(
+    coulomb: List[ Coulomb ] = field(
         default_factory=list,
         metadata={
             "name": "Coulomb",
@@ -10705,7 +10570,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    damage_elastic_isotropic: List[DamageElasticIsotropic] = field(
+    damage_elastic_isotropic: List[ DamageElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "DamageElasticIsotropic",
@@ -10713,7 +10578,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    damage_spectral_elastic_isotropic: List[DamageSpectralElasticIsotropic] = field(
+    damage_spectral_elastic_isotropic: List[ DamageSpectralElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "DamageSpectralElasticIsotropic",
@@ -10721,7 +10586,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    damage_vol_dev_elastic_isotropic: List[DamageVolDevElasticIsotropic] = field(
+    damage_vol_dev_elastic_isotropic: List[ DamageVolDevElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "DamageVolDevElasticIsotropic",
@@ -10729,7 +10594,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    dead_oil_fluid: List[DeadOilFluid] = field(
+    dead_oil_fluid: List[ DeadOilFluid ] = field(
         default_factory=list,
         metadata={
             "name": "DeadOilFluid",
@@ -10737,7 +10602,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    delft_egg: List[DelftEgg] = field(
+    delft_egg: List[ DelftEgg ] = field(
         default_factory=list,
         metadata={
             "name": "DelftEgg",
@@ -10745,7 +10610,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    drucker_prager: List[DruckerPrager] = field(
+    drucker_prager: List[ DruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "DruckerPrager",
@@ -10753,7 +10618,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    elastic_isotropic: List[ElasticIsotropic] = field(
+    elastic_isotropic: List[ ElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticIsotropic",
@@ -10761,17 +10626,15 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    elastic_isotropic_pressure_dependent: List[ElasticIsotropicPressureDependent] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "ElasticIsotropicPressureDependent",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    elastic_orthotropic: List[ElasticOrthotropic] = field(
+    elastic_isotropic_pressure_dependent: List[ ElasticIsotropicPressureDependent ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "ElasticIsotropicPressureDependent",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    elastic_orthotropic: List[ ElasticOrthotropic ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticOrthotropic",
@@ -10779,7 +10642,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    elastic_transverse_isotropic: List[ElasticTransverseIsotropic] = field(
+    elastic_transverse_isotropic: List[ ElasticTransverseIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticTransverseIsotropic",
@@ -10787,7 +10650,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    exponential_decay_permeability: List[ExponentialDecayPermeability] = field(
+    exponential_decay_permeability: List[ ExponentialDecayPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "ExponentialDecayPermeability",
@@ -10795,7 +10658,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    extended_drucker_prager: List[ExtendedDruckerPrager] = field(
+    extended_drucker_prager: List[ ExtendedDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "ExtendedDruckerPrager",
@@ -10803,7 +10666,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    frictionless_contact: List[FrictionlessContact] = field(
+    frictionless_contact: List[ FrictionlessContact ] = field(
         default_factory=list,
         metadata={
             "name": "FrictionlessContact",
@@ -10811,7 +10674,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    jfunction_capillary_pressure: List[JfunctionCapillaryPressure] = field(
+    jfunction_capillary_pressure: List[ JfunctionCapillaryPressure ] = field(
         default_factory=list,
         metadata={
             "name": "JFunctionCapillaryPressure",
@@ -10819,7 +10682,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    linear_isotropic_dispersion: List[LinearIsotropicDispersion] = field(
+    linear_isotropic_dispersion: List[ LinearIsotropicDispersion ] = field(
         default_factory=list,
         metadata={
             "name": "LinearIsotropicDispersion",
@@ -10827,7 +10690,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    modified_cam_clay: List[ModifiedCamClay] = field(
+    modified_cam_clay: List[ ModifiedCamClay ] = field(
         default_factory=list,
         metadata={
             "name": "ModifiedCamClay",
@@ -10835,9 +10698,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    multi_phase_constant_thermal_conductivity: List[
-        MultiPhaseConstantThermalConductivity
-    ] = field(
+    multi_phase_constant_thermal_conductivity: List[ MultiPhaseConstantThermalConductivity ] = field(
         default_factory=list,
         metadata={
             "name": "MultiPhaseConstantThermalConductivity",
@@ -10845,9 +10706,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    multi_phase_volume_weighted_thermal_conductivity: List[
-        MultiPhaseVolumeWeightedThermalConductivity
-    ] = field(
+    multi_phase_volume_weighted_thermal_conductivity: List[ MultiPhaseVolumeWeightedThermalConductivity ] = field(
         default_factory=list,
         metadata={
             "name": "MultiPhaseVolumeWeightedThermalConductivity",
@@ -10855,7 +10714,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    null_model: List[NullModel] = field(
+    null_model: List[ NullModel ] = field(
         default_factory=list,
         metadata={
             "name": "NullModel",
@@ -10863,7 +10722,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    parallel_plates_permeability: List[ParallelPlatesPermeability] = field(
+    parallel_plates_permeability: List[ ParallelPlatesPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "ParallelPlatesPermeability",
@@ -10871,7 +10730,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    particle_fluid: List[ParticleFluid] = field(
+    particle_fluid: List[ ParticleFluid ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleFluid",
@@ -10879,7 +10738,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    perfectly_plastic: List[PerfectlyPlastic] = field(
+    perfectly_plastic: List[ PerfectlyPlastic ] = field(
         default_factory=list,
         metadata={
             "name": "PerfectlyPlastic",
@@ -10887,7 +10746,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    permeability_base: List[PermeabilityBase] = field(
+    permeability_base: List[ PermeabilityBase ] = field(
         default_factory=list,
         metadata={
             "name": "PermeabilityBase",
@@ -10895,7 +10754,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_damage_elastic_isotropic: List[PorousDamageElasticIsotropic] = field(
+    porous_damage_elastic_isotropic: List[ PorousDamageElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDamageElasticIsotropic",
@@ -10903,9 +10762,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_damage_spectral_elastic_isotropic: List[
-        PorousDamageSpectralElasticIsotropic
-    ] = field(
+    porous_damage_spectral_elastic_isotropic: List[ PorousDamageSpectralElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDamageSpectralElasticIsotropic",
@@ -10913,9 +10770,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_damage_vol_dev_elastic_isotropic: List[
-        PorousDamageVolDevElasticIsotropic
-    ] = field(
+    porous_damage_vol_dev_elastic_isotropic: List[ PorousDamageVolDevElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDamageVolDevElasticIsotropic",
@@ -10923,7 +10778,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_delft_egg: List[PorousDelftEgg] = field(
+    porous_delft_egg: List[ PorousDelftEgg ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDelftEgg",
@@ -10931,7 +10786,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_drucker_prager: List[PorousDruckerPrager] = field(
+    porous_drucker_prager: List[ PorousDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "PorousDruckerPrager",
@@ -10939,7 +10794,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_elastic_isotropic: List[PorousElasticIsotropic] = field(
+    porous_elastic_isotropic: List[ PorousElasticIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticIsotropic",
@@ -10947,7 +10802,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_elastic_orthotropic: List[PorousElasticOrthotropic] = field(
+    porous_elastic_orthotropic: List[ PorousElasticOrthotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticOrthotropic",
@@ -10955,7 +10810,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_elastic_transverse_isotropic: List[PorousElasticTransverseIsotropic] = field(
+    porous_elastic_transverse_isotropic: List[ PorousElasticTransverseIsotropic ] = field(
         default_factory=list,
         metadata={
             "name": "PorousElasticTransverseIsotropic",
@@ -10963,7 +10818,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_extended_drucker_prager: List[PorousExtendedDruckerPrager] = field(
+    porous_extended_drucker_prager: List[ PorousExtendedDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "PorousExtendedDruckerPrager",
@@ -10971,7 +10826,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_modified_cam_clay: List[PorousModifiedCamClay] = field(
+    porous_modified_cam_clay: List[ PorousModifiedCamClay ] = field(
         default_factory=list,
         metadata={
             "name": "PorousModifiedCamClay",
@@ -10979,7 +10834,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_visco_drucker_prager: List[PorousViscoDruckerPrager] = field(
+    porous_visco_drucker_prager: List[ PorousViscoDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "PorousViscoDruckerPrager",
@@ -10987,17 +10842,15 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    porous_visco_extended_drucker_prager: List[PorousViscoExtendedDruckerPrager] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "PorousViscoExtendedDruckerPrager",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    porous_visco_modified_cam_clay: List[PorousViscoModifiedCamClay] = field(
+    porous_visco_extended_drucker_prager: List[ PorousViscoExtendedDruckerPrager ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "PorousViscoExtendedDruckerPrager",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    porous_visco_modified_cam_clay: List[ PorousViscoModifiedCamClay ] = field(
         default_factory=list,
         metadata={
             "name": "PorousViscoModifiedCamClay",
@@ -11005,7 +10858,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    pressure_porosity: List[PressurePorosity] = field(
+    pressure_porosity: List[ PressurePorosity ] = field(
         default_factory=list,
         metadata={
             "name": "PressurePorosity",
@@ -11013,7 +10866,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    proppant_permeability: List[ProppantPermeability] = field(
+    proppant_permeability: List[ ProppantPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantPermeability",
@@ -11021,7 +10874,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    proppant_porosity: List[ProppantPorosity] = field(
+    proppant_porosity: List[ ProppantPorosity ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantPorosity",
@@ -11029,7 +10882,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    proppant_slurry_fluid: List[ProppantSlurryFluid] = field(
+    proppant_slurry_fluid: List[ ProppantSlurryFluid ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantSlurryFluid",
@@ -11037,17 +10890,15 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    proppant_solid_proppant_permeability: List[ProppantSolidProppantPermeability] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "ProppantSolidProppantPermeability",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    reactive_brine: List[ReactiveBrine] = field(
+    proppant_solid_proppant_permeability: List[ ProppantSolidProppantPermeability ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "ProppantSolidProppantPermeability",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    reactive_brine: List[ ReactiveBrine ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveBrine",
@@ -11055,7 +10906,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    reactive_brine_thermal: List[ReactiveBrineThermal] = field(
+    reactive_brine_thermal: List[ ReactiveBrineThermal ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveBrineThermal",
@@ -11063,9 +10914,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_constant_thermal_conductivity: List[
-        SinglePhaseConstantThermalConductivity
-    ] = field(
+    single_phase_constant_thermal_conductivity: List[ SinglePhaseConstantThermalConductivity ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseConstantThermalConductivity",
@@ -11073,7 +10922,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    slip_dependent_permeability: List[SlipDependentPermeability] = field(
+    slip_dependent_permeability: List[ SlipDependentPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "SlipDependentPermeability",
@@ -11081,7 +10930,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    solid_internal_energy: List[SolidInternalEnergy] = field(
+    solid_internal_energy: List[ SolidInternalEnergy ] = field(
         default_factory=list,
         metadata={
             "name": "SolidInternalEnergy",
@@ -11089,7 +10938,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    table_capillary_pressure: List[TableCapillaryPressure] = field(
+    table_capillary_pressure: List[ TableCapillaryPressure ] = field(
         default_factory=list,
         metadata={
             "name": "TableCapillaryPressure",
@@ -11097,7 +10946,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    table_relative_permeability: List[TableRelativePermeability] = field(
+    table_relative_permeability: List[ TableRelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "TableRelativePermeability",
@@ -11105,9 +10954,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    table_relative_permeability_hysteresis: List[
-        TableRelativePermeabilityHysteresis
-    ] = field(
+    table_relative_permeability_hysteresis: List[ TableRelativePermeabilityHysteresis ] = field(
         default_factory=list,
         metadata={
             "name": "TableRelativePermeabilityHysteresis",
@@ -11115,9 +10962,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    thermal_compressible_single_phase_fluid: List[
-        ThermalCompressibleSinglePhaseFluid
-    ] = field(
+    thermal_compressible_single_phase_fluid: List[ ThermalCompressibleSinglePhaseFluid ] = field(
         default_factory=list,
         metadata={
             "name": "ThermalCompressibleSinglePhaseFluid",
@@ -11125,9 +10970,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    van_genuchten_baker_relative_permeability: List[
-        VanGenuchtenBakerRelativePermeability
-    ] = field(
+    van_genuchten_baker_relative_permeability: List[ VanGenuchtenBakerRelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenBakerRelativePermeability",
@@ -11135,7 +10978,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    van_genuchten_capillary_pressure: List[VanGenuchtenCapillaryPressure] = field(
+    van_genuchten_capillary_pressure: List[ VanGenuchtenCapillaryPressure ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenCapillaryPressure",
@@ -11143,9 +10986,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    van_genuchten_stone2_relative_permeability: List[
-        VanGenuchtenStone2RelativePermeability
-    ] = field(
+    van_genuchten_stone2_relative_permeability: List[ VanGenuchtenStone2RelativePermeability ] = field(
         default_factory=list,
         metadata={
             "name": "VanGenuchtenStone2RelativePermeability",
@@ -11153,7 +10994,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    visco_drucker_prager: List[ViscoDruckerPrager] = field(
+    visco_drucker_prager: List[ ViscoDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoDruckerPrager",
@@ -11161,7 +11002,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    visco_extended_drucker_prager: List[ViscoExtendedDruckerPrager] = field(
+    visco_extended_drucker_prager: List[ ViscoExtendedDruckerPrager ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoExtendedDruckerPrager",
@@ -11169,7 +11010,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    visco_modified_cam_clay: List[ViscoModifiedCamClay] = field(
+    visco_modified_cam_clay: List[ ViscoModifiedCamClay ] = field(
         default_factory=list,
         metadata={
             "name": "ViscoModifiedCamClay",
@@ -11177,7 +11018,7 @@ class Constitutive(BaseModel):
             "namespace": "",
         },
     )
-    willis_richards_permeability: List[WillisRichardsPermeability] = field(
+    willis_richards_permeability: List[ WillisRichardsPermeability ] = field(
         default_factory=list,
         metadata={
             "name": "WillisRichardsPermeability",
@@ -11187,12 +11028,13 @@ class Constitutive(BaseModel):
     )
 
 
-class ElasticFirstOrderSem(BaseModel):
+class ElasticFirstOrderSem( BaseModel ):
+
     class Meta:
         name = "ElasticFirstOrderSEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11200,7 +11042,7 @@ class ElasticFirstOrderSem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11216,13 +11058,11 @@ class ElasticFirstOrderSem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     dt_seismo_trace: str = field(
         default="0",
         metadata={
@@ -11281,9 +11121,12 @@ class ElasticFirstOrderSem(BaseModel):
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     linear_dassamples: str = field(
@@ -11313,9 +11156,12 @@ class ElasticFirstOrderSem(BaseModel):
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -11345,9 +11191,12 @@ class ElasticFirstOrderSem(BaseModel):
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     target_regions: str = field(
@@ -11356,8 +11205,7 @@ class ElasticFirstOrderSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_source_delay: str = field(
         default="-1",
         metadata={
@@ -11382,21 +11230,20 @@ class ElasticFirstOrderSem(BaseModel):
             "pattern": r".*[\[\]`$].*|none|dipole|strainIntegration",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElasticSem(BaseModel):
+class ElasticSem( BaseModel ):
+
     class Meta:
         name = "ElasticSEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11404,7 +11251,7 @@ class ElasticSem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11420,13 +11267,11 @@ class ElasticSem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     dt_seismo_trace: str = field(
         default="0",
         metadata={
@@ -11485,9 +11330,12 @@ class ElasticSem(BaseModel):
     linear_dasgeometry: str = field(
         default="{{0}}",
         metadata={
-            "name": "linearDASGeometry",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "linearDASGeometry",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     linear_dassamples: str = field(
@@ -11517,9 +11365,12 @@ class ElasticSem(BaseModel):
     receiver_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "receiverCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "receiverCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     ricker_order: str = field(
@@ -11549,25 +11400,34 @@ class ElasticSem(BaseModel):
     source_coordinates: str = field(
         default="{{0}}",
         metadata={
-            "name": "sourceCoordinates",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "name":
+            "sourceCoordinates",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     source_force: str = field(
         default="{0,0,0}",
         metadata={
-            "name": "sourceForce",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "sourceForce",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     source_moment: str = field(
         default="{1,1,1,0,0,0}",
         metadata={
-            "name": "sourceMoment",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "sourceMoment",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     target_regions: str = field(
@@ -11576,8 +11436,7 @@ class ElasticSem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_source_delay: str = field(
         default="-1",
         metadata={
@@ -11602,21 +11461,20 @@ class ElasticSem(BaseModel):
             "pattern": r".*[\[\]`$].*|none|dipole|strainIntegration",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ElementRegions(BaseModel):
+class ElementRegions( BaseModel ):
+
     class Meta:
         name = "ElementRegions"
 
-    model_config = ConfigDict(defer_build=True)
-    cell_element_region: List[CellElementRegion] = field(
+    model_config = ConfigDict( defer_build=True )
+    cell_element_region: List[ CellElementRegion ] = field(
         default_factory=list,
         metadata={
             "name": "CellElementRegion",
@@ -11624,7 +11482,7 @@ class ElementRegions(BaseModel):
             "namespace": "",
         },
     )
-    surface_element_region: List[SurfaceElementRegion] = field(
+    surface_element_region: List[ SurfaceElementRegion ] = field(
         default_factory=list,
         metadata={
             "name": "SurfaceElementRegion",
@@ -11632,7 +11490,7 @@ class ElementRegions(BaseModel):
             "namespace": "",
         },
     )
-    well_element_region: List[WellElementRegion] = field(
+    well_element_region: List[ WellElementRegion ] = field(
         default_factory=list,
         metadata={
             "name": "WellElementRegion",
@@ -11642,12 +11500,13 @@ class ElementRegions(BaseModel):
     )
 
 
-class EmbeddedSurfaceGenerator(BaseModel):
+class EmbeddedSurfaceGenerator( BaseModel ):
+
     class Meta:
         name = "EmbeddedSurfaceGenerator"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11655,7 +11514,7 @@ class EmbeddedSurfaceGenerator(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11671,13 +11530,11 @@ class EmbeddedSurfaceGenerator(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     fracture_region: str = field(
         default="FractureRegion",
         metadata={
@@ -11716,31 +11573,28 @@ class EmbeddedSurfaceGenerator(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class FieldSpecifications(BaseModel):
+class FieldSpecifications( BaseModel ):
+
     class Meta:
         name = "FieldSpecifications"
 
-    model_config = ConfigDict(defer_build=True)
-    aquifer: List[Aquifer] = field(
+    model_config = ConfigDict( defer_build=True )
+    aquifer: List[ Aquifer ] = field(
         default_factory=list,
         metadata={
             "name": "Aquifer",
@@ -11748,7 +11602,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    dirichlet: List[Dirichlet] = field(
+    dirichlet: List[ Dirichlet ] = field(
         default_factory=list,
         metadata={
             "name": "Dirichlet",
@@ -11756,7 +11610,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    field_specification: List[FieldSpecification] = field(
+    field_specification: List[ FieldSpecification ] = field(
         default_factory=list,
         metadata={
             "name": "FieldSpecification",
@@ -11764,7 +11618,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    hydrostatic_equilibrium: List[HydrostaticEquilibrium] = field(
+    hydrostatic_equilibrium: List[ HydrostaticEquilibrium ] = field(
         default_factory=list,
         metadata={
             "name": "HydrostaticEquilibrium",
@@ -11772,7 +11626,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    pml: List[Pml] = field(
+    pml: List[ Pml ] = field(
         default_factory=list,
         metadata={
             "name": "PML",
@@ -11780,7 +11634,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    source_flux: List[SourceFlux] = field(
+    source_flux: List[ SourceFlux ] = field(
         default_factory=list,
         metadata={
             "name": "SourceFlux",
@@ -11788,7 +11642,7 @@ class FieldSpecifications(BaseModel):
             "namespace": "",
         },
     )
-    traction: List[Traction] = field(
+    traction: List[ Traction ] = field(
         default_factory=list,
         metadata={
             "name": "Traction",
@@ -11798,12 +11652,13 @@ class FieldSpecifications(BaseModel):
     )
 
 
-class FiniteElements(BaseModel):
+class FiniteElements( BaseModel ):
+
     class Meta:
         name = "FiniteElements"
 
-    model_config = ConfigDict(defer_build=True)
-    finite_element_space: List[FiniteElementSpace] = field(
+    model_config = ConfigDict( defer_build=True )
+    finite_element_space: List[ FiniteElementSpace ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteElementSpace",
@@ -11811,7 +11666,7 @@ class FiniteElements(BaseModel):
             "namespace": "",
         },
     )
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11819,7 +11674,7 @@ class FiniteElements(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11829,12 +11684,13 @@ class FiniteElements(BaseModel):
     )
 
 
-class FiniteVolume(BaseModel):
+class FiniteVolume( BaseModel ):
+
     class Meta:
         name = "FiniteVolume"
 
-    model_config = ConfigDict(defer_build=True)
-    hybrid_mimetic_discretization: List[HybridMimeticDiscretization] = field(
+    model_config = ConfigDict( defer_build=True )
+    hybrid_mimetic_discretization: List[ HybridMimeticDiscretization ] = field(
         default_factory=list,
         metadata={
             "name": "HybridMimeticDiscretization",
@@ -11842,7 +11698,7 @@ class FiniteVolume(BaseModel):
             "namespace": "",
         },
     )
-    two_point_flux_approximation: List[TwoPointFluxApproximation] = field(
+    two_point_flux_approximation: List[ TwoPointFluxApproximation ] = field(
         default_factory=list,
         metadata={
             "name": "TwoPointFluxApproximation",
@@ -11852,12 +11708,13 @@ class FiniteVolume(BaseModel):
     )
 
 
-class FlowProppantTransport(BaseModel):
+class FlowProppantTransport( BaseModel ):
+
     class Meta:
         name = "FlowProppantTransport"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -11865,7 +11722,7 @@ class FlowProppantTransport(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -11881,14 +11738,12 @@ class FlowProppantTransport(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -11911,31 +11766,28 @@ class FlowProppantTransport(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Functions(BaseModel):
+class Functions( BaseModel ):
+
     class Meta:
         name = "Functions"
 
-    model_config = ConfigDict(defer_build=True)
-    composite_function: List[CompositeFunction] = field(
+    model_config = ConfigDict( defer_build=True )
+    composite_function: List[ CompositeFunction ] = field(
         default_factory=list,
         metadata={
             "name": "CompositeFunction",
@@ -11943,7 +11795,7 @@ class Functions(BaseModel):
             "namespace": "",
         },
     )
-    multivariable_table_function: List[MultivariableTableFunction] = field(
+    multivariable_table_function: List[ MultivariableTableFunction ] = field(
         default_factory=list,
         metadata={
             "name": "MultivariableTableFunction",
@@ -11951,7 +11803,7 @@ class Functions(BaseModel):
             "namespace": "",
         },
     )
-    symbolic_function: List[SymbolicFunction] = field(
+    symbolic_function: List[ SymbolicFunction ] = field(
         default_factory=list,
         metadata={
             "name": "SymbolicFunction",
@@ -11959,7 +11811,7 @@ class Functions(BaseModel):
             "namespace": "",
         },
     )
-    table_function: List[TableFunction] = field(
+    table_function: List[ TableFunction ] = field(
         default_factory=list,
         metadata={
             "name": "TableFunction",
@@ -11969,12 +11821,13 @@ class Functions(BaseModel):
     )
 
 
-class Geometry(BaseModel):
+class Geometry( BaseModel ):
+
     class Meta:
         name = "Geometry"
 
-    model_config = ConfigDict(defer_build=True)
-    box: List[Box] = field(
+    model_config = ConfigDict( defer_build=True )
+    box: List[ Box ] = field(
         default_factory=list,
         metadata={
             "name": "Box",
@@ -11982,7 +11835,7 @@ class Geometry(BaseModel):
             "namespace": "",
         },
     )
-    custom_polar_object: List[CustomPolarObject] = field(
+    custom_polar_object: List[ CustomPolarObject ] = field(
         default_factory=list,
         metadata={
             "name": "CustomPolarObject",
@@ -11990,7 +11843,7 @@ class Geometry(BaseModel):
             "namespace": "",
         },
     )
-    cylinder: List[Cylinder] = field(
+    cylinder: List[ Cylinder ] = field(
         default_factory=list,
         metadata={
             "name": "Cylinder",
@@ -11998,7 +11851,7 @@ class Geometry(BaseModel):
             "namespace": "",
         },
     )
-    disc: List[Disc] = field(
+    disc: List[ Disc ] = field(
         default_factory=list,
         metadata={
             "name": "Disc",
@@ -12006,7 +11859,7 @@ class Geometry(BaseModel):
             "namespace": "",
         },
     )
-    rectangle: List[Rectangle] = field(
+    rectangle: List[ Rectangle ] = field(
         default_factory=list,
         metadata={
             "name": "Rectangle",
@@ -12014,7 +11867,7 @@ class Geometry(BaseModel):
             "namespace": "",
         },
     )
-    thick_plane: List[ThickPlane] = field(
+    thick_plane: List[ ThickPlane ] = field(
         default_factory=list,
         metadata={
             "name": "ThickPlane",
@@ -12024,12 +11877,13 @@ class Geometry(BaseModel):
     )
 
 
-class Hydrofracture(BaseModel):
+class Hydrofracture( BaseModel ):
+
     class Meta:
         name = "Hydrofracture"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12037,7 +11891,7 @@ class Hydrofracture(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12059,16 +11913,13 @@ class Hydrofracture(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -12109,30 +11960,26 @@ class Hydrofracture(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     surface_generator_name: str = field(
         metadata={
             "name": "surfaceGeneratorName",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     use_quasi_newton: str = field(
         default="0",
         metadata={
@@ -12141,21 +11988,20 @@ class Hydrofracture(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Included(BaseModel):
+class Included( BaseModel ):
+
     class Meta:
         name = "Included"
 
-    model_config = ConfigDict(defer_build=True)
-    file: List[File] = field(
+    model_config = ConfigDict( defer_build=True )
+    file: List[ File ] = field(
         default_factory=list,
         metadata={
             "name": "File",
@@ -12165,12 +12011,13 @@ class Included(BaseModel):
     )
 
 
-class InternalWell(BaseModel):
+class InternalWell( BaseModel ):
+
     class Meta:
         name = "InternalWell"
 
-    model_config = ConfigDict(defer_build=True)
-    perforation: List[Perforation] = field(
+    model_config = ConfigDict( defer_build=True )
+    perforation: List[ Perforation ] = field(
         default_factory=list,
         metadata={
             "name": "Perforation",
@@ -12202,68 +12049,66 @@ class InternalWell(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    num_elements_per_segment: str = field(
-        metadata={
-            "name": "numElementsPerSegment",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    num_elements_per_segment: str = field( metadata={
+        "name": "numElementsPerSegment",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     polyline_node_coords: str = field(
         metadata={
-            "name": "polylineNodeCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
-        }
-    )
+            "name":
+            "polylineNodeCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+        } )
     polyline_segment_conn: str = field(
         metadata={
-            "name": "polylineSegmentConn",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*",
-        }
-    )
+            "name":
+            "polylineSegmentConn",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*",
+        } )
     radius: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    well_controls_name: str = field(
-        metadata={
-            "name": "wellControlsName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    well_region_name: str = field(
-        metadata={
-            "name": "wellRegionName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_controls_name: str = field( metadata={
+        "name": "wellControlsName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    well_region_name: str = field( metadata={
+        "name": "wellRegionName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class LaplaceFem(BaseModel):
+class LaplaceFem( BaseModel ):
+
     class Meta:
         name = "LaplaceFEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12271,7 +12116,7 @@ class LaplaceFem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12287,21 +12132,17 @@ class LaplaceFem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    field_name: str = field(
-        metadata={
-            "name": "fieldName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    field_name: str = field( metadata={
+        "name": "fieldName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -12324,31 +12165,28 @@ class LaplaceFem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         metadata={
             "name": "timeIntegrationOption",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|SteadyState|ImplicitTransient",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultiphasePoromechanicsReservoir(BaseModel):
+class MultiphasePoromechanicsReservoir( BaseModel ):
+
     class Meta:
         name = "MultiphasePoromechanicsReservoir"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12356,7 +12194,7 @@ class MultiphasePoromechanicsReservoir(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12394,39 +12232,34 @@ class MultiphasePoromechanicsReservoir(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    well_solver_name: str = field(
-        metadata={
-            "name": "wellSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_solver_name: str = field( metadata={
+        "name": "wellSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class MultiphasePoromechanics(BaseModel):
+class MultiphasePoromechanics( BaseModel ):
+
     class Meta:
         name = "MultiphasePoromechanics"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12434,7 +12267,7 @@ class MultiphasePoromechanics(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12450,14 +12283,12 @@ class MultiphasePoromechanics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -12482,14 +12313,12 @@ class MultiphasePoromechanics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     stabilization_multiplier: str = field(
         default="1",
         metadata={
@@ -12520,23 +12349,21 @@ class MultiphasePoromechanics(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Outputs(BaseModel):
+class Outputs( BaseModel ):
+
     class Meta:
         name = "Outputs"
 
-    model_config = ConfigDict(defer_build=True)
-    blueprint: List[Blueprint] = field(
+    model_config = ConfigDict( defer_build=True )
+    blueprint: List[ Blueprint ] = field(
         default_factory=list,
         metadata={
             "name": "Blueprint",
@@ -12544,7 +12371,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    chombo_io: List[ChomboIo] = field(
+    chombo_io: List[ ChomboIo ] = field(
         default_factory=list,
         metadata={
             "name": "ChomboIO",
@@ -12552,7 +12379,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    python: List[Python] = field(
+    python: List[ Python ] = field(
         default_factory=list,
         metadata={
             "name": "Python",
@@ -12560,7 +12387,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    restart: List[Restart] = field(
+    restart: List[ Restart ] = field(
         default_factory=list,
         metadata={
             "name": "Restart",
@@ -12568,7 +12395,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    silo: List[Silo] = field(
+    silo: List[ Silo ] = field(
         default_factory=list,
         metadata={
             "name": "Silo",
@@ -12576,7 +12403,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    time_history: List[TimeHistory] = field(
+    time_history: List[ TimeHistory ] = field(
         default_factory=list,
         metadata={
             "name": "TimeHistory",
@@ -12584,7 +12411,7 @@ class Outputs(BaseModel):
             "namespace": "",
         },
     )
-    vtk: List[Vtk] = field(
+    vtk: List[ Vtk ] = field(
         default_factory=list,
         metadata={
             "name": "VTK",
@@ -12594,12 +12421,13 @@ class Outputs(BaseModel):
     )
 
 
-class Parameters(BaseModel):
+class Parameters( BaseModel ):
+
     class Meta:
         name = "Parameters"
 
-    model_config = ConfigDict(defer_build=True)
-    parameter: List[Parameter] = field(
+    model_config = ConfigDict( defer_build=True )
+    parameter: List[ Parameter ] = field(
         default_factory=list,
         metadata={
             "name": "Parameter",
@@ -12609,12 +12437,13 @@ class Parameters(BaseModel):
     )
 
 
-class ParticleRegions(BaseModel):
+class ParticleRegions( BaseModel ):
+
     class Meta:
         name = "ParticleRegions"
 
-    model_config = ConfigDict(defer_build=True)
-    particle_region: List[ParticleRegion] = field(
+    model_config = ConfigDict( defer_build=True )
+    particle_region: List[ ParticleRegion ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleRegion",
@@ -12624,12 +12453,13 @@ class ParticleRegions(BaseModel):
     )
 
 
-class PeriodicEvent(BaseModel):
+class PeriodicEvent( BaseModel ):
+
     class Meta:
         name = "PeriodicEvent"
 
-    model_config = ConfigDict(defer_build=True)
-    halt_event: List[HaltEvent] = field(
+    model_config = ConfigDict( defer_build=True )
+    halt_event: List[ HaltEvent ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -12637,7 +12467,7 @@ class PeriodicEvent(BaseModel):
             "namespace": "",
         },
     )
-    periodic_event: List["PeriodicEvent"] = field(
+    periodic_event: List[ "PeriodicEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -12645,7 +12475,7 @@ class PeriodicEvent(BaseModel):
             "namespace": "",
         },
     )
-    solo_event: List["SoloEvent"] = field(
+    solo_event: List[ "SoloEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -12693,7 +12523,7 @@ class PeriodicEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    function: Optional[str] = field(
+    function: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12716,7 +12546,7 @@ class PeriodicEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    object_value: Optional[str] = field(
+    object_value: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "object",
@@ -12724,7 +12554,7 @@ class PeriodicEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    set: Optional[str] = field(
+    set: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12738,7 +12568,7 @@ class PeriodicEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    target: Optional[str] = field(
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -12776,21 +12606,20 @@ class PeriodicEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PhaseFieldDamageFem(BaseModel):
+class PhaseFieldDamageFem( BaseModel ):
+
     class Meta:
         name = "PhaseFieldDamageFEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12798,7 +12627,7 @@ class PhaseFieldDamageFem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12822,21 +12651,17 @@ class PhaseFieldDamageFem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    field_name: str = field(
-        metadata={
-            "name": "fieldName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    field_name: str = field( metadata={
+        "name": "fieldName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -12853,14 +12678,12 @@ class PhaseFieldDamageFem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    local_dissipation: str = field(
-        metadata={
-            "name": "localDissipation",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|Linear|Quadratic",
-        }
-    )
+    local_dissipation: str = field( metadata={
+        "name": "localDissipation",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|Linear|Quadratic",
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -12875,31 +12698,28 @@ class PhaseFieldDamageFem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         metadata={
             "name": "timeIntegrationOption",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class PhaseFieldFracture(BaseModel):
+class PhaseFieldFracture( BaseModel ):
+
     class Meta:
         name = "PhaseFieldFracture"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12907,7 +12727,7 @@ class PhaseFieldFracture(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -12923,14 +12743,12 @@ class PhaseFieldFracture(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    damage_solver_name: str = field(
-        metadata={
-            "name": "damageSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    damage_solver_name: str = field( metadata={
+        "name": "damageSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -12947,37 +12765,33 @@ class PhaseFieldFracture(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ProppantTransport(BaseModel):
+class ProppantTransport( BaseModel ):
+
     class Meta:
         name = "ProppantTransport"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -12985,7 +12799,7 @@ class ProppantTransport(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13025,13 +12839,11 @@ class ProppantTransport(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     friction_coefficient: str = field(
         default="0.03",
         metadata={
@@ -13118,8 +12930,7 @@ class ProppantTransport(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     update_proppant_packing: str = field(
         default="0",
         metadata={
@@ -13128,21 +12939,20 @@ class ProppantTransport(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class ReactiveCompositionalMultiphaseObl(BaseModel):
+class ReactiveCompositionalMultiphaseObl( BaseModel ):
+
     class Meta:
         name = "ReactiveCompositionalMultiphaseOBL"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13150,7 +12960,7 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13164,8 +12974,7 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+        } )
     allow_local_oblchopping: str = field(
         default="1",
         metadata={
@@ -13198,21 +13007,17 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    enable_energy_balance: str = field(
-        metadata={
-            "name": "enableEnergyBalance",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    enable_energy_balance: str = field( metadata={
+        "name": "enableEnergyBalance",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13269,22 +13074,18 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    num_components: str = field(
-        metadata={
-            "name": "numComponents",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
-    num_phases: str = field(
-        metadata={
-            "name": "numPhases",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    num_components: str = field( metadata={
+        "name": "numComponents",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
+    num_phases: str = field( metadata={
+        "name": "numPhases",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     phase_names: str = field(
         default="{}",
         metadata={
@@ -13299,8 +13100,7 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     trans_mult_exp: str = field(
         default="1",
         metadata={
@@ -13317,21 +13117,20 @@ class ReactiveCompositionalMultiphaseObl(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseFvm(BaseModel):
+class SinglePhaseFvm( BaseModel ):
+
     class Meta:
         name = "SinglePhaseFVM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13339,7 +13138,7 @@ class SinglePhaseFvm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13363,13 +13162,11 @@ class SinglePhaseFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13424,8 +13221,7 @@ class SinglePhaseFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     temperature: str = field(
         default="0",
         metadata={
@@ -13433,21 +13229,20 @@ class SinglePhaseFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseHybridFvm(BaseModel):
+class SinglePhaseHybridFvm( BaseModel ):
+
     class Meta:
         name = "SinglePhaseHybridFVM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13455,7 +13250,7 @@ class SinglePhaseHybridFvm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13479,13 +13274,11 @@ class SinglePhaseHybridFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13540,8 +13333,7 @@ class SinglePhaseHybridFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     temperature: str = field(
         default="0",
         metadata={
@@ -13549,21 +13341,20 @@ class SinglePhaseHybridFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhasePoromechanicsConformingFractures(BaseModel):
+class SinglePhasePoromechanicsConformingFractures( BaseModel ):
+
     class Meta:
         name = "SinglePhasePoromechanicsConformingFractures"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13571,7 +13362,7 @@ class SinglePhasePoromechanicsConformingFractures(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13587,14 +13378,12 @@ class SinglePhasePoromechanicsConformingFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13619,37 +13408,33 @@ class SinglePhasePoromechanicsConformingFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhasePoromechanicsEmbeddedFractures(BaseModel):
+class SinglePhasePoromechanicsEmbeddedFractures( BaseModel ):
+
     class Meta:
         name = "SinglePhasePoromechanicsEmbeddedFractures"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13657,7 +13442,7 @@ class SinglePhasePoromechanicsEmbeddedFractures(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13673,14 +13458,12 @@ class SinglePhasePoromechanicsEmbeddedFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13705,37 +13488,33 @@ class SinglePhasePoromechanicsEmbeddedFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhasePoromechanicsReservoir(BaseModel):
+class SinglePhasePoromechanicsReservoir( BaseModel ):
+
     class Meta:
         name = "SinglePhasePoromechanicsReservoir"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13743,7 +13522,7 @@ class SinglePhasePoromechanicsReservoir(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13781,39 +13560,34 @@ class SinglePhasePoromechanicsReservoir(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    well_solver_name: str = field(
-        metadata={
-            "name": "wellSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_solver_name: str = field( metadata={
+        "name": "wellSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhasePoromechanics(BaseModel):
+class SinglePhasePoromechanics( BaseModel ):
+
     class Meta:
         name = "SinglePhasePoromechanics"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13821,7 +13595,7 @@ class SinglePhasePoromechanics(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13837,14 +13611,12 @@ class SinglePhasePoromechanics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13869,37 +13641,33 @@ class SinglePhasePoromechanics(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseProppantFvm(BaseModel):
+class SinglePhaseProppantFvm( BaseModel ):
+
     class Meta:
         name = "SinglePhaseProppantFVM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -13907,7 +13675,7 @@ class SinglePhaseProppantFvm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -13931,13 +13699,11 @@ class SinglePhaseProppantFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -13992,8 +13758,7 @@ class SinglePhaseProppantFvm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     temperature: str = field(
         default="0",
         metadata={
@@ -14001,21 +13766,20 @@ class SinglePhaseProppantFvm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseReservoirPoromechanics(BaseModel):
+class SinglePhaseReservoirPoromechanics( BaseModel ):
+
     class Meta:
         name = "SinglePhaseReservoirPoromechanics"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14023,7 +13787,7 @@ class SinglePhaseReservoirPoromechanics(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14069,39 +13833,34 @@ class SinglePhaseReservoirPoromechanics(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    solid_solver_name: str = field(
-        metadata={
-            "name": "solidSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+        } )
+    solid_solver_name: str = field( metadata={
+        "name": "solidSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseReservoir(BaseModel):
+class SinglePhaseReservoir( BaseModel ):
+
     class Meta:
         name = "SinglePhaseReservoir"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14109,7 +13868,7 @@ class SinglePhaseReservoir(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14125,14 +13884,12 @@ class SinglePhaseReservoir(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    flow_solver_name: str = field(
-        metadata={
-            "name": "flowSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    flow_solver_name: str = field( metadata={
+        "name": "flowSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -14155,31 +13912,27 @@ class SinglePhaseReservoir(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    well_solver_name: str = field(
-        metadata={
-            "name": "wellSolverName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_solver_name: str = field( metadata={
+        "name": "wellSolverName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SinglePhaseWell(BaseModel):
+class SinglePhaseWell( BaseModel ):
+
     class Meta:
         name = "SinglePhaseWell"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14187,7 +13940,7 @@ class SinglePhaseWell(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14195,7 +13948,7 @@ class SinglePhaseWell(BaseModel):
             "namespace": "",
         },
     )
-    well_controls: List[WellControls] = field(
+    well_controls: List[ WellControls ] = field(
         default_factory=list,
         metadata={
             "name": "WellControls",
@@ -14233,8 +13986,7 @@ class SinglePhaseWell(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     write_csv: str = field(
         default="0",
         metadata={
@@ -14243,21 +13995,20 @@ class SinglePhaseWell(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsEmbeddedFractures(BaseModel):
+class SolidMechanicsEmbeddedFractures( BaseModel ):
+
     class Meta:
         name = "SolidMechanicsEmbeddedFractures"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14265,7 +14016,7 @@ class SolidMechanicsEmbeddedFractures(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14281,13 +14032,11 @@ class SolidMechanicsEmbeddedFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -14358,8 +14107,7 @@ class SolidMechanicsEmbeddedFractures(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         default="ExplicitDynamic",
         metadata={
@@ -14376,21 +14124,20 @@ class SolidMechanicsEmbeddedFractures(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsLagrangeContact(BaseModel):
+class SolidMechanicsLagrangeContact( BaseModel ):
+
     class Meta:
         name = "SolidMechanicsLagrangeContact"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14398,7 +14145,7 @@ class SolidMechanicsLagrangeContact(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14414,13 +14161,11 @@ class SolidMechanicsLagrangeContact(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -14469,14 +14214,12 @@ class SolidMechanicsLagrangeContact(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    stabilization_name: str = field(
-        metadata={
-            "name": "stabilizationName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    stabilization_name: str = field( metadata={
+        "name": "stabilizationName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     stiffness_damping: str = field(
         default="0",
         metadata={
@@ -14499,8 +14242,7 @@ class SolidMechanicsLagrangeContact(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         default="ExplicitDynamic",
         metadata={
@@ -14509,21 +14251,20 @@ class SolidMechanicsLagrangeContact(BaseModel):
             "pattern": r".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsLagrangianSsle(BaseModel):
+class SolidMechanicsLagrangianSsle( BaseModel ):
+
     class Meta:
         name = "SolidMechanicsLagrangianSSLE"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14531,7 +14272,7 @@ class SolidMechanicsLagrangianSsle(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14555,13 +14296,11 @@ class SolidMechanicsLagrangianSsle(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -14626,7 +14365,7 @@ class SolidMechanicsLagrangianSsle(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    surface_generator_name: Optional[str] = field(
+    surface_generator_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "surfaceGeneratorName",
@@ -14640,8 +14379,7 @@ class SolidMechanicsLagrangianSsle(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         default="ExplicitDynamic",
         metadata={
@@ -14650,21 +14388,20 @@ class SolidMechanicsLagrangianSsle(BaseModel):
             "pattern": r".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsLagrangianFem(BaseModel):
+class SolidMechanicsLagrangianFem( BaseModel ):
+
     class Meta:
         name = "SolidMechanics_LagrangianFEM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14672,7 +14409,7 @@ class SolidMechanicsLagrangianFem(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14696,13 +14433,11 @@ class SolidMechanicsLagrangianFem(BaseModel):
             "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     initial_dt: str = field(
         default="1e+99",
         metadata={
@@ -14767,7 +14502,7 @@ class SolidMechanicsLagrangianFem(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    surface_generator_name: Optional[str] = field(
+    surface_generator_name: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "surfaceGeneratorName",
@@ -14781,8 +14516,7 @@ class SolidMechanicsLagrangianFem(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         default="ExplicitDynamic",
         metadata={
@@ -14791,21 +14525,20 @@ class SolidMechanicsLagrangianFem(BaseModel):
             "pattern": r".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SolidMechanicsMpm(BaseModel):
+class SolidMechanicsMpm( BaseModel ):
+
     class Meta:
         name = "SolidMechanics_MPM"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -14813,7 +14546,7 @@ class SolidMechanicsMpm(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -14869,13 +14602,11 @@ class SolidMechanicsMpm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    discretization: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
-        }
-    )
+    discretization: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*",
+    } )
     f_table_interp_type: str = field(
         default="0",
         metadata={
@@ -14884,7 +14615,7 @@ class SolidMechanicsMpm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    f_table_path: Optional[str] = field(
+    f_table_path: Optional[ str ] = field(
         default=None,
         metadata={
             "name": "fTablePath",
@@ -14994,8 +14725,7 @@ class SolidMechanicsMpm(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     time_integration_option: str = field(
         default="ExplicitDynamic",
         metadata={
@@ -15020,21 +14750,20 @@ class SolidMechanicsMpm(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class SurfaceGenerator(BaseModel):
+class SurfaceGenerator( BaseModel ):
+
     class Meta:
         name = "SurfaceGenerator"
 
-    model_config = ConfigDict(defer_build=True)
-    linear_solver_parameters: List[LinearSolverParameters] = field(
+    model_config = ConfigDict( defer_build=True )
+    linear_solver_parameters: List[ LinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "LinearSolverParameters",
@@ -15042,7 +14771,7 @@ class SurfaceGenerator(BaseModel):
             "namespace": "",
         },
     )
-    nonlinear_solver_parameters: List[NonlinearSolverParameters] = field(
+    nonlinear_solver_parameters: List[ NonlinearSolverParameters ] = field(
         default_factory=list,
         metadata={
             "name": "NonlinearSolverParameters",
@@ -15112,53 +14841,45 @@ class SurfaceGenerator(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
+        } )
     target_regions: str = field(
         metadata={
             "name": "targetRegions",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Tasks(BaseModel):
+class Tasks( BaseModel ):
+
     class Meta:
         name = "Tasks"
 
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
     compositional_multiphase_reservoir_poromechanics_initialization: List[
-        CompositionalMultiphaseReservoirPoromechanicsInitialization
-    ] = field(
-        default_factory=list,
-        metadata={
-            "name": "CompositionalMultiphaseReservoirPoromechanicsInitialization",
-            "type": "Element",
-            "namespace": "",
-        },
-    )
-    compositional_multiphase_statistics: List[CompositionalMultiphaseStatistics] = (
-        field(
+        CompositionalMultiphaseReservoirPoromechanicsInitialization ] = field(
             default_factory=list,
             metadata={
-                "name": "CompositionalMultiphaseStatistics",
+                "name": "CompositionalMultiphaseReservoirPoromechanicsInitialization",
                 "type": "Element",
                 "namespace": "",
             },
         )
-    )
-    multiphase_poromechanics_initialization: List[
-        MultiphasePoromechanicsInitialization
-    ] = field(
+    compositional_multiphase_statistics: List[ CompositionalMultiphaseStatistics ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "CompositionalMultiphaseStatistics",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    multiphase_poromechanics_initialization: List[ MultiphasePoromechanicsInitialization ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanicsInitialization",
@@ -15166,7 +14887,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    pvtdriver: List[Pvtdriver] = field(
+    pvtdriver: List[ Pvtdriver ] = field(
         default_factory=list,
         metadata={
             "name": "PVTDriver",
@@ -15174,7 +14895,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    pack_collection: List[PackCollection] = field(
+    pack_collection: List[ PackCollection ] = field(
         default_factory=list,
         metadata={
             "name": "PackCollection",
@@ -15182,7 +14903,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    reactive_fluid_driver: List[ReactiveFluidDriver] = field(
+    reactive_fluid_driver: List[ ReactiveFluidDriver ] = field(
         default_factory=list,
         metadata={
             "name": "ReactiveFluidDriver",
@@ -15190,7 +14911,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    relperm_driver: List[RelpermDriver] = field(
+    relperm_driver: List[ RelpermDriver ] = field(
         default_factory=list,
         metadata={
             "name": "RelpermDriver",
@@ -15198,9 +14919,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_poromechanics_initialization: List[
-        SinglePhasePoromechanicsInitialization
-    ] = field(
+    single_phase_poromechanics_initialization: List[ SinglePhasePoromechanicsInitialization ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsInitialization",
@@ -15209,16 +14928,15 @@ class Tasks(BaseModel):
         },
     )
     single_phase_reservoir_poromechanics_initialization: List[
-        SinglePhaseReservoirPoromechanicsInitialization
-    ] = field(
-        default_factory=list,
-        metadata={
-            "name": "SinglePhaseReservoirPoromechanicsInitialization",
-            "type": "Element",
-            "namespace": "",
-        },
-    )
-    single_phase_statistics: List[SinglePhaseStatistics] = field(
+        SinglePhaseReservoirPoromechanicsInitialization ] = field(
+            default_factory=list,
+            metadata={
+                "name": "SinglePhaseReservoirPoromechanicsInitialization",
+                "type": "Element",
+                "namespace": "",
+            },
+        )
+    single_phase_statistics: List[ SinglePhaseStatistics ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseStatistics",
@@ -15226,7 +14944,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_state_reset: List[SolidMechanicsStateReset] = field(
+    solid_mechanics_state_reset: List[ SolidMechanicsStateReset ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsStateReset",
@@ -15234,7 +14952,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_statistics: List[SolidMechanicsStatistics] = field(
+    solid_mechanics_statistics: List[ SolidMechanicsStatistics ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsStatistics",
@@ -15242,7 +14960,7 @@ class Tasks(BaseModel):
             "namespace": "",
         },
     )
-    triaxial_driver: List[TriaxialDriver] = field(
+    triaxial_driver: List[ TriaxialDriver ] = field(
         default_factory=list,
         metadata={
             "name": "TriaxialDriver",
@@ -15252,12 +14970,13 @@ class Tasks(BaseModel):
     )
 
 
-class Vtkwell(BaseModel):
+class Vtkwell( BaseModel ):
+
     class Meta:
         name = "VTKWell"
 
-    model_config = ConfigDict(defer_build=True)
-    perforation: List[Perforation] = field(
+    model_config = ConfigDict( defer_build=True )
+    perforation: List[ Perforation ] = field(
         default_factory=list,
         metadata={
             "name": "Perforation",
@@ -15265,13 +14984,11 @@ class Vtkwell(BaseModel):
             "namespace": "",
         },
     )
-    file: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+    file: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
+    } )
     min_element_length: str = field(
         default="0.001",
         metadata={
@@ -15288,52 +15005,44 @@ class Vtkwell(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    num_elements_per_segment: str = field(
-        metadata={
-            "name": "numElementsPerSegment",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
-        }
-    )
+    num_elements_per_segment: str = field( metadata={
+        "name": "numElementsPerSegment",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+    } )
     radius: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
-        }
-    )
-    well_controls_name: str = field(
-        metadata={
-            "name": "wellControlsName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    well_region_name: str = field(
-        metadata={
-            "name": "wellRegionName",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+        } )
+    well_controls_name: str = field( metadata={
+        "name": "wellControlsName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    well_region_name: str = field( metadata={
+        "name": "wellRegionName",
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[^,\{\}\s]*\s*",
+    } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Crusher(BaseModel):
+class Crusher( BaseModel ):
+
     class Meta:
         name = "crusher"
 
-    model_config = ConfigDict(defer_build=True)
-    run: List[Run] = field(
+    model_config = ConfigDict( defer_build=True )
+    run: List[ Run ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -15343,12 +15052,13 @@ class Crusher(BaseModel):
     )
 
 
-class Lassen(BaseModel):
+class Lassen( BaseModel ):
+
     class Meta:
         name = "lassen"
 
-    model_config = ConfigDict(defer_build=True)
-    run: List[Run] = field(
+    model_config = ConfigDict( defer_build=True )
+    run: List[ Run ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -15358,12 +15068,13 @@ class Lassen(BaseModel):
     )
 
 
-class Quartz(BaseModel):
+class Quartz( BaseModel ):
+
     class Meta:
         name = "quartz"
 
-    model_config = ConfigDict(defer_build=True)
-    run: List[Run] = field(
+    model_config = ConfigDict( defer_build=True )
+    run: List[ Run ] = field(
         default_factory=list,
         metadata={
             "name": "Run",
@@ -15373,26 +15084,27 @@ class Quartz(BaseModel):
     )
 
 
-class Benchmarks(BaseModel):
+class Benchmarks( BaseModel ):
+
     class Meta:
         name = "Benchmarks"
 
-    model_config = ConfigDict(defer_build=True)
-    crusher: List[Crusher] = field(
+    model_config = ConfigDict( defer_build=True )
+    crusher: List[ Crusher ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
             "namespace": "",
         },
     )
-    lassen: List[Lassen] = field(
+    lassen: List[ Lassen ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
             "namespace": "",
         },
     )
-    quartz: List[Quartz] = field(
+    quartz: List[ Quartz ] = field(
         default_factory=list,
         metadata={
             "type": "Element",
@@ -15401,12 +15113,13 @@ class Benchmarks(BaseModel):
     )
 
 
-class InternalMesh(BaseModel):
+class InternalMesh( BaseModel ):
+
     class Meta:
         name = "InternalMesh"
 
-    model_config = ConfigDict(defer_build=True)
-    internal_well: List[InternalWell] = field(
+    model_config = ConfigDict( defer_build=True )
+    internal_well: List[ InternalWell ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -15414,7 +15127,7 @@ class InternalMesh(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: List[Vtkwell] = field(
+    vtkwell: List[ Vtkwell ] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -15428,37 +15141,32 @@ class InternalMesh(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     element_types: str = field(
         metadata={
             "name": "elementTypes",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     nx: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     ny: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     nz: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     position_tolerance: str = field(
         default="1e-10",
         metadata={
@@ -15478,66 +15186,83 @@ class InternalMesh(BaseModel):
     x_bias: str = field(
         default="{1}",
         metadata={
-            "name": "xBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "xBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     x_coords: str = field(
         metadata={
-            "name": "xCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "xCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     y_bias: str = field(
         default="{1}",
         metadata={
-            "name": "yBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "yBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     y_coords: str = field(
         metadata={
-            "name": "yCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "name":
+            "yCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     z_bias: str = field(
         default="{1}",
         metadata={
-            "name": "zBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     z_coords: str = field(
         metadata={
-            "name": "zCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "zCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class InternalWellbore(BaseModel):
+class InternalWellbore( BaseModel ):
+
     class Meta:
         name = "InternalWellbore"
 
-    model_config = ConfigDict(defer_build=True)
-    internal_well: List[InternalWell] = field(
+    model_config = ConfigDict( defer_build=True )
+    internal_well: List[ InternalWell ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -15545,7 +15270,7 @@ class InternalWellbore(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: List[Vtkwell] = field(
+    vtkwell: List[ Vtkwell ] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -15556,9 +15281,12 @@ class InternalWellbore(BaseModel):
     auto_space_radial_elems: str = field(
         default="{-1}",
         metadata={
-            "name": "autoSpaceRadialElems",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "autoSpaceRadialElems",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     cartesian_mapping_inner_radius: str = field(
@@ -15575,22 +15303,23 @@ class InternalWellbore(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
-        }
-    )
+        } )
     element_types: str = field(
         metadata={
             "name": "elementTypes",
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*",
-        }
-    )
+        } )
     hard_radial_coords: str = field(
         default="{0}",
         metadata={
-            "name": "hardRadialCoords",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "hardRadialCoords",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     nr: str = field(
@@ -15598,22 +15327,19 @@ class InternalWellbore(BaseModel):
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     nt: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     nz: str = field(
         metadata={
             "type": "Attribute",
             "required": True,
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*",
-        }
-    )
+        } )
     position_tolerance: str = field(
         default="1e-10",
         metadata={
@@ -15625,30 +15351,39 @@ class InternalWellbore(BaseModel):
     r_bias: str = field(
         default="{-0.8}",
         metadata={
-            "name": "rBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "rBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     radius: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     theta: str = field(
         metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
     trajectory: str = field(
         default="{{0}}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*",
         },
     )
     triangle_pattern: str = field(
@@ -15670,50 +15405,61 @@ class InternalWellbore(BaseModel):
     x_bias: str = field(
         default="{1}",
         metadata={
-            "name": "xBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "xBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     y_bias: str = field(
         default="{1}",
         metadata={
-            "name": "yBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "yBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     z_bias: str = field(
         default="{1}",
         metadata={
-            "name": "zBias",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+            "name":
+            "zBias",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
         },
     )
     z_coords: str = field(
         metadata={
-            "name": "zCoords",
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
-        }
-    )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+            "name":
+            "zCoords",
+            "type":
+            "Attribute",
+            "required":
+            True,
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*",
+        } )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class NumericalMethods(BaseModel):
+class NumericalMethods( BaseModel ):
+
     class Meta:
         name = "NumericalMethods"
 
-    model_config = ConfigDict(defer_build=True)
-    finite_elements: List[FiniteElements] = field(
+    model_config = ConfigDict( defer_build=True )
+    finite_elements: List[ FiniteElements ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteElements",
@@ -15721,7 +15467,7 @@ class NumericalMethods(BaseModel):
             "namespace": "",
         },
     )
-    finite_volume: List[FiniteVolume] = field(
+    finite_volume: List[ FiniteVolume ] = field(
         default_factory=list,
         metadata={
             "name": "FiniteVolume",
@@ -15731,12 +15477,13 @@ class NumericalMethods(BaseModel):
     )
 
 
-class SoloEvent(BaseModel):
+class SoloEvent( BaseModel ):
+
     class Meta:
         name = "SoloEvent"
 
-    model_config = ConfigDict(defer_build=True)
-    halt_event: List[HaltEvent] = field(
+    model_config = ConfigDict( defer_build=True )
+    halt_event: List[ HaltEvent ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -15744,7 +15491,7 @@ class SoloEvent(BaseModel):
             "namespace": "",
         },
     )
-    periodic_event: List[PeriodicEvent] = field(
+    periodic_event: List[ PeriodicEvent ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -15752,7 +15499,7 @@ class SoloEvent(BaseModel):
             "namespace": "",
         },
     )
-    solo_event: List["SoloEvent"] = field(
+    solo_event: List[ "SoloEvent" ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -15808,7 +15555,7 @@ class SoloEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    target: Optional[str] = field(
+    target: Optional[ str ] = field(
         default=None,
         metadata={
             "type": "Attribute",
@@ -15847,21 +15594,20 @@ class SoloEvent(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Solvers(BaseModel):
+class Solvers( BaseModel ):
+
     class Meta:
         name = "Solvers"
 
-    model_config = ConfigDict(defer_build=True)
-    acoustic_elastic_sem: List[AcousticElasticSem] = field(
+    model_config = ConfigDict( defer_build=True )
+    acoustic_elastic_sem: List[ AcousticElasticSem ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticElasticSEM",
@@ -15869,7 +15615,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    acoustic_first_order_sem: List[AcousticFirstOrderSem] = field(
+    acoustic_first_order_sem: List[ AcousticFirstOrderSem ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticFirstOrderSEM",
@@ -15877,7 +15623,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    acoustic_sem: List[AcousticSem] = field(
+    acoustic_sem: List[ AcousticSem ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticSEM",
@@ -15885,7 +15631,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    acoustic_vtisem: List[AcousticVtisem] = field(
+    acoustic_vtisem: List[ AcousticVtisem ] = field(
         default_factory=list,
         metadata={
             "name": "AcousticVTISEM",
@@ -15893,7 +15639,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_fvm: List[CompositionalMultiphaseFvm] = field(
+    compositional_multiphase_fvm: List[ CompositionalMultiphaseFvm ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseFVM",
@@ -15901,7 +15647,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_hybrid_fvm: List[CompositionalMultiphaseHybridFvm] = field(
+    compositional_multiphase_hybrid_fvm: List[ CompositionalMultiphaseHybridFvm ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseHybridFVM",
@@ -15909,7 +15655,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_reservoir: List[CompositionalMultiphaseReservoir] = field(
+    compositional_multiphase_reservoir: List[ CompositionalMultiphaseReservoir ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseReservoir",
@@ -15917,9 +15663,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_reservoir_poromechanics: List[
-        CompositionalMultiphaseReservoirPoromechanics
-    ] = field(
+    compositional_multiphase_reservoir_poromechanics: List[ CompositionalMultiphaseReservoirPoromechanics ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseReservoirPoromechanics",
@@ -15927,7 +15671,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    compositional_multiphase_well: List[CompositionalMultiphaseWell] = field(
+    compositional_multiphase_well: List[ CompositionalMultiphaseWell ] = field(
         default_factory=list,
         metadata={
             "name": "CompositionalMultiphaseWell",
@@ -15935,7 +15679,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    elastic_first_order_sem: List[ElasticFirstOrderSem] = field(
+    elastic_first_order_sem: List[ ElasticFirstOrderSem ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticFirstOrderSEM",
@@ -15943,7 +15687,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    elastic_sem: List[ElasticSem] = field(
+    elastic_sem: List[ ElasticSem ] = field(
         default_factory=list,
         metadata={
             "name": "ElasticSEM",
@@ -15951,7 +15695,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    embedded_surface_generator: List[EmbeddedSurfaceGenerator] = field(
+    embedded_surface_generator: List[ EmbeddedSurfaceGenerator ] = field(
         default_factory=list,
         metadata={
             "name": "EmbeddedSurfaceGenerator",
@@ -15959,7 +15703,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    flow_proppant_transport: List[FlowProppantTransport] = field(
+    flow_proppant_transport: List[ FlowProppantTransport ] = field(
         default_factory=list,
         metadata={
             "name": "FlowProppantTransport",
@@ -15967,7 +15711,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    hydrofracture: List[Hydrofracture] = field(
+    hydrofracture: List[ Hydrofracture ] = field(
         default_factory=list,
         metadata={
             "name": "Hydrofracture",
@@ -15975,7 +15719,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    laplace_fem: List[LaplaceFem] = field(
+    laplace_fem: List[ LaplaceFem ] = field(
         default_factory=list,
         metadata={
             "name": "LaplaceFEM",
@@ -15983,7 +15727,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    multiphase_poromechanics: List[MultiphasePoromechanics] = field(
+    multiphase_poromechanics: List[ MultiphasePoromechanics ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanics",
@@ -15991,7 +15735,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    multiphase_poromechanics_reservoir: List[MultiphasePoromechanicsReservoir] = field(
+    multiphase_poromechanics_reservoir: List[ MultiphasePoromechanicsReservoir ] = field(
         default_factory=list,
         metadata={
             "name": "MultiphasePoromechanicsReservoir",
@@ -15999,7 +15743,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    phase_field_damage_fem: List[PhaseFieldDamageFem] = field(
+    phase_field_damage_fem: List[ PhaseFieldDamageFem ] = field(
         default_factory=list,
         metadata={
             "name": "PhaseFieldDamageFEM",
@@ -16007,7 +15751,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    phase_field_fracture: List[PhaseFieldFracture] = field(
+    phase_field_fracture: List[ PhaseFieldFracture ] = field(
         default_factory=list,
         metadata={
             "name": "PhaseFieldFracture",
@@ -16015,7 +15759,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    proppant_transport: List[ProppantTransport] = field(
+    proppant_transport: List[ ProppantTransport ] = field(
         default_factory=list,
         metadata={
             "name": "ProppantTransport",
@@ -16023,17 +15767,15 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    reactive_compositional_multiphase_obl: List[ReactiveCompositionalMultiphaseObl] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "ReactiveCompositionalMultiphaseOBL",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    single_phase_fvm: List[SinglePhaseFvm] = field(
+    reactive_compositional_multiphase_obl: List[ ReactiveCompositionalMultiphaseObl ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "ReactiveCompositionalMultiphaseOBL",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    single_phase_fvm: List[ SinglePhaseFvm ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseFVM",
@@ -16041,7 +15783,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_hybrid_fvm: List[SinglePhaseHybridFvm] = field(
+    single_phase_hybrid_fvm: List[ SinglePhaseHybridFvm ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseHybridFVM",
@@ -16049,7 +15791,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_poromechanics: List[SinglePhasePoromechanics] = field(
+    single_phase_poromechanics: List[ SinglePhasePoromechanics ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanics",
@@ -16057,9 +15799,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_poromechanics_conforming_fractures: List[
-        SinglePhasePoromechanicsConformingFractures
-    ] = field(
+    single_phase_poromechanics_conforming_fractures: List[ SinglePhasePoromechanicsConformingFractures ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsConformingFractures",
@@ -16067,9 +15807,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_poromechanics_embedded_fractures: List[
-        SinglePhasePoromechanicsEmbeddedFractures
-    ] = field(
+    single_phase_poromechanics_embedded_fractures: List[ SinglePhasePoromechanicsEmbeddedFractures ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsEmbeddedFractures",
@@ -16077,17 +15815,15 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_poromechanics_reservoir: List[SinglePhasePoromechanicsReservoir] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "SinglePhasePoromechanicsReservoir",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    single_phase_proppant_fvm: List[SinglePhaseProppantFvm] = field(
+    single_phase_poromechanics_reservoir: List[ SinglePhasePoromechanicsReservoir ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhasePoromechanicsReservoir",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    single_phase_proppant_fvm: List[ SinglePhaseProppantFvm ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseProppantFVM",
@@ -16095,7 +15831,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_reservoir: List[SinglePhaseReservoir] = field(
+    single_phase_reservoir: List[ SinglePhaseReservoir ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseReservoir",
@@ -16103,17 +15839,15 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    single_phase_reservoir_poromechanics: List[SinglePhaseReservoirPoromechanics] = (
-        field(
-            default_factory=list,
-            metadata={
-                "name": "SinglePhaseReservoirPoromechanics",
-                "type": "Element",
-                "namespace": "",
-            },
-        )
-    )
-    single_phase_well: List[SinglePhaseWell] = field(
+    single_phase_reservoir_poromechanics: List[ SinglePhaseReservoirPoromechanics ] = ( field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhaseReservoirPoromechanics",
+            "type": "Element",
+            "namespace": "",
+        },
+    ) )
+    single_phase_well: List[ SinglePhaseWell ] = field(
         default_factory=list,
         metadata={
             "name": "SinglePhaseWell",
@@ -16121,7 +15855,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_embedded_fractures: List[SolidMechanicsEmbeddedFractures] = field(
+    solid_mechanics_embedded_fractures: List[ SolidMechanicsEmbeddedFractures ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsEmbeddedFractures",
@@ -16129,7 +15863,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_lagrange_contact: List[SolidMechanicsLagrangeContact] = field(
+    solid_mechanics_lagrange_contact: List[ SolidMechanicsLagrangeContact ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsLagrangeContact",
@@ -16137,7 +15871,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_lagrangian_ssle: List[SolidMechanicsLagrangianSsle] = field(
+    solid_mechanics_lagrangian_ssle: List[ SolidMechanicsLagrangianSsle ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanicsLagrangianSSLE",
@@ -16145,7 +15879,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_lagrangian_fem: List[SolidMechanicsLagrangianFem] = field(
+    solid_mechanics_lagrangian_fem: List[ SolidMechanicsLagrangianFem ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanics_LagrangianFEM",
@@ -16153,7 +15887,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    solid_mechanics_mpm: List[SolidMechanicsMpm] = field(
+    solid_mechanics_mpm: List[ SolidMechanicsMpm ] = field(
         default_factory=list,
         metadata={
             "name": "SolidMechanics_MPM",
@@ -16161,7 +15895,7 @@ class Solvers(BaseModel):
             "namespace": "",
         },
     )
-    surface_generator: List[SurfaceGenerator] = field(
+    surface_generator: List[ SurfaceGenerator ] = field(
         default_factory=list,
         metadata={
             "name": "SurfaceGenerator",
@@ -16172,19 +15906,23 @@ class Solvers(BaseModel):
     gravity_vector: str = field(
         default="{0,0,-9.81}",
         metadata={
-            "name": "gravityVector",
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "name":
+            "gravityVector",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
 
 
-class Vtkmesh(BaseModel):
+class Vtkmesh( BaseModel ):
+
     class Meta:
         name = "VTKMesh"
 
-    model_config = ConfigDict(defer_build=True)
-    internal_well: List[InternalWell] = field(
+    model_config = ConfigDict( defer_build=True )
+    internal_well: List[ InternalWell ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -16192,7 +15930,7 @@ class Vtkmesh(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: List[Vtkwell] = field(
+    vtkwell: List[ Vtkwell ] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -16224,13 +15962,11 @@ class Vtkmesh(BaseModel):
             "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*",
         },
     )
-    file: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
-        }
-    )
+    file: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r'.*[\[\]`$].*|[^*?<>\|:";,\s]*\s*',
+    } )
     log_level: str = field(
         default="0",
         metadata={
@@ -16282,8 +16018,10 @@ class Vtkmesh(BaseModel):
     scale: str = field(
         default="{1,1,1}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     surfacic_fields_in_geosx: str = field(
@@ -16305,8 +16043,10 @@ class Vtkmesh(BaseModel):
     translate: str = field(
         default="{0,0,0}",
         metadata={
-            "type": "Attribute",
-            "pattern": r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
+            "type":
+            "Attribute",
+            "pattern":
+            r".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*",
         },
     )
     use_global_ids: str = field(
@@ -16317,21 +16057,20 @@ class Vtkmesh(BaseModel):
             "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
         },
     )
-    name: str = field(
-        metadata={
-            "type": "Attribute",
-            "required": True,
-            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
-        }
-    )
+    name: str = field( metadata={
+        "type": "Attribute",
+        "required": True,
+        "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+    } )
 
 
-class Events(BaseModel):
+class Events( BaseModel ):
+
     class Meta:
         name = "Events"
 
-    model_config = ConfigDict(defer_build=True)
-    halt_event: List[HaltEvent] = field(
+    model_config = ConfigDict( defer_build=True )
+    halt_event: List[ HaltEvent ] = field(
         default_factory=list,
         metadata={
             "name": "HaltEvent",
@@ -16339,7 +16078,7 @@ class Events(BaseModel):
             "namespace": "",
         },
     )
-    periodic_event: List[PeriodicEvent] = field(
+    periodic_event: List[ PeriodicEvent ] = field(
         default_factory=list,
         metadata={
             "name": "PeriodicEvent",
@@ -16347,7 +16086,7 @@ class Events(BaseModel):
             "namespace": "",
         },
     )
-    solo_event: List[SoloEvent] = field(
+    solo_event: List[ SoloEvent ] = field(
         default_factory=list,
         metadata={
             "name": "SoloEvent",
@@ -16397,12 +16136,13 @@ class Events(BaseModel):
     )
 
 
-class Mesh(BaseModel):
+class Mesh( BaseModel ):
+
     class Meta:
         name = "Mesh"
 
-    model_config = ConfigDict(defer_build=True)
-    internal_mesh: List[InternalMesh] = field(
+    model_config = ConfigDict( defer_build=True )
+    internal_mesh: List[ InternalMesh ] = field(
         default_factory=list,
         metadata={
             "name": "InternalMesh",
@@ -16410,7 +16150,7 @@ class Mesh(BaseModel):
             "namespace": "",
         },
     )
-    internal_wellbore: List[InternalWellbore] = field(
+    internal_wellbore: List[ InternalWellbore ] = field(
         default_factory=list,
         metadata={
             "name": "InternalWellbore",
@@ -16418,7 +16158,7 @@ class Mesh(BaseModel):
             "namespace": "",
         },
     )
-    particle_mesh: List[ParticleMesh] = field(
+    particle_mesh: List[ ParticleMesh ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleMesh",
@@ -16426,7 +16166,7 @@ class Mesh(BaseModel):
             "namespace": "",
         },
     )
-    vtkmesh: List[Vtkmesh] = field(
+    vtkmesh: List[ Vtkmesh ] = field(
         default_factory=list,
         metadata={
             "name": "VTKMesh",
@@ -16436,12 +16176,13 @@ class Mesh(BaseModel):
     )
 
 
-class Problem(BaseModel):
+class Problem( BaseModel ):
+
     class Meta:
         name = "Problem"
 
-    model_config = ConfigDict(defer_build=True)
-    events: List[Events] = field(
+    model_config = ConfigDict( defer_build=True )
+    events: List[ Events ] = field(
         default_factory=list,
         metadata={
             "name": "Events",
@@ -16449,7 +16190,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    field_specifications: List[FieldSpecifications] = field(
+    field_specifications: List[ FieldSpecifications ] = field(
         default_factory=list,
         metadata={
             "name": "FieldSpecifications",
@@ -16457,7 +16198,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    functions: List[Functions] = field(
+    functions: List[ Functions ] = field(
         default_factory=list,
         metadata={
             "name": "Functions",
@@ -16465,7 +16206,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    geometry: List[Geometry] = field(
+    geometry: List[ Geometry ] = field(
         default_factory=list,
         metadata={
             "name": "Geometry",
@@ -16473,7 +16214,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    mesh: List[Mesh] = field(
+    mesh: List[ Mesh ] = field(
         default_factory=list,
         metadata={
             "name": "Mesh",
@@ -16481,7 +16222,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    numerical_methods: List[NumericalMethods] = field(
+    numerical_methods: List[ NumericalMethods ] = field(
         default_factory=list,
         metadata={
             "name": "NumericalMethods",
@@ -16489,7 +16230,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    outputs: List[Outputs] = field(
+    outputs: List[ Outputs ] = field(
         default_factory=list,
         metadata={
             "name": "Outputs",
@@ -16497,7 +16238,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    solvers: List[Solvers] = field(
+    solvers: List[ Solvers ] = field(
         default_factory=list,
         metadata={
             "name": "Solvers",
@@ -16505,7 +16246,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    tasks: List[Tasks] = field(
+    tasks: List[ Tasks ] = field(
         default_factory=list,
         metadata={
             "name": "Tasks",
@@ -16513,7 +16254,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    constitutive: List[Constitutive] = field(
+    constitutive: List[ Constitutive ] = field(
         default_factory=list,
         metadata={
             "name": "Constitutive",
@@ -16521,7 +16262,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    element_regions: List[ElementRegions] = field(
+    element_regions: List[ ElementRegions ] = field(
         default_factory=list,
         metadata={
             "name": "ElementRegions",
@@ -16529,7 +16270,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    particle_regions: List[ParticleRegions] = field(
+    particle_regions: List[ ParticleRegions ] = field(
         default_factory=list,
         metadata={
             "name": "ParticleRegions",
@@ -16537,7 +16278,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    included: List[Included] = field(
+    included: List[ Included ] = field(
         default_factory=list,
         metadata={
             "name": "Included",
@@ -16545,7 +16286,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    parameters: List[Parameters] = field(
+    parameters: List[ Parameters ] = field(
         default_factory=list,
         metadata={
             "name": "Parameters",
@@ -16553,7 +16294,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    benchmarks: List[Benchmarks] = field(
+    benchmarks: List[ Benchmarks ] = field(
         default_factory=list,
         metadata={
             "name": "Benchmarks",
@@ -16563,6 +16304,6 @@ class Problem(BaseModel):
     )
 
 
-class Problem(Problem):
+class Problem( Problem ):
     pass
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
