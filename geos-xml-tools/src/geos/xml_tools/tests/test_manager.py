@@ -1,4 +1,4 @@
-from typing import Self
+from typing_extensions import Self
 import unittest
 import re
 import os

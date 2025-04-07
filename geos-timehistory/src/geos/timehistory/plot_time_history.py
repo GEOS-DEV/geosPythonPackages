@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from geos.hdf5_wrapper import wrapper as h5w
 import matplotlib.pyplot as plt
 import os
@@ -19,19 +19,19 @@ def isiterable( obj: Any ) -> bool:
 def getHistorySeries( database: h5w,
                       variable: str,
                       setname: str,
-                      indices: int | list[ int ] = None,
-                      components: int | list[ int ] = None ) -> list[ tuple[ Any, ...] ]:
+                      indices: Optional[ int | list[ int ] ] = None,
+                      components: Optional[ int | list[ int ] ] = None ) -> Optional[ list[ tuple[ Any, ...] ] ]:
     """Retrieve a series of time history structures suitable for plotting in addition to the specific set index and component for the time series.
 
     Args:
         database (geos.hdf5_wrapper.hdf5_wrapper): database to retrieve time history data from
         variable (str): the name of the time history variable for which to retrieve time-series data
         setname (str): the name of the index set as specified in the geosx input xml for which to query time-series data
-        indices (int, list): the indices in the named set to query for, if None, defaults to all
-        components (int, list): the components in the flattened data types to retrieve, defaults to all
+        indices (Optional[int | list[ int ]]): the indices in the named set to query for, if None, defaults to all
+        components (Optional[int | list[ int ]]): the components in the flattened data types to retrieve, defaults to all
 
     Returns:
-        list: list of (time, data, idx, comp) timeseries tuples for each time history data component
+        Optional[list[ tuple[ Any, ...] ]]: list of (time, data, idx, comp) timeseries tuples for each time history data component
     """
     set_regex = re.compile( variable + '(.*?)', re.IGNORECASE )
     if setname is not None:
@@ -63,36 +63,40 @@ def getHistorySeries( database: h5w,
         print(
             f"Error: The length of the time-series {time_match} and data-series {set_match} do not match: {time_series.shape} and {data_series.shape} !"
         )
-
+    indices1: list[ int ] = []
     if indices is not None:
         if type( indices ) is int:
-            indices = [ indices ]
-        if isiterable( indices ):
-            oob_idxs = list( filter( lambda idx: not 0 <= idx < data_series.shape[ 1 ], indices ) )
+            indices1 = [ indices ]
+        elif isiterable( indices ):
+            oob_idxs: list[ int ] = list( filter( lambda idx: not 0 <= idx < data_series.shape[ 1 ],
+                                                  indices ) )  # type: ignore[arg-type]
             if len( oob_idxs ) > 0:
-                print( f"Error: The specified indices: ({', '.join(oob_idxs)}) " + "\n\t" +
+                print( f"Error: The specified indices: ({', '.join(map(str, oob_idxs))}) " + "\n\t" +
                        f" are out of the dataset index range: [0,{data_series.shape[1]})" )
-            indices = list( set( indices ) - set( oob_idxs ) )
+            indices1 = list( set( indices ) - set( oob_idxs ) )  # type: ignore[arg-type]
         else:
             print( f"Error: unsupported indices type: {type(indices)}" )
     else:
-        indices = range( data_series.shape[ 1 ] )
+        indices1 = list( range( data_series.shape[ 1 ] ) )
 
+    components1: list[ int ] = []
     if components is not None:
         if type( components ) is int:
-            components = [ components ]
-        if isiterable( components ):
-            oob_comps = list( filter( lambda comp: not 0 <= comp < data_series.shape[ 2 ], components ) )
+            components1 = [ components ]
+        elif isiterable( components ):
+            oob_comps: list[ int ] = list( filter( lambda comp: not 0 <= comp < data_series.shape[ 2 ],
+                                                   components ) )  # type: ignore[arg-type]
             if len( oob_comps ) > 0:
-                print( f"Error: The specified components: ({', '.join(oob_comps)}) " + "\n\t" +
+                print( f"Error: The specified components: ({', '.join(map(str, oob_comps))}) " + "\n\t" +
                        " is out of the dataset component range: [0,{data_series.shape[1]})" )
-            components = list( set( components ) - set( oob_comps ) )
+            components1 = list( set( components ) - set( oob_comps ) )  # type: ignore[arg-type]
         else:
             print( f"Error: unsupported components type: {type(components)}" )
     else:
-        components = range( data_series.shape[ 2 ] )
+        components1 = list( range( data_series.shape[ 2 ] ) )
 
-    return [ ( time_series[ :, 0 ], data_series[ :, idx, comp ], idx, comp ) for idx in indices for comp in components ]
+    return [ ( time_series[ :, 0 ], data_series[ :, idx, comp ], idx, comp ) for idx in indices1
+             for comp in components1 ]
 
 
 def commandLinePlotGen() -> int:

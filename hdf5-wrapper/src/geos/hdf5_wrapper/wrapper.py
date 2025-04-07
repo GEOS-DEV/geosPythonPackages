@@ -1,7 +1,7 @@
 import h5py  # type: ignore[import]
 import numpy as np
 from numpy.core.defchararray import encode, decode
-from typing import Self, Union, Dict, Any, Iterable, Optional, Tuple
+from typing_extensions import Self, Union, Dict, Any, Iterable, Optional, Tuple
 
 # Note: I would like to replace Any here with str, float, int, np.ndarray, etc.
 #       However, this heterogeneous pattern causes issues with mypy indexing
