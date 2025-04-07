@@ -16,7 +16,7 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins # noqa: F401
+import PVplugins  # noqa: F401
 
 from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
