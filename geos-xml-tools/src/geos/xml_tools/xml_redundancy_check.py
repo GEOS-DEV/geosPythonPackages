@@ -10,7 +10,7 @@ from typing import Iterable, Dict, Any
 def check_redundancy_level( local_schema: Dict[ str, Any ],
                             node: ElementTree.Element,
                             whitelist: Iterable[ str ] = [ 'component' ] ) -> int:
-    """Check xml redundancy at the current level
+    """Check xml redundancy at the current level.
 
     Args:
         local_schema (dict): Schema definitions
@@ -21,14 +21,11 @@ def check_redundancy_level( local_schema: Dict[ str, Any ],
         int: Number of required attributes in the node and its children
     """
     node_is_required = 0
-    for ka in node.attrib.keys():
-        if ( ka in whitelist ):
-            node_is_required += 1
-        elif ( ka not in local_schema[ 'attributes' ] ):
-            node_is_required += 1
-        elif ( 'default' not in local_schema[ 'attributes' ][ ka ] ):
-            node_is_required += 1
-        elif ( node.get( ka ) != local_schema[ 'attributes' ][ ka ][ 'default' ] ):
+    for ka in node.attrib:
+        if ( ka in whitelist ) or ( ka not in local_schema[ 'attributes' ] ) or (
+                'default'
+                not in local_schema[ 'attributes' ][ ka ] ) or ( node.get( ka )
+                                                                 != local_schema[ 'attributes' ][ ka ][ 'default' ] ):
             node_is_required += 1
         else:
             node.attrib.pop( ka )
@@ -45,7 +42,7 @@ def check_redundancy_level( local_schema: Dict[ str, Any ],
 
 
 def check_xml_redundancy( schema: Dict[ str, Any ], fname: str ) -> None:
-    """Check redundancy in an xml file
+    """Check redundancy in an xml file.
 
     Args:
         schema (dict): Schema definitions
@@ -59,12 +56,11 @@ def check_xml_redundancy( schema: Dict[ str, Any ], fname: str ) -> None:
 
 
 def process_xml_files( geosx_root: str ) -> None:
-    """Test for xml redundancy
+    """Test for xml redundancy.
 
     Args:
         geosx_root (str): GEOSX root directory
     """
-
     # Parse the schema
     geosx_root = os.path.expanduser( geosx_root )
     schema_fname = '%ssrc/coreComponents/schema/schema.xsd' % ( geosx_root )
@@ -80,12 +76,11 @@ def process_xml_files( geosx_root: str ) -> None:
 
 
 def main() -> None:
-    """Entry point for the xml attribute usage test script
+    """Entry point for the xml attribute usage test script.
 
     Args:
         -r/--root (str): GEOSX root directory
     """
-
     # Parse the user arguments
     parser = command_line_parsers.build_xml_redundancy_input_parser()
     args = parser.parse_args()

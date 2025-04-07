@@ -1,5 +1,3 @@
-"""Tools for processing xml files in GEOSX"""
-
 from lxml import etree as ElementTree  # type: ignore[import]
 from lxml.etree import XMLSyntaxError  # type: ignore[import]
 import re
@@ -12,6 +10,8 @@ from typing import Iterable, Tuple, List
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
+__doc__ = """Tools for processing xml files in GEOSX."""
+
 
 def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int ) -> None:
     """Merge nodes in an included file into the current structure level by level.
@@ -21,9 +21,8 @@ def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.
         targetNode (lxml.etree.Element): The node to insert.
         level (int): The xml file depth.
     """
-
     # Copy attributes on the current level
-    for tk in targetNode.attrib.keys():
+    for tk in targetNode.attrib:
         existingNode.set( tk, targetNode.get( tk ) )
 
     # Copy target children into the xml structure
@@ -69,7 +68,6 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
         includeCount (int): The current recursion depth.
         maxInclude (int): The maximum number of xml files to include (default = 100)
     """
-
     # Expand the input path
     pwd = os.getcwd()
     includePath, fname = os.path.split( os.path.abspath( os.path.expanduser( fname ) ) )
@@ -93,7 +91,7 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
     except XMLSyntaxError as err:
         print( '\nCould not load included file: %s' % ( fname ) )
         print( err.msg )
-        raise Exception( '\nCheck included file!' )
+        raise Exception( '\nCheck included file!' ) from err
 
     # Recursively add the includes:
     for includeNode in includeRoot.findall( 'Included' ):
@@ -106,14 +104,12 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
 
 
 def apply_regex_to_node( node: ElementTree.Element ) -> None:
-    """Apply regexes that handle parameters, units, and symbolic math to each
-    xml attribute in the structure.
+    """Apply regexes that handle parameters, units, and symbolic math to each xml attribute in the structure.
 
     Args:
         node (lxml.etree.Element): The target node in the xml structure.
     """
-
-    for k in node.attrib.keys():
+    for k in node.attrib:
         value = node.get( k )
 
         # Parameter format:  $Parameter or $:Parameter
@@ -143,7 +139,7 @@ def apply_regex_to_node( node: ElementTree.Element ) -> None:
 
 
 def generate_random_name( prefix: str = '', suffix: str = '.xml' ) -> str:
-    """If the target name is not specified, generate a random name for the compiled xml
+    """If the target name is not specified, generate a random name for the compiled xml.
 
     Args:
         prefix (str): The file prefix (default = '').
@@ -160,14 +156,15 @@ def generate_random_name( prefix: str = '', suffix: str = '.xml' ) -> str:
     return '%s%s%s' % ( prefix, md5( tmp.encode( 'utf-8' ) ).hexdigest(), suffix )
 
 
-def process( inputFiles: Iterable[ str ],
-             outputFile: str = '',
-             schema: str = '',
-             verbose: int = 0,
-             parameter_override: List[ Tuple[ str, str ] ] = [],
-             keep_parameters: bool = True,
-             keep_includes: bool = True ) -> str:
-    """Process an xml file
+def process(
+        inputFiles: Iterable[ str ],
+        outputFile: str = '',
+        schema: str = '',
+        verbose: int = 0,
+        parameter_override: List[ Tuple[ str, str ] ] = [],  # noqa: B006
+        keep_parameters: bool = True,
+        keep_includes: bool = True ) -> str:
+    """Process an xml file.
 
     Args:
         inputFiles (list): Input file names.
@@ -206,7 +203,7 @@ def process( inputFiles: Iterable[ str ],
         except XMLSyntaxError as err:
             print( '\nCould not load input file: %s' % ( single_input ) )
             print( err.msg )
-            raise Exception( '\nCheck input file!' )
+            raise Exception( '\nCheck input file!' ) from err
 
     else:
         # For multiple inputs, create a simple xml structure to hold
@@ -278,7 +275,8 @@ def process( inputFiles: Iterable[ str ],
     # Check for un-matched special characters
     with open( outputFile, 'r' ) as ofile:
         for line in ofile:
-            if any( [ sc in line for sc in [ '$', '[', ']', '`' ] ] ):
+            print()
+            if any( [ sc in line for sc in [ '$', '[', ']', '`' ] ] ):  #noqa: C419
                 raise Exception(
                     'Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!'
                     % ( line ) )
