@@ -136,7 +136,7 @@ class hdf5_wrapper():
         """
         return zip( self.keys(), self.values() )
 
-    def __enter__( self: Self ) -> None:
+    def __enter__( self: Self ) -> Self:
         """Entry point for an iterator."""
         return self
 

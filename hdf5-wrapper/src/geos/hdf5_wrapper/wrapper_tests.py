@@ -1,4 +1,5 @@
-from typing import Any, Self
+from typing_extensions import Self
+from typing import Any
 import unittest
 import os
 import argparse
