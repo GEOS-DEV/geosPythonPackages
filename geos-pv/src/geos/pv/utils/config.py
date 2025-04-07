@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def update_paths() -> None:
-    """Update sys path to load GEOS Python packages. """
+    """Update sys path to load GEOS Python packages."""
     # Add other packages path to sys path
     geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
     geos_python_packages_path: Path = geos_pv_path.parent

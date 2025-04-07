@@ -12,8 +12,6 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins  #required to update sys path
-
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.TransferAttributesVolumeSurface import (
     TransferAttributesVolumeSurface, )
@@ -44,7 +42,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPolyData,
     vtkUnstructuredGrid,
 )
-
 
 __doc__ = """
 PVTransferAttributesVolumeSurface is a Paraview plugin that allows to map face ids from

@@ -15,8 +15,6 @@ dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
-    
-import PVplugins  #required to update sys path
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -29,9 +27,6 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
-)
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 
 from PVplugins.PVExtractMergeBlocksVolumeWell import (

@@ -17,7 +17,6 @@ from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
-import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
     vtkDataArraySelection,
@@ -25,7 +24,6 @@ from vtkmodules.vtkCommonCore import (
     vtkPoints,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkCellData,
     vtkCompositeDataSet,
     vtkDataObject,
     vtkMultiBlockDataSet,
@@ -470,7 +468,7 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh, True )
+    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
     name: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     assert isAttributeInObject( mesh2, name, False ), f"Attribute {name} is not in the mesh."
     return [ str( int( ide ) ) for ide in getArrayInObject( mesh2, name, False ) ]

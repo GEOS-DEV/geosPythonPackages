@@ -961,17 +961,8 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             density: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, densityAttributeName,
                                                                    self.m_attributeOnPoints )
             try:
-<<<<<<< HEAD
-                depth: npt.NDArray[ np.float64 ]
-                if self.m_attributeOnPoints:
-                    depth = self.computeDepthAlongLine()
-                else:
-                    depth = self.computeDepthInMesh()
-
-=======
                 depth: npt.NDArray[ np.float64 ] = self.computeDepthAlongLine(
                 ) if self.m_attributeOnPoints else self.computeDepthInMesh()
->>>>>>> main
                 assert depth is not None, "Depth is undefined."
                 assert density is not None, ( f"{densityAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 

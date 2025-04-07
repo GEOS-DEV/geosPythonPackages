@@ -30,10 +30,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos_posp.processing.vtkUtils import (
-    getArrayInObject,
-    isAttributeInObject,
-)
 from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
@@ -540,7 +536,7 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
     animationScene.GoToFirst()
     source = FindSource( sourceName )
     dataset: vtkDataObject = servermanager.Fetch( source )
-    assert dataset is not None, f"Dataset is undefined."
+    assert dataset is not None, "Dataset is undefined."
     dataset2: vtkUnstructuredGrid = mergeFilterPV( dataset )
     time: str = str( animationScene.TimeKeeper.Time )
     dfPerTimestep: dict[ str, pd.DataFrame ] = { time: vtkToDataframe( dataset2 ) }

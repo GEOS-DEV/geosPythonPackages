@@ -32,11 +32,6 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
-<<<<<<< HEAD
-
-import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
-=======
->>>>>>> main
 
 from geos_posp.processing.vtkUtils import (
     createAttribute,
@@ -407,11 +402,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         if fromLocalToYXZ:
             return P
         # inverse the change of basis matrix
-<<<<<<< HEAD
-        return np.linalg.inv( P )
-=======
         return np.linalg.inv( P ).astype( np.float64 )
->>>>>>> main
 
     def getNormalTangentsVectors( self: Self ) -> npt.NDArray[ np.float64 ]:
         """Compute the change of basis matrix from Local to XYZ bases.
@@ -428,11 +419,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         assert tangents1 is not None, "Tangents attribute was not found."
 
         # compute second tangential component
-<<<<<<< HEAD
-        tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 )
-=======
         tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
->>>>>>> main
         assert tangents2 is not None, "Local basis third axis was not computed."
 
         # put vectors as columns

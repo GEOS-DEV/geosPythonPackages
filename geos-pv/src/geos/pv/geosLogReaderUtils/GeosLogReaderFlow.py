@@ -9,7 +9,6 @@ from geos.utils.enumUnits import Unit
 from typing_extensions import Self
 
 import geos.pv.geosLogReaderUtils.geosLogReaderFunctions as fcts
-from geos.utils.enumUnits import Unit
 
 
 class GeosLogReaderFlow:

@@ -28,19 +28,6 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
 
-<<<<<<< HEAD
-from geos.utils.ConnectionSet import (
-    ConnectionSet,
-    ConnectionSetCollection,
-)
-from geos.utils.geometryFunctions import getCellSideAgainstPlane
-from geos.utils.GeosOutputsConstants import PostProcessingOutputsEnum
-from geos.utils.Logger import Logger, getLogger
-from geos.utils.PhysicalConstants import (
-    EPSILON, )
-
-=======
->>>>>>> main
 __doc__ = """
 VolumeSurfaceMeshMapper is a vtk filter that collects the cell of a volume mesh
 adjacents to the faces of a surface mesh.

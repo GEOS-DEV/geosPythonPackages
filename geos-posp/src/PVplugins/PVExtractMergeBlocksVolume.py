@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
+import os
+import sys
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
@@ -12,8 +14,6 @@ dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
-
-import PVplugins  #required to update sys path
 
 from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,

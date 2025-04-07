@@ -16,7 +16,7 @@ if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
 from geos.utils.enumUnits import Unit, getSIUnits
-from geos_posp.processing import geosLogReaderFunctions as utils
+from geos.pv.geosLogReaderUtils import geosLogReaderFunctions as utils
 
 
 class TestsFunctionsGeosLogReader( unittest.TestCase ):
