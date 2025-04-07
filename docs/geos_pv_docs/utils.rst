@@ -13,7 +13,7 @@ geos.pv.utils.checkboxFunction module
    :show-inheritance:
 
 geos.pv.utils.DisplayOrganizationParaview module
----------------------------------------------
+-------------------------------------------------
 
 .. automodule:: geos.pv.utils.DisplayOrganizationParaview
    :members:
