@@ -35,7 +35,6 @@ def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float 
     return ( density / specificDensity ).astype( float )
 
 
-
 # https://en.wikipedia.org/wiki/Elastic_modulus
 def youngModulus( bulkModulus: npt.NDArray[ np.float64 ],
                   shearModulus: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
