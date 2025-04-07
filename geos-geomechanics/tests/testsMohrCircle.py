@@ -184,7 +184,7 @@ class TestsMohrCoulomb( unittest.TestCase ):
         obtained: npt.NDArray[ np.float64 ] = np.array( mohrCoulomb.computeShearStress( stressNormal ) )
 
         # test results
-        self.assertSequenceEqual( expectedValues.tolist(), np.round( obtained ).tolist() )  #type: ignore[arg-type]
+        self.assertSequenceEqual( expectedValues.tolist(), np.round( obtained ).tolist() )  # type: ignore[arg-type]
 
     def test_computeFailureEnvelop1( self: Self ) -> None:
         """Test calculation of failure envelop from minimum normal stress."""
@@ -222,10 +222,10 @@ class TestsMohrCoulomb( unittest.TestCase ):
 
         # test results
         self.assertSequenceEqual(
-            normalStressExpected.tolist(),  #type: ignore[arg-type]
-            np.round( normalStressObtained ).tolist() ) 
+            normalStressExpected.tolist(),  # type: ignore[arg-type]
+            np.round( normalStressObtained ).tolist() )
         self.assertSequenceEqual(
-            shearStressExpected.tolist(),  #type: ignore[arg-type]
+            shearStressExpected.tolist(),  # type: ignore[arg-type]
             np.round( shearStressObtained ).tolist() )
 
     def test_computeFailureEnvelop2( self: Self ) -> None:
@@ -267,8 +267,8 @@ class TestsMohrCoulomb( unittest.TestCase ):
 
         # test results
         self.assertSequenceEqual(
-            normalStressExpected.tolist(),  #type: ignore[arg-type]
+            normalStressExpected.tolist(),  # type: ignore[arg-type]
             np.round( normalStressObtained ).tolist() )
         self.assertSequenceEqual(
-            shearStressExpected.tolist(),  #type: ignore[arg-type]
+            shearStressExpected.tolist(),  # type: ignore[arg-type]
             np.round( shearStressObtained ).tolist() )

@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-from geos.geomechanics.processing.geomechanicsCalculatorFunctions import (
+from geos_posp.processing.geomechanicsCalculatorFunctions import (
     computeStressPrincipalComponentsFromStressVector, )
 
 __doc__ = """

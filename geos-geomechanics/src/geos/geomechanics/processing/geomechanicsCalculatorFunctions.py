@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
+from geos_posp.processing.MohrCoulomb import MohrCoulomb
 from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 from geos.utils.PhysicalConstants import (
     EPSILON, )
@@ -31,7 +31,9 @@ def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float 
 
     if abs( specificDensity ) < EPSILON:
         return np.full_like( density, np.nan )
+
     return ( density / specificDensity ).astype( float )
+
 
 
 # https://en.wikipedia.org/wiki/Elastic_modulus
@@ -668,6 +670,7 @@ def criticalPorePressure(
     cohesiveTerm: npt.NDArray[ np.floating[ Any ] ] = ( rockCohesion * np.cos( frictionAngle ) /
                                                         ( 1.0 - np.sin( frictionAngle ) ) )
     residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3.0 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
+
     return cohesiveTerm + residualTerm
 
 

@@ -9,7 +9,6 @@ import unittest
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
