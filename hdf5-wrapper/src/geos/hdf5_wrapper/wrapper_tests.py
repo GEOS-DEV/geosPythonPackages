@@ -1,3 +1,4 @@
+from typing import Any, Self
 import unittest
 import os
 import argparse
@@ -7,11 +8,28 @@ import string
 from geos.hdf5_wrapper import hdf5_wrapper
 
 
-def random_string( N ):
+def random_string( N: int ) -> str:
+    """Generate random string.
+
+    Args:
+        N (int): int
+
+    Returns:
+        _type_: str
+    """
     return ''.join( random.choices( string.ascii_uppercase + string.ascii_lowercase + string.digits, k=N ) )
 
 
-def build_test_dict( depth=0, max_depth=3 ):
+def build_test_dict( depth: int = 0, max_depth: int = 3 ) -> dict[ str, Any ]:
+    """Build test dictionnary.
+
+    Args:
+        depth (int, optional): depth. Defaults to 0.
+        max_depth (int, optional): maximum depth. Defaults to 3.
+
+    Returns:
+        dict[str, Any]: test dictionnary.
+    """
     r = [ np.random.randint( 2, 20 ) for x in range( 5 ) ]
     test = {
         'int': np.random.randint( -1000000, 1000000 ),
@@ -33,12 +51,22 @@ def build_test_dict( depth=0, max_depth=3 ):
 class Testhdf5_wrapper( unittest.TestCase ):
 
     @classmethod
-    def setUpClass( cls ):
+    def setUpClass( cls ) -> None:
+        """Set the tests up."""
         cls.test_dir = 'wrapper_tests'  # type: ignore[attr-defined]
         os.makedirs( cls.test_dir, exist_ok=True )  # type: ignore[attr-defined]
         cls.test_dict = build_test_dict()  # type: ignore[attr-defined]
 
-    def compare_wrapper_dict( self, x, y ):
+    def compare_wrapper_dict( self, x: dict[ str, Any ], y: dict[ str, Any ] ) -> None:
+        """Compare dictionnary wrapper.
+
+        Args:
+            x (dict[str, Any]): first dict
+            y (dict[str, Any]): second dict
+
+        Raises:
+            Exception: Key in dictionnary
+        """
         kx = x.keys()
         ky = y.keys()
 
@@ -65,16 +93,19 @@ class Testhdf5_wrapper( unittest.TestCase ):
                 else:
                     self.assertTrue( vx == vy )
 
-    def test_a_insert_write( self ):
+    def test_a_insert_write( self: Self ) -> None:
+        """Test insert."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ), mode='w' )  # type: ignore[attr-defined]
         data.insert( self.test_dict )  # type: ignore[attr-defined]
 
-    def test_b_manual_write( self ):
+    def test_b_manual_write( self: Self ) -> None:
+        """Test manual write."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ), mode='w' )  # type: ignore[attr-defined]
         for k, v in self.test_dict.items():  # type: ignore[attr-defined]
             data[ k ] = v
 
-    def test_c_link_write( self ):
+    def test_c_link_write( self: Self ) -> None:
+        """Test of link."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ), mode='w' )  # type: ignore[attr-defined]
         for k, v in self.test_dict.items():  # type: ignore[attr-defined]
             if ( 'child' in k ):
@@ -85,31 +116,34 @@ class Testhdf5_wrapper( unittest.TestCase ):
             else:
                 data[ k ] = v
 
-    def test_d_compare_wrapper( self ):
+    def test_d_compare_wrapper( self: Self ) -> None:
+        """Test of compare_wrapper."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) )  # type: ignore[attr-defined]
         self.compare_wrapper_dict( self.test_dict, data )  # type: ignore[attr-defined]
 
-    def test_e_compare_wrapper_copy( self ):
+    def test_e_compare_wrapper_copy( self: Self ) -> None:
+        """Test of compare_wrapper."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_insert.hdf5' ) )  # type: ignore[attr-defined]
         tmp = data.copy()
         self.compare_wrapper_dict( self.test_dict, tmp )  # type: ignore[attr-defined]
 
-    def test_f_compare_wrapper( self ):
+    def test_f_compare_wrapper( self: Self ) -> None:
+        """Test of compare_wrapper."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_manual.hdf5' ) )  # type: ignore[attr-defined]
         self.compare_wrapper_dict( self.test_dict, data )  # type: ignore[attr-defined]
 
-    def test_g_compare_wrapper( self ):
+    def test_g_compare_wrapper( self: Self ) -> None:
+        """Test of compare_wrapper."""
         data = hdf5_wrapper( os.path.join( self.test_dir, 'test_linked.hdf5' ) )  # type: ignore[attr-defined]
         self.compare_wrapper_dict( self.test_dict, data )  # type: ignore[attr-defined]
 
 
-def main():
-    """Entry point for the geosx_xml_tools unit tests
+def main() -> None:
+    """Entry point for the geosx_xml_tools unit tests.
 
     Args:
         -v/--verbose (int): Output verbosity
     """
-
     # Parse the user arguments
     parser = argparse.ArgumentParser()
     parser.add_argument( '-v', '--verbose', type=int, help='Verbosity level', default=2 )

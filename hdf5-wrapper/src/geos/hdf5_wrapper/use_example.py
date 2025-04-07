@@ -4,15 +4,14 @@ from typing import Union, Dict
 
 
 def print_database_iterative( database: hdf5_wrapper, level: int = 0 ) -> None:
-    """
-    Print the database targets iteratively by level
+    """Print the database targets iteratively by level.
 
     Args:
-        database (hdf5_wrapper) the wrapper for the current database
+        database (hdf5_wrapper): the wrapper for the current database
         level (int): the depth within the database
     """
     # Note: you can also iterate over the hdf5_wrapper object directly
-    for k in database.keys():
+    for k in database:
         print( '%s%s' % ( '  ' * level, k ) )
 
         if isinstance( database[ k ], hdf5_wrapper ):
@@ -25,10 +24,7 @@ def print_database_iterative( database: hdf5_wrapper, level: int = 0 ) -> None:
 
 
 def read_write_hdf5_database_example() -> None:
-    """
-    Simple demonstration of hdf5_wrapper
-    """
-
+    """Simple demonstration of hdf5_wrapper."""
     # ------------------------
     # Generate test data
     # ------------------------

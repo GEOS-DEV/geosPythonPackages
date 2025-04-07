@@ -1,25 +1,27 @@
-import numpy as np
+from typing import Any
 from geos.hdf5_wrapper import wrapper as h5w
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
-import sys
 import argparse
 
 import re
 
 
-def isiterable( obj ):
+def isiterable( obj: Any ) -> bool:
+    """Check if input is iterable."""
     try:
-        it = iter( obj )
+        it = iter( obj )  # noqa: F841
     except TypeError:
         return False
     return True
 
 
-def getHistorySeries( database, variable, setname, indices=None, components=None ):
-    """
-    Retrieve a series of time history structures suitable for plotting in addition to the specific set index and component for the time series
+def getHistorySeries( database: h5w,
+                      variable: str,
+                      setname: str,
+                      indices: int | list[ int ] = None,
+                      components: int | list[ int ] = None ) -> list[ tuple[ Any, ...] ]:
+    """Retrieve a series of time history structures suitable for plotting in addition to the specific set index and component for the time series.
 
     Args:
         database (geos.hdf5_wrapper.hdf5_wrapper): database to retrieve time history data from
@@ -27,14 +29,13 @@ def getHistorySeries( database, variable, setname, indices=None, components=None
         setname (str): the name of the index set as specified in the geosx input xml for which to query time-series data
         indices (int, list): the indices in the named set to query for, if None, defaults to all
         components (int, list): the components in the flattened data types to retrieve, defaults to all
-    
+
     Returns:
         list: list of (time, data, idx, comp) timeseries tuples for each time history data component
     """
-
     set_regex = re.compile( variable + '(.*?)', re.IGNORECASE )
     if setname is not None:
-        set_regex = re.compile( variable + '\s*' + str( setname ), re.IGNORECASE )
+        set_regex = re.compile( variable + r'\s*' + str( setname ), re.IGNORECASE )
     time_regex = re.compile( 'Time', re.IGNORECASE )  # need to make this per-set, thought that was in already?
 
     set_match = list( filter( set_regex.match, database.keys() ) )
@@ -94,7 +95,8 @@ def getHistorySeries( database, variable, setname, indices=None, components=None
     return [ ( time_series[ :, 0 ], data_series[ :, idx, comp ], idx, comp ) for idx in indices for comp in components ]
 
 
-def commandLinePlotGen():
+def commandLinePlotGen() -> int:
+    """Parse commande line."""
     parser = argparse.ArgumentParser(
         description="A script that parses geosx HDF5 time-history files and produces time-history plots using matplotlib"
     )

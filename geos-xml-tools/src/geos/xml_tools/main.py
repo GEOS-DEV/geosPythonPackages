@@ -1,15 +1,14 @@
-"""Command line tools for geosx_xml_tools"""
-
 import sys
-import argparse
 import os
 import time
 from geos.xml_tools import xml_processor, command_line_parsers
-from typing import Callable, Any, Union, Tuple, Iterable
+from typing import Callable, Any, Union, Iterable
+
+__doc__ = """Command line tools for geosx_xml_tools."""
 
 
 def check_mpi_rank() -> int:
-    """Check the MPI rank
+    """Check the MPI rank.
 
     Returns:
         int: MPI rank
@@ -28,7 +27,7 @@ TFunc = Callable[..., Any ]
 def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
                                 max_wait_time: float = 100,
                                 max_startup_delay: float = 1 ) -> Callable[ [ TFunc ], TFunc ]:
-    """Constructor for a function decorator that waits for a target file to be written on rank 0
+    """Constructor for a function decorator that waits for a target file to be written on rank 0.
 
     Args:
         target_file_argument (int, str): Index or keyword of the filename argument in the decorated function
@@ -40,15 +39,14 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
     """
 
     def wait_for_file_write_rank_0_inner( writer: TFunc ) -> TFunc:
-        """Intermediate constructor for the function decorator
+        """Intermediate constructor for the function decorator.
 
         Args:
             writer (typing.Callable): A function that writes to a file
         """
 
-        def wait_for_file_write_rank_0_decorator( *args, **kwargs ) -> Any:
-            """Apply the writer on rank 0, and wait for completion on other ranks
-            """
+        def wait_for_file_write_rank_0_decorator( *args, **kwargs ) -> Any:  # noqa: ANN002, ANN003
+            """Apply the writer on rank 0, and wait for completion on other ranks."""
             # Check the target file status
             rank = check_mpi_rank()
             fname = ''
@@ -87,9 +85,7 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
 
 
 def preprocess_serial() -> None:
-    """
-    Entry point for the geosx_xml_tools console script
-    """
+    """Entry point for the geosx_xml_tools console script."""
     # Process the xml file
     args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
 
@@ -121,9 +117,7 @@ def preprocess_serial() -> None:
 
 
 def preprocess_parallel() -> Iterable[ str ]:
-    """
-    MPI aware xml preprocesing
-    """
+    """MPI aware xml preprocesing."""
     # Process the xml file
     from mpi4py import MPI  # type: ignore[import]
     comm = MPI.COMM_WORLD
@@ -142,7 +136,7 @@ def preprocess_parallel() -> Iterable[ str ]:
 
 
 def format_geosx_arguments( compiled_name: str, unknown_args: Iterable[ str ] ) -> Iterable[ str ]:
-    """Format GEOSX arguments
+    """Format GEOSX arguments.
 
     Args:
         compiled_name (str): Name of the compiled xml file

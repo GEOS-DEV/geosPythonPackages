@@ -12,7 +12,7 @@ def parse_schema_element( root: ElementTree.Element,
                           xsd: str = '{http://www.w3.org/2001/XMLSchema}',
                           recursive_types: Iterable[ str ] = [ 'PeriodicEvent', 'SoloEvent', 'HaltEvent' ],
                           folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> record_type:
-    """Parse the xml schema at the current level
+    """Parse the xml schema at the current level.
 
     Args:
         root (lxml.etree.Element): the root schema node
@@ -24,7 +24,6 @@ def parse_schema_element( root: ElementTree.Element,
     Returns:
         dict: Dictionary of attributes and children for the current node
     """
-
     element_type = node.get( 'type' )
     element_name = node.get( 'name' )
     element_def = root.find( "%scomplexType[@name='%s']" % ( xsd, element_type ) )
@@ -49,7 +48,7 @@ def parse_schema_element( root: ElementTree.Element,
 
 
 def parse_schema( fname: str ) -> record_type:
-    """Parse the schema file into the xml attribute usage dict
+    """Parse the schema file into the xml attribute usage dict.
 
     Args:
         fname (str): schema name
@@ -64,14 +63,14 @@ def parse_schema( fname: str ) -> record_type:
 
 
 def collect_xml_attributes_level( local_types: record_type, node: ElementTree.Element, folder: str ) -> None:
-    """Collect xml attribute usage at the current level
+    """Collect xml attribute usage at the current level.
 
     Args:
         local_types (dict): dictionary containing attribute usage
         node (lxml.etree.Element): current xml node
         folder (str): the source folder for the current file
     """
-    for ka in node.attrib.keys():
+    for ka in node.attrib:
         local_types[ 'attributes' ][ ka ][ folder ].append( node.get( ka ) )
 
     for child in node:
@@ -80,7 +79,7 @@ def collect_xml_attributes_level( local_types: record_type, node: ElementTree.El
 
 
 def collect_xml_attributes( xml_types: record_type, fname: str, folder: str ) -> None:
-    """Collect xml attribute usage in a file
+    """Collect xml attribute usage in a file.
 
     Args:
         xml_types (dict): dictionary containing attribute usage
@@ -97,15 +96,15 @@ def collect_xml_attributes( xml_types: record_type, fname: str, folder: str ) ->
 def write_attribute_usage_xml_level( local_types: record_type,
                                      node: ElementTree.Element,
                                      folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> None:
-    """Write xml attribute usage file at a given level
+    """Write xml attribute usage file at a given level.
 
     Args:
         local_types (dict): dict containing attribute usage at the current level
         node (lxml.etree.Element): current xml node
+        folders (Iterable[ str ]): folders. Defaults to [ 'src', 'examples' ].
     """
-
     # Write attributes
-    for ka in local_types[ 'attributes' ].keys():
+    for ka in local_types[ 'attributes' ]:
         attribute_node = ElementTree.Element( ka )
         node.append( attribute_node )
 
@@ -129,7 +128,7 @@ def write_attribute_usage_xml_level( local_types: record_type,
 
 
 def write_attribute_usage_xml( xml_types: record_type, fname: str ) -> None:
-    """Write xml attribute usage file
+    """Write xml attribute usage file.
 
     Args:
         xml_types (dict): dictionary containing attribute usage by xml type
@@ -143,13 +142,12 @@ def write_attribute_usage_xml( xml_types: record_type, fname: str ) -> None:
 
 
 def process_xml_files( geosx_root: str, output_name: str ) -> None:
-    """Test for xml attribute usage
+    """Test for xml attribute usage.
 
     Args:
         geosx_root (str): GEOSX root directory
         output_name (str): output file name
     """
-
     # Parse the schema
     geosx_root = os.path.expanduser( geosx_root )
     schema = '%ssrc/coreComponents/schema/schema.xsd' % ( geosx_root )
@@ -168,13 +166,12 @@ def process_xml_files( geosx_root: str, output_name: str ) -> None:
 
 
 def main() -> None:
-    """Entry point for the xml attribute usage test script
+    """Entry point for the xml attribute usage test script.
 
     Args:
         -r/--root (str): GEOSX root directory
         -o/--output (str): output file name
     """
-
     # Parse the user arguments
     parser = command_line_parsers.build_attribute_coverage_input_parser()
     args = parser.parse_args()
