@@ -15,19 +15,16 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkCommonSystem import vtkTimerLog
 from vtkmodules.vtkFiltersCore import (
-    vtkAppendFilter,
-)
+    vtkAppendFilter, )
 from vtkmodules.vtkFiltersFlowPaths import vtkModifiedBSPTree
 from vtkmodules.vtkFiltersGeneral import (
-    vtkOBBTree,
-)
+    vtkOBBTree, )
 from vtkmodules.vtkIOXML import (
-    vtkXMLPartitionedDataSetCollectionReader,
-)
+    vtkXMLPartitionedDataSetCollectionReader, )
 
 
 def parsing() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Test Cell Locator onto VTK files")
+    parser = argparse.ArgumentParser( description="Test Cell Locator onto VTK files" )
 
     parser.add_argument(
         "-vtpc",
@@ -41,32 +38,32 @@ def parsing() -> argparse.ArgumentParser:
     return parser
 
 
-def main(args: argparse.Namespace) -> None:
+def main( args: argparse.Namespace ) -> None:
     reader = vtkXMLPartitionedDataSetCollectionReader()
-    reader.SetFileName(args.vtpcFilepath)
+    reader.SetFileName( args.vtpcFilepath )
     reader.Update()
     pdsc: vtkPartitionedDataSetCollection = reader.GetOutput()
 
     assembly: vtkDataAssembly = pdsc.GetDataAssembly()
-    root_name: str = assembly.GetNodeName(assembly.GetRootNode())
+    root_name: str = assembly.GetNodeName( assembly.GetRootNode() )
 
     # 1. Get Mesh
-    mesh = assembly.GetFirstNodeByPath("//" + root_name + "/Mesh")
+    mesh = assembly.GetFirstNodeByPath( "//" + root_name + "/Mesh" )
 
     append_filter = vtkAppendFilter()
-    append_filter.SetMergePoints(True)
-    append_filter.SetTolerance(0.0)
+    append_filter.SetMergePoints( True )
+    append_filter.SetTolerance( 0.0 )
     if mesh > 0:
-        for sub_node in assembly.GetChildNodes(mesh, False):
-            datasets = assembly.GetDataSetIndices(sub_node, False)
+        for sub_node in assembly.GetChildNodes( mesh, False ):
+            datasets = assembly.GetDataSetIndices( sub_node, False )
             for d in datasets:
-                dataset = pdsc.GetPartitionedDataSet(d)
-                append_filter.AddInputData(dataset.GetPartition(0))
+                dataset = pdsc.GetPartitionedDataSet( d )
+                append_filter.AddInputData( dataset.GetPartition( 0 ) )
     else:
-        raise Exception("No mesh found")
+        raise Exception( "No mesh found" )
 
     append_filter.Update()
-    output = append_filter.GetOutputDataObject(0)
+    output = append_filter.GetOutputDataObject( 0 )
 
     # 2. Get Perforations
     # Create points array which are positions to probe data with
@@ -74,74 +71,72 @@ def main(args: argparse.Namespace) -> None:
     # probe operation.
     # ProbeCells = vtkPoints()
     # ProbeCells.SetDataTypeToDouble()
-    ProbeCells: list[pv.PointSet] = []
-    wells = assembly.GetFirstNodeByPath("//" + root_name + "/Wells")
+    ProbeCells: list[ pv.PointSet ] = []
+    wells = assembly.GetFirstNodeByPath( "//" + root_name + "/Wells" )
     if wells > 0:
-        for well in assembly.GetChildNodes(wells, False):
-            sub_nodes = assembly.GetChildNodes(well, False)
+        for well in assembly.GetChildNodes( wells, False ):
+            sub_nodes = assembly.GetChildNodes( well, False )
             for sub_node in sub_nodes:
-                if assembly.GetNodeName(sub_node) == "Perforations":
-                    for i, perfos in enumerate(assembly.GetChildNodes(sub_node, False)):
-                        datasets = assembly.GetDataSetIndices(perfos, False)
+                if assembly.GetNodeName( sub_node ) == "Perforations":
+                    for i, perfos in enumerate( assembly.GetChildNodes( sub_node, False ) ):
+                        datasets = assembly.GetDataSetIndices( perfos, False )
                         for d in datasets:
-                            dataset = pdsc.GetPartitionedDataSet(d)
-                            if dataset.GetPartition(0) is not None:
-                                pointset = dataset.GetPartition(0)
-                                ProbeCells.append(pv.wrap(pointset))
+                            dataset = pdsc.GetPartitionedDataSet( d )
+                            if dataset.GetPartition( 0 ) is not None:
+                                pointset = dataset.GetPartition( 0 )
+                                ProbeCells.append( pv.wrap( pointset ) )
                                 # ProbeCells.InsertNextPoint(pointset.GetPoint(0))
     else:
-        raise Exception("No wells found")
+        raise Exception( "No wells found" )
 
     # numProbes = ProbeCells.GetNumberOfPoints()
-    numProbes = len(ProbeCells)
+    numProbes = len( ProbeCells )
 
     closest = vtkIdList()
-    closest.SetNumberOfIds(numProbes)
+    closest.SetNumberOfIds( numProbes )
     treeClosest = vtkIdList()
-    treeClosest.SetNumberOfIds(numProbes)
+    treeClosest.SetNumberOfIds( numProbes )
     staticClosest = vtkIdList()
-    staticClosest.SetNumberOfIds(numProbes)
+    staticClosest.SetNumberOfIds( numProbes )
     bspClosest = vtkIdList()
-    bspClosest.SetNumberOfIds(numProbes)
+    bspClosest.SetNumberOfIds( numProbes )
     obbClosest = vtkIdList()
-    obbClosest.SetNumberOfIds(numProbes)
+    obbClosest.SetNumberOfIds( numProbes )
     dsClosest = vtkIdList()
-    dsClosest.SetNumberOfIds(numProbes)
+    dsClosest.SetNumberOfIds( numProbes )
 
     genCell = vtkGenericCell()
-    pc = [0, 0, 0]
-    weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    subId = reference(0)
+    pc = [ 0, 0, 0 ]
+    weights = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+    subId = reference( 0 )
 
     # Print initial statistics
-    print(f"Processing NumCells: {output.GetNumberOfCells()}")
-    print("\n")
+    print( f"Processing NumCells: {output.GetNumberOfCells()}" )
+    print( "\n" )
     timer = vtkTimerLog()
 
     #############################################################
     # Time the creation and building of the static cell locator
     locator2 = vtkStaticCellLocator()
-    locator2.SetDataSet(output)
+    locator2.SetDataSet( output )
     locator2.AutomaticOn()
-    locator2.SetNumberOfCellsPerNode(20)
+    locator2.SetNumberOfCellsPerNode( 20 )
 
     timer.StartTimer()
     locator2.BuildLocator()
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Build Static Cell Locator: {time}")
+    print( f"Build Static Cell Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        staticClosest.SetId(
-            i, locator2.FindCell(m.GetPoint(0))
-        )  # ,0.001,genCell,pc,weights))
+    for i, m in enumerate( ProbeCells ):
+        staticClosest.SetId( i, locator2.FindCell( m.GetPoint( 0 ) ) )  # ,0.001,genCell,pc,weights))
     # for i in range (0,numProbes):
     #     staticClosest.SetId(i, locator2.FindCell(ProbeCells.GetPoint(i)) #,0.001,genCell,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The incremental locator is quite slow due
     # to fragmented memory.
@@ -149,32 +144,32 @@ def main(args: argparse.Namespace) -> None:
     del locator2
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete Static Cell Locator: {time2}")
-    print(f"    Static Cell Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete Static Cell Locator: {time2}" )
+    print( f"    Static Cell Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
     #############################################################
     # Time the creation and building of the standard cell locator
     locator = vtkCellLocator()
-    locator.SetDataSet(output)
-    locator.SetNumberOfCellsPerBucket(25)
+    locator.SetDataSet( output )
+    locator.SetNumberOfCellsPerBucket( 25 )
     locator.AutomaticOn()
 
     timer.StartTimer()
     locator.BuildLocator()
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Build Cell Locator: {time}")
+    print( f"Build Cell Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        closest.SetId(i, locator.FindCell(m.GetPoint(0)))  # ,0.001,genCell,pc,weights))
+    for i, m in enumerate( ProbeCells ):
+        closest.SetId( i, locator.FindCell( m.GetPoint( 0 ) ) )  # ,0.001,genCell,pc,weights))
     # for i in range (0,numProbes):
     #     closest.SetId(i, locator.FindCell(ProbeCells.GetPoint(i),0.001,genCell,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The standard locator is quite slow due
     # to fragmented memory.
@@ -182,33 +177,31 @@ def main(args: argparse.Namespace) -> None:
     del locator
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete Cell Locator: {time2}")
-    print(f"    Cell Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete Cell Locator: {time2}" )
+    print( f"    Cell Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
     #############################################################
     # Time the creation and building of the cell tree locator
     locator1 = vtkCellTreeLocator()
-    locator1.SetDataSet(output)
+    locator1.SetDataSet( output )
     locator1.AutomaticOn()
 
     timer.StartTimer()
     locator1.BuildLocator()
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Build Cell Tree Locator: {time}")
+    print( f"Build Cell Tree Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        treeClosest.SetId(
-            i, locator1.FindCell(m.GetPoint(0))
-        )  # ,0.001,genCell,pc,weights))
+    for i, m in enumerate( ProbeCells ):
+        treeClosest.SetId( i, locator1.FindCell( m.GetPoint( 0 ) ) )  # ,0.001,genCell,pc,weights))
     # for i in range (0,numProbes):
     #     treeClosest.SetId(i, locator1.FindCell(ProbeCells.GetPoint(i),0.001,genCell,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The incremental locator is quite slow due
     # to fragmented memory.
@@ -216,33 +209,31 @@ def main(args: argparse.Namespace) -> None:
     del locator1
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete Cell Tree Locator: {time2}")
-    print(f"    Cell Tree Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete Cell Tree Locator: {time2}" )
+    print( f"    Cell Tree Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
     #############################################################
     # Time the creation and building of the bsp tree
     locator3 = vtkModifiedBSPTree()
-    locator3.SetDataSet(output)
+    locator3.SetDataSet( output )
     locator3.AutomaticOn()
 
     timer.StartTimer()
     locator3.BuildLocator()
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Build BSP Tree Locator: {time}")
+    print( f"Build BSP Tree Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        bspClosest.SetId(
-            i, locator3.FindCell(m.GetPoint(0))
-        )  # ,0.001,genCell,pc,weights))
+    for i, m in enumerate( ProbeCells ):
+        bspClosest.SetId( i, locator3.FindCell( m.GetPoint( 0 ) ) )  # ,0.001,genCell,pc,weights))
     # for i in range (0,numProbes):
     #     bspClosest.SetId(i, locator3.FindCell(ProbeCells.GetPoint(i),0.001,genCell,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The incremental locator is quite slow due
     # to fragmented memory.
@@ -250,33 +241,31 @@ def main(args: argparse.Namespace) -> None:
     del locator3
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete BSP Tree Locator: {time2}")
-    print(f"    BSP Tree Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete BSP Tree Locator: {time2}" )
+    print( f"    BSP Tree Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
     #############################################################
     # Time the creation and building of the obb tree
     locator4 = vtkOBBTree()
-    locator4.SetDataSet(output)
+    locator4.SetDataSet( output )
     locator4.AutomaticOn()
 
     timer.StartTimer()
     locator4.BuildLocator()
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Build OBB Locator: {time}")
+    print( f"Build OBB Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        obbClosest.SetId(
-            i, locator4.FindCell(m.GetPoint(0))
-        )  # ,0.001,genCell,pc,weights))
+    for i, m in enumerate( ProbeCells ):
+        obbClosest.SetId( i, locator4.FindCell( m.GetPoint( 0 ) ) )  # ,0.001,genCell,pc,weights))
     # for i in range (0,numProbes):
     #     obbClosest.SetId(i, locator4.FindCell(ProbeCells.GetPoint(i))) #,0.001,genCell,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The incremental locator is quite slow due
     # to fragmented memory.
@@ -284,9 +273,9 @@ def main(args: argparse.Namespace) -> None:
     del locator4
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete OBB Locator: {time2}")
-    print(f"    OBB Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete OBB Locator: {time2}" )
+    print( f"    OBB Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
     #############################################################
     # For comparison purposes compare to FindCell()
@@ -295,19 +284,17 @@ def main(args: argparse.Namespace) -> None:
     # output.FindCell(ProbeCells.GetPoint(0),genCell,-1,0.001,subId,pc,weights)
     timer.StopTimer()
     time = timer.GetElapsedTime()
-    print(f"Point Locator: {time}")
+    print( f"Point Locator: {time}" )
 
     # Probe the dataset with FindClosestPoint() and time it
     timer.StartTimer()
-    for i, m in enumerate(ProbeCells):
-        dsClosest.SetId(
-            i, output.FindCell(m.GetPoint(0), genCell, -1, 0.001, subId, pc, weights)
-        )
+    for i, m in enumerate( ProbeCells ):
+        dsClosest.SetId( i, output.FindCell( m.GetPoint( 0 ), genCell, -1, 0.001, subId, pc, weights ) )
     # for i in range (0,numProbes):
     #     dsClosest.SetId(i, output.FindCell(ProbeCells.GetPoint(0),genCell,-1,0.001,subId,pc,weights))
     timer.StopTimer()
     opTime = timer.GetElapsedTime()
-    print(f"    Find cell probing: {opTime}")
+    print( f"    Find cell probing: {opTime}" )
 
     # Time the deletion of the locator. The incremental locator is quite slow due
     # to fragmented memory.
@@ -315,15 +302,15 @@ def main(args: argparse.Namespace) -> None:
     del output
     timer.StopTimer()
     time2 = timer.GetElapsedTime()
-    print(f"    Delete Point Locator: {time2}")
-    print(f"    Point Locator (Total): {time + opTime + time2}")
-    print("\n")
+    print( f"    Delete Point Locator: {time2}" )
+    print( f"    Point Locator (Total): {time + opTime + time2}" )
+    print( "\n" )
 
 
 def run() -> None:
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
-    main(args)
+    main( args )
 
 
 if __name__ == "__main__":

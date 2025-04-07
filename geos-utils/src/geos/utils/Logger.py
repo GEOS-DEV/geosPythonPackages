@@ -22,7 +22,7 @@ ERROR: int = logging.ERROR
 CRITICAL: int = logging.CRITICAL
 
 
-class CustomLoggerFormatter(logging.Formatter):
+class CustomLoggerFormatter( logging.Formatter ):
     """Custom formatter for the logger.
 
     .. WARNING:: Colors do not work in the ouput message window of Paraview.
@@ -45,12 +45,10 @@ class CustomLoggerFormatter(logging.Formatter):
     reset: str = "\x1b[0m"
     # define prefix of log messages
     format1: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    format2: str = (
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
-    )
+    format2: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
 
     #: format for each logger output type
-    FORMATS: dict[int, str] = {
+    FORMATS: dict[ int, str ] = {
         DEBUG: grey + format2 + reset,
         INFO: grey + format1 + reset,
         WARNING: yellow + format1 + reset,
@@ -59,7 +57,7 @@ class CustomLoggerFormatter(logging.Formatter):
     }
 
     #: same without colors
-    FORMATS_PV: dict[int, str] = {
+    FORMATS_PV: dict[ int, str ] = {
         DEBUG: format2,
         INFO: format1,
         WARNING: format1,
@@ -67,7 +65,7 @@ class CustomLoggerFormatter(logging.Formatter):
         CRITICAL: format2,
     }
 
-    def format(self: Self, record: logging.LogRecord) -> str:
+    def format( self: Self, record: logging.LogRecord ) -> str:
         """Return the format according to input record.
 
         Args:
@@ -76,12 +74,12 @@ class CustomLoggerFormatter(logging.Formatter):
         Returns:
             str: format as a string
         """
-        log_fmt: Union[str, None] = self.FORMATS_PV.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
-        return formatter.format(record)
+        log_fmt: Union[ str, None ] = self.FORMATS_PV.get( record.levelno )
+        formatter = logging.Formatter( log_fmt )
+        return formatter.format( record )
 
 
-def getLogger(title: str) -> Logger:
+def getLogger( title: str ) -> Logger:
     """Return the Logger with pre-defined configuration.
 
     Example:
@@ -107,9 +105,9 @@ def getLogger(title: str) -> Logger:
     Returns:
         Logger: logger
     """
-    logger: Logger = logging.getLogger(title)
-    logger.setLevel(logging.INFO)
+    logger: Logger = logging.getLogger( title )
+    logger.setLevel( logging.INFO )
     ch = logging.StreamHandler()
-    ch.setFormatter(CustomLoggerFormatter())
-    logger.addHandler(ch)
+    ch.setFormatter( CustomLoggerFormatter() )
+    logger.addHandler( ch )
     return logger

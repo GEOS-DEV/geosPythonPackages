@@ -8,15 +8,39 @@ concurrency:
 
 
 jobs:
-  build:
+  # Checks if PR title follows conventional semantics
+  semantic_pull_request:    
+    permissions:
+      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
+      statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
+      contents: read    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if the PR name has conventional semantics
+        if: github.event_name == 'pull_request'
+        uses: amannn/action-semantic-pull-request@v5.5.3
+        id: lint_pr_title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          wip: true
+          # Configure that a scope doesn't need to be provided.
+          requireScope: false
+    
+      - name: Skip the check on main branch
+        if:  github.ref_name == 'main'
+        run: |
+          echo "This is not a Pull-Request, skipping"
 
+  build:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       max-parallel: 3
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        package-name: ["geos-ats", "geos-mesh", "geos-timehistory", "geos-xml-tools", "hdf5-wrapper", "pygeos-tools"]
+        python-version: ["3.10", "3.11", "3.12"]
+        package-name: ["geos-ats", "geos-mesh", "geos-posp", "geos-timehistory", "geos-trame", "geos-utils", "geos-xml-tools", "geos-xml-viewer", "hdf5-wrapper", "pygeos-tools"]
 
     steps:
     - uses: actions/checkout@v3
@@ -31,12 +55,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest yapf toml
-        python -m pip install ${{ matrix.package-name }}/
+        python -m pip install ./${{ matrix.package-name }}/[test]
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
-        yapf -r --diff ${{ matrix.package-name }} --style .style.yapf
-    # - name: Test with pytest
-    #   working-directory: ./${{ matrix.package-name }}
-    #   run: |
-    #     pytest
+        yapf -r --diff ./${{ matrix.package-name }} --style .style.yapf
+    - name: Test with pytest
+      #working-directory: ./${{ matrix.package-name }}
+      run:
+      # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
+      # wrap pytest to avoid error when no tests in the package
+        sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
+         

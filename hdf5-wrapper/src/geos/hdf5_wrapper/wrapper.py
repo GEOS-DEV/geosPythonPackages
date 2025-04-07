@@ -176,7 +176,7 @@ class hdf5_wrapper():
         Returns:
             dict: a dictionary holding the database contents
         """
-        result: Dict[ Union[ str, int ], Any ] = {}
+        result: Dict[ str, Any ] = {}
         for k in self.keys():
             tmp = self[ k ]
             if isinstance( tmp, hdf5_wrapper ):

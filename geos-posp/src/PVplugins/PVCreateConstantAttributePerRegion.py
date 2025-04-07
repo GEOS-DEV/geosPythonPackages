@@ -10,20 +10,20 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.dirname(dir_path)
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
-    sys.path.append(parent_dir_path)
-
-import PVplugins #required to update sys path
+    sys.path.append( parent_dir_path )
 
 import vtkmodules.util.numpy_support as vnp
+from geos.utils.Logger import Logger, getLogger
+from geos_posp.processing.multiblockInpectorTreeFunctions import (
+    getBlockElementIndexesFlatten,
+    getBlockFromFlatIndex,
+)
+from geos_posp.processing.vtkUtils import isAttributeInObject
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase,
-    smdomain,
-    smhint,
-    smproperty,
-    smproxy,
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import (
@@ -36,13 +36,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
 )
-
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from geos_posp.processing.vtkUtils import isAttributeInObject
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to
@@ -66,25 +59,26 @@ DEFAULT_REGION_ATTRIBUTE_NAME = "region"
     name="PVCreateConstantAttributePerRegion",
     label="Create Constant Attribute Per Region",
 )
-@smhint.xml("""<ShowInMenu category="0- Geos Pre-processing"/>""")
-@smproperty.input(name="Input", port_index=0)
+@smhint.xml( """<ShowInMenu category="0- Geos Pre-processing"/>""" )
+@smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
-    dataTypes=["vtkMultiBlockDataSet", "vtkUnstructuredGrid"],
+    dataTypes=[ "vtkMultiBlockDataSet", "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> None:
-        """Create an attribute with constant value per region."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkDataSet")
+class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
-        self.m_table: list[tuple[int, float]] = []
+    def __init__( self: Self ) -> None:
+        """Create an attribute with constant value per region."""
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataSet" )
+
+        self.m_table: list[ tuple[ int, float ] ] = []
         self.m_regionAttributeName: str = DEFAULT_REGION_ATTRIBUTE_NAME
         self.m_attributeName: str = "attribute"
 
         # logger
-        self.m_logger: Logger = getLogger("Create Constant Attribute Per Region Filter")
+        self.m_logger: Logger = getLogger( "Create Constant Attribute Per Region Filter" )
 
-    def SetLogger(self: Self, logger: Logger) -> None:
+    def SetLogger( self: Self, logger: Logger ) -> None:
         """Set filter logger.
 
         Args:
@@ -92,8 +86,7 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         """
         self.m_logger = logger
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
         <StringVectorProperty
             name="RegionArray"
             label="Region Array"
@@ -113,15 +106,13 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
                 Select an attribute containing the indexes of the regions
             </Documentation>
         </StringVectorProperty>
-        """
-    )
-    def a01SetRegionAttributeName(self: Self, name: str) -> None:
+        """ )
+    def a01SetRegionAttributeName( self: Self, name: str ) -> None:
         """Set region attribute name."""
         self.m_regionAttributeName = name
         self.Modified()
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
         <StringVectorProperty
             name="AttributeName"
             command="a02SetAttributeName"
@@ -132,9 +123,8 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
                 Name of the new attribute
             </Documentation>
         </StringVectorProperty>
-        """
-    )
-    def a02SetAttributeName(self: Self, value: str) -> None:
+        """ )
+    def a02SetAttributeName( self: Self, value: str ) -> None:
         """Set attribute name.
 
         Args:
@@ -143,8 +133,7 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         self.m_attributeName = value
         self.Modified()
 
-    @smproperty.xml(
-        """
+    @smproperty.xml( """
         <DoubleVectorProperty
             name="AttributeTable"
             command="b01SetAttributeValues"
@@ -162,9 +151,8 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
                 Set new attributes values for each region index.
             </Documentation>
         </DoubleVectorProperty>
-        """
-    )
-    def b01SetAttributeValues(self: Self, regionIndex: int, value: float) -> None:
+        """ )
+    def b01SetAttributeValues( self: Self, regionIndex: int, value: float ) -> None:
         """Set attribute values per region.
 
         Args:
@@ -172,23 +160,21 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
 
             value (float): attribute value.
         """
-        self.m_table.append((regionIndex, value))
+        self.m_table.append( ( regionIndex, value ) )
         self.Modified()
 
-    @smproperty.xml(
-        """<PropertyGroup label="Attribute value per regions"
+    @smproperty.xml( """<PropertyGroup label="Attribute value per regions"
                         panel_visibility="default">
                     <Property name="AttributeTable"/>
-                   </PropertyGroup>"""
-    )
-    def b02GroupFlow(self: Self) -> None:
+                   </PropertyGroup>""" )
+    def b02GroupFlow( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
-        inInfoVec: list[vtkInformationVector],
+        inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
@@ -201,19 +187,19 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)  # type: ignore[no-any-return]
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[vtkInformationVector],  # noqa: F841
-        outInfoVec: vtkInformationVector,  # noqa: F841
+            self: Self,
+            request: vtkInformation,  # noqa: F841
+            inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+            outInfoVec: vtkInformationVector,  # noqa: F841
     ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
@@ -225,86 +211,75 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.m_logger.info(f"Apply filter {__name__}")
+        self.m_logger.info( f"Apply filter {__name__}" )
         try:
-            input0: Union[vtkUnstructuredGrid, vtkMultiBlockDataSet] = (
-                self.GetInputData(inInfoVec, 0, 0)
-            )
-            output: Union[vtkUnstructuredGrid, vtkMultiBlockDataSet] = (
-                self.GetOutputData(outInfoVec, 0)
-            )
+            input0: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet ] = ( self.GetInputData( inInfoVec, 0, 0 ) )
+            output: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet ] = ( self.GetOutputData( outInfoVec, 0 ) )
 
             assert input0 is not None, "Input Surface is null."
             assert output is not None, "Output pipeline is null."
 
-            output.ShallowCopy(input0)
+            output.ShallowCopy( input0 )
 
-            assert (
-                len(self.m_regionAttributeName) > 0
-            ), "Region attribute is undefined, please select an attribute."
-            if isinstance(output, vtkMultiBlockDataSet):
-                self.createAttributesMultiBlock(output)
+            assert ( len( self.m_regionAttributeName )
+                     > 0 ), "Region attribute is undefined, please select an attribute."
+            if isinstance( output, vtkMultiBlockDataSet ):
+                self.createAttributesMultiBlock( output )
             else:
-                self.createAttributes(output)
+                self.createAttributes( output )
 
-            mess: str = (
-                f"The new attribute {self.m_attributeName} was successfully added."
-            )
+            mess: str = ( f"The new attribute {self.m_attributeName} was successfully added." )
             self.Modified()
-            self.m_logger.info(mess)
+            self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "The new attribute was not added due to:"
-            self.m_logger.error(mess1)
-            self.m_logger.error(e, exc_info=True)
+            self.m_logger.error( mess1 )
+            self.m_logger.error( e, exc_info=True )
             return 0
         except Exception as e:
             mess0: str = "The new attribute was not added due to:"
-            self.m_logger.critical(mess0)
-            self.m_logger.critical(e, exc_info=True)
+            self.m_logger.critical( mess0 )
+            self.m_logger.critical( e, exc_info=True )
             return 0
         self.m_compute = True
         return 1
 
-    def createAttributesMultiBlock(self: Self, output: vtkMultiBlockDataSet) -> None:
+    def createAttributesMultiBlock( self: Self, output: vtkMultiBlockDataSet ) -> None:
         """Create attributes on vtkMultiBlockDataSet from input data.
 
         Args:
             output (vtkMultiBlockDataSet): mesh where to create the attributes.
         """
         # for each block
-        blockIndexes: list[int] = getBlockElementIndexesFlatten(output)
+        blockIndexes: list[ int ] = getBlockElementIndexesFlatten( output )
         for blockIndex in blockIndexes:
-            block0: vtkDataObject = getBlockFromFlatIndex(output, blockIndex)
+            block0: vtkDataObject = getBlockFromFlatIndex( output, blockIndex )
             assert block0 is not None, "Block is undefined."
-            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(block0)
+            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( block0 )
             try:
-                self.createAttributes(block)
+                self.createAttributes( block )
             except AssertionError as e:
-                self.m_logger.warning(f"Block {blockIndex}: {e}")
+                self.m_logger.warning( f"Block {blockIndex}: {e}" )
         output.Modified()
 
-    def createAttributes(self: Self, mesh: vtkUnstructuredGrid) -> None:
+    def createAttributes( self: Self, mesh: vtkUnstructuredGrid ) -> None:
         """Create attributes on vtkUnstructuredGrid from input data.
 
         Args:
-
              mesh (vtkUnstructuredGrid): mesh where to create the attributes.
         """
-        assert isAttributeInObject(
-            mesh, self.m_regionAttributeName, False
-        ), f"{self.m_regionAttributeName} is not in the mesh."
-        regionAttr: vtkDataArray = mesh.GetCellData().GetArray(
-            self.m_regionAttributeName
-        )
+        assert isAttributeInObject( mesh, self.m_regionAttributeName,
+                                    False ), f"{self.m_regionAttributeName} is not in the mesh."
+        regionAttr: vtkDataArray = mesh.GetCellData().GetArray( self.m_regionAttributeName )
         assert regionAttr is not None, "Region attribute is undefined"
-        npArray: npt.NDArray[np.float64] = self.createNpArray(regionAttr)
-        newAttr: vtkDataArray = vnp.numpy_to_vtk(npArray, True, VTK_DOUBLE)
-        newAttr.SetName(self.m_attributeName)
-        mesh.GetCellData().AddArray(newAttr)
+        npArray: npt.NDArray[ np.float64 ] = self.createNpArray( regionAttr )
+        newAttr: vtkDataArray = vnp.numpy_to_vtk( npArray, True, VTK_DOUBLE )
+        newAttr.SetName( self.m_attributeName )
+        mesh.GetCellData().AddArray( newAttr )
         mesh.GetCellData().Modified()
         mesh.Modified()
 
-    def createNpArray(self: Self, regionAttr: vtkDataArray) -> npt.NDArray[np.float64]:
+    def createNpArray( self: Self, regionAttr: vtkDataArray ) -> npt.NDArray[ np.float64 ]:
         """Create numpy arrays from input data.
 
         Args:
@@ -313,16 +288,14 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         Returns:
             npt.NDArray[np.float64]: numpy array of the new attribute.
         """
-        regionNpArray: npt.NDArray[np.float64] = vnp.vtk_to_numpy(regionAttr)
-        npArray: npt.NDArray[np.float64] = np.full_like(regionNpArray, np.nan)
+        regionNpArray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( regionAttr )
+        npArray: npt.NDArray[ np.float64 ] = np.full_like( regionNpArray, np.nan )
         # for each region
         for regionIndex, value in self.m_table:
-            if regionIndex in np.unique(regionNpArray):
-                mask: npt.NDArray[np.bool_] = regionNpArray == regionIndex
-                npArray[mask] = value
+            if regionIndex in np.unique( regionNpArray ):
+                mask: npt.NDArray[ np.bool_ ] = regionNpArray == regionIndex
+                npArray[ mask ] = value
             else:
-                self.m_logger.warning(
-                    f"Index {regionIndex} is not in the values of the region"
-                    + f" attribute '{regionAttr.GetName()}'"
-                )
+                self.m_logger.warning( f"Index {regionIndex} is not in the values of the region" +
+                                       f" attribute '{regionAttr.GetName()}'" )
         return npArray

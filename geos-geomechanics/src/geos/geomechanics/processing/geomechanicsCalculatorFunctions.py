@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
+from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
+from geos_posp.processing.MohrCoulomb import MohrCoulomb
 from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 from geos.utils.PhysicalConstants import (
     EPSILON, )
@@ -30,7 +31,7 @@ def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float 
 
     if abs( specificDensity ) < EPSILON:
         return np.full_like( density, np.nan )
-    return density / specificDensity
+    return ( density / specificDensity ).astype( np.float64 )
 
 
 # https://en.wikipedia.org/wiki/Elastic_modulus
@@ -666,7 +667,7 @@ def criticalPorePressure(
     # assertion frictionAngle < np.pi/2., so sin(frictionAngle) != 1
     cohesiveTerm: npt.NDArray[ np.float64 ] = ( rockCohesion * np.cos( frictionAngle ) /
                                                 ( 1 - np.sin( frictionAngle ) ) )
-    residualTerm: npt.NDArray[ np.float64 ] = ( 3 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
+    residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
     return cohesiveTerm + residualTerm
 
 
@@ -848,7 +849,8 @@ def shearCapacityUtilization( traction: npt.NDArray[ np.float64 ], rockCohesion:
     assert traction.shape[ 1 ] == 3, "Traction vector must have 3 components."
 
     scu: npt.NDArray[ np.float64 ] = np.full( traction.shape[ 0 ], np.nan )
-    for i, tractionVec in enumerate( traction ):
+    for i in range( traction.shape[ 0 ] ):
+        tractionVec: npt.NDArray[ np.float64 ] = traction[ i ]
         # use -1 to agree with Geos convention (i.e., compression with negative stress)
         stressNormal: npt.NDArray[ np.float64 ] = -1.0 * tractionVec[ 0 ]
 

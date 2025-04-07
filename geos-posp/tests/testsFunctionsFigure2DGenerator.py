@@ -8,18 +8,19 @@ import unittest
 
 from typing_extensions import Self
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.join(os.path.dirname(dir_path), "src")
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
-    sys.path.append(parent_dir_path)
+    sys.path.append( parent_dir_path )
 
 from geos_posp.visu.pythonViewUtils import functionsFigure2DGenerator as utils
 
 
-class TestsFunctionsFigure2DGenerator(unittest.TestCase):
-    def test_associatePropertyToAxeType(self: Self) -> None:
+class TestsFunctionsFigure2DGenerator( unittest.TestCase ):
+
+    def test_associatePropertyToAxeType( self: Self ) -> None:
         """Test of associatePropertyToAxeType function."""
-        example: list[str] = [
+        example: list[ str ] = [
             "WellControls1__BHP__Pa__Source1",
             "WellControls1__TotalMassRate__kg/s__Source1",
             "WellControls1__TotalSurfaceVolumetricRate__m3/s__Source1",
@@ -41,7 +42,7 @@ class TestsFunctionsFigure2DGenerator(unittest.TestCase):
             "Mean__SurfaceVolumetricRateCO2__bbl/day__Source1",
             "Mean__SurfaceVolumetricRateWater__bbl/day__Source1",
         ]
-        expected: dict[str, list[str]] = {
+        expected: dict[ str, list[ str ] ] = {
             "BHP (Pa)": [
                 "WellControls1__BHP__Pa__Source1",
                 "WellControls2__BHP__Pa__Source1",
@@ -73,18 +74,18 @@ class TestsFunctionsFigure2DGenerator(unittest.TestCase):
                 "Mean__SurfaceVolumetricRateWater__bbl/day__Source1",
             ],
         }
-        obtained: dict[str, list[str]] = utils.associatePropertyToAxeType(example)
-        self.assertEqual(expected, obtained)
+        obtained: dict[ str, list[ str ] ] = utils.associatePropertyToAxeType( example )
+        self.assertEqual( expected, obtained )
 
-    def test_propertiesPerIdentifier(self: Self) -> None:
+    def test_propertiesPerIdentifier( self: Self ) -> None:
         """Test of propertiesPerIdentifier function."""
-        propertyNames: list[str] = [
+        propertyNames: list[ str ] = [
             "WellControls1__BHP__Pa__Source1",
             "WellControls1__TotalMassRate__kg/s__Source1",
             "WellControls2__BHP__Pa__Source1",
             "WellControls2__TotalMassRate__kg/s__Source1",
         ]
-        expected: dict[str, list[str]] = {
+        expected: dict[ str, list[ str ] ] = {
             "WellControls1": [
                 "WellControls1__BHP__Pa__Source1",
                 "WellControls1__TotalMassRate__kg/s__Source1",
@@ -94,12 +95,12 @@ class TestsFunctionsFigure2DGenerator(unittest.TestCase):
                 "WellControls2__TotalMassRate__kg/s__Source1",
             ],
         }
-        obtained = utils.propertiesPerIdentifier(propertyNames)
-        self.assertEqual(expected, obtained)
+        obtained = utils.propertiesPerIdentifier( propertyNames )
+        self.assertEqual( expected, obtained )
 
-    def test_associationIdentifers(self: Self) -> None:
+    def test_associationIdentifers( self: Self ) -> None:
         """Test of associationIdentifiers function."""
-        propertyNames: list[str] = [
+        propertyNames: list[ str ] = [
             "WellControls1__BHP__Pa__Source1",
             "WellControls1__TotalMassRate__kg/s__Source1",
             "WellControls1__TotalSurfaceVolumetricRate__m3/s__Source1",
@@ -121,7 +122,7 @@ class TestsFunctionsFigure2DGenerator(unittest.TestCase):
             "Mean__SurfaceVolumetricRateCO2__bbl/day__Source1",
             "Mean__SurfaceVolumetricRateWater__bbl/day__Source1",
         ]
-        expected: dict[str, dict[str, list[str]]] = {
+        expected: dict[ str, dict[ str, list[ str ] ] ] = {
             "WellControls1": {
                 "BHP (Pa)": [
                     "WellControls1__BHP__Pa__Source1",
@@ -175,8 +176,8 @@ class TestsFunctionsFigure2DGenerator(unittest.TestCase):
                 ],
             },
         }
-        obtained = utils.associationIdentifiers(propertyNames)
-        self.assertEqual(expected, obtained)
+        obtained = utils.associationIdentifiers( propertyNames )
+        self.assertEqual( expected, obtained )
 
 
 if __name__ == "__main__":

@@ -92,5 +92,5 @@ class MohrCoulomb:
             element is the ordinates.
         """
         sigmaMin: float = ( self.m_sigmaMin if stressNormalMin is None else stressNormalMin )
-        stressNormal: npt.NDArray[ np.float64 ] = np.linspace( sigmaMin, stressNormalMax, n )
+        stressNormal: npt.NDArray[ np.float64 ] = np.linspace( sigmaMin, stressNormalMax, n ).astype( np.float64 )
         return ( stressNormal, np.array( self.computeShearStress( stressNormal ) ) )

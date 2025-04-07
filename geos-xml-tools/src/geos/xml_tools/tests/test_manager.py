@@ -2,8 +2,8 @@ import unittest
 import re
 import os
 import filecmp
-from geosx_xml_tools import regex_tools, unit_manager, xml_processor
-from geosx_xml_tools.tests import generate_test_xml
+from geos.xml_tools import regex_tools, unit_manager, xml_processor
+from geos.xml_tools.tests import generate_test_xml
 import argparse
 from parameterized import parameterized
 
@@ -16,7 +16,7 @@ class TestUnitManager( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
-        cls.tol = 1e-6
+        cls.tol = 1e-6  # type: ignore[attr-defined]
 
     def test_unit_dict( self ):
         unitManager.buildUnits()
@@ -35,7 +35,7 @@ class TestUnitManager( unittest.TestCase ):
     def test_units( self, unit, scale, expected_value, expect_fail=False ):
         try:
             val = float( unitManager( [ scale, unit ] ) )
-            self.assertTrue( ( abs( val - expected_value ) < self.tol ) != expect_fail )
+            self.assertTrue( ( abs( val - expected_value ) < self.tol ) != expect_fail )  # type: ignore[attr-defined]
         except TypeError:
             self.assertTrue( expect_fail )
 
@@ -45,9 +45,9 @@ class TestParameterRegex( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
-        cls.regexHandler = regex_tools.DictRegexHandler()
-        cls.regexHandler.target[ 'foo' ] = '1.23'
-        cls.regexHandler.target[ 'bar' ] = '4.56e7'
+        cls.regexHandler = regex_tools.DictRegexHandler()  # type: ignore[attr-defined]
+        cls.regexHandler.target[ 'foo' ] = '1.23'  # type: ignore[attr-defined]
+        cls.regexHandler.target[ 'bar' ] = '4.56e7'  # type: ignore[attr-defined]
 
     @parameterized.expand( [ [ '$:foo*1.234', '1.23*1.234' ], [ '$:foo*1.234/$:bar', '1.23*1.234/4.56e7' ],
                              [ '$:foo*1.234/($:bar*$:foo)', '1.23*1.234/(4.56e7*1.23)' ],
@@ -57,7 +57,10 @@ class TestParameterRegex( unittest.TestCase ):
                              [ '$foo$*1.234/$bar$', '4.56e7*1.234/4.56e7', True ] ] )
     def test_parameter_regex( self, parameterInput, expectedValue, expect_fail=False ):
         try:
-            result = re.sub( regex_tools.patterns[ 'parameters' ], self.regexHandler, parameterInput )
+            result = re.sub(
+                regex_tools.patterns[ 'parameters' ],
+                self.regexHandler,  # type: ignore[attr-defined]
+                parameterInput )
             self.assertTrue( ( result == expectedValue ) != expect_fail )
         except Exception:
             self.assertTrue( expect_fail )
@@ -68,7 +71,7 @@ class TestUnitsRegex( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
-        cls.tol = 1e-6
+        cls.tol = 1e-6  # type: ignore[attr-defined]
 
     @parameterized.expand( [ [ '1.234[m**2/s]', '1.234' ], [ '1.234 [m**2/s]', '1.234' ],
                              [ '1.234[m**2/s]*3.4', '1.234*3.4' ],
@@ -88,7 +91,7 @@ class TestSymbolicRegex( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ):
-        cls.tol = 1e-6
+        cls.tol = 1e-6  # type: ignore[attr-defined]
 
     @parameterized.expand( [ [ '`1.234`', '1.234' ], [ '`1.234*2.0`', '2.468' ], [ '`10`', '1e1' ], [ '`10*2`', '2e1' ],
                              [ '`1.0/2.0`', '5e-1' ], [ '`2.0**2`', '4' ], [ '`1.0 + 2.0**2`', '5' ],
