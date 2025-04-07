@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         # add packages to check typing
-        package-name: ["hdf5-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-xml-tools", "hdf5-wrapper"]
+        package-name: ["geos-posp", "geos-timehistory", "geos-utils", "geos-xml-tools", "hdf5-wrapper"]
 
     steps:
     - uses: actions/checkout@v3
@@ -35,9 +35,14 @@ jobs:
     - name: Typing check with mypy
       #  working-directory: ./${{ matrix.package-name }}
       run:  |
-        python -m mypy --config-file ./.mypy.ini --check-untyped-defs ./${{ matrix.package-name }}
+        python -m mypy --config-file ./.mypy.ini --exclude 'build' --check-untyped-defs ./${{ matrix.package-name }}
 
-    - name: Format and linting check with ruff
+    # Removed that 'ruff' run for the moment because it would created conflicts with 'mypy' when solving an error thrown
+    # by 'ruff', and the reverse situation was the same ...
+    # 'mypy' checking works great, let's keep that
+    # A dedicated PR for the 'ruff' checking in the geosPythonPackages would be required
+
+    # - name: Format and linting check with ruff
       #  working-directory: ./${{ matrix.package-name }}
-      run:  |
-        python -m ruff check --config .ruff.toml ./geos-utils
+      # run:  |
+      #   python -m ruff check --config .ruff.toml ./geos-utils

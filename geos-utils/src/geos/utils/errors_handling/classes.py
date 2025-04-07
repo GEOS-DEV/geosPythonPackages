@@ -1,6 +1,17 @@
-def required_attributes( *attributes ):
-    def decorator( method ):
-        def wrapper( self, *args, **kwargs ):
+from typing import Any, Callable, Tuple
+
+
+def required_attributes( *attributes: str ) -> Callable:
+    """A decorator to ensure that specified attributes are defined and not None.
+
+    Args:
+        *attributes (str): The names of the attributes to check.
+
+    Returns:
+        Callable: The decorator function.
+    """
+    def decorator( method: Callable ) -> Callable:
+        def wrapper( self, *args: Tuple[ Any, ...], **kwargs: Any ) -> Callable:
             for attribute in attributes:
                 if not isinstance( attribute, str ):
                     raise TypeError( f"Attribute '{attribute}' needs to be a str." )
