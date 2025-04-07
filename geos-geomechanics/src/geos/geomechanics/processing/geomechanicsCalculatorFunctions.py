@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from geos_posp.processing.MohrCoulomb import MohrCoulomb
+from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
 from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 from geos.utils.PhysicalConstants import (
     EPSILON, )

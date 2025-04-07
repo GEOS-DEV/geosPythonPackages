@@ -24,5 +24,13 @@ dynamic = ["dependencies"]
 # dependency to use if install together with paraview
 paraview = ["paraview"]
 
-[project.scripts]
-
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = [".", "src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []

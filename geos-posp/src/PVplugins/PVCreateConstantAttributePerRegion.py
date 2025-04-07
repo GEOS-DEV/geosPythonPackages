@@ -15,6 +15,8 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
+import PVplugins # noqa: F401
+
 import vtkmodules.util.numpy_support as vnp
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.processing.multiblockInpectorTreeFunctions import (
