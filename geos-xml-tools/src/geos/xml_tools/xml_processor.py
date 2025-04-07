@@ -275,7 +275,8 @@ def process(
     # Check for un-matched special characters
     with open( outputFile, 'r' ) as ofile:
         for line in ofile:
-            if any( [ '$', '[', ']', '`' ] ):
+            print()
+            if any( [ sc in line for sc in [ '$', '[', ']', '`' ] ] ):  #noqa: C419
                 raise Exception(
                     'Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!'
                     % ( line ) )

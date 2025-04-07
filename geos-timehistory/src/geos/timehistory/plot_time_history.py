@@ -68,8 +68,10 @@ def getHistorySeries( database: h5w,
         if type( indices ) is int:
             indices1 = [ indices ]
         elif isiterable( indices ):
-            oob_idxs: list[ int ] = list( filter( lambda idx: not 0 <= idx < data_series.shape[ 1 ],  # type: ignore[arg-type]
-                                                  indices ) )  # type: ignore[arg-type]
+            oob_idxs: list[ int ] = list(
+                filter(
+                    lambda idx: not 0 <= idx < data_series.shape[ 1 ],  # type: ignore[arg-type]
+                    indices ) )  # type: ignore[arg-type]
             if len( oob_idxs ) > 0:
                 print( f"Error: The specified indices: ({', '.join(map(str, oob_idxs))}) " + "\n\t" +
                        f" are out of the dataset index range: [0,{data_series.shape[1]})" )  # type: ignore[arg-type]
@@ -84,8 +86,10 @@ def getHistorySeries( database: h5w,
         if type( components ) is int:
             components1 = [ components ]
         elif isiterable( components ):
-            oob_comps: list[ int ] = list( filter( lambda comp: not 0 <= comp < data_series.shape[ 2 ],  # type: ignore[arg-type]
-                                                   components ) )  # type: ignore[arg-type]
+            oob_comps: list[ int ] = list(
+                filter(
+                    lambda comp: not 0 <= comp < data_series.shape[ 2 ],  # type: ignore[arg-type]
+                    components ) )  # type: ignore[arg-type]
             if len( oob_comps ) > 0:
                 print( f"Error: The specified components: ({', '.join(map(str, oob_comps))}) " + "\n\t" +
                        " is out of the dataset component range: [0,{data_series.shape[1]})" )
