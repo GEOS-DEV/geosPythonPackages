@@ -50,7 +50,7 @@ class BoundaryMesh:
         cells_to_reorient = filter(
             lambda c: mesh.GetCell( c ).GetCellType() == VTK_POLYHEDRON,
             map( self.__original_cells.GetValue, range( self.__original_cells.GetNumberOfValues() ) ) )
-        reoriented_mesh = reorient_mesh( mesh, cells_to_reorient )
+        reoriented_mesh = reorient_mesh.reorient_mesh( mesh, cells_to_reorient )
         self.re_boundary_mesh, re_normals, _ = BoundaryMesh.__build_boundary_mesh( reoriented_mesh, consistency=False )
         num_cells = boundary_mesh.GetNumberOfCells()
         # Precomputing the underlying cell type

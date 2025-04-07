@@ -10,7 +10,9 @@ def required_attributes( *attributes: str ) -> Callable:
     Returns:
         Callable: The decorator function.
     """
+
     def decorator( method: Callable ) -> Callable:
+
         def wrapper( self, *args: Tuple[ Any, ...], **kwargs: Any ) -> Callable:
             for attribute in attributes:
                 if not isinstance( attribute, str ):
@@ -18,5 +20,7 @@ def required_attributes( *attributes: str ) -> Callable:
                 if getattr( self, attribute, None ) is None:
                     raise AttributeError( f"The '{attribute}' attribute is not defined or is None." )
             return method( self, *args, **kwargs )
+
         return wrapper
+
     return decorator
