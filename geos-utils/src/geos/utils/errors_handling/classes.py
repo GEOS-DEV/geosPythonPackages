@@ -13,7 +13,7 @@ def required_attributes( *attributes: str ) -> Callable:
 
     def decorator( method: Callable ) -> Callable:
 
-        def wrapper( self, *args: Tuple[ Any, ...], **kwargs: Any ) -> Callable:
+        def wrapper( self, *args: Tuple[ Any, ...], **kwargs: Any ) -> Callable:  # noqa: ANN001
             for attribute in attributes:
                 if not isinstance( attribute, str ):
                     raise TypeError( f"Attribute '{attribute}' needs to be a str." )
