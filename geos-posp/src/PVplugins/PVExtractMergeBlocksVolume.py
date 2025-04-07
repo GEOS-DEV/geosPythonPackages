@@ -2,9 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-import sys
-
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
@@ -18,22 +15,21 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+from geos.utils.GeosOutputsConstants import (
+    GeosMeshOutputsEnum,
+    getAttributeToTransferFromInitialTime,
 )
-
+from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos_posp.processing.vtkUtils import (
     copyAttribute,
     createCellCenterAttribute,
 )
-from geos.utils.GeosOutputsConstants import (
-    GeosMeshOutputsEnum,
-    getAttributeToTransferFromInitialTime,
-)
-from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.visu.PVUtils.paraviewTreatments import getTimeStepIndex
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
 
 __doc__ = """
 PVExtractMergeBlocksVolume is a Paraview plugin that allows to merge ranks

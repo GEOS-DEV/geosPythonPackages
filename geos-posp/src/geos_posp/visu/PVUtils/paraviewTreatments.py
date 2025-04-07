@@ -8,6 +8,10 @@ from typing import Any, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
+from geos.utils.GeosOutputsConstants import (
+    ComponentNameEnum,
+    GeosMeshOutputsEnum,
+)
 from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
     vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
@@ -33,10 +37,6 @@ from vtkmodules.vtkCommonDataModel import (
 from geos_posp.processing.vtkUtils import (
     getArrayInObject,
     isAttributeInObject,
-)
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
 )
 
 # valid sources for Python view configurator
@@ -470,15 +470,10 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
-    attributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
-    data: vtkCellData = mesh2.GetCellData()
-    assert data is not None, "Cell Data are undefined."
-    assert bool( data.HasArray( attributeName ) ), f"Attribute {attributeName} is not in the mesh"
-
-    array: vtkDoubleArray = data.GetArray( attributeName )
-    nparray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
-    return [ str( int( ide ) ) for ide in nparray ]
+    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh, True )
+    name: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
+    assert isAttributeInObject( mesh2, name, False ), f"Attribute {name} is not in the mesh."
+    return [ str( int( ide ) ) for ide in getArrayInObject( mesh2, name, False ) ]
 
 
 def strEnumToEnumerationDomainXml( enumObj: Enum ) -> str:
@@ -540,7 +535,7 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
     animationScene.GoToFirst()
     source = FindSource( sourceName )
     dataset: vtkDataObject = servermanager.Fetch( source )
-    assert dataset is not None, f"Dataset is undefined."
+    assert dataset is not None, "Dataset is undefined."
     dataset2: vtkUnstructuredGrid = mergeFilterPV( dataset )
     time: str = str( animationScene.TimeKeeper.Time )
     dfPerTimestep: dict[ str, pd.DataFrame ] = { time: vtkToDataframe( dataset2 ) }

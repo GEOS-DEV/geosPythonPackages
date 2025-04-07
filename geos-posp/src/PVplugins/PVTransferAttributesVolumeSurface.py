@@ -14,6 +14,17 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
+from geos.utils.Logger import Logger, getLogger
+from geos_posp.filters.TransferAttributesVolumeSurface import (
+    TransferAttributesVolumeSurface, )
+from geos_posp.processing.multiblockInpectorTreeFunctions import (
+    getBlockElementIndexesFlatten,
+    getBlockFromFlatIndex,
+)
+from geos_posp.processing.vtkUtils import getAttributeSet, mergeBlocks
+from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
+    createModifiedCallback, )
+from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveSource, GetSources, servermanager,
 )
@@ -34,17 +45,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos_posp.filters.TransferAttributesVolumeSurface import (
-    TransferAttributesVolumeSurface, )
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from geos_posp.processing.vtkUtils import getAttributeSet, mergeBlocks
-from geos.utils.Logger import Logger, getLogger
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
 
 __doc__ = """
 PVTransferAttributesVolumeSurface is a Paraview plugin that allows to map face ids from
@@ -243,7 +243,6 @@ class PVTransferAttributesVolumeSurface( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if transfer is successfull, False otherwise.
         """
-
         attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
         volumeMeshMerged: vtkUnstructuredGrid = mergeBlocks( self.m_volumeMesh )
         surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( self.m_outputSurfaceMesh )

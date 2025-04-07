@@ -9,8 +9,9 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from geos_xml_viewer.algorithms.deck import SimulationDeck, build_model, read
 
 
-class GeosDeckReader(VTKPythonAlgorithmBase):
-    def __init__(self: Self) -> Self:
+class GeosDeckReader( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> Self:
         """VTK GEOS deck reader filter."""
         VTKPythonAlgorithmBase.__init__(
             self,
@@ -22,7 +23,7 @@ class GeosDeckReader(VTKPythonAlgorithmBase):
         self.__attributeName: str = ""
         self.__simulationDeck: SimulationDeck
 
-    def SetFileName(self: Self, name: str) -> None:
+    def SetFileName( self: Self, name: str ) -> None:
         """Set the filename.
 
         Args:
@@ -32,11 +33,11 @@ class GeosDeckReader(VTKPythonAlgorithmBase):
             self.__filename = name
             self.Modified()
 
-    def GetFileName(self: Self) -> str:
+    def GetFileName( self: Self ) -> str:
         """Get the filename."""
         return self.__filename
 
-    def SetAttributeName(self: Self, name: str) -> None:
+    def SetAttributeName( self: Self, name: str ) -> None:
         """Set the attribute name.
 
         Args:
@@ -46,7 +47,7 @@ class GeosDeckReader(VTKPythonAlgorithmBase):
             self.__attributeName = name
             self.Modified()
 
-    def GetAttributeName(self: Self) -> str:
+    def GetAttributeName( self: Self ) -> str:
         """Get the attribute name."""
         return self.__attributeName
 
@@ -66,12 +67,12 @@ class GeosDeckReader(VTKPythonAlgorithmBase):
         Returns:
             int: Returns 1 if the pipeline is successful
         """
-        self.__simulationDeck = read(self.__filename)
-        opt = vtk.vtkPartitionedDataSetCollection.GetData(outInfoVec)
+        self.__simulationDeck = read( self.__filename )
+        opt = vtk.vtkPartitionedDataSetCollection.GetData( outInfoVec )
 
         output = vtk.vtkPartitionedDataSetCollection()
-        build_model(self.__simulationDeck, output, self.__attributeName)
+        build_model( self.__simulationDeck, output, self.__attributeName )
 
-        opt.ShallowCopy(output)
+        opt.ShallowCopy( output )
 
         return 1

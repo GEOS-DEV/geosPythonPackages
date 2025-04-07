@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
+from geos.utils.GeosOutputsConstants import (
+    GeosDomainNameEnum,
+    OutputObjectEnum,
+)
+from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
@@ -9,11 +14,6 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos_posp.processing.multiblockInpectorTreeFunctions import (
     getBlockIndexFromName, )
 from geos_posp.processing.vtkUtils import extractBlock
-from geos.utils.GeosOutputsConstants import (
-    GeosDomainNameEnum,
-    OutputObjectEnum,
-)
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 GeosBlockExtractor module is a vtk filter that allows to extract Volume mesh,

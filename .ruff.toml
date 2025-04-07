@@ -1,0 +1,66 @@
+# Exclude a variety of commonly ignored directories.
+extend-exclude = ["tests/data"]
+
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.9
+target-version = "py39"
+
+[lint]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+#    "UP",   # pyupgrade deactivate since python39
+    "B",    # flake8-bugbear        
+    "SIM",  # flake8-simplify        
+    "ANN",  # flake8-annotations        
+    "C4",   # flake8-comprehensions    
+#    "I",    # isort - manage by yapf
+    "D",    # pydocstyle    
+]
+
+ignore = [
+    "E501",  # line too long, handled by yapf
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+    "D100",
+    "D101",
+    "D104",  # Missing docstring in public package in __init__.py files
+    "UP007",
+    "ANN401",  # allows Any return
+]
+
+[lint.pydocstyle]
+convention = "google"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+docstring-code-format = true
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+docstring-code-line-length = "dynamic"

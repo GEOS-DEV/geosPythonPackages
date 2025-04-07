@@ -18,22 +18,21 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+from geos.utils.GeosOutputsConstants import (
+    GeosMeshOutputsEnum,
+    getAttributeToTransferFromInitialTime,
 )
-
+from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos_posp.processing.vtkUtils import (
     copyAttribute,
     createCellCenterAttribute,
 )
-from geos.utils.GeosOutputsConstants import (
-    GeosMeshOutputsEnum,
-    getAttributeToTransferFromInitialTime,
-)
-from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos_posp.visu.PVUtils.paraviewTreatments import getTimeStepIndex
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
 
 __doc__ = """
 PVExtractMergeBlocksVolumeSurface is a Paraview plugin that allows to merge

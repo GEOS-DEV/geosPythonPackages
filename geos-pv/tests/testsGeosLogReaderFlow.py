@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
 # ruff: noqa: E402 # disable Module level import not at top of file
-import contextlib
-import io
 import os
 import sys
 import unittest
@@ -16,8 +14,8 @@ parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.utils.UnitRepository import Unit, UnitRepository
+from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
 
 unitsObjSI: UnitRepository = UnitRepository()
 conversionFactors: dict[ str, Unit ] = unitsObjSI.getPropertiesUnit()

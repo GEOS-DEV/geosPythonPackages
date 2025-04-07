@@ -5,7 +5,7 @@ from PIL import Image
 from PIL import ImageChops
 
 
-def image_pixel_differences(base_image_path, compare_image_path):
+def image_pixel_differences( base_image_path, compare_image_path ):
     """
     Calculates the bounding box of the non-zero regions in the image.
     :param base_image: target image to find
@@ -14,10 +14,10 @@ def image_pixel_differences(base_image_path, compare_image_path):
      False otherwise
     """
 
-    base_image = Image.open(base_image_path)
-    compare_image = Image.open(compare_image_path)
+    base_image = Image.open( base_image_path )
+    compare_image = Image.open( compare_image_path )
 
-    diff = ImageChops.difference(base_image, compare_image)
+    diff = ImageChops.difference( base_image, compare_image )
     if diff.getbbox():
         return False
     else:

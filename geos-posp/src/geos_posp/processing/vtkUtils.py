@@ -261,14 +261,9 @@ def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool 
     Returns:
         vtkDoubleArray: the vtk array corresponding to input attribute name.
     """
-    array: vtkDoubleArray
     assert isAttributeInObject( object, attributeName, onPoints ), f"{attributeName} is not in input object."
-
-    if onPoints:
-        array = object.GetPointData().GetArray( attributeName )
-    else:
-        array = object.GetCellData().GetArray( attributeName )
-    return array
+    return object.GetPointData().GetArray( attributeName ) if onPoints else object.GetCellData().GetArray(
+        attributeName )
 
 
 def getNumberOfComponents(
@@ -328,7 +323,6 @@ def getNumberOfComponentsMultiBlock(
     Returns:
         int: number of components.
     """
-
     elementraryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
     for blockIndex in elementraryBlockIndexes:
         block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )

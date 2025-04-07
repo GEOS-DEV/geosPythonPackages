@@ -18,10 +18,6 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
@@ -30,6 +26,10 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
+
 from PVplugins.PVExtractMergeBlocksVolume import PVExtractMergeBlocksVolume
 from PVplugins.PVGeomechanicsAnalysis import PVGeomechanicsAnalysis
 

@@ -14,14 +14,13 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 
-from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
-
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
 import PVplugins  #required to update sys path
+
 
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
@@ -30,6 +29,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
+from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
 PVGeomechanicsAnalysis is a Paraview plugin that allows to compute

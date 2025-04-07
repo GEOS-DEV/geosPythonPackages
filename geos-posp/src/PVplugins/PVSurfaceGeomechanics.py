@@ -15,6 +15,16 @@ if parent_dir_path not in sys.path:
 
 import PVplugins  #required to update sys path
 
+from geos.utils.Logger import Logger, getLogger
+from geos.utils.PhysicalConstants import (
+    DEFAULT_FRICTION_ANGLE_DEG,
+    DEFAULT_ROCK_COHESION,
+)
+from geos_posp.filters.SurfaceGeomechanics import SurfaceGeomechanics
+from geos_posp.processing.multiblockInpectorTreeFunctions import (
+    getBlockElementIndexesFlatten,
+    getBlockFromFlatIndex,
+)
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -27,17 +37,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkDataObject,
     vtkMultiBlockDataSet,
     vtkPolyData,
-)
-
-from geos_posp.filters.SurfaceGeomechanics import SurfaceGeomechanics
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from geos.utils.Logger import Logger, getLogger
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_ROCK_COHESION,
 )
 
 __doc__ = r"""
@@ -198,7 +197,6 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-
         self.m_logger.info( f"Apply filter {__name__}" )
         try:
             input0: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
@@ -231,7 +229,6 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             input (vtkMultiBlockDataSet): input multiBlockDataSet
             output (vtkMultiBlockDataSet): output multiBlockDataSet
         """
-
         surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( input )
         for blockIndex in surfaceBlockIndexes:
             surfaceBlock0: vtkDataObject = getBlockFromFlatIndex( output, blockIndex )

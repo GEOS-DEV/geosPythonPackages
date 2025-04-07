@@ -75,7 +75,7 @@ class TestsMohrCoulomb( unittest.TestCase ):
     def test_computeShearStress( self: Self ) -> None:
         """Test calculation of shear stress from normal stress."""
         # inputs
-        stressNormal: npt.NDArray[ np.float64 ] = np.linspace( 5.0e8, 1.0e9, 100 )
+        stressNormal: npt.NDArray[ np.float64 ] = np.linspace( 5.0e8, 1.0e9, 100 ).astype( float )
         # expected values
         expectedValues: npt.NDArray[ np.float64 ] = np.array( [
             888163490.0,
@@ -184,7 +184,7 @@ class TestsMohrCoulomb( unittest.TestCase ):
         obtained: npt.NDArray[ np.float64 ] = np.array( mohrCoulomb.computeShearStress( stressNormal ) )
 
         # test results
-        self.assertSequenceEqual( expectedValues.tolist(), np.round( obtained ).tolist() )
+        self.assertSequenceEqual( expectedValues.tolist(), np.round( obtained ).tolist() )  # type: ignore[arg-type]
 
     def test_computeFailureEnvelop1( self: Self ) -> None:
         """Test calculation of failure envelop from minimum normal stress."""
@@ -221,8 +221,12 @@ class TestsMohrCoulomb( unittest.TestCase ):
         normalStressObtained, shearStressObtained = mohrCoulomb.computeFailureEnvelop( stressNormalMax, n=10 )
 
         # test results
-        self.assertSequenceEqual( normalStressExpected.tolist(), np.round( normalStressObtained ).tolist() )
-        self.assertSequenceEqual( shearStressExpected.tolist(), np.round( shearStressObtained ).tolist() )
+        self.assertSequenceEqual(
+            normalStressExpected.tolist(),  # type: ignore[arg-type]
+            np.round( normalStressObtained ).tolist() )
+        self.assertSequenceEqual(
+            shearStressExpected.tolist(),  # type: ignore[arg-type]
+            np.round( shearStressObtained ).tolist() )
 
     def test_computeFailureEnvelop2( self: Self ) -> None:
         """Test calculation of failure envelop in user-defined range."""
@@ -262,5 +266,9 @@ class TestsMohrCoulomb( unittest.TestCase ):
                                                                                        n=10 )
 
         # test results
-        self.assertSequenceEqual( normalStressExpected.tolist(), np.round( normalStressObtained ).tolist() )
-        self.assertSequenceEqual( shearStressExpected.tolist(), np.round( shearStressObtained ).tolist() )
+        self.assertSequenceEqual(
+            normalStressExpected.tolist(),  # type: ignore[arg-type]
+            np.round( normalStressObtained ).tolist() )
+        self.assertSequenceEqual(
+            shearStressExpected.tolist(),  # type: ignore[arg-type]
+            np.round( shearStressObtained ).tolist() )

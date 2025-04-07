@@ -82,7 +82,11 @@ To use it:
     name="PVGeosLogReader",
     label="Geos Log Reader",
     extensions=[ "txt", "out" ],
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
     file_description="GEOS log .txt or .out files",
+=======
+    file_description="txt and out files of GEOS log files",
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
 )
 class PVGeosLogReader( VTKPythonAlgorithmBase ):
 
@@ -194,8 +198,13 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
 
     @smproperty.stringvector( name="EnterPhaseNames", label="Enter Phase Names", default_values="" )
     @smdomain.xml( """<Documentation>
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
             Please enter the phase names as in the form: phase0, phase1, phase2
            </Documentation>""" )
+=======
+                  Please enter your phase names as phase0, phase1, phase2.
+                  </Documentation>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a02SetPhaseNames( self: Self, value: str ) -> None:
         """Set phase names.
 
@@ -241,10 +250,17 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         return self.m_dataframeChoice
 
     @smproperty.xml( """<PropertyGroup label="Log informations">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="DataFilepath"/>
                 <Property name="EnterPhaseNames"/>
                 <Property name="DataframeChoice"/>
             </PropertyGroup>""" )
+=======
+                        <Property name="DataFilepath"/>
+                        <Property name="EnterPhaseNames"/>
+                        <Property name="DataframeChoice"/>
+                    </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a04PropertyGroup( self: Self ) -> None:
         """Organized group."""
         self.Modified()
@@ -255,10 +271,17 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         return self.m_propertiesFlow
 
     @smproperty.xml( """<PropertyGroup label="PropertiesSelection" panel_visibility="advanced">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="FlowProperties"/>
                 <Hints><PropertyWidgetDecorator type="GenericDecorator"
                 mode="visibility" property="DataframeChoice" value="0" /></Hints>
             </PropertyGroup>""" )
+=======
+                    <Property name="FlowProperties"/>
+                    <Hints><PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility" property="DataframeChoice" value="0" /></Hints>
+                   </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a06GroupFlow( self: Self ) -> None:
         """Organized group."""
         self.Modified()
@@ -287,11 +310,19 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         return self.m_numberWellsMean
 
     @smproperty.xml( """<PropertyGroup label="PropertiesSelection" panel_visibility="advanced">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="WellsProperties"/>
                 <Property name="NumberOfWellsForMeanCalculation"/>
                 <Hints><PropertyWidgetDecorator type="GenericDecorator"
                 mode="visibility" property="DataframeChoice" value="1" /></Hints>
             </PropertyGroup>""" )
+=======
+                    <Property name="WellsProperties"/>
+                    <Property name="NumberOfWellsForMeanCalculation"/>
+                    <Hints><PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility" property="DataframeChoice" value="1" /></Hints>
+                   </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a09GroupWells( self: Self ) -> None:
         """Organized group."""
         self.Modified()
@@ -302,10 +333,17 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         return self.m_propertiesAquifers
 
     @smproperty.xml( """<PropertyGroup label="PropertiesSelection" panel_visibility="advanced">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="AquifersProperties"/>
                 <Hints><PropertyWidgetDecorator type="GenericDecorator"
                 mode="visibility" property="DataframeChoice" value="2" /></Hints>
             </PropertyGroup>""" )
+=======
+                    <Property name="AquifersProperties"/>
+                    <Hints><PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility" property="DataframeChoice" value="2" /></Hints>
+                   </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a11GroupAquifers( self: Self ) -> None:
         """Organized group."""
         self.Modified()
@@ -316,10 +354,17 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         return self.m_convergence
 
     @smproperty.xml( """<PropertyGroup label="PropertiesSelection" panel_visibility="advanced">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="Convergence"/>
                 <Hints><PropertyWidgetDecorator type="GenericDecorator"
                 mode="visibility" property="DataframeChoice" value="3" /></Hints>
             </PropertyGroup>""" )
+=======
+                    <Property name="Convergence"/>
+                    <Hints><PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility" property="DataframeChoice" value="3" /></Hints>
+                   </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def a13GroupSolvers( self: Self ) -> None:
         """Organized group."""
         self.Modified()
@@ -448,6 +493,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         self.Modified()
 
     @smproperty.xml( """<PropertyGroup label="Units Choice">
+<<<<<<< HEAD:geos-pv/src/PVplugins/PVGeosLogReader.py
                 <Property name="Pressure"/>
                 <Property name="BHP"/>
                 <Property name="Time"/>
@@ -458,6 +504,18 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                 <Hints><PropertyWidgetDecorator type="GenericDecorator"
                 mode="visibility" property="UseSIUnits" value="0" /></Hints>
             </PropertyGroup>""" )
+=======
+                        <Property name="Pressure"/>
+                        <Property name="BHP"/>
+                        <Property name="Time"/>
+                        <Property name="Mass"/>
+                        <Property name="Volume"/>
+                        <Property name="VolumetricRate"/>
+                        <Property name="MassRate"/>
+                    <Hints><PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility" property="UseSIUnits" value="0" /></Hints>
+                    </PropertyGroup>""" )
+>>>>>>> main:geos-posp/src/PVplugins/PVGeosLogReader.py
     def b09GroupUnitsToUse( self: Self ) -> None:
         """Organize group."""
         self.Modified()

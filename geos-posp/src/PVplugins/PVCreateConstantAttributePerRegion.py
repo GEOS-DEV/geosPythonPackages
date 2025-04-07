@@ -18,6 +18,12 @@ if parent_dir_path not in sys.path:
 import PVplugins  #required to update sys path
 
 import vtkmodules.util.numpy_support as vnp
+from geos.utils.Logger import Logger, getLogger
+from geos_posp.processing.multiblockInpectorTreeFunctions import (
+    getBlockElementIndexesFlatten,
+    getBlockFromFlatIndex,
+)
+from geos_posp.processing.vtkUtils import isAttributeInObject
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -32,13 +38,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
 )
-
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from geos_posp.processing.vtkUtils import isAttributeInObject
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to
@@ -269,7 +268,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Create attributes on vtkUnstructuredGrid from input data.
 
         Args:
-
              mesh (vtkUnstructuredGrid): mesh where to create the attributes.
         """
         assert isAttributeInObject( mesh, self.m_regionAttributeName,

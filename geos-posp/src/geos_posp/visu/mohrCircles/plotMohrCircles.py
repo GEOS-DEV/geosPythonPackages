@@ -6,16 +6,16 @@ from typing import Any
 import matplotlib.pyplot as plt  # type: ignore[import-untyped]
 import numpy as np
 import numpy.typing as npt
+from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
+from geos.utils.enumUnits import Pressure, Unit, convert
+from geos.utils.GeosOutputsConstants import FAILURE_ENVELOPE
 from matplotlib import ticker
 from matplotlib.axes import Axes  # type: ignore[import-untyped]
 from matplotlib.figure import Figure  # type: ignore[import-untyped]
 from matplotlib.lines import Line2D  # type: ignore[import-untyped]
 
 import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
-from geos.geomechanics.model.MohrCircle import MohrCircle
-from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
-from geos.utils.enumUnits import Pressure, Unit, convert
-from geos.utils.GeosOutputsConstants import FAILURE_ENVELOPE
 from geos_posp.visu.PVUtils.matplotlibOptions import (
     FontStyleEnum,
     FontWeightEnum,
@@ -85,7 +85,7 @@ def _plotMohrCircles(
         annotate (bool): if True, display min and max normal stress.
     """
     nbPts: int = 361
-    ang: npt.NDArray[ np.float64 ] = np.linspace( 0.0, np.pi, nbPts )
+    ang: npt.NDArray[ np.float64 ] = np.linspace( 0.0, np.pi, nbPts ).astype( np.float64 )
     for mohrCircle in mohrCircles:
         radius: float = mohrCircle.getCircleRadius()
         xCoords = mohrCircle.getCircleCenter() + radius * np.cos( ang )
@@ -93,7 +93,7 @@ def _plotMohrCircles(
         label: str = mohrCircle.getCircleId()
 
         p: list[ Line2D ]  # plotted lines to get the color later
-        if label in circlesAspect.keys():
+        if label in circlesAspect:
             circleAspect: dict[ str, Any ] = circlesAspect[ label ]
             color: tuple[ float, float, float ] = circleAspect.get( "color", "k" )
             linestyle: str = circleAspect.get( "linestyle", LineStyleEnum.SOLID.optionValue )
@@ -212,7 +212,7 @@ def _updateAxis( ax: Axes, userChoices: dict[ str, Any ] ) -> None:
     ax.set_ylim( 0.0, xmax )
     ax.grid()
     ax.minorticks_off()
-    if "minorticks" in userChoices.keys() and userChoices[ "minorticks" ]:
+    if "minorticks" in userChoices and userChoices[ "minorticks" ]:
         ax.minorticks_on()
 
 
@@ -253,15 +253,15 @@ def _updateAxisLimits( ax: Axes, userChoices: dict[ str, Any ] ) -> None:
         userChoices (dict[str, Any]): user parameters.
     """
     xmin, xmax = ax.get_xlim()
-    if userChoices.get( "limMinX", None ) is not None:
+    if userChoices.get( "limMinX" ) is not None:
         xmin = userChoices[ "limMinX" ]
-    if userChoices.get( "limMaxX", None ) is not None:
+    if userChoices.get( "limMaxX" ) is not None:
         xmax = userChoices[ "limMaxX" ]
     ax.set_xlim( xmin, xmax )
 
     ymin, ymax = ax.get_xlim()
-    if userChoices.get( "limMinY", None ) is not None:
+    if userChoices.get( "limMinY" ) is not None:
         ymin = userChoices[ "limMinY" ]
-    if userChoices.get( "limMaxY", None ) is not None:
+    if userChoices.get( "limMaxY" ) is not None:
         ymax = userChoices[ "limMaxY" ]
     ax.set_ylim( ymin, ymax )

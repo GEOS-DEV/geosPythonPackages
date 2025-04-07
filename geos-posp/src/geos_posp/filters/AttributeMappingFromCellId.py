@@ -4,13 +4,13 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import numpy as np
 import numpy.typing as npt
+from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 from geos_posp.processing.vtkUtils import createAttribute, getArrayInObject
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 AttributeMappingFromCellId module is a vtk filter that transfer a attribute from a
@@ -102,7 +102,11 @@ class AttributeMappingFromCellId( VTKPythonAlgorithmBase ):
         if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+<<<<<<< HEAD
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+=======
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore
+>>>>>>> main
 
     def RequestData(
         self: Self,
@@ -120,7 +124,6 @@ class AttributeMappingFromCellId( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-
         try:
             serverMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
             clientMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( inInfoVec[ 1 ] )

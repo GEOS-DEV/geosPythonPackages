@@ -3,6 +3,14 @@
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
 
+from geos.utils.GeosOutputsConstants import (
+    PHASE_SEP,
+    FluidPrefixEnum,
+    PhaseTypeEnum,
+    PostProcessingOutputsEnum,
+    getRockSuffixRenaming,
+)
+from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -34,14 +42,6 @@ from geos_posp.processing.vtkUtils import (
     getAttributeSet,
     mergeBlocks,
 )
-from geos.utils.GeosOutputsConstants import (
-    PHASE_SEP,
-    FluidPrefixEnum,
-    PhaseTypeEnum,
-    PostProcessingOutputsEnum,
-    getRockSuffixRenaming,
-)
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 GeosBlockMerge module is a vtk filter that allows to merge Geos ranks, rename

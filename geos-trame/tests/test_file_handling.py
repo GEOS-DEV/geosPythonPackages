@@ -6,12 +6,12 @@ from trame_client.utils.testing import enable_testing
 from geos_trame.app.core import GeosTrame
 
 
-def test_unsupported_file(capsys):
+def test_unsupported_file( capsys ):
 
-    server = enable_testing(get_server(client_type="vue3"), "message")
+    server = enable_testing( get_server( client_type="vue3" ), "message" )
     file_name = "tests/data/acous3D/acous3D_vtu.xml"
 
-    GeosTrame(server, file_name)
+    GeosTrame( server, file_name )
 
     captured = capsys.readouterr()
     assert captured.err == "Cannot build ui as the input file cannot be parse.\n"

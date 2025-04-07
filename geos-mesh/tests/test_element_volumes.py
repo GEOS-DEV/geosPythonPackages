@@ -9,7 +9,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from checks.element_volumes import Options, __check
+from geos.mesh.doctor.checks.element_volumes import Options, __check
 
 
 def test_simple_tet():

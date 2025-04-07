@@ -5,6 +5,9 @@
 import numpy as np
 import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
+from geos.utils.ConnectionSet import ConnectionSetCollection
+from geos.utils.GeosOutputsConstants import GeosMeshSuffixEnum
+from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
@@ -21,9 +24,6 @@ from geos_posp.processing.vtkUtils import (
     getComponentNames,
     isAttributeInObject,
 )
-from geos.utils.ConnectionSet import ConnectionSetCollection
-from geos.utils.GeosOutputsConstants import GeosMeshSuffixEnum
-from geos.utils.Logger import Logger, getLogger
 
 __doc__ = """
 TransferAttributesVolumeSurface is a vtk filter that allows to transfer volume
@@ -219,7 +219,6 @@ class TransferAttributesVolumeSurface( VTKPythonAlgorithmBase ):
             dict[int, dict[int, bool]]: dictionnary of face ids as keys and
             volume cell ids and side as values.
         """
-
         filter: VolumeSurfaceMeshMapper = VolumeSurfaceMeshMapper()
         filter.AddInputDataObject( 0, self.m_volumeMesh )
         filter.AddInputDataObject( 1, self.m_surfaceMesh )
