@@ -3,7 +3,7 @@ from typing import Tuple, Iterable
 
 
 def build_preprocessor_input_parser() -> argparse.ArgumentParser:
-    """Build the argument parser
+    """Build the argument parser.
 
     Returns:
         argparse.ArgumentParser: The parser
@@ -29,7 +29,7 @@ def build_preprocessor_input_parser() -> argparse.ArgumentParser:
 
 
 def parse_xml_preprocessor_arguments() -> Tuple[ argparse.Namespace, Iterable[ str ] ]:
-    """Parse user arguments
+    """Parse user arguments.
 
     Args:
         -i/--input (str): Input file name (multiple allowed)
@@ -46,12 +46,11 @@ def parse_xml_preprocessor_arguments() -> Tuple[ argparse.Namespace, Iterable[ s
 
 
 def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
-    """Build the argument parser
+    """Build the argument parser.
 
     Returns:
         argparse.ArgumentParser: the parser instance
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument( 'input', type=str, help='Input file name' )
     parser.add_argument( '-i', '--indent', type=int, help='Indent size', default=2 )
@@ -64,12 +63,11 @@ def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
 
 
 def build_attribute_coverage_input_parser() -> argparse.ArgumentParser:
-    """Build attribute coverage redundancy input parser
+    """Build attribute coverage redundancy input parser.
 
     Returns:
         argparse.ArgumentParser: parser instance
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
     parser.add_argument( '-o', '--output', type=str, help='Output file name', default='attribute_test.xml' )
@@ -77,12 +75,11 @@ def build_attribute_coverage_input_parser() -> argparse.ArgumentParser:
 
 
 def build_xml_redundancy_input_parser() -> argparse.ArgumentParser:
-    """Build xml redundancy input parser
+    """Build xml redundancy input parser.
 
     Returns:
         argparse.ArgumentParser: parser instance
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
     return parser

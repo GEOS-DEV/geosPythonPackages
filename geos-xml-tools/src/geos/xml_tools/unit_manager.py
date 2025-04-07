@@ -1,8 +1,8 @@
-"""Tools for managing units in GEOSX"""
-
 import re
 from geos.xml_tools import regex_tools
-from typing import List, Any, Dict, Union
+from typing import List, Any, Dict
+
+__doc__ = """Tools for managing units in GEOSX."""
 
 
 class UnitManager():
@@ -23,7 +23,6 @@ class UnitManager():
         Returns:
             str: The string with evaluated unit definitions
         """
-
         # Replace all instances of units in the string with their scale defined in self.units
         symbolicUnits = re.sub( regex_tools.patterns[ 'units_b' ], self.unitMatcher, unitStruct[ 1 ] )
 
@@ -53,7 +52,6 @@ class UnitManager():
 
     def buildUnits( self ) -> None:
         """Build the unit definitions."""
-
         # yapf: disable
         # Long, short names for SI prefixes
         unit_dict_type = Dict[str, Dict[str, Any]]
@@ -133,9 +131,9 @@ class UnitManager():
                 unit_defs[ alt ] = { 'value': unit_defs[ u ][ 'value' ], 'usePrefix': unit_defs[ u ][ 'usePrefix' ] }
 
         # Combine the results into the final dictionary
-        for u in unit_defs.keys():
+        for u in unit_defs:
             if ( unit_defs[ u ][ 'usePrefix' ] ):
-                for p in prefixes.keys():
+                for p in prefixes:
                     self.units[ p + u ] = prefixes[ p ][ 'value' ] * unit_defs[ u ][ 'value' ]
             else:
                 self.units[ u ] = unit_defs[ u ][ 'value' ]

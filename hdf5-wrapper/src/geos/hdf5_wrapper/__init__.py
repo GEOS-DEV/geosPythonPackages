@@ -1,1 +1,1 @@
-from .wrapper import hdf5_wrapper
+from .wrapper import hdf5_wrapper  # noqa: F401

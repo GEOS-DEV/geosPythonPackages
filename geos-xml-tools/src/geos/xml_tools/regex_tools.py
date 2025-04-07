@@ -1,8 +1,9 @@
-"""Tools for managing regular expressions in geosx_xml_tools"""
-
 import re
-from typing import Union, Dict
-"""
+from typing import Dict
+
+__doc__ = """
+Tools for managing regular expressions in geosx_xml_tools.
+
 Define regex patterns used throughout the module:
 
 Pattern         |  Example targets             | Notes
@@ -56,6 +57,7 @@ class DictRegexHandler():
 
     def __init__( self ) -> None:
         """Initialize the handler with an empty target list.
+
         The key/value pairs of self.target indicate which values
         to look for and the values they will replace with.
         """
@@ -67,10 +69,9 @@ class DictRegexHandler():
         Args:
             match (re.match): A matching string identified by the regex.
         """
-
         k = match.group( 1 )
         if k:
-            if ( k not in self.target.keys() ):
+            if ( k not in self.target ):
                 raise Exception( 'Error: Target (%s) is not defined in the regex handler' % k )
             value = self.target[ k ]
             return str( value )
