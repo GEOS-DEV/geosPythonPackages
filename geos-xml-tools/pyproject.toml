@@ -16,7 +16,8 @@ requires-python = ">=3.8"
 dependencies = [
     "lxml>=4.5.0",
     "parameterized",
-    "numpy"
+    "numpy>=1.16.2",
+    "typing_extensions>=4.12"
 ]
 
 [project.scripts]
@@ -25,3 +26,14 @@ dependencies = [
     test_geosx_xml_tools = "geos.xml_tools.tests.test_manager:main"
     check_xml_attribute_coverage = "geos.xml_tools.attribute_coverage:main"
     check_xml_redundancy = "geos.xml_tools.xml_redundancy_check:main"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = [".", "src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []

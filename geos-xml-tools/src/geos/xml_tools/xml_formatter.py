@@ -6,7 +6,7 @@ from geos.xml_tools import command_line_parsers
 
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
-    """Format xml attribute strings
+    """Format xml attribute strings.
 
     Args:
         attribute_indent (str): Attribute indent string
@@ -31,7 +31,7 @@ def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> 
         split_positions: List[ Any ] = [ match.end() for match in re.finditer( r"}\s*,", attribute_value ) ]
         newline_indent = '\n%s' % ( ' ' * ( len( attribute_indent ) + len( ka ) + 4 ) )
         new_values = []
-        for a, b in zip( [ None ] + split_positions, split_positions + [ None ] ):
+        for a, b in zip( [ None ] + split_positions, split_positions + [ None ], strict=False ):
             new_values.append( attribute_value[ a:b ].strip() )
         if new_values:
             attribute_value = newline_indent.join( new_values )
@@ -48,7 +48,7 @@ def format_xml_level( output: TextIO,
                       sort_attributes: bool = False,
                       close_tag_newline: bool = False,
                       include_namespace: bool = False ) -> None:
-    """Iteratively format the xml file
+    """Iteratively format the xml file.
 
     Args:
         output (file): the output text file handle
@@ -61,7 +61,6 @@ def format_xml_level( output: TextIO,
         close_tag_newline (bool): option to place close tag on a separate line
         include_namespace (bool): option to include the xml namespace in the output
     """
-
     # Handle comments
     if node.tag is ElementTree.Comment:
         output.write( '\n%s<!--%s-->' % ( indent * level, node.text ) )
@@ -110,7 +109,7 @@ def format_xml_level( output: TextIO,
         if len( node ):
             output.write( '>' )
             Nc = len( node )
-            for ii, child in zip( range( Nc ), node ):
+            for ii, child in zip( range( Nc ), node, strict=False ):
                 format_xml_level( output, child, level + 1, indent, block_separation_max_depth, modify_attribute_indent,
                                   sort_attributes, close_tag_newline, include_namespace )
 
@@ -135,7 +134,7 @@ def format_file( input_fname: str,
                  alphebitize_attributes: bool = False,
                  close_style: bool = False,
                  namespace: bool = False ) -> None:
-    """Script to format xml files
+    """Script to format xml files.
 
     Args:
         input_fname (str): Input file name
@@ -176,11 +175,11 @@ def format_file( input_fname: str,
     except ElementTree.ParseError as err:
         print( '\nCould not load file: %s' % ( fname ) )
         print( err.msg )
-        raise Exception( '\nCheck input file!' )
+        raise Exception( '\nCheck input file!' ) from err
 
 
 def main() -> None:
-    """Script to format xml files
+    """Script to format xml files.
 
     Args:
         input (str): Input file name
