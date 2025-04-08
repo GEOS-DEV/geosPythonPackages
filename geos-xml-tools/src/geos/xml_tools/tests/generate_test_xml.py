@@ -1,17 +1,16 @@
 """Tool for generating test xml files for processing."""
 
-from lxml import etree as ElementTree
 import os
 from geos.xml_tools import xml_formatter
 
 
-def generate_test_xml_files( root_dir ):
+def generate_test_xml_files( root_dir: str ) -> None:
     """Build example input/output xml files, which can be used to test the parser.
+
      These are derived from a GEOSX integrated test xml.
 
     @param root_dir The folder to write the example xml files.
     """
-
     # Build segments of an xml file that can be compiled to form a test
     # File header/footer
     xml_header = """<Problem>"""
