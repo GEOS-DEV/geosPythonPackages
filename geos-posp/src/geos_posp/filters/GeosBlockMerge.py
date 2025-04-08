@@ -33,9 +33,9 @@ from vtkmodules.vtkFiltersCore import (
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getElementaryCompositeBlockIndexes, )
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     createConstantAttribute,
     extractBlock,
     fillAllPartialAttributes,

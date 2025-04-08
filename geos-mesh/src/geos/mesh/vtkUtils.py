@@ -41,7 +41,7 @@ from vtkmodules.vtkFiltersCore import (
 )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )

@@ -16,7 +16,7 @@ if parent_dir_path not in sys.path:
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.AttributeMappingFromCellCoords import (
     AttributeMappingFromCellCoords, )
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     fillPartialAttributes,
     getAttributeSet,
     getNumberOfComponents,

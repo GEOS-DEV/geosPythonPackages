@@ -11,7 +11,7 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from geos.mesh.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getBlockIndexFromName, )
 from geos.mesh.vtkUtils import extractBlock
 

@@ -17,11 +17,11 @@ if parent_dir_path not in sys.path:
 
 import vtkmodules.util.numpy_support as vnp
 from geos.utils.Logger import Logger, getLogger
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos_posp.processing.vtkUtils import isAttributeInObject
+from geos.mesh.vtkUtils import isAttributeInObject
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )

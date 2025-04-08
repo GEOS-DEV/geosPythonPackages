@@ -14,7 +14,7 @@ if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
 from geos.utils.Logger import Logger, getLogger
-from geos_posp.processing.vtkUtils import mergeBlocks
+from geos.mesh.vtkUtils import mergeBlocks
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )

@@ -15,7 +15,7 @@ if parent_dir_path not in sys.path:
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.TransferAttributesVolumeSurface import (
     TransferAttributesVolumeSurface, )
-from geos.mesh.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )

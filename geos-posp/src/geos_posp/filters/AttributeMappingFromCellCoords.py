@@ -22,7 +22,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     computeCellCenterCoordinates,
     createEmptyAttribute,
     getVtkArrayInObject,
