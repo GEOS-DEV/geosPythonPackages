@@ -5,11 +5,10 @@ Home
 
 It includes:
 
-* a reader able to parse the GEOS output log (before commit version #9365098) to collect data and display them as tables;
-* tools to clean and check GEOS input mesh;
-* tools to clean GEOS output mesh;
-* tools to compute additional geomechanical properties from GEOS outputs;
-* tools to display Mohr's circles at a given time step and the evolution through time from GEOS outputs.
+* Paraview readers allowing to load data;
+* generic tools to processes meshes;
+* GEOS pre-processing tools to clean and check GEOS input mesh;
+* GEOS post-processing tools to clean GEOS output mesh, compute additional properties, or create specific plots such as Mohr's circle plot.
 
 The packages can be loaded into Paraview using the Plugin Manager from `Tools > Plugin Manager`. On success, you will 
 see the selected plugin in the `Filters`` menu (see `Paraview documentation <https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html>`.

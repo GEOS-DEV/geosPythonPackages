@@ -9,4 +9,4 @@ GEOS Paraview plugins
 
    ./geos_pv_docs/modules.rst
 
-   ./geos_pv_docs/PVplugins.rst
+   ./geos_pv_docs/readers.rst
