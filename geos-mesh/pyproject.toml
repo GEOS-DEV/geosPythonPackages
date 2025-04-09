@@ -37,9 +37,12 @@ Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-pythonpath = [
-    "src",
-]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = ["src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []
