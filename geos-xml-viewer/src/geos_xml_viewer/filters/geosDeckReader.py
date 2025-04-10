@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Lionel Untereiner
 from typing_extensions import Self
 
-from vtkmodules.vtkCommonCore import vtkInformation,vtkInformationVector
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
