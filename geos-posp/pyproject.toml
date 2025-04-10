@@ -29,8 +29,18 @@ keywords = [
     "GEOS",
     "Simulation",
 ]
-dynamic = ["dependencies"]
-requires-python = ">= 3.9"
+
+requires-python = ">= 3.10"
+
+dependencies = [
+    "vtk >= 9.3",
+    "numpy >= 1.26",
+    "pandas >= 2.2",
+    "typing_extensions >= 4.12",
+    "geos-utils @ file:./geos-utils",
+    "geos-geomechanics @ file:./geos-geomechanics",
+]
+
 
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
