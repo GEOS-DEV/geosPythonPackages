@@ -12,10 +12,10 @@ parameters      | $Parameter, $Parameter$      | Matches entire parameter string
 units           | 9.81[m**2/s],  1.0 [bbl/day] | Matches entire unit string
 units_b         | m, bbl, day                  | Matches unit names
 symbolic        | `1 + 2.34e5*2`               | Matches the entire symbolic string
-sanitize        |                              | Removes any residual characters before
-                |                              | evaluating symbolic expressions
+sanitize        |                              | Removes any residual characters before evaluating symbolic expressions
 strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
 strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
+
 """
 
 patterns: Dict[ str, str ] = {

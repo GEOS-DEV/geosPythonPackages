@@ -2,6 +2,11 @@ name: "Pull Request Docs Check"
 on: 
 - pull_request
 
+# Cancels in-progress workflows for a PR when updated
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -10,4 +15,4 @@ jobs:
     - uses: ammaraskar/sphinx-action@dev
       with:
         docs-folder: "docs/"
-        build-command: "sphinx-build -b html . _build"
+        build-command: "sphinx-build -b html . _build -W"

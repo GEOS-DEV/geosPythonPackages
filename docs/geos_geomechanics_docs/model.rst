@@ -1,6 +1,7 @@
 Geomechanics models
 ======================
-This 
+
+This module defines data structures for geomechanics calculations.
 
 geos.geomechanics.model.MohrCircle module
 ------------------------------------------

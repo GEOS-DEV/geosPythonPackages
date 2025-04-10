@@ -8,7 +8,13 @@ from datetime import timedelta
 
 import colorcet as cc  # type: ignore[import-untyped]
 import pyvista as pv
-import vtkmodules.all as vtk
+
+from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetCollectionReader
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkDataAssembly, vtkPartitionedDataSetCollection, vtkStaticCellLocator
+from vtkmodules.vtkRenderingCore import vtkActor
+from vtkmodules.vtkFiltersCore import vtkExtractCells
+
 from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
 from geos_xml_viewer.geos.models.schema import Problem
 from xsdata.formats.dataclass.context import XmlContext
@@ -151,7 +157,7 @@ class RegionViewer:
 class SetVisibilityCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
-    def __init__( self, actor: vtk.vtkActor ) -> None:
+    def __init__( self, actor: vtkActor ) -> None:
         self.actor = actor
 
     def __call__( self, state: bool ) -> None:
@@ -162,9 +168,9 @@ class SetVisibilitiesCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
     def __init__( self ) -> None:
-        self.actors: list[ vtk.vtkActor ] = []
+        self.actors: list[ vtkActor ] = []
 
-    def add_actor( self, actor: vtk.vtkActor ) -> None:
+    def add_actor( self, actor: vtkActor ) -> None:
         self.actors.append( actor )
 
     def update_visibility( self, state: bool ) -> None:
@@ -207,10 +213,10 @@ def find_surfaces( xmlFile: str ) -> list[ str ]:
 
 def main( args: argparse.Namespace ) -> None:
     start_time = time.monotonic()
-    pdsc: vtk.vtkPartitionedDataSetCollection
+    pdsc: vtkPartitionedDataSetCollection
 
     if args.vtpcFilepath != "":
-        reader = vtk.vtkXMLPartitionedDataSetCollectionReader()
+        reader = vtkXMLPartitionedDataSetCollectionReader()
         reader.SetFileName( args.vtpcFilepath )
         reader.Update()
         pdsc = reader.GetOutput()
@@ -224,7 +230,7 @@ def main( args: argparse.Namespace ) -> None:
     read_time = time.monotonic()
     print( "time elapsed reading files: ", timedelta( seconds=read_time - start_time ) )
 
-    assembly: vtk.vtkDataAssembly = pdsc.GetDataAssembly()
+    assembly: vtkDataAssembly = pdsc.GetDataAssembly()
     root_name: str = assembly.GetNodeName( assembly.GetRootNode() )
     surfaces_used = find_surfaces( args.xmlFilepath )
 
@@ -405,7 +411,7 @@ def main( args: argparse.Namespace ) -> None:
                 border_size=1,
             )
 
-            my_cell_locator = vtk.vtkStaticCellLocator()
+            my_cell_locator = vtkStaticCellLocator()
             my_cell_locator.SetDataSet( region_engine.input )
             my_cell_locator.AutomaticOn()
             my_cell_locator.SetNumberOfCellsPerNode( 20 )
@@ -421,9 +427,9 @@ def main( args: argparse.Namespace ) -> None:
                     # render cell containing perforation
                     cell_id = my_cell_locator.FindCell( m.center )
                     if cell_id != -1:
-                        id_list = vtk.vtkIdList()
+                        id_list = vtkIdList()
                         id_list.InsertNextId( cell_id )
-                        extract = vtk.vtkExtractCells()
+                        extract = vtkExtractCells()
                         extract.SetInputDataObject( region_engine.input )
                         extract.SetCellList( id_list )
                         extract.Update()

@@ -5,7 +5,7 @@
 import argparse
 from pathlib import PurePath
 
-from geos_xml_viewer.algorithms.deck import SimulationDeck, read, format_xml
+from geos_xml_viewer.algorithms.deck import SimulationDeck, read
 from lxml import etree as ElementTree  # type: ignore[import-untyped]
 
 

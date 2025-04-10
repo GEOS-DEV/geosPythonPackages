@@ -425,9 +425,9 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
     def convertBlockToSurface( self: Self, block: vtkUnstructuredGrid ) -> vtkPolyData:
         """Convert vtkUnstructuredGrid to a surface vtkPolyData.
 
-        ..WARNING: work only with triangulated surfaces
+        .. WARNING:: work only with triangulated surfaces
 
-        TODO: need to convert quadrangular to triangulated surfaces first
+        .. TODO:: need to convert quadrangular to triangulated surfaces first
 
 
         Args:

@@ -373,7 +373,7 @@ def _read_vtk_data_repository(
     if path.suffix in CLASS_READERS:
         try:
             Reader = CLASS_READERS[ path.suffix ]
-        except KeyError as err:
+        except KeyError:
             # raise ValueError(
             #     f"`read` does not support a file with the {path.suffix} extension"
             # ) from err
@@ -457,7 +457,7 @@ def _read_vtk_data_repository(
     elif path.suffix in COMPOSITE_DATA_READERS:
         try:
             Reader = COMPOSITE_DATA_READERS[ path.suffix ]
-        except KeyError as err:
+        except KeyError:
             # raise ValueError(
             #     f"`read` does not support a file with the {path.suffix} extension"
             # ) from err
@@ -760,7 +760,6 @@ def format_xml_level(
         close_tag_newline (bool): option to place close tag on a separate line
         include_namespace (bool): option to include the xml namespace in the output
     """
-
     # Handle comments
     if node.tag is ElementTree.Comment:
         output.write( "\n%s<!--%s-->" % ( indent * level, node.text ) )

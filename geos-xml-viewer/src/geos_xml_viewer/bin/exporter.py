@@ -64,7 +64,7 @@ def parsing() -> argparse.ArgumentParser:
 
 
 def main( args: argparse.Namespace ) -> None:
-    """Main function that reads the xml file and writes a PartiotionedDataSetCollection file.
+    """Main function that reads the xml file and writes a PartionedDataSetCollection file.
 
     Args:
         args (argparse.Namespace): list of arguments

@@ -5,8 +5,10 @@
 import argparse
 from pathlib import PurePath
 
-import vtkmodules.all as vtk
 from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
+
+from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetCollectionReader
+from vtkmodules.vtkCommonDataModel import vtkDataAssembly
 
 
 def valid_file( param: str ) -> str:
@@ -60,18 +62,18 @@ def main( args: argparse.Namespace ) -> None:
     reader.Update()
     pdsc_xml = reader.GetOutputDataObject( 0 )
 
-    vtpc = vtk.vtkXMLPartitionedDataSetCollectionReader()
+    vtpc = vtkXMLPartitionedDataSetCollectionReader()
     vtpc.SetFileName( args.vtpc )
     vtpc.Update()
     pdsc_file = vtpc.GetOutput()
 
     # look for xml root node name and wells node id
-    assembly_xml: vtk.vtkDataAssembly = pdsc_xml.GetDataAssembly()
+    assembly_xml: vtkDataAssembly = pdsc_xml.GetDataAssembly()
     root_name_xml: str = assembly_xml.GetNodeName( assembly_xml.GetRootNode() )
     wells_xml = assembly_xml.GetFirstNodeByPath( "//" + root_name_xml + "/Wells" )
 
     # look for vtpc root node name and wells node id
-    assembly_file: vtk.vtkDataAssembly = pdsc_file.GetDataAssembly()
+    assembly_file: vtkDataAssembly = pdsc_file.GetDataAssembly()
     wells_file = assembly_file.GetFirstNodeByPath( "//" + root_name_xml + "/Wells" )
 
     print( "assembly from vtpc file: ", wells_file )
@@ -89,7 +91,7 @@ def main( args: argparse.Namespace ) -> None:
 
     print( assembly_file )
 
-    writer = vtk.vtkXMLPartitionedDataSetCollectionWriter()
+    writer = vtkXMLPartitionedDataSetCollectionWriter()
     writer.SetInputData( pdsc_file )
     writer.SetFileName( args.outputName )
     writer.Write()

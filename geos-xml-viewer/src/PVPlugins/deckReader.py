@@ -8,6 +8,10 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 
+__doc__ = """
+PVGeosDeckReader is a Paraview plugin to load and create mesh objects from GEOS xml input file.
+"""
+
 paraview_plugin_version = "0.1.0"
 
 
