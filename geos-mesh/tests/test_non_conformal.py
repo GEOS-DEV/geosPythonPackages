@@ -1,10 +1,6 @@
 import numpy
-
+from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from geos.mesh.doctor.checks.non_conformal import Options, __check
-from geos.mesh.doctor.checks.generate_cube import (
-    build_rectilinear_blocks_mesh,
-    XYZ,
-)
 
 
 def test_two_close_hexs():

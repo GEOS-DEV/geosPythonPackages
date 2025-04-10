@@ -1,40 +1,14 @@
 import logging
-from typing import (
-    Dict,
-    FrozenSet,
-    Iterator,
-    List,
-    Tuple,
-)
-
-import numpy
-
-from tqdm import tqdm
-
 import networkx
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList,
-    vtkPoints,
-)
-from vtkmodules.vtkCommonDataModel import (
-    VTK_POLYHEDRON,
-    VTK_TRIANGLE,
-    vtkCellArray,
-    vtkPolyData,
-    vtkPolygon,
-    vtkUnstructuredGrid,
-    vtkTetra,
-)
-from vtkmodules.vtkFiltersCore import (
-    vtkTriangleFilter, )
-from .vtk_utils import (
-    to_vtk_id_list, )
-
-from .vtk_polyhedron import (
-    FaceStream,
-    build_face_to_face_connectivity_through_edges,
-)
+import numpy
+from tqdm import tqdm
+from typing import Dict, FrozenSet, Iterator, List, Tuple
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
+from vtkmodules.vtkCommonDataModel import ( VTK_POLYHEDRON, VTK_TRIANGLE, vtkCellArray, vtkPolyData, vtkPolygon,
+                                            vtkUnstructuredGrid, vtkTetra )
+from vtkmodules.vtkFiltersCore import vtkTriangleFilter
+from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream, build_face_to_face_connectivity_through_edges
+from geos.mesh.vtk.helpers import to_vtk_id_list
 
 
 def __compute_volume( mesh_points: vtkPoints, face_stream: FaceStream ) -> float:

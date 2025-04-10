@@ -54,4 +54,3 @@ filterwarnings = []
 [tool.coverage.run]
 branch = true
 source = ["src/geos/utils"]
-

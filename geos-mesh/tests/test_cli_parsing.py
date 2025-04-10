@@ -1,25 +1,10 @@
 import argparse
 from dataclasses import dataclass
-
-from typing import (
-    Iterator,
-    Sequence,
-)
-
 import pytest
-
-from geos.mesh.doctor.checks.vtk_utils import (
-    VtkOutput, )
-
-from geos.mesh.doctor.checks.generate_fractures import (
-    FracturePolicy,
-    Options,
-)
-from geos.mesh.doctor.parsing.generate_fractures_parsing import (
-    convert,
-    display_results,
-    fill_subparser,
-)
+from typing import Iterator, Sequence
+from geos.mesh.doctor.checks.generate_fractures import FracturePolicy, Options
+from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, display_results, fill_subparser
+from geos.mesh.vtk.io import VtkOutput
 
 
 @dataclass( frozen=True )
@@ -35,19 +20,19 @@ def __generate_generate_fractures_parsing_test_data() -> Iterator[ TestCase ]:
     main_mesh: str = "output.vtu"
     fracture_mesh: str = "fracture.vtu"
 
-    cli_gen: str = f"generate_fractures --policy {{}} --name {field} --values 0,1 --output {main_mesh} --fracture-output {fracture_mesh}"
+    cli_gen: str = f"generate_fractures --policy {{}} --name {field} --values 0,1 --output {main_mesh} --fractures_output_dir ."
     all_cli_args = cli_gen.format( "field" ).split(), cli_gen.format( "internal_surfaces" ).split(), cli_gen.format(
         "dummy" ).split()
     policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
     exceptions = False, False, True
     for cli_args, policy, exception in zip( all_cli_args, policies, exceptions ):
-        options: Options = Options( policy=policy,
-                                    field=field,
-                                    field_values_combined=frozenset( ( 0, 1 ) ),
-                                    field_values_per_fracture=frozenset( ( 0, 1 ) ),
-                                    mesh_VtkOutput=VtkOutput( output=main_mesh, is_data_mode_binary=True ),
-                                    all_fractures_VtkOutput=VtkOutput( output=fracture_mesh,
-                                                                       is_data_mode_binary=True ) )
+        options: Options = Options(
+            policy=policy,
+            field=field,
+            field_values_combined=frozenset( ( 0, 1 ) ),
+            field_values_per_fracture=[ frozenset( ( 0, 1 ) ) ],
+            mesh_VtkOutput=VtkOutput( output=main_mesh, is_data_mode_binary=True ),
+            all_fractures_VtkOutput=[ VtkOutput( output=fracture_mesh, is_data_mode_binary=True ) ] )
         yield TestCase( cli_args, options, exception )
 
 
@@ -59,7 +44,7 @@ def __f( test_case: TestCase ):
     options = convert( vars( args ) )
     assert options.policy == test_case.options.policy
     assert options.field == test_case.options.field
-    assert options.field_values == test_case.options.field_values
+    assert options.field_values_combined == test_case.options.field_values_combined
 
 
 def test_display_results():

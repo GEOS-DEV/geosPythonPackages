@@ -1,41 +1,18 @@
 from dataclasses import dataclass
 import logging
 import multiprocessing
-from typing import (
-    Collection,
-    FrozenSet,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-)
-
-from tqdm import tqdm
-
 import networkx
 import numpy
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkCellTypes,
-    vtkUnstructuredGrid,
-    VTK_HEXAGONAL_PRISM,
-    VTK_HEXAHEDRON,
-    VTK_PENTAGONAL_PRISM,
-    VTK_POLYHEDRON,
-    VTK_PYRAMID,
-    VTK_TETRA,
-    VTK_VOXEL,
-    VTK_WEDGE,
-)
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy, )
-
-from . import vtk_utils
-from .vtk_utils import vtk_iter
-from .vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
+from tqdm import tqdm
+from typing import FrozenSet, Iterable, Mapping, Optional
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkCommonCore import vtkIdList
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
+                                            VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
+                                            VTK_WEDGE )
+from geos.mesh.doctor.checks.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
+from geos.mesh.vtk.helpers import vtk_iter
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
@@ -51,8 +28,8 @@ class Result:
         int ]  # list of polyhedron elements that could not be converted to supported std elements
 
 
-MESH: Optional[
-    vtkUnstructuredGrid ] = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+# for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+MESH: Optional[ vtkUnstructuredGrid ] = None
 
 
 class IsPolyhedronConvertible:
@@ -156,5 +133,5 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh: vtkUnstructuredGrid = vtk_utils.read_mesh( vtk_input_file )
+    mesh: vtkUnstructuredGrid = read_mesh( vtk_input_file )
     return __check( mesh, options )

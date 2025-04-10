@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-
 import numpy
 from numpy.linalg import norm
 import pytest
-
 from geos.mesh.doctor.checks.triangle_distance import distance_between_two_segments, distance_between_two_triangles
 
 

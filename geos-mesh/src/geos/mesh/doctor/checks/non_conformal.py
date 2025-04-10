@@ -1,45 +1,21 @@
 from dataclasses import dataclass
 import math
-from typing import List, Tuple, Any
 import numpy
-
 from tqdm import tqdm
-
-from vtkmodules.vtkCommonCore import (
-    vtkIdList,
-    vtkPoints,
-)
-from vtkmodules.vtkCommonDataModel import (
-    VTK_POLYHEDRON,
-    vtkBoundingBox,
-    vtkCell,
-    vtkCellArray,
-    vtkPointSet,
-    vtkPolyData,
-    vtkStaticCellLocator,
-    vtkStaticPointLocator,
-    vtkUnstructuredGrid,
-)
-from vtkmodules.vtkCommonTransforms import (
-    vtkTransform, )
-from vtkmodules.vtkFiltersCore import (
-    vtkPolyDataNormals, )
-from vtkmodules.vtkFiltersGeometry import (
-    vtkDataSetSurfaceFilter, )
-from vtkmodules.vtkFiltersModeling import (
-    vtkCollisionDetectionFilter,
-    vtkLinearExtrusionFilter,
-)
+from typing import List, Tuple, Any
 from vtk import reference as vtk_reference
-
-from .reorient_mesh import reorient_mesh
-
-from . import vtk_utils
-
-from .vtk_polyhedron import (
-    vtk_iter, )
-
-from . import triangle_distance
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
+from vtkmodules.vtkCommonDataModel import ( vtkBoundingBox, vtkCell, vtkCellArray, vtkPointSet, vtkPolyData,
+                                            vtkStaticCellLocator, vtkStaticPointLocator, vtkUnstructuredGrid,
+                                            VTK_POLYHEDRON )
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
+from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
+from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter, vtkLinearExtrusionFilter
+from geos.mesh.doctor.checks import reorient_mesh
+from geos.mesh.doctor.checks import triangle_distance
+from geos.mesh.vtk.helpers import vtk_iter
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
@@ -74,7 +50,7 @@ class BoundaryMesh:
         cells_to_reorient = filter(
             lambda c: mesh.GetCell( c ).GetCellType() == VTK_POLYHEDRON,
             map( self.__original_cells.GetValue, range( self.__original_cells.GetNumberOfValues() ) ) )
-        reoriented_mesh = reorient_mesh( mesh, cells_to_reorient )
+        reoriented_mesh = reorient_mesh.reorient_mesh( mesh, cells_to_reorient )
         self.re_boundary_mesh, re_normals, _ = BoundaryMesh.__build_boundary_mesh( reoriented_mesh, consistency=False )
         num_cells = boundary_mesh.GetNumberOfCells()
         # Precomputing the underlying cell type
@@ -429,5 +405,5 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )
