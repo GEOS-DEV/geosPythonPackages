@@ -7,7 +7,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["geos_geomechanics*"]
+include = ["geos.geomechanics*"]
 exclude = ['tests*']
 
 [project]
