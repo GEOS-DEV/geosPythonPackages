@@ -1,4 +1,4 @@
-GEOS Post-Processing tools
+GEOS Geomechanics tools
 =============================
 
 .. toctree::
