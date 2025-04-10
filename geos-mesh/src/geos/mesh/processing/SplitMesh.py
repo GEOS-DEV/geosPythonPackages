@@ -8,15 +8,21 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
     vtkPoints,
     vtkIdTypeArray,
+    vtkDataArray,
+    vtkInformation,
+    vtkInformationVector,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, 
     vtkCellArray,
+    vtkCellData,
     vtkCell,
     vtkCellTypes,
     VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID,
 )
 
+from vtkmodules.util.numpy_support import (numpy_to_vtk, 
+                                           vtk_to_numpy)
 
 __doc__ = """
 SplitMesh module is a vtk filter that split cells of a mesh composed of Tetrahedra, pyramids, and hexahedra.
@@ -53,21 +59,59 @@ class SplitMesh(VTKPythonAlgorithmBase):
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[int]
 
-    def FillInputPortInformation(self, port, info):
+    def FillInputPortInformation(self: Self, port: int, info: vtkInformation ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+
+        Args:
+            port (int): input port
+            info (vtkInformationVector): info
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
         if port == 0:
             info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid")
-    def RequestDataObject(self, request, inInfo, outInfo):
-        inData = self.GetInputData(inInfo, 0, 0)
-        outData = self.GetOutputData(outInfo, 0)
+
+    def RequestDataObject(self: Self, 
+                          request: vtkInformation,  # noqa: F841
+                          inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+                          outInfoVec: vtkInformationVector,
+                         ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+
+        Args:
+            request (vtkInformation): request
+            inInfoVec (list[vtkInformationVector]): input objects
+            outInfoVec (vtkInformationVector): output objects
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        inData = self.GetInputData(inInfoVec, 0, 0)
+        outData = self.GetOutputData(outInfoVec, 0)
         assert inData is not None
         if outData is None or (not outData.IsA(inData.GetClassName())):
             outData = inData.NewInstance()
-            outInfo.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfo, outInfo)      
+            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
+        return super().RequestDataObject(request, inInfoVec, outInfoVec)      
 
-    def RequestData(self, request, inInfo, outInfo):
-        self.inData = self.GetInputData(inInfo, 0, 0)
-        output: vtkUnstructuredGrid = self.GetOutputData(outInfo, 0)
+    def RequestData(self: Self, 
+                    request: vtkInformation,  # noqa: F841
+                    inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+                    outInfoVec: vtkInformationVector,
+                   ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestData.
+
+        Args:
+            request (vtkInformation): request
+            inInfoVec (list[vtkInformationVector]): input objects
+            outInfoVec (vtkInformationVector): output objects
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        self.inData = self.GetInputData(inInfoVec, 0, 0)
+        output: vtkUnstructuredGrid = self.GetOutputData(outInfoVec, 0)
         
         assert self.inData is not None, "Input mesh is undefined."
         assert output is not None, "Output mesh is undefined."
@@ -77,12 +121,20 @@ class SplitMesh(VTKPythonAlgorithmBase):
                 
         self.points = vtkPoints()
         self.points.DeepCopy(self.inData.GetPoints())
-        self.points.Resize( self.inData.GetNumberOfPoints() + nb_hex *19 + nb_tet * 6 + nb_pyr * 9)
+        nbNewPoints: int = 0
+        volumeCellCounts = nb_hex + nb_tet + nb_pyr
+        if volumeCellCounts > 0:
+            nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9
+        else:
+            nbNewPoints = nb_triangles * 3 + nb_quad * 5
+        nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
+
+        self.points.Resize( self.inData.GetNumberOfPoints() + nbNewPoints)
         self.cells = vtkCellArray()
-        self.cells.AllocateExact(nb_hex*8+nb_tet*8+nb_pyr*10,8)
+        self.cells.AllocateExact(nbNewCells, 8)
         self.originalId = vtkIdTypeArray()
         self.originalId.SetName("OriginalID")
-        self.originalId.Allocate(nb_hex*8+nb_tet*8+nb_pyr*10)
+        self.originalId.Allocate(nbNewCells)
         self.cellTypes = []
         for c in range(nb_cells):
             cell: vtkCell = self.inData.GetCell(c)
@@ -103,10 +155,11 @@ class SplitMesh(VTKPythonAlgorithmBase):
         output.SetPoints(self.points)
         output.SetCells(self.cellTypes, self.cells)
         # add attribute saving original cell ids
-        # cellArrays: vtkCellData = output.GetCellData()
-        # assert cellArrays is not None, "Cell data is undefined."
-        # cellArrays.AllocateArrays(1)
-        # cellArrays.AddArray(self.originalId)
+        cellArrays: vtkCellData = output.GetCellData()
+        assert cellArrays is not None, "Cell data is undefined."
+        cellArrays.AddArray(self.originalId)
+        # transfer all cell arrays
+        self._transferCellArrays(output)
         return 1
 
     def _get_cell_counts(self: Self) -> tuple[int, int, int, int, int]:
@@ -385,3 +438,40 @@ class SplitMesh(VTKPythonAlgorithmBase):
         for i in range(4):
             self.originalId.InsertNextValue(index)
         self.cellTypes.extend([VTK_QUAD]*4)
+
+    def _transferCellArrays(self :Self, 
+                            splittedMesh: vtkUnstructuredGrid
+                        ) ->bool:
+        """Transfer arrays from input mesh to splitted mesh.
+
+        Args:
+            splittedMesh (vtkUnstructuredGrid): splitted mesh
+
+        Returns:
+            bool: True if arrays were successfully transfered.
+        """
+        cellDataSplitted: vtkCellData = splittedMesh.GetCellData()
+        assert cellDataSplitted is not None, "Cell data of splitted mesh should be defined."
+        cellData: vtkCellData = self.inData.GetCellData()
+        assert cellData is not None, "Cell data of input mesh should be defined."
+        # for each array of input mesh
+        for i in range(cellData.GetNumberOfArrays()):
+            array: vtkDataArray = cellData.GetArray(i)
+            assert array is not None, "Array should be defined."
+            npArray: npt.NDArray[np.float64] = vtk_to_numpy(array)
+            # get number of components
+            dims: tuple[int,...] = npArray.shape
+            ny:int = 1 if len(dims) == 1 else dims[1]
+            # create new array with nb cells from splitted mesh and number of components from array to copy
+            newNpArray: npt.NDArray[np.float64] = np.full((splittedMesh.GetNumberOfCells(), ny), np.nan)
+            # for each cell, copy the values from input mesh
+            for c in range(splittedMesh.GetNumberOfCells()):
+                idParent: int = int(self.originalId.GetTuple1(c))
+                newNpArray[c] = npArray[idParent]
+            # set array the splitted mesh
+            newArray: vtkDataArray = numpy_to_vtk(newNpArray)
+            newArray.SetName(array.GetName())
+            cellDataSplitted.AddArray(newArray)
+            cellDataSplitted.Modified()
+        splittedMesh.Modified()
+        return True

@@ -12,17 +12,23 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 )
 
 from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
     vtkInformation,
     vtkInformationVector,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkCompositeDataSet,
     vtkDataObjectTreeIterator,
-    vtkDataSet,
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
 )
+
+dir_path = os.path.dirname( os.path.realpath( __file__ ) )
+root = os.path.dirname(os.path.dirname(os.path.dirname( dir_path )))
+print(root)
+for m in ("geos-posp", "geos-mesh", "geos-pv"):
+    path = os.path.join(root, m, "src")
+    if path not in sys.path:
+        sys.path.append( path )
 
 from geos.mesh.processing.SplitMesh import SplitMesh
 

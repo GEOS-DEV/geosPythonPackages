@@ -18,6 +18,7 @@ from vtkmodules.util.numpy_support import (numpy_to_vtk,
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, 
     vtkCellArray,
+    vtkCellData,
     vtkCellTypes,
     VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID
 )
@@ -25,6 +26,7 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkCommonCore import (
     vtkPoints,
     vtkIdList,
+    vtkDataArray,
 )
 #from vtkmodules.vtkFiltersSources import vtkCubeSource
 
@@ -240,5 +242,18 @@ def test_single_cell_split( test_case: TestCase ):
         assert ptIds is not None, "Point ids must be defined"
         assert ptIds.GetNumberOfIds() == nbPtsExp, f"Cells must be defined by {nbPtsExp} points."
         assert cellsOutObs == test_case.cellsExp[i], "Cell point ids are wrong."
+
+    # test originalId array was created
+    cellData: vtkCellData = output.GetCellData()
+    assert cellData is not None, "Cell data should be defined."
+    array: vtkDataArray = cellData.GetArray("OriginalID")
+    assert array is not None, "OriginalID array should be defined."
+
+    # test other arrays were transferred
+    cellDataInput: vtkCellData = test_case.mesh.GetCellData()
+    assert cellDataInput is not None, "Cell data from input mesh should be defined."
+    nbArrayInput: int = cellDataInput.GetNumberOfArrays()
+    nbArraySplited: int = cellData.GetNumberOfArrays()
+    assert nbArraySplited == nbArrayInput + 1, f"Number of arrays should be {nbArrayInput + 1}"
 
     #assert False
