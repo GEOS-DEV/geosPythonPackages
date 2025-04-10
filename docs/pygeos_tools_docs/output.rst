@@ -1,27 +1,27 @@
 Output
 ======
 
-This packages consists of utilities for seismic acquisition.
+This packages contain utilities to output seismic traces.
 
 
-geos.pygeos_tools.output.SEGYTraceOutput module
------------------------------------------------
+SEGYTraceOutput
+---------------
 
 .. automodule:: geos.pygeos_tools.output.SEGYTraceOutput
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos.pygeos_tools.output.SeismicTraceOutput module
---------------------------------------------------
+SeismicTraceOutput
+------------------
 
 .. automodule:: geos.pygeos_tools.output.SeismicTraceOutput
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos.pygeos_tools.output.SEPTraceOutput module
-----------------------------------------------
+SEPTraceOutput
+--------------
 
 .. automodule:: geos.pygeos_tools.output.SEPTraceOutput
    :members:

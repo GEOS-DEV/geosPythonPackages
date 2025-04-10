@@ -82,7 +82,7 @@ def make_dodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
 # TODO make this test work
 def test_dodecahedron() -> None:
     """
-    Tests that a dodecahedron is not supported by GEOSX.
+    Tests whether a dodecahedron is support by GEOS or not.
     """
     points, faces = make_dodecahedron()
     mesh = vtkUnstructuredGrid()

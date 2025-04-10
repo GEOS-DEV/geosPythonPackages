@@ -84,7 +84,7 @@ def read_mesh( vtk_input_file: str ) -> vtkPointSet:
     """
     Read the vtk file and builds either an unstructured grid or a structured grid from it.
     :param vtk_input_file: The file name. The extension will be used to guess the file format.
-        If first guess does not work, eventually all the others reader available will be tested.
+        If the first guess fails, the other available readers will be tried.
     :return: A vtkPointSet.
     """
     if not os.path.exists( vtk_input_file ):

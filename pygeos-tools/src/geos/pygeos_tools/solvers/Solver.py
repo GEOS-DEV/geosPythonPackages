@@ -688,7 +688,7 @@ class Solver:
     @required_attributes( "solver" )
     def cleanup( self: Self, time: float ) -> None:
         """
-        Finalize simulation. Also triggers write of leftover seismogram data
+        Finalize simulation.
 
         Parameters
         ----------

@@ -1,27 +1,25 @@
 Model
 =====
 
-This packages consists of utilities for seismic acquisition.
 
-
-geos.pygeos_tools.model.pyevtk_tools module
--------------------------------------------
+pyevtk_tools
+------------
 
 .. automodule:: geos.pygeos_tools.model.pyevtk_tools
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos.pygeos_tools.model.SepModel module
----------------------------------------
+SepModel
+--------
 
 .. automodule:: geos.pygeos_tools.model.SepModel
    :members:
    :undoc-members:
    :show-inheritance:
 
-geos.pygeos_tools.model.VtkModel module
----------------------------------------
+VtkModel
+--------
 
 .. automodule:: geos.pygeos_tools.model.VtkModel
    :members:
