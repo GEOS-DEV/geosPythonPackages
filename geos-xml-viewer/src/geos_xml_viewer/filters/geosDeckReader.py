@@ -3,7 +3,8 @@
 # SPDX-FileContributor: Lionel Untereiner
 from typing_extensions import Self
 
-import vtkmodules.all as vtk
+from vtkmodules.vtkCommonCore import vtkInformation,vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from geos_xml_viewer.algorithms.deck import SimulationDeck, build_model, read
@@ -53,9 +54,9 @@ class GeosDeckReader( VTKPythonAlgorithmBase ):
 
     def RequestData(
         self: Self,
-        request: vtk.vtkInformation,
-        inInfoVec: vtk.vtkInformationVector,
-        outInfoVec: vtk.vtkInformationVector,
+        request: vtkInformation,
+        inInfoVec: vtkInformationVector,
+        outInfoVec: vtkInformationVector,
     ) -> int:
         """RequestData function of the vtk pipeline.
 
@@ -68,9 +69,9 @@ class GeosDeckReader( VTKPythonAlgorithmBase ):
             int: Returns 1 if the pipeline is successful
         """
         self.__simulationDeck = read( self.__filename )
-        opt = vtk.vtkPartitionedDataSetCollection.GetData( outInfoVec )
+        opt = vtkPartitionedDataSetCollection.GetData( outInfoVec )
 
-        output = vtk.vtkPartitionedDataSetCollection()
+        output = vtkPartitionedDataSetCollection()
         build_model( self.__simulationDeck, output, self.__attributeName )
 
         opt.ShallowCopy( output )
