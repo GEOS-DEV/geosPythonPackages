@@ -49,53 +49,53 @@ The following package defines [Paraview](https://docs.paraview.org/) plugins tha
 GEOS Python packages dependency tree (inter-dependency and main external dependencies) is the following:
 
 ```
-|-- geos-ats
-|-- pygeos-tools
-|-- geos-utils
-|-- geos-geomechanics
-|   |-- geos-utils
-|
-|-- hdf5-wrapper
-|   |-- h5py
-|
-|-- geos-xml-tools
-|   |-- lxml
-|
-|-- geos-mesh
-|   |-- geos-utils
-|   |-- vtk
-|
-|-- geos-prep
-|   |-- geos-mesh
-|   |-- geos-xml-tools
-|
-|-- geos-posp
-|   |-- geos-mesh
-|   |-- geos-geomechanics
-|
-|-- time-history
-|   |-- hdf5-wrapper
-|
-|-- mesh-doctor
-|   |-- geos-prep
-|   |-- pyvista
-|
-|-- geos-trame
-|   |-- geos-xml-tools
-|   |-- geos-mesh
-|   |-- pyvista
-|   |-- trame
-|
-|-- geos-xml-viewer
-|   |-- geos-xml-tools
-|   |-- geos-mesh
-|   |-- pyvista
-|
-|-- geos-pv
-    |-- geos-prep
-    |-- geos-posp
-    |-- geos-xml-tools
-    |-- paraview
+├── geos-ats
+├── pygeos-tools
+├── geos-utils
+├── geos-geomechanics
+│   ├── geos-utils
+│
+├── hdf5-wrapper
+│   ├── h5py
+│
+├── geos-xml-tools
+│   ├── lxml
+│
+├── geos-mesh
+│   ├── geos-utils
+│   ├── vtk
+│
+├── geos-prep
+│   ├── geos-mesh
+│   ├── geos-xml-tools
+│
+├── geos-posp
+│   ├── geos-mesh
+│   ├── geos-geomechanics
+│
+├── time-history
+│   ├── hdf5-wrapper
+│
+├── mesh-doctor
+│   ├── geos-prep
+│   ├── pyvista
+│
+├── geos-trame
+│   ├── geos-xml-tools
+│   ├── geos-mesh
+│   ├── pyvista
+│   ├── trame
+│
+├── geos-xml-viewer
+│   ├── geos-xml-tools
+│   ├── geos-mesh
+│   ├── pyvista
+│
+├── geos-pv
+    ├── geos-prep
+    ├── geos-posp
+    ├── geos-xml-tools
+    ├── paraview
 ```
 
 See the [documentation](https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/) for additional details about the packages and how to use them.
@@ -149,56 +149,26 @@ If you do not have the rights to push the code and open new PRs, consider openin
 Any new package must have the following architecture:
 
 ```
-package-name
-|-- pyproject.toml
-|-- setup.py
-|-- src
-|   |-- geos
-|       |-- package_name
-|           |-- file1.py
-|           |-- file1.py
-|-- tests
-    |-- test1.py
-    |-- test2.py
+package-name/
+├── pyproject.toml
+├── src
+│   ├── geos
+│       ├── package_name
+│           ├── file1.py
+│           ├── file1.py
+├── tests
+    ├── test1.py
+    ├── test2.py
 ```
 
-The *setup.py* file is optional. It is required if the package depends on another GEOS Python package located in the root directory. If you want a package1 to depend on package2, follow this [procedure](https://stackoverflow.com/questions/75159453/specifying-local-relative-dependency-in-pyproject-toml):
-
-* in the *package1/pyproject.py*, replace the tag `dependencies = ["external_packageX", "external_packageY",]` with `dynamic = ["dependencies"]`
-* create the *package1/setup.py* file
-* copy the following lines in the *setup.py* and update the dependencies
-  ```
-  from pathlib import Path
-  from setuptools import setup
-
-  # This is where you add any fancy path resolution to the local lib:
-  package_name = "geos-utils"
-  geos_utils_path: str = (Path(__file__).parent.parent / package_name).as_uri()
-
-  setup(
-      install_requires=[
-          "vtk >= 9.3",
-          "numpy >= 1.26",
-          "pandas >= 2.2",
-          "typing_extensions >= 4.12",
-          f"{package_name} @ {geos_utils_path}",
-      ]
-  )
-  ```
-
-If you want to add new Paraview plugins, create the plugins in the `geos-pv/src/PVplugins` directory. 
-If the plugin depends on another GEOS python package, add the package name to `geos-pv/requirements.txt` and the following lines to the top of your plugin:
+If you want a package to depend on another GEOS Python package (let's say `geos-utils`), in the pyproject.toml the dependency takes the form:
 
 ```
-import sys
-from pathlib import Path
-# update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent
-sys.path.insert( 0, str(geos_pv_path / "src") )
-from geos.pv.utils.config import update_paths
-update_paths()
+dependencies = [
+    ...
+    "geos-utils @ file:./geos-utils",
+]
 ```
-
 
 Release
 -------
