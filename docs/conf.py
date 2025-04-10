@@ -48,7 +48,7 @@ extensions = [
 ]
 
 autoclass_content = 'both'
-autodoc_mock_imports = [ "ats", "h5py", "lxml", "paraview", "pygeosx", "pylvarray", "meshio", "mpi4py", "scipy", "xmlschema", "colorcet", "xsdata" ]
+autodoc_mock_imports = [ "ats", "colorcet", "h5py", "lxml", "meshio", "mpi4py", "scipy", "paraview", "pygeosx", "pylvarray", "vtk", "xmlschema", "xsdata" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
 suppress_warnings = [ "autodoc.mocked_object" ]
