@@ -81,6 +81,9 @@ Vtk reader of GEOS xml file to load or build vtk objects (mesh, wells, boxes).
 Paraview plugin
 ----------------
 
+Geos Deck Reader
+^^^^^^^^^^^^^^^^
+
 Paraview plugin of Geos Deck Reader.
 
 .. automodule:: PVPlugins.deckReader
@@ -90,10 +93,15 @@ Paraview plugin of Geos Deck Reader.
 Utilities
 ---------
 
+geos_xml_viewer.algorithms.deck
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. automodule:: geos_xml_viewer.algorithms.deck
    :members:
    :undoc-members:
 
+geos_xml_viewer.algorithms.write_wells
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: geos_xml_viewer.algorithms.write_wells
    :members:
    :undoc-members:
