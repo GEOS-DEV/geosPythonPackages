@@ -4,8 +4,8 @@ Processing
 .. toctree::
    :maxdepth: 5
 
-   filters
+   geosLogReaderUtils
 
-   processing
+   pyplotUtils
 
-   pyvistaTools
+   utils

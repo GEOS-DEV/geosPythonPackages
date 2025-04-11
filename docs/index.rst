@@ -80,11 +80,13 @@ Packages
 
     geos-ats
 
+    geos-geomechanics
+
     geos-mesh
 
     geos-posp
-
-    geos-geomechanics
+    
+    geos-pv
 
     geos-timehistory
 

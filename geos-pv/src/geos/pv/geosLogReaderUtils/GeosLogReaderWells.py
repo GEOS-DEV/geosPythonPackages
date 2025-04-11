@@ -5,10 +5,10 @@ from io import TextIOBase
 from typing import Union
 
 import pandas as pd  # type: ignore[import-untyped]
-from geos.utils.enumUnits import Unit
 from typing_extensions import Self
 
-import geos_posp.processing.geosLogReaderFunctions as fcts
+import geos.pv.geosLogReaderUtils.geosLogReaderFunctions as fcts
+from geos.utils.enumUnits import Unit
 
 
 class GeosLogReaderWells:
@@ -234,7 +234,7 @@ class GeosLogReaderWells:
         for meanName, columns in differentMeanColumns.items():
             if len( columns ) > 0:
                 values: list[ list[ float ] ] = [ wpv[ c ] for c in columns ]
-                meanValues: list[ float ] = [ sum( item ) / nbr for item in zip( *values, strict=False ) ]
+                meanValues: list[ float ] = [ sum( item ) / nbr for item in zip( *values ) ]
                 meanNameWithId: str = fcts.identifyProperties( [ meanName ] )[ 0 ]
                 self.m_wellsPropertiesValues[ meanNameWithId ] = meanValues
 
