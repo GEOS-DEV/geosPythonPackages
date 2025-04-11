@@ -170,6 +170,8 @@ dependencies = [
 ]
 ```
 
+geos-pv dependencies are managed using a requirements.txt file where all external and internal dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
+
 Release
 -------
 
