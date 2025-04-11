@@ -1,6 +1,7 @@
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
+import os
 from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
@@ -10,10 +11,10 @@ from typing import (
     Iterator,
 )
 
+from geos.mesh.processing.helpers import createSingleCellMesh
 from geos.mesh.processing.SplitMesh import SplitMesh
 
-from vtkmodules.util.numpy_support import (numpy_to_vtk, 
-                                           vtk_to_numpy)
+from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, 
@@ -30,27 +31,17 @@ from vtkmodules.vtkCommonCore import (
 )
 #from vtkmodules.vtkFiltersSources import vtkCubeSource
 
-# create test meshes
+
+data_root: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 ###############################################################
 #                  create single tetra mesh                   #
 ###############################################################
 tetra_cell_type: int = VTK_TETRA
-tetra_cell: npt.NDArray[np.float64] = np.array([[0, 0, 0],
-                                                [1, 0, 0],
-                                                [0, 0, 1],
-                                                [0, 1, 0]], np.float64)
+tetra_path = "tetra_cell.csv"
+
 # expected results
-tetra_points_out: npt.NDArray[np.float64] = np.array([[0.,  0.,  0. ],
-                                                      [1.,  0.,  0. ],
-                                                      [0.,  0.,  1. ],
-                                                      [0.,  1.,  0. ],
-                                                      [0.5, 0.,  0. ],
-                                                      [0.5, 0.,  0.5],
-                                                      [0.,  0.,  0.5],
-                                                      [0.,  0.5, 0. ],
-                                                      [0.,  0.5, 0.5],
-                                                      [0.5, 0.5, 0. ]], np.float64)
+tetra_points_out: npt.NDArray[np.float64] = np.array([[0.,  0.,  0. ], [1.,  0.,  0. ], [0.,  0.,  1. ], [0.,  1.,  0. ], [0.5, 0.,  0. ], [0.5, 0.,  0.5], [0.,  0.,  0.5], [0.,  0.5, 0. ], [0.,  0.5, 0.5], [0.5, 0.5, 0. ]], np.float64)
 tetra_cells_out: list[list[int]] = [[0, 4, 6, 7],
                                     [7, 9, 8, 3],
                                     [9, 4, 5, 1],
@@ -64,14 +55,8 @@ tetra_cells_out: list[list[int]] = [[0, 4, 6, 7],
 #                  create single hexa mesh                    #
 ###############################################################
 hexa_cell_type: int = VTK_HEXAHEDRON
-hexa_cell: npt.NDArray[np.float64] = np.array([[0, 0, 0],
-                                               [1, 0, 0],
-                                               [1, 1, 0],
-                                               [0, 1, 0],
-                                               [0, 0, 1],
-                                               [1, 0, 1],
-                                               [1, 1, 1],
-                                               [0, 1, 1]], np.float64)
+hexa_path = "hexa_cell.csv"
+
 # expected results
 hexa_points_out: npt.NDArray[np.float64] = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.5], [1.0, 0.5, 0.0], [1.0, 0.0, 0.5], [0.5, 1.0, 0.0], [1.0, 1.0, 0.5], [0.0, 1.0, 0.5], [0.5, 0.0, 1.0], [0.0, 0.5, 1.0], [1.0, 0.5, 1.0], [0.5, 1.0, 1.0], [0.5, 0.5, 0.0], [0.5, 0.0, 0.5], [0.0, 0.5, 0.5], [1.0, 0.5, 0.5], [0.5, 1.0, 0.5], [0.5, 0.5, 1.0], [0.5, 0.5, 0.5]], np.float64)
 hexa_cells_out: list[list[int]] = [[10, 21, 26, 22, 4, 16, 25, 17],
@@ -87,11 +72,8 @@ hexa_cells_out: list[list[int]] = [[10, 21, 26, 22, 4, 16, 25, 17],
 #                 create single pyramid mesh                  #
 ###############################################################
 pyramid_cell_type: int = VTK_PYRAMID
-pyramid_cell: npt.NDArray[np.float64] = np.array([[0.0, 0.0, 0],
-                                                  [1.0, 0.0, 0],
-                                                  [1.0, 1.0, 0],
-                                                  [0.0, 1.0, 0],
-                                                  [0.5, 0.5, 1]], np.float64)
+pyramid_path = "pyramid_cell.csv"
+
 # expected results
 pyramid_points_out: npt.NDArray[np.float64] = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.5, 0.5, 1.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0], [0.25, 0.25, 0.5], [1.0, 0.5, 0.0], [0.75, 0.25, 0.5], [0.5, 1.0, 0.0], [0.75, 0.75, 0.5], [0.25, 0.75, 0.5], [0.5, 0.5, 0.0]], np.float64)
 pyramid_cells_out: list[list[int]] = [[5, 1, 8, 13, 9],
@@ -109,9 +91,8 @@ pyramid_cells_out: list[list[int]] = [[5, 1, 8, 13, 9],
 #                create single triangle mesh                  #
 ###############################################################
 triangle_cell_type: int = VTK_TRIANGLE
-triangle_cell: npt.NDArray[np.float64] = np.array([[0, 0, 0],
-                                                   [1, 0, 0],
-                                                   [0, 1, 0]], np.float64)
+triangle_path = "triangle_cell.csv"
+
 # expected results
 triangle_points_out: npt.NDArray[np.float64] = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.5, 0.0, 0.0], [0.5, 0.5, 0.0], [0.0, 0.5, 0.0]], np.float64)
 triangle_cells_out: list[list[int]] = [[0, 3, 5],
@@ -123,10 +104,8 @@ triangle_cells_out: list[list[int]] = [[0, 3, 5],
 #                   create single quad mesh                   #
 ###############################################################
 quad_cell_type: int = VTK_QUAD
-quad_cell: npt.NDArray[np.float64] = np.array([[0, 0, 0],
-                                               [1, 0, 0],
-                                               [1, 1, 0],
-                                               [0, 1, 0]], np.float64)
+quad_path = "quad_cell.csv"
+
 # expected results
 quad_points_out: npt.NDArray[np.float64] = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.5, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.0, 0.0], [0.0, 0.5, 0.0], [0.5, 0.5, 0.0]], np.float64)
 quad_cells_out: list[list[int]] = [[0, 4, 8, 7],
@@ -140,8 +119,8 @@ quad_cells_out: list[list[int]] = [[0, 4, 8, 7],
 # TODO: add tests cases composed of multi-cell meshes of various types
 
 
+data_filename_all = (tetra_path, hexa_path, pyramid_path, triangle_path, quad_path)
 cell_types_all = (tetra_cell_type, hexa_cell_type, pyramid_cell_type, triangle_cell_type, quad_cell_type)
-cell_all = (tetra_cell, hexa_cell, pyramid_cell, triangle_cell, quad_cell)
 points_out_all = (tetra_points_out, hexa_points_out, pyramid_points_out, triangle_points_out, quad_points_out)
 cells_out_all = (tetra_cells_out, hexa_cells_out, pyramid_cells_out, triangle_cells_out, quad_cells_out)
 
@@ -159,51 +138,28 @@ class TestCase:
     cellsExp: list[int]
     
 
-
-def __create_single_cell_type_mesh(cellType: int, ptsCoord: npt.NDArray[np.float64]) ->vtkUnstructuredGrid:
-    """Create a mesh that consists of a single cell.
-
-    Args:
-        cellType (int): cell type
-        pts_coord (npt.NDArray[np.float64]): cell point coordinates
-
-    Returns:
-        vtkUnstructuredGrid: output mesh
-    """
-    nbPoints: int = ptsCoord.shape[0]
-    points: npt.NDArray[np.float64] = np.vstack((ptsCoord,))
-    # Convert points to vtkPoints object
-    vtkpts: vtkPoints = vtkPoints()
-    vtkpts.SetData(numpy_to_vtk(points))
-
-    # create cells from point ids
-    cellsID: vtkIdList = vtkIdList()
-    for j in range( nbPoints ):
-        cellsID.InsertNextId(j)
-
-    # add cell to mesh
-    mesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
-    mesh.SetPoints(vtkpts)
-    mesh.Allocate(1)
-    mesh.InsertNextCell(cellType, cellsID)
-    return mesh
-
 def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    for cellType, ptsCoord, pointsExp, cellsExp in zip(
-        cell_types_all, cell_all, points_out_all, cells_out_all,
+    for cellType, data_path, pointsExp, cellsExp in zip(
+        cell_types_all, data_filename_all, points_out_all, cells_out_all,
         strict=True):
-        mesh: vtkUnstructuredGrid = __create_single_cell_type_mesh(cellType, ptsCoord)
+        ptsCoord: npt.NDArray[np.float64] = np.loadtxt(os.path.join(data_root, data_path), dtype=float, delimiter=',')
+        mesh: vtkUnstructuredGrid = createSingleCellMesh(cellType, ptsCoord)
         yield TestCase( cellType, mesh, pointsExp, cellsExp )
   
 
 ids = [vtkCellTypes.GetClassNameFromTypeId(cellType) for cellType in cell_types_all]
 @pytest.mark.parametrize( "test_case", __generate_split_mesh_test_data(), ids=ids )
 def test_single_cell_split( test_case: TestCase ):
+    """Test of SplitMesh filter with meshes composed of a single cell.
+
+    Args:
+        test_case (TestCase): test case
+    """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId(test_case.cellType)
     filter :SplitMesh = SplitMesh()
     filter.SetInputDataObject(test_case.mesh)
