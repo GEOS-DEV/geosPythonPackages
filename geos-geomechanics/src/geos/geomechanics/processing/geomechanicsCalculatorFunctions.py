@@ -31,7 +31,8 @@ def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float 
 
     if abs( specificDensity ) < EPSILON:
         return np.full_like( density, np.nan )
-    return ( density / specificDensity ).astype( np.float64 )
+
+    return ( density / specificDensity ).astype( float )
 
 
 # https://en.wikipedia.org/wiki/Elastic_modulus
@@ -626,7 +627,7 @@ def criticalPorePressure(
     stressVector: npt.NDArray[ np.float64 ],
     rockCohesion: float,
     frictionAngle: float = 0.0,
-) -> npt.NDArray[ np.float64 ]:
+) -> npt.NDArray[ np.floating[ Any ] ]:
     r"""Compute the critical pore pressure.
 
     Fracturing can occur in areas where Critical pore pressure is greater than
@@ -665,9 +666,10 @@ def criticalPorePressure(
         maximumPrincipalStress[ i ] = p1
 
     # assertion frictionAngle < np.pi/2., so sin(frictionAngle) != 1
-    cohesiveTerm: npt.NDArray[ np.float64 ] = ( rockCohesion * np.cos( frictionAngle ) /
-                                                ( 1 - np.sin( frictionAngle ) ) )
-    residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
+    cohesiveTerm: npt.NDArray[ np.floating[ Any ] ] = ( rockCohesion * np.cos( frictionAngle ) /
+                                                        ( 1.0 - np.sin( frictionAngle ) ) )
+    residualTerm: npt.NDArray[ np.floating[ Any ] ] = ( 3.0 * minimumPrincipalStress - maximumPrincipalStress ) / 2.0
+
     return cohesiveTerm + residualTerm
 
 
@@ -852,14 +854,14 @@ def shearCapacityUtilization( traction: npt.NDArray[ np.float64 ], rockCohesion:
     for i in range( traction.shape[ 0 ] ):
         tractionVec: npt.NDArray[ np.float64 ] = traction[ i ]
         # use -1 to agree with Geos convention (i.e., compression with negative stress)
-        stressNormal: npt.NDArray[ np.float64 ] = -1.0 * tractionVec[ 0 ]
+        stressNormal: float = -1.0 * tractionVec[ 0 ]
 
         # compute failure envelope
         mohrCoulomb: MohrCoulomb = MohrCoulomb( rockCohesion, frictionAngle )
         tauFailure: float = float( mohrCoulomb.computeShearStress( stressNormal ) )
         scu_i: float = np.nan
         if tauFailure > 0:
-            scu_i = np.abs( tractionVec[ 1 ] ) / tauFailure
+            scu_i = abs( tractionVec[ 1 ] ) / tauFailure
         # compute SCU
         scu[ i ] = scu_i
     return scu
