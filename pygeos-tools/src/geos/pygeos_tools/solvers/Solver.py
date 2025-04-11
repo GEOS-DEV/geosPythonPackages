@@ -88,15 +88,6 @@ class Solver:
         self.alreadyInitialized: bool = False
         argv = kwargs.get( "geosx_argv", sys.argv )
         self.geosxArgs = GeosxArgs( argv )
-
-        try:
-            self.xml = XML( self.geosxArgs.options[ "xml" ] )
-        except KeyError:
-            raise ValueError( "You need to provide a xml input file" )
-
-        solverTypesInXML: List[ str ] = self.xml.getSolverTypes()
-        if solverType not in solverTypesInXML:
-            raise ValueError( f"The solver type '{solverType}' does not exist in your XML '{self.xml.filename}'." )
         self.type: str = solverType
 
         # Other attributes that will be defined after initialization
@@ -139,6 +130,18 @@ class Solver:
             self.setXml( xml )
             if self.geosxArgs.updateArg( "xml", xml.filename ):
                 self.alreadyInitialized = False
+
+        else:
+            if self.xml is None:
+                try:
+                    self.xml = XML( self.geosxArgs.options[ "xml" ] )
+                except KeyError:
+                    raise ValueError( "You need to provide a xml input file" )
+
+                solverTypesInXML: List[ str ] = self.xml.getSolverTypes()
+                if self.type not in solverTypesInXML:
+                    raise ValueError(
+                        f"The solver type '{self.type}' does not exist in your XML '{self.xml.filename}'." )
 
         if not self.alreadyInitialized:
             geosState: int = self._getGEOSState()
