@@ -1,5 +1,5 @@
 Home
-====
+-----
 
 **Geos-posp** is a Python library to read, process and visualize GEOS simulation software outputs.
 
