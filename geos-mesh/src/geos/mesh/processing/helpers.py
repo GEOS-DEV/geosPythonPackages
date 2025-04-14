@@ -8,7 +8,7 @@ from typing import Sequence
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, 
+    vtkUnstructuredGrid,
     vtkIncrementalOctreePointLocator
 )
 
@@ -64,7 +64,7 @@ def createSingleCellMesh(cellType: int, ptsCoord: npt.NDArray[np.float64]) ->vtk
     mesh.InsertNextCell(cellType, cellsID)
     return mesh
 
-def createMultiCellMesh(cellTypes: list[int], 
+def createMultiCellMesh(cellTypes: list[int],
                         cellPtsCoord: list[npt.NDArray[np.float64]],
                         sharePoints: bool = True
                         ) ->vtkUnstructuredGrid:
@@ -90,15 +90,15 @@ def createMultiCellMesh(cellTypes: list[int],
     mesh.SetPoints(points)
     mesh.Allocate(nbCells)
     # create mesh cells
-    for cellType, ptsId in zip(cellTypes, cellVertexMapAll, strict=True):       
+    for cellType, ptsId in zip(cellTypes, cellVertexMapAll, strict=True):
         # create cells from point ids
         cellsID: vtkIdList = vtkIdList()
         for ptId in ptsId:
-            cellsID.InsertNextId(ptId)    
+            cellsID.InsertNextId(ptId)
         mesh.InsertNextCell(cellType, cellsID)
     return mesh
 
-def createVertices(cellPtsCoord: list[npt.NDArray[np.float64]], 
+def createVertices(cellPtsCoord: list[npt.NDArray[np.float64]],
                    shared: bool = True
                   ) -> tuple[vtkPoints, list[tuple[int, ...]]]:
     """Create vertices from cell point coordinates list.

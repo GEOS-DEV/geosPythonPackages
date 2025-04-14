@@ -15,7 +15,7 @@ from geos.mesh.processing.helpers import createSingleCellMesh
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, 
+    vtkUnstructuredGrid,
     vtkCellArray,
     vtkCellTypes,
     VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID
@@ -24,7 +24,6 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkCommonCore import (
     vtkPoints,
     vtkIdList,
-    reference,
 )
 
 # inputs
@@ -36,7 +35,7 @@ cell_type_all: tuple[int, ...] = (VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID
 
 @dataclass( frozen=True )
 class TestCase:
-    """Test case"""
+    """Test case."""
     __test__ = False
     #: VTK cell type
     cellType: int
@@ -54,11 +53,11 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         strict=True):
         cell: npt.NDArray[np.float64] = np.loadtxt(os.path.join(data_root, path), dtype=float, delimiter=',')
         yield TestCase( cellType, cell )
-  
+
 
 ids: list[str] = [vtkCellTypes.GetClassNameFromTypeId(cellType) for cellType in cell_type_all]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
-def test_createSingleCellMesh( test_case: TestCase ):
+def test_createSingleCellMesh( test_case: TestCase ) ->None:
     """Test of createSingleCellMesh method.
 
     Args:
@@ -87,14 +86,14 @@ def test_createSingleCellMesh( test_case: TestCase ):
     output.GetCellTypes(types)
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[np.int64] = vtk_to_numpy(types.GetCellTypesArray())
-    
+
     print("typesArray", cellTypeName, typesArray)
     assert (typesArray.size == 1) and (typesArray[0] == test_case.cellType), f"Cell must be {cellTypeName}"
-    
+
     ptIds = vtkIdList()
     cellsOut.GetCellAtId(0, ptIds)
     cellsOutObs: list[int] = [ptIds.GetId(j) for j in range(ptIds.GetNumberOfIds())]
-    
+
     print("cell type", cellTypeName, vtkCellTypes.GetClassNameFromTypeId(types.GetCellType(0)))
     print("cellsOutObs: ", cellTypeName, cellsOutObs)
     assert ptIds is not None, "Point ids must be defined"

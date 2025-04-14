@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
+import numpy as np
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -8,11 +9,14 @@ from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
     vtkPoints,
-    reference
+    reference,
+    vtkIdList,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, 
+    vtkUnstructuredGrid,
     vtkIncrementalOctreePointLocator,
+    vtkCellTypes,
+    vtkCell,
 )
 
 
@@ -44,7 +48,8 @@ To use the filter:
 """
 
 class MergeColocatedPoints(VTKPythonAlgorithmBase):
-    def __init__(self: Self ):
+    def __init__(self: Self ) ->None:
+        """MergeColocatedPoints filter merge duplacted points of the input mesh."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
@@ -60,7 +65,7 @@ class MergeColocatedPoints(VTKPythonAlgorithmBase):
         if port == 0:
             info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid")
 
-    def RequestDataObject(self: Self, 
+    def RequestDataObject(self: Self,
                           request: vtkInformation,  # noqa: F841
                           inInfoVec: list[ vtkInformationVector ],  # noqa: F841
                           outInfoVec: vtkInformationVector,
@@ -83,7 +88,7 @@ class MergeColocatedPoints(VTKPythonAlgorithmBase):
             outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
         return super().RequestDataObject(request, inInfoVec, outInfoVec)
 
-    def RequestData(self: Self, 
+    def RequestData(self: Self,
                     request: vtkInformation,  # noqa: F841
                     inInfoVec: list[ vtkInformationVector ],  # noqa: F841
                     outInfoVec: vtkInformationVector,
@@ -100,28 +105,82 @@ class MergeColocatedPoints(VTKPythonAlgorithmBase):
         """
         inData: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
         output: vtkUnstructuredGrid = self.GetOutputData(outInfoVec, 0)
+        assert inData is not None, "Input mesh is undefined."
+        assert output is not None, "Output mesh is undefined."
+        vertexMap: list[int] = self.setMergePoints(inData, output)
+        self.setCells(inData, output, vertexMap)
+        return 1
+
+    def setMergePoints(self :Self,
+                       input: vtkUnstructuredGrid,
+                       output: vtkUnstructuredGrid
+                      ) ->list[int]:
+        """Merge duplicated points and set new points and attributes to output mesh.
+
+        Args:
+            input (vtkUnstructuredGrid): input mesh
+            output (vtkUnstructuredGrid): output mesh
+
+        Returns:
+            list[int]: list containing new point ids.
+        """
+        vertexMap: list[int] = []
         newPoints: vtkPoints = vtkPoints()
         # use point locator to check for colocated points
-        merge_points = vtkIncrementalOctreePointLocator()
-        merge_points.InitPointInsertion(newPoints,inData.GetBounds())
+        pointsLocator = vtkIncrementalOctreePointLocator()
+        pointsLocator.InitPointInsertion(newPoints,input.GetBounds())
         # create an array to count the number of colocated points
         vertexCount: vtkIntArray = vtkIntArray()
         vertexCount.SetName("Count")
         ptId = reference(0)
-        countD: int = 0
-        for v in range(inData.GetNumberOfPoints()):
-            inserted: bool = merge_points.InsertUniquePoint( inData.GetPoints().GetPoint(v), ptId)
+        countD: int = 0 # total number of colocated points
+        for v in range(input.GetNumberOfPoints()):
+            inserted: bool = pointsLocator.InsertUniquePoint( input.GetPoints().GetPoint(v), ptId)
             if inserted:
                 vertexCount.InsertNextValue(1)
             else:
                 vertexCount.SetValue( ptId, vertexCount.GetValue(ptId) + 1)
                 countD = countD + 1
-            
-        output.SetPoints(merge_points.GetLocatorPoints())
+            vertexMap += [ptId.get()]
+
+        output.SetPoints(pointsLocator.GetLocatorPoints())
         # copy point attributes
-        output.GetPointData().DeepCopy(inData.GetPointData())
+        output.GetPointData().DeepCopy(input.GetPointData())
         # add the array to points data
         output.GetPointData().AddArray(vertexCount)
+        return vertexMap
+
+    def setCells(self :Self,
+                 input: vtkUnstructuredGrid,
+                 output: vtkUnstructuredGrid,
+                 vertexMap: list[int]) ->bool:
+        """Set cell point ids and attributes to output mesh.
+
+        Args:
+            input (vtkUnstructuredGrid): input mesh
+            output (vtkUnstructuredGrid): output mesh
+            vertexMap (list[int)]): list containing new point ids
+
+        Returns:
+            bool: True if calculation successfully ended.
+        """
+        nbCells: int = input.GetNumberOfCells()
+        nbPoints: int = output.GetNumberOfPoints()
+        assert np.unique(vertexMap).size == nbPoints, "The size of the list of point ids must be equal to the number of points."
+        cellTypes: vtkCellTypes = vtkCellTypes()
+        input.GetCellTypes(cellTypes)
+        output.Allocate(nbCells)
+        # create mesh cells
+        for cellId in range(nbCells):
+            cell: vtkCell = input.GetCell(cellId)
+            # create cells from point ids
+            cellsID: vtkIdList = vtkIdList()
+            for ptId in range(cell.GetNumberOfPoints()):
+                ptIdOld: int = cell.GetPointId(ptId)
+                ptIdNew: int = vertexMap[ptIdOld]
+                cellsID.InsertNextId(ptIdNew)
+            output.InsertNextCell(cell.GetCellType(), cellsID)
         # copy cell attributes
-        output.GetCellData().DeepCopy(inData.GetCellData())
-        return 1
+        assert output.GetNumberOfCells() == nbCells, "Output and input mesh must have the same number of cells."
+        output.GetCellData().DeepCopy(input.GetCellData())
+        return True

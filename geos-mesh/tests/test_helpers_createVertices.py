@@ -15,7 +15,7 @@ from geos.mesh.processing.helpers import getBounds, createVertices, createMultiC
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, 
+    vtkUnstructuredGrid,
     vtkCellArray,
     vtkCellTypes,
     VTK_TETRA, VTK_HEXAHEDRON,
@@ -45,7 +45,7 @@ cellPtsIdsExp_all = (tetra_cellPtsIdsExp, hexa_cellPtsIdsExp)
 
 @dataclass( frozen=True )
 class TestCase:
-    """Test case"""
+    """Test case."""
     __test__ = False
     #: cell types
     cellTypes: list[int]
@@ -75,11 +75,11 @@ def __generate_test_data() -> Iterator[ TestCase ]:
             pointsExp: npt.NDArray[np.float64] = pointsExp0 if shared else ptsCoords
             cellPtsIdsExp = cellPtsIdsExp0 if shared else [tuple(range(i*nbPtsCell, (i+1)*nbPtsCell, 1)) for i in range(nbCells)]
             yield TestCase( cellTypes, cellPtsCoords, shared, pointsExp, cellPtsIdsExp )
-  
+
 
 ids: list[str] = [os.path.splitext(name)[0]+f"_{shared}]" for name in data_filename_all for shared in (False, True)]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
-def test_createVertices( test_case: TestCase ):
+def test_createVertices( test_case: TestCase )->None:
     """Test of createVertices method.
 
     Args:
@@ -100,7 +100,7 @@ def test_createVertices( test_case: TestCase ):
 
 ids: list[str] = [os.path.splitext(name)[0]+f"_{shared}]" for name in data_filename_all for shared in (False, True)]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
-def test_createMultiCellMesh( test_case: TestCase ):
+def test_createMultiCellMesh( test_case: TestCase )->None:
     """Test of createMultiCellMesh method.
 
     Args:
@@ -108,7 +108,7 @@ def test_createMultiCellMesh( test_case: TestCase ):
     """
     output: vtkUnstructuredGrid = createMultiCellMesh(test_case.cellTypes, test_case.cellPtsCoords, test_case.share)
     assert output is not None, "Output mesh is undefined."
-    
+
     # tests on points
     pointsOut: vtkPoints = output.GetPoints()
     assert pointsOut is not None, "Output points is undefined."
@@ -123,14 +123,14 @@ def test_createMultiCellMesh( test_case: TestCase ):
     assert cellsOut is not None, "Cells from output mesh are undefined."
     nbCells: int = len(test_case.cellPtsCoords)
     assert cellsOut.GetNumberOfCells() == nbCells, f"Number of cells is expected to be {nbCells}."
-    
+
     # check cell types
     types: vtkCellTypes = vtkCellTypes()
     output.GetCellTypes(types)
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[np.int64] = vtk_to_numpy(types.GetCellTypesArray())
     print("typesArray.size ", typesArray.size)
-    assert (typesArray.size == 1) and (typesArray[0] == test_case.cellTypes[0]), f"Cell types are wrong"
+    assert (typesArray.size == 1) and (typesArray[0] == test_case.cellTypes[0]), "Cell types are wrong"
 
     for cellId in range(output.GetNumberOfCells()):
         ptIds = vtkIdList()
@@ -142,7 +142,7 @@ def test_createMultiCellMesh( test_case: TestCase ):
         assert ptIds.GetNumberOfIds() == nbCellPts, f"Cells must be defined by {nbCellPts} points."
         assert cellsOutObs == test_case.cellPtsIdsExp[cellId], "Cell point ids are wrong."
 
-def test_getBounds( ):
+def test_getBounds( )->None:
     """Test of getBounds method."""
     # input
     cellPtsCoord: list[npt.NDArray[np.float64]] = [
@@ -156,4 +156,3 @@ def test_getBounds( ):
     boundsObs: list[float] = getBounds(cellPtsCoord)
     assert boundsExp == boundsObs, f"Expected bounds are {boundsExp}."
 
-    
