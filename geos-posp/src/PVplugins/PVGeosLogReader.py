@@ -54,12 +54,11 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import vtkTable
 
 __doc__ = """
-GeosLogRePVGeosLogReaderader is a Paraview plugin that allows to read Geos output log.
+PVGeosLogReader is a Paraview plugin that allows to read Geos output log.
 
 Input is a file and output is a vtkTable containing log information.
 
 ..WARNING::
-
     The reader is compliant with GEOS log before commit version #9365098.
     For more recent version, use the csv or hdf5 export options from GEOS.
 

@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-from geos_posp.processing.geomechanicsCalculatorFunctions import (
+from geos.geomechanics.processing.geomechanicsCalculatorFunctions import (
     computeStressPrincipalComponentsFromStressVector, )
 
 __doc__ = """
@@ -38,6 +38,7 @@ To use the object:
     p1, p2, p3 :float = mohrCircle.getPrincipalComponents()
     radius :float = mohrCircle.getCircleRadius()
     center :float = mohrCircle.getCircleCenter()
+    
 """
 
 
