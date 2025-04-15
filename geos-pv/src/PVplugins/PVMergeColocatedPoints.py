@@ -20,32 +20,32 @@ sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 update_paths()
 
-from geos.mesh.processing.SplitMesh import SplitMesh
+from geos.mesh.processing.MergeColocatedPoints import MergeColocatedPoints
 from geos.pv.utils.AbstractPVPluginVtkWrapper import AbstractPVPluginVtkWrapper
 
 __doc__ = """
-Split each cell of input mesh to smaller cells.
+Merge collocated points of input mesh.
 
-Output mesh is of same type as input mesh. If input mesh is a composite mesh, the plugin split cells of each part independently.
+Output mesh is of same type as input mesh. If input mesh is a composite mesh, the plugin merge points of each part independently.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVSplitMesh.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMergeColocatedPoints.
 * Select the input mesh.
 * Apply the filter.
 
 """
 
-@smproxy.filter( name="PVSplitMesh", label="Split Mesh" )
+@smproxy.filter( name="PVMergeColocatedPoints", label="Merge Colocated Points" )
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
-    dataTypes=[ "vtkPointSet" ],
+    dataTypes=[ "vtkPointSet"],
     composite_data_supported=True,
 )
-class PVSplitMesh(AbstractPVPluginVtkWrapper):
+class PVMergeColocatedPoints(AbstractPVPluginVtkWrapper):
     def __init__(self:Self) ->None:
-        """Split mesh cells."""
+        """Merge collocated points."""
         super().__init__()
 
     def applyVtkFlilter(
@@ -60,7 +60,7 @@ class PVSplitMesh(AbstractPVPluginVtkWrapper):
         Returns:
             vtkPointSet: output mesh
         """
-        filter :SplitMesh = SplitMesh()
+        filter :MergeColocatedPoints = MergeColocatedPoints()
         filter.SetInputDataObject(input)
         filter.Update()
         return filter.GetOutputDataObject( 0 )
