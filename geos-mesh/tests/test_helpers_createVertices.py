@@ -68,7 +68,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         # all points coordinates
         ptsCoords: npt.NDArray[np.float64] = np.loadtxt(os.path.join(data_root, path), dtype=float, delimiter=',')
         # split array to get a list of coordinates per cell
-        cellPtsCoords = [ptsCoords[i:i+nbPtsCell] for i in range(0, ptsCoords.shape[0], nbPtsCell)]
+        cellPtsCoords: list[npt.NDArray[np.float64]] = [ptsCoords[i:i+nbPtsCell] for i in range(0, ptsCoords.shape[0], nbPtsCell)]
         nbCells: int = int(ptsCoords.shape[0]/nbPtsCell)
         cellTypes = nbCells * [celltype]
         for shared in (False, True):

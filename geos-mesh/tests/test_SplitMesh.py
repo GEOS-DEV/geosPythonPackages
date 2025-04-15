@@ -6,7 +6,6 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import pytest
-from typing_extensions import Self
 from typing import (
     Iterator,
 )
@@ -17,7 +16,7 @@ from geos.mesh.processing.SplitMesh import SplitMesh
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, 
+    vtkUnstructuredGrid,
     vtkCellArray,
     vtkCellData,
     vtkCellTypes,
@@ -126,7 +125,7 @@ cells_out_all = (tetra_cells_out, hexa_cells_out, pyramid_cells_out, triangle_ce
 
 @dataclass( frozen=True )
 class TestCase:
-    """Test case"""
+    """Test case."""
     __test__ = False
     #: VTK cell type
     cellType: int
@@ -136,7 +135,7 @@ class TestCase:
     pointsExp: npt.NDArray[np.float64]
     #: expected new cell point ids
     cellsExp: list[int]
-    
+
 
 def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
@@ -150,11 +149,11 @@ def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
         ptsCoord: npt.NDArray[np.float64] = np.loadtxt(os.path.join(data_root, data_path), dtype=float, delimiter=',')
         mesh: vtkUnstructuredGrid = createSingleCellMesh(cellType, ptsCoord)
         yield TestCase( cellType, mesh, pointsExp, cellsExp )
-  
+
 
 ids = [vtkCellTypes.GetClassNameFromTypeId(cellType) for cellType in cell_types_all]
 @pytest.mark.parametrize( "test_case", __generate_split_mesh_test_data(), ids=ids )
-def test_single_cell_split( test_case: TestCase ):
+def test_single_cell_split( test_case: TestCase ) ->None:
     """Test of SplitMesh filter with meshes composed of a single cell.
 
     Args:
@@ -184,10 +183,10 @@ def test_single_cell_split( test_case: TestCase ):
     output.GetCellTypes(types)
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[np.int64] = vtk_to_numpy(types.GetCellTypesArray())
-    
+
     print("typesArray", cellTypeName, typesArray)
     assert (typesArray.size == 1) and (typesArray[0] == test_case.cellType), f"All cells must be {cellTypeName}"
-    
+
     for i in range(cellsOut.GetNumberOfCells()):
         ptIds = vtkIdList()
         cellsOut.GetCellAtId(i, ptIds)

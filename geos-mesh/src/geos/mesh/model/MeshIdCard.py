@@ -6,7 +6,7 @@ import numpy.typing as npt
 from typing_extensions import Self
 from vtkmodules.vtkCommonDataModel import (
     vtkCellTypes,
-    VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON, VTK_POLYGON, VTK_LINE, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE, VTK_NUMBER_OF_CELL_TYPES
+    VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON, VTK_POLYGON, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE, VTK_NUMBER_OF_CELL_TYPES
 )
 
 
@@ -27,7 +27,23 @@ class MeshIdCard():
         """
         return self.print()
 
-    def add(self: Self, cellType: int) ->None:
+    def __add__(self: Self, other :Self) ->Self:
+        """Addition operator.
+
+        MeshIdCard addition consists in suming counts.
+
+        Args:
+            other (Self): other MeshIdCard object
+
+        Returns:
+            Self: new MeshIdCard object
+        """
+        assert isinstance(other, MeshIdCard), "Other object must be a MeshIdCard."
+        newCard: MeshIdCard = MeshIdCard()
+        newCard._counts = self._counts + other._counts
+        return newCard
+
+    def addType(self: Self, cellType: int) ->None:
         """Increment the number of cell of input type.
 
         Args:
@@ -56,7 +72,7 @@ class MeshIdCard():
         Returns:
             int: number of cells
         """
-        return self._counts[cellType]
+        return int(self._counts[cellType])
 
     def _updateGeneralCounts(self: Self, cellType: int, count: int) ->None:
         """Update generic type counters.
@@ -70,7 +86,6 @@ class MeshIdCard():
         if (cellType != VTK_POLYHEDRON) and (vtkCellTypes.GetDimension(cellType) == 3):
             self._counts[VTK_POLYHEDRON] += count
 
-
     def print(self: Self) ->str:
         """Print card string.
 
@@ -81,8 +96,7 @@ class MeshIdCard():
         card +=  "|                                   |              |\n"
         card +=  "|               -                   |       -      |\n"
         card += f"| **Total Number of Vertices**      | {int(self._counts[VTK_VERTEX]):12} |\n"
-        card += f"| **Total Number of Edges**         | {int(self._counts[VTK_LINE]):12} |\n"
-        card += f"| **Total Number of Faces**         | {int(self._counts[VTK_POLYGON]):12} |\n"
+        card += f"| **Total Number of Polygon**         | {int(self._counts[VTK_POLYGON]):12} |\n"
         card += f"| **Total Number of Polyhedron**    | {int(self._counts[VTK_POLYHEDRON]):12} |\n"
         card += f"| **Total Number of Cells**         | {int(self._counts[VTK_POLYHEDRON]+self._counts[VTK_POLYGON]):12} |\n"
         card +=  "|               -                   |       -      |\n"
