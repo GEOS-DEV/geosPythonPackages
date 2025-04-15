@@ -7,7 +7,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["geos_geomechanics*"]
+include = ["geos.geomechanics*"]
 exclude = ['tests*']
 
 [project]
@@ -19,36 +19,44 @@ maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenerg
 license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python"
+    "Programming Language :: Python",
+    "License :: OSI Approved :: Apache Software License ",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
 ]
-dependencies=[
-    "vtk >= 9.3",
-    "numpy >= 1.26",
-    "pandas >= 2.2",
-    "typing_extensions >= 4.12",
-    "geos-utils @ file:./geos-utils",
-]
+
 requires-python = ">= 3.10"
+
+dependencies=[
+    "geos-utils @ file:./geos-utils",
+    "vtk >= 9.3",
+    "pandas >= 2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [project.optional-dependencies]
 build = [
   "build ~= 1.2"
 ]
 dev = [
-    "yapf",
-    "mypy",
+   "mypy",
+   "yapf",
 ]
 test = [
    "pytest",
+   "pytest-cov"
 ]
-
-[project.scripts]
-
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 console_output_style = "count"
-pythonpath = ["src"]
+pythonpath = [".", "src"]
 python_classes = "Test"
 python_files = "test*.py"
 python_functions = "test*"
@@ -56,7 +64,6 @@ testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
 
-
 [tool.coverage.run]
 branch = true
-source = ["src/geos"]
+source = ["src/geos/geomechanics"]

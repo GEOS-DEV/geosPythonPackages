@@ -2,27 +2,58 @@
 requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geos.pv*"]
+exclude = ['tests*']
+
 [project]
 name = "geos-pv"
 version = "0.1.0"
 description = "geos-pv is a Python package that gathers Paraview plugins and dedicated utils to process and visualize GEOS inputs and outputs."
 authors = [{name = "GEOS Contributors" }]
-maintainers = [ 
-    {name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}
-]
+maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
 license = {text = "Apache-2.0"}
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Programming Language :: Python"
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "License :: OSI Approved :: Apache Software License ",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">= 3.10"
 
-dynamic = ["dependencies"]
+dependencies=[
+    "geos-utils @ file:./geos-utils",
+    "vtk >= 9.3",
+    "pandas >= 2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [project.optional-dependencies]
 # dependency to use if install together with paraview
 paraview = ["paraview"]
+build = [
+  "build ~= 1.2"
+]
+dev = [
+   "mypy",
+   "yapf",
+]
+test = [
+   "pytest",
+   "pytest-cov"
+]
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -34,3 +65,7 @@ python_functions = "test*"
 testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
