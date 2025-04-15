@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
@@ -51,7 +51,7 @@ To use the filter:
 class SplitMesh(VTKPythonAlgorithmBase):
 
     def __init__(self) ->None:
-        """SplitMesh filter split each cell using edge centers."""
+        """SplitMesh filter splits each cell using edge centers."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
 
         self.inData: vtkUnstructuredGrid

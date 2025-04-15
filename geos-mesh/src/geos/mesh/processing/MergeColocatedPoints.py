@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
 import numpy as np
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
@@ -49,7 +49,7 @@ To use the filter:
 
 class MergeColocatedPoints(VTKPythonAlgorithmBase):
     def __init__(self: Self ) ->None:
-        """MergeColocatedPoints filter merge duplacted points of the input mesh."""
+        """MergeColocatedPoints filter merges duplacted points of the input mesh."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
