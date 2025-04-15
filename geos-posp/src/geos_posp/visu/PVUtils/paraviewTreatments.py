@@ -468,7 +468,7 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh, True )
+    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
     name: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     assert isAttributeInObject( mesh2, name, False ), f"Attribute {name} is not in the mesh."
     return [ str( int( ide ) ) for ide in getArrayInObject( mesh2, name, False ) ]
@@ -563,18 +563,12 @@ def getTimeStepIndex( time: float, timeSteps: npt.NDArray[ np.float64 ] ) -> int
     return int( indexes[ 0 ] )
 
 
-def mergeFilterPV(
-    input: vtkDataObject,
-    keepPartialAttributes: bool = False,
-) -> vtkUnstructuredGrid:
+def mergeFilterPV( input: vtkDataObject, ) -> vtkUnstructuredGrid:
     """Apply Paraview merge block filter.
 
     Args:
         input (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): composite
             object to merge blocks
-        keepPartialAttributes (bool): if True, keep partial attributes after merge.
-
-            Defaults to False.
 
     Returns:
         vtkUnstructuredGrid: merged block object

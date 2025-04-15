@@ -10,122 +10,91 @@ The plugins include:
 * Processing plugins to compute additional geomechanical properties;
 * Visualization plugins to plot Mohr's circles and cross plots using Paraview Python View.
 
-PVplugins.PVAttributeMapping module
+PVAttributeMapping plugin
 -----------------------------------
 
 .. automodule:: PVplugins.PVAttributeMapping
-   :members:
-   :undoc-members:
 
-PVplugins.PVCreateConstantAttributePerRegion module
+
+PVCreateConstantAttributePerRegion plugin
 ---------------------------------------------------
 
 .. automodule:: PVplugins.PVCreateConstantAttributePerRegion
-   :members:
-   :undoc-members:
 
-PVplugins.PVExtractMergeBlocksVolume module
+
+PVExtractMergeBlocksVolume plugin
 -------------------------------------------
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolume
-   :members:
-   :undoc-members:
 
-PVplugins.PVExtractMergeBlocksVolumeSurface module
+
+PVExtractMergeBlocksVolumeSurface plugin
 --------------------------------------------------
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolumeSurface
-   :members:
-   :undoc-members:
 
-PVplugins.PVExtractMergeBlocksVolumeSurfaceWell module
+
+PVExtractMergeBlocksVolumeSurfaceWell plugin
 ------------------------------------------------------
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolumeSurfaceWell
-   :members:
-   :undoc-members:
 
-PVplugins.PVExtractMergeBlocksVolumeWell module
+
+PVExtractMergeBlocksVolumeWell plugin
 -----------------------------------------------
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolumeWell
-   :members:
-   :undoc-members:
 
-PVplugins.PVGeomechanicsAnalysis module
+
+PVGeomechanicsAnalysis plugin
 ---------------------------------------
 
 .. automodule:: PVplugins.PVGeomechanicsAnalysis
-   :members:
-   :undoc-members:
 
-PVplugins.PVGeomechanicsWorkflowVolume module
+
+PVGeomechanicsWorkflowVolume plugin
 ---------------------------------------------
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolume
-   :members:
-   :undoc-members:
 
-PVplugins.PVGeomechanicsWorkflowVolumeSurface module
+
+PVGeomechanicsWorkflowVolumeSurface plugin
 ----------------------------------------------------
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeSurface
-   :members:
-   :undoc-members:
 
-PVplugins.PVGeomechanicsWorkflowVolumeSurfaceWell module
+
+PVGeomechanicsWorkflowVolumeSurfaceWell plugin
 --------------------------------------------------------
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeSurfaceWell
-   :members:
-   :undoc-members:
 
-PVplugins.PVGeomechanicsWorkflowVolumeWell module
+
+PVGeomechanicsWorkflowVolumeWell plugin
 -------------------------------------------------
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
-   :members:
-   :undoc-members:
-
-PVplugins.PVGeosLogReader module
---------------------------------
-
-.. automodule:: PVplugins.PVGeosLogReader
-   :members:
-   :undoc-members:
 
 PVplugins.PVMergeBlocksEnhanced module
 --------------------------------------
 
 .. automodule:: PVplugins.PVMergeBlocksEnhanced
-   :members:
-   :undoc-members:
 
-PVplugins.PVMohrCirclePlot module
+
+PVMohrCirclePlot plugin
 ---------------------------------
 
 .. automodule:: PVplugins.PVMohrCirclePlot
-   :members:
-   :undoc-members:
-
-PVplugins.PVPythonViewConfigurator module
------------------------------------------
-
-.. automodule:: PVplugins.PVPythonViewConfigurator
-   :members:
-   :undoc-members:
 
 PVplugins.PVSurfaceGeomechanics module
 --------------------------------------
 
 .. automodule:: PVplugins.PVSurfaceGeomechanics
-   :members:
-   :undoc-members:
 
-PVplugins.PVTransferAttributesVolumeSurface module
+
+PVTransferAttributesVolumeSurface plugin
 --------------------------------------------------
 
 .. automodule:: PVplugins.PVTransferAttributesVolumeSurface
-   :members:
-   :undoc-members:
+
 

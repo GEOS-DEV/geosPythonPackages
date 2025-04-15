@@ -6,8 +6,6 @@ Processing
 
    filters
 
-   readers
-
    processing
 
    pyvistaTools

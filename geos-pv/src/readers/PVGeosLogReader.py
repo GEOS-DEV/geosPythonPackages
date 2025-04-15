@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import sys
+from pathlib import Path
 from enum import Enum
 from typing import Union, cast
 
@@ -12,35 +13,14 @@ import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
+
+update_paths()
 
 import vtkmodules.util.numpy_support as vnp
-from geos.utils.enumUnits import (
-    Mass,
-    MassRate,
-    Pressure,
-    Time,
-    Unit,
-    Volume,
-    VolumetricRate,
-    enumerationDomainUnit,
-)
-from geos.utils.UnitRepository import UnitRepository
-from geos_posp.processing.geosLogReaderFunctions import (
-    identifyProperties,
-    transformUserChoiceToListPhases,
-)
-from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
-from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
-from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
-from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos_posp.visu.PVUtils.paraviewTreatments import (
-    strListToEnumerationDomainXml, )
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -53,13 +33,38 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import vtkTable
 
+from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import (
+    identifyProperties,
+    transformUserChoiceToListPhases,
+)
+
+from geos.pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
+from geos.pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
+from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
+from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
+from geos.utils.enumUnits import (
+    Mass,
+    MassRate,
+    Pressure,
+    Time,
+    Unit,
+    Volume,
+    VolumetricRate,
+    enumerationDomainUnit,
+)
+
+from geos.utils.UnitRepository import UnitRepository
+from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
+    createModifiedCallback, )
+from geos.pv.utils.paraviewTreatments import (
+    strListToEnumerationDomainXml, )
+
 __doc__ = """
-GeosLogRePVGeosLogReaderader is a Paraview plugin that allows to read Geos output log.
+PVGeosLogReader is a Paraview plugin that allows to read Geos output log.
 
 Input is a file and output is a vtkTable containing log information.
 
 ..WARNING::
-
     The reader is compliant with GEOS log before commit version #9365098.
     For more recent version, use the csv or hdf5 export options from GEOS.
 
@@ -194,7 +199,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         """Set phase names.
 
         Args:
-            value (str): list of phase names seprated by space.
+            value (str): list of phase names separated by space.
         """
         self.m_phasesUserChoice = transformUserChoiceToListPhases( value )
         self.Modified()
@@ -228,9 +233,9 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
 
         Returns:
             int: The value corresponding to a certain dataframe.
-            "Flow" has value "0", "Wells" has value "1",
-            "Aquifers" has value "2", "Convergence" has
-            value "3".
+                "Flow" has value "0", "Wells" has value "1",
+                "Aquifers" has value "2", "Convergence" has
+                value "3".
         """
         return self.m_dataframeChoice
 
