@@ -128,7 +128,11 @@ Installation
     python -m pytest ./<PACKAGE_NAME>
     ```
 
-**NOTE: geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).**
+  [!WARNING]
+  Due to local package conflicts with `pip install`, it is recommended either to build the packages one by one, or to inlude only top-level packages (see dependency tree hereabove) in the build list.
+
+  [!NOTE]
+  geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).
 
 
 Contributions
@@ -141,8 +145,8 @@ If you would like to report a bug, please submit an [issue](https://github.com/G
 If you would like to contribute to GEOS Python packages, please respect the following guidelines:
 
 1. Create a new branch named from this template: `[CONTRIBUTOR]/[TYPE]/[TITLE]` where CONTRIBUTOR is the name of the contributor, TYPE is the type of contribution among 'feature', 'refactor', 'doc', 'ci', TITLE is a short title for the branch.
-1. Add your code trying to integrate into the current code architecture.
-1. Push the branch, open a new PR, and add reviewers
+2. Add your code trying to integrate into the current code architecture.
+3. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
@@ -169,6 +173,9 @@ dependencies = [
     "geos-utils @ file:./geos-utils",
 ]
 ```
+
+[!IMPORTANT]
+geos-pv dependencies are managed using a requirements.txt (together with the setup.py) file where all internal (and external if needed) dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
 
 Release
 -------

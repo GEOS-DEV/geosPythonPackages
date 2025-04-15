@@ -1,19 +1,19 @@
-sphinx >= 7.4.7
-sphinx_rtd_theme
-sphinx-argparse >= 0.5.2
-sphinx-autodoc-typehints
-sphinx-design
+sphinx >= 8.2
+sphinx_rtd_theme >= 3.0
+sphinx-argparse >= 0.5
+sphinx-autodoc-typehints >= 3.1
+sphinx-design >= 0.6
 # Running CLI programs and capture outputs
-sphinxcontrib-programoutput>=0.17
+sphinxcontrib-programoutput >= 0.17
 # Installing all package requirements to be able to load all the modules and run the help.
-vtk >= 9.1
+vtk >= 9.3
 networkx >= 2.4
-tqdm
-numpy
-pandas
-typing_extensions
+tqdm >= 4.67
+numpy >= 2.2
+pandas >= 2.2
+typing_extensions > 4.12
 matplotlib>=3.9.4
-h5py
-lxml>=4.5.0
-parameterized
-pyvista
+h5py >= 3.12
+lxml >= 4.5.0
+parameterized >= 0.9
+pyvista >= 0.44

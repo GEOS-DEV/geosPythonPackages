@@ -75,14 +75,7 @@ PVGeomechanicsWorkflowVolumeWell plugin
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
 
-
-PVGeosLogReader plugin
---------------------------------
-
-.. automodule:: PVplugins.PVGeosLogReader
-
-
-PVMergeBlocksEnhanced plugin
+PVplugins.PVMergeBlocksEnhanced module
 --------------------------------------
 
 .. automodule:: PVplugins.PVMergeBlocksEnhanced
@@ -93,14 +86,7 @@ PVMohrCirclePlot plugin
 
 .. automodule:: PVplugins.PVMohrCirclePlot
 
-
-PVPythonViewConfigurator plugin
------------------------------------------
-
-.. automodule:: PVplugins.PVPythonViewConfigurator
-
-
-PVSurfaceGeomechanics plugin
+PVplugins.PVSurfaceGeomechanics module
 --------------------------------------
 
 .. automodule:: PVplugins.PVSurfaceGeomechanics
