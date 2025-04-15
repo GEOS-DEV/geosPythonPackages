@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=61.2", "wheel >= 0.37.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,9 +7,7 @@ name = "geos-pv"
 version = "0.1.0"
 description = "geos-pv is a Python package that gathers Paraview plugins and dedicated utils to process and visualize GEOS inputs and outputs."
 authors = [{name = "GEOS Contributors" }]
-maintainers = [ 
-    {name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}
-]
+maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
 license = {text = "Apache-2.0"}
 classifiers = [
   "Development Status :: 4 - Beta",

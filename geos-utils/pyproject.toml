@@ -1,26 +1,32 @@
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=61.2", "wheel >= 0.37.1"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geos.utils*"]
+exclude = ['tests*']
 
 [project]
 name = "geos-utils"
 version = "0.1.0"
 description = "geos-utils is a Python package that gathers utilities common to all GEOS python packages."
 authors = [{name = "GEOS Contributors" }]
-maintainers = [ 
-    {name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}
-]
+maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
 license = {text = "Apache-2.0"}
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
-    "typing_extensions",
-    "numpy",
+    "numpy >= 2.2",
+    "typing_extensions >= 4.12",
 ]
 
 [project.optional-dependencies]
@@ -28,8 +34,8 @@ build = [
   "build ~= 1.2"
 ]
 dev = [
-    "yapf",
     "mypy",
+    "yapf",
 ]
 test = [
     "pytest",
