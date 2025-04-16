@@ -395,8 +395,8 @@ def getComponentNamesMultiBlock(
     Returns:
         tuple[str,...]: names of the components.
     """
-    elementraryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
-    for blockIndex in elementraryBlockIndexes:
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
+    for blockIndex in elementaryBlockIndexes:
         block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )
         if isAttributeInObject( block, attributeName, onPoints ):
             return getComponentNamesDataSet( block, attributeName, onPoints )
@@ -545,23 +545,17 @@ def mergeBlocks(
 
 
 def createEmptyAttribute(
-    object: vtkDataObject,
     attributeName: str,
     componentNames: tuple[ str, ...],
     dataType: int,
-    onPoints: bool,
 ) -> vtkDataArray:
     """Create an empty attribute.
 
     Args:
-        object (vtkDataObject): object (vtkMultiBlockDataSet, vtkDataSet)
-            where to create the attribute
         attributeName (str): name of the attribute
         componentNames (tuple[str,...]): name of the components for vectorial
             attributes
         dataType (int): data type.
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
 
     Returns:
         bool: True if the attribute was correctly created
@@ -753,7 +747,7 @@ def copyAttribute(
     for index in elementaryBlockIndexesTo:
         # get block from initial time step object
         blockT0: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectFrom, index ) )
-        assert blockT0 is not None, "Block at intitial time step is null."
+        assert blockT0 is not None, "Block at initial time step is null."
 
         # get block from current time step object
         block: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
@@ -934,7 +928,7 @@ def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -
     return cutter.GetOutputDataObject( 0 )
 
 
-def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet:
+def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet: #TODO CHECK OUTPUT
     """Transfer point data to cell data.
 
     Args:
