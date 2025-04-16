@@ -34,7 +34,7 @@ jobs:
           echo "This is not a Pull-Request, skipping"
 
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -43,10 +43,10 @@ jobs:
         package-name: ["geos-ats", "geos-mesh", "geos-posp", "geos-timehistory", "geos-trame", "geos-utils", "geos-xml-tools", "geos-xml-viewer", "hdf5-wrapper", "pygeos-tools"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: mpi4py/setup-mpi@v1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
