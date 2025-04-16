@@ -40,4 +40,4 @@ jobs:
     - name: Format and linting check with ruff
       #  working-directory: ./${{ matrix.package-name }}
       run:  |
-        python -m ruff check --config .ruff.toml ./geos-utils
+        python -m ruff check --config .ruff.toml ./${{ matrix.package-name }}

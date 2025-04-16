@@ -38,7 +38,6 @@ To use the object:
     p1, p2, p3 :float = mohrCircle.getPrincipalComponents()
     radius :float = mohrCircle.getCircleRadius()
     center :float = mohrCircle.getCircleCenter()
-    
 """
 
 
