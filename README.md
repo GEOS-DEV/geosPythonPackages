@@ -49,53 +49,53 @@ The following package defines [Paraview](https://docs.paraview.org/) plugins tha
 GEOS Python packages dependency tree (inter-dependency and main external dependencies) is the following:
 
 ```
-|-- geos-ats
-|-- pygeos-tools
-|-- geos-utils
-|-- geos-geomechanics
-|   |-- geos-utils
-|
-|-- hdf5-wrapper
-|   |-- h5py
-|
-|-- geos-xml-tools
-|   |-- lxml
-|
-|-- geos-mesh
-|   |-- geos-utils
-|   |-- vtk
-|
-|-- geos-prep
-|   |-- geos-mesh
-|   |-- geos-xml-tools
-|
-|-- geos-posp
-|   |-- geos-mesh
-|   |-- geos-geomechanics
-|
-|-- time-history
-|   |-- hdf5-wrapper
-|
-|-- mesh-doctor
-|   |-- geos-prep
-|   |-- pyvista
-|
-|-- geos-trame
-|   |-- geos-xml-tools
-|   |-- geos-mesh
-|   |-- pyvista
-|   |-- trame
-|
-|-- geos-xml-viewer
-|   |-- geos-xml-tools
-|   |-- geos-mesh
-|   |-- pyvista
-|
-|-- geos-pv
-    |-- geos-prep
-    |-- geos-posp
-    |-- geos-xml-tools
-    |-- paraview
+├── geos-ats
+├── pygeos-tools
+├── geos-utils
+├── geos-geomechanics
+│   ├── geos-utils
+│
+├── hdf5-wrapper
+│   ├── h5py
+│
+├── geos-xml-tools
+│   ├── lxml
+│
+├── geos-mesh
+│   ├── geos-utils
+│   ├── vtk
+│
+├── geos-prep
+│   ├── geos-mesh
+│   ├── geos-xml-tools
+│
+├── geos-posp
+│   ├── geos-mesh
+│   ├── geos-geomechanics
+│
+├── time-history
+│   ├── hdf5-wrapper
+│
+├── mesh-doctor
+│   ├── geos-prep
+│   ├── pyvista
+│
+├── geos-trame
+│   ├── geos-xml-tools
+│   ├── geos-mesh
+│   ├── pyvista
+│   ├── trame
+│
+├── geos-xml-viewer
+│   ├── geos-xml-tools
+│   ├── geos-mesh
+│   ├── pyvista
+│
+├── geos-pv
+    ├── geos-prep
+    ├── geos-posp
+    ├── geos-xml-tools
+    ├── paraview
 ```
 
 See the [documentation](https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/) for additional details about the packages and how to use them.
@@ -128,7 +128,11 @@ Installation
     python -m pytest ./<PACKAGE_NAME>
     ```
 
-**NOTE: geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).**
+  [!WARNING]
+  Due to local package conflicts with `pip install`, it is recommended either to build the packages one by one, or to inlude only top-level packages (see dependency tree hereabove) in the build list.
+
+  [!NOTE]
+  geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).
 
 
 Contributions
@@ -141,51 +145,37 @@ If you would like to report a bug, please submit an [issue](https://github.com/G
 If you would like to contribute to GEOS Python packages, please respect the following guidelines:
 
 1. Create a new branch named from this template: `[CONTRIBUTOR]/[TYPE]/[TITLE]` where CONTRIBUTOR is the name of the contributor, TYPE is the type of contribution among 'feature', 'refactor', 'doc', 'ci', TITLE is a short title for the branch.
-1. Add your code trying to integrate into the current code architecture.
-1. Push the branch, open a new PR, and add reviewers
+2. Add your code trying to integrate into the current code architecture.
+3. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
 Any new package must have the following architecture:
 
 ```
-package-name
-|-- pyproject.toml
-|-- setup.py
-|-- src
-|   |-- geos
-|       |-- package_name
-|           |-- file1.py
-|           |-- file1.py
-|-- tests
-    |-- test1.py
-    |-- test2.py
+package-name/
+├── pyproject.toml
+├── src
+│   ├── geos
+│       ├── package_name
+│           ├── file1.py
+│           ├── file1.py
+├── tests
+    ├── test1.py
+    ├── test2.py
 ```
 
-The *setup.py* file is optional. It is required if the package depends on another GEOS Python package located in the root directory. If you want a package1 to depend on package2, follow this [procedure](https://stackoverflow.com/questions/75159453/specifying-local-relative-dependency-in-pyproject-toml):
+If you want a package to depend on another GEOS Python package (let's say `geos-utils`), in the pyproject.toml the dependency takes the form:
 
-* in the *package1/pyproject.py*, replace the tag `dependencies = ["external_packageX", "external_packageY",]` with `dynamic = ["dependencies"]`
-* create the *package1/setup.py* file
-* copy the following lines in the *setup.py* and update the dependencies
-  ```
-  from pathlib import Path
-  from setuptools import setup
+```
+dependencies = [
+    ...
+    "geos-utils @ file:./geos-utils",
+]
+```
 
-  # This is where you add any fancy path resolution to the local lib:
-  package_name = "geos-utils"
-  geos_utils_path: str = (Path(__file__).parent.parent / package_name).as_uri()
-
-  setup(
-      install_requires=[
-          "vtk >= 9.3",
-          "numpy >= 1.26",
-          "pandas >= 2.2",
-          "typing_extensions >= 4.12",
-          f"{package_name} @ {geos_utils_path}",
-      ]
-  )
-  ```
-
+[!IMPORTANT]
+geos-pv dependencies are managed using a requirements.txt (together with the setup.py) file where all internal (and external if needed) dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
 
 Release
 -------

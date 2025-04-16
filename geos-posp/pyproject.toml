@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=61.2", "wheel >= 0.37.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -14,7 +14,8 @@ exclude = ['tests*']
 name = "geos-posp"
 version = "1.0.0"
 description = "The Python package geos-posp is dedicated to post-process data from the geos simulation tool."
-authors = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
+authors = [{name = "GEOS Contributors" }]
+maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Intended Audience :: Developers",
@@ -29,8 +30,18 @@ keywords = [
     "GEOS",
     "Simulation",
 ]
-dynamic = ["dependencies"]
-requires-python = ">= 3.9"
+
+requires-python = ">= 3.10"
+
+dependencies = [
+    "geos-geomechanics @ file:./geos-geomechanics",
+    "geos-utils @ file:./geos-utils",
+    "vtk >= 9.3",
+    "numpy >= 2.2",
+    "pandas >= 2.2",
+    "typing_extensions >= 4.12",
+]
+
 
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
@@ -39,6 +50,9 @@ Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [project.optional-dependencies]
+build = [
+  "build ~= 1.2"
+]
 dev = [
    "mypy", 
    "yapf",

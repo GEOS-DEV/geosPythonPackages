@@ -13,6 +13,8 @@ parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
+import PVplugins  # noqa: F401
+
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.AttributeMappingFromCellCoords import (
     AttributeMappingFromCellCoords, )
@@ -211,6 +213,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
                                   "Use either vtkUnstructuredGrid or vtkMultiBlockDataSet" )
 
             outData.Modified()
+
             mess: str = "Attributes were successfully transferred ."
             self.m_logger.info( mess )
         except AssertionError as e:

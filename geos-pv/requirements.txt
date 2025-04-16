@@ -1,0 +1,4 @@
+geos-geomechanics
+geos-mesh
+geos-posp
+geos-utils

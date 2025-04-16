@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
-from typing import Union
+from typing import Union, cast
 
 from vtkmodules.vtkCommonDataModel import (
     vtkCompositeDataSet,
@@ -36,7 +36,7 @@ def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) ->
         block: vtkDataObject = iter.GetCurrentDataObject()
         nbBlocks: int = 99
         if isinstance( block, vtkMultiBlockDataSet ):
-            block1: vtkMultiBlockDataSet = block
+            block1: vtkMultiBlockDataSet = cast( vtkMultiBlockDataSet, block )
             nbBlocks = block1.GetNumberOfBlocks()
 
         # stop if multiple children
