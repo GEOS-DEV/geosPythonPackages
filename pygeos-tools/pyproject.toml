@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["geos.pygeos_tools*"]
+exclude = ["examples"]
 
 [project]
 name = "pygeos-tools"

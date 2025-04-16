@@ -15,7 +15,7 @@ The example python script for this documentation is the following:
 
 .. code-block:: console
 
-   pygeos-tools/src/solvers_examples/reservoir_modeling.py
+   pygeos-tools/examples/solvers/reservoir_modeling.py
 
 
 ------------------------------------------------------------------
@@ -152,7 +152,7 @@ Using the same python used to build your GEOS installation with, run this comman
 
 .. code-block:: console
 
-   python pygeos-tools/src/solvers_examples/reservoir_modeling.py
+   python pygeos-tools/examples/solvers/reservoir_modeling.py
           --xml /path/to/your/GEOS/src/inputFiles/compositionalMultiphaseFlow/2ph_cap_1d_ihu.xml
 
 

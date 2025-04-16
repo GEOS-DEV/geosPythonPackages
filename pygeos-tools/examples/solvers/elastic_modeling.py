@@ -81,7 +81,7 @@ def main():
 
         while t < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
-                print( f"time = {t:.3f}s, dt = {solver.dt:.4f}, iter = {cycle+1}" )
+                print( f"time = {t:.3f}s, dt = {solver.dt:.4f}, iter = {cycle + 1}" )
             solver.execute( t )
             if cycle % 100 == 0:
                 solver.outputVtk( t )

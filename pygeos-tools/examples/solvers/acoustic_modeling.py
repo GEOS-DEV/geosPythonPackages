@@ -55,11 +55,11 @@ def parse_workflow_parameters( pfile ):
 
     hdrList = list()
     for fl in hdrStr.split( '\n' ):
-        l = fl.split( "#" )[ 0 ]
-        if l:
+        elt = fl.split( "#" )[ 0 ]
+        if elt:
             # add "--" to facilitate parsing that follows
-            l = "--" + l
-            hdrList += l.split( "=" )
+            elt = "--" + elt
+            hdrList += elt.split( "=" )
 
     parser = argparse.ArgumentParser( "Modelling workflow parser" )
     parser.add_argument( "--mintime", dest="mintime", default=None, type=float, help="Min time for the simulation" )
@@ -148,7 +148,7 @@ def main():
         cycle: int = 0
         while time < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
-                print( f"time = {time:.3f}s, dt= {solver.dt:.4f}, iter = {cycle+1}" )
+                print( f"time = {time:.3f}s, dt= {solver.dt:.4f}, iter = {cycle + 1}" )
             solver.execute( time )
             if cycle % 50 == 0:
                 solver.outputVtk( time )
