@@ -31,7 +31,7 @@ keywords = [
 ]
 dependencies = [
     "vtk >= 9.3",
-    "numpy >= 1.26",
+    "numpy >= 2.2",
     "pandas >= 2.2",
     "typing_extensions >= 4.12",
     "geos_posp >=1.0",

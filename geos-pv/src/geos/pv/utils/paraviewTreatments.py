@@ -8,15 +8,12 @@ from typing import Any, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-)
 from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
     vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
+import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
     vtkDataArraySelection,
@@ -24,6 +21,7 @@ from vtkmodules.vtkCommonCore import (
     vtkPoints,
 )
 from vtkmodules.vtkCommonDataModel import (
+    vtkCellData,
     vtkCompositeDataSet,
     vtkDataObject,
     vtkMultiBlockDataSet,
@@ -32,9 +30,9 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos_posp.processing.vtkUtils import (
-    getArrayInObject,
-    isAttributeInObject,
+from geos.utils.GeosOutputsConstants import (
+    ComponentNameEnum,
+    GeosMeshOutputsEnum,
 )
 
 # valid sources for Python view configurator
@@ -469,9 +467,14 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
     """
     # merge blocks for vtkCompositeDataSet
     mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
-    name: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
-    assert isAttributeInObject( mesh2, name, False ), f"Attribute {name} is not in the mesh."
-    return [ str( int( ide ) ) for ide in getArrayInObject( mesh2, name, False ) ]
+    attributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
+    data: vtkCellData = mesh2.GetCellData()
+    assert data is not None, "Cell Data are undefined."
+    assert bool( data.HasArray( attributeName ) ), f"Attribute {attributeName} is not in the mesh"
+
+    array: vtkDoubleArray = data.GetArray( attributeName )
+    nparray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
+    return [ str( int( ide ) ) for ide in nparray ]
 
 
 def strEnumToEnumerationDomainXml( enumObj: Enum ) -> str:

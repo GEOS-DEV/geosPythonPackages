@@ -3,14 +3,6 @@ Processing functions
 
 This package define functions to process data.
 
-geos_posp.processing.geosLogReaderFunctions module
-------------------------------------------------------
-
-.. automodule:: geos_posp.processing.geosLogReaderFunctions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.processing.multiblockInpectorTreeFunctions module
 ---------------------------------------------------------------
 
