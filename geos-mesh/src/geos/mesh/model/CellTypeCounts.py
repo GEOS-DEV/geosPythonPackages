@@ -11,12 +11,12 @@ from vtkmodules.vtkCommonDataModel import (
 
 
 __doc__ = """
-MeshIdCard stores the number of elements of each type.
+CellTypeCounts stores the number of elements of each type.
 """
 
-class MeshIdCard():
+class CellTypeCounts():
     def __init__(self: Self ) ->None:
-        """MeshIdCard stores the number of cells of each type."""
+        """CellTypeCounts stores the number of cells of each type."""
         self._counts: npt.NDArray[np.int64] = np.zeros(VTK_NUMBER_OF_CELL_TYPES)
 
     def __str__(self: Self) ->str:
@@ -30,16 +30,16 @@ class MeshIdCard():
     def __add__(self: Self, other :Self) ->Self:
         """Addition operator.
 
-        MeshIdCard addition consists in suming counts.
+        CellTypeCounts addition consists in suming counts.
 
         Args:
-            other (Self): other MeshIdCard object
+            other (Self): other CellTypeCounts object
 
         Returns:
-            Self: new MeshIdCard object
+            Self: new CellTypeCounts object
         """
-        assert isinstance(other, MeshIdCard), "Other object must be a MeshIdCard."
-        newCard: MeshIdCard = MeshIdCard()
+        assert isinstance(other, CellTypeCounts), "Other object must be a CellTypeCounts."
+        newCard: CellTypeCounts = CellTypeCounts()
         newCard._counts = self._counts + other._counts
         return newCard
 
@@ -96,7 +96,7 @@ class MeshIdCard():
         card +=  "|                                   |              |\n"
         card +=  "|               -                   |       -      |\n"
         card += f"| **Total Number of Vertices**      | {int(self._counts[VTK_VERTEX]):12} |\n"
-        card += f"| **Total Number of Polygon**         | {int(self._counts[VTK_POLYGON]):12} |\n"
+        card += f"| **Total Number of Polygon**       | {int(self._counts[VTK_POLYGON]):12} |\n"
         card += f"| **Total Number of Polyhedron**    | {int(self._counts[VTK_POLYHEDRON]):12} |\n"
         card += f"| **Total Number of Cells**         | {int(self._counts[VTK_POLYHEDRON]+self._counts[VTK_POLYGON]):12} |\n"
         card +=  "|               -                   |       -      |\n"

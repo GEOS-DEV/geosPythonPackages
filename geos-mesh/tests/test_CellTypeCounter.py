@@ -11,8 +11,8 @@ from typing import (
 )
 
 from geos.mesh.processing.helpers import createSingleCellMesh, createMultiCellMesh
-from geos.mesh.stats.ComputeMeshStats import ComputeMeshStats
-from geos.mesh.model.MeshIdCard import MeshIdCard
+from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
@@ -54,17 +54,17 @@ def __generate_test_data_single_cell() -> Iterator[ TestCase ]:
 
 ids: list[str] = [vtkCellTypes.GetClassNameFromTypeId(cellType) for cellType in cellType_all]
 @pytest.mark.parametrize( "test_case", __generate_test_data_single_cell(), ids=ids )
-def test_ComputeMeshStats_single( test_case: TestCase ) ->None:
-    """Test of ComputeMeshStats filter.
+def test_CellTypeCounter_single( test_case: TestCase ) ->None:
+    """Test of CellTypeCounter filter.
 
     Args:
         test_case (TestCase): test case
     """
-    filter :ComputeMeshStats = ComputeMeshStats()
+    filter :CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject(test_case.mesh)
     filter.Update()
-    card :MeshIdCard = filter.GetMeshIdCard()
-    assert card is not None, "MeshIdCard is undefined"
+    card :CellTypeCounts = filter.GetCellTypeCounts()
+    assert card is not None, "CellTypeCounts is undefined"
 
     assert card.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 
@@ -101,17 +101,17 @@ def __generate_test_data_multi_cell() -> Iterator[ TestCase ]:
 
 ids2: list[str] = [os.path.splitext(name)[0] for name in filename_all2]
 @pytest.mark.parametrize( "test_case", __generate_test_data_multi_cell(), ids=ids2 )
-def test_ComputeMeshStats_multi( test_case: TestCase ) ->None:
-    """Test of ComputeMeshStats filter.
+def test_CellTypeCounter_multi( test_case: TestCase ) ->None:
+    """Test of CellTypeCounter filter.
 
     Args:
         test_case (TestCase): test case
     """
-    filter :ComputeMeshStats = ComputeMeshStats()
+    filter :CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject(test_case.mesh)
     filter.Update()
-    card :MeshIdCard = filter.GetMeshIdCard()
-    assert card is not None, "MeshIdCard is undefined"
+    card :CellTypeCounts = filter.GetCellTypeCounts()
+    assert card is not None, "CellTypeCounts is undefined"
 
     assert card.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 

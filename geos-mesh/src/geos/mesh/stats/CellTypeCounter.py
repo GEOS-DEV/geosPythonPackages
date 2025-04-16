@@ -14,10 +14,10 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VERTEX
 )
 
-from geos.mesh.model.MeshIdCard import MeshIdCard
+from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-ComputeMeshStats module is a vtk filter that computes mesh stats.
+CellTypeCounter module is a vtk filter that computes mesh stats.
 
 Mesh stats include the number of elements of each type.
 
@@ -27,26 +27,26 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.stats.ComputeMeshStats import ComputeMeshStats
+    from geos.mesh.stats.CellTypeCounter import CellTypeCounter
 
     # filter inputs
     input :vtkUnstructuredGrid
 
     # instanciate the filter
-    filter :ComputeMeshStats = ComputeMeshStats()
+    filter :CellTypeCounter = CellTypeCounter()
     # set input data object
     filter.SetInputDataObject(input)
     # do calculations
     filter.Update()
     # get output mesh id card
-    output :MeshIdCard = filter.GetMeshIdCard()
+    output :CellTypeCounts = filter.GetCellTypeCounts()
 """
-class ComputeMeshStats(VTKPythonAlgorithmBase):
+class CellTypeCounter(VTKPythonAlgorithmBase):
 
     def __init__(self) ->None:
-        """ComputeMeshStats filter computes mesh stats."""
+        """CellTypeCounter filter computes mesh stats."""
         super().__init__(nInputPorts=1, nOutputPorts=0)
-        self.card: MeshIdCard
+        self.card: CellTypeCounts
 
     def FillInputPortInformation(self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -98,7 +98,7 @@ class ComputeMeshStats(VTKPythonAlgorithmBase):
         inData: vtkUnstructuredGrid = self.GetInputData(inInfoVec, 0, 0)
         assert inData is not None, "Input mesh is undefined."
 
-        self.card = MeshIdCard()
+        self.card = CellTypeCounts()
         self.card.setTypeCount(VTK_VERTEX, inData.GetNumberOfPoints())
         for i in range(inData.GetNumberOfCells()):
             cell: vtkCell = inData.GetCell(i)
@@ -123,10 +123,10 @@ class ComputeMeshStats(VTKPythonAlgorithmBase):
         edges.Update()
         return edges.GetOutput().GetNumberOfCells()
 
-    def GetMeshIdCard(self :Self) -> MeshIdCard:
-        """Get MeshIdCard object.
+    def GetCellTypeCounts(self :Self) -> CellTypeCounts:
+        """Get CellTypeCounts object.
 
         Returns:
-            MeshIdCard: MeshIdCard object.
+            CellTypeCounts: CellTypeCounts object.
         """
         return self.card
