@@ -928,7 +928,7 @@ def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -
     return cutter.GetOutputDataObject( 0 )
 
 
-def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet: #TODO CHECK OUTPUT
+def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet:
     """Transfer point data to cell data.
 
     Args:
