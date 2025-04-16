@@ -117,32 +117,35 @@ Cells with negative volumes will typically be an issue for ``geos`` and should b
 """"""""""""""""""""""""""
 
 It sometimes happens that an exported mesh does not abide by the ``vtk`` orderings.
-The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
+The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements to respect VTK convention.
 This can be convenient if you cannot regenerate the mesh.
 
 .. code-block::
 
       $ python src/geos/mesh/doctor/mesh_doctor.py fix_elements_orderings --help
-      usage: mesh_doctor.py fix_elements_orderings [-h] [--Hexahedron 1,6,5,4,7,0,2,3] [--Prism5 8,2,0,7,6,9,5,1,4,3]
-                                                   [--Prism6 11,2,8,10,5,0,9,7,6,1,4,3] [--Pyramid 3,4,0,2,1]
-                                                   [--Tetrahedron 2,0,3,1] [--Voxel 1,6,5,4,7,0,2,3]
-                                                   [--Wedge 3,5,4,0,2,1] --output OUTPUT [--data-mode binary, ascii]
+      usage: mesh_doctor.py fix_elements_orderings [-h] [--cell_names Hexahedron, Tetrahedron, Pyramid, Wedge, Prism5, Prism6]
+                                                   [--volume_to_reorder all, positive, negative]
+                                                   --output OUTPUT [--data-mode binary, ascii]
 
       options:
       -h, --help              show this help message and exit
-      --Hexahedron 1,6,5,4,7,0,2,3
-                              [list of integers]: node permutation for "Hexahedron".
-      --Prism5 8,2,0,7,6,9,5,1,4,3
-                              [list of integers]: node permutation for "Prism5".
-      --Prism6 11,2,8,10,5,0,9,7,6,1,4,3
-                              [list of integers]: node permutation for "Prism6".
-      --Pyramid 3,4,0,2,1     [list of integers]: node permutation for "Pyramid".
-      --Tetrahedron 2,0,3,1   [list of integers]: node permutation for "Tetrahedron".
-      --Voxel 1,6,5,4,7,0,2,3 [list of integers]: node permutation for "Voxel".
-      --Wedge 3,5,4,0,2,1     [list of integers]: node permutation for "Wedge".
+      --cell_names Hexahedron, Tetrahedron, Pyramid, Wedge, Prism5, Prism6
+                              [list of str]: Cell names that can be reordered in your grid. You can use multiple names.Defaults to all cell names being used.
+      --volume_to_reorder all, positive, negative
+                              [str]: Select which element volume is invalid and needs reordering. 'all' will allow reordering of nodes for every element, regarding of their volume.
+                              'positive' or 'negative' will only reorder the element with the corresponding volume. Defaults to 'negative'.
       --output OUTPUT         [string]: The vtk output file destination.
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
+
+For example, assume that you have a mesh that contains 3 different cell types like Hexahedrons, Pyramids and Tetrahedrons.
+After checking ``element_volumes``, you found that all your Hexahedrons and half of your Tetrahedrons have a negative volume.
+To correct that, you can use this command:
+
+.. code-block::
+
+      $ python src/geos/mesh/doctor/mesh_doctor.py -i /path/to/your/mesh/file fix_elements_orderings --cell_names Hexahedron,Tetrahedron
+      --volume_to_reorder negative --output /new/path/for/your/new/mesh/reordered/file --data-mode binary
 
 ``generate_cube``
 """""""""""""""""
@@ -340,7 +343,3 @@ API
 
 .. automodule:: geos.mesh.conversion.abaqus_converter
     :members:
-
-
-
-
