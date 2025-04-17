@@ -80,7 +80,7 @@ def test_getNumberOfComponentsDataSet(
 
 
 @pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PERM", False, ( "component1", "component2", "component3" ) ),
+( "PERM", False, ( "AX1", "AX2", "AX3" ) ),
     ( "PORO", False, () ),
 ] )
 def test_getComponentNamesDataSet( vtkDataSetTest: vtkDataSet, attributeName: str, onpoints: bool,
