@@ -80,7 +80,7 @@ def test_getNumberOfComponentsDataSet(
 
 
 @pytest.mark.parametrize( "attributeName, onpoints, expected", [
-( "PERM", False, ( "AX1", "AX2", "AX3" ) ),
+    ( "PERM", False, ( "AX1", "AX2", "AX3" ) ),
     ( "PORO", False, () ),
 ] )
 def test_getComponentNamesDataSet( vtkDataSetTest: vtkDataSet, attributeName: str, onpoints: bool,
@@ -93,8 +93,7 @@ def test_getComponentNamesDataSet( vtkDataSetTest: vtkDataSet, attributeName: st
         onpoints (bool): _description_
         expected (tuple[ str, ...]): _description_
     """
-    obtained: tuple[ str, ...] = vtkutils.getComponentNamesDataSet( vtkDataSetTest, attributeName,
-                                                                    onpoints )
+    obtained: tuple[ str, ...] = vtkutils.getComponentNamesDataSet( vtkDataSetTest, attributeName, onpoints )
 
     assert obtained == expected
 
