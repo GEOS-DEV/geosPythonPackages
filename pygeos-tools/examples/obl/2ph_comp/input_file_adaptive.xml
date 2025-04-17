@@ -68,20 +68,6 @@
 
 	<Events
 		maxTime="31536000.0">
-		<!--PeriodicEvent
-			name="outputs"
-			timeFrequency="2592000.0"
-			target="/Outputs/vtkOutput"/-->
-		<PeriodicEvent
-			name="solver_1"
-			forceDt="86400.0"
-			endTime="604800.0"
-			target="/Solvers/compflow"/>
-		<PeriodicEvent
-			name="solver_2"
-			forceDt="1209600.0"
-			beginTime="604800.0"
-			target="/Solvers/compflow"/>
 	</Events>
 
 	<Outputs>

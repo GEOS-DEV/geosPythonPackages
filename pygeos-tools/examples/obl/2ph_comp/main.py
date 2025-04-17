@@ -92,20 +92,25 @@ def run_darts_model( xml_name: str, darts_model=None ):
             print( "Adaptive OBL interpolator is configured." )
 
     solver.applyInitialConditions()
-    solver.setDtFromTimeVariable( "forceDt" )
     solver.setMaxTime( solver.getTimeVariables()[ "maxTime" ] )
 
     time: float = 0
     cycle: int = 0
 
+    solver.setDt( 86400.0 )
     solver.outputVtk( time )
     while time < solver.maxTime:
+        if time < 604800:
+            solver.setDt( 86400.0 )
+        else:
+            solver.setDt( 1209600.0 )
+
         if rank == 0:
             if solver.dt is not None:
                 print( f"time = {time:.3f}s, dt = {solver.getDt():.4f}, iter = {cycle + 1}" )
         solver.execute( time )
+        time += solver.getDt()
         solver.outputVtk( time )
-        time += solver.dt
         cycle += 1
     solver.cleanup( time )
 

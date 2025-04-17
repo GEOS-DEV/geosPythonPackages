@@ -13,8 +13,8 @@
 # ------------------------------------------------------------------------------------------------------------
 
 # ---------------------------------------- README ----------------------------------------
-# Requires 'python -m pip install open-darts' and GEOS branch feature/anovikov/adaptive_obl
-# to run this example.
+# Requires 'python -m pip install open-darts phreeqpy coolprop' 
+# and GEOS branch feature/anovikov/adaptive_obl to run this example.
 # In this model, carbonated water is injected into a core-scale domain,
 # associated geochemistry is resolved by PHREEQC.
 
@@ -45,7 +45,6 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
             print( "Adaptive OBL interpolator is configured." )
 
     solver.applyInitialConditions()
-    solver.updateTimeVariables()
     solver.setMaxTime( solver.getTimeVariables()[ "maxTime" ] )
 
     time: float = 0
@@ -96,5 +95,5 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
 
 if __name__ == "__main__":
     darts_model = Model()
-    # run_darts_model(domain='1D', xml_name="1d_setup.xml", darts_model=darts_model)
+    # run_darts_model( domain='1D', xml_name="1d_setup.xml", darts_model=darts_model )
     run_darts_model( domain='2D', xml_name="2d_setup.xml", darts_model=darts_model )
