@@ -13,7 +13,7 @@
 # ------------------------------------------------------------------------------------------------------------
 
 # ---------------------------------------- README ----------------------------------------
-# Requires 'python -m pip install open-darts phreeqpy coolprop' 
+# Requires 'python -m pip install open-darts phreeqpy coolprop'
 # and GEOS branch feature/anovikov/adaptive_obl to run this example.
 # In this model, carbonated water is injected into a core-scale domain,
 # associated geochemistry is resolved by PHREEQC.

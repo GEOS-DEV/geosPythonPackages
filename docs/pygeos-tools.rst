@@ -44,4 +44,4 @@ Once the correct python is selected, you need to run in your virtual environment
    :maxdepth: 1
    :caption: Example
 
-   ./pygeos_tools_docs/Example/reservoir.rst
+   ./pygeos_tools_docs/example.rst
