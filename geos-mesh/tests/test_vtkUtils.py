@@ -83,17 +83,17 @@ def test_getNumberOfComponentsDataSet(
     ( "PERM", False, ( "component1", "component2", "component3" ) ),
     ( "PORO", False, () ),
 ] )
-def test_getComponentNamesDataSet( vtkdatasetWithComponentNames: vtkDataSet, attributeName: str, onpoints: bool,
+def test_getComponentNamesDataSet( vtkDataSetTest: vtkDataSet, attributeName: str, onpoints: bool,
                                    expected: tuple[ str, ...] ) -> None:
     """Test getComponentNamesDataSet function.
 
     Args:
-        vtkdatasetWithComponentNames (vtkDataSet): _description_
+        vtkDataSetTest (vtkDataSet): _description_
         attributeName (str): _description_
         onpoints (bool): _description_
         expected (tuple[ str, ...]): _description_
     """
-    obtained: tuple[ str, ...] = vtkutils.getComponentNamesDataSet( vtkdatasetWithComponentNames, attributeName,
+    obtained: tuple[ str, ...] = vtkutils.getComponentNamesDataSet( vtkDataSetTest, attributeName,
                                                                     onpoints )
 
     assert obtained == expected

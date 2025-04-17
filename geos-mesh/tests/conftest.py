@@ -40,24 +40,3 @@ def vtkDataSetTest() -> vtkDataSet:
     reader.Update()
 
     return reader.GetOutput()
-
-
-@pytest.fixture( scope="function" )
-def vtkdatasetWithComponentNames( vtkDataSetTest: vtkDataSet ) -> vtkDataSet:
-    """Set names for existing vtk dataset for test purpose.
-
-    Args:
-        vtkDataSetTest (vtkDataSet): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    attributeName1: str = "PERM"
-
-    # return dataset
-    if vtkDataSetTest.GetCellData().HasArray( attributeName1 ) == 1:
-        vtkDataSetTest.GetCellData().GetArray( attributeName1 ).SetComponentName( 0, "component1" )
-        vtkDataSetTest.GetCellData().GetArray( attributeName1 ).SetComponentName( 1, "component2" )
-        vtkDataSetTest.GetCellData().GetArray( attributeName1 ).SetComponentName( 2, "component3" )
-
-    return vtkDataSetTest
