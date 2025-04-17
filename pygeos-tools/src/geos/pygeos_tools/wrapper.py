@@ -1,16 +1,20 @@
 import sys
 import numpy as np
-from mpi4py import MPI
 import matplotlib.pyplot as plt
 import pylvarray
 import pygeosx
+from typing import Dict, List, Union
+import mpi4py
+
+mpi4py.rc.initialize = False
+from mpi4py import MPI
 
 # Get the MPI rank
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
-def get_wrapper( problem, target_key, write_flag=False ):
+def get_wrapper( problem: pygeosx.Group, target_key: str, write_flag=False ) -> np.ndarray:
     """
     Get a local copy of a wrapper as a numpy ndarray
 
@@ -38,7 +42,7 @@ def get_wrapper( problem, target_key, write_flag=False ):
     return local_values
 
 
-def get_wrapper_par( problem, target_key, allgather=False, ghost_key='' ):
+def get_wrapper_par( problem: pygeosx.Group, target_key: str, allgather=False, ghost_key: str = '' ) -> np.ndarray:
     """
     Get a global copy of a wrapper as a numpy ndarray.
     Note: if ghost_key is set, it will try to remove any ghost elements
@@ -107,7 +111,7 @@ def get_wrapper_par( problem, target_key, allgather=False, ghost_key='' ):
         return all_values
 
 
-def gather_wrapper( problem, key, ghost_key='' ):
+def gather_wrapper( problem: pygeosx.Group, key: str, ghost_key: str = '' ) -> np.ndarray:
     """
     Get a global copy of a wrapper as a numpy ndarray on rank 0
 
@@ -121,7 +125,7 @@ def gather_wrapper( problem, key, ghost_key='' ):
     return get_wrapper_par( problem, key, ghost_key=ghost_key )
 
 
-def allgather_wrapper( problem, key, ghost_key='' ):
+def allgather_wrapper( problem: pygeosx.Group, key: str, ghost_key: str = '' ) -> np.ndarray:
     """
     Get a global copy of a wrapper as a numpy ndarray on all ranks
 
@@ -135,7 +139,7 @@ def allgather_wrapper( problem, key, ghost_key='' ):
     return get_wrapper_par( problem, key, allgather=True, ghost_key=ghost_key )
 
 
-def get_global_value_range( problem, key ):
+def get_global_value_range( problem: pygeosx.Group, key: str ) -> np.ndarray:
     """
     Get the range of a target value across all processes
 
@@ -177,7 +181,11 @@ def get_global_value_range( problem, key ):
     return global_min, global_max
 
 
-def print_global_value_range( problem, key, header, scale=1.0, precision='%1.4f' ):
+def print_global_value_range( problem: pygeosx.Group,
+                              key: str,
+                              header: str,
+                              scale: float = 1.0,
+                              precision: str = '%1.4f' ) -> tuple[ str, str ]:
     """
     Print the range of a target value across all processes
 
@@ -209,7 +217,7 @@ def print_global_value_range( problem, key, header, scale=1.0, precision='%1.4f'
     return global_min, global_max
 
 
-def set_wrapper_to_value( problem, key, value ):
+def set_wrapper_to_value( problem: pygeosx.Group, target_key: str, value: float ) -> None:
     """
     Set the value of a wrapper
 
@@ -218,11 +226,15 @@ def set_wrapper_to_value( problem, key, value ):
         target_key (str): Key for the target wrapper
         value (float): Value to set the wrapper
     """
-    local_values = get_wrapper( problem, key, write_flag=True )
+    local_values = get_wrapper( problem, target_key, write_flag=True )
     local_values[...] = value
 
 
-def set_wrapper_with_function( problem, target_key, input_keys, fn, target_index=-1 ):
+def set_wrapper_with_function( problem: pygeosx.Group,
+                               target_key: str,
+                               input_keys: Union[ str, List[ str ] ],
+                               fn: any,
+                               target_index: int = -1 ) -> None:
     """
     Set the value of a wrapper using a function
 
@@ -270,7 +282,11 @@ def set_wrapper_with_function( problem, target_key, input_keys, fn, target_index
                          ( str( M ), str( N ), target_index ) )
 
 
-def search_datastructure_wrappers_recursive( group, filters, matching_paths, level=0, group_path=[] ):
+def search_datastructure_wrappers_recursive( group: pygeosx.Group,
+                                             filters: List[ str ],
+                                             matching_paths: List[ str ],
+                                             level: int = 0,
+                                             group_path: List[ str ] = list() ) -> None:
     """
     Recursively search the group and its children for wrappers that match the filters
 
@@ -294,7 +310,29 @@ def search_datastructure_wrappers_recursive( group, filters, matching_paths, lev
                                                  group_path=group_path + [ sub_group_name ] )
 
 
-def get_matching_wrapper_path( problem, filters ):
+def get_all_matching_wrapper_paths( problem: pygeosx.Group, filters: List[ str ] ) -> List[ str ]:
+    """
+    Recursively search the group and its children for wrappers that match the filters
+    A successful match is identified if the wrapper path contains all of the
+    strings in the filter.
+    For example, if filters=['a', 'b', 'c'], the following could match any of the following:
+    'a/b/c', 'c/b/a', 'd/e/c/f/b/a/a'
+
+    Args:
+        problem (pygeosx.Group): GEOSX problem handle
+        filters (list[str]): a list of strings
+
+    Returns:
+        list[str]: Key of the all the matching wrappers that can satisfy the filters.
+    """
+    if not isinstance( filters, list ):
+        raise TypeError( f"'filters' argument needs to be a list of str. Cannot use '{filters}'." )
+    matching_paths: list[ str ] = list()
+    search_datastructure_wrappers_recursive( problem, filters, matching_paths )
+    return matching_paths
+
+
+def get_matching_wrapper_path( problem: pygeosx.Group, filters: List[ str ] ) -> str:
     """
     Recursively search the group and its children for wrappers that match the filters
     A successful match is identified if the wrapper path contains all of the
@@ -309,9 +347,7 @@ def get_matching_wrapper_path( problem, filters ):
     Returns:
         str: Key of the matching wrapper
     """
-    matching_paths = []
-    search_datastructure_wrappers_recursive( problem, filters, matching_paths )
-
+    matching_paths: list[ str ] = get_all_matching_wrapper_paths( problem, filters )
     if ( len( matching_paths ) == 1 ):
         if ( rank == 0 ):
             print( 'Found matching wrapper: %s' % ( matching_paths[ 0 ] ) )
@@ -325,7 +361,34 @@ def get_matching_wrapper_path( problem, filters ):
         raise Exception( 'Search resulted in 0 or >1 wrappers mathching filters' )
 
 
-def run_queries( problem, records ):
+def find_first_difference_between_wrapper_paths( wrapper_paths: List[ str ] ) -> List[ str ]:
+    """
+
+    Args:
+        wrapper_paths (List[ str ]): ['domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup',
+            'domain/MeshBodies/mesh/meshLevels/singlePhaseTPFA/ElementRegions/elementRegionsGroup']
+
+    Returns:
+        List[ str ]: First differences found between wrappers. In this example, we would obtain:
+        [ "Level0", "singlePhaseTPFA" ]
+    """
+    if isinstance( wrapper_paths, list ):
+        if len( wrapper_paths ) > 1:
+            differences: set[ str ] = set()
+            for i in range( 0, len( wrapper_paths ) - 1 ):
+                path0_elts: List[ str ] = wrapper_paths[ i ].split( "/" )
+                path1_elts: List[ str ] = wrapper_paths[ i + 1 ].split( "/" )
+                max_comparison_depth: int = min( len( path0_elts ), len( path1_elts ) )
+                for elt0, elt1 in zip( path0_elts[ :max_comparison_depth ], path1_elts[ :max_comparison_depth ] ):
+                    if elt0 != elt1:
+                        differences.add( elt0 )
+                        differences.add( elt1 )
+                        break
+            return list( differences )
+    return [ "" ]
+
+
+def run_queries( problem: pygeosx.Group, records: Dict[ str, Dict[ str, str ] ] ) -> None:
     """
     Query the current GEOSX datastructure
     Note: The expected record request format is as follows.
@@ -349,7 +412,10 @@ def run_queries( problem, records ):
     sys.stdout.flush()
 
 
-def plot_history( records, output_root='.', save_figures=True, show_figures=True ):
+def plot_history( records: Dict[ str, Dict[ str, str ] ],
+                  output_root: str = '.',
+                  save_figures: bool = True,
+                  show_figures: bool = True ) -> None:
     """
     Plot the time-histories for the records structure.
     Note: If figures are shown, the GEOSX process will be blocked until they are closed

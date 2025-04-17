@@ -1,20 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import logging
-from typing import (
-    Collection,
-    Iterable,
-)
 import numpy
-
-from vtkmodules.vtkCommonCore import (
-    reference,
-    vtkPoints,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkIncrementalOctreePointLocator, )
-
-from . import vtk_utils
+from typing import Collection, Iterable
+from vtkmodules.vtkCommonCore import reference, vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
@@ -73,5 +64,5 @@ def __check( mesh, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )

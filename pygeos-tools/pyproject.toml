@@ -1,13 +1,19 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.2", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["geos.pygeos_tools*"]
+exclude = ["examples"]
 
 [project]
 name = "pygeos-tools"
-version = "0.1.0"
+version = "0.2.0"
 description = "Tools for interacting with pygeosx"
 maintainers = [
-    {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
+    {name = "Christopher Sherman", email = "sherman27@llnl.gov" },
+    {name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" }
 ]
 license = {text = "LGPL-2.1"}
 classifiers = [
@@ -15,14 +21,27 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-requires-python = ">=3.8"
+requires-python = ">= 3.10"
 
 dependencies = [
+    "geos-utils @ file:./geos-utils",
+    "geos-mesh @ file:./geos-mesh",
     "matplotlib",
-    "numpy",
     "scipy",
     "mpi4py",
+    "vtk",
+    "pyevtk",
+    "xmltodict",
+    "h5py",
+    "segyio",
+    "numba",
 ]
+
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -38,4 +57,3 @@ filterwarnings = []
 [tool.coverage.run]
 branch = true
 source = ["geos"]
-

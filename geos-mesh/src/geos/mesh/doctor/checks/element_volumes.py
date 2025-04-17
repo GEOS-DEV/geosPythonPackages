@@ -1,22 +1,11 @@
-import logging
 from dataclasses import dataclass
+import logging
 from typing import List, Tuple
 import uuid
-
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAHEDRON,
-    VTK_PYRAMID,
-    VTK_TETRA,
-    VTK_WEDGE,
-)
-from vtkmodules.vtkFiltersVerdict import (
-    vtkCellSizeFilter,
-    vtkMeshQuality,
-)
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy, )
-
-from . import vtk_utils
+from vtkmodules.vtkCommonDataModel import VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
+from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
@@ -78,5 +67,5 @@ def __check( mesh, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )
