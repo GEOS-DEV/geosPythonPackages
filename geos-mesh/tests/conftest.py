@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Paloma Martinez
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-
+import os
 import pytest
 
 import numpy as np
@@ -23,7 +23,9 @@ def array( request: str ) -> npt.NDArray:
     Returns:
         npt.NDArray: _description_
     """
-    data = np.load( "data/data.npz" )
+    reference_data = "data/data.npz"
+    reference_data_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), reference_data )
+    data = np.load( reference_data_path )
 
     return data[ request.param ]
 
@@ -36,7 +38,10 @@ def vtkDataSetTest() -> vtkDataSet:
         vtkDataSet: _description_
     """
     reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-    reader.SetFileName( "../../../GEOS/inputFiles/poromechanicsFractures/domain_res5_id.vtu" )
+    vtkFilename = "data/domain_res5_id.vtu"
+    data_test_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
+    # reader.SetFileName( "geos-mesh/tests/data/domain_res5_id.vtu" )
+    reader.SetFileName( data_test_path )
     reader.Update()
 
     return reader.GetOutput()
