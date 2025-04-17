@@ -141,7 +141,7 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False 
     return writer.Write()
 
 
-def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, toBinary: bool = False, canOverwrite: bool = False ) -> int:
+def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
     """
     Writes the mesh to disk.
     Nothing will be done if the file already exists.
@@ -157,9 +157,9 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, toBinary: bool = False
     if file_extension == ".vtk":
         success_code = __write_vtk( mesh, vtk_output.output )
     elif file_extension == ".vts":
-        success_code = __write_vts( mesh, vtk_output.output, toBinary )
+        success_code = __write_vts( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     elif file_extension == ".vtu":
-        success_code = __write_vtu( mesh, vtk_output.output, toBinary )
+        success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
     else:
         # No writer found did work. Dying.
         err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\"."
