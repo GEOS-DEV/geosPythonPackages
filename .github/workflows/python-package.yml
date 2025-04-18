@@ -40,7 +40,18 @@ jobs:
       max-parallel: 3
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        package-name: ["geos-ats", "geos-mesh", "geos-posp", "geos-timehistory", "geos-trame", "geos-utils", "geos-xml-tools", "geos-xml-viewer", "hdf5-wrapper", "pygeos-tools"]
+        include:
+          - package-name: geos-ats
+          - package-name: geos-mesh
+          - package-name: geos-posp
+          - package-name: geos-timehistory
+          - package-name: geos-trame
+          - package-name: geos-utils
+          - package-name: geos-xml-tools
+          - package-name: geos-xml-viewer
+          - package-name: hdf5-wrapper
+          - package-name: pygeos-tools
+            dependencies: "geos-utils geos-mesh"
 
     steps:
     - uses: actions/checkout@v4
@@ -54,15 +65,20 @@ jobs:
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
-
-        # install dependencies for the package pygeos-tools (we wll need something better)
-        if [ "${{ matrix.package-name }}" = "pygeos-tools" ]; then
-          echo "Installing prerequisites for pygeos-tools..."
-          python -m pip install ./geos-utils
-          python -m pip install ./geos-mesh
-        fi
         python -m pip install pytest yapf toml
+
+        DEPS="${{ matrix.dependencies || '' }}"  
+
+        if [ -n "$DEPS" ]; then
+        echo "Installing additional dependencies: $DEPS"
+        for dep in $DEPS; do
+          python -m pip install ./$dep
+        done
+        fi
+
+        echo "Installing main package..."
         python -m pip install ./${{ matrix.package-name }}/[test]
+
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
@@ -73,4 +89,3 @@ jobs:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
       # wrap pytest to avoid error when no tests in the package
         sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
-         
