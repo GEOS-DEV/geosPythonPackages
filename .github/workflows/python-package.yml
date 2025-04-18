@@ -54,6 +54,13 @@ jobs:
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
+
+        # install dependencies for the package pygeos-tools (we wll need something better)
+        if [ "${{ matrix.package-name }}" = "pygeos-tools" ]; then
+          echo "Installing prerequisites for pygeos-tools..."
+          python -m pip install ./geos-utils
+          python -m pip install ./geos-mesh
+        fi
         python -m pip install pytest yapf toml
         python -m pip install ./${{ matrix.package-name }}/[test]
     - name: Lint with yapf
