@@ -31,7 +31,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     createAttribute,
     getArrayInObject,
     getComponentNames,

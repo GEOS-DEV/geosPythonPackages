@@ -33,7 +33,7 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     createAttribute,
     getArrayInObject,
     getAttributeSet,

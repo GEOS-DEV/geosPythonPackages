@@ -30,6 +30,7 @@ dependencies = [
     "tqdm >= 4.67",
     "numpy >= 2.2",
     "meshio >= 5.3",
+    "pandas",
 ]
 
 [project.scripts]

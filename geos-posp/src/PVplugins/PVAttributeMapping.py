@@ -18,7 +18,7 @@ import PVplugins  # noqa: F401
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.AttributeMappingFromCellCoords import (
     AttributeMappingFromCellCoords, )
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.vtkUtils import (
     fillPartialAttributes,
     getAttributeSet,
     getNumberOfComponents,
