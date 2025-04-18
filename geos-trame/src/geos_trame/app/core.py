@@ -13,7 +13,7 @@ from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
 from geos_trame.app.ui.timeline import TimelineEditor
-from geos_trame.app.ui.viewer import DeckViewer
+from geos_trame.app.ui.viewer.viewer import DeckViewer
 
 import sys
 
