@@ -15,6 +15,7 @@ class Renderable( Enum ):
     VTKMESH = "VTKMesh"
     INTERNALMESH = "InternalMesh"
     INTERNALWELL = "InternalWell"
+    VTKWELL = "VTKWell"
     PERFORATION = "Perforation"
 
 
@@ -201,7 +202,7 @@ class DeckInspector( vuetify.VTreeview ):
         self._source = None
         self.listen_to_active = listen_to_active
 
-        self.state.obj_path = ""
+        self.state.object_state = [ "", False ]
 
         # register used types from Problem
         self.simput_types = []
@@ -225,18 +226,18 @@ class DeckInspector( vuetify.VTreeview ):
 
         with self:
             with vuetify.Template( v_slot_append="{ item }" ):
-                with vuetify.VBtn(
-                        v_if=( "item.is_drawable" ),
-                        icon=True,
-                        flat=True,
-                        slim=True,
-                        input_value=( "item.drawn" ),
-                        click=( self.to_draw_change, "[item.id]" ),
-                ):
-                    vuetify.VIcon(
-                        "{{ ((item.drawn)) ? 'mdi-eye' : 'mdi-eye-off' }}",
-                        v_if=( "item.is_drawable" ),
-                    )
+                vuetify.VCheckboxBtn(
+                    v_if="item.is_drawable",
+                    icon=True,
+                    true_icon="mdi-eye",
+                    false_icon="mdi-eye-off",
+                    dense=True,
+                    hide_details=True,
+                    update_modelValue=( self.to_draw_change, "[ item.id, $event ] " ),
+                )
+
+    def to_draw_change( self, id, drawn ):
+        self.state.object_state = [ id, drawn ]
 
     @property
     def source( self ):
@@ -297,9 +298,6 @@ class DeckInspector( vuetify.VTreeview ):
                 for key, value in test.items():
                     debug.set_property( key, getattr( active_block, key ) )
                 debug.commit()
-
-    def to_draw_change( self, path ):
-        self.state.obj_path = path
 
     # def on_active_change(self, **_):
     #     if self.listen_to_active:

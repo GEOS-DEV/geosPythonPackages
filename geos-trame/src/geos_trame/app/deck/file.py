@@ -221,6 +221,7 @@ def _build_inspect_tree_inner( key, obj, path ) -> dict:
         "VTKMesh",
         "InternalMesh",
         "InternalWell",
+        "VTKWell",
         "Perforation",
     ]
     sub_node[ "drawn" ] = False
