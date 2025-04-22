@@ -101,7 +101,7 @@ def get_node_dict( obj, node_id, path ):
         title=node_name,
         children=children if len( children ) else [],
         hidden_children=[],
-        is_drawable=node_id in ( k for k in Renderable ),
+        is_drawable=node_id in ( k.value for k in Renderable ),
         drawn=False,
     )
 

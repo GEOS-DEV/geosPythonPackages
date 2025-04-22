@@ -73,6 +73,12 @@ class WellViewer:
 
         return self._wells[ index ].tube
 
+    def get_tube_size( self ) -> float:
+        """
+        get the size used for the tube.
+        """
+        return self.size
+
     def append_actor( self, perforation_path: str, tube_actor: pv.Actor ) -> None:
         """
         Append a given actor, typically the Actor returned by
@@ -98,9 +104,9 @@ class WellViewer:
         return self._wells[ index ].actor
 
     def update( self, value: float ) -> None:
-        radius = self.size * ( value / 100 )
+        self.size = value
         for idx, m in enumerate( self._wells ):
-            self._wells[ idx ].tube.copy_from( m.polyline.tube( radius=radius, n_sides=50 ) )
+            self._wells[ idx ].tube.copy_from( m.polyline.tube( radius=self.size, n_sides=50 ) )
 
     def remove( self, perforation_path: str ) -> None:
         """

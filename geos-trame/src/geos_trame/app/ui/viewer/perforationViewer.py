@@ -29,6 +29,9 @@ class PerforationViewer:
         self.perforation_actor.GetMapper().SetInputDataObject( self.perforation_mesh )
         self.perforation_actor.GetMapper().Update()
 
+    def get_perforation_size( self ) -> float:
+        return self.radius
+
     def reset( self ) -> None:
         self.perforation_actor = pv.Actor()
         self.perforation_mesh = pv.PolyData()

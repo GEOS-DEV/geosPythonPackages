@@ -144,28 +144,30 @@ class DeckViewer( vuetify.VCard ):
         Create slider to control in the gui well parameters.
         """
 
+        wells_radius = self._get_tube_size()
         self.plotter.add_slider_widget(
             self._on_change_tube_size,
-            [ 1, 100 ],
+            [ 1, 20 ],
             title="Wells radius",
             pointa=( 0.02, 0.12 ),
             pointb=( 0.30, 0.12 ),
             title_opacity=0.5,
             title_color="black",
             title_height=0.02,
-            value=5,
+            value=wells_radius,
         )
 
+        perforation_radius = self._get_perforation_size()
         self.plotter.add_slider_widget(
             self._on_change_perforation_size,
-            [ 1, 100 ],
+            [ 1, 50 ],
             title="Perforation radius",
             title_opacity=0.5,
             pointa=( 0.02, 0.25 ),
             pointb=( 0.30, 0.25 ),
             title_color="black",
             title_height=0.02,
-            value=5,
+            value=perforation_radius,
         )
 
     def _remove_slider( self ) -> None:
@@ -177,9 +179,19 @@ class DeckViewer( vuetify.VCard ):
     def _on_change_tube_size( self, value ) -> None:
         self.well_engine.update( value )
 
+    def _get_tube_size( self ) -> float:
+        return self.well_engine.get_tube_size()
+
     def _on_change_perforation_size( self, value ) -> None:
         for key, perforation in self._perforations.items():
             perforation.update_perforation_radius( value )
+
+    def _get_perforation_size( self ) -> float:
+        if len( self._perforations ) <= 0:
+            return 5
+
+        for key, perforation in self._perforations.items():
+            return perforation.get_perforation_size()
 
     def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
         """
