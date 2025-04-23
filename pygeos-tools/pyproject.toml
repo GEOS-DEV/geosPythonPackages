@@ -24,8 +24,8 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-    "geos-utils @ file:./geos-utils",
-    "geos-mesh @ file:./geos-mesh",
+    "geos-utils",
+    "geos-mesh",
     "matplotlib",
     "scipy",
     "mpi4py",
