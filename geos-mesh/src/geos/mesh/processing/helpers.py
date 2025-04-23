@@ -7,19 +7,15 @@ from typing import Sequence, Union
 
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkIncrementalOctreePointLocator,
-    vtkPointData,
-    vtkCellData,
-    vtkDataSet
-)
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkIncrementalOctreePointLocator, vtkPointData,
+                                            vtkCellData, vtkDataSet )
 
 from vtkmodules.vtkCommonCore import (
     vtkPoints,
     vtkIdList,
     reference,
 )
+
 
 # TODO: copy from vtkUtils
 def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
@@ -53,7 +49,8 @@ def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str,
         attributes[ attributeName ] = nbComponents
     return attributes
 
-def getBounds(cellPtsCoord: list[npt.NDArray[np.float64]]) -> Sequence[float]:
+
+def getBounds( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ] ) -> Sequence[ float ]:
     """Compute bounding box coordinates of the list of points.
 
     Args:
@@ -62,16 +59,24 @@ def getBounds(cellPtsCoord: list[npt.NDArray[np.float64]]) -> Sequence[float]:
     Returns:
         Sequence[float]: bounding box coordinates (xmin, xmax, ymin, ymax, zmin, zmax)
     """
-    bounds: list[float] = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf,]
+    bounds: list[ float ] = [
+        np.inf,
+        -np.inf,
+        np.inf,
+        -np.inf,
+        np.inf,
+        -np.inf,
+    ]
     for ptsCoords in cellPtsCoord:
-        mins: npt.NDArray[np.float64] = np.min(ptsCoords, axis=0)
-        maxs: npt.NDArray[np.float64] = np.max(ptsCoords, axis=0)
-        for i in range(3):
-            bounds[2 * i] = float(min(bounds[2 * i], mins[i]))
-            bounds[2 * i + 1] = float(max(bounds[2 * i + 1], maxs[i]))
+        mins: npt.NDArray[ np.float64 ] = np.min( ptsCoords, axis=0 )
+        maxs: npt.NDArray[ np.float64 ] = np.max( ptsCoords, axis=0 )
+        for i in range( 3 ):
+            bounds[ 2 * i ] = float( min( bounds[ 2 * i ], mins[ i ] ) )
+            bounds[ 2 * i + 1 ] = float( max( bounds[ 2 * i + 1 ], maxs[ i ] ) )
     return bounds
 
-def createSingleCellMesh(cellType: int, ptsCoord: npt.NDArray[np.float64]) ->vtkUnstructuredGrid:
+
+def createSingleCellMesh( cellType: int, ptsCoord: npt.NDArray[ np.float64 ] ) -> vtkUnstructuredGrid:
     """Create a mesh that consists of a single cell.
 
     Args:
@@ -81,28 +86,28 @@ def createSingleCellMesh(cellType: int, ptsCoord: npt.NDArray[np.float64]) ->vtk
     Returns:
         vtkUnstructuredGrid: output mesh
     """
-    nbPoints: int = ptsCoord.shape[0]
-    points: npt.NDArray[np.float64] = np.vstack((ptsCoord,))
+    nbPoints: int = ptsCoord.shape[ 0 ]
+    points: npt.NDArray[ np.float64 ] = np.vstack( ( ptsCoord, ) )
     # Convert points to vtkPoints object
     vtkpts: vtkPoints = vtkPoints()
-    vtkpts.SetData(numpy_to_vtk(points))
+    vtkpts.SetData( numpy_to_vtk( points ) )
 
     # create cells from point ids
     cellsID: vtkIdList = vtkIdList()
     for j in range( nbPoints ):
-        cellsID.InsertNextId(j)
+        cellsID.InsertNextId( j )
 
     # add cell to mesh
     mesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
-    mesh.SetPoints(vtkpts)
-    mesh.Allocate(1)
-    mesh.InsertNextCell(cellType, cellsID)
+    mesh.SetPoints( vtkpts )
+    mesh.Allocate( 1 )
+    mesh.InsertNextCell( cellType, cellsID )
     return mesh
 
-def createMultiCellMesh(cellTypes: list[int],
-                        cellPtsCoord: list[npt.NDArray[np.float64]],
-                        sharePoints: bool = True
-                        ) ->vtkUnstructuredGrid:
+
+def createMultiCellMesh( cellTypes: list[ int ],
+                         cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
+                         sharePoints: bool = True ) -> vtkUnstructuredGrid:
     """Create a mesh that consists of multiple cells.
 
     .. WARNING:: the mesh is not check for conformity.
@@ -115,27 +120,28 @@ def createMultiCellMesh(cellTypes: list[int],
     Returns:
         vtkUnstructuredGrid: output mesh
     """
-    assert len(cellPtsCoord) == len(cellTypes), "The lists of cell types of point coordinates must be of same size."
-    nbCells: int = len(cellPtsCoord)
+    assert len( cellPtsCoord ) == len( cellTypes ), "The lists of cell types of point coordinates must be of same size."
+    nbCells: int = len( cellPtsCoord )
     mesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
     points: vtkPoints
-    cellVertexMapAll: list[tuple[int, ...]]
-    points, cellVertexMapAll = createVertices(cellPtsCoord, sharePoints)
-    assert len(cellVertexMapAll) == len(cellTypes), "The lists of cell types of cell point ids must be of same size."
-    mesh.SetPoints(points)
-    mesh.Allocate(nbCells)
+    cellVertexMapAll: list[ tuple[ int, ...] ]
+    points, cellVertexMapAll = createVertices( cellPtsCoord, sharePoints )
+    assert len( cellVertexMapAll ) == len(
+        cellTypes ), "The lists of cell types of cell point ids must be of same size."
+    mesh.SetPoints( points )
+    mesh.Allocate( nbCells )
     # create mesh cells
-    for cellType, ptsId in zip(cellTypes, cellVertexMapAll, strict=True):
+    for cellType, ptsId in zip( cellTypes, cellVertexMapAll, strict=True ):
         # create cells from point ids
         cellsID: vtkIdList = vtkIdList()
         for ptId in ptsId:
-            cellsID.InsertNextId(ptId)
-        mesh.InsertNextCell(cellType, cellsID)
+            cellsID.InsertNextId( ptId )
+        mesh.InsertNextCell( cellType, cellsID )
     return mesh
 
-def createVertices(cellPtsCoord: list[npt.NDArray[np.float64]],
-                   shared: bool = True
-                  ) -> tuple[vtkPoints, list[tuple[int, ...]]]:
+
+def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
+                    shared: bool = True ) -> tuple[ vtkPoints, list[ tuple[ int, ...] ] ]:
     """Create vertices from cell point coordinates list.
 
     Args:
@@ -147,22 +153,22 @@ def createVertices(cellPtsCoord: list[npt.NDArray[np.float64]],
             map of cell point ids
     """
     # get point bounds
-    bounds: list[float] = getBounds(cellPtsCoord)
+    bounds: list[ float ] = getBounds( cellPtsCoord )
     points: vtkPoints = vtkPoints()
     # use point locator to check for colocated points
     pointsLocator = vtkIncrementalOctreePointLocator()
-    pointsLocator.InitPointInsertion(points, bounds)
-    cellVertexMapAll: list[tuple[int, ...]] = []
-    ptId: reference = reference(0)
-    ptsCoords: npt.NDArray[np.float64]
+    pointsLocator.InitPointInsertion( points, bounds )
+    cellVertexMapAll: list[ tuple[ int, ...] ] = []
+    ptId: reference = reference( 0 )
+    ptsCoords: npt.NDArray[ np.float64 ]
     for ptsCoords in cellPtsCoord:
-        cellVertexMap: list[reference] = []
-        pt: npt.NDArray[np.float64] # 1DArray
+        cellVertexMap: list[ reference ] = []
+        pt: npt.NDArray[ np.float64 ]  # 1DArray
         for pt in ptsCoords:
             if shared:
-                pointsLocator.InsertUniquePoint( pt.tolist(), ptId)
+                pointsLocator.InsertUniquePoint( pt.tolist(), ptId )
             else:
-                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1)
-            cellVertexMap += [ptId.get()]
-        cellVertexMapAll += [tuple(cellVertexMap)]
+                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 )
+            cellVertexMap += [ ptId.get() ]
+        cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
