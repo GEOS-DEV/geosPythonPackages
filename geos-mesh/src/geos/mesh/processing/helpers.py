@@ -3,13 +3,16 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import numpy as np
 import numpy.typing as npt
-from typing import Sequence
+from typing import Sequence, Union
 
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
-    vtkIncrementalOctreePointLocator
+    vtkIncrementalOctreePointLocator,
+    vtkPointData,
+    vtkCellData,
+    vtkDataSet
 )
 
 from vtkmodules.vtkCommonCore import (
@@ -17,6 +20,38 @@ from vtkmodules.vtkCommonCore import (
     vtkIdList,
     reference,
 )
+
+# TODO: copy from vtkUtils
+def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
+    """Get the dictionnary of all attributes of a vtkDataSet on points or cells.
+
+    Args:
+        object (vtkDataSet): object where to find the attributes.
+        onPoints (bool): True if attributes are on points, False if they are
+            on cells.
+
+    Returns:
+        dict[str, int]: List of the names of the attributes.
+    """
+    attributes: dict[ str, int ] = {}
+    data: Union[ vtkPointData, vtkCellData ]
+    sup: str = ""
+    if onPoints:
+        data = object.GetPointData()
+        sup = "Point"
+    else:
+        data = object.GetCellData()
+        sup = "Cell"
+    assert data is not None, f"{sup} data was not recovered."
+
+    nbAttributes = data.GetNumberOfArrays()
+    for i in range( nbAttributes ):
+        attributeName = data.GetArrayName( i )
+        attribute = data.GetArray( attributeName )
+        assert attribute is not None, f"Attribut {attributeName} is null"
+        nbComponents = attribute.GetNumberOfComponents()
+        attributes[ attributeName ] = nbComponents
+    return attributes
 
 def getBounds(cellPtsCoord: list[npt.NDArray[np.float64]]) -> Sequence[float]:
     """Compute bounding box coordinates of the list of points.

@@ -2,26 +2,26 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
 from typing_extensions import Self
-from vtkmodules.vtkFiltersCore import vtkFeatureEdges
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
+    vtkIntArray,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
     vtkCell,
-    VTK_VERTEX
+    vtkTable,
+    vtkCellTypes,
+    VTK_VERTEX, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON
 )
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-CellTypeCounter module is a vtk filter that computes mesh stats.
+CellTypeCounter module is a vtk filter that computes cell type counts.
 
-Mesh stats include the number of elements of each type.
-
-Filter input is a vtkUnstructuredGrid.
+Filter input is a vtkUnstructuredGrid, output is a vtkTable
 
 To use the filter:
 
@@ -38,15 +38,15 @@ To use the filter:
     filter.SetInputDataObject(input)
     # do calculations
     filter.Update()
-    # get output mesh id card
-    output :CellTypeCounts = filter.GetCellTypeCounts()
+    # get counts
+    counts :CellTypeCounts = filter.GetCellTypeCounts()
 """
 class CellTypeCounter(VTKPythonAlgorithmBase):
 
     def __init__(self) ->None:
         """CellTypeCounter filter computes mesh stats."""
-        super().__init__(nInputPorts=1, nOutputPorts=0)
-        self.card: CellTypeCounts
+        super().__init__(nInputPorts=1, nOutputPorts=1, inputType="vtkUnstructuredGrid", outputType="vtkTable")
+        self.counts: CellTypeCounts
 
     def FillInputPortInformation(self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -60,25 +60,6 @@ class CellTypeCounter(VTKPythonAlgorithmBase):
         """
         if port == 0:
             info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid")
-
-    def RequestDataObject(self: Self,
-                          request: vtkInformation,  # noqa: F841
-                          inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-                          outInfoVec: vtkInformationVector,
-                         ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        assert inData is not None
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)
 
     def RequestData(self: Self,
                     request: vtkInformation,  # noqa: F841
@@ -96,32 +77,32 @@ class CellTypeCounter(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         inData: vtkUnstructuredGrid = self.GetInputData(inInfoVec, 0, 0)
+        outTable: vtkTable = vtkTable.GetData(outInfoVec, 0)
         assert inData is not None, "Input mesh is undefined."
+        assert outTable is not None, "Output table is undefined."
 
-        self.card = CellTypeCounts()
-        self.card.setTypeCount(VTK_VERTEX, inData.GetNumberOfPoints())
+        # compute cell type counts
+        self.counts = CellTypeCounts()
+        self.counts.setTypeCount(VTK_VERTEX, inData.GetNumberOfPoints())
         for i in range(inData.GetNumberOfCells()):
             cell: vtkCell = inData.GetCell(i)
-            self.card.addType(cell.GetCellType())
+            self.counts.addType(cell.GetCellType())
+
+        # create output table
+        # first reset output table
+        outTable.RemoveAllRows()
+        outTable.RemoveAllColumns()
+        outTable.SetNumberOfRows(1)
+
+        # create columns per types
+        for cellType in self.getAllCellTypes():
+            array: vtkIntArray = vtkIntArray()
+            array.SetName(vtkCellTypes.GetClassNameFromTypeId(cellType))
+            array.SetNumberOfComponents(1)
+            array.SetNumberOfValues(1)
+            array.SetValue(0, self.counts.getTypeCount(cellType))
+            outTable.AddColumn(array)
         return 1
-
-    def _computeNumberOfEdges(self :Self, mesh: vtkUnstructuredGrid) ->int:
-        """Compute the number of edges of the mesh.
-
-        Args:
-            mesh (vtkUnstructuredGrid): input mesh
-
-        Returns:
-            int: number of edges
-        """
-        edges: vtkFeatureEdges = vtkFeatureEdges()
-        edges.BoundaryEdgesOn()
-        edges.ManifoldEdgesOn()
-        edges.FeatureEdgesOff()
-        edges.NonManifoldEdgesOff()
-        edges.SetInputDataObject(mesh)
-        edges.Update()
-        return edges.GetOutput().GetNumberOfCells()
 
     def GetCellTypeCounts(self :Self) -> CellTypeCounts:
         """Get CellTypeCounts object.
@@ -129,4 +110,12 @@ class CellTypeCounter(VTKPythonAlgorithmBase):
         Returns:
             CellTypeCounts: CellTypeCounts object.
         """
-        return self.card
+        return self.counts
+
+    def getAllCellTypes(self :Self) -> tuple[int,...]:
+        """Get all cell type ids managed by CellTypeCount class.
+
+        Returns:
+            tuple[int,...]: tuple containg cell type ids.
+        """
+        return (VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON)

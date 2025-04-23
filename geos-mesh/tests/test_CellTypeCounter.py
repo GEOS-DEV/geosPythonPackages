@@ -63,10 +63,10 @@ def test_CellTypeCounter_single( test_case: TestCase ) ->None:
     filter :CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject(test_case.mesh)
     filter.Update()
-    card :CellTypeCounts = filter.GetCellTypeCounts()
-    assert card is not None, "CellTypeCounts is undefined"
+    counts :CellTypeCounts = filter.GetCellTypeCounts()
+    assert counts is not None, "CellTypeCounts is undefined"
 
-    assert card.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
+    assert counts.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 
     # compute counts for each type of cell
     elementTypes: tuple[int] = (VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE)
@@ -77,12 +77,12 @@ def test_CellTypeCounter_single( test_case: TestCase ) ->None:
         counts[index] += 1
     # check cell type counts
     for i, elementType in enumerate(elementTypes):
-        assert int(card.getTypeCount(elementType)) == counts[i], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
+        assert int(counts.getTypeCount(elementType)) == counts[i], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[0] + counts[1]
     nbPolyhedra: int = np.sum(counts[2:])
-    assert int(card.getTypeCount(VTK_POLYGON)) == nbPolygon, f"The number of faces should be {nbPolygon}."
-    assert int(card.getTypeCount(VTK_POLYHEDRON)) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."
+    assert int(counts.getTypeCount(VTK_POLYGON)) == nbPolygon, f"The number of faces should be {nbPolygon}."
+    assert int(counts.getTypeCount(VTK_POLYHEDRON)) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."
 
 def __generate_test_data_multi_cell() -> Iterator[ TestCase ]:
     """Generate test cases.
@@ -110,10 +110,10 @@ def test_CellTypeCounter_multi( test_case: TestCase ) ->None:
     filter :CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject(test_case.mesh)
     filter.Update()
-    card :CellTypeCounts = filter.GetCellTypeCounts()
-    assert card is not None, "CellTypeCounts is undefined"
+    counts :CellTypeCounts = filter.GetCellTypeCounts()
+    assert counts is not None, "CellTypeCounts is undefined"
 
-    assert card.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
+    assert counts.getTypeCount(VTK_VERTEX) == test_case.mesh.GetNumberOfPoints(), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 
     # compute counts for each type of cell
     elementTypes: tuple[int] = (VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE)
@@ -124,9 +124,9 @@ def test_CellTypeCounter_multi( test_case: TestCase ) ->None:
         counts[index] += 1
     # check cell type counts
     for i, elementType in enumerate(elementTypes):
-        assert int(card.getTypeCount(elementType)) == counts[i], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
+        assert int(counts.getTypeCount(elementType)) == counts[i], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[0] + counts[1]
     nbPolyhedra: int = np.sum(counts[2:])
-    assert int(card.getTypeCount(VTK_POLYGON)) == nbPolygon, f"The number of faces should be {nbPolygon}."
-    assert int(card.getTypeCount(VTK_POLYHEDRON)) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."
+    assert int(counts.getTypeCount(VTK_POLYGON)) == nbPolygon, f"The number of faces should be {nbPolygon}."
+    assert int(counts.getTypeCount(VTK_POLYHEDRON)) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."

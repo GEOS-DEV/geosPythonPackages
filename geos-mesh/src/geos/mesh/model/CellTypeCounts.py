@@ -17,13 +17,13 @@ CellTypeCounts stores the number of elements of each type.
 class CellTypeCounts():
     def __init__(self: Self ) ->None:
         """CellTypeCounts stores the number of cells of each type."""
-        self._counts: npt.NDArray[np.int64] = np.zeros(VTK_NUMBER_OF_CELL_TYPES)
+        self._counts: npt.NDArray[np.int64] = np.zeros(VTK_NUMBER_OF_CELL_TYPES, dtype=float)
 
     def __str__(self: Self) ->str:
         """Overload __str__ method.
 
         Returns:
-            str: card string.
+            str: counts as string.
         """
         return self.print()
 
@@ -39,9 +39,9 @@ class CellTypeCounts():
             Self: new CellTypeCounts object
         """
         assert isinstance(other, CellTypeCounts), "Other object must be a CellTypeCounts."
-        newCard: CellTypeCounts = CellTypeCounts()
-        newCard._counts = self._counts + other._counts
-        return newCard
+        newCounts: CellTypeCounts = CellTypeCounts()
+        newCounts._counts = self._counts + other._counts
+        return newCounts
 
     def addType(self: Self, cellType: int) ->None:
         """Increment the number of cell of input type.
@@ -87,10 +87,10 @@ class CellTypeCounts():
             self._counts[VTK_POLYHEDRON] += count
 
     def print(self: Self) ->str:
-        """Print card string.
+        """Print counts string.
 
         Returns:
-            str: card string.
+            str: counts string.
         """
         card: str = ""
         card +=  "|                                   |              |\n"
@@ -105,6 +105,3 @@ class CellTypeCounts():
         for cellType in (VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON):
             card += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
         return card
-
-
-
