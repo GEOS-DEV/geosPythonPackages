@@ -149,7 +149,7 @@ def main():
         while time < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
                 print( f"time = {time:.3f}s, dt= {solver.dt:.4f}, iter = {cycle + 1}" )
-            
+
             if cycle % 50 == 0:
                 solver.outputVtk( time, cycle )
 

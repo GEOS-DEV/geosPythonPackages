@@ -61,7 +61,7 @@ def main():
         solver.execute( time, cycle )
         time += solver.dt
         cycle += 1
-        
+
     solver.outputVtk( time, cycle )
     solver.cleanup( time )
 

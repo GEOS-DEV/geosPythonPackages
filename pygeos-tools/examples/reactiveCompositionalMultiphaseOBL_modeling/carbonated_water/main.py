@@ -50,7 +50,7 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
     time: float = 0
     cycle: int = 0
     solver.setDt( 8.64 )
-    
+
     while time < solver.maxTime:
         # choose new timestep
         if domain == '1D':
@@ -83,7 +83,7 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
                 solver.setDt( 100.0 )
         if rank == 0:
             print( f"time = {time:.3f}s, dt = {solver.getDt():.4f}, step = {cycle + 1}" )
-        
+
         if cycle % 5 == 0:
             solver.outputVtk( time, cycle )
 
