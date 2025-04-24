@@ -53,15 +53,16 @@ def main():
     time: float = 0.0
     cycle: int = 0
 
-    solver.outputVtk( time )
     while time < solver.maxTime:
         if rank == 0:
             if solver.dt is not None:
                 print( f"time = {time:.3f}s, dt = {solver.dt:.4f}, iter = {cycle + 1}" )
-        solver.execute( time )
-        solver.outputVtk( time )
+        solver.outputVtk( time, cycle )
+        solver.execute( time, cycle )
         time += solver.dt
         cycle += 1
+        
+    solver.outputVtk( time, cycle )
     solver.cleanup( time )
 
 
