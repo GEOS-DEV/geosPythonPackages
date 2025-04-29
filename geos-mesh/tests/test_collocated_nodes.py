@@ -1,16 +1,7 @@
-from typing import Iterator, Tuple
-
 import pytest
-
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_TETRA,
-    vtkCellArray,
-    vtkTetra,
-    vtkUnstructuredGrid,
-)
-
+from typing import Iterator, Tuple
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkTetra, vtkUnstructuredGrid, VTK_TETRA
 from geos.mesh.doctor.checks.collocated_nodes import Options, __check
 
 

@@ -17,7 +17,8 @@ import sys
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-posp', 'geos-pv', 'geos-timehistory', 'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'pygeos-tools' )
+python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-posp', 'geos-pv', 'geos-timehistory',
+                   'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'pygeos-tools' )
 
 
 for m in python_modules:
@@ -49,7 +50,9 @@ extensions = [
 ]
 
 autoclass_content = 'both'
-autodoc_mock_imports = [ "ats", "colorcet", "h5py", "lxml", "matplotlib", "meshio", "mpi4py", "scipy", "pandas", "paraview", "pygeosx", "pylvarray", "vtk", "xmlschema", "xsdata", ]
+autodoc_mock_imports = [ "ats", "colorcet", "h5py", "lxml", "matplotlib", "meshio", "mpi4py", "numba", "pandas",
+                         "paraview", "pygeosx", "pyevtk", "pylvarray", "scipy", "segyio", "vtk", "xmlschema",
+                         "xmltodict", "xsdata" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
 suppress_warnings = [ "autodoc.mocked_object" ]
