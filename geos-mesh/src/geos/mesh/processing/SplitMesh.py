@@ -18,11 +18,14 @@ from vtkmodules.vtkCommonDataModel import (
     vtkCellData,
     vtkCell,
     vtkCellTypes,
-    VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID,
+    VTK_TRIANGLE,
+    VTK_QUAD,
+    VTK_TETRA,
+    VTK_HEXAHEDRON,
+    VTK_PYRAMID,
 )
 
-from vtkmodules.util.numpy_support import (numpy_to_vtk,
-                                           vtk_to_numpy)
+from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 
 __doc__ = """
 SplitMesh module is a vtk filter that split cells of a mesh composed of Tetrahedra, pyramids, and hexahedra.
@@ -48,19 +51,20 @@ To use the filter:
     output :vtkUnstructuredGrid = filter.GetOutputDataObject(0)
 """
 
-class SplitMesh(VTKPythonAlgorithmBase):
 
-    def __init__(self) ->None:
+class SplitMesh( VTKPythonAlgorithmBase ):
+
+    def __init__( self ) -> None:
         """SplitMesh filter splits each cell using edge centers."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
 
         self.inData: vtkUnstructuredGrid
         self.cells: vtkCellArray
         self.points: vtkPoints
         self.originalId: vtkIdTypeArray
-        self.cellTypes: list[int]
+        self.cellTypes: list[ int ]
 
-    def FillInputPortInformation(self: Self, port: int, info: vtkInformation ) -> int:
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
@@ -71,13 +75,14 @@ class SplitMesh(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         if port == 0:
-            info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid")
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
 
-    def RequestDataObject(self: Self,
-                          request: vtkInformation,  # noqa: F841
-                          inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-                          outInfoVec: vtkInformationVector,
-                         ) -> int:
+    def RequestDataObject(
+        self: Self,
+        request: vtkInformation,  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+        outInfoVec: vtkInformationVector,
+    ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
@@ -88,19 +93,20 @@ class SplitMesh(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )
 
-    def RequestData(self: Self,
-                    request: vtkInformation,  # noqa: F841
-                    inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-                    outInfoVec: vtkInformationVector,
-                   ) -> int:
+    def RequestData(
+        self: Self,
+        request: vtkInformation,  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+        outInfoVec: vtkInformationVector,
+    ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
@@ -111,8 +117,8 @@ class SplitMesh(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.inData = self.GetInputData(inInfoVec, 0, 0)
-        output: vtkUnstructuredGrid = self.GetOutputData(outInfoVec, 0)
+        self.inData = self.GetInputData( inInfoVec, 0, 0 )
+        output: vtkUnstructuredGrid = self.GetOutputData( outInfoVec, 0 )
 
         assert self.inData is not None, "Input mesh is undefined."
         assert output is not None, "Output mesh is undefined."
@@ -121,46 +127,46 @@ class SplitMesh(VTKPythonAlgorithmBase):
         nb_hex, nb_tet, nb_pyr, nb_triangles, nb_quad = self._get_cell_counts()
 
         self.points = vtkPoints()
-        self.points.DeepCopy(self.inData.GetPoints())
+        self.points.DeepCopy( self.inData.GetPoints() )
         nbNewPoints: int = 0
         volumeCellCounts = nb_hex + nb_tet + nb_pyr
         nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9 if volumeCellCounts > 0 else nb_triangles * 3 + nb_quad * 5
         nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
 
-        self.points.Resize( self.inData.GetNumberOfPoints() + nbNewPoints)
+        self.points.Resize( self.inData.GetNumberOfPoints() + nbNewPoints )
         self.cells = vtkCellArray()
-        self.cells.AllocateExact(nbNewCells, 8)
+        self.cells.AllocateExact( nbNewCells, 8 )
         self.originalId = vtkIdTypeArray()
-        self.originalId.SetName("OriginalID")
-        self.originalId.Allocate(nbNewCells)
+        self.originalId.SetName( "OriginalID" )
+        self.originalId.Allocate( nbNewCells )
         self.cellTypes = []
-        for c in range(nb_cells):
-            cell: vtkCell = self.inData.GetCell(c)
+        for c in range( nb_cells ):
+            cell: vtkCell = self.inData.GetCell( c )
             cellType: int = cell.GetCellType()
             if cellType == VTK_HEXAHEDRON:
-                self._split_hexahedron(cell, c)
+                self._split_hexahedron( cell, c )
             elif cellType == VTK_TETRA:
-                self._split_tetrahedron(cell, c)
+                self._split_tetrahedron( cell, c )
             elif cellType == VTK_PYRAMID:
-                self._split_pyramid(cell, c)
+                self._split_pyramid( cell, c )
             elif cellType == VTK_TRIANGLE:
-                self._split_triangle(cell, c)
+                self._split_triangle( cell, c )
             elif cellType == VTK_QUAD:
-                self._split_quad(cell, c)
+                self._split_quad( cell, c )
             else:
-                raise TypeError(f"Cell type {vtkCellTypes.GetClassNameFromTypeId(cellType)} is not supported.")
+                raise TypeError( f"Cell type {vtkCellTypes.GetClassNameFromTypeId(cellType)} is not supported." )
         # add points and cells
-        output.SetPoints(self.points)
-        output.SetCells(self.cellTypes, self.cells)
+        output.SetPoints( self.points )
+        output.SetCells( self.cellTypes, self.cells )
         # add attribute saving original cell ids
         cellArrays: vtkCellData = output.GetCellData()
         assert cellArrays is not None, "Cell data is undefined."
-        cellArrays.AddArray(self.originalId)
+        cellArrays.AddArray( self.originalId )
         # transfer all cell arrays
-        self._transferCellArrays(output)
+        self._transferCellArrays( output )
         return 1
 
-    def _get_cell_counts(self: Self) -> tuple[int, int, int, int, int]:
+    def _get_cell_counts( self: Self ) -> tuple[ int, int, int, int, int ]:
         """Get the number of cells of each type.
 
         Returns:
@@ -173,8 +179,8 @@ class SplitMesh(VTKPythonAlgorithmBase):
         nb_pyr: int = 0
         nb_triangles: int = 0
         nb_quad: int = 0
-        for c in range(nb_cells):
-            cell: vtkCell = self.inData.GetCell(c)
+        for c in range( nb_cells ):
+            cell: vtkCell = self.inData.GetCell( c )
             cellType = cell.GetCellType()
             if cellType == VTK_HEXAHEDRON:
                 nb_hex = nb_hex + 1
@@ -188,7 +194,7 @@ class SplitMesh(VTKPythonAlgorithmBase):
                 nb_quad = nb_quad + 1
         return nb_hex, nb_tet, nb_pyr, nb_triangles, nb_quad
 
-    def _addMidPoint( self: Self, ptA :int, ptB :int) ->int:
+    def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.
 
         Args:
@@ -198,12 +204,12 @@ class SplitMesh(VTKPythonAlgorithmBase):
         Returns:
             int: inserted point Id
         """
-        ptACoor: npt.NDArray[np.float64] = np.array(self.points.GetPoint(ptA))
-        ptBCoor: npt.NDArray[np.float64] = np.array(self.points.GetPoint(ptB))
-        center: npt.NDArray[np.float64] = (ptACoor + ptBCoor) / 2.
-        return self.points.InsertNextPoint(center[0], center[1], center[2])
+        ptACoor: npt.NDArray[ np.float64 ] = np.array( self.points.GetPoint( ptA ) )
+        ptBCoor: npt.NDArray[ np.float64 ] = np.array( self.points.GetPoint( ptB ) )
+        center: npt.NDArray[ np.float64 ] = ( ptACoor + ptBCoor ) / 2.
+        return self.points.InsertNextPoint( center[ 0 ], center[ 1 ], center[ 2 ] )
 
-    def _split_tetrahedron(self :Self, cell: vtkCell, index: int) -> None:
+    def _split_tetrahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a tetrahedron.
 
         Let's suppose an input tetrahedron composed of nodes (0, 1, 2, 3),
@@ -226,30 +232,30 @@ class SplitMesh(VTKPythonAlgorithmBase):
             cell (vtkCell): cell to split
             index (int): index of the cell
         """
-        pt0: int  = cell.GetPointId(0)
-        pt1: int  = cell.GetPointId(1)
-        pt2: int  = cell.GetPointId(2)
-        pt3: int  = cell.GetPointId(3)
-        pt4: int  = self._addMidPoint(pt0,pt1)
-        pt5: int  = self._addMidPoint(pt1,pt2)
-        pt6: int  = self._addMidPoint(pt0,pt2)
-        pt7: int  = self._addMidPoint(pt0,pt3)
-        pt8: int  = self._addMidPoint(pt2,pt3)
-        pt9: int  = self._addMidPoint(pt1,pt3)
+        pt0: int = cell.GetPointId( 0 )
+        pt1: int = cell.GetPointId( 1 )
+        pt2: int = cell.GetPointId( 2 )
+        pt3: int = cell.GetPointId( 3 )
+        pt4: int = self._addMidPoint( pt0, pt1 )
+        pt5: int = self._addMidPoint( pt1, pt2 )
+        pt6: int = self._addMidPoint( pt0, pt2 )
+        pt7: int = self._addMidPoint( pt0, pt3 )
+        pt8: int = self._addMidPoint( pt2, pt3 )
+        pt9: int = self._addMidPoint( pt1, pt3 )
 
-        self.cells.InsertNextCell(4, [pt0,pt4,pt6,pt7])
-        self.cells.InsertNextCell(4, [pt7,pt9,pt8,pt3])
-        self.cells.InsertNextCell(4, [pt9,pt4,pt5,pt1])
-        self.cells.InsertNextCell(4, [pt5,pt6,pt8,pt2])
-        self.cells.InsertNextCell(4, [pt6,pt8,pt7,pt4])
-        self.cells.InsertNextCell(4, [pt4,pt8,pt7,pt9])
-        self.cells.InsertNextCell(4, [pt4,pt8,pt9,pt5])
-        self.cells.InsertNextCell(4, [pt5,pt4,pt8,pt6])
-        for _ in range(8):
-            self.originalId.InsertNextValue(index)
-        self.cellTypes.extend([VTK_TETRA]*8)
+        self.cells.InsertNextCell( 4, [ pt0, pt4, pt6, pt7 ] )
+        self.cells.InsertNextCell( 4, [ pt7, pt9, pt8, pt3 ] )
+        self.cells.InsertNextCell( 4, [ pt9, pt4, pt5, pt1 ] )
+        self.cells.InsertNextCell( 4, [ pt5, pt6, pt8, pt2 ] )
+        self.cells.InsertNextCell( 4, [ pt6, pt8, pt7, pt4 ] )
+        self.cells.InsertNextCell( 4, [ pt4, pt8, pt7, pt9 ] )
+        self.cells.InsertNextCell( 4, [ pt4, pt8, pt9, pt5 ] )
+        self.cells.InsertNextCell( 4, [ pt5, pt4, pt8, pt6 ] )
+        for _ in range( 8 ):
+            self.originalId.InsertNextValue( index )
+        self.cellTypes.extend( [ VTK_TETRA ] * 8 )
 
-    def _split_pyramid(self :Self, cell: vtkCell, index: int) -> None:
+    def _split_pyramid( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a pyramid.
 
         Let's suppose an input pyramid composed of nodes (0, 1, 2, 3, 4),
@@ -274,37 +280,37 @@ class SplitMesh(VTKPythonAlgorithmBase):
             cell (vtkCell): cell to split
             index (int): index of the cell
         """
-        pt0: int  = cell.GetPointId(0)
-        pt1: int  = cell.GetPointId(1)
-        pt2: int  = cell.GetPointId(2)
-        pt3: int  = cell.GetPointId(3)
-        pt4: int  = cell.GetPointId(4)
-        pt5: int  = self._addMidPoint(pt0,pt1)
-        pt6: int  = self._addMidPoint(pt0,pt3)
-        pt7: int  = self._addMidPoint(pt0,pt4)
-        pt8: int  = self._addMidPoint(pt1,pt2)
-        pt9: int  = self._addMidPoint(pt1,pt4)
-        pt10: int  = self._addMidPoint(pt2,pt3)
-        pt11: int  = self._addMidPoint(pt2,pt4)
-        pt12: int  = self._addMidPoint(pt3,pt4)
-        pt13: int  = self._addMidPoint(pt5,pt10)
+        pt0: int = cell.GetPointId( 0 )
+        pt1: int = cell.GetPointId( 1 )
+        pt2: int = cell.GetPointId( 2 )
+        pt3: int = cell.GetPointId( 3 )
+        pt4: int = cell.GetPointId( 4 )
+        pt5: int = self._addMidPoint( pt0, pt1 )
+        pt6: int = self._addMidPoint( pt0, pt3 )
+        pt7: int = self._addMidPoint( pt0, pt4 )
+        pt8: int = self._addMidPoint( pt1, pt2 )
+        pt9: int = self._addMidPoint( pt1, pt4 )
+        pt10: int = self._addMidPoint( pt2, pt3 )
+        pt11: int = self._addMidPoint( pt2, pt4 )
+        pt12: int = self._addMidPoint( pt3, pt4 )
+        pt13: int = self._addMidPoint( pt5, pt10 )
 
-        self.cells.InsertNextCell(5, [pt5,pt1,pt8,pt13,pt9])
-        self.cells.InsertNextCell(5, [pt13,pt8,pt2,pt10,pt11])
-        self.cells.InsertNextCell(5, [pt3,pt6,pt13,pt10,pt12])
-        self.cells.InsertNextCell(5, [pt6,pt0,pt5,pt13,pt7])
-        self.cells.InsertNextCell(5, [pt12,pt7,pt9,pt11,pt4])
-        self.cells.InsertNextCell(5, [pt11,pt9,pt7,pt12,pt13])
+        self.cells.InsertNextCell( 5, [ pt5, pt1, pt8, pt13, pt9 ] )
+        self.cells.InsertNextCell( 5, [ pt13, pt8, pt2, pt10, pt11 ] )
+        self.cells.InsertNextCell( 5, [ pt3, pt6, pt13, pt10, pt12 ] )
+        self.cells.InsertNextCell( 5, [ pt6, pt0, pt5, pt13, pt7 ] )
+        self.cells.InsertNextCell( 5, [ pt12, pt7, pt9, pt11, pt4 ] )
+        self.cells.InsertNextCell( 5, [ pt11, pt9, pt7, pt12, pt13 ] )
 
-        self.cells.InsertNextCell(4, [pt7,pt9,pt5,pt13])
-        self.cells.InsertNextCell(4, [pt9,pt11,pt8,pt13])
-        self.cells.InsertNextCell(4, [pt11,pt12,pt10,pt13])
-        self.cells.InsertNextCell(4, [pt12,pt7,pt6,pt13])
-        for _ in range(10):
-            self.originalId.InsertNextValue(index)
-        self.cellTypes.extend([VTK_PYRAMID]*8)
+        self.cells.InsertNextCell( 4, [ pt7, pt9, pt5, pt13 ] )
+        self.cells.InsertNextCell( 4, [ pt9, pt11, pt8, pt13 ] )
+        self.cells.InsertNextCell( 4, [ pt11, pt12, pt10, pt13 ] )
+        self.cells.InsertNextCell( 4, [ pt12, pt7, pt6, pt13 ] )
+        for _ in range( 10 ):
+            self.originalId.InsertNextValue( index )
+        self.cellTypes.extend( [ VTK_PYRAMID ] * 8 )
 
-    def _split_hexahedron(self :Self, cell: vtkCell, index: int) -> None:
+    def _split_hexahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a hexahedron.
 
         Let's suppose an input hexahedron composed of nodes (0, 1, 2, 3, 4, 5, 6, 7),
@@ -326,47 +332,47 @@ class SplitMesh(VTKPythonAlgorithmBase):
             cell (vtkCell): cell to split
             index (int): index of the cell
         """
-        pt0: int  = cell.GetPointId(0)
-        pt1: int  = cell.GetPointId(1)
-        pt2: int  = cell.GetPointId(2)
-        pt3: int  = cell.GetPointId(3)
-        pt4: int  = cell.GetPointId(4)
-        pt5: int  = cell.GetPointId(5)
-        pt6: int  = cell.GetPointId(6)
-        pt7: int  = cell.GetPointId(7)
-        pt8: int  = self._addMidPoint(pt0,pt1)
-        pt9: int  = self._addMidPoint(pt0,pt3)
-        pt10: int = self._addMidPoint(pt0,pt4)
-        pt11: int = self._addMidPoint(pt1,pt2)
-        pt12: int = self._addMidPoint(pt1,pt5)
-        pt13: int = self._addMidPoint(pt2,pt3)
-        pt14: int = self._addMidPoint(pt2,pt6)
-        pt15: int = self._addMidPoint(pt3,pt7)
-        pt16: int = self._addMidPoint(pt4,pt5)
-        pt17: int = self._addMidPoint(pt4,pt7)
-        pt18: int = self._addMidPoint(pt5,pt6)
-        pt19: int = self._addMidPoint(pt6,pt7)
-        pt20: int = self._addMidPoint(pt9,pt11)
-        pt21: int = self._addMidPoint(pt10,pt12)
-        pt22: int = self._addMidPoint(pt9,pt17)
-        pt23: int = self._addMidPoint(pt11,pt18)
-        pt24: int = self._addMidPoint(pt14,pt15)
-        pt25: int = self._addMidPoint(pt17,pt18)
-        pt26: int = self._addMidPoint(pt22,pt23)
+        pt0: int = cell.GetPointId( 0 )
+        pt1: int = cell.GetPointId( 1 )
+        pt2: int = cell.GetPointId( 2 )
+        pt3: int = cell.GetPointId( 3 )
+        pt4: int = cell.GetPointId( 4 )
+        pt5: int = cell.GetPointId( 5 )
+        pt6: int = cell.GetPointId( 6 )
+        pt7: int = cell.GetPointId( 7 )
+        pt8: int = self._addMidPoint( pt0, pt1 )
+        pt9: int = self._addMidPoint( pt0, pt3 )
+        pt10: int = self._addMidPoint( pt0, pt4 )
+        pt11: int = self._addMidPoint( pt1, pt2 )
+        pt12: int = self._addMidPoint( pt1, pt5 )
+        pt13: int = self._addMidPoint( pt2, pt3 )
+        pt14: int = self._addMidPoint( pt2, pt6 )
+        pt15: int = self._addMidPoint( pt3, pt7 )
+        pt16: int = self._addMidPoint( pt4, pt5 )
+        pt17: int = self._addMidPoint( pt4, pt7 )
+        pt18: int = self._addMidPoint( pt5, pt6 )
+        pt19: int = self._addMidPoint( pt6, pt7 )
+        pt20: int = self._addMidPoint( pt9, pt11 )
+        pt21: int = self._addMidPoint( pt10, pt12 )
+        pt22: int = self._addMidPoint( pt9, pt17 )
+        pt23: int = self._addMidPoint( pt11, pt18 )
+        pt24: int = self._addMidPoint( pt14, pt15 )
+        pt25: int = self._addMidPoint( pt17, pt18 )
+        pt26: int = self._addMidPoint( pt22, pt23 )
 
-        self.cells.InsertNextCell(8, [pt10,pt21,pt26,pt22,pt4,pt16,pt25,pt17])
-        self.cells.InsertNextCell(8, [pt21,pt12,pt23,pt26,pt16,pt5,pt18,pt25])
-        self.cells.InsertNextCell(8, [pt0,pt8,pt20,pt9,pt10,pt21,pt26,pt22])
-        self.cells.InsertNextCell(8, [pt8,pt1,pt11,pt20,pt21,pt12,pt23,pt26])
-        self.cells.InsertNextCell(8, [pt22,pt26,pt24,pt15,pt17,pt25,pt19,pt7])
-        self.cells.InsertNextCell(8, [pt26,pt23,pt14,pt24,pt25,pt18,pt6,pt19])
-        self.cells.InsertNextCell(8, [pt9,pt20,pt13,pt3,pt22,pt26,pt24,pt15])
-        self.cells.InsertNextCell(8, [pt20,pt11,pt2,pt13,pt26,pt23,pt14,pt24])
-        for _ in range(8):
-            self.originalId.InsertNextValue(index)
-        self.cellTypes.extend([VTK_HEXAHEDRON]*8)
+        self.cells.InsertNextCell( 8, [ pt10, pt21, pt26, pt22, pt4, pt16, pt25, pt17 ] )
+        self.cells.InsertNextCell( 8, [ pt21, pt12, pt23, pt26, pt16, pt5, pt18, pt25 ] )
+        self.cells.InsertNextCell( 8, [ pt0, pt8, pt20, pt9, pt10, pt21, pt26, pt22 ] )
+        self.cells.InsertNextCell( 8, [ pt8, pt1, pt11, pt20, pt21, pt12, pt23, pt26 ] )
+        self.cells.InsertNextCell( 8, [ pt22, pt26, pt24, pt15, pt17, pt25, pt19, pt7 ] )
+        self.cells.InsertNextCell( 8, [ pt26, pt23, pt14, pt24, pt25, pt18, pt6, pt19 ] )
+        self.cells.InsertNextCell( 8, [ pt9, pt20, pt13, pt3, pt22, pt26, pt24, pt15 ] )
+        self.cells.InsertNextCell( 8, [ pt20, pt11, pt2, pt13, pt26, pt23, pt14, pt24 ] )
+        for _ in range( 8 ):
+            self.originalId.InsertNextValue( index )
+        self.cellTypes.extend( [ VTK_HEXAHEDRON ] * 8 )
 
-    def _split_triangle(self :Self, cell: vtkCell, index: int) -> None:
+    def _split_triangle( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a triangle.
 
         Let's suppose an input triangle composed of nodes (0, 1, 2),
@@ -384,22 +390,22 @@ class SplitMesh(VTKPythonAlgorithmBase):
             cell (vtkCell): cell to split
             index (int): index of the cell
         """
-        pt0: int  = cell.GetPointId(0)
-        pt1: int  = cell.GetPointId(1)
-        pt2: int  = cell.GetPointId(2)
-        pt3: int  = self._addMidPoint(pt0,pt1)
-        pt4: int  = self._addMidPoint(pt1,pt2)
-        pt5: int  = self._addMidPoint(pt0,pt2)
+        pt0: int = cell.GetPointId( 0 )
+        pt1: int = cell.GetPointId( 1 )
+        pt2: int = cell.GetPointId( 2 )
+        pt3: int = self._addMidPoint( pt0, pt1 )
+        pt4: int = self._addMidPoint( pt1, pt2 )
+        pt5: int = self._addMidPoint( pt0, pt2 )
 
-        self.cells.InsertNextCell(3, [pt0,pt3,pt5])
-        self.cells.InsertNextCell(3, [pt3,pt1,pt4])
-        self.cells.InsertNextCell(3, [pt5,pt4,pt2])
-        self.cells.InsertNextCell(3, [pt3,pt4,pt5])
-        for _ in range(4):
-            self.originalId.InsertNextValue(index)
-        self.cellTypes.extend([VTK_TRIANGLE]*4)
+        self.cells.InsertNextCell( 3, [ pt0, pt3, pt5 ] )
+        self.cells.InsertNextCell( 3, [ pt3, pt1, pt4 ] )
+        self.cells.InsertNextCell( 3, [ pt5, pt4, pt2 ] )
+        self.cells.InsertNextCell( 3, [ pt3, pt4, pt5 ] )
+        for _ in range( 4 ):
+            self.originalId.InsertNextValue( index )
+        self.cellTypes.extend( [ VTK_TRIANGLE ] * 4 )
 
-    def _split_quad(self :Self, cell: vtkCell, index: int) -> None:
+    def _split_quad( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a quad.
 
         Let's suppose an input quad composed of nodes (0, 1, 2, 3),
@@ -417,27 +423,25 @@ class SplitMesh(VTKPythonAlgorithmBase):
             cell (vtkCell): cell to split
             index (int): index of the cell
         """
-        pt0: int  = cell.GetPointId(0)
-        pt1: int  = cell.GetPointId(1)
-        pt2: int  = cell.GetPointId(2)
-        pt3: int  = cell.GetPointId(3)
-        pt4: int  = self._addMidPoint(pt0,pt1)
-        pt5: int  = self._addMidPoint(pt1,pt2)
-        pt6: int  = self._addMidPoint(pt2,pt3)
-        pt7: int  = self._addMidPoint(pt3,pt0)
-        pt8: int  = self._addMidPoint(pt7,pt5)
+        pt0: int = cell.GetPointId( 0 )
+        pt1: int = cell.GetPointId( 1 )
+        pt2: int = cell.GetPointId( 2 )
+        pt3: int = cell.GetPointId( 3 )
+        pt4: int = self._addMidPoint( pt0, pt1 )
+        pt5: int = self._addMidPoint( pt1, pt2 )
+        pt6: int = self._addMidPoint( pt2, pt3 )
+        pt7: int = self._addMidPoint( pt3, pt0 )
+        pt8: int = self._addMidPoint( pt7, pt5 )
 
-        self.cells.InsertNextCell(4, [pt0,pt4,pt8,pt7])
-        self.cells.InsertNextCell(4, [pt4,pt1,pt5,pt8])
-        self.cells.InsertNextCell(4, [pt8,pt5,pt2,pt6])
-        self.cells.InsertNextCell(4, [pt7,pt8,pt6,pt3])
-        for _ in range(4):
-            self.originalId.InsertNextValue(index)
-        self.cellTypes.extend([VTK_QUAD]*4)
+        self.cells.InsertNextCell( 4, [ pt0, pt4, pt8, pt7 ] )
+        self.cells.InsertNextCell( 4, [ pt4, pt1, pt5, pt8 ] )
+        self.cells.InsertNextCell( 4, [ pt8, pt5, pt2, pt6 ] )
+        self.cells.InsertNextCell( 4, [ pt7, pt8, pt6, pt3 ] )
+        for _ in range( 4 ):
+            self.originalId.InsertNextValue( index )
+        self.cellTypes.extend( [ VTK_QUAD ] * 4 )
 
-    def _transferCellArrays(self :Self,
-                            splittedMesh: vtkUnstructuredGrid
-                        ) ->bool:
+    def _transferCellArrays( self: Self, splittedMesh: vtkUnstructuredGrid ) -> bool:
         """Transfer arrays from input mesh to splitted mesh.
 
         Args:
@@ -451,23 +455,23 @@ class SplitMesh(VTKPythonAlgorithmBase):
         cellData: vtkCellData = self.inData.GetCellData()
         assert cellData is not None, "Cell data of input mesh should be defined."
         # for each array of input mesh
-        for i in range(cellData.GetNumberOfArrays()):
-            array: vtkDataArray = cellData.GetArray(i)
+        for i in range( cellData.GetNumberOfArrays() ):
+            array: vtkDataArray = cellData.GetArray( i )
             assert array is not None, "Array should be defined."
-            npArray: npt.NDArray[np.float64] = vtk_to_numpy(array)
+            npArray: npt.NDArray[ np.float64 ] = vtk_to_numpy( array )
             # get number of components
-            dims: tuple[int,...] = npArray.shape
-            ny:int = 1 if len(dims) == 1 else dims[1]
+            dims: tuple[ int, ...] = npArray.shape
+            ny: int = 1 if len( dims ) == 1 else dims[ 1 ]
             # create new array with nb cells from splitted mesh and number of components from array to copy
-            newNpArray: npt.NDArray[np.float64] = np.full((splittedMesh.GetNumberOfCells(), ny), np.nan)
+            newNpArray: npt.NDArray[ np.float64 ] = np.full( ( splittedMesh.GetNumberOfCells(), ny ), np.nan )
             # for each cell, copy the values from input mesh
-            for c in range(splittedMesh.GetNumberOfCells()):
-                idParent: int = int(self.originalId.GetTuple1(c))
-                newNpArray[c] = npArray[idParent]
+            for c in range( splittedMesh.GetNumberOfCells() ):
+                idParent: int = int( self.originalId.GetTuple1( c ) )
+                newNpArray[ c ] = npArray[ idParent ]
             # set array the splitted mesh
-            newArray: vtkDataArray = numpy_to_vtk(newNpArray)
-            newArray.SetName(array.GetName())
-            cellDataSplitted.AddArray(newArray)
+            newArray: vtkDataArray = numpy_to_vtk( newNpArray )
+            newArray.SetName( array.GetName() )
+            cellDataSplitted.AddArray( newArray )
             cellDataSplitted.Modified()
         splittedMesh.Modified()
         return True
