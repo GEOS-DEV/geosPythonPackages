@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.processing.helpers import createMultiCellMesh
+from geos.mesh.vtk.helpers import createMultiCellMesh
 from geos.mesh.processing.MergeColocatedPoints import MergeColocatedPoints
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
