@@ -17,8 +17,7 @@ update_paths()
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty, smproxy, smhint
-)
+    smdomain, smproperty, smproxy, smhint )
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
@@ -59,7 +58,7 @@ Additional examples are here defined:
 
 
 @smproxy.filter( name="PVPreserveInputTypeFilter", label="Preserve Input Type Filter" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
@@ -70,7 +69,6 @@ class PVPreserveInputTypeFilter( VTKPythonAlgorithmBase ):
     def __init__( self: Self ) -> None:
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-
 
     def RequestDataObject(
         self: Self,
@@ -88,7 +86,7 @@ class PVPreserveInputTypeFilter( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        print("RequestDataObject")
+        print( "RequestDataObject" )
         inData1 = self.GetInputData( inInfoVec, 0, 0 )
         outData = self.GetOutputData( outInfoVec, 0 )
         assert inData1 is not None
@@ -113,7 +111,7 @@ class PVPreserveInputTypeFilter( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        print("RequestData")
+        print( "RequestData" )
         input: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
         outData: vtkPointSet = self.GetOutputData( outInfoVec, 0 )
 
@@ -123,20 +121,20 @@ class PVPreserveInputTypeFilter( VTKPythonAlgorithmBase ):
         # do something...
         # for instance copy input and create a Field data in output object
 
-        outData.ShallowCopy(input)
+        outData.ShallowCopy( input )
 
         # add Field data attribute
         nbArrays: int = 3
         fieldData: vtkFieldData = outData.GetFieldData()
-        fieldData.AllocateArrays(nbArrays)
-        for i in range(nbArrays):
+        fieldData.AllocateArrays( nbArrays )
+        for i in range( nbArrays ):
             newArray: vtkDoubleArray = vtkDoubleArray()
-            newArray.SetName(f"Column{i}")
-            newArray.SetNumberOfComponents(1)
-            newArray.SetNumberOfTuples(1)
-            val: float = i + np.random.rand(1)[0]
-            newArray.SetValue(0, val)
-            fieldData.AddArray(newArray)
+            newArray.SetName( f"Column{i}" )
+            newArray.SetNumberOfComponents( 1 )
+            newArray.SetNumberOfValues( 1 )
+            val: float = i + np.random.rand( 1 )[ 0 ]
+            newArray.SetValue( 0, val )
+            fieldData.AddArray( newArray )
         fieldData.Modified()
 
         # add Point attribute
@@ -146,8 +144,9 @@ class PVPreserveInputTypeFilter( VTKPythonAlgorithmBase ):
         outData.Modified()
         return 1
 
+
 @smproxy.filter( name="PVCompositeDataSetFilter", label="Composite Data Set Filter" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkMultiBlockDataSet" ],
@@ -208,17 +207,18 @@ class PVCompositeDataSetFilter( VTKPythonAlgorithmBase ):
         # do something...
         # for instance copy input and create a Field data in output object
 
-        outData.ShallowCopy(input)
+        outData.ShallowCopy( input )
         nbArrays: int = 3
         fieldData: vtkFieldData = outData.GetFieldData()
-        fieldData.AllocateArrays(nbArrays)
-        for i in range(nbArrays):
+        fieldData.AllocateArrays( nbArrays )
+        for i in range( nbArrays ):
             newArray: vtkDoubleArray = vtkDoubleArray()
-            newArray.SetName(f"Column{i}")
-            newArray.SetNumberOfComponents(1)
-            val: float = i + np.random.rand(1)[0]
-            newArray.SetValue(val)
-            fieldData.AddArray(newArray)
+            newArray.SetName( f"Column{i}" )
+            newArray.SetNumberOfComponents( 1 )
+            newArray.SetNumberOfValues( 1 )
+            val: float = i + np.random.rand( 1 )[ 0 ]
+            newArray.SetValue( 0, val )
+            fieldData.AddArray( newArray )
 
         fieldData.Modified()
         outData.Modified()
@@ -226,10 +226,12 @@ class PVCompositeDataSetFilter( VTKPythonAlgorithmBase ):
 
 
 @smproxy.filter( name="PVMultiInputFilter", label="Multiple Input Filter" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input1", port_index=1, label="Input 1" )
 @smdomain.datatype(
-    dataTypes=[ "vtkPointSet", ],
+    dataTypes=[
+        "vtkPointSet",
+    ],
     composite_data_supported=False,
 )
 @smproperty.input( name="Input0", port_index=0, label="Input 0" )
@@ -296,12 +298,13 @@ class PVMultipleInputFilter( VTKPythonAlgorithmBase ):
 
         return 1
 
+
 @smproxy.filter( name="PVMultiOutputFilter", label="Multiple Output Filter" )
-@smhint.xml("""
+@smhint.xml( """
                 <ShowInMenu category="Filter Examples"/>
                 <OutputPort index="0" name="Output0"/>
                 <OutputPort index="1" name="Output1"/>
-            """)
+            """ )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
@@ -339,7 +342,7 @@ class PVMultipleOutputFilter( VTKPythonAlgorithmBase ):
         outData1 = self.GetOutputData( outInfoVec, 1 )
         if outData1 is None or ( not outData1.IsA( inData1.GetClassName() ) ):
             outData1 = inData1.NewInstance()
-            outInfoVec.GetInformationObject( 1 ).Set( outData1.DATA_OBJECT(), outData1)
+            outInfoVec.GetInformationObject( 1 ).Set( outData1.DATA_OBJECT(), outData1 )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(

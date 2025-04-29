@@ -18,8 +18,7 @@ update_paths()
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty, smproxy, smhint
-)
+    smdomain, smproperty, smproxy, smhint )
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
@@ -36,7 +35,7 @@ Example of a Paraview plugin that runs through time steps.
 
 
 @smproxy.filter( name="PVTimeStepAggregatorFilter", label="Time Step Aggregator Filter" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
@@ -47,7 +46,7 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
     def __init__( self: Self ) -> None:
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-        print("__init__")
+        print( "__init__" )
 
         #: all time steps from input
         self._timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -60,7 +59,7 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         self._requestDataStep: int = -1
 
         #: saved object at each time step
-        self._savedInputs: list[vtkUnstructuredGrid] = []
+        self._savedInputs: list[ vtkUnstructuredGrid ] = []
 
     def RequestUpdateExtent(
         self: Self,
@@ -83,9 +82,9 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         # get displayed time step info at filter intialization only
         if self._requestDataStep == -1:
             self._timeSteps = inInfo.GetInformationObject( 0 ).Get( executive.TIME_STEPS()  # type: ignore
-                                                                    )
+                                                                   )
             self._currentTime = inInfo.GetInformationObject( 0 ).Get( executive.UPDATE_TIME_STEP()  # type: ignore
-                                                                      )
+                                                                     )
             self._currentTimeStepIndex = self.getTimeStepIndex( self._currentTime, self._timeSteps )
 
             self._savedInputs.clear()
@@ -94,13 +93,11 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         self._requestDataStep += 1
         # update time according to requestDataStep iterator
         inInfo.GetInformationObject( 0 ).Set(
-            executive.UPDATE_TIME_STEP(),
-            self._timeSteps[ self._requestDataStep ]  # type: ignore
-        )
+            executive.UPDATE_TIME_STEP(),  # type: ignore[attr-defined]
+            self._timeSteps[ self._requestDataStep ] )
         outInfoVec.GetInformationObject( 0 ).Set(
-            executive.UPDATE_TIME_STEP(),
-            self._timeSteps[ self._requestDataStep ]  # type: ignore
-        )
+            executive.UPDATE_TIME_STEP(),  # type: ignore[attr-defined]
+            self._timeSteps[ self._requestDataStep ] )
         # update all objects according to new time info
         self.Modified()
         return 1
@@ -157,21 +154,21 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
 
             # do something repeated at each time step...
             dataAtT: vtkUnstructuredGrid = vtkUnstructuredGrid()
-            dataAtT.ShallowCopy(input)
-            self._savedInputs.append(dataAtT)
-            print(f"Input data saved at time step {self._requestDataStep}")
+            dataAtT.ShallowCopy( input )
+            self._savedInputs.append( dataAtT )
+            print( f"Input data saved at time step {self._requestDataStep}" )
             # keep running through time steps
             request.Set( executive.CONTINUE_EXECUTING(), 1 )  # type: ignore
         if self._requestDataStep >= self._currentTimeStepIndex:
-                # displayed time step, stop running
-                request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore
+            # displayed time step, stop running
+            request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore
 
-                # reinitialize requestDataStep if filter is re-applied later
-                self._requestDataStep = -1
+            # reinitialize requestDataStep if filter is re-applied later
+            self._requestDataStep = -1
 
-                # do something to finalize process...
-                outData.ShallowCopy(input)
-                print("Finalization process")
+            # do something to finalize process...
+            outData.ShallowCopy( input )
+            print( "Finalization process" )
 
         outData.Modified()
         return 1

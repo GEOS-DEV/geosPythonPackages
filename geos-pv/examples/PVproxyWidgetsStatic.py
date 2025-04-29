@@ -19,7 +19,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
@@ -37,7 +36,7 @@ and `property hints documentation <https://www.paraview.org/paraview-docs/latest
 
 
 @smproxy.filter( name="PVproxyWidgetsStatic", label="Static Widget Examples" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
@@ -55,18 +54,17 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         self._outputFilePath: str = ""
         self._directoryPath: str = ""
         self._intSingle: float = 0
-        self._intMulti: list[float] = [0, 0, 0]
+        self._intMulti: list[ float ] = [ 0, 0, 0 ]
         self._boolSingle: bool = False
         self._doubleSingle: float = 0.0
-        self._doubleMulti: list[float] = [0.0, 0.0, 0.0]
+        self._doubleMulti: list[ float ] = [ 0.0, 0.0, 0.0 ]
         self._singleSliderValue: float = 0.0
         self._singleIntSliderValue: int = 0
-        self._doubleSlider: list[float] = [0.0, 0.0]
-        self._color: list[float] = [0.0, 0.0, 0.0]
+        self._doubleSlider: list[ float ] = [ 0.0, 0.0 ]
+        self._color: list[ float ] = [ 0.0, 0.0, 0.0 ]
         self._table: list[ tuple[ int, float, str ] ] = []
         self._clearTable: bool = True
         self._dropDownListSelection: int = 0
-
 
     @smproperty.xml( """
         <Property name="Action Button"
@@ -75,7 +73,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """ )
     def a00ActionButton( self: Self ) -> None:
         """Action button example."""
-        print("Executes action")
+        print( "Executes action" )
         self.Modified()
 
     @smproperty.stringvector(
@@ -95,6 +93,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             self._strSingle = value
             self.Modified()
 
+
 #     <StringVectorProperty command="SetFunction"
 #                             name="Function"
 #                             number_of_elements="1"
@@ -105,8 +104,8 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
 #         </Documentation>
 #       </StringVectorProperty>
 
+# use syntax=<language> to highlight text with language color
 
-    # use syntax=<language> to highlight text with language color
     @smproperty.stringvector(
         name="StringMultiline",
         label="MultiLine String",
@@ -114,11 +113,11 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         default_values="-",
         panel_visibility="default",
     )
-    @smdomain.xml("""
+    @smdomain.xml( """
         <Hints>
             <Widget type="multi_line" syntax="python"/>
         </Hints>
-    """)
+    """ )
     def a02StringMultiLine( self: Self, value: str ) -> None:
         """Define an input string field.
 
@@ -135,7 +134,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <Property name="StringSingle"/>
                             <Property name="StringMultiline"/>
                         </PropertyGroup>""" )
-    def a03StringInputsGroup(self: Self) ->None:
+    def a03StringInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -158,7 +157,6 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             self._inputFilePath = value
             self.Modified()
 
-
     # @smdomain.filelist() and @smhint.filechooser may be replaced by this @smdomain.xml
     # @smdomain.xml("""
     #                 <FileListDomain name="files" />
@@ -175,12 +173,12 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         panel_visibility="default",
     )
     @smdomain.filelist()
-    @smhint.filechooser( extensions=[ "txt" ], file_description="Output text file.")
-    @smdomain.xml("""
+    @smhint.filechooser( extensions=[ "txt" ], file_description="Output text file." )
+    @smdomain.xml( """
                     <Hints>
                         <AcceptAnyFile/>
                     </Hints>
-                  """)
+                  """ )
     def b02OutputFilePath( self: Self, value: str ) -> None:
         """Define an input file path.
 
@@ -190,7 +188,6 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         if value != self._outputFilePath:
             self._outputFilePath = value
             self.Modified()
-
 
     # @smdomain.filelist() and @smhint.filechooser may be replaced by this @smdomain.xml
     # @smdomain.xml("""
@@ -209,11 +206,11 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
     )
     @smdomain.filelist()
     @smhint.filechooser( extensions="", file_description="Output directory." )
-    @smdomain.xml("""
+    @smdomain.xml( """
                     <Hints>
                         <UseDirectoryName/>
                     </Hints>
-                  """)
+                  """ )
     def b03DirectoryPath( self: Self, value: str ) -> None:
         """Define an input string field.
 
@@ -231,7 +228,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <Property name="OutputFilePath"/>
                             <Property name="DirectoryPath"/>
                         </PropertyGroup>""" )
-    def b04FileInputsGroup(self: Self) ->None:
+    def b04FileInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -256,7 +253,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         name="IntMulti",
         label="Int Multi",
         number_of_elements="3",
-        default_values=(0, 0, 0),
+        default_values=( 0, 0, 0 ),
         panel_visibility="default",
     )
     def c02IntMulti( self: Self, value0: int, value1: int, value2: int ) -> None:
@@ -267,14 +264,14 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             value1 (int): input 1
             value2 (int): input 2
         """
-        if value0 != self._intMulti[0]:
-            self._intMulti[0] = value0
+        if value0 != self._intMulti[ 0 ]:
+            self._intMulti[ 0 ] = value0
             self.Modified()
-        if value1 != self._intMulti[1]:
-            self._intMulti[1] = value1
+        if value1 != self._intMulti[ 1 ]:
+            self._intMulti[ 1 ] = value1
             self.Modified()
-        if value2 != self._intMulti[2]:
-            self._intMulti[2] = value2
+        if value2 != self._intMulti[ 2 ]:
+            self._intMulti[ 2 ] = value2
             self.Modified()
 
     @smproperty.xml( """<PropertyGroup
@@ -283,7 +280,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <Property name="IntSingle"/>
                             <Property name="IntMulti"/>
                         </PropertyGroup>""" )
-    def c03IntInputsGroup(self: Self) ->None:
+    def c03IntInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -308,7 +305,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             panel_visibility="default">
                             <Property name="BoolSingle"/>
                         </PropertyGroup>""" )
-    def c03BoolInputsGroup(self: Self) ->None:
+    def c03BoolInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -333,7 +330,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         name="DoubleMulti",
         label="Double Multi",
         number_of_elements="3",
-        default_values=(0.0, 0.0, 0.0),
+        default_values=( 0.0, 0.0, 0.0 ),
         panel_visibility="default",
     )
     def d02DoubleMulti( self: Self, value0: float, value1: float, value2: float ) -> None:
@@ -344,14 +341,14 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             value1 (float): input 1
             value2 (float): input 2
         """
-        if value0 != self._doubleMulti[0]:
-            self._doubleMulti[0] = value0
+        if value0 != self._doubleMulti[ 0 ]:
+            self._doubleMulti[ 0 ] = value0
             self.Modified()
-        if value1 != self._doubleMulti[1]:
-            self._doubleMulti[1] = value1
+        if value1 != self._doubleMulti[ 1 ]:
+            self._doubleMulti[ 1 ] = value1
             self.Modified()
-        if value2 != self._doubleMulti[2]:
-            self._doubleMulti[2] = value2
+        if value2 != self._doubleMulti[ 2 ]:
+            self._doubleMulti[ 2 ] = value2
             self.Modified()
 
     @smproperty.xml( """<PropertyGroup
@@ -360,22 +357,20 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <Property name="DoubleSingle"/>
                             <Property name="DoubleMulti"/>
                         </PropertyGroup>""" )
-    def d03DoubleInputsGroup(self: Self) ->None:
+    def d03DoubleInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
-    @smproperty.intvector(
-        name="SingleIntSlider",
-        label="Single Int Slider",
-        number_of_elements=1,
-        default_values=0.0,
-        panel_visibility="default",
-        panel_widget="range"
-    )
+    @smproperty.intvector( name="SingleIntSlider",
+                           label="Single Int Slider",
+                           number_of_elements=1,
+                           default_values=0.0,
+                           panel_visibility="default",
+                           panel_widget="range" )
     @smdomain.xml( """
                 <IntRangeDomain name="range" min="0" max="20" />
-                """)
-    def d04SingleIntSlider( self: Self, value: int) -> None:
+                """ )
+    def d04SingleIntSlider( self: Self, value: int ) -> None:
         """Define a slider.
 
         Args:
@@ -393,8 +388,8 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                     default_values="0.1">
                     <DoubleRangeDomain name="range" min="0.0" max="1.0" />
                 </DoubleVectorProperty>
-                """)
-    def d05SingleFloatSlider( self: Self, value: float) -> None:
+                """ )
+    def d05SingleFloatSlider( self: Self, value: float ) -> None:
         """Define a slider.
 
         Args:
@@ -422,19 +417,19 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <MaximumLabel text="Maximum Limit" />
                         </Hints>
                     </DoubleVectorProperty>
-                    """)
-    def d06DoubleSlider( self: Self, mini: float, maxi: float) -> None:
+                    """ )
+    def d06DoubleSlider( self: Self, mini: float, maxi: float ) -> None:
         """Define a double slider.
 
         Args:
             mini (float): minimum
             maxi (float): maximum
         """
-        if mini != self._doubleSlider[0]:
-            self._doubleSlider[0] = mini
+        if mini != self._doubleSlider[ 0 ]:
+            self._doubleSlider[ 0 ] = mini
             self.Modified()
-        if maxi != self._doubleSlider[1]:
-            self._doubleSlider[1] = maxi
+        if maxi != self._doubleSlider[ 1 ]:
+            self._doubleSlider[ 1 ] = maxi
             self.Modified()
 
     @smproperty.xml( """<PropertyGroup
@@ -444,23 +439,21 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             <Property name="SingleFloatSlider"/>
                             <Property name="DoubleSlider"/>
                         </PropertyGroup>""" )
-    def d07SliderInputsGroup(self: Self) ->None:
+    def d07SliderInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
-    @smproperty.doublevector(
-        name="Color",
-        label="Color",
-        number_of_elements="3",
-        default_values=(0.0, 0.0, 0.0),
-        panel_visibility="default",
-        panel_widget="color_selector_with_palette"
-    )
-    @smdomain.xml("""
+    @smproperty.doublevector( name="Color",
+                              label="Color",
+                              number_of_elements="3",
+                              default_values=( 0.0, 0.0, 0.0 ),
+                              panel_visibility="default",
+                              panel_widget="color_selector_with_palette" )
+    @smdomain.xml( """
                     <Hints>
                         <PropertyLink group="settings" proxy="ColorPalette" property="BackgroundColor" unlink_if_modified="1" />
                     </Hints>
-                    """)
+                    """ )
     def d07Color( self: Self, value0: float, value1: float, value2: float ) -> None:
         """Define an input double field.
 
@@ -469,22 +462,21 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             value1 (float): input 1
             value2 (float): input 2
         """
-        if value0 != self._color[0]:
-            self._color[0] = value0
+        if value0 != self._color[ 0 ]:
+            self._color[ 0 ] = value0
             self.Modified()
-        if value1 != self._color[1]:
-            self._color[1] = value1
+        if value1 != self._color[ 1 ]:
+            self._color[ 1 ] = value1
             self.Modified()
-        if value2 != self._color[2]:
-            self._color[2] = value2
+        if value2 != self._color[ 2 ]:
+            self._color[ 2 ] = value2
             self.Modified()
-
 
     @smproperty.xml( """<PropertyGroup
                             panel_visibility="default">
                             <Property name="Color"/>
                         </PropertyGroup>""" )
-    def d08ColorInputsGroup(self: Self) ->None:
+    def d08ColorInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -495,14 +487,14 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         default_values=0,
         panel_visibility="default",
     )
-    @smdomain.xml("""
+    @smdomain.xml( """
                     <EnumerationDomain name="enum">
                         <Entry value="6" text="Choice1"/>
                         <Entry value="7" text="Choice2"/>
                         <Entry value="12" text="Choice3"/>
                     </EnumerationDomain>
-                    """)
-    def e01DropDownList(self: Self, intValue: int) -> None:
+                    """ )
+    def e01DropDownList( self: Self, intValue: int ) -> None:
         """Set selection from predefined drop down list.
 
         Args:
@@ -541,7 +533,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         if self._clearTable:
             self._table.clear()
         self._clearTable = False
-        self._table.append( ( int(intValue), float(floatValue), str(strValue) ) )
+        self._table.append( ( int( intValue ), float( floatValue ), str( strValue ) ) )
         self.Modified()
 
     def RequestDataObject(
@@ -591,21 +583,21 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         assert outData is not None, "Output pipeline is null."
 
         # do something...
-        print(f"Single String {self._strSingle}")
-        print(f"Multiline String {self._strMultiline}")
-        print(f"Input file path {self._inputFilePath}")
-        print(f"Output file path {self._outputFilePath}")
-        print(f"Directory path {self._directoryPath}")
-        print(f"Single int {self._intSingle}")
-        print(f"Multiple int {self._intMulti}")
-        print(f"Boolean {self._boolSingle}")
-        print(f"Single double {self._doubleSingle}")
-        print(f"Multiple double {self._doubleMulti}")
-        print(f"Single Slider {self._singleIntSliderValue}")
-        print(f"Single Slider {self._singleSliderValue}")
-        print(f"Double Slider {self._doubleSlider}")
-        print(f"Color {self._color}")
-        print(f"Variable table {self._table}")
+        print( f"Single String {self._strSingle}" )
+        print( f"Multiline String {self._strMultiline}" )
+        print( f"Input file path {self._inputFilePath}" )
+        print( f"Output file path {self._outputFilePath}" )
+        print( f"Directory path {self._directoryPath}" )
+        print( f"Single int {self._intSingle}" )
+        print( f"Multiple int {self._intMulti}" )
+        print( f"Boolean {self._boolSingle}" )
+        print( f"Single double {self._doubleSingle}" )
+        print( f"Multiple double {self._doubleMulti}" )
+        print( f"Single Slider {self._singleIntSliderValue}" )
+        print( f"Single Slider {self._singleSliderValue}" )
+        print( f"Double Slider {self._doubleSlider}" )
+        print( f"Color {self._color}" )
+        print( f"Variable table {self._table}" )
 
         # set self._clearTable to True for the next time the table is updated
         self._clearTable = True

@@ -14,11 +14,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.pv.utils.paraviewTreatments import (
-    strListToEnumerationDomainXml,
-    strEnumToEnumerationDomainXml,
-    getArrayChoices
-)
+from geos.pv.utils.paraviewTreatments import ( strListToEnumerationDomainXml, strEnumToEnumerationDomainXml,
+                                               getArrayChoices )
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 
@@ -55,29 +52,29 @@ if they are supported by point, cell, or field; number_of_components keyword fil
 
 # TODO: try this https://discourse.paraview.org/t/difficulties-to-use-propertygroup-in-python-plugin-of-a-filter/12070
 
-DROP_DOWN_LIST_ELEMENTS: tuple[str, str, str] = ("Choice1", "Choice2", "Choice3")
-class DROP_DOWN_LIST_ENUM(Enum):
+DROP_DOWN_LIST_ELEMENTS: tuple[ str, str, str ] = ( "Choice1", "Choice2", "Choice3" )
+
+
+class DROP_DOWN_LIST_ENUM( Enum ):
     CHOICE1 = "Enum1"
     CHOICE2 = "Enum2"
     CHOICE3 = "Enum3"
 
 
 @smproxy.filter( name="PVproxyWidgetsDynamic", label="Dynamic Widget Examples" )
-@smhint.xml("""<ShowInMenu category="Filter Examples"/>""")
-
+@smhint.xml( """<ShowInMenu category="Filter Examples"/>""" )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-@smdomain.xml("""
+@smdomain.xml( """
               <InputArrayDomain name="points_array" attribute_type="point" />
               <InputArrayDomain name="cells_array" attribute_type="cell" />
               <InputArrayDomain name="fields_array" attribute_type="field" />
               <InputArrayDomain name="cells_scalar_array" attribute_type="cell" number_of_components="1" />
               <InputArrayDomain name="cells_vector_array" attribute_type="cell" number_of_components="3" />
-              """
-)
+              """ )
 class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -85,28 +82,28 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
 
         self._strSingle: str = ""
-        self._intSingle: str = 0
-        self._doubleSingle: str = 0.0
+        self._intSingle: int = 0
+        self._doubleSingle: float = 0.0
 
         self._dropDownListSelection: int = 0
         self._dropDownListSelection2: int = 0
 
         self._selectedAttributeSingle: str = ""
         self._clearSelectedAttributeMulti: bool = True
-        self._selectedAttributeMulti: list[str] = []
+        self._selectedAttributeMulti: list[ str ] = []
 
         # used to init data
         self._initArraySelections: bool = True
         self._selectedTimes: vtkDataArraySelection = vtkDataArraySelection()
         self._selectedTimes.AddObserver( 0, createModifiedCallback( self ) )
 
-        self._extentSlider: list[float] = [0.0, 1.0]
+        self._extentSlider: list[ float ] = [ 0.0, 1.0 ]
 
-        self._selectedAttributeSingleType: str= ""
+        self._selectedAttributeSingleType: str = ""
         self._componentIndex: int = 0
 
         self.clearBlockNames: bool = True
-        self._blockNames: list[str] = []
+        self._blockNames: list[ str ] = []
 
     @smproperty.intvector(
         name="BoolSingle",
@@ -183,7 +180,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                     mode="visibility" property="BoolSingle"
                     value="1"/></Hints>
                     </PropertyGroup>""" )
-    def a04ShowHideGroup(self: Self) ->None:
+    def a04ShowHideGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -194,7 +191,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         default_values=0,
     )
     @smdomain.xml( strListToEnumerationDomainXml( DROP_DOWN_LIST_ELEMENTS ) )
-    def b01DropDownListFromVariable(self: Self, intValue: int) -> None:
+    def b01DropDownListFromVariable( self: Self, intValue: int ) -> None:
         """Set selection from drop down list filled with variable elements.
 
         Args:
@@ -211,7 +208,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         default_values=0,
     )
     @smdomain.xml( strEnumToEnumerationDomainXml( DROP_DOWN_LIST_ENUM ) )
-    def b02DropDownListFromEnum(self: Self, intValue: int) -> None:
+    def b02DropDownListFromEnum( self: Self, intValue: int ) -> None:
         """Set selection from drop down list filled with enumeration elements.
 
         Args:
@@ -225,7 +222,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                         <Property name="DropDownListFromVariable"/>
                         <Property name="DropDownListFromEnum"/>
                     </PropertyGroup>""" )
-    def b03DropDownListGroup(self: Self) ->None:
+    def b03DropDownListGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -237,7 +234,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         default_values="",
         panel_visibility="default",
     )
-    @smdomain.xml("""
+    @smdomain.xml( """
                 <ArrayListDomain
                     name="array_list"
                     attribute_type="Scalars"
@@ -253,7 +250,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                     function from <InputArrayDomain/> tag from filter @smdomain.xml.
                     Attribute type is defined by keyword `attribute_type`: Scalars or Vectors
                 </Documentation>
-                  """)
+                  """ )
     def a01SelectSingleAttribute( self: Self, name: str ) -> None:
         """Set selected attribute name.
 
@@ -267,13 +264,13 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
     @smproperty.stringvector(
         name="SelectMultipleAttribute",
         label="Select Multiple Attribute",
-        repeat_command = 1,
+        repeat_command=1,
         number_of_elements_per_command="1",
         element_types="2",
         default_values="",
         panel_visibility="default",
     )
-    @smdomain.xml("""
+    @smdomain.xml( """
                 <ArrayListDomain
                     name="array_list"
                     attribute_type="Vectors"
@@ -289,7 +286,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                     function from <InputArrayDomain/> tag from filter @smdomain.xml.
                     Attribute type is defined by keyword `attribute_type`: Scalars or Vectors
                 </Documentation>
-                  """)
+                  """ )
     def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
         """Set selected attribute name.
 
@@ -299,14 +296,14 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         if self._clearSelectedAttributeMulti:
             self._selectedAttributeMulti.clear()
         self._clearSelectedAttributeMulti = False
-        self._selectedAttributeMulti.append(name)
+        self._selectedAttributeMulti.append( name )
         self.Modified()
 
     @smproperty.xml( """<PropertyGroup label="Attribute selection" panel_visibility="default">
                         <Property name="SelectSingleAttribute"/>
                         <Property name="SelectMultipleAttribute"/>
                     </PropertyGroup>""" )
-    def a05AttributeSelectionGroup(self: Self) ->None:
+    def a05AttributeSelectionGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -329,14 +326,12 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """
         return self._selectedTimes
 
-    @smproperty.doublevector(
-            name="ExtentSlider",
-            label="Extent Slider",
-            number_of_elements=2,
-            default_values=(0.0, 0.0),
-            panel_visibility="default",
-            panel_widget="double_range"
-    )
+    @smproperty.doublevector( name="ExtentSlider",
+                              label="Extent Slider",
+                              number_of_elements=2,
+                              default_values=( 0.0, 0.0 ),
+                              panel_visibility="default",
+                              panel_widget="double_range" )
     @smdomain.xml( """
                     <BoundsDomain mode="normal" name="bounds" scale_factor="1">
                         <RequiredProperties>
@@ -347,30 +342,29 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                         <MinimumLabel text="Minimum Limit"/>
                         <MaximumLabel text="Maximum Limit" />
                     </Hints>
-                    """)
-    def d05ExtentSlider( self: Self, mini: float, maxi: float) -> None:
+                    """ )
+    def d05ExtentSlider( self: Self, mini: float, maxi: float ) -> None:
         """Define a double slider.
 
         Args:
             mini (float): minimum
             maxi (float): maximum
         """
-        if mini != self._extentSlider[0]:
-            self._extentSlider[0] = mini
+        if mini != self._extentSlider[ 0 ]:
+            self._extentSlider[ 0 ] = mini
             self.Modified()
-        if maxi != self._extentSlider[1]:
-            self._extentSlider[1] = maxi
+        if maxi != self._extentSlider[ 1 ]:
+            self._extentSlider[ 1 ] = maxi
             self.Modified()
 
     # use mode="leaves" to display only leaves, or discard it to display the whole tree
-    @smproperty.intvector(name="CompositeDataSetIndex",
-                          default_values=1,
-                          number_of_elements=1,
-                          number_of_elements_per_command=1,
-                          panel_visibility="default",
-                          repeat_command=1
-    )
-    @smdomain.xml("""<CompositeTreeDomain mode="leaves" name="tree">
+    @smproperty.intvector( name="CompositeDataSetIndex",
+                           default_values=1,
+                           number_of_elements=1,
+                           number_of_elements_per_command=1,
+                           panel_visibility="default",
+                           repeat_command=1 )
+    @smdomain.xml( """<CompositeTreeDomain mode="leaves" name="tree">
                         <RequiredProperties>
                             <Property function="Input" name="Input" />
                         </RequiredProperties>
@@ -379,8 +373,8 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                         <!-- we don't want to show this property, except for MBs. -->
                         <PropertyWidgetDecorator type="InputDataTypeDecorator"
                             mode="visibility" name="vtkMultiBlockDataSet" />
-                    </Hints>""")
-    def e00SetBlockNames( self: Self, value: str) -> None:
+                    </Hints>""" )
+    def e00SetBlockNames( self: Self, value: str ) -> None:
         """Define component selector.
 
         Args:
@@ -389,19 +383,16 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         if self.clearBlockNames:
             self._blockNames.clear()
         self.clearBlockNames = False
-        self._blockNames.append(value)
+        self._blockNames.append( value )
         self.Modified()
 
-    @smproperty.intvector(name="AttributeType",
-                          default_values=0,
-                          number_of_elements=1
-    )
-    @smdomain.xml("""<FieldDataDomain enable_field_data="1" name="enum">
+    @smproperty.intvector( name="AttributeType", default_values=0, number_of_elements=1 )
+    @smdomain.xml( """<FieldDataDomain enable_field_data="1" name="enum">
                         <RequiredProperties>
                             <Property function="Input" name="Input" />
                         </RequiredProperties>
-                    </FieldDataDomain>""")
-    def e01SetFieldAssociation(self: Self, value: int) ->None:
+                    </FieldDataDomain>""" )
+    def e01SetFieldAssociation( self: Self, value: int ) -> None:
         """Set attribute support for next attribute selector.
 
         Args:
@@ -409,8 +400,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """
         self.Modified()
 
-
-    @smproperty.xml("""
+    @smproperty.xml( """
         <StringVectorProperty command="e02SelectSingleAttributeWithType"
                             element_types="0 0 0 0 2"
                             name="SelectSingleAttributeWithTypeFilter"
@@ -427,8 +417,8 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
             This property indicates the name of the array to be extracted.
         </Documentation>
         </StringVectorProperty>
-    """)
-    def e02SelectSingleAttributeWithType(self: Self, v1: int, v2: int, v3: int, support: int, name :str) ->None:
+    """ )
+    def e02SelectSingleAttributeWithType( self: Self, v1: int, v2: int, v3: int, support: int, name: str ) -> None:
         """Set selected attribute name.
 
         Args:
@@ -442,7 +432,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
             self._selectedAttributeSingleType = name
             self.Modified()
 
-    @smproperty.xml(""" <IntVectorProperty
+    @smproperty.xml( """ <IntVectorProperty
                             name="SetInputArrayComponent"
                             label="Select Component"
                             animateable="0"
@@ -459,8 +449,8 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                             This property indicates the component of the array to be extracted.
                             </Documentation>
                         </IntVectorProperty>
-                    """)
-    def e04SetInputArrayComponent( self: Self, value: int) -> None:
+                    """ )
+    def e04SetInputArrayComponent( self: Self, value: int ) -> None:
         """Define component selector.
 
         Args:
@@ -476,7 +466,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
                         <Property name="SelectSingleAttributeWithTypeFilter"/>
                         <Property name="SetInputArrayComponent"/>
                     </PropertyGroup>""" )
-    def e05SelectorGroup(self: Self) ->None:
+    def e05SelectorGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 
@@ -503,7 +493,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
             executive = self.GetExecutive()  # noqa: F841
             inInfo = inInfoVec[ 0 ]
             self.m_timeSteps = inInfo.GetInformationObject( 0 ).Get( executive.TIME_STEPS() )  # type: ignore
-            for timestep in self.m_timeSteps:
+            for timestep in self.m_timeSteps:  # type: ignore[attr-defined]
                 if not self._selectedTimes.ArrayExists( str( timestep ) ):
                     self._selectedTimes.AddArray( str( timestep ) )
         self._initArraySelections = False
@@ -556,19 +546,19 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         assert outData is not None, "Output pipeline is null."
 
         # do something...
-        print(f"Single String {self._strSingle}")
-        print(f"Single int {self._intSingle}")
-        print(f"Single double {self._doubleSingle}")
-        print(f"Single Attribute selection {self._selectedAttributeSingle}")
-        print(f"Single Attribute selection with type {self._selectedAttributeSingleType}")
-        print(f"Multiple Attribute selection {self._selectedAttributeMulti}")
+        print( f"Single String {self._strSingle}" )
+        print( f"Single int {self._intSingle}" )
+        print( f"Single double {self._doubleSingle}" )
+        print( f"Single Attribute selection {self._selectedAttributeSingle}" )
+        print( f"Single Attribute selection with type {self._selectedAttributeSingleType}" )
+        print( f"Multiple Attribute selection {self._selectedAttributeMulti}" )
 
         selectedTimes = getArrayChoices( self.d02GetSelectedTimes() )
-        print(f"Selected times: {selectedTimes}")
+        print( f"Selected times: {selectedTimes}" )
 
-        print(f"Bounds slider: {self._extentSlider}")
-        print(f"Attribute {self._selectedAttributeSingleType} component: {self._componentIndex}")
-        print(f"Selected Block names: {self._blockNames}")
+        print( f"Bounds slider: {self._extentSlider}" )
+        print( f"Attribute {self._selectedAttributeSingleType} component: {self._componentIndex}" )
+        print( f"Selected Block names: {self._blockNames}" )
         self._clearSelectedAttributeMulti = True
         self.clearBlockNames = True
         return 1
