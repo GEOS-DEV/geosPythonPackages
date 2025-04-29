@@ -81,11 +81,14 @@ def __read_pvtu( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
 
 
 def read_mesh( vtk_input_file: str ) -> vtkPointSet:
-    """
-    Read the vtk file and builds either an unstructured grid or a structured grid from it.
-    :param vtk_input_file: The file name. The extension will be used to guess the file format.
-        If the first guess fails, the other available readers will be tried.
-    :return: A vtkPointSet.
+    """Read the vtk file and builds either an unstructured grid or a structured grid from it.
+
+    Args:
+        vtk_input_file (str): The file name. The extension will be used to guess the file format.
+            If the first guess fails, the other available readers will be tried.
+
+    Returns:
+        vtkPointSet: A vtkPointSet.
     """
     if not os.path.exists( vtk_input_file ):
         err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."
@@ -142,14 +145,18 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False 
 
 
 def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
-    """
-    Writes the mesh to disk.
-    Nothing will be done if the file already exists.
-    :param mesh: The grid to write.
-    :param vtk_output: Where to write. The file extension will be used to select the VTK file format.
-    :return: 0 in case of success.
-    """
+    """Writes the mesh to disk.
 
+    Nothing will be done if the file already exists.
+
+    Args:
+        mesh (vtkPointSet): The mesh to write.
+        vtk_output (VtkOutput): Where to write. The file extension will be used to select the VTK file format.
+        canOverwrite (bool): if True, overwrite output file. Defaults to False.
+
+    Returns:
+        0 in case of success.
+    """
     if os.path.exists( vtk_output.output ) and canOverwrite:
         logging.error( f"File \"{vtk_output.output}\" already exists, nothing done." )
         return 1

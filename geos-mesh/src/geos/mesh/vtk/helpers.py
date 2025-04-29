@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
-from typing import Iterator, Optional, List, Sequence, Union, Sized
+from typing import Iterator, Iterable, Optional, List, Sequence, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -16,10 +16,12 @@ from vtkmodules.vtkCommonDataModel import (
     vtkCellData,
     vtkPointData,
     vtkDataSet,
+    vtkCellTypes,
     vtkIncrementalOctreePointLocator,
 )
 
 GLOBAL_IDS_ARRAY_NAME: str = "GlobalIds"
+
 
 # TODO: copy from vtkUtils
 def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
@@ -157,12 +159,12 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
             map of cell point ids
     """
     # get point bounds
-    bounds: list[ float ] = getBounds( cellPtsCoord )
+    bounds: Sequence[ float ] = getBounds( cellPtsCoord )
     points: vtkPoints = vtkPoints()
     # use point locator to check for colocated points
     pointsLocator = vtkIncrementalOctreePointLocator()
     pointsLocator.InitPointInsertion( points, bounds )
-    cellVertexMapAll: list[ tuple[ int, ...] ] = []
+    cellVertexMapAll: list[ tuple[ reference, ...] ] = []
     ptId: reference = reference( 0 )
     ptsCoords: npt.NDArray[ np.float64 ]
     for ptsCoords in cellPtsCoord:
@@ -170,21 +172,22 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
         pt: npt.NDArray[ np.float64 ]  # 1DArray
         for pt in ptsCoords:
             if shared:
-                pointsLocator.InsertUniquePoint( pt.tolist(), ptId )
+                pointsLocator.InsertUniquePoint( pt.tolist(), ptId )  # type: ignore[arg-type]
             else:
-                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 )
-            cellVertexMap += [ ptId.get() ]
+                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 ) # type: ignore[arg-type]
+            cellVertexMap += [ ptId ]
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
 
-def to_vtk_id_list( data: Sized ) -> vtkIdList:
-    """Generate vtkIdList from sized object.
+
+def to_vtk_id_list( data: Sequence [ Any ] ) -> vtkIdList:
+    """Generate vtkIdList from iterable object.
 
     Args:
-        data (Sized): sized object
+        data (Sequence [ Any ]): iterable object
 
     Returns:
-        vtkIdList: id ilst
+        vtkIdList: id list
     """
     result = vtkIdList()
     result.Allocate( len( data ) )
@@ -193,23 +196,23 @@ def to_vtk_id_list( data: Sized ) -> vtkIdList:
     return result
 
 
-def vtk_iter( vtkContainer: any ) -> Iterator[ any ]:
-    """Create an iterable from a vtk "container" (e.g. vtkIdList).
+def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
+    """Create an iterable from a vtk "container".
 
     To be used for building built-inspython containers.
 
     Args:
-        vtkContainer: A vtk container.
+        vtkContainer (vtkIdList | vtkCellTypes): A vtk container.
 
     Yields:
         Iterator[ any ]: The iterator.
     """
-    if hasattr( vtkContainer, "GetNumberOfIds" ):
-        for i in range( vtkContainer.GetNumberOfIds() ):
-            yield vtkContainer.GetId( i )
-    elif hasattr( vtkContainer, "GetNumberOfTypes" ):
-        for i in range( vtkContainer.GetNumberOfTypes() ):
-            yield vtkContainer.GetCellType( i )
+    if isinstance( vtkContainer, vtkIdList ):
+        for i in range( vtkContainer.GetNumberOfIds() ):  # type: ignore[attr-defined]
+            yield vtkContainer.GetId( i )  # type: ignore[attr-defined]
+    elif isinstance( vtkContainer, vtkCellTypes ):
+        for i in range( vtkContainer.GetNumberOfTypes() ):  # type: ignore[attr-defined]
+            yield vtkContainer.GetCellType( i )  # type: ignore[attr-defined]
 
 
 def has_invalid_arrays( object: vtkDataSet, invalid_arrays: List[ str ] ) -> bool:
@@ -328,9 +331,10 @@ def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
         if name == GLOBAL_IDS_ARRAY_NAME:
             return getCopyArrayByName( data, name )
     logging.warning( f"No {GLOBAL_IDS_ARRAY_NAME} array was found." )
+    return None
 
 
-def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[npt.NDArray[np.int64]]:
+def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[ npt.NDArray[ np.int64 ] ]:
     """Get GlobalIds array as numpy array.
 
     Args:
@@ -342,21 +346,21 @@ def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[npt.NDArray[np.int6
     return vtk_to_numpy( getGlobalIdsArray( data ) )
 
 
-def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[np.int64] ) -> None:
-    """Sort input array by GlobalIds.
+def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.float64 ] ) -> None:
+    """Sort inplace input array by GlobalIds.
 
     Args:
         data (vtkFieldData): field data
         arr (npt.NDArray[np.int64]): array to sort
     """
-    globalids: npt.NDArray[np.int64] = getNumpyGlobalIdsArray( data )
+    globalids: npt.NDArray[ np.int64 ] = getNumpyGlobalIdsArray( data )
     if globalids is not None:
         arr = arr[ np.argsort( globalids ) ]
     else:
-        logging.warning( "No sorting was performed." )
+        logging.warning( "No sorting was performed." )  # type: ignore[unreachable]
 
 
-def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[npt.NDArray[np.float64]]:
+def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray[ np.float64 ] ]:
     """Get numpy array from name.
 
     Args:
@@ -367,16 +371,17 @@ def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -
     Returns:
         Optional[npt.NDArray[np.int64]]: output numpy array
     """
-    arr: npt.NDArray[np.float64] = vtk_to_numpy( getArrayByName( data, name ) )
+    arr: npt.NDArray[ np.float64 ] = vtk_to_numpy( getArrayByName( data, name ) )
     if arr is not None:
         if sorted:
-            array_names: List[ str ] = getArrayNames( data )
-            sortArrayByGlobalIds( data, arr, array_names )
+            sortArrayByGlobalIds( data, arr )
         return arr
-    return None
+    return None  # type: ignore[unreachable]
 
 
-def getCopyNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[npt.NDArray[np.float64]]:
+def getCopyNumpyArrayByName( data: vtkFieldData,
+                             name: str,
+                             sorted: bool = False ) -> Optional[ npt.NDArray[ np.float64 ] ]:
     """Get a deep copy of numpy array from name.
 
     Args:
