@@ -1,16 +1,9 @@
 from dataclasses import dataclass
-import logging
-from typing import (
-    Collection,
-    List,
-)
-
-from vtkmodules.vtkFiltersGeneral import ( vtkCellValidator )
-from vtkmodules.vtkCommonCore import ( vtkOutputWindow, vtkFileOutputWindow )
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy, )
-
-from . import vtk_utils
+from typing import Collection, List
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.vtkFiltersGeneral import vtkCellValidator
+from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
+from geos.mesh.vtk.io import read_mesh
 
 
 @dataclass( frozen=True )
@@ -82,5 +75,5 @@ def __check( mesh, options: Options ) -> Result:
 
 
 def check( vtk_input_file: str, options: Options ) -> Result:
-    mesh = vtk_utils.read_mesh( vtk_input_file )
+    mesh = read_mesh( vtk_input_file )
     return __check( mesh, options )

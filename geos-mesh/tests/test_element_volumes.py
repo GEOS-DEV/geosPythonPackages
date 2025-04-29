@@ -1,14 +1,6 @@
 import numpy
-
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_TETRA,
-    vtkCellArray,
-    vtkTetra,
-    vtkUnstructuredGrid,
-)
-
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import VTK_TETRA, vtkCellArray, vtkTetra, vtkUnstructuredGrid
 from geos.mesh.doctor.checks.element_volumes import Options, __check
 
 
