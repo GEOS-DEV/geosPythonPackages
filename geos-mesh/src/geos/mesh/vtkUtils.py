@@ -805,7 +805,7 @@ def renameAttribute(
         bool: True if renaming operation successfully ended.
     """
     if isAttributeInObject( object, attributeName, onPoints ):
-        dim: int = int( onPoints )
+        dim: int = 0 if onPoints == True else 1
         filter = vtkArrayRename()
         filter.SetInputData( object )
         filter.SetArrayName( dim, attributeName, newAttributeName )
