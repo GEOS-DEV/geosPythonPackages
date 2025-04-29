@@ -175,7 +175,7 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
                 pointsLocator.InsertUniquePoint( pt.tolist(), ptId )  # type: ignore[arg-type]
             else:
                 pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 )  # type: ignore[arg-type]
-            cellVertexMap += [ ptId ]
+            cellVertexMap += [ ptId.get() ]
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
 
