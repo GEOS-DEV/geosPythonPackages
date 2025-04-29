@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
-from typing import Iterator, Iterable, Optional, List, Sequence, Union, Any
+from typing import Iterator, Optional, List, Sequence, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -174,13 +174,13 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
             if shared:
                 pointsLocator.InsertUniquePoint( pt.tolist(), ptId )  # type: ignore[arg-type]
             else:
-                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 ) # type: ignore[arg-type]
+                pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 )  # type: ignore[arg-type]
             cellVertexMap += [ ptId ]
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
 
 
-def to_vtk_id_list( data: Sequence [ Any ] ) -> vtkIdList:
+def to_vtk_id_list( data: Sequence[ Any ] ) -> vtkIdList:
     """Generate vtkIdList from iterable object.
 
     Args:
