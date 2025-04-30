@@ -13,6 +13,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTab
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
+from geos.mesh.processing.meshQualityMetricHelpers import getAllCellTypes
+
 __doc__ = """
 CellTypeCounter module is a vtk filter that computes cell type counts.
 
@@ -93,7 +95,7 @@ class CellTypeCounter( VTKPythonAlgorithmBase ):
         outTable.SetNumberOfRows( 1 )
 
         # create columns per types
-        for cellType in self.getAllCellTypes():
+        for cellType in getAllCellTypes():
             array: vtkIntArray = vtkIntArray()
             array.SetName( vtkCellTypes.GetClassNameFromTypeId( cellType ) )
             array.SetNumberOfComponents( 1 )
@@ -109,11 +111,3 @@ class CellTypeCounter( VTKPythonAlgorithmBase ):
             CellTypeCounts: CellTypeCounts object.
         """
         return self.counts
-
-    def getAllCellTypes( self: Self ) -> tuple[ int, ...]:
-        """Get all cell type ids managed by CellTypeCount class.
-
-        Returns:
-            tuple[int,...]: tuple containg cell type ids.
-        """
-        return ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
