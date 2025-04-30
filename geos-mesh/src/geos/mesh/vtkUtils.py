@@ -508,7 +508,7 @@ def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> 
     extractedBlock: vtkMultiBlockDataSet = extractBlockfilter.GetOutput()
     return extractedBlock
 
-
+# TODO : fix function for keepPartialAttributes = True
 def mergeBlocks(
     input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
     keepPartialAttributes: bool = False,
@@ -727,7 +727,7 @@ def copyAttribute(
     attributNameFrom: str,
     attributNameTo: str,
 ) -> bool:
-    """Copy an attribute from objectFrom to objectTo.
+    """Copy a cell attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkMultiBlockDataSet): object from which to copy the attribute.
@@ -736,7 +736,7 @@ def copyAttribute(
         attributNameTo (str): attribute name in objectTo.
 
     Returns:
-        bool: True if copy sussfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise
     """
     elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( objectTo )
     elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( objectFrom )
@@ -766,7 +766,7 @@ def copyAttributeDataSet(
     attributNameFrom: str,
     attributNameTo: str,
 ) -> bool:
-    """Copy an attribute from objectFrom to objectTo.
+    """Copy a cell attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkDataSet): object from which to copy the attribute.
@@ -775,7 +775,7 @@ def copyAttributeDataSet(
         attributNameTo (str): attribute name in objectTo.
 
     Returns:
-        bool: True if copy sussfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise
     """
     # get attribut from initial time step block
     npArray: npt.NDArray[ np.float64 ] = getArrayInObject( objectFrom, attributNameFrom, False )
