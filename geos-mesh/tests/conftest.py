@@ -5,24 +5,16 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import pytest
-
+from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-from vtkmodules.vtkCommonDataModel import vtkDataSet
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLMultiBlockDataReader
 
 
 @pytest.fixture
-def array( request: str ) -> npt.NDArray:
-    """Fixture to get reference array depending on request array name.
-
-    Args:
-        request (str): _description_
-
-    Returns:
-        npt.NDArray: _description_
-    """
+def arrayExpected( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
     reference_data = "data/data.npz"
     reference_data_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), reference_data )
     data = np.load( reference_data_path )
@@ -30,18 +22,33 @@ def array( request: str ) -> npt.NDArray:
     return data[ request.param ]
 
 
-@pytest.fixture( scope="function" )
-def vtkDataSetTest() -> vtkDataSet:
-    """Load vtk dataset to run the tests in test_vtkUtils.py.
+@pytest.fixture
+def arrayTest( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
+    np.random.seed( 42 )
+    array: npt.NDArray[ np.float64 ] = np.random.rand(
+        request.param,
+        3,
+    )
+    return array
 
-    Returns:
-        vtkDataSet: _description_
-    """
-    reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-    vtkFilename = "data/domain_res5_id.vtu"
-    data_test_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
-    # reader.SetFileName( "geos-mesh/tests/data/domain_res5_id.vtu" )
-    reader.SetFileName( data_test_path )
-    reader.Update()
 
-    return reader.GetOutput()
+@pytest.fixture
+def dataSetTest() -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
+
+    def _get_dataset( datasetType: str ):
+        if datasetType == "multiblock":
+            reader = reader = vtkXMLMultiBlockDataReader()
+            vtkFilename = "data/displacedFault.vtm"
+        elif datasetType == "dataset":
+            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            vtkFilename = "data/domain_res5_id.vtu"
+        elif datasetType == "polydata":
+            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            vtkFilename = "data/surface.vtu"
+        datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
+        reader.SetFileName( datapath )
+        reader.Update()
+
+        return reader.GetOutput()
+
+    return _get_dataset
