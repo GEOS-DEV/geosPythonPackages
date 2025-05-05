@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 
-import geos_posp.processing.vtkUtils as vtkUtils
+import geos.mesh.vtkUtils as vtkUtils
 
 __doc__ = r"""
 This module contains utilities to process meshes using pyvista.
