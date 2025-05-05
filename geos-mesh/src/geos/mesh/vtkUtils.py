@@ -508,6 +508,7 @@ def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> 
     extractedBlock: vtkMultiBlockDataSet = extractBlockfilter.GetOutput()
     return extractedBlock
 
+
 # TODO : fix function for keepPartialAttributes = True
 def mergeBlocks(
     input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],

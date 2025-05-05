@@ -13,9 +13,8 @@ import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
 import pandas as pd  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet, vtkMultiBlockDataSet, vtkDataObject, vtkDataObjectTreeIterator, vtkPolyData, vtkPointData, vtkCellData,
-    vtkUnstructuredGrid )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkDataObject, vtkDataObjectTreeIterator,
+                                            vtkPolyData, vtkPointData, vtkCellData, vtkUnstructuredGrid )
 
 from vtk import (  # type: ignore[import-untyped]
     VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT,
@@ -339,7 +338,7 @@ def test_createConstantAttributeMultiBlock(
         else:
             data = dataset.GetCellData()
         createdAttribute: vtkDoubleArray = data.GetArray( attributeName )
-        cnames: Tuple[ str, ... ] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
+        cnames: Tuple[ str, ...] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
 
         assert ( vnp.vtk_to_numpy( createdAttribute ) == np.full( ( elementSize[ iter.GetCurrentFlatIndex() - 1 ], 3 ),
                                                                   fill_value=values ) ).all()
@@ -372,7 +371,7 @@ def test_createConstantAttributeDataSet(
         data = vtkDataSetTest.GetCellData()
 
     createdAttribute: vtkDoubleArray = data.GetArray( attributeName )
-    cnames: Tuple[ str, ... ] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
+    cnames: Tuple[ str, ...] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
 
     assert ( vnp.vtk_to_numpy( createdAttribute ) == np.full( ( elementSize, 3 ), fill_value=values ) ).all()
     assert cnames == componentNames
@@ -403,7 +402,7 @@ def test_createAttribute(
         data = vtkDataSetTest.GetCellData()
 
     createdAttribute: vtkDoubleArray = data.GetArray( attributeName )
-    cnames: Tuple[ str, ... ] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
+    cnames: Tuple[ str, ...] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
 
     assert ( vnp.vtk_to_numpy( createdAttribute ) == arrayExpected ).all()
     assert cnames == componentNames
