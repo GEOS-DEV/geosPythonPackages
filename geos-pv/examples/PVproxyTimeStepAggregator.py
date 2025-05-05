@@ -61,18 +61,18 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         #: saved object at each time step
         self._savedInputs: list[ vtkUnstructuredGrid ] = []
 
-    def RequestUpdateExtent(
+    def RequestInformation(
         self: Self,
         request: vtkInformation,  # noqa: F841
         inInfoVec: list[ vtkInformationVector ],
         outInfoVec: vtkInformationVector,
     ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestUpdateExtent.
+        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -111,9 +111,9 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -135,9 +135,9 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -177,11 +177,11 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
         """Get the time step index of input time from the list of time steps.
 
         Args:
-            time (float): time
+            time (float): Time
             timeSteps (npt.NDArray[np.float64]): Array of time steps
 
         Returns:
-            int: time step index
+            int: Time step index
         """
         indexes: npt.NDArray[ np.int64 ] = np.where( np.isclose( timeSteps, time ) )[ 0 ]
         assert ( indexes.size > 0 ), f"Current time {time} does not exist in the selected object."

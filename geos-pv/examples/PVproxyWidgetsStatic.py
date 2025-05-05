@@ -87,13 +87,13 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input string field.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._strSingle:
             self._strSingle = value
             self.Modified()
 
-
+# may be used with panel_widget="calculator" to create a scriptable widget.
 #     <StringVectorProperty command="SetFunction"
 #                             name="Function"
 #                             number_of_elements="1"
@@ -122,7 +122,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input string field.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._strMultiline:
             self._strMultiline = value
@@ -151,7 +151,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input file path.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._inputFilePath:
             self._inputFilePath = value
@@ -183,7 +183,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input file path.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._outputFilePath:
             self._outputFilePath = value
@@ -215,7 +215,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input string field.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._directoryPath:
             self._directoryPath = value
@@ -243,7 +243,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input int field.
 
         Args:
-            value (int): input
+            value (int): Input
         """
         if value != self._intSingle:
             self._intSingle = value
@@ -260,9 +260,9 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input int field.
 
         Args:
-            value0 (int): input 0
-            value1 (int): input 1
-            value2 (int): input 2
+            value0 (int): Input 0
+            value1 (int): Input 1
+            value2 (int): Input 2
         """
         if value0 != self._intMulti[ 0 ]:
             self._intMulti[ 0 ] = value0
@@ -295,7 +295,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define boolean input.
 
         Args:
-            value (bool): input bool.
+            value (bool): Input bool.
         """
         self._boolSingle = value
         self.Modified()
@@ -320,7 +320,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input double field.
 
         Args:
-            value (float): input
+            value (float): Input
         """
         if value != self._doubleSingle:
             self._doubleSingle = value
@@ -337,9 +337,9 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input double field.
 
         Args:
-            value0 (float): input 0
-            value1 (float): input 1
-            value2 (float): input 2
+            value0 (float): Input 0
+            value1 (float): Input 1
+            value2 (float): Input 2
         """
         if value0 != self._doubleMulti[ 0 ]:
             self._doubleMulti[ 0 ] = value0
@@ -374,7 +374,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define a slider.
 
         Args:
-            value (float): input value
+            value (float): Input value
         """
         if value != self._singleIntSliderValue:
             self._singleIntSliderValue = value
@@ -393,7 +393,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define a slider.
 
         Args:
-            value (float): input value
+            value (float): Input value
         """
         if value != self._singleSliderValue:
             self._singleSliderValue = value
@@ -422,8 +422,8 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define a double slider.
 
         Args:
-            mini (float): minimum
-            maxi (float): maximum
+            mini (float): Minimum
+            maxi (float): Maximum
         """
         if mini != self._doubleSlider[ 0 ]:
             self._doubleSlider[ 0 ] = mini
@@ -458,9 +458,9 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Define an input double field.
 
         Args:
-            value0 (float): input 0
-            value1 (float): input 1
-            value2 (float): input 2
+            value0 (float): Input 0
+            value1 (float): Input 1
+            value2 (float): Input 2
         """
         if value0 != self._color[ 0 ]:
             self._color[ 0 ] = value0
@@ -545,9 +545,9 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -569,9 +569,9 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.

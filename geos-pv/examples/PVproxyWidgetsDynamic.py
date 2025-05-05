@@ -116,7 +116,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define boolean input.
 
         Args:
-            value (bool): input bool.
+            value (bool): Input bool.
         """
         # no necessarily need to store the checkbox state
         self.Modified()
@@ -132,7 +132,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define an input string field.
 
         Args:
-            value (str): input
+            value (str): Input
         """
         if value != self._strSingle:
             self._strSingle = value
@@ -149,7 +149,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define an input int field.
 
         Args:
-            value (int): input
+            value (int): Input
         """
         if value != self._intSingle:
             self._intSingle = value
@@ -166,7 +166,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define an input double field.
 
         Args:
-            value (float): input
+            value (float): Input
         """
         if value != self._doubleSingle:
             self._doubleSingle = value
@@ -255,7 +255,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Set selected attribute name.
 
         Args:
-            name (str): input value
+            name (str): Input value
         """
         if name != self._selectedAttributeSingle:
             self._selectedAttributeSingle = name
@@ -291,7 +291,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Set selected attribute name.
 
         Args:
-            name (str): input value
+            name (str): Input value
         """
         if self._clearSelectedAttributeMulti:
             self._selectedAttributeMulti.clear()
@@ -347,8 +347,8 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define a double slider.
 
         Args:
-            mini (float): minimum
-            maxi (float): maximum
+            mini (float): Minimum
+            maxi (float): Maximum
         """
         if mini != self._extentSlider[ 0 ]:
             self._extentSlider[ 0 ] = mini
@@ -378,7 +378,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define component selector.
 
         Args:
-            value (int): component index
+            value (int): Component index
         """
         if self.clearBlockNames:
             self._blockNames.clear()
@@ -396,7 +396,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Set attribute support for next attribute selector.
 
         Args:
-            value  (int): input value
+            value  (int): Input value
         """
         self.Modified()
 
@@ -422,11 +422,11 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Set selected attribute name.
 
         Args:
-            v1 (int): input value 1
-            v2 (int): input value 2
-            v3 (int): input value 3
-            support (int): attribute support (point 0, cell 1, field 2)
-            name (str): input value
+            v1 (int): Input value 1
+            v2 (int): Input value 2
+            v3 (int): Input value 3
+            support (int): Attribute support (point 0, cell 1, field 2)
+            name (str): Input value
         """
         if name != self._selectedAttributeSingleType:
             self._selectedAttributeSingleType = name
@@ -454,7 +454,7 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Define component selector.
 
         Args:
-            value (int): component index
+            value (int): Component index
         """
         if value != self._componentIndex:
             self._componentIndex = value
@@ -479,9 +479,9 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -508,9 +508,9 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -532,9 +532,9 @@ class PVproxyWidgetsDynamic( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
