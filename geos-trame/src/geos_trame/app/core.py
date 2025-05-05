@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
+
 from trame.ui.vuetify3 import VAppLayout
 from trame.decorators import TrameApp
 from trame.widgets import html, simput
@@ -9,6 +10,7 @@ from trame_simput import get_simput_manager
 
 from geos_trame import module
 from geos_trame.app.deck.tree import DeckTree
+from geos_trame.app.utils.properties_checker import PropertiesChecker
 from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
@@ -49,6 +51,9 @@ class GeosTrame:
         # Tree
         self.tree = DeckTree( self.state.sm_id )
 
+        # Properties checker
+        self.properties_checker = PropertiesChecker(self.tree, trame_server=server)
+
         # TODO put as a modal window
         self.set_input_file( file_name=self.state.input_file )
 
@@ -74,7 +79,8 @@ class GeosTrame:
                     cols=2,
                     order=1,
             ):
-                self.deckInspector = DeckInspector( source=self.tree, classes="fill-height" )
+                self.deckInspector = DeckInspector( source=self.tree, classes="fit-content" )
+                vuetify.VBtn(text="Check fields", classes="ma-4", click=(self.properties_checker.check_fields,))
 
             with vuetify.VCol(
                     cols=10,

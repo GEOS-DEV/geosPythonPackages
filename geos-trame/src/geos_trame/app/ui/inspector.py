@@ -6,8 +6,7 @@ from enum import Enum
 
 import yaml
 from pydantic import BaseModel
-from trame.widgets import vuetify3 as vuetify
-from trame.widgets import html
+from trame.widgets import vuetify3 as vuetify, html
 from trame_simput import get_simput_manager
 from typing import Any
 
@@ -62,6 +61,7 @@ class TreeNode:
     hidden_children: list
     is_drawable: bool
     drawn: bool
+    valid: int
 
     @property
     def json( self ) -> dict:
@@ -71,6 +71,7 @@ class TreeNode:
                 title=self.title,
                 is_drawable=self.is_drawable,
                 drawn=self.drawn,
+                valid=self.valid,
                 children=[ c.json for c in self.children ],
                 hidden_children=[ c.json for c in self.hidden_children ],
             )
@@ -79,6 +80,7 @@ class TreeNode:
             title=self.title,
             is_drawable=self.is_drawable,
             drawn=self.drawn,
+            valid=self.valid,
             children=None,
             hidden_children=[],
         )
@@ -104,6 +106,7 @@ def get_node_dict( obj, node_id, path ):
         hidden_children=[],
         is_drawable=node_id in ( k.value for k in Renderable ),
         drawn=False,
+        valid=0
     )
 
 
@@ -222,6 +225,26 @@ class DeckInspector( vuetify.VTreeview ):
 
         with self:
             with vuetify.Template( v_slot_append="{ item }" ):
+                with vuetify.VTooltip(v_if=("item.valid == 2",)):
+                    with vuetify.Template(
+                            v_slot_activator=("{ props }",),
+                            __properties__=[("v_slot_activator", "v-slot:activator")],
+                    ):
+                        vuetify.VIcon(
+                            v_bind=("props",),
+                            classes="mr-2",
+                            icon="mdi-close",
+                            color="red"
+                        )
+                    html.Div(v_if=("item.invalid_properties",), v_text=("'Invalid properties: ' + item.invalid_properties",))
+                    html.Div(v_if=("item.invalid_children",), v_text=("'Invalid children: ' + item.invalid_children",))
+
+                vuetify.VIcon(
+                    v_if=("item.valid < 2",),
+                    classes="mr-2",
+                    icon='mdi-check',
+                    color=("['gray', 'green'][item.valid]",)
+                )
                 vuetify.VCheckboxBtn( v_if="item.is_drawable",
                                       focused=True,
                                       dense=True,
