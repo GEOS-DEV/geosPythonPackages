@@ -393,7 +393,7 @@ class WaveSolver( Solver ):
         self.setGeosWrapperValueByTargetKey( "Events/minTime", self.minTimeSim )
         self.sourceValue = np.real( y[ max( i1 - d, 0 ):min( i4 + d, n ), : ] )
 
-    def outputWaveField( self: Self, time: float ) -> None:
+    def outputWaveField( self: Self, time: float, cycleNumber: int ) -> None:
         """
         Trigger the wavefield output
 
@@ -401,6 +401,8 @@ class WaveSolver( Solver ):
         ----------
             time : float
                 Current time of simulation
+            cycleNumber : int
+                Current cycle number
         """
-        self.collections[ 0 ].collect( time, self.dt )
-        self.hdf5Outputs[ 0 ].output( time, self.dt )
+        self.collections[ 0 ].collect( time, self.dt, cycleNumber )
+        self.hdf5Outputs[ 0 ].output( time, self.dt, cycleNumber )

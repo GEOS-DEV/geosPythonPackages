@@ -701,7 +701,7 @@ class Solver:
         self.solver.cleanup( time )
 
     @required_attributes( "solver" )
-    def execute( self: Self, time: float ) -> None:
+    def execute( self: Self, time: float, cycleNumber: int ) -> None:
         """
         Do one solver iteration
 
@@ -709,8 +709,10 @@ class Solver:
         ----------
             time : float
                 Current time of simulation
+            cycleNumber : int
+                Current cycle number
         """
-        self.solver.execute( time, self.dt )
+        self.solver.execute( time, self.dt, cycleNumber )
 
     @required_attributes( "solver" )
     def reinitSolver( self: Self ) -> None:
@@ -718,7 +720,7 @@ class Solver:
         self.solver.reinit()
 
     @required_attributes( "vtkOutputs" )
-    def outputVtk( self: Self, time: float ) -> None:
+    def outputVtk( self: Self, time: float, cycleNumber: int ) -> None:
         """
         Trigger the VTK output
 
@@ -726,9 +728,11 @@ class Solver:
         ----------
             time : float
                 Current time of simulation
+            cycleNumber : int
+                Current cycle number
         """
         for vtkOutput in self.vtkOutputs:
-            vtkOutput.output( time, self.dt )
+            vtkOutput.output( time, self.dt, cycleNumber )
 
     """
     Update methods when initializing or reinitializing the solver
