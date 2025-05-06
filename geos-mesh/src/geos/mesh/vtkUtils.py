@@ -41,7 +41,7 @@ from vtkmodules.vtkFiltersCore import (
 )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.multiblockInspectorTreeFunctions import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
@@ -395,8 +395,8 @@ def getComponentNamesMultiBlock(
     Returns:
         tuple[str,...]: names of the components.
     """
-    elementraryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
-    for blockIndex in elementraryBlockIndexes:
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
+    for blockIndex in elementaryBlockIndexes:
         block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )
         if isAttributeInObject( block, attributeName, onPoints ):
             return getComponentNamesDataSet( block, attributeName, onPoints )
@@ -509,6 +509,7 @@ def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> 
     return extractedBlock
 
 
+# TODO : fix function for keepPartialAttributes = True
 def mergeBlocks(
     input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
     keepPartialAttributes: bool = False,
@@ -545,23 +546,17 @@ def mergeBlocks(
 
 
 def createEmptyAttribute(
-    object: vtkDataObject,
     attributeName: str,
     componentNames: tuple[ str, ...],
     dataType: int,
-    onPoints: bool,
 ) -> vtkDataArray:
     """Create an empty attribute.
 
     Args:
-        object (vtkDataObject): object (vtkMultiBlockDataSet, vtkDataSet)
-            where to create the attribute
         attributeName (str): name of the attribute
         componentNames (tuple[str,...]): name of the components for vectorial
             attributes
         dataType (int): data type.
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
 
     Returns:
         bool: True if the attribute was correctly created
@@ -733,7 +728,7 @@ def copyAttribute(
     attributNameFrom: str,
     attributNameTo: str,
 ) -> bool:
-    """Copy an attribute from objectFrom to objectTo.
+    """Copy a cell attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkMultiBlockDataSet): object from which to copy the attribute.
@@ -742,7 +737,7 @@ def copyAttribute(
         attributNameTo (str): attribute name in objectTo.
 
     Returns:
-        bool: True if copy sussfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise
     """
     elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( objectTo )
     elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( objectFrom )
@@ -753,7 +748,7 @@ def copyAttribute(
     for index in elementaryBlockIndexesTo:
         # get block from initial time step object
         blockT0: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectFrom, index ) )
-        assert blockT0 is not None, "Block at intitial time step is null."
+        assert blockT0 is not None, "Block at initial time step is null."
 
         # get block from current time step object
         block: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
@@ -772,7 +767,7 @@ def copyAttributeDataSet(
     attributNameFrom: str,
     attributNameTo: str,
 ) -> bool:
-    """Copy an attribute from objectFrom to objectTo.
+    """Copy a cell attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkDataSet): object from which to copy the attribute.
@@ -781,7 +776,7 @@ def copyAttributeDataSet(
         attributNameTo (str): attribute name in objectTo.
 
     Returns:
-        bool: True if copy sussfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise
     """
     # get attribut from initial time step block
     npArray: npt.NDArray[ np.float64 ] = getArrayInObject( objectFrom, attributNameFrom, False )
@@ -811,7 +806,7 @@ def renameAttribute(
         bool: True if renaming operation successfully ended.
     """
     if isAttributeInObject( object, attributeName, onPoints ):
-        dim: int = int( onPoints )
+        dim: int = 0 if onPoints == True else 1
         filter = vtkArrayRename()
         filter.SetInputData( object )
         filter.SetArrayName( dim, attributeName, newAttributeName )

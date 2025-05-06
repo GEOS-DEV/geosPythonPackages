@@ -3,18 +3,19 @@ Processing functions
 
 This package define functions to process data.
 
-geos_posp.processing.multiblockInpectorTreeFunctions module
+
+geos.mesh.multiblockInspectorTreeFunctions module
 ---------------------------------------------------------------
 
-.. automodule:: geos_posp.processing.multiblockInpectorTreeFunctions
+.. automodule:: geos.mesh.multiblockInspectorTreeFunctions
    :members:
    :undoc-members:
    :show-inheritance:
    
-geos_posp.processing.vtkUtils module
+geos.mesh.vtkUtils module
 ----------------------------------------
 
-.. automodule:: geos_posp.processing.vtkUtils
+.. automodule:: geos.mesh.vtkUtils
    :members:
    :undoc-members:
    :show-inheritance:
