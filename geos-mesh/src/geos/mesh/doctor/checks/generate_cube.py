@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 import logging
-import numpy
+import numpy as np
+import numpy.typing as npt
 from typing import Iterable, Sequence
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
-from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.checks.generate_global_ids import build_global_ids
 from geos.mesh.vtk.io import VtkOutput, write_mesh
 
 
@@ -38,9 +39,64 @@ class Options:
 
 @dataclass( frozen=True )
 class XYZ:
-    x: numpy.ndarray
-    y: numpy.ndarray
-    z: numpy.ndarray
+    x: npt.NDArray
+    y: npt.NDArray
+    z: npt.NDArray
+
+
+def build_coordinates( positions, num_elements ):
+    result = []
+    it = zip( zip( positions, positions[ 1: ] ), num_elements )
+    try:
+        coords, n = next( it )
+        while True:
+            start, stop = coords
+            end_point = False
+            tmp = np.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
+            coords, n = next( it )
+            result.append( tmp )
+    except StopIteration:
+        end_point = True
+        tmp = np.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
+        result.append( tmp )
+    return np.concatenate( result )
+
+
+def build_rectilinear_grid( x: npt.NDArray, y: npt.NDArray, z: npt.NDArray ) -> vtkUnstructuredGrid:
+    """
+    Builds an unstructured vtk grid from the x,y,z coordinates.
+    :return: The unstructured mesh, even if it's topologically structured.
+    """
+    rg = vtkRectilinearGrid()
+    rg.SetDimensions( len( x ), len( y ), len( z ) )
+    rg.SetXCoordinates( numpy_to_vtk( x ) )
+    rg.SetYCoordinates( numpy_to_vtk( y ) )
+    rg.SetZCoordinates( numpy_to_vtk( z ) )
+
+    num_points = rg.GetNumberOfPoints()
+    num_cells = rg.GetNumberOfCells()
+
+    points = vtkPoints()
+    points.Allocate( num_points )
+    for i in range( rg.GetNumberOfPoints() ):
+        points.InsertNextPoint( rg.GetPoint( i ) )
+
+    cell_types = [ VTK_HEXAHEDRON ] * num_cells
+    cells = vtkCellArray()
+    cells.AllocateExact( num_cells, num_cells * 8 )
+
+    m = ( 0, 1, 3, 2, 4, 5, 7, 6 )  # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
+    for i in range( rg.GetNumberOfCells() ):
+        c = rg.GetCell( i )
+        new_cell = vtkHexahedron()
+        for j in range( 8 ):
+            new_cell.GetPointIds().SetId( j, c.GetPointId( m[ j ] ) )
+        cells.InsertNextCell( new_cell )
+
+    mesh = vtkUnstructuredGrid()
+    mesh.SetPoints( points )
+    mesh.SetCells( cell_types, cells )
+    return mesh
 
 
 def build_rectilinear_blocks_mesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGrid:
@@ -89,7 +145,7 @@ def build_rectilinear_blocks_mesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGri
     return mesh
 
 
-def __add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
+def add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
     for field_info in fields:
         if field_info.support == "CELLS":
             data = mesh.GetCellData()
@@ -97,7 +153,7 @@ def __add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> 
         elif field_info.support == "POINTS":
             data = mesh.GetPointData()
             n = mesh.GetNumberOfPoints()
-        array = numpy.ones( ( n, field_info.dimension ), dtype=float )
+        array = np.ones( ( n, field_info.dimension ), dtype=float )
         vtk_array = numpy_to_vtk( array )
         vtk_array.SetName( field_info.name )
         data.AddArray( vtk_array )
@@ -106,29 +162,12 @@ def __add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> 
 
 def __build( options: Options ):
 
-    def build_coordinates( positions, num_elements ):
-        result = []
-        it = zip( zip( positions, positions[ 1: ] ), num_elements )
-        try:
-            coords, n = next( it )
-            while True:
-                start, stop = coords
-                end_point = False
-                tmp = numpy.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
-                coords, n = next( it )
-                result.append( tmp )
-        except StopIteration:
-            end_point = True
-            tmp = numpy.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
-            result.append( tmp )
-        return numpy.concatenate( result )
-
     x = build_coordinates( options.xs, options.nxs )
     y = build_coordinates( options.ys, options.nys )
     z = build_coordinates( options.zs, options.nzs )
     cube = build_rectilinear_blocks_mesh( ( XYZ( x, y, z ), ) )
-    cube = __add_fields( cube, options.fields )
-    __build_global_ids( cube, options.generate_cells_global_ids, options.generate_points_global_ids )
+    cube = add_fields( cube, options.fields )
+    build_global_ids( cube, options.generate_cells_global_ids, options.generate_points_global_ids )
     return cube
 
 
