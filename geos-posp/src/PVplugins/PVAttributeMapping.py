@@ -18,10 +18,7 @@ import PVplugins  # noqa: F401
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.AttributeMappingFromCellCoords import (
     AttributeMappingFromCellCoords, )
-from geos.mesh.utils.filters import (
-    fillPartialAttributes,
-    mergeBlocks
-)
+from geos.mesh.utils.filters import ( fillPartialAttributes, mergeBlocks )
 from geos.mesh.utils.helpers import (
     getAttributeSet,
     getNumberOfComponents,

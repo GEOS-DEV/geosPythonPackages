@@ -11,8 +11,7 @@ from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList, vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
                                             vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData,
                                             vtkDataObjectTreeIterator, vtkPolyData )
-from geos.mesh.utils.multiblockInspectorTreeFunctions import ( getBlockElementIndexesFlatten,
-                                                                   getBlockFromFlatIndex )
+from geos.mesh.utils.multiblockInspectorTreeFunctions import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 
 def to_vtk_id_list( data ) -> vtkIdList:
