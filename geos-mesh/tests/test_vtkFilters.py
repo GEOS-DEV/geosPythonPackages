@@ -3,188 +3,23 @@
 # SPDX-FileContributor: Paloma Martinez
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-# mypy: disable-error-code="operator, attr-defined"
+# mypy: disable-error-code="operator"
 import pytest
-from typing import Union, Tuple
+from typing import Union, Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
 
 import vtkmodules.util.numpy_support as vnp
-import pandas as pd  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkDataObject, vtkDataObjectTreeIterator,
-                                            vtkPolyData, vtkPointData, vtkCellData, vtkUnstructuredGrid )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkDataObjectTreeIterator,
+                                            vtkPointData, vtkCellData, vtkUnstructuredGrid )
 
 from vtk import (  # type: ignore[import-untyped]
     VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT,
 )
 
-from geos.mesh import vtkUtils
-
-
-@pytest.mark.parametrize( "onpoints, expected", [ ( True, {
-    'GLOBAL_IDS_POINTS': 1,
-    'collocated_nodes': 2,
-    'PointAttribute': 3
-} ), ( False, {
-    'CELL_MARKERS': 1,
-    'PERM': 3,
-    'PORO': 1,
-    'FAULT': 1,
-    'GLOBAL_IDS_CELLS': 1,
-    'CellAttribute': 3
-} ) ] )
-def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, onpoints: bool,
-                                            expected: dict[ str, int ] ) -> None:
-    """Test getting attribute list as dict from multiblock."""
-    multiBlockTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    attributes: dict[ str, int ] = vtkUtils.getAttributesFromMultiBlockDataSet( multiBlockTest, onpoints )
-
-    assert attributes == expected
-
-
-@pytest.mark.parametrize( "onpoints, expected", [ ( True, {
-    'GLOBAL_IDS_POINTS': 1,
-    'PointAttribute': 3,
-} ), ( False, {
-    'CELL_MARKERS': 1,
-    'PERM': 3,
-    'PORO': 1,
-    'FAULT': 1,
-    'GLOBAL_IDS_CELLS': 1,
-    'CellAttribute': 3
-} ) ] )
-def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, onpoints: bool, expected: dict[ str, int ] ) -> None:
-    """Test getting attribute list as dict from dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    attributes: dict[ str, int ] = vtkUtils.getAttributesFromDataSet( vtkDataSetTest, onpoints )
-    assert attributes == expected
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PORO", False, 1 ),
-    ( "PORO", True, 0 ),
-] )
-def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str, onpoints: bool,
-                                               expected: dict[ str, int ] ) -> None:
-    """Test presence of attribute in a multiblock."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: bool = vtkUtils.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, onpoints )
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PORO", False, 1 ),
-    ( "PORO", True, 0 ),
-] )
-def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str, onpoints: bool,
-                                     expected: bool ) -> None:
-    """Test presence of attribute in a dataset."""
-    vtkDataset: vtkDataSet = dataSetTest( "dataset" )
-    obtained: bool = vtkUtils.isAttributeInObjectDataSet( vtkDataset, attributeName, onpoints )
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "arrayExpected, onpoints", [
-    ( "PORO", False ),
-    ( "PERM", False ),
-    ( "PointAttribute", True ),
-],
-                          indirect=[ "arrayExpected" ] )
-def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray, dataSetTest: vtkDataSet,
-                           onpoints: bool ) -> None:
-    """Test getting numpy array of an attribute from dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    params = request.node.callspec.params
-    attributeName: str = params[ "arrayExpected" ]
-
-    obtained: npt.NDArray[ np.float64 ] = vtkUtils.getArrayInObject( vtkDataSetTest, attributeName, onpoints )
-    expected: npt.NDArray[ np.float64 ] = arrayExpected
-
-    assert ( obtained == expected ).all()
-
-
-@pytest.mark.parametrize( "arrayExpected, onpoints", [
-    ( "PORO", False ),
-    ( "PointAttribute", True ),
-],
-                          indirect=[ "arrayExpected" ] )
-def test_getVtkArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray[ np.float64 ],
-                              dataSetTest: vtkDataSet, onpoints: bool ) -> None:
-    """Test getting Vtk Array from a dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    params = request.node.callspec.params
-    attributeName: str = params[ 'arrayExpected' ]
-
-    obtained: vtkDoubleArray = vtkUtils.getVtkArrayInObject( vtkDataSetTest, attributeName, onpoints )
-    obtained_as_np: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( obtained )
-
-    assert ( obtained_as_np == arrayExpected ).all()
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PORO", False, 1 ),
-    ( "PERM", False, 3 ),
-    ( "PointAttribute", True, 3 ),
-] )
-def test_getNumberOfComponentsDataSet(
-    dataSetTest: vtkDataSet,
-    attributeName: str,
-    onpoints: bool,
-    expected: int,
-) -> None:
-    """Test getting the number of components of an attribute from a dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    obtained: int = vtkUtils.getNumberOfComponentsDataSet( vtkDataSetTest, attributeName, onpoints )
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PORO", False, 1 ),
-    ( "PERM", False, 3 ),
-    ( "PointAttribute", True, 3 ),
-] )
-def test_getNumberOfComponentsMultiBlock(
-    dataSetTest: vtkMultiBlockDataSet,
-    attributeName: str,
-    onpoints: bool,
-    expected: int,
-) -> None:
-    """Test getting the number of components of an attribute from a multiblock."""
-    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: int = vtkUtils.getNumberOfComponentsMultiBlock( vtkMultiBlockDataSetTest, attributeName, onpoints )
-
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PERM", False, ( "AX1", "AX2", "AX3" ) ),
-    ( "PORO", False, () ),
-] )
-def test_getComponentNamesDataSet( dataSetTest: vtkDataSet, attributeName: str, onpoints: bool,
-                                   expected: tuple[ str, ...] ) -> None:
-    """Test getting the component names of an attribute from a dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    obtained: tuple[ str, ...] = vtkUtils.getComponentNamesDataSet( vtkDataSetTest, attributeName, onpoints )
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "attributeName, onpoints, expected", [
-    ( "PERM", False, ( "AX1", "AX2", "AX3" ) ),
-    ( "PORO", False, () ),
-] )
-def test_getComponentNamesMultiBlock(
-    dataSetTest: vtkMultiBlockDataSet,
-    attributeName: str,
-    onpoints: bool,
-    expected: tuple[ str, ...],
-) -> None:
-    """Test getting the component names of an attribute from a multiblock."""
-    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: tuple[ str, ...] = vtkUtils.getComponentNamesMultiBlock( vtkMultiBlockDataSetTest, attributeName,
-                                                                       onpoints )
-    assert obtained == expected
+from geos.mesh.utils import filters as vtkFilters
 
 
 @pytest.mark.parametrize( "attributeName, onpoints", [ ( "CellAttribute", False ), ( "PointAttribute", True ) ] )
@@ -195,7 +30,7 @@ def test_fillPartialAttributes(
 ) -> None:
     """Test filling a partial attribute from a multiblock with nan values."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    vtkUtils.fillPartialAttributes( vtkMultiBlockDataSetTest, attributeName, nbComponents=3, onPoints=onpoints )
+    vtkFilters.fillPartialAttributes( vtkMultiBlockDataSetTest, attributeName, nbComponents=3, onPoints=onpoints )
 
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( vtkMultiBlockDataSetTest )
@@ -224,7 +59,7 @@ def test_fillAllPartialAttributes(
 ) -> None:
     """Test filling all partial attributes from a multiblock with nan values."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    vtkUtils.fillAllPartialAttributes( vtkMultiBlockDataSetTest, onpoints )
+    vtkFilters.fillAllPartialAttributes( vtkMultiBlockDataSetTest, onpoints )
 
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( vtkMultiBlockDataSetTest )
@@ -244,23 +79,6 @@ def test_fillAllPartialAttributes(
         iter.GoToNextItem()
 
 
-@pytest.mark.parametrize( "attributeNames, expected_columns", [
-    ( ( "CellAttribute1", ), ( "CellAttribute1_0", "CellAttribute1_1", "CellAttribute1_2" ) ),
-    ( (
-        "CellAttribute1",
-        "CellAttribute2",
-    ), ( "CellAttribute2", "CellAttribute1_0", "CellAttribute1_1", "CellAttribute1_2" ) ),
-] )
-def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...],
-                                 expected_columns: Tuple[ str, ...] ) -> None:
-    """Test getting an attribute from a polydata as a dataframe."""
-    polydataset: vtkPolyData = dataSetTest( "polydata" )
-    data: pd.DataFrame = vtkUtils.getAttributeValuesAsDF( polydataset, attributeNames )
-
-    obtained_columns = data.columns.values.tolist()
-    assert obtained_columns == list( expected_columns )
-
-
 # TODO: Add test for keepPartialAttributes = True when function fixed
 @pytest.mark.parametrize(
     "keepPartialAttributes, expected_point_attributes, expected_cell_attributes",
@@ -276,7 +94,7 @@ def test_mergeBlocks(
 ) -> None:
     """Test the merging of a multiblock."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    dataset: vtkUnstructuredGrid = vtkUtils.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
+    dataset: vtkUnstructuredGrid = vtkFilters.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
 
     assert dataset.GetCellData().GetNumberOfArrays() == len( expected_cell_attributes )
     for c_attribute in expected_cell_attributes:
@@ -301,7 +119,7 @@ def test_createEmptyAttribute(
 ) -> None:
     """Test empty attribute creation."""
     componentNames: tuple[ str, str, str ] = ( "d1", "d2", "d3" )
-    newAttr: vtkDataArray = vtkUtils.createEmptyAttribute( attributeName, componentNames, dataType )
+    newAttr: vtkDataArray = vtkFilters.createEmptyAttribute( attributeName, componentNames, dataType )
 
     assert newAttr.GetNumberOfComponents() == len( componentNames )
     for ax in range( 3 ):
@@ -323,8 +141,8 @@ def test_createConstantAttributeMultiBlock(
     attributeName: str = "testAttributemultiblock"
     values: tuple[ float, float, float ] = ( 12.4, 10, 40.0 )
     componentNames: tuple[ str, str, str ] = ( "X", "Y", "Z" )
-    vtkUtils.createConstantAttributeMultiBlock( vtkMultiBlockDataSetTest, values, attributeName, componentNames,
-                                                onpoints )
+    vtkFilters.createConstantAttributeMultiBlock( vtkMultiBlockDataSetTest, values, attributeName, componentNames,
+                                                  onpoints )
 
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( vtkMultiBlockDataSetTest )
@@ -361,7 +179,7 @@ def test_createConstantAttributeDataSet(
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
     componentNames: Tuple[ str, str, str ] = ( "XX", "YY", "ZZ" )
     attributeName: str = "newAttributedataset"
-    vtkUtils.createConstantAttributeDataSet( vtkDataSetTest, values, attributeName, componentNames, onpoints )
+    vtkFilters.createConstantAttributeDataSet( vtkDataSetTest, values, attributeName, componentNames, onpoints )
 
     data: Union[ vtkPointData, vtkCellData ]
     if onpoints:
@@ -393,7 +211,7 @@ def test_createAttribute(
     componentNames: tuple[ str, str, str ] = ( "XX", "YY", "ZZ" )
     attributeName: str = "AttributeName"
 
-    vtkUtils.createAttribute( vtkDataSetTest, arrayTest, attributeName, componentNames, onpoints )
+    vtkFilters.createAttribute( vtkDataSetTest, arrayTest, attributeName, componentNames, onpoints )
 
     data: Union[ vtkPointData, vtkCellData ]
     if onpoints:
@@ -416,11 +234,11 @@ def test_copyAttribute( dataSetTest: vtkMultiBlockDataSet ) -> None:
     attributeFrom: str = "CellAttribute"
     attributeTo: str = "CellAttributeTO"
 
-    vtkUtils.copyAttribute( objectFrom, objectTo, attributeFrom, attributeTo )
+    vtkFilters.copyAttribute( objectFrom, objectTo, attributeFrom, attributeTo )
 
     blockIndex: int = 0
-    blockFrom: vtkDataObject = objectFrom.GetBlock( blockIndex )
-    blockTo: vtkDataObject = objectTo.GetBlock( blockIndex )
+    blockFrom: vtkDataSet = cast( vtkDataSet, objectFrom.GetBlock( blockIndex ) )
+    blockTo: vtkDataSet = cast( vtkDataSet, objectTo.GetBlock( blockIndex ) )
 
     arrayFrom: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( blockFrom.GetCellData().GetArray( attributeFrom ) )
     arrayTo: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( blockTo.GetCellData().GetArray( attributeTo ) )
@@ -436,7 +254,7 @@ def test_copyAttributeDataSet( dataSetTest: vtkDataSet, ) -> None:
     attributNameFrom = "CellAttribute"
     attributNameTo = "COPYATTRIBUTETO"
 
-    vtkUtils.copyAttributeDataSet( objectFrom, objectTo, attributNameFrom, attributNameTo )
+    vtkFilters.copyAttributeDataSet( objectFrom, objectTo, attributNameFrom, attributNameTo )
 
     arrayFrom: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( objectFrom.GetCellData().GetArray( attributNameFrom ) )
     arrayTo: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( objectTo.GetCellData().GetArray( attributNameTo ) )
@@ -456,13 +274,13 @@ def test_renameAttributeMultiblock(
     """Test renaming attribute in a multiblock dataset."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     newAttributeName: str = "new" + attributeName
-    vtkUtils.renameAttribute(
+    vtkFilters.renameAttribute(
         vtkMultiBlockDataSetTest,
         attributeName,
         newAttributeName,
         onpoints,
     )
-    block: vtkDataObject = vtkMultiBlockDataSetTest.GetBlock( 0 )
+    block: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTest.GetBlock( 0 ) )
     data: Union[ vtkPointData, vtkCellData ]
     if onpoints:
         data = block.GetPointData()
@@ -484,10 +302,10 @@ def test_renameAttributeDataSet(
     """Test renaming an attribute in a dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
     newAttributeName: str = "new" + attributeName
-    vtkUtils.renameAttribute( object=vtkDataSetTest,
-                              attributeName=attributeName,
-                              newAttributeName=newAttributeName,
-                              onPoints=onpoints )
+    vtkFilters.renameAttribute( object=vtkDataSetTest,
+                                attributeName=attributeName,
+                                newAttributeName=newAttributeName,
+                                onPoints=onpoints )
     if onpoints:
         assert vtkDataSetTest.GetPointData().HasArray( attributeName ) == 0
         assert vtkDataSetTest.GetPointData().HasArray( newAttributeName ) == 1

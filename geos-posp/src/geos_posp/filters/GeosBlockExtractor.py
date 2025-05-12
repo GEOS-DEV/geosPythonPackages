@@ -11,9 +11,9 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from geos.mesh.multiblockInspectorTreeFunctions import (
+from geos.mesh.utils.multiblockInspectorTreeFunctions import (
     getBlockIndexFromName, )
-from geos.mesh.vtkUtils import extractBlock
+from geos.mesh.utils.filters import extractBlock
 
 __doc__ = """
 GeosBlockExtractor module is a vtk filter that allows to extract Volume mesh,

@@ -33,13 +33,13 @@ from vtkmodules.vtkFiltersCore import (
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 
-from geos.mesh.multiblockInspectorTreeFunctions import (
+from geos.mesh.utils.multiblockInspectorTreeFunctions import (
     getElementaryCompositeBlockIndexes, )
-from geos.mesh.vtkUtils import (
+from geos.mesh.utils.helpers import getAttributeSet
+from geos.mesh.utils.filters import (
     createConstantAttribute,
     extractBlock,
     fillAllPartialAttributes,
-    getAttributeSet,
     mergeBlocks,
 )
 

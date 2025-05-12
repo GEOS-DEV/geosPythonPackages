@@ -32,7 +32,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos.mesh.vtkUtils import (
+from geos.mesh.utils.helpers import (
     getArrayInObject,
     isAttributeInObject,
 )

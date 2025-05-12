@@ -8,7 +8,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from geos.mesh.doctor.checks.generate_fractures import Coordinates3D
-from geos.mesh.vtk.helpers import vtk_iter
+from geos.mesh.utils.helpers import vtk_iter
 
 
 @dataclass( frozen=True )
