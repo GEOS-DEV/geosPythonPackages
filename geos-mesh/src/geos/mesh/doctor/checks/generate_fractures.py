@@ -525,8 +525,8 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     return fracture_mesh
 
 
-def __split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
-                               options: Options ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+def split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
+                             options: Options ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
     all_fracture_infos: list[ FractureInfo ] = list()
     for fracture_id in range( len( options.field_values_per_fracture ) ):
         fracture_info: FractureInfo = build_fracture_info( mesh, options, False, fracture_id )
@@ -545,7 +545,7 @@ def __split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
 
 
 def __check( mesh, options: Options ) -> Result:
-    output_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+    output_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     write_mesh( output_mesh, options.mesh_VtkOutput )
     for i, fracture_mesh in enumerate( fracture_meshes ):
         write_mesh( fracture_mesh, options.all_fractures_VtkOutput[ i ] )
