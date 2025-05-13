@@ -93,6 +93,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
             self._strSingle = value
             self.Modified()
 
+
 # may be used with panel_widget="calculator" to create a scriptable widget.
 #     <StringVectorProperty command="SetFunction"
 #                             name="Function"
@@ -305,7 +306,7 @@ class PVproxyWidgetsStatic( VTKPythonAlgorithmBase ):
                             panel_visibility="default">
                             <Property name="BoolSingle"/>
                         </PropertyGroup>""" )
-    def c03BoolInputsGroup( self: Self ) -> None:
+    def c05BoolInputsGroup( self: Self ) -> None:
         """Create a group of widgets."""
         self.Modified()
 

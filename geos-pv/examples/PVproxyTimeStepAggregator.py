@@ -29,7 +29,10 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-Example of a Paraview plugin that runs through time steps.
+Example of a Paraview plugin that runs aggregate data from various time steps.
+
+For instance, to copy arrays from oter time steps to the current one, or to compute
+array differences between successive time steps.
 
 """
 
@@ -46,7 +49,6 @@ class PVTimeStepAggregatorFilter( VTKPythonAlgorithmBase ):
     def __init__( self: Self ) -> None:
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-        print( "__init__" )
 
         #: all time steps from input
         self._timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
