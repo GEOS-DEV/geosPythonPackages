@@ -28,8 +28,7 @@ from geos.mesh.utils.filters import (
 )
 
 from geos.mesh.utils.helpers import (
-    getVtkArrayInObject,
-)
+    getVtkArrayInObject, )
 
 __doc__ = """
 AttributeMappingFromCellCoords module is a vtk filter that map two identical mesh (or a mesh is
