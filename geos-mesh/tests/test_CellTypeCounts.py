@@ -195,7 +195,6 @@ def test_CellTypeCounts_add( test_case: TestCase ) -> None:
         2 * test_case.nbHexa ), f"Number of hexahedra must be {int(2 * test_case.nbHexa)}"
 
 
-#cpt = 0
 @pytest.mark.parametrize( "test_case", __generate_test_data() )
 def test_CellTypeCounts_print( test_case: TestCase ) -> None:
     """Test of CellTypeCounts .
@@ -214,10 +213,4 @@ def test_CellTypeCounts_print( test_case: TestCase ) -> None:
     line: str = counts.print()
     lineExp: str = __get_expected_counts( test_case.nbVertex, test_case.nbTri, test_case.nbQuad, test_case.nbTetra,
                                           test_case.nbPyr, test_case.nbWed, test_case.nbHexa )
-    # global cpt
-    # with open(f"meshIdcounts_{cpt}.txt", 'w') as fout:
-    #     fout.write(line)
-    #     fout.write("------------------------------------------------------------\n")
-    #     fout.write(lineExp)
-    # cpt += 1
     assert line == lineExp, "Output counts string differs from expected value."

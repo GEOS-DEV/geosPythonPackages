@@ -23,8 +23,8 @@ from vtkmodules.vtkCommonDataModel import (
 GLOBAL_IDS_ARRAY_NAME: str = "GlobalIds"
 
 
-# TODO: copy from vtkUtils
-def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
+# copy from geos-posp vtkUtils.getAttributesFromDataSet
+def getArraysFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
     """Get the dictionnary of all attributes of a vtkDataSet on points or cells.
 
     Args:
@@ -121,7 +121,7 @@ def createMultiCellMesh( cellTypes: list[ int ],
     Args:
         cellTypes (list[int]): cell type
         cellPtsCoord (list[1DArray[np.float64]]): list of cell point coordinates
-        sharePoints (bool): if True, cells share points, else a new point is created fro each cell vertex
+        sharePoints (bool): if True, cells share points, else a new point is created for each cell vertex
 
     Returns:
         vtkUnstructuredGrid: output mesh
@@ -164,18 +164,18 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
     # use point locator to check for colocated points
     pointsLocator = vtkIncrementalOctreePointLocator()
     pointsLocator.InitPointInsertion( points, bounds )
-    cellVertexMapAll: list[ tuple[ reference, ...] ] = []
+    cellVertexMapAll: list[ tuple[ int, ...] ] = []
     ptId: reference = reference( 0 )
     ptsCoords: npt.NDArray[ np.float64 ]
     for ptsCoords in cellPtsCoord:
-        cellVertexMap: list[ reference ] = []
+        cellVertexMap: list[ int ] = []
         pt: npt.NDArray[ np.float64 ]  # 1DArray
         for pt in ptsCoords:
             if shared:
                 pointsLocator.InsertUniquePoint( pt.tolist(), ptId )  # type: ignore[arg-type]
             else:
                 pointsLocator.InsertPointWithoutChecking( pt.tolist(), ptId, 1 )  # type: ignore[arg-type]
-            cellVertexMap += [ ptId.get() ]
+            cellVertexMap += [ ptId.get() ]  # type: ignore
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
 
@@ -353,7 +353,7 @@ def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.float64 ] ) -
         data (vtkFieldData): field data
         arr (npt.NDArray[np.int64]): array to sort
     """
-    globalids: npt.NDArray[ np.int64 ] = getNumpyGlobalIdsArray( data )
+    globalids: npt.NDArray[ np.int64 ] | None = getNumpyGlobalIdsArray( data )
     if globalids is not None:
         arr = arr[ np.argsort( globalids ) ]
     else:

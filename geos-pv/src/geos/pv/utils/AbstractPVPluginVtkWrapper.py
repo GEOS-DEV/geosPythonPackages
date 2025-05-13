@@ -18,7 +18,8 @@ from vtkmodules.vtkCommonCore import (
 __doc__ = """
 AbstractPVPluginVtkWrapper module defines the parent Paraview plugin from which inheritates PV plugins that directly wrap a vtk filter.
 
-To use it, make children PV plugins inherited from AbstractPVPluginVtkWrapper. Output mesh is of same type as input mesh. If output type needs to be specified, this must be done in the child class.
+To use it, make children PV plugins inherited from AbstractPVPluginVtkWrapper. Output mesh is of same type as input mesh.
+If output type needs to be specified, this must be done in the child class.
 """
 
 class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
@@ -72,15 +73,12 @@ class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
             assert inputMesh is not None, "Input server mesh is null."
             assert outputMesh is not None, "Output pipeline is null."
 
-            splittedMesh = self.applyVtkFlilter(inputMesh)
-            assert splittedMesh is not None, "Splitted mesh is null."
-            outputMesh.ShallowCopy(splittedMesh)
-            print("Mesh was successfully splitted.")
-        except AssertionError as e:
-            print(f"Mesh split failed due to: {e}")
-            return 0
-        except Exception as e:
-            print(f"Mesh split failed due to: {e}")
+            tmpMesh = self.applyVtkFlilter(inputMesh)
+            assert tmpMesh is not None, "Output mesh is null."
+            outputMesh.ShallowCopy(tmpMesh)
+            print("Filter was successfully applied.")
+        except (AssertionError, Exception) as e:
+            print(f"Filter failed due to: {e}")
             return 0
         return 1
 
