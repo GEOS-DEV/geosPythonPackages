@@ -139,7 +139,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         nb_polygon = counts.getTypeCount( VTK_POLYGON )
         nb_polyhedra = counts.getTypeCount( VTK_POLYHEDRON )
         assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
-        assert nb_polyhedra * nb_polygon > 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
+        assert nb_polyhedra * nb_polygon == 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
         nbNewPoints: int = 0
         nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9 if nb_polyhedra > 0 else nb_triangles * 3 + nb_quad * 5
         nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
