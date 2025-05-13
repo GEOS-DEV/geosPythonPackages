@@ -23,8 +23,8 @@ from vtkmodules.vtkCommonDataModel import (
 GLOBAL_IDS_ARRAY_NAME: str = "GlobalIds"
 
 
-# TODO: copy from vtkUtils
-def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
+# copy from geos-posp vtkUtils.getAttributesFromDataSet
+def getArraysFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
     """Get the dictionnary of all attributes of a vtkDataSet on points or cells.
 
     Args:

@@ -23,9 +23,15 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_TETRA,
     VTK_HEXAHEDRON,
     VTK_PYRAMID,
+    VTK_WEDGE,
+    VTK_POLYHEDRON,
+    VTK_POLYGON,
 )
 
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
+
+from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
 SplitMesh module is a vtk filter that split cells of a mesh composed of Tetrahedra, pyramids, and hexahedra.
@@ -64,7 +70,10 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[ int ]
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
+    def FillInputPortInformation( self: Self,
+                                 port: int,
+                                 info: vtkInformation
+                                ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
@@ -124,16 +133,24 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         assert output is not None, "Output mesh is undefined."
 
         nb_cells: int = self.inData.GetNumberOfCells()
-        nb_hex, nb_tet, nb_pyr, nb_triangles, nb_quad = self._get_cell_counts()
+        counts: CellTypeCounts = self._get_cell_counts()
+        nb_tet: int = counts.getTypeCount( VTK_TETRA )
+        nb_pyr: int = counts.getTypeCount( VTK_PYRAMID )
+        nb_hex: int = counts.getTypeCount( VTK_HEXAHEDRON )
+        nb_triangles: int = counts.getTypeCount( VTK_TRIANGLE )
+        nb_quad: int = counts.getTypeCount( VTK_QUAD )
+        nb_polygon = counts.getTypeCount( VTK_POLYGON )
+        nb_polyhedra = counts.getTypeCount( VTK_POLYHEDRON )
+        assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
+        assert nb_polyhedra * nb_polygon > 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
+        nbNewPoints: int = 0
+        nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9 if nb_polyhedra > 0 else nb_triangles * 3 + nb_quad * 5
+        nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
 
         self.points = vtkPoints()
         self.points.DeepCopy( self.inData.GetPoints() )
-        nbNewPoints: int = 0
-        volumeCellCounts = nb_hex + nb_tet + nb_pyr
-        nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9 if volumeCellCounts > 0 else nb_triangles * 3 + nb_quad * 5
-        nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
-
         self.points.Resize( self.inData.GetNumberOfPoints() + nbNewPoints )
+
         self.cells = vtkCellArray()
         self.cells.AllocateExact( nbNewCells, 8 )
         self.originalId = vtkIdTypeArray()
@@ -166,33 +183,16 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self._transferCellArrays( output )
         return 1
 
-    def _get_cell_counts( self: Self ) -> tuple[ int, int, int, int, int ]:
+    def _get_cell_counts( self: Self ) -> CellTypeCounts:
         """Get the number of cells of each type.
 
         Returns:
-            tuple[int, int, int, int, int]: tuple containing counts of
-            hexahedron, tetrahedron, pyramid, triangles, quads
+            CellTypeCounts: cell type counts
         """
-        nb_cells: int = self.inData.GetNumberOfCells()
-        nb_hex: int = 0
-        nb_tet: int = 0
-        nb_pyr: int = 0
-        nb_triangles: int = 0
-        nb_quad: int = 0
-        for c in range( nb_cells ):
-            cell: vtkCell = self.inData.GetCell( c )
-            cellType = cell.GetCellType()
-            if cellType == VTK_HEXAHEDRON:
-                nb_hex = nb_hex + 1
-            if cellType == VTK_TETRA:
-                nb_tet = nb_tet + 1
-            if cellType == VTK_PYRAMID:
-                nb_pyr = nb_pyr + 1
-            if cellType == VTK_TRIANGLE:
-                nb_triangles = nb_triangles + 1
-            if cellType == VTK_QUAD:
-                nb_quad = nb_quad + 1
-        return nb_hex, nb_tet, nb_pyr, nb_triangles, nb_quad
+        filter: CellTypeCounter = CellTypeCounter()
+        filter.SetInputDataObject( self.inData )
+        filter.Update()
+        return filter.GetCellTypeCounts()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.
