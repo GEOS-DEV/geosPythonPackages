@@ -70,10 +70,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[ int ]
 
-    def FillInputPortInformation( self: Self,
-                                 port: int,
-                                 info: vtkInformation
-                                ) -> int:
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
