@@ -12,7 +12,6 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTab
                                             VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
-
 from geos.mesh.processing.meshQualityMetricHelpers import getAllCellTypes
 
 __doc__ = """
@@ -36,7 +35,7 @@ To use the filter:
     # do calculations
     filter.Update()
     # get counts
-    counts :CellTypeCounts = filter.GetCellTypeCounts()
+    counts :CellTypeCounts = filter.GetCellTypeCountsObject()
 """
 
 
@@ -45,20 +44,7 @@ class CellTypeCounter( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """CellTypeCounter filter computes mesh stats."""
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkUnstructuredGrid", outputType="vtkTable" )
-        self.counts: CellTypeCounts
-
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
+        self._counts: CellTypeCounts = CellTypeCounts()
 
     def RequestData(
         self: Self,
@@ -82,11 +68,11 @@ class CellTypeCounter( VTKPythonAlgorithmBase ):
         assert outTable is not None, "Output table is undefined."
 
         # compute cell type counts
-        self.counts = CellTypeCounts()
-        self.counts.setTypeCount( VTK_VERTEX, inData.GetNumberOfPoints() )
+        self._counts.reset()
+        self._counts.setTypeCount( VTK_VERTEX, inData.GetNumberOfPoints() )
         for i in range( inData.GetNumberOfCells() ):
             cell: vtkCell = inData.GetCell( i )
-            self.counts.addType( cell.GetCellType() )
+            self._counts.addType( cell.GetCellType() )
 
         # create output table
         # first reset output table
@@ -100,14 +86,14 @@ class CellTypeCounter( VTKPythonAlgorithmBase ):
             array.SetName( vtkCellTypes.GetClassNameFromTypeId( cellType ) )
             array.SetNumberOfComponents( 1 )
             array.SetNumberOfValues( 1 )
-            array.SetValue( 0, self.counts.getTypeCount( cellType ) )
+            array.SetValue( 0, self._counts.getTypeCount( cellType ) )
             outTable.AddColumn( array )
         return 1
 
-    def GetCellTypeCounts( self: Self ) -> CellTypeCounts:
+    def GetCellTypeCountsObject( self: Self ) -> CellTypeCounts:
         """Get CellTypeCounts object.
 
         Returns:
             CellTypeCounts: CellTypeCounts object.
         """
-        return self.counts
+        return self._counts

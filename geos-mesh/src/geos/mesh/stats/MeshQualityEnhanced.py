@@ -34,7 +34,6 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 from geos.mesh.stats.CellTypeCounter import CellTypeCounter
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
-from geos.utils.geometryFunctions import computeAngleFromPoints, computeNormalFromPoints, computeAngleFromVectors
 from geos.mesh.vtk.helpers import getAttributesFromDataSet
 from geos.mesh.processing.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
@@ -50,6 +49,13 @@ from geos.mesh.processing.meshQualityMetricHelpers import (
     getQualityMeasureFromCellType,
     getChildrenCellTypes,
 )
+# from geos.utils.geometryFunctions import (
+#     computeAngleFromPoints,
+#     computeNormalFromPoints,
+#     computeAngleFromVectors
+# )
+import geos.utils.geometryFunctions as fcts
+
 __doc__ = """
 MeshQualityEnhanced module is a vtk filter that computes mesh quality stats.
 
@@ -143,6 +149,14 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
             outData = inData.NewInstance()
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+
+    def GetQualityMetricSummary(self :Self)-> QualityMetricSummary:
+        """Get QualityMetricSummary object.
+
+        Returns:
+            QualityMetricSummary: QualityMetricSummary object
+        """
+        return self._qualityMetricSummary
 
     def SetTriangleMetrics(self :Self, metrics: Optional[set[int]]) -> None:
         """Set triangle quality metrics to compute.
@@ -272,9 +286,7 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
         self._outputMesh = self.GetOutputData(outInfoVec, 0)
         assert inData is not None, "Input mesh is undefined."
         assert self._outputMesh is not None, "Ouput pipeline is undefined."
-
         self._outputMesh.ShallowCopy( inData )
-        print(f"nb cells Input mesh {inData.GetNumberOfCells()}")
 
         # compute cell type counts
         self._computeCellTypeCounts()
@@ -291,11 +303,6 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
         self._outputMesh.Modified()
 
         # TODO move calculation in _evaluateMeshQuality
-
-        # cellCounter: CellTypeCounter = CellTypeCounter()
-        # cellCounter.SetInputDataObject(inData)
-        # cellCounter.Update()
-        # cellCounts: CellTypeCounts = cellCounter.GetCellTypeCounts()
 
         # EL_data = [[],[]]
         # VIE_data =[[],[]]
@@ -323,7 +330,7 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
         filter: CellTypeCounter = CellTypeCounter()
         filter.SetInputDataObject( self._outputMesh )
         filter.Update()
-        counts: CellTypeCounts = filter.GetCellTypeCounts()
+        counts: CellTypeCounts = filter.GetCellTypeCountsObject()
         assert counts is not None, "CellTypeCounts is undefined"
         self._qualityMetricSummary.setCellTypeCounts(counts)
 
@@ -482,10 +489,12 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
         std: float = float(np.nanstd(npArray[cellTypeMask]))
         mini: float = float(np.nanmin(npArray[cellTypeMask]))
         maxi: float = float(np.nanmax(npArray[cellTypeMask]))
-        self._qualityMetricSummary.setStatValueToMetricAndCellType(metricIndex, cellType, StatTypes.MEAN, mean)
-        self._qualityMetricSummary.setStatValueToMetricAndCellType(metricIndex, cellType, StatTypes.STD_DEV, std)
-        self._qualityMetricSummary.setStatValueToMetricAndCellType(metricIndex, cellType, StatTypes.MIN, mini)
-        self._qualityMetricSummary.setStatValueToMetricAndCellType(metricIndex, cellType, StatTypes.MAX, maxi)
+        count: int = self._qualityMetricSummary.getCellTypeCountsOfCellType(cellType)
+        self._qualityMetricSummary.setStatValueFromStatMetricAndCellType(metricIndex, cellType, StatTypes.MEAN, mean)
+        self._qualityMetricSummary.setStatValueFromStatMetricAndCellType(metricIndex, cellType, StatTypes.STD_DEV, std)
+        self._qualityMetricSummary.setStatValueFromStatMetricAndCellType(metricIndex, cellType, StatTypes.MIN, mini)
+        self._qualityMetricSummary.setStatValueFromStatMetricAndCellType(metricIndex, cellType, StatTypes.MAX, maxi)
+        self._qualityMetricSummary.setStatValueFromStatMetricAndCellType(metricIndex, cellType, StatTypes.COUNT, count)
 
 
     def _createFieldDataStatsSummary(self: Self) ->None:
@@ -510,7 +519,7 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
             for metricIndex in metrics:
                 # one array per statistic number except Count (last one)
                 for statType in list(StatTypes)[:-1]:
-                    value: int = self._qualityMetricSummary.getStatValueToMetricAndCellType(metricIndex, cellType, statType)
+                    value: int = self._qualityMetricSummary.getStatValueFromStatMetricAndCellType(metricIndex, cellType, statType)
                     name = self._createArrayName(cellType, metricIndex, statType)
                     array: vtkDoubleArray = vtkDoubleArray()
                     array.SetName(name)
@@ -578,7 +587,7 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
         ptsCoords: npt.NDArray[np.float64] = np.zeros((3, 3), dtype=float)
         for i in range(3):
             points.GetPoint(facePtsIds.GetId(i), ptsCoords[i])
-        return computeNormalFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2])
+        return fcts.computeNormalFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2])
 
     # TODO: add metric that measures the deviation angle from cell center to face center vector versus face normal vector
     # TODO: add metric that computes the deviation of cell volumes
@@ -641,11 +650,11 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
                                 # deviation angle between cell centers vector and face normal
                                 cb: npt.NDArray[np.float64] = cellCenter - neighborCellCenter
                                 ba: npt.NDArray[np.float64] = self.GetNormalVector(points, face)
-                                devAngu[0].append(computeAngleFromVectors(cb, ba))
+                                devAngu[0].append(fcts.computeAngleFromVectors(cb, ba))
 
                                 # deviation angle between cell centers vector and face to cell center vector
                                 ba = faceCenter - cellCenter
-                                kOrtho[0].append(computeAngleFromVectors(ba, -cb))
+                                kOrtho[0].append(fcts.computeAngleFromVectors(ba, -cb))
 
     # TODO: still usefull ?
     def CellsNeighborsMatrix(self: Self,
@@ -749,14 +758,14 @@ class MeshQualityEnhanced(VTKPythonAlgorithmBase):
                     points.GetPoint(facePtsIds.GetId(p), ptsCoords[p])
                 # compute edge angles
                 if nbPts == 3:
-                    listData[0].append(computeAngleFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2]))
-                    listData[0].append(computeAngleFromPoints(ptsCoords[1], ptsCoords[0], ptsCoords[2]))
-                    listData[0].append(computeAngleFromPoints(ptsCoords[0], ptsCoords[2], ptsCoords[1]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[1], ptsCoords[0], ptsCoords[2]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[0], ptsCoords[2], ptsCoords[1]))
                 elif nbPts == 4:
-                    listData[0].append(computeAngleFromPoints(ptsCoords[3], ptsCoords[0], ptsCoords[1]))
-                    listData[0].append(computeAngleFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2]))
-                    listData[0].append(computeAngleFromPoints(ptsCoords[1], ptsCoords[2], ptsCoords[3]))
-                    listData[0].append(computeAngleFromPoints(ptsCoords[2], ptsCoords[3], ptsCoords[0]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[3], ptsCoords[0], ptsCoords[1]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[0], ptsCoords[1], ptsCoords[2]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[1], ptsCoords[2], ptsCoords[3]))
+                    listData[0].append(fcts.computeAngleFromPoints(ptsCoords[2], ptsCoords[3], ptsCoords[0]))
                 else:
                     raise TypeError("Faces must be triangles or quads. Other types are currently not managed.")
 

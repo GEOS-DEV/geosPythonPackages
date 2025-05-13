@@ -4,7 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
-from typing_extensions import Self
+from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -14,15 +14,10 @@ from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
-    vtkDoubleArray,
     vtkDataArraySelection,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet,
-    vtkTable,
-    vtkCellTypes,
     vtkUnstructuredGrid,
-    vtkMultiBlockDataSet,
 )
 
 # update sys.path to load all GEOS Python Package dependencies
@@ -31,6 +26,7 @@ sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 update_paths()
 
+from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
@@ -68,8 +64,9 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         """Merge collocated points."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
 
-        self._filename = None
-        self._saveToFile = True
+        self._filename: Optional[str] = None
+        self._saveToFile: bool = True
+        self._blockIndex: int = 0
         # used to concatenate results if vtkMultiBlockDataSet
         self._metricsAll: list[float] = []
         self._commonQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
@@ -121,7 +118,7 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
                         Specify if mesh statistics are dumped into a file.
                     </Documentation>
                   """ )
-    def a04SetSaveToFile( self: Self, saveToFile: bool) -> None:
+    def b01SetSaveToFile( self: Self, saveToFile: bool) -> None:
         """Setter to save the stats into a file.
 
         Args:
@@ -136,11 +133,11 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
                     <FileListDomain name="files" />
                     <Documentation>Output file path.</Documentation>
                     <Hints>
-                        <FileChooser extensions="txt" file_description="Output text file." />
+                        <FileChooser extensions="png" file_description="Output file." />
                         <AcceptAnyFile/>
                     </Hints>
                   """)
-    def a04SetFileName(self: Self, fname :str) -> None:
+    def b02SetFileName(self: Self, fname :str) -> None:
         """Specify filename for the filter to write.
 
         Args:
@@ -162,9 +159,14 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
                         </Hints>
                     </PropertyGroup>
                     """ )
-    def b01GroupAdvancedOutputParameters( self: Self ) -> None:
+    def b03GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
+
+    def Modified(self: Self) ->None:
+        """Overload Modified method to reset _blockIndex."""
+        self._blockIndex = 0
+        super().Modified()
 
     def RequestDataObject(
         self: Self,
@@ -215,8 +217,6 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        print("requestData")
-
         inputMesh: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
         outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData(outInfoVec, 0)
         assert inputMesh is not None, "Input server mesh is null."
@@ -224,9 +224,6 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
 
         triangleMetrics: set[vtkMeshQuality.QualityMeasureTypes] = self._getQualityMetricsToUse(self._commonQualityMetric).union(self._getQualityMetricsToUse(self._triangleQualityMetric))
         quadMetrics: set[vtkMeshQuality.QualityMeasureTypes] = self._getQualityMetricsToUse(self._commonQualityMetric).union(self._getQualityMetricsToUse(self._quadsQualityMetric))
-        print(inputMesh.GetNumberOfCells())
-        print("triangleMetrics", triangleMetrics)
-        print("quadMetrics", quadMetrics)
         filter: MeshQualityEnhanced = MeshQualityEnhanced()
         filter.SetInputDataObject(inputMesh)
         filter.SetMeshQualityMetrics(triangleMetrics=triangleMetrics, quadMetrics=quadMetrics)
@@ -234,15 +231,18 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
 
         outputMesh.ShallowCopy(filter.GetOutputDataObject(0))
 
-
-        #self._metricsAll += metrics
         # save to file if asked
-        # if self._saveToFile:
-        #     try:
-        #         with open(self._filename, 'w') as fout:
-        #             fout.write(self._metricsAll)
-        #             print(f"File {self._filename} was successfully written.")
-        #     except Exception as e:
-        #         print("Error while exporting the file due to:")
-        #         print(str(e))
+        if self._saveToFile:
+            try:
+                # add index for multiblock meshes
+                index: int = self._filename.rfind('.')
+                filename: str = self._filename[:index] + f"_{self._blockIndex}" + self._filename[index:]
+                stats: QualityMetricSummary = filter.GetQualityMetricSummary()
+                fig = stats.plotSummaryFigure()
+                fig.savefig(filename, dpi=150)
+                print(f"File {filename} was successfully written.")
+            except Exception as e:
+                print("Error while exporting the file due to:")
+                print(str(e))
+        self._blockIndex += 1
         return 1

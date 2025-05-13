@@ -29,6 +29,7 @@ from vtkmodules.vtkCommonCore import (
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
     QualityMetricEnum,
+    QualityRange,
     getQualityMeasureFromCellType,
     getTriangleQualityMeasure,
     getQuadQualityMeasure,
@@ -41,6 +42,7 @@ from geos.mesh.processing.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
     getQualityMeasureIndexFromName,
     getAllCellTypesExtended,
+    getAllCellTypes,
 )
 
 triangleQualityMeasureExp: set[int] = {
@@ -176,10 +178,23 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     for metric in list(QualityMetricEnum):
         yield TestCase( metric.metricIndex, metric.metricName )
 
-def test_QualityMetricEnumOrder() ->None:
+def test_QualityMetricEnum_Order() ->None:
     """Test QualityMetricEnum ordering is correct."""
     for i, metric in enumerate(list(QualityMetricEnum)):
         assert metric.metricIndex == i
+
+def test_QualityMetricEnum_QualityRange() ->None:
+    """Test QualityMetricEnum.getQualityRange returns the right number of values."""
+    for metric in list(QualityMetricEnum):
+        for cellType in getAllCellTypes():
+            qualityRange: QualityRange = metric.getQualityRange(cellType)
+            if qualityRange is not None:
+                assert (len(qualityRange.fullRange) == 2), "Full range length is expected to be 2"
+                assert (len(qualityRange.normalRange) == 2), "Normal range length is expected to be 2"
+                assert (len(qualityRange.acceptableRange) == 2), "Acceptable range length is expected to be 2"
+
+        for cellType in (VTK_POLYGON, VTK_POLYHEDRON):
+            assert metric.getQualityRange(cellType) is None, "QualityRange should be undefined."
 
 ids: list[str] = [metric.metricName for metric in list(QualityMetricEnum)]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
@@ -188,7 +203,6 @@ def test_getQualityMeasureNameFromIndex( test_case: TestCase ) ->None:
     name: str = getQualityMeasureNameFromIndex(test_case.qualityMetricIndex)
     assert name == test_case.qualityMetricName
 
-ids: list[str] = [metric.metricName for metric in list(QualityMetricEnum)]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
 def test_getQualityMeasureIndexFromName( test_case: TestCase ) ->None:
     """Test of getQualityMeasureIndexFromName method."""
@@ -323,3 +337,8 @@ def test_getAllCellTypesExtended() ->None:
     """Test of getAllCellTypesExtended method."""
     cellTypesExp: list[int] = [VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON, VTK_POLYGON, VTK_POLYHEDRON]
     assert cellTypesExp == getAllCellTypesExtended(), "Cell types differ."
+
+def test_getAllCellTypes() ->None:
+    """Test of getAllCellTypes method."""
+    cellTypesExp: list[int] = [VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON]
+    assert cellTypesExp == getAllCellTypes(), "Cell types differ."

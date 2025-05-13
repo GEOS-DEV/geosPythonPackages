@@ -7,6 +7,7 @@ import pandas as pd
 import random as rd
 import pytest
 from typing import Iterator
+from matplotlib.figure import Figure
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
 
@@ -95,7 +96,7 @@ def test_QualityMetricSummary_setter( test_case: TestCase ) -> None:
     val: float = 1.0
     for metricIndex in test_case.metricIndexes:
         with pytest.raises( IndexError ) as pytest_wrapped_e:
-            stats.setStatValueToMetricAndCellType(metricIndex, test_case.cellType, statType, val)
+            stats.setStatValueFromStatMetricAndCellType(metricIndex, test_case.cellType, statType, val)
     assert pytest_wrapped_e.type is IndexError
 
 @pytest.mark.parametrize( "test_case", __generate_test_data() )
@@ -108,10 +109,9 @@ def test_QualityMetricSummary_setterGetter( test_case: TestCase ) -> None:
     stats: QualityMetricSummary = QualityMetricSummary()
     for metricIndex in test_case.metricIndexes:
         for statType, value in zip(test_case.statTypes, test_case.values, strict=True):
-            print(metricIndex, test_case.cellType, statType)
-            stats.setStatValueToMetricAndCellType(metricIndex, test_case.cellType, statType, value)
+            stats.setStatValueFromStatMetricAndCellType(metricIndex, test_case.cellType, statType, value)
 
-    assert np.any(stats.getAllStats().to_numpy() > 0), "Stats values were not corretcly set."
+    assert np.any(stats.getAllStats().to_numpy() > 0), "Stats values were not correctly set."
     for metricIndex in test_case.metricIndexes:
         for statType, val in zip(test_case.statTypes, test_case.values, strict=True):
             subSet: pd.DataFrame = stats.getStatsFromCellType(test_case.cellType)
@@ -123,5 +123,22 @@ def test_QualityMetricSummary_setterGetter( test_case: TestCase ) -> None:
             subSet3: pd.Series = stats.getStatsFromMetricAndCellType(metricIndex, test_case.cellType)
             assert subSet3[statType.getIndex()] == val, f"Stats at ({metricIndex}, {test_case.cellType}, {statType}) from getStatsFromMetricAndCellType is exepected to be equal to {val}."
 
-            valObs: float = stats.getStatValueToMetricAndCellType(metricIndex, test_case.cellType, statType)
+            valObs: float = stats.getStatValueFromStatMetricAndCellType(metricIndex, test_case.cellType, statType)
             assert valObs == val, f"Stats at ({metricIndex}, {test_case.cellType}, {statType}) from getStatValueFromMetricAndCellType is exepected to be equal to {val}."
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_QualityMetricSummary_plotSummaryFigure( test_case: TestCase ) -> None:
+    """Test of plotSummaryFigure method.
+
+    Args:
+        test_case (TestCase): test case
+    """
+    stats: QualityMetricSummary = QualityMetricSummary()
+    for metricIndex in test_case.metricIndexes:
+        for statType, value in zip(test_case.statTypes, test_case.values, strict=True):
+            stats.setStatValueFromStatMetricAndCellType(metricIndex, test_case.cellType, statType, value)
+    fig: Figure = stats.plotSummaryFigure()
+    assert fig is not None, "Figure is undefined"
+    # metrics + counts
+    nbAxesExp: int = len(test_case.metricIndexes) + 1
+    assert len(fig.get_axes()) == nbAxesExp, f"Number of Axes is expected to be {nbAxesExp}."

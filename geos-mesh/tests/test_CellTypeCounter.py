@@ -76,7 +76,7 @@ def test_CellTypeCounter_single( test_case: TestCase ) -> None:
     filter: CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCounts()
+    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
@@ -135,7 +135,7 @@ def test_CellTypeCounter_multi( test_case: TestCase ) -> None:
     filter: CellTypeCounter = CellTypeCounter()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCounts()
+    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(

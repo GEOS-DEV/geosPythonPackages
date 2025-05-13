@@ -144,7 +144,7 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
         outputTable.ShallowCopy(filter.GetOutputDataObject(0))
 
         # print counts in Output Messages view
-        counts: CellTypeCounts = filter.GetCellTypeCounts()
+        counts: CellTypeCounts = filter.GetCellTypeCountsObject()
         print(counts.print())
 
         self._countsAll += counts
