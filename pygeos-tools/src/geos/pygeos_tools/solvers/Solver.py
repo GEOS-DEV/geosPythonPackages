@@ -22,7 +22,7 @@ from typing_extensions import Self
 from geos.pygeos_tools.input.GeosxArgs import GeosxArgs
 from geos.pygeos_tools.input.Xml import XML
 from geos.pygeos_tools.input.XMLTime import XMLTime
-from geos.pygeos_tools.solvers.helpers import GEOS_STATE
+from geos.pygeos_tools.solvers.helpers import GEOS_STATE, automatic_solver_type
 from geos.pygeos_tools.wrapper import ( find_first_difference_between_wrapper_paths, get_all_matching_wrapper_paths,
                                         get_wrapper )
 from geos.utils.errors_handling.classes import required_attributes
@@ -84,7 +84,7 @@ class Solver:
             XML object
     """
 
-    def __init__( self: Self, solverType: str, **kwargs ):
+    def __init__( self: Self, solverType: str = "automatic", **kwargs ):
         self.alreadyInitialized: bool = False
         argv = kwargs.get( "geosx_argv", sys.argv )
         self.geosxArgs = GeosxArgs( argv )
@@ -138,10 +138,7 @@ class Solver:
                 except KeyError:
                     raise ValueError( "You need to provide a xml input file" )
 
-                solverTypesInXML: List[ str ] = self.xml.getSolverTypes()
-                if self.type not in solverTypesInXML:
-                    raise ValueError(
-                        f"The solver type '{self.type}' does not exist in your XML '{self.xml.filename}'." )
+                self.type = automatic_solver_type( self.xml, self.type )
 
         if not self.alreadyInitialized:
             geosState: int = self._getGEOSState()

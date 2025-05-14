@@ -43,7 +43,7 @@ class AcousticSolver( WaveSolver ):
     """
 
     def __init__( self: Self,
-                  solverType: str = "AcousticSEM",
+                  solverType: str = "acoustic",
                   dt: float = None,
                   minTime: float = 0.0,
                   maxTime: float = None,

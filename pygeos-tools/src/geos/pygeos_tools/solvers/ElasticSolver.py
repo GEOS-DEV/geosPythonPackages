@@ -33,7 +33,7 @@ class ElasticSolver( WaveSolver ):
     """
 
     def __init__( self: Self,
-                  solverType: str = "ElasticSEM",
+                  solverType: str = "elastic",
                   dt: float = None,
                   minTime: float = 0.0,
                   maxTime: float = None,

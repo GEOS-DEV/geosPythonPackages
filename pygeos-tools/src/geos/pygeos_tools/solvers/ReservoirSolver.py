@@ -33,7 +33,7 @@ class ReservoirSolver( Solver ):
         The ones inherited from Solver class
     """
 
-    def __init__( self: Self, solverType: str, initialDt: float = None, maxTime: float = None, **kwargs ):
+    def __init__( self: Self, solverType: str = "phase", initialDt: float = None, maxTime: float = None, **kwargs ):
         """
         Parameters
         -----------

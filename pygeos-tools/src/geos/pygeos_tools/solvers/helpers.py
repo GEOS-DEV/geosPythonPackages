@@ -12,6 +12,8 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 # ------------------------------------------------------------------------------------------------------------
 from enum import Enum
+from typing import List
+from geos.pygeos_tools.input.Xml import XML
 
 
 class GEOS_STATE( Enum ):
@@ -33,6 +35,28 @@ class MODEL_FOR_GRADIENT( Enum ):
     VELOCITY = "c"
     SLOWNESS = "1/c"
     SLOWNESS_SQUARED = "1/c2"
+
+
+def automatic_solver_type( xml: XML, prefix: str = "automatic" ) -> str:
+    """Given a XML object and a prefix of the solver you are looking for in the XML, returns the associated solver type.
+    If "automatic" was the prefix, the first solver type found on the list of solvers in your XML file will be chosen.
+    If no solver matches your prefix, defaults to the first solver type found also.
+
+    Args:
+        xml (XML): XML object
+        prefix (str, optional): Solver name prefix. Can be just a part of the solver name. Defaults to "automatic".
+
+    Returns:
+        str: The solver type
+    """
+    solverTypes: List[ str ] = xml.getSolverTypes()
+    if prefix == "automatic":
+        return solverTypes[ 0 ]
+    for solverType in solverTypes:
+        if prefix.lower() in solverType.lower():
+            return solverType
+    print( "No solver corresponding to your prefix choice was found in the Solvers. We choose the first one found." )
+    return solverTypes[ 0 ]
 
 
 def print_group( group, indent=0 ):

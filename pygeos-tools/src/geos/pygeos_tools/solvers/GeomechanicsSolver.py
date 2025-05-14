@@ -32,7 +32,7 @@ class GeomechanicsSolver( Solver ):
         The ones inherited from Solver class
     """
 
-    def __init__( self: Self, solverType: str, dt: float = None, maxTime: float = None, **kwargs ):
+    def __init__( self: Self, solverType: str = "solid", dt: float = None, maxTime: float = None, **kwargs ):
         """
         Parameters
         -----------

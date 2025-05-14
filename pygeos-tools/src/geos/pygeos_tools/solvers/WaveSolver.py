@@ -54,7 +54,7 @@ class WaveSolver( Solver ):
     """
 
     def __init__( self: Self,
-                  solverType: str,
+                  solverType: str = "stic",
                   dt: float = None,
                   minTime: float = 0.0,
                   maxTime: float = None,
