@@ -98,7 +98,7 @@ def run_darts_model( xml_name: str, darts_model=None ):
     cycle: int = 0
 
     solver.setDt( 86400.0 )
-    solver.outputVtk( time )
+
     while time < solver.maxTime:
         if time < 604800:
             solver.setDt( 86400.0 )
@@ -108,10 +108,14 @@ def run_darts_model( xml_name: str, darts_model=None ):
         if rank == 0:
             if solver.dt is not None:
                 print( f"time = {time:.3f}s, dt = {solver.getDt():.4f}, iter = {cycle + 1}" )
-        solver.execute( time )
+
+        solver.outputVtk( time, cycle )
+        solver.execute( time, cycle )
+
         time += solver.getDt()
-        solver.outputVtk( time )
         cycle += 1
+
+    solver.outputVtk( time, cycle )
     solver.cleanup( time )
 
 

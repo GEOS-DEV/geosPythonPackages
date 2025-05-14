@@ -18,7 +18,9 @@
 			newtonTol="0.0001"
 			newtonMaxIter="25"/>
 		<LinearSolverParameters
-			directParallel="0"/>
+            solverType="fgmres"
+            preconditionerType="mgr"
+            krylovTol="1.0e-5"/>
 		</ReactiveCompositionalMultiphaseOBL>
 	</Solvers>
 
@@ -101,7 +103,7 @@
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="0"
-			scale="0.7"/>
+			scale="0.276839"/>
 		<FieldSpecification
 			name="Region1InitCa"
 			initialCondition="1"
@@ -109,7 +111,7 @@
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="1"
-			scale="0.0"/>
+			scale="1e-11"/>
 		<FieldSpecification
 			name="Region1InitC"
 			initialCondition="1"
@@ -117,7 +119,7 @@
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="2"
-			scale="0.0"/>
+			scale="1e-11"/>
 		<FieldSpecification
 			name="Region1InitO"
 			initialCondition="1"
@@ -139,7 +141,7 @@
 			name="inj1Pressure"
 			objectPath="ElementRegions/Region1"
 			fieldName="pressure"
-			scale="10010000.0"
+			scale="10005000.0"
 			setNames="{ inj1 }"/>
 		<FieldSpecification
 			name="inj1Calcite"
@@ -219,21 +221,21 @@
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="0"
-			scale="0.7"/>
+			scale="0.276839"/>
 		<FieldSpecification
 			name="prd1Ca"
 			setNames="{ prd1 }"
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="1"
-			scale="0.0"/>
+			scale="1e-11"/>
 		<FieldSpecification
 			name="prd1C"
 			setNames="{ prd1 }"
 			objectPath="ElementRegions/Region1"
 			fieldName="globalCompFraction"
 			component="2"
-			scale="0.0"/>
+			scale="1e-11"/>
 		<FieldSpecification
 			name="prd1O"
 			setNames="{ prd1 }"

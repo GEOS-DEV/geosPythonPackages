@@ -117,12 +117,12 @@ This block contains a ``forceDt`` attribute that will be used later to choose as
 
 The "outputs" event triggers the output of the vtk files. The attribute "timeFrequency" has the same value as "forceDt"
 so we can use the same timestep for the solver and the outputs.
-To start, we will set the time to 0.0 and trigger one output of the vtk files.
+To start, we will set the time to 0.0 and the cycle number to 0.
 
 .. code-block:: python
 
    time = 0.0
-   solver.outputVtk( time )
+   cycle = 0
 
 
 ------------------------------------------------------------------
@@ -135,9 +135,12 @@ Once done, the simulation is ended by calling the ``cleanup`` method.
 .. code-block:: python
 
    while time < solver.maxTime:
-       solver.execute( time )
-       solver.outputVtk( time )
+       solver.outputVtk( time, cycle )
+       solver.execute( time, cycle )
        time += solver.dt
+       cycle += 1
+
+   solver.outputVtk( time, cycle )
    solver.cleanup( time )
 
 
