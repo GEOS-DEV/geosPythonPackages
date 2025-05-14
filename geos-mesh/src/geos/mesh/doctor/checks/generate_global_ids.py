@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
-from geos.mesh.vtk.io import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )
