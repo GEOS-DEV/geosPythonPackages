@@ -30,6 +30,7 @@ dependencies = [
     "tqdm >= 4.67",
     "numpy >= 2.2",
     "meshio >= 5.3",
+    "typing_extensions >= 4.12",
 ]
 
 [project.scripts]
@@ -47,7 +48,8 @@ build = [
   "build ~= 1.2"
 ]
 dev = [
-   "mypy", 
+   "mypy",
+   "ruff", 
    "yapf",
 ]
 test = [
@@ -56,9 +58,12 @@ test = [
 ]
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-pythonpath = [
-    "src",
-]
+addopts = "--import-mode=importlib"
+console_output_style = "count"
+pythonpath = ["src"]
+python_classes = "Test"
+python_files = "test*.py"
+python_functions = "test*"
+testpaths = ["tests"]
+norecursedirs = "bin"
+filterwarnings = []

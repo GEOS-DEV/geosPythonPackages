@@ -6,8 +6,7 @@ from geos.mesh.doctor.checks.collocated_nodes import Options, __check
 
 
 def get_points() -> Iterator[ Tuple[ vtkPoints, int ] ]:
-    """
-    Generates the data for the cases.
+    """Generates the data for the cases.
     One case has two nodes at the exact same position.
     The other has two differente nodes
     :return: Generator to (vtk points, number of expected duplicated locations)
