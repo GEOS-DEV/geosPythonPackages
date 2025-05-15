@@ -30,6 +30,10 @@ class Result:
 
 # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
 MESH: Optional[ vtkUnstructuredGrid ] = None
+supported_cell_types: set[ int ] = {
+    VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
+    VTK_WEDGE
+}
 
 
 class IsPolyhedronConvertible:
@@ -105,21 +109,19 @@ class IsPolyhedronConvertible:
             return ic
 
 
-def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> set[ int ]:
     if hasattr( mesh, "GetDistinctCellTypesArray" ):  # For more recent versions of vtk.
-        cell_types = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
+        unique_cell_types = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
     else:
-        cell_types = vtkCellTypes()
-        mesh.GetCellTypes( cell_types )
-        cell_types = set( vtk_iter( cell_types ) )
-    supported_cell_types = {
-        VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
-        VTK_WEDGE
-    }
-    unsupported_std_elements_types = cell_types - supported_cell_types
+        vtk_cell_types = vtkCellTypes()
+        mesh.GetCellTypes( vtk_cell_types )
+        unique_cell_types = set( vtk_iter( vtk_cell_types ) )
+    return unique_cell_types - supported_cell_types
 
+
+def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Options ) -> list[ int ]:
     # Dealing with polyhedron elements.
-    num_cells = mesh.GetNumberOfCells()
+    num_cells: int = mesh.GetNumberOfCells()
     result = numpy.ones( num_cells, dtype=int ) * -1
     with multiprocessing.Pool( processes=options.num_proc ) as pool:
         generator = pool.imap_unordered( IsPolyhedronConvertible( mesh ),
@@ -127,7 +129,12 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                                          chunksize=options.chunk_size )
         for i, val in enumerate( tqdm( generator, total=num_cells, desc="Testing support for elements" ) ):
             result[ i ] = val
-    unsupported_polyhedron_elements = [ i for i in result if i > -1 ]
+    return [ i for i in result if i > -1 ]
+
+
+def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    unsupported_std_elements_types: set[ int ] = find_unsupported_std_elements_types( mesh )
+    unsupported_polyhedron_elements: list[ int ] = find_unsupported_polyhedron_elements( mesh, options )
     return Result( unsupported_std_elements_types=frozenset( unsupported_std_elements_types ),
                    unsupported_polyhedron_elements=frozenset( unsupported_polyhedron_elements ) )
 
