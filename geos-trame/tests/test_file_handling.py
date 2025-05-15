@@ -14,4 +14,4 @@ def test_unsupported_file( capsys ):
     GeosTrame( server, file_name )
 
     captured = capsys.readouterr()
-    assert captured.err == "Cannot build ui as the input file cannot be parse.\n"
+    assert captured.err == "The file tests/data/acous3D/acous3D_vtu.xml cannot be parsed.\n"

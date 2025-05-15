@@ -7,6 +7,7 @@ from enum import Enum
 import yaml
 from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify
+from trame.widgets import html
 from trame_simput import get_simput_manager
 from typing import Any
 
@@ -181,20 +182,15 @@ class DeckInspector( vuetify.VTreeview ):
             **{
                 # style
                 "hoverable": True,
+                "max_width": 500,
                 "rounded": True,
-                # "dense": True,
-                # "density": "compact",
-                # "active_color": "blue",
                 # activation logic
-                # "activatable": True,
-                # "active_strategy": "single-independent",
-                # "activated": ("active_ids", ),
-                # "update_activated": "(active_ids) => {active_id = active_ids[0]}",
+                "activatable": True,
+                "activated": ( "active_ids", ),
+                "active_strategy": "single-independent",
+                "update_activated": ( self.change_current_id, "$event" ),
                 # selection logic
-                "selectable": True,
-                "select_strategy": "single-independent",
-                "selected": ( "active_ids", ),
-                "update_selected": "(active_ids) => {active_id = active_ids[0]}",
+                "selectable": False,
                 **kwargs,
             },
         )
@@ -226,18 +222,17 @@ class DeckInspector( vuetify.VTreeview ):
 
         with self:
             with vuetify.Template( v_slot_append="{ item }" ):
-                vuetify.VCheckboxBtn(
-                    v_if="item.is_drawable",
-                    icon=True,
-                    true_icon="mdi-eye",
-                    false_icon="mdi-eye-off",
-                    dense=True,
-                    hide_details=True,
-                    update_modelValue=( self.to_draw_change, "[ item.id, $event ] " ),
-                )
+                vuetify.VCheckboxBtn( v_if="item.is_drawable",
+                                      focused=True,
+                                      dense=True,
+                                      hide_details=True,
+                                      icon=True,
+                                      false_icon="mdi-eye-off",
+                                      true_icon="mdi-eye",
+                                      update_modelValue=( self.to_draw_change, "[ item, item.id, $event ] " ) )
 
-    def to_draw_change( self, id, drawn ):
-        self.state.object_state = [ id, drawn ]
+    def to_draw_change( self, item, item_id, drawn ):
+        self.state.object_state = [ item_id, drawn ]
 
     @property
     def source( self ):
@@ -299,10 +294,14 @@ class DeckInspector( vuetify.VTreeview ):
                     debug.set_property( key, getattr( active_block, key ) )
                 debug.commit()
 
-    # def on_active_change(self, **_):
-    #     if self.listen_to_active:
-    #         print("on_active_change")
-    # self.set_source_proxy(simple.GetActiveSource())
+    def change_current_id( self, item_id=None ):
+        """
+        Change the current id of the tree.
+        This function is called when the user click on the tree.
+        """
+        if item_id is None:
+            # Silently ignore, it could occurs is the user click on the tree
+            # and this item is already selected
+            return
 
-    # def on_selection_change(self, node_active, **_):
-    #     print("on_selection_change", node_active)
+        self.state.active_id = item_id

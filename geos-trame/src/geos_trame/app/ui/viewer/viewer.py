@@ -114,12 +114,33 @@ class DeckViewer( vuetify.VCard ):
             self._update_vtkmesh( active_block, show_obj )
 
         if isinstance( active_block, Vtkwell ):
+            if self.region_engine.input.number_of_cells == 0 and show_obj:
+
+                self.ctrl.on_add_warning(
+                    "Can't display " + active_block.name,
+                    "Please display the mesh before creating a well.",
+                )
+                return
+
             self._update_vtkwell( active_block, path, show_obj )
 
         if isinstance( active_block, InternalWell ):
+            if self.region_engine.input.number_of_cells == 0 and show_obj:
+                self.ctrl.on_add_warning(
+                    "Can't display " + active_block.name,
+                    "Please display the mesh before creating a well",
+                )
+                return
+
             self._update_internalwell( active_block, path, show_obj )
 
         if isinstance( active_block, Perforation ):
+            if self.well_engine.get_number_of_wells() == 0 and show_obj:
+                self.ctrl.on_add_warning(
+                    "Can't display " + active_block.name,
+                    "Please display a well before creating a perforation",
+                )
+                return
             self._update_perforation( active_block, show_obj, path )
 
     def _on_clip_visibility_change( self, **kwargs ):
@@ -212,9 +233,9 @@ class DeckViewer( vuetify.VCard ):
 
         sorted_points = []
         for id in connectivity:
-            sorted_points.append(points[id])
+            sorted_points.append( points[ id ] )
 
-        well_polydata = pv.MultipleLines(sorted_points)
+        well_polydata = pv.MultipleLines( sorted_points )
         index = self.well_engine.add_mesh( well_polydata, path )
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( index ) )
@@ -320,7 +341,7 @@ class DeckViewer( vuetify.VCard ):
 
         self._perforations[ path ] = saved_perforation
 
-    def __parse_polyline_property( self, property: str, dtype : Type[Any] ) -> np.ndarray[Any]:
+    def __parse_polyline_property( self, property: str, dtype: Type[ Any ] ) -> np.ndarray[ Any ]:
         """
         Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
         This string always follow this for :
@@ -329,7 +350,7 @@ class DeckViewer( vuetify.VCard ):
         try:
             nodes_str = property.split( "}, {" )
             points = []
-            for i in range(0, len(nodes_str)):
+            for i in range( 0, len( nodes_str ) ):
 
                 nodes_str[ i ] = nodes_str[ i ].replace( " ", "" )
                 nodes_str[ i ] = nodes_str[ i ].replace( "{", "" )
@@ -339,7 +360,9 @@ class DeckViewer( vuetify.VCard ):
 
                 points.append( point )
 
-            return np.array(points,dtype=dtype)
+            return np.array( points, dtype=dtype )
         except ValueError:
-            raise GeosTrameException("cannot be able to convert the property into a numeric array: ", ValueError)
-
+            raise GeosTrameException(
+                "cannot be able to convert the property into a numeric array: ",
+                ValueError,
+            )

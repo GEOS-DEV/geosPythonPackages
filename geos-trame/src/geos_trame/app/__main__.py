@@ -33,3 +33,7 @@ def main( server=None, **kwargs ):
 
     app = GeosTrame( server, file_name )
     app.server.start( **kwargs )
+
+
+if __name__ == "__main__":
+    main()
