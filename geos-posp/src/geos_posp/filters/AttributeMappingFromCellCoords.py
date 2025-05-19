@@ -22,12 +22,12 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-from geos.mesh.utils.filters import (
+from geos.mesh.utils.arrayModifiers import (
     computeCellCenterCoordinates,
     createEmptyAttribute,
 )
 
-from geos.mesh.utils.helpers import (
+from geos.mesh.utils.arrayHelpers import (
     getVtkArrayInObject, )
 
 __doc__ = """

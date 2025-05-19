@@ -1,12 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay, Paloma Martinez
-from typing import Union
+# SPDX-FileContributor: Martin Lemay, Alexandre Benedicto, Paloma Martinez
 
 import numpy as np
 import numpy.typing as npt
+import logging
 import vtkmodules.util.numpy_support as vnp
-
+from typing import Optional, Union
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
+from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkDataSet, vtkPointSet, vtkCompositeDataSet,
+                                            vtkDataObject, vtkDataObjectTreeIterator, vtkFieldData )
+from vtkmodules.vtkFiltersCore import (
+    vtkArrayRename,
+    vtkCellCenters,
+    vtkPointDataToCellData,
+)
+from vtk import (  # type: ignore[import-untyped]
+    VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT,
+)
 from vtkmodules.vtkCommonCore import (
     vtkCharArray,
     vtkDataArray,
@@ -16,42 +27,16 @@ from vtkmodules.vtkCommonCore import (
     vtkPoints,
     vtkUnsignedIntArray,
 )
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkDataObject,
-    vtkDataObjectTreeIterator,
-    vtkDataSet,
-    vtkMultiBlockDataSet,
-    vtkPlane,
-    vtkPointSet,
-    vtkPolyData,
-    vtkUnstructuredGrid,
-)
-from vtkmodules.vtkFiltersCore import (
-    vtk3DLinearGridPlaneCutter,
-    vtkAppendDataSets,
-    vtkArrayRename,
-    vtkCellCenters,
-    vtkPointDataToCellData,
-)
-from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
-from vtk import (  # type: ignore[import-untyped]
-    VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT,
-)
-from geos.mesh.utils.multiblockInspectorTreeFunctions import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-
-from geos.mesh.utils.helpers import (
+from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
     getAttributesWithNumberOfComponents,
     getAttributeSet,
     getArrayInObject,
     isAttributeInObject,
 )
+from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten, getBlockFromFlatIndex
 
-__doc__ = """ Utilities to process vtk objects. """
+__doc__ = """ Generic utilities to process VTK Arrays objects. """
 
 
 def fillPartialAttributes(
@@ -106,61 +91,6 @@ def fillAllPartialAttributes(
         fillPartialAttributes( multiBlockMesh, attributeName, nbComponents, onPoints )
     multiBlockMesh.Modified()
     return True
-
-
-def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> vtkMultiBlockDataSet:
-    """Extract the block with index blockIndex from multiBlockDataSet.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet): multiblock dataset from which
-            to extract the block
-        blockIndex (int): block index to extract
-
-    Returns:
-        vtkMultiBlockDataSet: extracted block
-    """
-    extractBlockfilter: vtkExtractBlock = vtkExtractBlock()
-    extractBlockfilter.SetInputData( multiBlockDataSet )
-    extractBlockfilter.AddIndex( blockIndex )
-    extractBlockfilter.Update()
-    extractedBlock: vtkMultiBlockDataSet = extractBlockfilter.GetOutput()
-    return extractedBlock
-
-
-# TODO : fix function for keepPartialAttributes = True
-def mergeBlocks(
-    input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-    keepPartialAttributes: bool = False,
-) -> vtkUnstructuredGrid:
-    """Merge all blocks of a multi block mesh.
-
-    Args:
-        input (vtkMultiBlockDataSet | vtkCompositeDataSet ): composite
-            object to merge blocks
-        keepPartialAttributes (bool): if True, keep partial attributes after merge.
-
-            Defaults to False.
-
-    Returns:
-        vtkUnstructuredGrid: merged block object
-
-    """
-    if keepPartialAttributes:
-        fillAllPartialAttributes( input, False )
-        fillAllPartialAttributes( input, True )
-
-    af = vtkAppendDataSets()
-    af.MergePointsOn()
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( input )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
-        af.AddInputData( block )
-        iter.GoToNextItem()
-    af.Update()
-    return af.GetOutputDataObject( 0 )
 
 
 def createEmptyAttribute(
@@ -493,58 +423,6 @@ def doCreateCellCenterAttribute( block: vtkDataSet, cellCenterAttributeName: str
         block.GetCellData().AddArray( centerCoords )
         block.Modified()
     return True
-
-
-def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
-    """Get the coordinates of Cell center.
-
-    Args:
-        mesh (vtkDataSet): input surface
-
-    Returns:
-        vtkPoints: cell center coordinates
-    """
-    assert mesh is not None, "Surface is undefined."
-    filter: vtkCellCenters = vtkCellCenters()
-    filter.SetInputDataObject( mesh )
-    filter.Update()
-    output: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
-    assert output is not None, "Cell center output is undefined."
-    pts: vtkPoints = output.GetPoints()
-    assert pts is not None, "Cell center points are undefined."
-    return pts.GetData()
-
-
-def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -> vtkPolyData:
-    """Extract surface at a constant elevation from a mesh.
-
-    Args:
-        mesh (vtkUnstructuredGrid): input mesh
-        elevation (float): elevation at which to extract the surface
-
-    Returns:
-        vtkPolyData: output surface
-    """
-    assert mesh is not None, "Input mesh is undefined."
-    assert isinstance( mesh, vtkUnstructuredGrid ), "Wrong object type"
-
-    bounds: tuple[ float, float, float, float, float, float ] = mesh.GetBounds()
-    ooX: float = ( bounds[ 0 ] + bounds[ 1 ] ) / 2.0
-    ooY: float = ( bounds[ 2 ] + bounds[ 3 ] ) / 2.0
-
-    # check plane z coordinates against mesh bounds
-    assert ( elevation <= bounds[ 5 ] ) and ( elevation >= bounds[ 4 ] ), "Plane is out of input mesh bounds."
-
-    plane: vtkPlane = vtkPlane()
-    plane.SetNormal( 0.0, 0.0, 1.0 )
-    plane.SetOrigin( ooX, ooY, elevation )
-
-    cutter = vtk3DLinearGridPlaneCutter()
-    cutter.SetInputDataObject( mesh )
-    cutter.SetPlane( plane )
-    cutter.SetInterpolateAttributes( True )
-    cutter.Update()
-    return cutter.GetOutputDataObject( 0 )
 
 
 def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet:

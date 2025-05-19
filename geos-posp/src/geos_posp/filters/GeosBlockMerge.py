@@ -33,15 +33,11 @@ from vtkmodules.vtkFiltersCore import (
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 
-from geos.mesh.utils.multiblockInspectorTreeFunctions import (
-    getElementaryCompositeBlockIndexes, )
-from geos.mesh.utils.helpers import getAttributeSet
-from geos.mesh.utils.filters import (
-    createConstantAttribute,
-    extractBlock,
-    fillAllPartialAttributes,
-    mergeBlocks,
-)
+from geos.mesh.utils.multiblockHelpers import getElementaryCompositeBlockIndexes
+from geos.mesh.utils.arrayHelpers import getAttributeSet
+from geos.mesh.utils.arrayModifiers import createConstantAttribute, fillAllPartialAttributes
+from geos.mesh.utils.multiblockHelpers import extractBlock
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 __doc__ = """
 GeosBlockMerge module is a vtk filter that allows to merge Geos ranks, rename

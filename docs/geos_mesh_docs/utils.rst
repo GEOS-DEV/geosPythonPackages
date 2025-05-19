@@ -25,10 +25,10 @@ geos.mesh.utils.helpers module
 
 
 
-geos.mesh.utils.multiblockInspectorTreeFunctions module
+geos.mesh.utils.multiblockHelpers module
 ---------------------------------------------------------------
 
-.. automodule:: geos.mesh.utils.multiblockInspectorTreeFunctions
+.. automodule:: geos.mesh.utils.multiblockHelpers
    :members:
    :undoc-members:
    :show-inheritance:

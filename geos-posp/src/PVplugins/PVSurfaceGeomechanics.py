@@ -21,7 +21,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
 )
 from geos_posp.filters.SurfaceGeomechanics import SurfaceGeomechanics
-from geos.mesh.utils.multiblockInspectorTreeFunctions import (
+from geos.mesh.utils.multiblockHelpers import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )

@@ -8,7 +8,7 @@ from geos.mesh.doctor.checks.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from geos.mesh.doctor.checks.generate_fractures import ( __split_mesh_on_fractures, Options, FracturePolicy,
                                                          Coordinates3D, IDMapping )
-from geos.mesh.utils.helpers import to_vtk_id_list
+from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]

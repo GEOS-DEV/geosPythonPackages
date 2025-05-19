@@ -15,7 +15,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 
-from geos.mesh.utils import helpers as vtkHelpers
+from geos.mesh.utils import arrayHelpers
 
 
 @pytest.mark.parametrize( "onpoints, expected", [ ( True, {
@@ -34,7 +34,7 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, o
                                             expected: dict[ str, int ] ) -> None:
     """Test getting attribute list as dict from multiblock."""
     multiBlockTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    attributes: dict[ str, int ] = vtkHelpers.getAttributesFromMultiBlockDataSet( multiBlockTest, onpoints )
+    attributes: dict[ str, int ] = arrayHelpers.getAttributesFromMultiBlockDataSet( multiBlockTest, onpoints )
 
     assert attributes == expected
 
@@ -53,7 +53,7 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, o
 def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, onpoints: bool, expected: dict[ str, int ] ) -> None:
     """Test getting attribute list as dict from dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    attributes: dict[ str, int ] = vtkHelpers.getAttributesFromDataSet( vtkDataSetTest, onpoints )
+    attributes: dict[ str, int ] = arrayHelpers.getAttributesFromDataSet( vtkDataSetTest, onpoints )
     assert attributes == expected
 
 
@@ -65,7 +65,7 @@ def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet
                                                expected: dict[ str, int ] ) -> None:
     """Test presence of attribute in a multiblock."""
     multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: bool = vtkHelpers.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, onpoints )
+    obtained: bool = arrayHelpers.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, onpoints )
     assert obtained == expected
 
 
@@ -77,7 +77,7 @@ def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str
                                      expected: bool ) -> None:
     """Test presence of attribute in a dataset."""
     vtkDataset: vtkDataSet = dataSetTest( "dataset" )
-    obtained: bool = vtkHelpers.isAttributeInObjectDataSet( vtkDataset, attributeName, onpoints )
+    obtained: bool = arrayHelpers.isAttributeInObjectDataSet( vtkDataset, attributeName, onpoints )
     assert obtained == expected
 
 
@@ -94,7 +94,7 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     params = request.node.callspec.params
     attributeName: str = params[ "arrayExpected" ]
 
-    obtained: npt.NDArray[ np.float64 ] = vtkHelpers.getArrayInObject( vtkDataSetTest, attributeName, onpoints )
+    obtained: npt.NDArray[ np.float64 ] = arrayHelpers.getArrayInObject( vtkDataSetTest, attributeName, onpoints )
     expected: npt.NDArray[ np.float64 ] = arrayExpected
 
     assert ( obtained == expected ).all()
@@ -112,7 +112,7 @@ def test_getVtkArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt
     params = request.node.callspec.params
     attributeName: str = params[ 'arrayExpected' ]
 
-    obtained: vtkDoubleArray = vtkHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, onpoints )
+    obtained: vtkDoubleArray = arrayHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, onpoints )
     obtained_as_np: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( obtained )
 
     assert ( obtained_as_np == arrayExpected ).all()
@@ -131,7 +131,7 @@ def test_getNumberOfComponentsDataSet(
 ) -> None:
     """Test getting the number of components of an attribute from a dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    obtained: int = vtkHelpers.getNumberOfComponentsDataSet( vtkDataSetTest, attributeName, onpoints )
+    obtained: int = arrayHelpers.getNumberOfComponentsDataSet( vtkDataSetTest, attributeName, onpoints )
     assert obtained == expected
 
 
@@ -148,7 +148,7 @@ def test_getNumberOfComponentsMultiBlock(
 ) -> None:
     """Test getting the number of components of an attribute from a multiblock."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: int = vtkHelpers.getNumberOfComponentsMultiBlock( vtkMultiBlockDataSetTest, attributeName, onpoints )
+    obtained: int = arrayHelpers.getNumberOfComponentsMultiBlock( vtkMultiBlockDataSetTest, attributeName, onpoints )
 
     assert obtained == expected
 
@@ -161,7 +161,7 @@ def test_getComponentNamesDataSet( dataSetTest: vtkDataSet, attributeName: str, 
                                    expected: tuple[ str, ...] ) -> None:
     """Test getting the component names of an attribute from a dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    obtained: tuple[ str, ...] = vtkHelpers.getComponentNamesDataSet( vtkDataSetTest, attributeName, onpoints )
+    obtained: tuple[ str, ...] = arrayHelpers.getComponentNamesDataSet( vtkDataSetTest, attributeName, onpoints )
     assert obtained == expected
 
 
@@ -177,8 +177,8 @@ def test_getComponentNamesMultiBlock(
 ) -> None:
     """Test getting the component names of an attribute from a multiblock."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: tuple[ str, ...] = vtkHelpers.getComponentNamesMultiBlock( vtkMultiBlockDataSetTest, attributeName,
-                                                                         onpoints )
+    obtained: tuple[ str, ...] = arrayHelpers.getComponentNamesMultiBlock( vtkMultiBlockDataSetTest, attributeName,
+                                                                           onpoints )
     assert obtained == expected
 
 
@@ -193,7 +193,7 @@ def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple
                                  expected_columns: Tuple[ str, ...] ) -> None:
     """Test getting an attribute from a polydata as a dataframe."""
     polydataset: vtkPolyData = dataSetTest( "polydata" )
-    data: pd.DataFrame = vtkHelpers.getAttributeValuesAsDF( polydataset, attributeNames )
+    data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames )
 
     obtained_columns = data.columns.values.tolist()
     assert obtained_columns == list( expected_columns )

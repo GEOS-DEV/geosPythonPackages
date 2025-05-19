@@ -19,11 +19,11 @@ import PVplugins  # noqa: F401
 
 import vtkmodules.util.numpy_support as vnp
 from geos.utils.Logger import Logger, getLogger
-from geos.mesh.utils.multiblockInspectorTreeFunctions import (
+from geos.mesh.utils.multiblockHelpers import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos.mesh.utils.helpers import isAttributeInObject
+from geos.mesh.utils.arrayHelpers import isAttributeInObject
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )

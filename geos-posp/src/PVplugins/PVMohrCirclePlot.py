@@ -43,8 +43,8 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
 )
-from geos.mesh.utils.helpers import getArrayInObject
-from geos.mesh.utils.filters import mergeBlocks
+from geos.mesh.utils.arrayHelpers import getArrayInObject
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos_posp.visu.PVUtils.DisplayOrganizationParaview import (

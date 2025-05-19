@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Any
 import logging
 from copy import deepcopy
@@ -7,34 +10,15 @@ import pandas as pd  # type: ignore[import-untyped]
 import vtkmodules.util.numpy_support as vnp
 from typing import Iterator, Optional, List, Union, cast
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList, vtkDoubleArray
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
                                             vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData,
                                             vtkDataObjectTreeIterator, vtkPolyData )
-from geos.mesh.utils.multiblockInspectorTreeFunctions import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkFiltersCore import vtkCellCenters
+from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-
-def to_vtk_id_list( data ) -> vtkIdList:
-    result = vtkIdList()
-    result.Allocate( len( data ) )
-    for d in data:
-        result.InsertNextId( d )
-    return result
-
-
-def vtk_iter( vtkContainer ) -> Iterator[ Any ]:
-    """
-    Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins
-    python containers.
-    :param vtkContainer: A vtk container.
-    :return: The iterator.
-    """
-    if hasattr( vtkContainer, "GetNumberOfIds" ):
-        for i in range( vtkContainer.GetNumberOfIds() ):
-            yield vtkContainer.GetId( i )
-    elif hasattr( vtkContainer, "GetNumberOfTypes" ):
-        for i in range( vtkContainer.GetNumberOfTypes() ):
-            yield vtkContainer.GetCellType( i )
+__doc__ = """ Utilities methods to get information on VTK Arrays. """
 
 
 def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) -> bool:
@@ -108,14 +92,6 @@ def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
 
 def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[ npt.NDArray[ np.int64 ] ]:
     return vtk_to_numpy( getGlobalIdsArray( data ) )
-
-
-def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.int64 ] ) -> None:
-    globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
-    if globalids is not None:
-        arr = arr[ np.argsort( globalids ) ]
-    else:
-        logging.warning( "No sorting was performed." )
 
 
 def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ Any ]:
@@ -609,3 +585,37 @@ def getMultiBlockBounds( input: vtkMultiBlockDataSet, ) -> tuple[ float, float, 
         zmin = bounds[ 4 ] if bounds[ 4 ] < zmin else zmin
         zmax = bounds[ 5 ] if bounds[ 5 ] > zmax else zmax
     return xmin, xmax, ymin, ymax, zmin, zmax
+
+
+def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
+    """Get the coordinates of Cell center.
+
+    Args:
+        mesh (vtkDataSet): input surface
+
+    Returns:
+        vtkPoints: cell center coordinates
+    """
+    assert mesh is not None, "Surface is undefined."
+    filter: vtkCellCenters = vtkCellCenters()
+    filter.SetInputDataObject( mesh )
+    filter.Update()
+    output: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
+    assert output is not None, "Cell center output is undefined."
+    pts: vtkPoints = output.GetPoints()
+    assert pts is not None, "Cell center points are undefined."
+    return pts.GetData()
+
+
+def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.int64 ] ) -> None:
+    """Sort an array following global Ids
+
+    Args:
+        data (vtkFieldData): Global Ids array
+        arr (npt.NDArray[ np.int64 ]): Array to sort
+    """
+    globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
+    if globalids is not None:
+        arr = arr[ np.argsort( globalids ) ]
+    else:
+        logging.warning( "No sorting was performed." )
