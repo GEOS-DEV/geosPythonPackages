@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Alexandre Benedicto
+
 import os.path
 import logging
 from dataclasses import dataclass
@@ -7,6 +11,8 @@ from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGri
 from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
                                   vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
                                   vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
+
+__doc__ = """Input and Ouput methods for VTK meshes."""
 
 
 @dataclass( frozen=True )

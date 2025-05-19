@@ -4,10 +4,10 @@
 from typing import Union, cast
 
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, vtkDataObjectTreeIterator,
-                                            vtkMultiBlockDataSet, vtkUnstructuredGrid )
+                                            vtkMultiBlockDataSet )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-__doc__ = """Functions to explore and process VTK multiblock datasets. """
+__doc__ = """Functions to explore VTK multiblock datasets."""
 
 
 def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> str:

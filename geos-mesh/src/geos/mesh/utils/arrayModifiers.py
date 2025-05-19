@@ -36,7 +36,7 @@ from geos.mesh.utils.arrayHelpers import (
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten, getBlockFromFlatIndex
 
-__doc__ = """ Generic utilities to process VTK Arrays objects. """
+__doc__ = """Utilities to process VTK Arrays objects."""
 
 
 def fillPartialAttributes(

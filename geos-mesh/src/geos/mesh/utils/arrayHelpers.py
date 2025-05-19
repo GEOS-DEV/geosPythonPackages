@@ -18,7 +18,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-__doc__ = """ Utilities methods to get information on VTK Arrays. """
+__doc__ = """Utilities methods to get information on VTK Arrays."""
 
 
 def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) -> bool:

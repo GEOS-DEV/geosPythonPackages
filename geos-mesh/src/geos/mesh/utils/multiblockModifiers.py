@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
-from typing import Union, cast
+from typing import Union
 
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
                                             vtkUnstructuredGrid )
 from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
 
-__doc__ = """Function to process VTK multiblock datasets. """
+__doc__ = """Function to merge VTK multiblock datasets. """
 
 
 # TODO : fix function for keepPartialAttributes = True
