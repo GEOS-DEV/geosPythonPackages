@@ -29,7 +29,7 @@ sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 update_paths()
 
-from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
@@ -37,20 +37,20 @@ Compute cell type counts. Counts are dumped in to Output message window and can 
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounter.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounterEnhanced.
 * Select the input mesh.
 * Apply the filter.
 
 """
 
-@smproxy.filter( name="PVCellTypeCounter", label="Cell Type Counter" )
+@smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid"],
     composite_data_supported=True,
 )
-class PVCellTypeCounter(VTKPythonAlgorithmBase):
+class PVCellTypeCounterEnhanced(VTKPythonAlgorithmBase):
     def __init__(self:Self) ->None:
         """Merge collocated points."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkTable")
@@ -138,7 +138,7 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        filter: CellTypeCounter = CellTypeCounter()
+        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
         filter.SetInputDataObject(inputMesh)
         filter.Update()
         outputTable.ShallowCopy(filter.GetOutputDataObject(0))

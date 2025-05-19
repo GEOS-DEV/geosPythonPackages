@@ -20,8 +20,8 @@ from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkIdList, vt
 from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkFieldData, vtkImageData, vtkPointData, vtkPointSet
 from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
-from geos.mesh.vtk.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
-from geos.mesh.vtk.io import VtkOutput, read_mesh, write_mesh
+from geos.mesh.utils.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
+from geos.mesh.utils.io import VtkOutput, read_mesh, write_mesh
 from geos.pygeos_tools.model.pyevtk_tools import cGlobalIds
 from geos.utils.errors_handling.classes import required_attributes
 

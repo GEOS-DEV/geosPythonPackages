@@ -34,33 +34,36 @@ from geos.mesh.processing.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
     getQualityMeasureIndexFromName,
     getQuadQualityMeasure,
-    getTriangleQualityMeasure,
-    getCommonPolygonQualityMeasure,
+    getTetQualityMeasure,
+    getPyramidQualityMeasure,
+    getWedgeQualityMeasure,
+    getHexQualityMeasure,
+    getCommonPolyhedraQualityMeasure,
 )
 from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 
 __doc__ = """
-Compute mesh quality metrics on surface meshes.
+Compute mesh quality metrics on volume meshes.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVSurfaceMeshQualityEnhanced.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVVolumeMeshQualityEnhanced.
 * Select the input mesh.
 * Select the metric to compute
 * Apply the filter.
 
 """
 
-@smproxy.filter( name="PVSurfaceMeshQualityEnhanced", label="Surface Mesh Quality Enhanced" )
+@smproxy.filter( name="PVVolumeMeshQualityEnhanced", label="Volume Mesh Quality Enhanced" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid"],
     composite_data_supported=True,
 )
-class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
+class PVVolumeMeshQualityEnhanced(VTKPythonAlgorithmBase):
     def __init__(self:Self) ->None:
         """Merge collocated points."""
         super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
@@ -72,26 +75,38 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         self._metricsAll: list[float] = []
         self._commonMeshQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._commonCellQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
-        self._triangleQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
-        self._quadsQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
+        self._tetQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
+        self._PyrQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
+        self._WedgeQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
+        self._HexQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._initQualityMetricSelection()
 
     def _initQualityMetricSelection(self: Self) ->None:
         self._commonCellQualityMetric.RemoveAllArrays()
         self._commonCellQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        commonCellMetrics: set[int] = getCommonPolygonQualityMeasure()
+        commonCellMetrics: set[int] = getCommonPolyhedraQualityMeasure()
         for measure in commonCellMetrics:
             self._commonCellQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
 
-        self._triangleQualityMetric.RemoveAllArrays()
-        self._triangleQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        for measure in getTriangleQualityMeasure().difference(commonCellMetrics):
-            self._triangleQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+        self._tetQualityMetric.RemoveAllArrays()
+        self._tetQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
+        for measure in getTetQualityMeasure().difference(commonCellMetrics):
+            self._tetQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
 
-        self._quadsQualityMetric.RemoveAllArrays()
-        self._quadsQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        for measure in getQuadQualityMeasure().difference(commonCellMetrics):
-            self._quadsQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+        self._PyrQualityMetric.RemoveAllArrays()
+        self._PyrQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
+        for measure in getPyramidQualityMeasure().difference(commonCellMetrics):
+            self._PyrQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+
+        self._WedgeQualityMetric.RemoveAllArrays()
+        self._WedgeQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
+        for measure in getWedgeQualityMeasure().difference(commonCellMetrics):
+            self._WedgeQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+
+        self._HexQualityMetric.RemoveAllArrays()
+        self._HexQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
+        for measure in getHexQualityMeasure().difference(commonCellMetrics):
+            self._HexQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
 
         otherMetrics: set[int] = getQualityMetricsOther()
         for measure in otherMetrics:
@@ -103,15 +118,25 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         """Set polygon quality metrics selection."""
         return self._commonCellQualityMetric
 
-    @smproperty.dataarrayselection( name="TriangleSpecificQualityMetric" )
-    def a02SetTriangleMetrics( self: Self ) -> vtkDataArraySelection:
-        """Set triangle quality metrics selection."""
-        return self._triangleQualityMetric
+    @smproperty.dataarrayselection( name="TetrahedronSpecificQualityMetric" )
+    def a02SetTetMetrics( self: Self ) -> vtkDataArraySelection:
+        """Set tetra quality metrics selection."""
+        return self._tetQualityMetric
 
-    @smproperty.dataarrayselection( name="QuadSpecificQualityMetric" )
-    def a03sSetQuadMetrics( self: Self ) -> vtkDataArraySelection:
-        """Set quad quality metrics selection."""
-        return self._quadsQualityMetric
+    @smproperty.dataarrayselection( name="PyramidSpecificQualityMetric" )
+    def a03sSetPyrMetrics( self: Self ) -> vtkDataArraySelection:
+        """Set Pyramid quality metrics selection."""
+        return self._PyrQualityMetric
+
+    @smproperty.dataarrayselection( name="WedgeSpecificQualityMetric" )
+    def a03sSetWedgeMetrics( self: Self ) -> vtkDataArraySelection:
+        """Set Wedge quality metrics selection."""
+        return self._WedgeQualityMetric
+
+    @smproperty.dataarrayselection( name="HexahedronSpecificQualityMetric" )
+    def a03sSetHexMetrics( self: Self ) -> vtkDataArraySelection:
+        """Set Hexahdron quality metrics selection."""
+        return self._HexQualityMetric
 
     @smproperty.dataarrayselection( name="OtherMeshQualityMetric" )
     def a04SetOtherMeshMetrics( self: Self ) -> vtkDataArraySelection:
@@ -204,15 +229,6 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
             outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
         return super().RequestDataObject(request, inInfoVec, outInfoVec)
 
-    def _getQualityMetricsToUse(self :Self, selection: vtkDataArraySelection) -> set[int]:
-        """Get mesh quality metric indexes from user selection.
-
-        Returns:
-            list[int]: list of quality metric indexes
-        """
-        metricsNames: set[str] = getArrayChoices(selection)
-        return {getQualityMeasureIndexFromName(name) for name in metricsNames}
-
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
@@ -234,12 +250,14 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        triangleMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._triangleQualityMetric))
-        quadMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._quadsQualityMetric))
+        tetraMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._tetQualityMetric))
+        pyrMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._PyrQualityMetric))
+        wedgeMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._PyrQualityMetric))
+        hexaMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._PyrQualityMetric))
         otherMetrics: set[int] = self._getQualityMetricsToUse(self._commonMeshQualityMetric)
         filter: MeshQualityEnhanced = MeshQualityEnhanced()
         filter.SetInputDataObject(inputMesh)
-        filter.SetCellQualityMetrics(triangleMetrics=triangleMetrics, quadMetrics=quadMetrics)
+        filter.SetCellQualityMetrics(tetraMetrics=tetraMetrics, pyramidMetrics=pyrMetrics, wedgeMetrics=wedgeMetrics, hexaMetrics=hexaMetrics)
         filter.SetOtherMeshQualityMetrics(otherMetrics)
         filter.Update()
 
@@ -248,11 +266,20 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         # save to file if asked
         if self._saveToFile:
             stats: QualityMetricSummary = filter.GetQualityMetricSummary()
-            self.saveFile(stats)
+            self._saveFile(stats)
         self._blockIndex += 1
         return 1
 
-    def saveFile(self: Self, stats: QualityMetricSummary) ->None:
+    def _getQualityMetricsToUse(self :Self, selection: vtkDataArraySelection) -> set[int]:
+        """Get mesh quality metric indexes from user selection.
+
+        Returns:
+            list[int]: list of quality metric indexes
+        """
+        metricsNames: set[str] = getArrayChoices(selection)
+        return {getQualityMeasureIndexFromName(name) for name in metricsNames}
+
+    def _saveFile(self: Self, stats: QualityMetricSummary) ->None:
         """Export mesh quality metric summary file."""
         try:
             # add index for multiblock meshes

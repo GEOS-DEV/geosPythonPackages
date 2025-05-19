@@ -9,8 +9,8 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.vtk.helpers import createSingleCellMesh, createMultiCellMesh
-from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.utils.helpers import createSingleCellMesh, createMultiCellMesh
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from vtkmodules.vtkCommonDataModel import (
@@ -67,13 +67,13 @@ ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellTyp
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data_single_cell(), ids=ids )
-def test_CellTypeCounter_single( test_case: TestCase ) -> None:
-    """Test of CellTypeCounter filter.
+def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
+    """Test of CellTypeCounterEnhanced filter.
 
     Args:
         test_case (TestCase): test case
     """
-    filter: CellTypeCounter = CellTypeCounter()
+    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
     countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
@@ -126,13 +126,13 @@ ids2: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in filename_all2 ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data_multi_cell(), ids=ids2 )
-def test_CellTypeCounter_multi( test_case: TestCase ) -> None:
-    """Test of CellTypeCounter filter.
+def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
+    """Test of CellTypeCounterEnhanced filter.
 
     Args:
         test_case (TestCase): test case
     """
-    filter: CellTypeCounter = CellTypeCounter()
+    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
     countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()

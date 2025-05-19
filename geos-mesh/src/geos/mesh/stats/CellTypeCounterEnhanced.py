@@ -15,7 +15,7 @@ from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.processing.meshQualityMetricHelpers import getAllCellTypes
 
 __doc__ = """
-CellTypeCounter module is a vtk filter that computes cell type counts.
+CellTypeCounterEnhanced module is a vtk filter that computes cell type counts.
 
 Filter input is a vtkUnstructuredGrid, output is a vtkTable
 
@@ -23,13 +23,13 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+    from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 
     # filter inputs
     input :vtkUnstructuredGrid
 
     # instanciate the filter
-    filter :CellTypeCounter = CellTypeCounter()
+    filter :CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     # set input data object
     filter.SetInputDataObject(input)
     # do calculations
@@ -39,10 +39,10 @@ To use the filter:
 """
 
 
-class CellTypeCounter( VTKPythonAlgorithmBase ):
+class CellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:
-        """CellTypeCounter filter computes mesh stats."""
+        """CellTypeCounterEnhanced filter computes mesh stats."""
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkUnstructuredGrid", outputType="vtkTable" )
         self._counts: CellTypeCounts = CellTypeCounts()
 

@@ -5,7 +5,7 @@ import uuid
 from vtkmodules.vtkCommonDataModel import VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from geos.mesh.vtk.io import read_mesh
+from geos.mesh.utils.io import read_mesh
 
 
 @dataclass( frozen=True )

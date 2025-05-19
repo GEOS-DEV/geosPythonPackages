@@ -175,8 +175,8 @@ def computeAngleFromVectors(vec1: npt.NDArray[np.float64],
     Returns:
         float: angle
     """
-    assert abs(np.linalg.norm(vec1)) > 0., "First vector connot be null"
-    assert abs(np.linalg.norm(vec2)) > 0., "Second vector connot be null"
+    assert abs(np.linalg.norm(vec1)) > 0., "First vector cannot be null"
+    assert abs(np.linalg.norm(vec2)) > 0., "Second vector cannot be null"
     # normalization
     vec1_norm: npt.NDArray[np.float64] = vec1 / np.linalg.norm(vec1)
     vec2_norm: npt.NDArray[np.float64] = vec2 / np.linalg.norm(vec2)
@@ -191,6 +191,25 @@ def computeAngleFromVectors(vec1: npt.NDArray[np.float64],
     if det < 0:
         teta = 2.0 * np.pi - teta
     return teta
+
+def computeCosineFromVectors(vec1: npt.NDArray[np.float64],
+                             vec2: npt.NDArray[np.float64],
+                            ) -> float:
+    """Compute cosine from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): first vector
+        vec2 (npt.NDArray[np.float64]): second vector
+
+    Returns:
+        float: cosine
+    """
+    assert abs(np.linalg.norm(vec1)) > 0., "First vector cannot be null"
+    assert abs(np.linalg.norm(vec2)) > 0., "Second vector cannot be null"
+    # normalization
+    vec1_norm: npt.NDArray[np.float64] = vec1 / np.linalg.norm(vec1)
+    vec2_norm: npt.NDArray[np.float64] = vec2 / np.linalg.norm(vec2)
+    return np.dot(vec1_norm, vec2_norm)
 
 def computeNormalFromPoints(pt1: npt.NDArray[np.float64],
                             pt2: npt.NDArray[np.float64],

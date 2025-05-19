@@ -10,8 +10,7 @@ from typing import (
     Iterator,
 )
 
-from geos.mesh.vtk.helpers import createMultiCellMesh
-from geos.mesh.processing.MergeColocatedPoints import MergeColocatedPoints
+from geos.mesh.utils.helpers import createMultiCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
@@ -28,9 +27,9 @@ from vtkmodules.vtkCommonCore import (
 )
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
-    QualityMetricEnum,
+    VtkCellQualityMetricEnum,
     QualityRange,
-    getQualityMeasureFromCellType,
+    getCellQualityMeasureFromCellType,
     getTriangleQualityMeasure,
     getQuadQualityMeasure,
     getTetQualityMeasure,
@@ -175,17 +174,17 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    for metric in list(QualityMetricEnum):
+    for metric in list(VtkCellQualityMetricEnum):
         yield TestCase( metric.metricIndex, metric.metricName )
 
-def test_QualityMetricEnum_Order() ->None:
-    """Test QualityMetricEnum ordering is correct."""
-    for i, metric in enumerate(list(QualityMetricEnum)):
+def test_CellQualityMetricEnum_Order() ->None:
+    """Test VtkCellQualityMetricEnum ordering is correct."""
+    for i, metric in enumerate(list(VtkCellQualityMetricEnum)):
         assert metric.metricIndex == i
 
-def test_QualityMetricEnum_QualityRange() ->None:
-    """Test QualityMetricEnum.getQualityRange returns the right number of values."""
-    for metric in list(QualityMetricEnum):
+def test_CellQualityMetricEnum_QualityRange() ->None:
+    """Test VtkCellQualityMetricEnum.getQualityRange returns the right number of values."""
+    for metric in list(VtkCellQualityMetricEnum):
         for cellType in getAllCellTypes():
             qualityRange: QualityRange = metric.getQualityRange(cellType)
             if qualityRange is not None:
@@ -196,7 +195,7 @@ def test_QualityMetricEnum_QualityRange() ->None:
         for cellType in (VTK_POLYGON, VTK_POLYHEDRON):
             assert metric.getQualityRange(cellType) is None, "QualityRange should be undefined."
 
-ids: list[str] = [metric.metricName for metric in list(QualityMetricEnum)]
+ids: list[str] = [metric.metricName for metric in list(VtkCellQualityMetricEnum)]
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
 def test_getQualityMeasureNameFromIndex( test_case: TestCase ) ->None:
     """Test of getQualityMeasureNameFromIndex method."""
@@ -210,13 +209,13 @@ def test_getQualityMeasureIndexFromName( test_case: TestCase ) ->None:
     assert index == test_case.qualityMetricIndex
 
 def test_getQualityMeasureFromCellType_exception() ->None:
-    """Test of supported cell type from getQualityMeasureFromCellType method."""
+    """Test of supported cell type from getCellQualityMeasureFromCellType method."""
     for i in range(20):
         if i in (VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON, VTK_POLYGON, VTK_POLYHEDRON):
-            assert len(getQualityMeasureFromCellType(i)) > 0
+            assert len(getCellQualityMeasureFromCellType(i)) > 0
         else:
             with pytest.raises(ValueError) as pytest_wrapped_e:
-                getQualityMeasureFromCellType(i)
+                getCellQualityMeasureFromCellType(i)
             assert pytest_wrapped_e.type is ValueError
 
 def test_getTriangleQualityMeasure() -> None:
