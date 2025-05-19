@@ -31,7 +31,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.genericHelpers import (
+from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
     getComponentNames,
     isAttributeInObject,

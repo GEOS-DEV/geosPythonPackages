@@ -13,11 +13,8 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 from geos.mesh.utils.genericHelpers import extractSurfaceFromElevation
-from geos.mesh.utils.arrayHelpers import getAttributeValuesAsDF
-from geos.mesh.utils.arrayModifiers import (
-    transferPointDataToCellData,
-    computeCellCenterCoordinates,
-)
+from geos.mesh.utils.arrayHelpers import ( getAttributeValuesAsDF, computeCellCenterCoordinates )
+from geos.mesh.utils.arrayModifiers import transferPointDataToCellData
 
 __doc__ = r"""
 This module contains utilities to process meshes using pyvista.
