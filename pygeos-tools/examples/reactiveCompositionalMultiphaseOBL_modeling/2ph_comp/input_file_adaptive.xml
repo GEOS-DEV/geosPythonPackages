@@ -16,7 +16,9 @@
 			newtonTol="0.0001"
 			newtonMaxIter="25"/>
 		<LinearSolverParameters
-			directParallel="0"/>
+            solverType="fgmres"
+            preconditionerType="mgr"
+            krylovTol="1.0e-5"/>
 		</ReactiveCompositionalMultiphaseOBL>
 	</Solvers>
 
