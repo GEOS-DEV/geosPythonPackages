@@ -1,12 +1,12 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Any, Iterator, List
 from vtkmodules.vtkCommonCore import vtkIdList
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkPolyData,
-    vtkPlane,
-)
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkPolyData, vtkPlane
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
-""" Generic VTK utilities."""
+
+__doc__ = """ Generic VTK utilities."""
 
 
 def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
@@ -29,10 +29,10 @@ def vtk_iter( vtkContainer ) -> Iterator[ Any ]:
     """
     Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins
     python containers.
-    
+
     Args:
         vtkContainer: A vtk container
-    
+
     Returns:
         The iterator
     """

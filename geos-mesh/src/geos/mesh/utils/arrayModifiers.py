@@ -1,20 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Alexandre Benedicto, Paloma Martinez
-
 import numpy as np
 import numpy.typing as npt
-import logging
 import vtkmodules.util.numpy_support as vnp
-from typing import Optional, Union
-from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
+from typing import Union
 from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkDataSet, vtkPointSet, vtkCompositeDataSet,
-                                            vtkDataObject, vtkDataObjectTreeIterator, vtkFieldData )
-from vtkmodules.vtkFiltersCore import (
-    vtkArrayRename,
-    vtkCellCenters,
-    vtkPointDataToCellData,
-)
+                                            vtkDataObject, vtkDataObjectTreeIterator )
+from vtkmodules.vtkFiltersCore import vtkArrayRename, vtkCellCenters, vtkPointDataToCellData
 from vtk import (  # type: ignore[import-untyped]
     VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT,
 )
@@ -354,7 +347,7 @@ def renameAttribute(
         bool: True if renaming operation successfully ended.
     """
     if isAttributeInObject( object, attributeName, onPoints ):
-        dim: int = 0 if onPoints == True else 1
+        dim: int = 0 if onPoints else 1
         filter = vtkArrayRename()
         filter.SetInputData( object )
         filter.SetArrayName( dim, attributeName, newAttributeName )

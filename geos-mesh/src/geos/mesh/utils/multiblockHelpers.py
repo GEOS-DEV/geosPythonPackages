@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 from typing import Union, cast
-
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, vtkDataObjectTreeIterator,
                                             vtkMultiBlockDataSet )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock

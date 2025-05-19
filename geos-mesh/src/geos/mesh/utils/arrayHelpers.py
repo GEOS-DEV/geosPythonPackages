@@ -1,27 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
-from typing import Any
-import logging
 from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 import vtkmodules.util.numpy_support as vnp
-from typing import Iterator, Optional, List, Union, cast
+from typing import Optional, Union, cast
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
                                             vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData,
                                             vtkDataObjectTreeIterator, vtkPolyData )
-from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
+from geos.utils.Logger import getLogger
 
 __doc__ = """Utilities methods to get information on VTK Arrays."""
+logger = getLogger( "arrayHelpers" )
 
 
-def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) -> bool:
+def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
     """Checks if a mesh contains at least a data arrays within its cell, field or point data
     having a certain name. If so, returns True, else False.
 
@@ -36,24 +35,37 @@ def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: List[ str ] ) 
     cell_data = mesh.GetCellData()
     for i in range( cell_data.GetNumberOfArrays() ):
         if cell_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
+            logger.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
             return True
     # Check the field data fields
     field_data = mesh.GetFieldData()
     for i in range( field_data.GetNumberOfArrays() ):
         if field_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
+            logger.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
             return True
     # Check the point data fields
     point_data = mesh.GetPointData()
     for i in range( point_data.GetNumberOfArrays() ):
         if point_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
+            logger.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
             return True
     return False
 
 
 def getFieldType( data: vtkFieldData ) -> str:
+    """A vtk grid can contain 3 types of field data:
+    - vtkFieldData (parent class)
+    - vtkCellData  (inheritance of vtkFieldData)
+    - vtkPointData (inheritance of vtkFieldData)
+
+    The goal is to return whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
+
+    Args:
+        data (vtkFieldData)
+
+    Returns:
+        str: "vtkFieldData", "vtkCellData" or "vtkPointData"
+    """
     if not data.IsA( "vtkFieldData" ):
         raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
     if data.IsA( "vtkCellData" ):
@@ -64,47 +76,90 @@ def getFieldType( data: vtkFieldData ) -> str:
         return "vtkFieldData"
 
 
-def getArrayNames( data: vtkFieldData ) -> List[ str ]:
+def getArrayNames( data: vtkFieldData ) -> list[ str ]:
+    """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
+
+    Args:
+        data (vtkFieldData)
+
+    Returns:
+        list[ str ]: The array names in the order that they are stored in the field data.
+    """
     if not data.IsA( "vtkFieldData" ):
         raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 
 def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
+    """Get the vtkDataArray corresponding to the given name.
+
+    Args:
+        data (vtkFieldData)
+        name (str)
+
+    Returns:
+        Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
+    """
     if data.HasArray( name ):
         return data.GetArray( name )
-    logging.warning( f"No array named '{name}' was found in '{data}'." )
+    logger.warning( f"No array named '{name}' was found in '{data}'." )
     return None
 
 
 def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
-    return deepcopy( getArrayByName( data, name ) )
+    """Get the copy of a vtkDataArray corresponding to the given name.
 
+    Args:
+        data (vtkFieldData)
+        name (str)
 
-def getGlobalIdsArray( data: vtkFieldData ) -> Optional[ vtkDataArray ]:
-    array_names: List[ str ] = getArrayNames( data )
-    for name in array_names:
-        if name.startswith( "Global" ) and name.endswith( "Ids" ):
-            return getCopyArrayByName( data, name )
-    logging.warning( "No GlobalIds array was found." )
+    Returns:
+        Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
+    """
+    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
+    if dataArray is not None:
+        return deepcopy( dataArray )
     return None
 
 
-def getNumpyGlobalIdsArray( data: vtkFieldData ) -> Optional[ npt.NDArray[ np.int64 ] ]:
-    return vtk_to_numpy( getGlobalIdsArray( data ) )
+def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Optional[ npt.NDArray[ np.int64 ] ]:
+    """Get a numpy array of the GlobalIds.
+
+    Args:
+        data (Union[ vtkCellData, vtkPointData ])
+
+    Returns:
+        Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
+    """
+    global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
+    if global_ids is None:
+        logger.warning( "No GlobalIds array was found." )
+        return None
+    return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ Any ]:
-    arr: Optional[ npt.NDArray[ Any ] ] = vtk_to_numpy( getArrayByName( data, name ) )
-    if arr is not None:
+def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
+    """Get the numpy array of a given vtkDataArray found by its name.
+    If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
+    no reordering will be perform.
+
+    Args:
+        data (vtkFieldData)
+        name (str)
+        sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
+
+    Returns:
+        Optional[ npt.NDArray ]
+    """
+    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
+    if dataArray is not None:
+        arr: Optional[ npt.NDArray ] = vtk_to_numpy( dataArray )
         if sorted:
-            sortArrayByGlobalIds( data, arr )
+            fieldType: str = getFieldType( data )
+            if fieldType in [ "vtkCellData", "vtkPointData" ]:
+                sortArrayByGlobalIds( data, arr )
         return arr
     return None
-
-
-def getCopyNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray[ Any ] ]:
-    return deepcopy( getNumpyArrayByName( data, name, sorted=sorted ) )
 
 
 def getAttributeSet( object: Union[ vtkMultiBlockDataSet, vtkDataSet ], onPoints: bool ) -> set[ str ]:
@@ -198,7 +253,7 @@ def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str,
             on cells.
 
     Returns:
-        dict[str, int]: List of the names of the attributes.
+        dict[str, int]: list of the names of the attributes.
     """
     attributes: dict[ str, int ] = {}
     data: Union[ vtkPointData, vtkCellData ]
@@ -211,12 +266,12 @@ def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str,
         sup = "Cell"
     assert data is not None, f"{sup} data was not recovered."
 
-    nbAttributes = data.GetNumberOfArrays()
+    nbAttributes: int = data.GetNumberOfArrays()
     for i in range( nbAttributes ):
-        attributeName = data.GetArrayName( i )
-        attribute = data.GetArray( attributeName )
+        attributeName: str = data.GetArrayName( i )
+        attribute: vtkDataArray = data.GetArray( attributeName )
         assert attribute is not None, f"Attribut {attributeName} is null"
-        nbComponents = attribute.GetNumberOfComponents()
+        nbComponents: int = attribute.GetNumberOfComponents()
         attributes[ attributeName ] = nbComponents
     return attributes
 
@@ -430,7 +485,7 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
 
     """
     array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
-    componentNames: list[ str ] = []
+    componentNames: list[ str ] = list()
     if array.GetNumberOfComponents() > 1:
         componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     return tuple( componentNames )
@@ -476,19 +531,14 @@ def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ..
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
         if not isAttributeInObject( surface, attributeName, False ):
-            print( f"WARNING: Attribute {attributeName} is not in the mesh." )
+            logger.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
         array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
 
         if len( array.shape ) > 1:
             for i in range( array.shape[ 1 ] ):
                 data[ attributeName + f"_{i}" ] = array[ :, i ]
-            data.drop(
-                columns=[
-                    attributeName,
-                ],
-                inplace=True,
-            )
+            data.drop( columns=[ attributeName ], inplace=True )
         else:
             data[ attributeName ] = array
     return data
@@ -509,19 +559,14 @@ def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFra
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
         if not isAttributeInObject( surface, attributeName, False ):
-            print( f"WARNING: Attribute {attributeName} is not in the mesh." )
+            logger.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
         array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
 
         if len( array.shape ) > 1:
             for i in range( array.shape[ 1 ] ):
                 data[ attributeName + f"_{i}" ] = array[ :, i ]
-            data.drop(
-                columns=[
-                    attributeName,
-                ],
-                inplace=True,
-            )
+            data.drop( columns=[ attributeName ], inplace=True )
         else:
             data[ attributeName ] = array
     return data
@@ -607,7 +652,7 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     return pts.GetData()
 
 
-def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.int64 ] ) -> None:
+def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkFieldData ], arr: npt.NDArray[ np.int64 ] ) -> None:
     """Sort an array following global Ids
 
     Args:
@@ -618,4 +663,4 @@ def sortArrayByGlobalIds( data: vtkFieldData, arr: npt.NDArray[ np.int64 ] ) -> 
     if globalids is not None:
         arr = arr[ np.argsort( globalids ) ]
     else:
-        logging.warning( "No sorting was performed." )
+        logger.warning( "No sorting was performed." )
