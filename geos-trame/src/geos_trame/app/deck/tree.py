@@ -160,10 +160,12 @@ class DeckTree( object ):
         files = self._split( pb )
 
         for filepath, content in files.items():
-            includeName: str = self.input_file.xml_parser.file_to_relative_path[ filepath ]
             model_loaded: BaseModel = self.decode_data( content )
             model_with_changes: BaseModel = self._apply_changed_properties( model_loaded )
-            self._append_include_file( model_with_changes, includeName )
+
+            if self.input_file.xml_parser.contains_include_files():
+                includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
+                self._append_include_file( model_with_changes, includeName )
 
             model_as_xml: str = self.to_xml( model_with_changes )
 
