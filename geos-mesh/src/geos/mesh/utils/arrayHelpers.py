@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from copy import deepcopy
+import logging
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
@@ -14,10 +15,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, v
                                             vtkDataObjectTreeIterator, vtkPolyData )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
-from geos.utils.Logger import getLogger
 
 __doc__ = """Utilities methods to get information on VTK Arrays."""
-logger = getLogger( "arrayHelpers" )
 
 
 def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
@@ -35,19 +34,19 @@ def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) 
     cell_data = mesh.GetCellData()
     for i in range( cell_data.GetNumberOfArrays() ):
         if cell_data.GetArrayName( i ) in invalid_fields:
-            logger.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
+            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
             return True
     # Check the field data fields
     field_data = mesh.GetFieldData()
     for i in range( field_data.GetNumberOfArrays() ):
         if field_data.GetArrayName( i ) in invalid_fields:
-            logger.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
+            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
             return True
     # Check the point data fields
     point_data = mesh.GetPointData()
     for i in range( point_data.GetNumberOfArrays() ):
         if point_data.GetArrayName( i ) in invalid_fields:
-            logger.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
+            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
             return True
     return False
 
@@ -102,7 +101,7 @@ def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
     """
     if data.HasArray( name ):
         return data.GetArray( name )
-    logger.warning( f"No array named '{name}' was found in '{data}'." )
+    logging.warning( f"No array named '{name}' was found in '{data}'." )
     return None
 
 
@@ -133,7 +132,7 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     """
     global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
     if global_ids is None:
-        logger.warning( "No GlobalIds array was found." )
+        logging.warning( "No GlobalIds array was found." )
         return None
     return vtk_to_numpy( global_ids )
 
@@ -531,7 +530,7 @@ def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ..
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
         if not isAttributeInObject( surface, attributeName, False ):
-            logger.warning( f"Attribute {attributeName} is not in the mesh." )
+            logging.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
         array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
 
@@ -559,7 +558,7 @@ def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFra
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
         if not isAttributeInObject( surface, attributeName, False ):
-            logger.warning( f"Attribute {attributeName} is not in the mesh." )
+            logging.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
         array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
 
@@ -663,4 +662,4 @@ def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkFieldData ], arr: npt.NDA
     if globalids is not None:
         arr = arr[ np.argsort( globalids ) ]
     else:
-        logger.warning( "No sorting was performed." )
+        logging.warning( "No sorting was performed." )
