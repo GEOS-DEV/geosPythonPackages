@@ -30,9 +30,8 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
-
-from geos_posp.processing.vtkUtils import (
-    createAttribute,
+from geos.mesh.utils.arrayModifiers import createAttribute
+from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
     getComponentNames,
     isAttributeInObject,

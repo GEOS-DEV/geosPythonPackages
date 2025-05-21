@@ -2,15 +2,17 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 from typing import Union, cast
+from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, vtkDataObjectTreeIterator,
+                                            vtkMultiBlockDataSet )
+from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkDataObject,
-    vtkDataObjectTreeIterator,
-    vtkMultiBlockDataSet,
-)
+__doc__ = """
+Functions to explore VTK multiblock datasets.
 
-__doc__ = """Functions to explore and process multiblock inspector tree."""
+Methods include:
+    - getters for blocks names and indexes
+    - block extractor
+"""
 
 
 def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> str:
@@ -24,7 +26,6 @@ def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) ->
 
     Returns:
         str: name of the block in the tree.
-
     """
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( input )
@@ -56,7 +57,6 @@ def getBlockNameFromIndex( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataS
 
     Returns:
         str: name of the block in the tree.
-
     """
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( input )
@@ -225,3 +225,22 @@ def getBlockFromName( multiBlock: Union[ vtkMultiBlockDataSet, vtkCompositeDataS
             break
         iter.GoToNextItem()
     return block
+
+
+def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> vtkMultiBlockDataSet:
+    """Extract the block with index blockIndex from multiBlockDataSet.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet): multiblock dataset from which
+            to extract the block
+        blockIndex (int): block index to extract
+
+    Returns:
+        vtkMultiBlockDataSet: extracted block
+    """
+    extractBlockfilter: vtkExtractBlock = vtkExtractBlock()
+    extractBlockfilter.SetInputData( multiBlockDataSet )
+    extractBlockfilter.AddIndex( blockIndex )
+    extractBlockfilter.Update()
+    extractedBlock: vtkMultiBlockDataSet = extractBlockfilter.GetOutput()
+    return extractedBlock

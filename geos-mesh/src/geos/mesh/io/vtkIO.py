@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Alexandre Benedicto
+
 import os.path
 import logging
 from dataclasses import dataclass
@@ -7,6 +11,12 @@ from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGri
 from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
                                   vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
                                   vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
+
+__doc__ = """
+Input and Ouput methods for VTK meshes:
+    - VTK, VTU, VTS, PVTU, PVTS readers
+    - VTK, VTS, VTU writers
+"""
 
 
 @dataclass( frozen=True )
@@ -81,11 +91,18 @@ def __read_pvtu( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
 
 
 def read_mesh( vtk_input_file: str ) -> vtkPointSet:
-    """
-    Read the vtk file and builds either an unstructured grid or a structured grid from it.
-    :param vtk_input_file: The file name. The extension will be used to guess the file format.
-        If the first guess fails, the other available readers will be tried.
-    :return: A vtkPointSet.
+    """Read vtk file and build either an unstructured grid or a structured grid from it.
+
+    Args:
+        vtk_input_file (str): The file name. Extension will be used to guess file format\
+                            If first guess fails, other available readers will be tried.
+
+    Raises:
+        ValueError: Invalid file path error
+        ValueError: No appropriate reader available for the file format
+
+    Returns:
+        vtkPointSet: Mesh read
     """
     if not os.path.exists( vtk_input_file ):
         err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."
@@ -142,14 +159,20 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False 
 
 
 def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
-    """
-    Writes the mesh to disk.
-    Nothing will be done if the file already exists.
-    :param mesh: The grid to write.
-    :param vtk_output: Where to write. The file extension will be used to select the VTK file format.
-    :return: 0 in case of success.
-    """
+    """Write mesh to disk.
+    Nothing is done if file already exists.
 
+    Args:
+        mesh (vtkPointSet): Grid to write
+        vtk_output (VtkOutput): File path. File extension will be used to select VTK file format
+        canOverwrite (bool, optional): Authorize overwriting the file. Defaults to False.
+
+    Raises:
+        ValueError: Invalid VTK format.
+
+    Returns:
+        int: 0 if success
+    """
     if os.path.exists( vtk_output.output ) and canOverwrite:
         logging.error( f"File \"{vtk_output.output}\" already exists, nothing done." )
         return 1

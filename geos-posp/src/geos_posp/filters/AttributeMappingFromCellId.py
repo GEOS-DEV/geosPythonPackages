@@ -10,7 +10,8 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
-from geos_posp.processing.vtkUtils import createAttribute, getArrayInObject
+from geos.mesh.utils.arrayModifiers import createAttribute
+from geos.mesh.utils.arrayHelpers import getArrayInObject
 
 __doc__ = """
 AttributeMappingFromCellId module is a vtk filter that transfer a attribute from a

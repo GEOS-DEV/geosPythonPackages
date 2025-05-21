@@ -18,11 +18,11 @@ import PVplugins  # noqa: F401
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.AttributeMappingFromCellCoords import (
     AttributeMappingFromCellCoords, )
-from geos_posp.processing.vtkUtils import (
-    fillPartialAttributes,
+from geos.mesh.utils.arrayModifiers import fillPartialAttributes
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
+from geos.mesh.utils.arrayHelpers import (
     getAttributeSet,
     getNumberOfComponents,
-    mergeBlocks,
 )
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )

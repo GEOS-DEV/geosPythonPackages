@@ -33,8 +33,8 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
 
-from geos_posp.processing.vtkUtils import (
-    createAttribute,
+from geos.mesh.utils.arrayModifiers import createAttribute
+from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
     getAttributeSet,
     isAttributeInObject,

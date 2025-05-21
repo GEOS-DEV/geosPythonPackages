@@ -12,8 +12,9 @@ from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import (
     vtkPolyData, )
-
-import geos_posp.processing.vtkUtils as vtkUtils
+from geos.mesh.utils.genericHelpers import extractSurfaceFromElevation
+from geos.mesh.utils.arrayHelpers import ( getAttributeValuesAsDF, computeCellCenterCoordinates )
+from geos.mesh.utils.arrayModifiers import transferPointDataToCellData
 
 __doc__ = r"""
 This module contains utilities to process meshes using pyvista.
@@ -61,14 +62,14 @@ def loadDataSet(
         assert mergedMesh is not None, "Merged mesh is undefined."
 
         # extract data
-        surface = vtkUtils.extractSurfaceFromElevation( mergedMesh, elevation )
+        surface = extractSurfaceFromElevation( mergedMesh, elevation )
         # transfer point data to cell center
-        surface = cast( vtkPolyData, vtkUtils.transferPointDataToCellData( surface ) )
-        timeToPropertyMap[ str( time ) ] = vtkUtils.getAttributeValuesAsDF( surface, properties )
+        surface = cast( vtkPolyData, transferPointDataToCellData( surface ) )
+        timeToPropertyMap[ str( time ) ] = getAttributeValuesAsDF( surface, properties )
 
     # get cell center coordinates
     assert surface is not None, "Surface are undefined."
-    pointsCoords: vtkDataArray = vtkUtils.computeCellCenterCoordinates( surface )
+    pointsCoords: vtkDataArray = computeCellCenterCoordinates( surface )
     assert pointsCoords is not None, "Cell center are undefined."
     pointsCoordsNp: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( pointsCoords )
     return ( timeToPropertyMap, pointsCoordsNp )
