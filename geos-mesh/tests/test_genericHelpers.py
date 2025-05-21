@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.utils.helpers import getBounds, createVertices, createMultiCellMesh
+from geos.mesh.utils.genericHelpers import getBoundsFromPointCoords, createVertices, createMultiCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
@@ -173,8 +173,8 @@ def test_createMultiCellMesh( test_case: TestCase ) -> None:
         assert cellsOutObs == test_case.cellPtsIdsExp[ cellId ], "Cell point ids are wrong."
 
 
-def test_getBounds() -> None:
-    """Test of getBounds method."""
+def test_getBoundsFromPointCoords() -> None:
+    """Test of getBoundsFromPointCoords method."""
     # input
     cellPtsCoord: list[ npt.NDArray[ np.float64 ] ] = [
         np.array( [ [ 5, 4, 3 ], [ 1, 8, 4 ], [ 2, 5, 7 ] ], dtype=float ),
@@ -184,5 +184,5 @@ def test_getBounds() -> None:
     ]
     # expected output
     boundsExp: list[ float ] = [ 0., 5., 1., 8., 2., 9. ]
-    boundsObs: list[ float ] = getBounds( cellPtsCoord )
+    boundsObs: list[ float ] = getBoundsFromPointCoords( cellPtsCoord )
     assert boundsExp == boundsObs, f"Expected bounds are {boundsExp}."

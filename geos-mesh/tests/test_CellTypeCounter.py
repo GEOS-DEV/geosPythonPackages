@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.utils.helpers import createSingleCellMesh, createMultiCellMesh
+from geos.mesh.utils.genericHelpers import createSingleCellMesh, createMultiCellMesh
 from geos.mesh.stats.CellTypeCounter import CellTypeCounter
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 

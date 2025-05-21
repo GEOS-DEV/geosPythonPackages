@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.utils.helpers import createSingleCellMesh
+from geos.mesh.utils.genericHelpers import createSingleCellMesh
 from geos.mesh.processing.SplitMesh import SplitMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
