@@ -27,7 +27,7 @@ class CellTypeCounts():
         """
         return self.print()
 
-    def __add__( self: Self, other: Self ) -> Self:
+    def __add__( self: Self, other: Self ) -> 'CellTypeCounts':
         """Addition operator.
 
         CellTypeCounts addition consists in suming counts.

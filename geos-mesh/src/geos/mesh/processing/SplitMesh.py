@@ -82,6 +82,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         """
         if port == 0:
             info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
+        return 1
 
     def RequestDataObject(
         self: Self,

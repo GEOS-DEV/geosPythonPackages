@@ -11,13 +11,13 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 )
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet,
-)
+    vtkPointSet, )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+
 update_paths()
 
 from geos.mesh.processing.SplitMesh import SplitMesh
@@ -36,6 +36,7 @@ To use it:
 
 """
 
+
 @smproxy.filter( name="PVSplitMesh", label="Split Mesh" )
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0 )
@@ -43,8 +44,9 @@ To use it:
     dataTypes=[ "vtkPointSet" ],
     composite_data_supported=True,
 )
-class PVSplitMesh(AbstractPVPluginVtkWrapper):
-    def __init__(self:Self) ->None:
+class PVSplitMesh( AbstractPVPluginVtkWrapper ):
+
+    def __init__( self: Self ) -> None:
         """Split mesh cells."""
         super().__init__()
 
@@ -60,7 +62,7 @@ class PVSplitMesh(AbstractPVPluginVtkWrapper):
         Returns:
             vtkPointSet: output mesh
         """
-        filter :SplitMesh = SplitMesh()
-        filter.SetInputDataObject(input)
+        filter: SplitMesh = SplitMesh()
+        filter.SetInputDataObject( input )
         filter.Update()
         return filter.GetOutputDataObject( 0 )

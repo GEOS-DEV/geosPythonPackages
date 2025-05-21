@@ -5,28 +5,25 @@
 import sys
 from pathlib import Path
 from typing_extensions import Self
+from typing import Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy
-)
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
-    vtkDoubleArray,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkPointSet,
     vtkTable,
-    vtkCellTypes,
-    vtkUnstructuredGrid,
-    vtkMultiBlockDataSet,
 )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+
 update_paths()
 
 from geos.mesh.stats.CellTypeCounter import CellTypeCounter
@@ -43,20 +40,22 @@ To use it:
 
 """
 
+
 @smproxy.filter( name="PVCellTypeCounter", label="Cell Type Counter" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid"],
+    dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-class PVCellTypeCounter(VTKPythonAlgorithmBase):
-    def __init__(self:Self) ->None:
-        """Merge collocated points."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkTable")
+class PVCellTypeCounter( VTKPythonAlgorithmBase ):
 
-        self._filename = None
-        self._saveToFile = True
+    def __init__( self: Self ) -> None:
+        """Merge collocated points."""
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkTable" )
+
+        self._filename: Optional[ str ] = None
+        self._saveToFile: bool = True
         # used to concatenate results if vtkMultiBlockDataSet
         self._countsAll: CellTypeCounts = CellTypeCounts()
 
@@ -72,7 +71,7 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
                         Specify if mesh statistics are dumped into a file.
                     </Documentation>
                   """ )
-    def SetSaveToFile( self: Self, saveToFile: bool) -> None:
+    def SetSaveToFile( self: Self, saveToFile: bool ) -> None:
         """Setter to save the stats into a file.
 
         Args:
@@ -82,7 +81,7 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
             self._saveToFile = saveToFile
             self.Modified()
 
-    @smproperty.stringvector(name="FilePath", label="File Path")
+    @smproperty.stringvector( name="FilePath", label="File Path" )
     @smdomain.xml( """
                     <FileListDomain name="files" />
                     <Documentation>Output file path.</Documentation>
@@ -90,8 +89,8 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
                         <FileChooser extensions="txt" file_description="Output text file." />
                         <AcceptAnyFile/>
                     </Hints>
-                  """)
-    def SetFileName(self: Self, fname :str) -> None:
+                  """ )
+    def SetFileName( self: Self, fname: str ) -> None:
         """Specify filename for the filter to write.
 
         Args:
@@ -134,27 +133,27 @@ class PVCellTypeCounter(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         inputMesh: vtkPointSet = self.GetInputData( inInfoVec, 0, 0 )
-        outputTable: vtkTable = vtkTable.GetData(outInfoVec, 0)
+        outputTable: vtkTable = vtkTable.GetData( outInfoVec, 0 )
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
         filter: CellTypeCounter = CellTypeCounter()
-        filter.SetInputDataObject(inputMesh)
+        filter.SetInputDataObject( inputMesh )
         filter.Update()
-        outputTable.ShallowCopy(filter.GetOutputDataObject(0))
+        outputTable.ShallowCopy( filter.GetOutputDataObject( 0 ) )
 
         # print counts in Output Messages view
         counts: CellTypeCounts = filter.GetCellTypeCounts()
-        print(counts.print())
+        print( counts.print() )
 
         self._countsAll += counts
         # save to file if asked
-        if self._saveToFile:
+        if self._saveToFile and self._filename is not None:
             try:
-                with open(self._filename, 'w') as fout:
-                    fout.write(self._countsAll.print())
-                    print(f"File {self._filename} was successfully written.")
+                with open( self._filename, 'w' ) as fout:
+                    fout.write( self._countsAll.print() )
+                    print( f"File {self._filename} was successfully written." )
             except Exception as e:
-                print("Error while exporting the file due to:")
-                print(str(e))
+                print( "Error while exporting the file due to:" )
+                print( str( e ) )
         return 1

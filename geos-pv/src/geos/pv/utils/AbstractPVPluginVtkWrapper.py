@@ -6,14 +6,12 @@ from typing import Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase,
-)
+    VTKPythonAlgorithmBase, )
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
 )
-
 
 __doc__ = """
 AbstractPVPluginVtkWrapper module defines the parent Paraview plugin from which inheritates PV plugins that directly wrap a vtk filter.
@@ -22,10 +20,12 @@ To use it, make children PV plugins inherited from AbstractPVPluginVtkWrapper. O
 If output type needs to be specified, this must be done in the child class.
 """
 
-class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
-    def __init__(self:Self) ->None:
+
+class AbstractPVPluginVtkWrapper( VTKPythonAlgorithmBase ):
+
+    def __init__( self: Self ) -> None:
         """Abstract Paraview Plugin class."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet")
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet" )
 
     def RequestDataObject(
         self: Self,
@@ -43,13 +43,13 @@ class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )
 
     def RequestData(
         self: Self,
@@ -73,12 +73,12 @@ class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
             assert inputMesh is not None, "Input server mesh is null."
             assert outputMesh is not None, "Output pipeline is null."
 
-            tmpMesh = self.applyVtkFilter(inputMesh)
+            tmpMesh = self.applyVtkFilter( inputMesh )
             assert tmpMesh is not None, "Output mesh is null."
-            outputMesh.ShallowCopy(tmpMesh)
-            print("Filter was successfully applied.")
-        except (AssertionError, Exception) as e:
-            print(f"Filter failed due to: {e}")
+            outputMesh.ShallowCopy( tmpMesh )
+            print( "Filter was successfully applied." )
+        except ( AssertionError, Exception ) as e:
+            print( f"Filter failed due to: {e}" )
             return 0
         return 1
 
