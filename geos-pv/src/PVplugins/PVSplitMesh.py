@@ -48,7 +48,7 @@ class PVSplitMesh(AbstractPVPluginVtkWrapper):
         """Split mesh cells."""
         super().__init__()
 
-    def applyVtkFlilter(
+    def applyVtkFilter(
         self: Self,
         input: vtkPointSet,
     ) -> vtkPointSet:

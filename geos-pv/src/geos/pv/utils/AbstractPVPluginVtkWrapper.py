@@ -73,7 +73,7 @@ class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
             assert inputMesh is not None, "Input server mesh is null."
             assert outputMesh is not None, "Output pipeline is null."
 
-            tmpMesh = self.applyVtkFlilter(inputMesh)
+            tmpMesh = self.applyVtkFilter(inputMesh)
             assert tmpMesh is not None, "Output mesh is null."
             outputMesh.ShallowCopy(tmpMesh)
             print("Filter was successfully applied.")
@@ -82,7 +82,7 @@ class AbstractPVPluginVtkWrapper(VTKPythonAlgorithmBase):
             return 0
         return 1
 
-    def applyVtkFlilter(
+    def applyVtkFilter(
         self: Self,
         input: Any,
     ) -> Any:
