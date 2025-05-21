@@ -28,8 +28,6 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_WEDGE,
 )
 
-#from vtkmodules.vtkFiltersSources import vtkCubeSource
-
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
 filename_all: tuple[ str, ...] = ( "triangle_cell.csv", "quad_cell.csv", "tetra_cell.csv", "pyramid_cell.csv",

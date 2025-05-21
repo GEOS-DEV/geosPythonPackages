@@ -85,7 +85,6 @@ def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -
     return cutter.GetOutputDataObject( 0 )
 
 
-
 def getBounds(
         input: Union[ vtkUnstructuredGrid,
                       vtkMultiBlockDataSet ] ) -> tuple[ float, float, float, float, float, float ]:
@@ -268,4 +267,3 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
             cellVertexMap += [ ptId.get() ]  # type: ignore
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
-
