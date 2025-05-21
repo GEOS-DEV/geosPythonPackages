@@ -10,6 +10,21 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD
 
 __doc__ = """
 CellTypeCounts stores the number of elements of each type.
+
+To use the filter:
+
+.. code-block:: python
+
+    from geos.mesh.model.CellTypeCounts import CellTypeCounts
+
+    counts: CellTypeCounts = CellTypeCounts()
+
+    # set data
+    counts.addType( cellType )
+    counts.setTypeCount( cellType, count )
+
+    # get data
+    count: int counts.getTypeCount( cellType )
 """
 
 
@@ -27,7 +42,7 @@ class CellTypeCounts():
         """
         return self.print()
 
-    def __add__( self: Self, other: Self ) -> Self:
+    def __add__( self: Self, other: Self ) -> 'CellTypeCounts':
         """Addition operator.
 
         CellTypeCounts addition consists in suming counts.
@@ -82,7 +97,7 @@ class CellTypeCounts():
         """
         return int( self._counts[ cellType ] )
 
-    def reset(self: Self) ->None:
+    def reset( self: Self ) -> None:
         """Reset counts."""
         self._counts = np.zeros( VTK_NUMBER_OF_CELL_TYPES, dtype=float )
 

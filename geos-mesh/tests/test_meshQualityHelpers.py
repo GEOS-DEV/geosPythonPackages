@@ -1,30 +1,18 @@
 # SPDX-FileContributor: Martin Lemay
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 from dataclasses import dataclass
-import numpy as np
-import numpy.typing as npt
 import pytest
 from typing import (
     Iterator,
 )
 
-from geos.mesh.utils.helpers import createMultiCellMesh
 
-from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkCellArray,
-    vtkCellTypes,
     VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON, VTK_POLYGON, VTK_POLYHEDRON
 )
 
-from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-    vtkIdList,
-)
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
     VtkCellQualityMetricEnum,

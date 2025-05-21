@@ -10,20 +10,19 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 
-from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
     vtkDataArraySelection,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-)
+    vtkUnstructuredGrid, )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+
 update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
@@ -53,50 +52,57 @@ To use it:
 
 """
 
+
 @smproxy.filter( name="PVSurfaceMeshQualityEnhanced", label="Surface Mesh Quality Enhanced" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid"],
+    dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
-    def __init__(self:Self) ->None:
-        """Merge collocated points."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid")
+class PVSurfaceMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
-        self._filename: Optional[str] = None
+    def __init__( self: Self ) -> None:
+        """Merge collocated points."""
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
+
+        self._filename: Optional[ str ] = None
         self._saveToFile: bool = True
         self._blockIndex: int = 0
         # used to concatenate results if vtkMultiBlockDataSet
-        self._metricsAll: list[float] = []
+        self._metricsAll: list[ float ] = []
         self._commonMeshQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._commonCellQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._triangleQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._quadsQualityMetric: vtkDataArraySelection = vtkDataArraySelection()
         self._initQualityMetricSelection()
 
-    def _initQualityMetricSelection(self: Self) ->None:
+    def _initQualityMetricSelection( self: Self ) -> None:
         self._commonCellQualityMetric.RemoveAllArrays()
-        self._commonCellQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        commonCellMetrics: set[int] = getCommonPolygonQualityMeasure()
+        self._commonCellQualityMetric.AddObserver(
+            "ModifiedEvent",  # type: ignore[arg-type]
+            createModifiedCallback( self ) )
+        commonCellMetrics: set[ int ] = getCommonPolygonQualityMeasure()
         for measure in commonCellMetrics:
-            self._commonCellQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+            self._commonCellQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
 
         self._triangleQualityMetric.RemoveAllArrays()
-        self._triangleQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        for measure in getTriangleQualityMeasure().difference(commonCellMetrics):
-            self._triangleQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+        self._triangleQualityMetric.AddObserver(
+            "ModifiedEvent",  # type: ignore[arg-type]
+            createModifiedCallback( self ) )
+        for measure in getTriangleQualityMeasure().difference( commonCellMetrics ):
+            self._triangleQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
 
         self._quadsQualityMetric.RemoveAllArrays()
-        self._quadsQualityMetric.AddObserver( "ModifiedEvent", createModifiedCallback( self ) )  # type: ignore[arg-type]
-        for measure in getQuadQualityMeasure().difference(commonCellMetrics):
-            self._quadsQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
+        self._quadsQualityMetric.AddObserver(
+            "ModifiedEvent",  # type: ignore[arg-type]
+            createModifiedCallback( self ) )
+        for measure in getQuadQualityMeasure().difference( commonCellMetrics ):
+            self._quadsQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
 
-        otherMetrics: set[int] = getQualityMetricsOther()
+        otherMetrics: set[ int ] = getQualityMetricsOther()
         for measure in otherMetrics:
-            self._commonMeshQualityMetric.AddArray( getQualityMeasureNameFromIndex(measure) )
-
+            self._commonMeshQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
 
     @smproperty.dataarrayselection( name="CommonCellQualityMetric" )
     def a01SetCommonMetrics( self: Self ) -> vtkDataArraySelection:
@@ -130,7 +136,7 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
                         Specify if mesh statistics are dumped into a file.
                     </Documentation>
                   """ )
-    def b01SetSaveToFile( self: Self, saveToFile: bool) -> None:
+    def b01SetSaveToFile( self: Self, saveToFile: bool ) -> None:
         """Setter to save the stats into a file.
 
         Args:
@@ -140,7 +146,7 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
             self._saveToFile = saveToFile
             self.Modified()
 
-    @smproperty.stringvector(name="FilePath", label="File Path")
+    @smproperty.stringvector( name="FilePath", label="File Path" )
     @smdomain.xml( """
                     <FileListDomain name="files" />
                     <Documentation>Output file path.</Documentation>
@@ -148,8 +154,8 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
                         <FileChooser extensions="png" file_description="Output file." />
                         <AcceptAnyFile/>
                     </Hints>
-                  """)
-    def b02SetFileName(self: Self, fname :str) -> None:
+                  """ )
+    def b02SetFileName( self: Self, fname: str ) -> None:
         """Specify filename for the filter to write.
 
         Args:
@@ -175,7 +181,7 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         """Organize groups."""
         self.Modified()
 
-    def Modified(self: Self) ->None:
+    def Modified( self: Self ) -> None:
         """Overload Modified method to reset _blockIndex."""
         self._blockIndex = 0
         super().Modified()
@@ -196,22 +202,22 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData(inInfoVec, 0, 0)
-        outData = self.GetOutputData(outInfoVec, 0)
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
-        if outData is None or (not outData.IsA(inData.GetClassName())):
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
             outData = inData.NewInstance()
-            outInfoVec.GetInformationObject(0).Set(outData.DATA_OBJECT(), outData)
-        return super().RequestDataObject(request, inInfoVec, outInfoVec)
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )
 
-    def _getQualityMetricsToUse(self :Self, selection: vtkDataArraySelection) -> set[int]:
+    def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.
 
         Returns:
             list[int]: list of quality metric indexes
         """
-        metricsNames: set[str] = getArrayChoices(selection)
-        return {getQualityMeasureIndexFromName(name) for name in metricsNames}
+        metricsNames: set[ str ] = getArrayChoices( selection )
+        return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
     def RequestData(
         self: Self,
@@ -230,38 +236,42 @@ class PVSurfaceMeshQualityEnhanced(VTKPythonAlgorithmBase):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         inputMesh: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData(outInfoVec, 0)
+        outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( outInfoVec, 0 )
         assert inputMesh is not None, "Input server mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        triangleMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._triangleQualityMetric))
-        quadMetrics: set[int] = self._getQualityMetricsToUse(self._commonCellQualityMetric).union(self._getQualityMetricsToUse(self._quadsQualityMetric))
-        otherMetrics: set[int] = self._getQualityMetricsToUse(self._commonMeshQualityMetric)
+        triangleMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellQualityMetric ).union(
+            self._getQualityMetricsToUse( self._triangleQualityMetric ) )
+        quadMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellQualityMetric ).union(
+            self._getQualityMetricsToUse( self._quadsQualityMetric ) )
+        otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
         filter: MeshQualityEnhanced = MeshQualityEnhanced()
-        filter.SetInputDataObject(inputMesh)
-        filter.SetCellQualityMetrics(triangleMetrics=triangleMetrics, quadMetrics=quadMetrics)
-        filter.SetOtherMeshQualityMetrics(otherMetrics)
+        filter.SetInputDataObject( inputMesh )
+        filter.SetCellQualityMetrics( triangleMetrics=triangleMetrics, quadMetrics=quadMetrics )
+        filter.SetOtherMeshQualityMetrics( otherMetrics )
         filter.Update()
 
-        outputMesh.ShallowCopy(filter.GetOutputDataObject(0))
+        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
 
         # save to file if asked
         if self._saveToFile:
             stats: QualityMetricSummary = filter.GetQualityMetricSummary()
-            self.saveFile(stats)
+            self.saveFile( stats )
         self._blockIndex += 1
         return 1
 
-    def saveFile(self: Self, stats: QualityMetricSummary) ->None:
+    def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
         """Export mesh quality metric summary file."""
         try:
+            if self._filename is None:
+                print( "Mesh quality summary report file path is undefined." )
+                return
             # add index for multiblock meshes
-            index: int = self._filename.rfind('.')
-            filename: str = self._filename[:index] + f"_{self._blockIndex}" + self._filename[index:]
+            index: int = self._filename.rfind( '.' )
+            filename: str = self._filename[ :index ] + f"_{self._blockIndex}" + self._filename[ index: ]
             fig = stats.plotSummaryFigure()
-            fig.savefig(filename, dpi=150)
-            print(f"File {filename} was successfully written.")
+            fig.savefig( filename, dpi=150 )
+            print( f"File {filename} was successfully written." )
         except Exception as e:
-            print("Error while exporting the file due to:")
-            print(str(e))
-
+            print( "Error while exporting the file due to:" )
+            print( str( e ) )

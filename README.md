@@ -118,7 +118,7 @@ Installation
     python -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install ./<PACKAGE_NAME>
+    python -m pip install -e ./<PACKAGE_NAME>
     ```
 
     You can test installed package by running the commands:
@@ -146,7 +146,14 @@ If you would like to contribute to GEOS Python packages, please respect the foll
 
 1. Create a new branch named from this template: `[CONTRIBUTOR]/[TYPE]/[TITLE]` where CONTRIBUTOR is the name of the contributor, TYPE is the type of contribution among 'feature', 'refactor', 'doc', 'ci', TITLE is a short title for the branch.
 2. Add your code trying to integrate into the current code architecture.
-3. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
+3. Run mypy, ruff and yapf in this order
+  ```
+  python -m pip install --upgrade mypy ruff yapf
+  python -m mypy --config-file ./.mypy.ini --check-untyped-defs ./<PACKAGE_NAME>
+  python -m ruff check --fix --config .ruff.toml ./<PACKAGE_NAME>
+  python -m yapf -r -i --style .style.yapf ./<PACKAGE_NAME>
+  ```
+4. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 

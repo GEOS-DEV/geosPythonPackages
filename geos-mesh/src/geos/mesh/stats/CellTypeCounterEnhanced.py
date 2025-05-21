@@ -8,8 +8,7 @@ from vtkmodules.vtkCommonCore import (
     vtkInformationVector,
     vtkIntArray,
 )
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX,
-                                            VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX )
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.processing.meshQualityMetricHelpers import getAllCellTypes

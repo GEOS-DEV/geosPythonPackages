@@ -13,9 +13,8 @@ from matplotlib.figure import Figure
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
 
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
-from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
+from vtkmodules.vtkCommonDataModel import ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON, VTK_POLYHEDRON )
-from geos.mesh.processing.meshQualityMetricHelpers import getQualityMeasureNameFromIndex
 
 # inputs
 statTypes: tuple[StatTypes,...] = tuple(StatTypes)

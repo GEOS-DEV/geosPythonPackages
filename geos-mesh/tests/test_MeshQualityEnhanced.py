@@ -2,12 +2,9 @@
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
-import sys
-from pathlib import Path
 from matplotlib.figure import Figure
 from dataclasses import dataclass
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import pytest
 from typing import (
@@ -16,14 +13,6 @@ from typing import (
 )
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
-    VtkCellQualityMetricEnum,
-    getTriangleQualityMeasure,
-    getQuadQualityMeasure,
-    getTetQualityMeasure,
-    getPyramidQualityMeasure,
-    getWedgeQualityMeasure,
-    getHexQualityMeasure,
-    getAllCellTypes,
     getAllCellTypesExtended,
 )
 from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
@@ -132,7 +121,6 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     nbFieldArrayExp: int = test_case.mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * (nbPolygon + nbPolyhedra)
     assert fieldData.GetNumberOfArrays() == nbFieldArrayExp, f"Number of field data arrays is expected to be {nbFieldArrayExp}."
 
-    print(test_case.qualityMetrics)
     stats: QualityMetricSummary = filter.GetQualityMetricSummary()
     for i, cellType in enumerate(getAllCellTypesExtended()):
         # test Counts
@@ -143,7 +131,6 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
         # test metric summary
         for j, metricIndex in enumerate(test_case.qualityMetrics):
             subStats: pd.Series = stats.getStatsFromMetricAndCellType(metricIndex, cellType)
-            print(j, np.round(subStats, 2).tolist())
             assert np.round(subStats, 2).tolist() == list(test_case.metricsSummary[j]), f"Stats at metric index {j} are wrong."
 
     fig: Figure = stats.plotSummaryFigure()
