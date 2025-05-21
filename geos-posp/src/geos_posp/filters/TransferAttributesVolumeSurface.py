@@ -19,7 +19,7 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
 
 from geos_posp.filters.VolumeSurfaceMeshMapper import VolumeSurfaceMeshMapper
-from geos_posp.processing.vtkUtils import (
+from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
     getComponentNames,
     isAttributeInObject,

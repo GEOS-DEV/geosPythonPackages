@@ -6,6 +6,4 @@ Processing
 
    filters
 
-   processing
-
    pyvistaTools

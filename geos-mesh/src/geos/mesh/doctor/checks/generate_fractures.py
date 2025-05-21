@@ -13,8 +13,9 @@ from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, v
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.util.vtkConstants import VTK_ID_TYPE
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
-from geos.mesh.vtk.helpers import has_invalid_arrays, to_vtk_id_list, vtk_iter
-from geos.mesh.vtk.io import VtkOutput, read_mesh, write_mesh
+from geos.mesh.utils.arrayHelpers import has_invalid_field
+from geos.mesh.utils.genericHelpers import to_vtk_id_list, vtk_iter
+from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 """
 TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
 https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
