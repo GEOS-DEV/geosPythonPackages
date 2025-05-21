@@ -6,7 +6,13 @@ from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, 
                                             vtkMultiBlockDataSet )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-__doc__ = """Functions to explore VTK multiblock datasets."""
+__doc__ = """
+Functions to explore VTK multiblock datasets.
+
+Methods include:
+    - getters for blocks names and indexes
+    - block extractor
+"""
 
 
 def getBlockName( input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> str:

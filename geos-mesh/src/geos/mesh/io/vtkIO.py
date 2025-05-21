@@ -12,7 +12,11 @@ from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructur
                                   vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
                                   vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
 
-__doc__ = """Input and Ouput methods for VTK meshes."""
+__doc__ = """
+Input and Ouput methods for VTK meshes:
+    - VTK, VTU, VTS, PVTU, PVTS readers
+    - VTK, VTS, VTU writers
+"""
 
 
 @dataclass( frozen=True )
@@ -155,17 +159,20 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False 
 
 
 def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
-    """Writes the mesh to disk.
+    """Write mesh to disk.
 
-    Nothing will be done if the file already exists.
+    Nothing is done if file already exists.
 
     Args:
-        mesh (vtkPointSet): The mesh to write.
-        vtk_output (VtkOutput): Where to write. The file extension will be used to select the VTK file format.
-        canOverwrite (bool): if True, overwrite output file. Defaults to False.
+        mesh (vtkPointSet): Grid to write
+        vtk_output (VtkOutput): File path. File extension will be used to select VTK file format
+        canOverwrite (bool, optional): Authorize overwriting the file. Defaults to False.
+
+    Raises:
+        ValueError: Invalid VTK format.
 
     Returns:
-        0 in case of success.
+        int: 0 if success
     """
     if os.path.exists( vtk_output.output ) and canOverwrite:
         logging.error( f"File \"{vtk_output.output}\" already exists, nothing done." )

@@ -16,7 +16,14 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, v
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-__doc__ = """Utilities methods to get information on VTK Arrays."""
+__doc__ = """
+ArrayHelpers module contains several utilities methods to get information on arrays in VTK datasets.
+
+These methods include:
+    - array getters, with conversion into numpy array or pandas dataframe
+    - boolean functions to check whether an array is present in the dataset
+    - bounds getter for vtu and multiblock datasets
+"""
 
 
 def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
