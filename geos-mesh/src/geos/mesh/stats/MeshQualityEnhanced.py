@@ -28,7 +28,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
-from geos.mesh.utils.helpers import getArraysFromDataSet
+from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
 from geos.mesh.processing.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
     getQualityMetricFromIndex,
@@ -360,7 +360,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
             cellType (int): cell type index
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
-        if arrayName in getArraysFromDataSet( self._outputMesh, False ):
+        if arrayName in getAttributesFromDataSet( self._outputMesh, False ):
             # metric is already computed (by default computed for all cell types if applicable)
             return
 

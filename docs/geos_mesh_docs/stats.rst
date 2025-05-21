@@ -11,3 +11,11 @@ geos.mesh.stats.CellTypeCounter filter
     :members:
     :undoc-members:
     :show-inheritance:
+
+geos.mesh.stats.MeshQualityEnhanced filter
+-------------------------------------------
+
+.. automodule:: geos.mesh.stats.MeshQualityEnhanced
+    :members:
+    :undoc-members:
+    :show-inheritance:
