@@ -16,6 +16,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from geos.mesh.processing.meshQualityMetricHelpers import (
     VtkCellQualityMetricEnum,
+    CellQualityMetricAdditionalEnum,
     QualityRange,
     getCellQualityMeasureFromCellType,
     getTriangleQualityMeasure,
@@ -106,6 +107,8 @@ pyrQualityMeasureExp: set[int] = {
     vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN,
     vtkMeshQuality.QualityMeasureTypes.SHAPE,
     vtkMeshQuality.QualityMeasureTypes.VOLUME,
+    vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX,
+    CellQualityMetricAdditionalEnum.MAXIMUM_ASPECT_RATIO.metricIndex,
 }
 
 wedgeQualityMeasureExp: set[int] = {
@@ -120,6 +123,8 @@ wedgeQualityMeasureExp: set[int] = {
     vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN,
     vtkMeshQuality.QualityMeasureTypes.SHAPE,
     vtkMeshQuality.QualityMeasureTypes.VOLUME,
+    vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX,
+    CellQualityMetricAdditionalEnum.MAXIMUM_ASPECT_RATIO.metricIndex,
 }
 
 hexQualityMeasureExp: set[int] = {
@@ -145,6 +150,8 @@ hexQualityMeasureExp: set[int] = {
     vtkMeshQuality.QualityMeasureTypes.STRETCH,
     vtkMeshQuality.QualityMeasureTypes.TAPER,
     vtkMeshQuality.QualityMeasureTypes.VOLUME,
+    vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX,
+    CellQualityMetricAdditionalEnum.MAXIMUM_ASPECT_RATIO.metricIndex,
 }
 
 @dataclass( frozen=True )

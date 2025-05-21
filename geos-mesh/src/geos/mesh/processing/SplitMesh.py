@@ -190,7 +190,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
         filter.SetInputDataObject( self.inData )
         filter.Update()
-        return filter.GetCellTypeCounts()
+        return filter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.
