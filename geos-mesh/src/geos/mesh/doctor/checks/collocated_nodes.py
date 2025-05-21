@@ -5,7 +5,7 @@ import numpy
 from typing import Collection, Iterable
 from vtkmodules.vtkCommonCore import reference, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator
-from geos.mesh.utils.io import read_mesh
+from geos.mesh.io.vtkIO import read_mesh
 
 
 @dataclass( frozen=True )

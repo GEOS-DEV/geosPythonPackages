@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, List, Set
 from vtkmodules.vtkCommonCore import vtkIdList
-from geos.mesh.utils.helpers import to_vtk_id_list
-from geos.mesh.utils.io import VtkOutput, read_mesh, write_mesh
+from geos.mesh.utils.genericHelpers import to_vtk_id_list
+from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )

@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Alexandre Benedicto
+
 import os.path
 import logging
 from dataclasses import dataclass
@@ -7,6 +11,8 @@ from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGri
 from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
                                   vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
                                   vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
+
+__doc__ = """Input and Ouput methods for VTK meshes."""
 
 
 @dataclass( frozen=True )
@@ -81,14 +87,18 @@ def __read_pvtu( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
 
 
 def read_mesh( vtk_input_file: str ) -> vtkPointSet:
-    """Read the vtk file and builds either an unstructured grid or a structured grid from it.
+    """Read vtk file and build either an unstructured grid or a structured grid from it.
 
     Args:
-        vtk_input_file (str): The file name. The extension will be used to guess the file format.
-            If the first guess fails, the other available readers will be tried.
+        vtk_input_file (str): The file name. Extension will be used to guess file format\
+                            If first guess fails, other available readers will be tried.
+
+    Raises:
+        ValueError: Invalid file path error
+        ValueError: No appropriate reader available for the file format
 
     Returns:
-        vtkPointSet: A vtkPointSet.
+        vtkPointSet: Mesh read
     """
     if not os.path.exists( vtk_input_file ):
         err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."

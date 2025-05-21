@@ -3,7 +3,7 @@ from typing import Collection, List
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersGeneral import vtkCellValidator
 from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
-from geos.mesh.utils.io import read_mesh
+from geos.mesh.io.vtkIO import read_mesh
 
 
 @dataclass( frozen=True )

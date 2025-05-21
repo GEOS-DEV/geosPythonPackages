@@ -20,8 +20,8 @@ from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkIdList, vt
 from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkFieldData, vtkImageData, vtkPointData, vtkPointSet
 from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
-from geos.mesh.utils.helpers import getCopyNumpyArrayByName, getNumpyGlobalIdsArray, getNumpyArrayByName
-from geos.mesh.utils.io import VtkOutput, read_mesh, write_mesh
+from geos.mesh.utils.arrayHelpers import getNumpyArrayByName, getNumpyGlobalIdsArray
+from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 from geos.pygeos_tools.model.pyevtk_tools import cGlobalIds
 from geos.utils.errors_handling.classes import required_attributes
 
@@ -175,7 +175,7 @@ class VTKMesh:
     Accessors
     """
 
-    def getArray( self: Self, name: str, dtype: str = "cell", copy: bool = False, sorted: bool = False ) -> npt.NDArray:
+    def getArray( self: Self, name: str, dtype: str = "cell", sorted: bool = False ) -> npt.NDArray:
         """
         Return a cell or point data array. If the file is a pvtu, the array is sorted with global ids
 
@@ -185,8 +185,6 @@ class VTKMesh:
                 Name of the vtk cell/point data array
             dtype : str
                 Type of vtk data `cell` or `point`
-            copy : bool
-                Return a copy of the requested array. Default is False
             sorted : bool
                 Return the array sorted with respect to GlobalPointIds or GlobalCellIds. Default is False
 
@@ -197,10 +195,7 @@ class VTKMesh:
         """
         assert dtype.lower() in ( "cell", "point" )
         fdata = self.getCellData() if dtype.lower() == "cell" else self.getPointData()
-        if copy:
-            array = getCopyNumpyArrayByName( fdata, name, sorted=sorted )
-        else:
-            array = getNumpyArrayByName( fdata, name, sorted=sorted )
+        array = getNumpyArrayByName( fdata, name, sorted=sorted )
         return array
 
     def getBounds( self: Self ) -> Iterable[ float ]:
