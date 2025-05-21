@@ -566,67 +566,6 @@ def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFra
             data[ attributeName ] = array
     return data
 
-
-def getBounds(
-        input: Union[ vtkUnstructuredGrid,
-                      vtkMultiBlockDataSet ] ) -> tuple[ float, float, float, float, float, float ]:
-    """Get bounds of either single of composite data set.
-
-    Args:
-        input (Union[vtkUnstructuredGrid, vtkMultiBlockDataSet]): input mesh
-
-    Returns:
-        tuple[float, float, float, float, float, float]: tuple containing
-            bounds (xmin, xmax, ymin, ymax, zmin, zmax)
-
-    """
-    if isinstance( input, vtkMultiBlockDataSet ):
-        return getMultiBlockBounds( input )
-    else:
-        return getMonoBlockBounds( input )
-
-
-def getMonoBlockBounds( input: vtkUnstructuredGrid, ) -> tuple[ float, float, float, float, float, float ]:
-    """Get boundary box extrema coordinates for a vtkUnstructuredGrid.
-
-    Args:
-        input (vtkMultiBlockDataSet): input single block mesh
-
-    Returns:
-        tuple[float, float, float, float, float, float]: tuple containing
-            bounds (xmin, xmax, ymin, ymax, zmin, zmax)
-
-    """
-    return input.GetBounds()
-
-
-def getMultiBlockBounds( input: vtkMultiBlockDataSet, ) -> tuple[ float, float, float, float, float, float ]:
-    """Get boundary box extrema coordinates for a vtkMultiBlockDataSet.
-
-    Args:
-        input (vtkMultiBlockDataSet): input multiblock mesh
-
-    Returns:
-        tuple[float, float, float, float, float, float]: bounds.
-
-    """
-    xmin, ymin, zmin = 3 * [ np.inf ]
-    xmax, ymax, zmax = 3 * [ -1.0 * np.inf ]
-    blockIndexes: list[ int ] = getBlockElementIndexesFlatten( input )
-    for blockIndex in blockIndexes:
-        block0: vtkDataObject = getBlockFromFlatIndex( input, blockIndex )
-        assert block0 is not None, "Mesh is undefined."
-        block: vtkDataSet = vtkDataSet.SafeDownCast( block0 )
-        bounds: tuple[ float, float, float, float, float, float ] = block.GetBounds()
-        xmin = bounds[ 0 ] if bounds[ 0 ] < xmin else xmin
-        xmax = bounds[ 1 ] if bounds[ 1 ] > xmax else xmax
-        ymin = bounds[ 2 ] if bounds[ 2 ] < ymin else ymin
-        ymax = bounds[ 3 ] if bounds[ 3 ] > ymax else ymax
-        zmin = bounds[ 4 ] if bounds[ 4 ] < zmin else zmin
-        zmax = bounds[ 5 ] if bounds[ 5 ] > zmax else zmax
-    return xmin, xmax, ymin, ymax, zmin, zmax
-
-
 def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     """Get the coordinates of Cell center.
 

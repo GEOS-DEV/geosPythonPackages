@@ -20,7 +20,7 @@ class Result:
 
 
 def __check( mesh, options: Options ) -> Result:
-    points = mesh.GetPoints()
+    points: vtkPoints = mesh.GetPoints()
 
     locator = vtkIncrementalOctreePointLocator()
     locator.SetTolerance( options.tolerance )
