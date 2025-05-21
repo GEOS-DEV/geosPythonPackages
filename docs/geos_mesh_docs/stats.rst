@@ -4,10 +4,10 @@ Mesh stats tools
 The `stats` module of `geos-mesh` package contains filter to compute statistics on meshes.
 
 
-geos.mesh.stats.CellTypeCounter filter
---------------------------------------
+geos.mesh.stats.CellTypeCounterEnhanced filter
+-----------------------------------------------
 
-.. automodule:: geos.mesh.stats.CellTypeCounter
+.. automodule:: geos.mesh.stats.CellTypeCounterEnhanced
     :members:
     :undoc-members:
     :show-inheritance:

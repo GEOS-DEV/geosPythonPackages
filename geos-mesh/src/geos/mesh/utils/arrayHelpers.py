@@ -566,6 +566,7 @@ def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFra
             data[ attributeName ] = array
     return data
 
+
 def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     """Get the coordinates of Cell center.
 
