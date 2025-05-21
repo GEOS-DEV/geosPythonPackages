@@ -11,4 +11,10 @@ GEOS Mesh tools
 
     io
 
+    model
+
+    processing
+
+    stats
+
     utils

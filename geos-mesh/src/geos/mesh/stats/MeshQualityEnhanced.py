@@ -59,7 +59,7 @@ To use the filter:
 .. code-block:: python
 
     from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
-    
+
     # filter inputs
     input :vtkUnstructuredGrid
 

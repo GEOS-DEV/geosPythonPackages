@@ -3,10 +3,17 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Any, Iterator, List
 from vtkmodules.vtkCommonCore import vtkIdList
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkPolyData, vtkPlane
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkPolyData, vtkPlane, vtkCellTypes
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
 
-__doc__ = """ Generic VTK utilities."""
+__doc__ = """
+Generic VTK utilities.
+
+These methods include:
+    - extraction of a surface from a given elevation
+    - conversion from a list to vtkIdList
+    - conversion of vtk container into iterable
+"""
 
 
 def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
@@ -25,21 +32,19 @@ def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
     return result
 
 
-def vtk_iter( vtkContainer ) -> Iterator[ Any ]:
-    """
-    Utility function transforming a vtk "container" (e.g. vtkIdList) into an iterable to be used for building built-ins
-    python containers.
+def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
+    """Utility function transforming a vtk "container" into an iterable.
 
     Args:
-        vtkContainer: A vtk container
+        vtkContainer (vtkIdList | vtkCellTypes): A vtk container
 
     Returns:
-        The iterator
+        Iterator[ Any ]: The iterator
     """
-    if hasattr( vtkContainer, "GetNumberOfIds" ):
+    if isinstance( vtkContainer, vtkIdList ):
         for i in range( vtkContainer.GetNumberOfIds() ):
             yield vtkContainer.GetId( i )
-    elif hasattr( vtkContainer, "GetNumberOfTypes" ):
+    elif isinstance( vtkContainer, vtkCellTypes ):
         for i in range( vtkContainer.GetNumberOfTypes() ):
             yield vtkContainer.GetCellType( i )
 

@@ -32,7 +32,6 @@ dependencies = [
     "pandas >= 2.2",
     "meshio >= 5.3",
     "typing_extensions >= 4.12",
-    "matplotlib >= 3.10",
 ]
 
 [project.scripts]

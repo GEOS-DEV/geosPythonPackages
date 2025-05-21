@@ -45,6 +45,20 @@ class CellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkUnstructuredGrid", outputType="vtkTable" )
         self._counts: CellTypeCounts = CellTypeCounts()
 
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+
+        Args:
+            port (int): input port
+            info (vtkInformationVector): info
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        if port == 0:
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
+        return 1
+
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841

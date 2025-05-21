@@ -16,7 +16,14 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, v
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-__doc__ = """Utilities methods to get information on VTK Arrays."""
+__doc__ = """
+ArrayHelpers module contains several utilities methods to get information on arrays in VTK datasets.
+
+These methods include:
+    - array getters, with conversion into numpy array or pandas dataframe
+    - boolean functions to check whether an array is present in the dataset
+    - bounds getter for vtu and multiblock datasets
+"""
 
 
 def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
@@ -30,12 +37,12 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
         bool: True if at least one array is found, else False.
     """
     # Check the cell data fields
-    data: vtkFieldData
-    for data in (mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData()):
+    data: vtkFieldData | None
+    for data in ( mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData() ):
         if data is None:
-            continue
+            continue  # type: ignore[unreachable]
         for arrayName in array_names:
-            if data.HasArray(arrayName):
+            if data.HasArray( arrayName ):
                 logging.error( f"The mesh contains the array named '{arrayName}'." )
                 return True
     return False
@@ -127,14 +134,14 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
+def getNumpyArrayByName( data: vtkCellData | vtkPointData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
     no reordering will be perform.
 
     Args:
-        data (vtkFieldData): vtk field data.
+        data (vtkCellData | vtkPointData): vtk field data.
         name (str): Array name to sort
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
@@ -143,11 +150,9 @@ def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -
     """
     dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
     if dataArray is not None:
-        arr: Optional[ npt.NDArray ] = vtk_to_numpy( dataArray )
-        if sorted:
-            fieldType: str = getFieldType( data )
-            if fieldType in [ "vtkCellData", "vtkPointData" ]:
-                sortArrayByGlobalIds( data, arr )
+        arr: npt.NDArray[ np.float64 ] = vtk_to_numpy( dataArray )
+        if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
+            sortArrayByGlobalIds( data, arr )
         return arr
     return None
 
@@ -475,7 +480,7 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
 
     """
     array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
-    componentNames: list[ str ] = list()
+    componentNames: list[ str ] = []
     if array.GetNumberOfComponents() > 1:
         componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     return tuple( componentNames )
@@ -642,12 +647,12 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     return pts.GetData()
 
 
-def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkFieldData ], arr: npt.NDArray[ np.int64 ] ) -> None:
-    """Sort an array following global Ids
+def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDArray[ np.float64 ] ) -> None:
+    """Sort an array following global Ids.
 
     Args:
         data (vtkFieldData): Global Ids array
-        arr (npt.NDArray[ np.int64 ]): Array to sort
+        arr (npt.NDArray[ np.float64 ]): Array to sort
     """
     globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
     if globalids is not None:

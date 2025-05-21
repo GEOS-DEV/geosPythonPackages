@@ -29,7 +29,14 @@ from geos.mesh.utils.arrayHelpers import (
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten, getBlockFromFlatIndex
 
-__doc__ = """Utilities to process VTK Arrays objects."""
+__doc__ = """
+ArrayModifiers contains utilities to process VTK Arrays objects.
+
+These methods include:
+    - filling partial  VTK arrays with nan values (useful for block merge)
+    - creation of new VTK array, empty or with a given data array
+    - transfer from VTK point data to VTK cell data
+"""
 
 
 def fillPartialAttributes(
