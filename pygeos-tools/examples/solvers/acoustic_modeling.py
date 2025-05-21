@@ -149,11 +149,16 @@ def main():
         while time < solver.maxTime:
             if rank == 0 and cycle % 100 == 0:
                 print( f"time = {time:.3f}s, dt= {solver.dt:.4f}, iter = {cycle + 1}" )
-            solver.execute( time )
+
             if cycle % 50 == 0:
-                solver.outputVtk( time )
+                solver.outputVtk( time, cycle )
+
+            solver.execute( time, cycle )
+
             time += solver.dt
             cycle += 1
+
+        solver.outputVtk( time, cycle )
 
         shot.flag = "Done"
         if rank == 0:

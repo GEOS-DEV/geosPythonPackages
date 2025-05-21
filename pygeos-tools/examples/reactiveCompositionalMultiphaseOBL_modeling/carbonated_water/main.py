@@ -51,7 +51,6 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
     cycle: int = 0
     solver.setDt( 8.64 )
 
-    solver.outputVtk( time )
     while time < solver.maxTime:
         # choose new timestep
         if domain == '1D':
@@ -84,16 +83,20 @@ def run_darts_model( domain: str, xml_name: str, darts_model=None ):
                 solver.setDt( 100.0 )
         if rank == 0:
             print( f"time = {time:.3f}s, dt = {solver.getDt():.4f}, step = {cycle + 1}" )
-        # run simulation
-        solver.execute( time )
-        time += solver.getDt()
+
         if cycle % 5 == 0:
-            solver.outputVtk( time )
+            solver.outputVtk( time, cycle )
+
+        solver.execute( time, cycle )
+
+        time += solver.getDt()
         cycle += 1
+
+    solver.outputVtk( time, cycle )
     solver.cleanup( time )
 
 
 if __name__ == "__main__":
     darts_model = Model()
-    # run_darts_model( domain='1D', xml_name="1d_setup.xml", darts_model=darts_model )
-    run_darts_model( domain='2D', xml_name="2d_setup.xml", darts_model=darts_model )
+    run_darts_model( domain='1D', xml_name="1d_setup.xml", darts_model=darts_model )
+    # run_darts_model( domain='2D', xml_name="2d_setup.xml", darts_model=darts_model )
