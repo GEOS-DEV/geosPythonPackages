@@ -24,18 +24,23 @@ basisTo2: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                  npt.NDArray[ np.float64 ] ] = ( np.array( [ 0.0, 2.0, 0.0 ] ), np.array( [ -2.0, 0.0, 0.0 ] ),
                                                  np.array( [ 0.0, 0.0, 2.0 ] ) )
 
+
 def test_getChangeOfBasisMatrixToCanonic() -> None:
     """Test change of basis matrix using canonic basis."""
     obtained: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisTo0, basisCanon )
     # matrix where the columns are the vectors
     expected: npt.NDArray[ np.float64 ] = np.transpose( np.array( basisTo0 ) )
-    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ), equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ),
+                           equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+
 
 def test_getChangeOfBasisMatrix() -> None:
     """Test change of basis matrix format from basis vectors."""
     obtained: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisTo0, basisTo1 )
     expected: npt.NDArray[ np.float64 ] = np.array( [ [ 2.5, 4.5, -0.5 ], [ 0.5, 0.5, 0.5 ], [ -0.5, -0.5, 0.5 ] ] )
-    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ), equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ),
+                           equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+
 
 def test_computeCoordinatesInNewBasisIdentity() -> None:
     """Test calculation of coordinates of a vector in the same basis."""
@@ -45,7 +50,9 @@ def test_computeCoordinatesInNewBasisIdentity() -> None:
     changeOfBasisMatrix: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisCanon, basisCanon )
     obtained: npt.NDArray[ np.float64 ] = fcts.computeCoordinatesInNewBasis( vec, changeOfBasisMatrix )
     expected: npt.NDArray[ np.float64 ] = vec
-    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ), equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ),
+                           equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+
 
 def test_computeCoordinatesInNewBasis() -> None:
     """Test calculation of coordinates of a vector in another basis."""
@@ -55,7 +62,9 @@ def test_computeCoordinatesInNewBasis() -> None:
     changeOfBasisMatrix: npt.NDArray[ np.float64 ] = fcts.getChangeOfBasisMatrix( basisTo0, basisTo1 )
     obtained = fcts.computeCoordinatesInNewBasis( vec, changeOfBasisMatrix )
     expected: npt.NDArray[ np.float64 ] = np.array( [ 16.5, 4.5, -0.5 ] )
-    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ), equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+    assert np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ),
+                           equal_nan=True ), f"Expected array is {np.round( expected, 2 ).tolist()}"
+
 
 def test_computePlaneFrom3Points() -> None:
     """Test calculation of plane coefficients from 3 points."""
@@ -66,19 +75,26 @@ def test_computePlaneFrom3Points() -> None:
     expected: tuple[ float, float, float, float ] = ( -1.0, 2.0, 2.0, -5.0 )
     assert obtained == expected, f"Expected tuple is {expected}"
 
+
 def test_getPointSideAgainstPlaneAssertion() -> None:
     """Test get point side against a plane."""
     planePt: npt.NDArray[ np.float64 ] = np.array( [ 0.0, 0.0, 0.0 ] )
 
     # assertion error - Point on the plane
     planeNormal: npt.NDArray[ np.float64 ] = np.array( [ 0.0, 0.0, 1.0 ] )
-    with pytest.raises(AssertionError):
+    with pytest.raises( AssertionError ):
         fcts.getPointSideAgainstPlane( planePt, planePt, planeNormal )
 
 
 listPtsCoords_all = (
-    [ np.array( [ 0.5, 0.5, 0.5 ] ), np.array( [ 0.5, 0.5, -0.5 ] ), ],
-    [ np.array( [ 0.5, 0.5, 0.5 ] ), np.array( [ -0.5, 0.5, 0.5 ] ), ],
+    [
+        np.array( [ 0.5, 0.5, 0.5 ] ),
+        np.array( [ 0.5, 0.5, -0.5 ] ),
+    ],
+    [
+        np.array( [ 0.5, 0.5, 0.5 ] ),
+        np.array( [ -0.5, 0.5, 0.5 ] ),
+    ],
 )
 planePt_all = (
     np.array( [ 0.0, 0.0, 0.0 ] ),
@@ -92,18 +108,21 @@ expected_all = (
     ( True, False ),
     ( True, False ),
 )
+
+
 @dataclass( frozen=True )
 class TestCasePointSideAgainstPlane:
     """Test case."""
     __test__ = False
     #: list of points
-    listPtsCoords: list[: npt.NDArray[ np.float64 ]]
+    listPtsCoords: list[ npt.NDArray[ np.float64 ] ]
     #: plane point
     planePt: npt.NDArray[ np.float64 ]
     #: plane normal
     planeNormal: npt.NDArray[ np.float64 ]
     #: expected result
-    expected: list[bool, bool]
+    expected: list[ bool ]
+
 
 def __generate_PointSideAgainstPlane_test_data() -> Iterator[ TestCasePointSideAgainstPlane ]:
     """Generate test cases.
@@ -111,10 +130,17 @@ def __generate_PointSideAgainstPlane_test_data() -> Iterator[ TestCasePointSideA
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    for listPtsCoords, planePt, planeNormal, expected  in zip(listPtsCoords_all, planePt_all, planeNormal_all, expected_all, strict=True):
-        yield TestCasePointSideAgainstPlane( listPtsCoords, planePt, planeNormal, list( expected ))
+    for listPtsCoords, planePt, planeNormal, expected in zip( listPtsCoords_all,
+                                                              planePt_all,
+                                                              planeNormal_all,
+                                                              expected_all,
+                                                              strict=True ):
+        yield TestCasePointSideAgainstPlane( listPtsCoords, planePt, planeNormal, list( expected ) )
 
-ids: list[str] = ("Horizontal plane", "Vertical plane")
+
+ids: tuple[ str, str ] = ( "Horizontal plane", "Vertical plane" )
+
+
 @pytest.mark.parametrize( "test_case", __generate_PointSideAgainstPlane_test_data(), ids=ids )
 def test_getPointSideAgainstPlane( test_case: TestCasePointSideAgainstPlane ) -> None:
     """Test get point side against a plane."""
@@ -124,11 +150,12 @@ def test_getPointSideAgainstPlane( test_case: TestCasePointSideAgainstPlane ) ->
         obtained += [ side ]
     assert obtained == test_case.expected, f"Expected tuple is {test_case.expected}"
 
+
 def test_getCellSideAgainstPlaneRandom() -> None:
     """Test get cell side against a plane."""
     # random plane
     planePt: npt.NDArray[ np.float64 ] = np.array( [ 125.58337, 1386.0465, -2782.502 ] )
-    listCellPtsCoords: list[npt.NDArray[ np.float64 ]] = [
+    listCellPtsCoords: list[ npt.NDArray[ np.float64 ] ] = [
         np.array( [
             [ 135.49551, 1374.7644, -2786.884 ],
             [ 125.58337, 1376.7441, -2782.502 ],
@@ -143,31 +170,55 @@ def test_getCellSideAgainstPlaneRandom() -> None:
         ] ),
     ]
     planeNormal: npt.NDArray[ np.float64 ] = np.array( [ 0.8660075, 0.0, -0.5000311 ] )
-    obtained: list[bool] = []
+    obtained: list[ bool ] = []
     for cellPtsCoords in listCellPtsCoords:
         side: bool = fcts.getCellSideAgainstPlane( cellPtsCoords, planePt, planeNormal )
         obtained += [ side ]
-    expected: list[bool] = [ True, False ]
+    expected: list[ bool ] = [ True, False ]
     assert obtained == expected, f"Expected tuple is {expected}"
 
-pts_all: tuple[npt.NDArray[np.float64],...] = (
-    np.array([0.0, 0.0, 0.0]),
-    np.array([1.0, 0.0, 0.0]),
-    np.array([0.5, 0.5, 0.0]),
-    np.array([-0.5, 0.5, 0.0]),
-    np.array([-0.5, -0.5, 0.0]),
-    np.array([0.5, -0.5, -1.0]),
+
+pts_all: tuple[ npt.NDArray[ np.float64 ], ...] = (
+    np.array( [ 0.0, 0.0, 0.0 ] ),
+    np.array( [ 1.0, 0.0, 0.0 ] ),
+    np.array( [ 0.5, 0.5, 0.0 ] ),
+    np.array( [ -0.5, 0.5, 0.0 ] ),
+    np.array( [ -0.5, -0.5, 0.0 ] ),
+    np.array( [ 0.5, -0.5, -1.0 ] ),
 )
-angleExp_all: tuple[float,...] = (0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,)
+angleExp_all: tuple[ float, ...] = (
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+)
+
 
 @dataclass( frozen=True )
 class TestCaseAngle:
     """Test case."""
     __test__ = False
-    pt1: npt.NDArray[np.float64]
-    pt2: npt.NDArray[np.float64]
-    pt3: npt.NDArray[np.float64]
+    pt1: npt.NDArray[ np.float64 ]
+    pt2: npt.NDArray[ np.float64 ]
+    pt3: npt.NDArray[ np.float64 ]
     angleExp: float
+
 
 def __generate_Angle_test_data() -> Iterator[ TestCaseAngle ]:
     """Generate test cases.
@@ -175,18 +226,20 @@ def __generate_Angle_test_data() -> Iterator[ TestCaseAngle ]:
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    print(len(list(combinations(pts_all, 3))))
-    for pts, angle in zip(list(combinations(pts_all, 3)), angleExp_all, strict=True):
-        yield TestCaseAngle( pts[0], pts[1], pts[2], angle)
+    print( len( list( combinations( pts_all, 3 ) ) ) )
+    for pts, angle in zip( list( combinations( pts_all, 3 ) ), angleExp_all, strict=True ):
+        yield TestCaseAngle( pts[ 0 ], pts[ 1 ], pts[ 2 ], angle )
+
 
 @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
-def test_computeAngleFromPoints(test_case: TestCaseAngle) -> None:
+def test_computeAngleFromPoints( test_case: TestCaseAngle ) -> None:
     """Test computeAngleFromPoints method."""
-    print(test_case.__str__(), test_case.pt1, test_case.pt2, test_case.pt3)
+    print( test_case.__str__(), test_case.pt1, test_case.pt2, test_case.pt3 )
     #obs: float = fcts.computeAngleFromPoints(test_case.pt1, test_case.pt2, test_case.pt3)
     #print(f"{test_case.__str__}: {obs}")
     # assert obs == test_case.angleExp
     pass
+
 
 # @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
 # def test_computeAngleFromVectors(test_case: TestCaseAngle) -> None:
@@ -197,13 +250,12 @@ def test_computeAngleFromPoints(test_case: TestCaseAngle) -> None:
 #     print(f"{test_case.__str__}: {obs}")
 #     assert obs == test_case.angleExp
 
+
 def test_computeNormalFromPoints() -> None:
     """Test computeNormalFromPoints method."""
     pass
 
-def test_computeNormalFromVectors() ->None:
+
+def test_computeNormalFromVectors() -> None:
     """Test computeNormalFromVectors method."""
     pass
-
-
-
