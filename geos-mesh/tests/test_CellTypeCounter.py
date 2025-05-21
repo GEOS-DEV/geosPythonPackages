@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.vtk.helpers import createSingleCellMesh, createMultiCellMesh
+from geos.mesh.utils.helpers import createSingleCellMesh, createMultiCellMesh
 from geos.mesh.stats.CellTypeCounter import CellTypeCounter
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
@@ -27,8 +27,6 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_HEXAHEDRON,
     VTK_WEDGE,
 )
-
-#from vtkmodules.vtkFiltersSources import vtkCubeSource
 
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 

@@ -9,7 +9,7 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.vtk.helpers import getBounds, createVertices, createMultiCellMesh
+from geos.mesh.utils.helpers import getBounds, createVertices, createMultiCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
