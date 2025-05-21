@@ -7,7 +7,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTr
 from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
 
-__doc__ = """Function to merge VTK multiblock datasets."""
+__doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
 
 
 # TODO : fix function for keepPartialAttributes = True

@@ -6,7 +6,14 @@ from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkPolyData, vtkPlane
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
 
-__doc__ = """ Generic VTK utilities."""
+__doc__ = """
+Generic VTK utilities.
+
+These methods include:
+    - extraction of a surface from a given elevation
+    - conversion from a list to vtkIdList
+    - conversion of vtk container into iterable
+"""
 
 
 def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
