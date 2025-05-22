@@ -10,7 +10,6 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockData
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-
 __doc__ = """
 Generic VTK utilities.
 
