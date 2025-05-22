@@ -93,6 +93,7 @@ def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
         data (vtkFieldData): vtk field data
         name (str): array name
 
+
     Returns:
         Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
     """
@@ -109,6 +110,7 @@ def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArra
         data (vtkFieldData): vtk field data
         name (str): array name
 
+
     Returns:
         Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
     """
@@ -123,6 +125,7 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
 
     Args:
         data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
+
 
     Returns:
         Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
@@ -481,6 +484,7 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
     """
     array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
     componentNames: list[ str ] = []
+
     if array.GetNumberOfComponents() > 1:
         componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     return tuple( componentNames )
