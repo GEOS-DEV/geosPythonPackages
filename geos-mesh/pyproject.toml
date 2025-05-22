@@ -32,6 +32,7 @@ dependencies = [
     "pandas >= 2.2",
     "meshio >= 5.3",
     "typing_extensions >= 4.12",
+    "geos-utils @ file:./geos-utils",
 ]
 
 [project.scripts]
