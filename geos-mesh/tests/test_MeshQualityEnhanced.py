@@ -23,10 +23,9 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellData, vt
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 
 # input data
-data_root: str = "/data/pau901/SIM_CS/users/MartinLemay/Data/mesh/"  #os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
-filenames_all: tuple[ str, ...] = (
-    "triangulatedSurface.vtu",
-    "tetraVolume.vtu",
+meshName_all: tuple[ str, ...] = (
+    "polydata",
+    "tetraVolume",
 )
 cellTypes_all: set[ int ] = ( VTK_TRIANGLE, VTK_TETRA )
 qualityMetrics_all: tuple[ set[ int ], ...] = (
@@ -67,7 +66,7 @@ class TestCase:
     """Test case."""
     __test__ = False
     #: mesh
-    mesh: vtkUnstructuredGrid
+    meshName: str
     cellType: vtkCellTypes
     qualityMetrics: set[ int ]
     cellTypeCounts: tuple[ int ]
@@ -80,33 +79,29 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    for filename, cellType, qualityMetrics, cellTypeCounts, metricsSummary in zip( filenames_all,
+    for meshName, cellType, qualityMetrics, cellTypeCounts, metricsSummary in zip( meshName_all,
                                                                                    cellTypes_all,
                                                                                    qualityMetrics_all,
                                                                                    cellTypeCounts_all,
                                                                                    metricsSummary_all,
                                                                                    strict=True ):
-        path: str = os.path.join( data_root, filename )
-        # load mesh
-        reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-        reader.SetFileName( path )
-        reader.Update()
-        mesh: vtkUnstructuredGrid = reader.GetOutputDataObject( 0 )
-        yield TestCase( mesh, cellType, qualityMetrics, cellTypeCounts, metricsSummary )
+        yield TestCase( meshName, cellType, qualityMetrics, cellTypeCounts, metricsSummary )
 
 
-ids: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in filenames_all ]
+ids: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in meshName_all ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
-def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
+def test_MeshQualityEnhanced( test_case: TestCase, dataSetTest: vtkUnstructuredGrid ) -> None:
     """Test of CellTypeCounterEnhanced filter.
 
     Args:
         test_case (TestCase): test case
+        dataSetTest: vtkUnstructuredGrid
     """
+    mesh: vtkUnstructuredGrid = dataSetTest( test_case.meshName )
     filter: MeshQualityEnhanced = MeshQualityEnhanced()
-    filter.SetInputDataObject( test_case.mesh )
+    filter.SetInputDataObject( mesh )
     if test_case.cellType == VTK_TRIANGLE:
         filter.SetTriangleMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_QUAD:
@@ -133,7 +128,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     assert cellData is not None, "Cell data is undefined."
 
     nbMetrics: int = len( test_case.qualityMetrics )
-    nbCellArrayExp: int = test_case.mesh.GetCellData().GetNumberOfArrays() + nbMetrics
+    nbCellArrayExp: int = mesh.GetCellData().GetNumberOfArrays() + nbMetrics
     assert cellData.GetNumberOfArrays() == nbCellArrayExp, f"Number of cell arrays is expected to be {nbCellArrayExp}."
 
     # test field data
@@ -144,7 +139,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     nbPolygon = 0 if nbPolygon == 0 else nbPolygon + 1
     nbPolyhedra: int = np.sum( tmp[ 2:6 ].astype( int ) )
     nbPolyhedra = 0 if nbPolyhedra == 0 else nbPolyhedra + 1
-    nbFieldArrayExp: int = test_case.mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * (
+    nbFieldArrayExp: int = mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * (
         nbPolygon + nbPolyhedra )
     assert fieldData.GetNumberOfArrays(
     ) == nbFieldArrayExp, f"Number of field data arrays is expected to be {nbFieldArrayExp}."
