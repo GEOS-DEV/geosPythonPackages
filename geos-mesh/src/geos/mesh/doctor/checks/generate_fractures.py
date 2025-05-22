@@ -14,6 +14,7 @@ from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.util.vtkConstants import VTK_ID_TYPE
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
 from geos.mesh.utils.arrayHelpers import has_array
+
 from geos.mesh.utils.genericHelpers import to_vtk_id_list, vtk_iter
 from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 """
