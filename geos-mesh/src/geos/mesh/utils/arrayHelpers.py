@@ -26,48 +26,38 @@ These methods include:
 """
 
 
-def has_invalid_field( mesh: vtkUnstructuredGrid, invalid_fields: list[ str ] ) -> bool:
-    """Checks if a mesh contains at least a data arrays within its cell, field or point data
-    having a certain name. If so, returns True, else False.
+def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
+    """Checks if input mesh contains at least one of input data arrays.
 
     Args:
         mesh (vtkUnstructuredGrid): An unstructured mesh.
-        invalid_fields (list[str]): Field name of an array in any data from the data.
+        array_names (list[str]): List of array names.
 
     Returns:
-        bool: True if one field found, else False.
+        bool: True if at least one array is found, else False.
     """
     # Check the cell data fields
-    cell_data = mesh.GetCellData()
-    for i in range( cell_data.GetNumberOfArrays() ):
-        if cell_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid cell field name '{cell_data.GetArrayName( i )}'." )
-            return True
-    # Check the field data fields
-    field_data = mesh.GetFieldData()
-    for i in range( field_data.GetNumberOfArrays() ):
-        if field_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid field name '{field_data.GetArrayName( i )}'." )
-            return True
-    # Check the point data fields
-    point_data = mesh.GetPointData()
-    for i in range( point_data.GetNumberOfArrays() ):
-        if point_data.GetArrayName( i ) in invalid_fields:
-            logging.error( f"The mesh contains an invalid point field name '{point_data.GetArrayName( i )}'." )
-            return True
+    data: vtkFieldData | None
+    for data in ( mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData() ):
+        if data is None:
+            continue  # type: ignore[unreachable]
+        for arrayName in array_names:
+            if data.HasArray( arrayName ):
+                logging.error( f"The mesh contains the array named '{arrayName}'." )
+                return True
     return False
 
 
 def getFieldType( data: vtkFieldData ) -> str:
-    """A vtk grid can contain 3 types of field data:
+    """Returns whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
+
+    A vtk mesh can contain 3 types of field data:
     - vtkFieldData (parent class)
     - vtkCellData  (inheritance of vtkFieldData)
     - vtkPointData (inheritance of vtkFieldData)
 
-    The goal is to return whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
-
     Args:
-        data (vtkFieldData)
+        data (vtkFieldData): vtk field data
 
     Returns:
         str: "vtkFieldData", "vtkCellData" or "vtkPointData"
@@ -86,7 +76,7 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
 
     Args:
-        data (vtkFieldData)
+        data (vtkFieldData): vtk field data
 
     Returns:
         list[ str ]: The array names in the order that they are stored in the field data.
@@ -100,8 +90,9 @@ def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
     """Get the vtkDataArray corresponding to the given name.
 
     Args:
-        data (vtkFieldData)
-        name (str)
+        data (vtkFieldData): vtk field data
+        name (str): array name
+
 
     Returns:
         Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
@@ -116,8 +107,9 @@ def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArra
     """Get the copy of a vtkDataArray corresponding to the given name.
 
     Args:
-        data (vtkFieldData)
-        name (str)
+        data (vtkFieldData): vtk field data
+        name (str): array name
+
 
     Returns:
         Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
@@ -132,7 +124,8 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     """Get a numpy array of the GlobalIds.
 
     Args:
-        data (Union[ vtkCellData, vtkPointData ])
+        data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
+
 
     Returns:
         Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
@@ -144,26 +137,25 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: vtkFieldData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
+def getNumpyArrayByName( data: vtkCellData | vtkPointData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
     """Get the numpy array of a given vtkDataArray found by its name.
+
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
     no reordering will be perform.
 
     Args:
-        data (vtkFieldData)
-        name (str)
+        data (vtkCellData | vtkPointData): vtk field data.
+        name (str): Array name to sort
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
     Returns:
-        Optional[ npt.NDArray ]
+        Optional[ npt.NDArray ]: Sorted array
     """
     dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
     if dataArray is not None:
-        arr: Optional[ npt.NDArray ] = vtk_to_numpy( dataArray )
-        if sorted:
-            fieldType: str = getFieldType( data )
-            if fieldType in [ "vtkCellData", "vtkPointData" ]:
-                sortArrayByGlobalIds( data, arr )
+        arr: npt.NDArray[ np.float64 ] = vtk_to_numpy( dataArray )
+        if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
+            sortArrayByGlobalIds( data, arr )
         return arr
     return None
 
@@ -491,7 +483,8 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
 
     """
     array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
-    componentNames: list[ str ] = list()
+    componentNames: list[ str ] = []
+
     if array.GetNumberOfComponents() > 1:
         componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     return tuple( componentNames )
@@ -658,12 +651,12 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     return pts.GetData()
 
 
-def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkFieldData ], arr: npt.NDArray[ np.int64 ] ) -> None:
-    """Sort an array following global Ids
+def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDArray[ np.float64 ] ) -> None:
+    """Sort an array following global Ids.
 
     Args:
         data (vtkFieldData): Global Ids array
-        arr (npt.NDArray[ np.int64 ]): Array to sort
+        arr (npt.NDArray[ np.float64 ]): Array to sort
     """
     globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
     if globalids is not None:

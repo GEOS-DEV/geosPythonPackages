@@ -13,7 +13,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, v
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.util.vtkConstants import VTK_ID_TYPE
 from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
-from geos.mesh.utils.arrayHelpers import has_invalid_field
+from geos.mesh.utils.arrayHelpers import has_array
+
 from geos.mesh.utils.genericHelpers import to_vtk_id_list, vtk_iter
 from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 """
@@ -558,7 +559,7 @@ def check( vtk_input_file: str, options: Options ) -> Result:
     try:
         mesh = read_mesh( vtk_input_file )
         # Mesh cannot contain global ids before splitting.
-        if has_invalid_field( mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
+        if has_array( mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             err_msg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +
                              " is to split the mesh and then generate global ids for new split meshes." )
             logging.error( err_msg )

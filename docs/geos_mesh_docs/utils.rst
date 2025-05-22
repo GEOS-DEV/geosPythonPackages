@@ -1,7 +1,7 @@
 Mesh utilities
 ^^^^^^^^^^^^^^^^
 
-The `utils` module of `geos-mesh` package contains different utilities methods for VTK meshes.
+The `utils` module of `geos-mesh` package contains various utilities for VTK meshes.
 
 
 geos.mesh.utils.genericHelpers module

@@ -160,6 +160,7 @@ def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False 
 
 def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
     """Write mesh to disk.
+
     Nothing is done if file already exists.
 
     Args:
