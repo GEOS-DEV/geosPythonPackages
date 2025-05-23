@@ -139,8 +139,8 @@ def test_MeshQualityEnhanced( test_case: TestCase, dataSetTest: vtkUnstructuredG
     nbPolygon = 0 if nbPolygon == 0 else nbPolygon + 1
     nbPolyhedra: int = np.sum( tmp[ 2:6 ].astype( int ) )
     nbPolyhedra = 0 if nbPolyhedra == 0 else nbPolyhedra + 1
-    nbFieldArrayExp: int = mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * (
-        nbPolygon + nbPolyhedra )
+    nbFieldArrayExp: int = mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * ( nbPolygon +
+                                                                                                  nbPolyhedra )
     assert fieldData.GetNumberOfArrays(
     ) == nbFieldArrayExp, f"Number of field data arrays is expected to be {nbFieldArrayExp}."
 
