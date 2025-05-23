@@ -16,7 +16,10 @@ from geos_trame.schema_generated.schema_mod import (
 import geos_trame.app.ui.viewer.regionViewer as RegionViewer
 import geos_trame.app.ui.viewer.wellViewer as WellViewer
 import geos_trame.app.ui.viewer.perforationViewer as PerforationViewer
+from geos_trame.app.geosTrameException import GeosTrameException
+
 import numpy as np
+from typing import Type, Any
 
 pv.OFF_SCREEN = True
 
@@ -203,10 +206,15 @@ class DeckViewer( vuetify.VCard ):
             self.well_engine.remove( path )
             return
 
-        points = self.__parse_polyline_node_coords( well.polyline_node_coords )
+        points = self.__parse_polyline_property( well.polyline_node_coords, dtype=float )
+        connectivity = self.__parse_polyline_property( well.polyline_segment_conn, dtype=int )
+        connectivity = connectivity.flatten()
 
-        well_polydata: pv.PolyData
-        well_polydata = pv.points.lines_from_points( points )
+        sorted_points = []
+        for id in connectivity:
+            sorted_points.append(points[id])
+
+        well_polydata = pv.MultipleLines(sorted_points)
         index = self.well_engine.add_mesh( well_polydata, path )
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( index ) )
@@ -312,22 +320,26 @@ class DeckViewer( vuetify.VCard ):
 
         self._perforations[ path ] = saved_perforation
 
-    def __parse_polyline_node_coords( self, polyline_node_coords: str ):
+    def __parse_polyline_property( self, property: str, dtype : Type[Any] ) -> np.ndarray[Any]:
         """
-        Internal method used to parse and convert a polyline_node_coords from an InternalWell.
-        This string always follow this for : "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"
+        Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
+        This string always follow this for :
+            "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"
         """
-        nodes_str = polyline_node_coords.split( "}, {" )
-        nodes_str[ 0 ] = nodes_str[ 0 ].replace( " ", "" )
-        nodes_str[ 0 ] = nodes_str[ 0 ].replace( "{", "" )
-        nodes_str[ 1 ] = nodes_str[ 1 ].replace( " ", "" )
-        nodes_str[ 1 ] = nodes_str[ 1 ].replace( "}", "" )
+        try:
+            nodes_str = property.split( "}, {" )
+            points = []
+            for i in range(0, len(nodes_str)):
 
-        top_point = np.array( nodes_str[ 0 ].split( "," ), dtype=float )
-        bottom_point = np.array( nodes_str[ 1 ].split( "," ), dtype=float )
+                nodes_str[ i ] = nodes_str[ i ].replace( " ", "" )
+                nodes_str[ i ] = nodes_str[ i ].replace( "{", "" )
+                nodes_str[ i ] = nodes_str[ i ].replace( "}", "" )
 
-        points = []
-        points.append( top_point )
-        points.append( bottom_point )
+                point = np.array( nodes_str[ i ].split( "," ), dtype=dtype )
 
-        return points
+                points.append( point )
+
+            return np.array(points,dtype=dtype)
+        except ValueError:
+            raise GeosTrameException("cannot be able to convert the property into a numeric array: ", ValueError)
+
