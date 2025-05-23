@@ -1,0 +1,363 @@
+<?xml version="1.0" ?>
+<?xml-model href="schema.xsd" ?>
+
+<Problem> 
+    <Solvers>
+        <CompositionalMultiphaseReservoir
+            name="coupledFlowAndWells"
+            flowSolverName="compositionalMultiphaseFlow"
+            wellSolverName="compositionalMultiphaseWell"
+            logLevel="1"
+            initialDt="1e2"
+            targetRegions="{ Reservoir, Caprock, Overburden, Underburden, Salt, wellRegion1, wellRegion2 }">
+            <NonlinearSolverParameters
+                newtonTol="1.0e-3"
+                lineSearchAction="Attempt"
+                maxTimeStepCuts="10"
+                newtonMaxIter="20"/>
+            <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="mgr"
+                krylovTol="1e-6"
+                krylovAdaptiveTol="1"
+                krylovWeakestTol="1e-2"/>
+        </CompositionalMultiphaseReservoir>
+
+        <CompositionalMultiphaseFVM
+            name="compositionalMultiphaseFlow"
+            targetRegions="{ Reservoir, Caprock, Overburden, Underburden, Salt }"
+            discretization="fluidTPFA"
+            temperature="368.15"
+			targetPhaseVolFractionChangeInTimeStep="0.07"
+            maxCompFractionChange="0.2"
+            logLevel="1"
+            useMass="1"/>
+
+        <CompositionalMultiphaseWell
+            name="compositionalMultiphaseWell"
+            targetRegions="{ wellRegion1, wellRegion2 }"
+            logLevel="1"
+            useMass="1">
+            <WellControls
+                name="wellControls1"
+                logLevel="1"
+                type="injector"
+                control="totalVolRate"
+                referenceElevation="395.646"
+                targetBHP="1e8"
+                enableCrossflow="0"
+                targetTotalRateTableName="totalRateTable"
+                injectionTemperature="368.15"
+                injectionStream="{ 0.995, 0.005 }"/>
+            <WellControls
+                name="wellControls2"
+                logLevel="1"
+                type="injector" 
+                control="totalVolRate" 
+                referenceElevation="395.646" 
+                targetBHP="1e8"
+                enableCrossflow="0"
+                targetTotalRateTableName="totalRateTable"
+                injectionTemperature="368.15"
+                injectionStream="{ 0.995, 0.005 }"/>
+        </CompositionalMultiphaseWell>
+    </Solvers>
+
+    <Mesh>
+        <!-- Reuse singlePhaseFlow for the testing -->
+        <VTKMesh
+            name="SyntheticMesh"
+            file="../singlePhaseFlow/synthetic.vtu"
+            logLevel="1" >
+
+            <!-- Block to comment to deactivate external well definition -->
+            <VTKWell
+                name="well_1"
+                file="well_1.vtk"
+                wellRegionName="wellRegion1"
+                wellControlsName="wellControls1"
+                radius="0.050"
+                numElementsPerSegment="1">
+                <Perforation
+                    name="well_1_perf_0"
+                    distanceFromHead="415.646"/>
+                <Perforation
+                    name="well_1_perf_1"
+                    distanceFromHead="495.646"/>
+                <Perforation
+                    name="well_1_perf_2"
+                    distanceFromHead="745.646"/>
+            </VTKWell>
+            <!-- End Block to comment to deactivate external well definition -->
+
+            <!-- Block to comment to deactivate internal well definition -->
+            <InternalWell
+                name="well_2"
+                logLevel="2"
+                wellRegionName="wellRegion2" 
+                wellControlsName="wellControls2"
+                polylineNodeCoords="{ { 800, 1450, 395.646 }, 
+                                      { 800, 1450, -200.0 },
+                                      { 800, 1450, 0.0 },
+                                      { 800, 1450, -554.354 } }"
+                polylineSegmentConn="{ { 0, 2 }, { 2, 1 }, { 1, 3 } }" 
+                radius="0.050"
+                numElementsPerSegment="5">
+                <Perforation   
+                    name="well_3_perf_0"
+                    distanceFromHead="245.646"/>
+                <Perforation
+                    name="well_3_perf_1"
+                    distanceFromHead="425.646"/>
+                <Perforation
+                    name="well_3_perf_2"
+                    distanceFromHead="545.646"/>
+                <Perforation
+                    name="well_3_perf_3"
+                    distanceFromHead="720.646"/>
+                <Perforation
+                    name="well_3_perf_4"
+                    distanceFromHead="875.646"/>
+            </InternalWell>
+            <!-- End Block to comment to deactivate internal well definition -->
+        </VTKMesh>
+    </Mesh>
+
+    <!-- Block to comment to deactivate box definition -->
+    <Geometry>
+        <Box
+        name="box_1"
+        xMin="{ 1150, 700, 62 }"
+        xMax="{ 1250, 800, 137 }"/>
+    </Geometry>
+    <!-- End Block to comment to deactivate box definition -->
+
+    <Events 
+        maxTime="5e8">
+        <PeriodicEvent
+            name="outputInjectionPeriod"
+            timeFrequency="15768000"
+            beginTime="0"
+            endTime="1.6e8"
+            target="/Outputs/vtkOutput"/>
+        <PeriodicEvent
+            name="outputPostInjectionPeriod"
+            timeFrequency="31536000"
+            beginTime="1.6e8"
+            endTime="5e8"
+            target="/Outputs/vtkOutput"/>
+
+        <PeriodicEvent
+            name="statistics"
+            timeFrequency="31536000"
+            target="/Tasks/compflowStatistics"/>
+        
+        <PeriodicEvent
+            name="solverApplicationsInjectionPeriod"      
+            beginTime="0"
+            endTime="1.6e8"
+            maxEventDt="5e5"        
+            target="/Solvers/coupledFlowAndWells"/>
+        <PeriodicEvent
+            name="solverApplicationsPostInjectionPeriod1"      
+            beginTime="1.6e8"
+            endTime="1.6001e8"
+            maxEventDt="10000"        
+            target="/Solvers/coupledFlowAndWells"/>
+        <PeriodicEvent
+            name="solverApplicationsPostInjectionPeriod2"      
+            beginTime="1.6001e8"
+            endTime="5e8"
+            maxEventDt="5e6"        
+            target="/Solvers/coupledFlowAndWells"/>
+    </Events>
+
+    <NumericalMethods>
+        <FiniteVolume>
+            <TwoPointFluxApproximation
+                name="fluidTPFA"
+            />
+        </FiniteVolume>
+    </NumericalMethods>
+
+    <ElementRegions>
+
+        <CellElementRegion
+            name="Reservoir"
+            cellBlocks="{ 2_tetrahedra }"
+            materialList="{ fluid, rock_reservoir, relperm }"/>
+
+        <CellElementRegion
+            name="Caprock"
+            cellBlocks="{ 4_tetrahedra}"
+            materialList="{ fluid, rock_caprock, relperm }"/>
+
+        <CellElementRegion
+            name="Overburden"
+            cellBlocks="{ 3_tetrahedra }"
+            materialList="{ fluid, rock_burden, relperm }"/>
+
+        <CellElementRegion
+            name="Underburden"
+            cellBlocks="{ 1_tetrahedra }"
+            materialList="{ fluid, rock_burden, relperm }"/>
+
+        <CellElementRegion
+            name="Salt"
+            cellBlocks="{ 0_tetrahedra}"
+            materialList="{ fluid, rock_salt, relperm }"/>
+
+        <WellElementRegion
+            name="wellRegion1"
+            materialList="{ fluid, relperm, rockPerm_burden }"/>
+        <WellElementRegion 
+            name="wellRegion2"
+            materialList="{ fluid, relperm, rockPerm_burden }"  />
+
+    </ElementRegions>
+
+    <Constitutive>
+        <CO2BrinePhillipsFluid
+            name="fluid"
+            phaseNames="{ gas, water }"
+            componentNames="{ co2, water }"
+            componentMolarWeight="{ 44e-3, 18e-3 }"
+            phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+            flashModelParaFile="co2flash.txt"/>
+
+        <CompressibleSolidConstantPermeability
+            name="rock_burden"
+            solidModelName="nullSolid"
+            porosityModelName="rockPorosity_burden"
+            permeabilityModelName="rockPerm_burden"/>
+
+        <CompressibleSolidConstantPermeability
+            name="rock_salt"
+            solidModelName="nullSolid"
+            porosityModelName="rockPorosity_salt"
+            permeabilityModelName="rockPerm_salt"/>
+
+        <CompressibleSolidConstantPermeability
+            name="rock_reservoir"
+            solidModelName="nullSolid"
+            porosityModelName="rockPorosity_reservoir"
+            permeabilityModelName="rockPerm_reservoir"/>
+
+        <CompressibleSolidConstantPermeability
+            name="rock_caprock"
+            solidModelName="nullSolid"
+            porosityModelName="rockPorosity_caprock"
+            permeabilityModelName="rockPerm_caprock"/>
+
+        <NullModel
+            name="nullSolid"/>
+
+        <PressurePorosity
+            name="rockPorosity_burden"
+            defaultReferencePorosity="0.2"
+            referencePressure="1.0e7"
+            compressibility="4.5e-10"/>
+
+        <PressurePorosity
+            name="rockPorosity_salt"
+            defaultReferencePorosity="0.1"
+            referencePressure="1.0e7"
+            compressibility="4.5e-10"/>
+
+        <PressurePorosity
+            name="rockPorosity_reservoir"
+            defaultReferencePorosity="0.25"
+            referencePressure="1.0e7"
+            compressibility="4.5e-10"/>
+
+        <PressurePorosity
+            name="rockPorosity_caprock"
+            defaultReferencePorosity="0.15"
+            referencePressure="1.0e7"
+            compressibility="4.5e-10"/>
+
+        <BrooksCoreyRelativePermeability
+            name="relperm"
+            phaseNames="{ gas, water }"
+            phaseMinVolumeFraction="{ 0.05, 0.30 }"
+            phaseRelPermExponent="{ 2.0, 2.0 }"
+            phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+
+        <ConstantPermeability
+            name="rockPerm_burden"
+            permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
+
+        <ConstantPermeability
+            name="rockPerm_salt"
+            permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+        <ConstantPermeability
+            name="rockPerm_reservoir"
+            permeabilityComponents="{ 1.0e-11, 1.0e-11, 1.0e-11 }"/>
+
+        <ConstantPermeability
+            name="rockPerm_caprock"
+            permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+    </Constitutive>
+
+    <FieldSpecifications>
+       <FieldSpecification
+            name="initialPressure"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="pressure"
+            scale="1.25e7"/>
+
+        <FieldSpecification
+            name="initialComposition_co2"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="globalCompFraction"
+            component="0"
+            scale="0.0"/>
+
+        <FieldSpecification
+            name="initialComposition_water"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="globalCompFraction"
+            component="1"
+            scale="1.0"/>    
+        
+        <SourceFlux
+            name="sourceFlux"
+            objectPath="ElementRegions/Overburden"
+            setNames="{ box_1 }"
+            component="0"
+            scale="-0.1"/>
+    </FieldSpecifications>
+
+    <Outputs>
+        <VTK
+            name="vtkOutput"/>
+    </Outputs>
+
+    <Tasks>
+
+        <CompositionalMultiphaseStatistics
+            name="compflowStatistics"
+            flowSolverName="compositionalMultiphaseFlow"
+            logLevel="1"
+            computeCFLNumbers="1"
+            computeRegionStatistics="1"/>
+    
+    </Tasks>
+
+    <Functions>
+        <TableFunction
+            name="totalRateTable"
+            inputVarNames="{time}"
+            interpolation="lower"
+            coordinates="{ 0, 1.6e8, 5e8 }"
+            values="{ 3e-2, 0, 0 }"/>
+    </Functions>
+
+</Problem>

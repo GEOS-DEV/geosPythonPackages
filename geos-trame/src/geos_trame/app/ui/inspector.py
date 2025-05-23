@@ -7,6 +7,7 @@ from enum import Enum
 import yaml
 from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify
+from trame.widgets import html
 from trame_simput import get_simput_manager
 from typing import Any
 
@@ -15,6 +16,7 @@ class Renderable( Enum ):
     VTKMESH = "VTKMesh"
     INTERNALMESH = "InternalMesh"
     INTERNALWELL = "InternalWell"
+    VTKWELL = "VTKWell"
     PERFORATION = "Perforation"
 
 
@@ -100,7 +102,7 @@ def get_node_dict( obj, node_id, path ):
         title=node_name,
         children=children if len( children ) else [],
         hidden_children=[],
-        is_drawable=node_id in ( k for k in Renderable ),
+        is_drawable=node_id in ( k.value for k in Renderable ),
         drawn=False,
     )
 
@@ -180,20 +182,15 @@ class DeckInspector( vuetify.VTreeview ):
             **{
                 # style
                 "hoverable": True,
+                "max_width": 500,
                 "rounded": True,
-                # "dense": True,
-                # "density": "compact",
-                # "active_color": "blue",
                 # activation logic
-                # "activatable": True,
-                # "active_strategy": "single-independent",
-                # "activated": ("active_ids", ),
-                # "update_activated": "(active_ids) => {active_id = active_ids[0]}",
+                "activatable": True,
+                "activated": ( "active_ids", ),
+                "active_strategy": "single-independent",
+                "update_activated": ( self.change_current_id, "$event" ),
                 # selection logic
-                "selectable": True,
-                "select_strategy": "single-independent",
-                "selected": ( "active_ids", ),
-                "update_selected": "(active_ids) => {active_id = active_ids[0]}",
+                "selectable": False,
                 **kwargs,
             },
         )
@@ -201,7 +198,7 @@ class DeckInspector( vuetify.VTreeview ):
         self._source = None
         self.listen_to_active = listen_to_active
 
-        self.state.obj_path = ""
+        self.state.object_state = [ "", False ]
 
         # register used types from Problem
         self.simput_types = []
@@ -225,18 +222,17 @@ class DeckInspector( vuetify.VTreeview ):
 
         with self:
             with vuetify.Template( v_slot_append="{ item }" ):
-                with vuetify.VBtn(
-                        v_if=( "item.is_drawable" ),
-                        icon=True,
-                        flat=True,
-                        slim=True,
-                        input_value=( "item.drawn" ),
-                        click=( self.to_draw_change, "[item.id]" ),
-                ):
-                    vuetify.VIcon(
-                        "{{ ((item.drawn)) ? 'mdi-eye' : 'mdi-eye-off' }}",
-                        v_if=( "item.is_drawable" ),
-                    )
+                vuetify.VCheckboxBtn( v_if="item.is_drawable",
+                                      focused=True,
+                                      dense=True,
+                                      hide_details=True,
+                                      icon=True,
+                                      false_icon="mdi-eye-off",
+                                      true_icon="mdi-eye",
+                                      update_modelValue=( self.to_draw_change, "[ item, item.id, $event ] " ) )
+
+    def to_draw_change( self, item, item_id, drawn ):
+        self.state.object_state = [ item_id, drawn ]
 
     @property
     def source( self ):
@@ -298,13 +294,14 @@ class DeckInspector( vuetify.VTreeview ):
                     debug.set_property( key, getattr( active_block, key ) )
                 debug.commit()
 
-    def to_draw_change( self, path ):
-        self.state.obj_path = path
+    def change_current_id( self, item_id=None ):
+        """
+        Change the current id of the tree.
+        This function is called when the user click on the tree.
+        """
+        if item_id is None:
+            # Silently ignore, it could occurs is the user click on the tree
+            # and this item is already selected
+            return
 
-    # def on_active_change(self, **_):
-    #     if self.listen_to_active:
-    #         print("on_active_change")
-    # self.set_source_proxy(simple.GetActiveSource())
-
-    # def on_selection_change(self, node_active, **_):
-    #     print("on_selection_change", node_active)
+        self.state.active_id = item_id
