@@ -64,9 +64,10 @@
     </Solvers>
 
     <Mesh>
+        <!-- Reuse singlePhaseFlow for the testing -->
         <VTKMesh
             name="SyntheticMesh"
-            file="ModelA.vtu"
+            file="../singlePhaseFlow/synthetic.vtu"
             logLevel="1" >
 
             <!-- Block to comment to deactivate external well definition -->
