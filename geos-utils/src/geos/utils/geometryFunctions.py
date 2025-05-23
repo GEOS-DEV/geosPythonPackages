@@ -145,3 +145,112 @@ def getPointSideAgainstPlane(
     dot: float = np.dot( planeNormal, vec )
     assert abs( dot ) > EPSILON, "The point is on the plane."
     return dot > 0
+
+
+def computeAngleFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
+                            pt3: npt.NDArray[ np.float64 ] ) -> float:
+    """Compute angle from 3 points.
+
+    Args:
+        pt1 (npt.NDArray[np.float64]): first point
+        pt2 (npt.NDArray[np.float64]): second point
+        pt3 (npt.NDArray[np.float64]): third point
+
+    Returns:
+        float: angle
+    """
+    # compute vectors
+    vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
+    vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+    return computeAngleFromVectors( vec1, vec2 )
+
+
+def computeAngleFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> float:
+    """Compute angle from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): first vector
+        vec2 (npt.NDArray[np.float64]): second vector
+
+    Returns:
+        float: angle
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
+    # normalization
+    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
+    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+    dot: float = np.dot( vec1, vec2 )
+    det: float = np.linalg.det( ( vec1_norm, vec2_norm ) )
+    # truncation due to numerical approximations
+    if dot > 1.:
+        dot = 1.
+    if dot < -1.:
+        dot = -1.
+    teta: float = np.arccos( dot )
+    if det < 0:
+        teta = 2.0 * np.pi - teta
+    return teta
+
+
+def computeCosineFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> float:
+    """Compute cosine from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): first vector
+        vec2 (npt.NDArray[np.float64]): second vector
+
+    Returns:
+        float: cosine
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
+    # normalization
+    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
+    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+    return np.dot( vec1_norm, vec2_norm )
+
+
+def computeNormalFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
+                             pt3: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """Compute the normal of a plane defined from 3 points.
+
+    Args:
+        pt1 (npt.NDArray[np.float64]): first point
+        pt2 (npt.NDArray[np.float64]): second point
+        pt3 (npt.NDArray[np.float64]): third point
+
+    Returns:
+        npt.NDArray[np.float64]: normal vector coordinates
+    """
+    # compute vectors
+    vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
+    vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+    return computeNormalFromVectors( vec1, vec2 )
+
+
+def computeNormalFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
+    """Compute the normal of a plane defined from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): first vector
+        vec2 (npt.NDArray[np.float64]): second vector
+
+    Returns:
+        npt.NDArray[np.float64]: normal vector coordinates
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "first and second points must be different"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second and third points must be different"
+    # normalization
+    vec1_norm = vec1 / np.linalg.norm( vec1 )
+    vec2_norm = vec2 / np.linalg.norm( vec2 )
+    return np.cross( vec1_norm, vec2_norm )
