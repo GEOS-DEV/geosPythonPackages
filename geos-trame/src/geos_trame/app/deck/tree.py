@@ -11,22 +11,18 @@ from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
 
+from geos_trame.app.deck.file import DeckFile
 from geos_trame.app.geosTrameException import GeosTrameException
+from geos_trame.app.utils.file_utils import normalize_path, format_xml
 from geos_trame.schema_generated.schema_mod import BaseModel, Problem, Included, File
-
-from .file import DeckFile, format_xml, normalize_path
 
 from collections import defaultdict
 from trame_simput import get_simput_manager
 
 
-def recursive_dict( element ):
-    return element.tag, dict( map( recursive_dict, element ) ) or element.text
-
-
 class DeckTree( object ):
     """
-    A tree that represents an deck file along with all the available blocks and parameters.
+    A tree that represents a deck file along with all the available blocks and parameters.
     """
 
     def __init__( self, sm_id=None, **kwds ):
@@ -82,16 +78,16 @@ class DeckTree( object ):
         new_path.append( key )
         funcy.set_in( self.input_file.pb_dict, new_path, value )
 
-    def search( self, path ) -> dict:
-        new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
+    def search( self, path ) -> list | None:
+        new_path = path.split( "/" )
         if self.input_file is None:
-            return
+            return None
         return dpath.values( self.input_file.pb_dict, new_path )
 
     def decode( self, path ):
         data = self.search( path )
         if data is None:
-            return
+            return None
 
         context = XmlContext(
             element_name_generator=text.pascal_case,
@@ -101,7 +97,7 @@ class DeckTree( object ):
         node = decoder.decode( data[ 0 ] )
         return node
 
-    def decode_data( self, data: BaseModel ) -> str:
+    def decode_data( self, data: BaseModel | None ) -> str:
         """
         Convert a data to a xml serializable file
         """
@@ -385,14 +381,3 @@ class DeckTree( object ):
                     restructured_files[ file_path ][ tag ] = contents
 
         return restructured_files
-
-
-if __name__ == "__main__":
-    import sys
-
-    if len( sys.argv ) < 3:
-        print( "Usage: <path_to_exe> <path_to_input_file>" )
-        exit( 1 )
-    input_file_path = sys.argv[ 2 ]
-    deck_tree = DeckTree()
-    deck_tree.setInputFile( input_file_path )

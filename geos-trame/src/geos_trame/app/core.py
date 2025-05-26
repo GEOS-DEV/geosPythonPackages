@@ -10,6 +10,9 @@ from trame_simput import get_simput_manager
 
 from geos_trame import module
 from geos_trame.app.deck.tree import DeckTree
+from geos_trame.app.io.data_loader import DataLoader
+from geos_trame.app.ui.viewer.regionViewer import RegionViewer
+from geos_trame.app.ui.viewer.wellViewer import WellViewer
 from geos_trame.app.utils.properties_checker import PropertiesChecker
 from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
@@ -26,6 +29,12 @@ class GeosTrame:
 
     def __init__( self, server, file_name: str ):
 
+        self.alertHandler = None
+        self.deckPlotting = None
+        self.deckViewer = None
+        self.deckEditor = None
+        self.timelineEditor = None
+        self.deckInspector = None
         self.server = server
         server.enable_module( module )
 
@@ -51,14 +60,21 @@ class GeosTrame:
         # Tree
         self.tree = DeckTree( self.state.sm_id )
 
+        # Viewers
+        self.region_viewer = RegionViewer()
+        self.well_viewer = WellViewer( 5, 5 )
+
+        # Data loader
+        self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
+
         # Properties checker
-        self.properties_checker = PropertiesChecker(self.tree, trame_server=server)
+        self.properties_checker = PropertiesChecker( self.tree, trame_server=server )
 
         # TODO put as a modal window
         self.set_input_file( file_name=self.state.input_file )
 
         # Load components
-        self.ui = self.build_ui()
+        self.build_ui()
 
     @property
     def state( self ):
@@ -68,7 +84,7 @@ class GeosTrame:
     def ctrl( self ):
         return self.server.controller
 
-    def set_input_file( self, file_name, file_str=None ):
+    def set_input_file( self, file_name ):
         """sets the input file of the InputTree object and populates simput/ui"""
         self.tree.set_input_file( file_name )
 
@@ -80,7 +96,7 @@ class GeosTrame:
                     order=1,
             ):
                 self.deckInspector = DeckInspector( source=self.tree, classes="fit-content" )
-                vuetify.VBtn(text="Check fields", classes="ma-4", click=(self.properties_checker.check_fields,))
+                vuetify.VBtn( text="Check fields", classes="ma-4", click=( self.properties_checker.check_fields, ) )
 
             with vuetify.VCol(
                     cols=10,
@@ -105,6 +121,8 @@ class GeosTrame:
                     ):
                         self.deckViewer = DeckViewer(
                             source=self.tree,
+                            region_viewer=self.region_viewer,
+                            well_viewer=self.well_viewer,
                             classes="ma-2",
                             style="flex: 1; height: 60%; width: 100%;",
                         )
@@ -115,7 +133,7 @@ class GeosTrame:
                             style="flex: 1; height: 40%; width: 100%;",
                         )
 
-    def build_ui( self, *args, **kwargs ):
+    def build_ui( self ):
         """Generates the full UI for the GEOS Trame Application"""
 
         with VAppLayout( self.server ) as layout:
@@ -123,15 +141,11 @@ class GeosTrame:
 
             self.alertHandler = AlertHandler()
 
-            def on_tab_change( tab_idx ):
-                pass
-
             with html.Div( style="position: relative; display: flex; border-bottom: 1px solid gray", ):
                 with vuetify.VTabs(
                         v_model=( "tab_idx", 0 ),
                         style="z-index: 1;",
                         color="grey",
-                        change=( on_tab_change, "[$event]" ),
                 ):
                     for tab_label in [ "Input File", "Execute", "Results Viewer" ]:
                         vuetify.VTab( tab_label )
@@ -160,21 +174,14 @@ class GeosTrame:
                     ):
                         vuetify.VBtn(
                             "Run",
-                            # click=self.executor.run,
-                            # disabled=(
-                            #     "exe_running || exe_use_threading && exe_threads < 2 || exe_use_mpi && exe_processes < 2",
-                            # ),
                             style="z-index: 1;",
                         )
                         vuetify.VBtn(
                             "Kill",
-                            # click=self.executor.kill,
-                            # disabled=("!exe_running",),
                             style="z-index: 1;",
                         )
                         vuetify.VBtn(
                             "Clear",
-                            # click=self.ctrl.terminal_clear,
                             style="z-index: 1;",
                         )
 

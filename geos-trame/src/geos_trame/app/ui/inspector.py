@@ -1,176 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
-from dataclasses import dataclass
-from enum import Enum
+from typing import Any
 
 import yaml
 from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify, html
 from trame_simput import get_simput_manager
-from typing import Any
 
-
-class Renderable( Enum ):
-    VTKMESH = "VTKMesh"
-    INTERNALMESH = "InternalMesh"
-    INTERNALWELL = "InternalWell"
-    VTKWELL = "VTKWell"
-    PERFORATION = "Perforation"
-
-
-# Pure pydantic version
-#
-# class TreeNode(BaseModel):
-#     id: str
-#     name: str
-#     is_drawable: bool
-#     drawn: bool
-#     children: list['TreeNode']
-#     hidden_children: list['TreeNode']
-
-# def get_node(obj, node_id, path):
-#     children = []
-#     for name, info in obj.model_fields.items():
-#         if name in obj.model_fields_set:
-#             print(type(info))
-#             print(name, "-", info.annotation, " - ", get_origin(info.annotation), get_args(info.annotation)[0])
-#             metadata = getattr(info, "xsdata_metadata", None) or {}
-#             print(metadata["name"])
-#             if get_origin(info.annotation) is list:
-#                 attr= getattr(obj, name)
-#                 print(attr)
-#                 for idx, item in enumerate(attr):
-#                     children.append(get_node(item, name, path + [name] + [idx]))
-
-#     return TreeNode(
-#         id = "Problem/" + "/".join(map(str, path)),
-#         name = "metadata",
-#         children = children,
-#         hidden_children = [],
-#         is_drawable = node_id in Renderable,
-#         drawn = False,
-#     )
-
-
-@dataclass
-class TreeNode:
-    id: str
-    title: str
-    children: list
-    hidden_children: list
-    is_drawable: bool
-    drawn: bool
-    valid: int
-
-    @property
-    def json( self ) -> dict:
-        if self.children:
-            return dict(
-                id=self.id,
-                title=self.title,
-                is_drawable=self.is_drawable,
-                drawn=self.drawn,
-                valid=self.valid,
-                children=[ c.json for c in self.children ],
-                hidden_children=[ c.json for c in self.hidden_children ],
-            )
-        return dict(
-            id=self.id,
-            title=self.title,
-            is_drawable=self.is_drawable,
-            drawn=self.drawn,
-            valid=self.valid,
-            children=None,
-            hidden_children=[],
-        )
-
-
-def get_node_dict( obj, node_id, path ):
-    children = []
-    for key, value in obj.items():
-        # todo look isinstance(value, dict):
-        if isinstance( value, list ):
-            for idx, item in enumerate( value ):
-                if isinstance( item, dict ):
-                    children.append( get_node_dict( item, key, path + [ key ] + [ idx ] ) )
-
-    node_name = node_id
-    if "name" in obj:
-        node_name = obj[ "name" ]
-
-    return TreeNode(
-        id="Problem/" + "/".join( map( str, path ) ),
-        title=node_name,
-        children=children if len( children ) else [],
-        hidden_children=[],
-        is_drawable=node_id in ( k.value for k in Renderable ),
-        drawn=False,
-        valid=0
-    )
-
-
-def object_to_tree( obj: dict ) -> dict:
-    return get_node_dict( obj, "Problem", [] ).json
-
-
-def dump( item ):
-    match item:
-        case BaseModel() as model:
-            subitems: dict[ str, Any ] = dict()
-            model.model_fields
-
-            for field, value in model:
-
-                if isinstance( value, str ):
-                    subitems[ field ] = value
-                    continue
-
-            return subitems
-        case list() | tuple() | set():  # pyright: ignore
-            # Pyright finds this disgusting; this passes `mypy` though. `  # type:
-            # ignore` would fail `mypy` is it'd be unused (because there's nothing to
-            # ignore because `mypy` is content)
-            # return type(container)(  # pyright: ignore
-            #     _dump(i) for i in container  # pyright: ignore
-            # )
-            pass
-        case dict():
-            # return {
-            #     k: _dump(v)
-            #     for k, v in item.items()  # pyright: ignore[reportUnknownVariableType]
-            # }
-            pass
-        case _:
-            return item
-
-
-def iterate_nested_dict( iterable, returned="key" ):
-    """Returns an iterator that returns all keys or values
-    of a (nested) iterable.
-
-    Arguments:
-        - iterable: <list> or <dictionary>
-        - returned: <string> "key" or "value"
-
-    Returns:
-        - <iterator>
-    """
-
-    if isinstance( iterable, dict ):
-        for key, value in iterable.items():
-            if key == "id":
-                if not ( isinstance( value, dict ) or isinstance( value, list ) ):
-                    yield value
-            # else:
-            #     raise ValueError("'returned' keyword only accepts 'key' or 'value'.")
-            for ret in iterate_nested_dict( value, returned=returned ):
-                yield ret
-    elif isinstance( iterable, list ):
-        for el in iterable:
-            for ret in iterate_nested_dict( el, returned=returned ):
-                yield ret
-
+from geos_trame.app.types.renderable import Renderable
+from geos_trame.app.types.tree_node import TreeNode
+from geos_trame.app.utils.dict_utils import iterate_nested_dict
 
 vuetify.enable_lab()
 
@@ -201,7 +41,7 @@ class DeckInspector( vuetify.VTreeview ):
         self._source = None
         self.listen_to_active = listen_to_active
 
-        self.state.object_state = [ "", False ]
+        self.state.object_state = ( "", False )
 
         # register used types from Problem
         self.simput_types = []
@@ -225,26 +65,21 @@ class DeckInspector( vuetify.VTreeview ):
 
         with self:
             with vuetify.Template( v_slot_append="{ item }" ):
-                with vuetify.VTooltip(v_if=("item.valid == 2",)):
+                with vuetify.VTooltip( v_if=( "item.valid == 2", ) ):
                     with vuetify.Template(
-                            v_slot_activator=("{ props }",),
-                            __properties__=[("v_slot_activator", "v-slot:activator")],
+                            v_slot_activator=( "{ props }", ),
+                            __properties__=[ ( "v_slot_activator", "v-slot:activator" ) ],
                     ):
-                        vuetify.VIcon(
-                            v_bind=("props",),
-                            classes="mr-2",
-                            icon="mdi-close",
-                            color="red"
-                        )
-                    html.Div(v_if=("item.invalid_properties",), v_text=("'Invalid properties: ' + item.invalid_properties",))
-                    html.Div(v_if=("item.invalid_children",), v_text=("'Invalid children: ' + item.invalid_children",))
+                        vuetify.VIcon( v_bind=( "props", ), classes="mr-2", icon="mdi-close", color="red" )
+                    html.Div( v_if=( "item.invalid_properties", ),
+                              v_text=( "'Invalid properties: ' + item.invalid_properties", ) )
+                    html.Div( v_if=( "item.invalid_children", ),
+                              v_text=( "'Invalid children: ' + item.invalid_children", ) )
 
-                vuetify.VIcon(
-                    v_if=("item.valid < 2",),
-                    classes="mr-2",
-                    icon='mdi-check',
-                    color=("['gray', 'green'][item.valid]",)
-                )
+                vuetify.VIcon( v_if=( "item.valid < 2", ),
+                               classes="mr-2",
+                               icon='mdi-check',
+                               color=( "['gray', 'green'][item.valid]", ) )
                 vuetify.VCheckboxBtn( v_if="item.is_drawable",
                                       focused=True,
                                       dense=True,
@@ -252,10 +87,10 @@ class DeckInspector( vuetify.VTreeview ):
                                       icon=True,
                                       false_icon="mdi-eye-off",
                                       true_icon="mdi-eye",
-                                      update_modelValue=( self.to_draw_change, "[ item, item.id, $event ] " ) )
+                                      update_modelValue=( self.to_draw_change, "[ item.id, $event ] " ) )
 
-    def to_draw_change( self, item, item_id, drawn ):
-        self.state.object_state = [ item_id, drawn ]
+    def to_draw_change( self, item_id, drawn ):
+        self.state.object_state = ( item_id, drawn )
 
     @property
     def source( self ):
@@ -328,3 +163,60 @@ class DeckInspector( vuetify.VTreeview ):
             return
 
         self.state.active_id = item_id
+
+
+def get_node_dict( obj, node_id, path ):
+    children = []
+    for key, value in obj.items():
+        # todo look isinstance(value, dict):
+        if isinstance( value, list ):
+            for idx, item in enumerate( value ):
+                if isinstance( item, dict ):
+                    children.append( get_node_dict( item, key, path + [ key ] + [ idx ] ) )
+
+    node_name = node_id
+    if "name" in obj:
+        node_name = obj[ "name" ]
+
+    return TreeNode( id="Problem/" + "/".join( map( str, path ) ),
+                     title=node_name,
+                     children=children if len( children ) else [],
+                     hidden_children=[],
+                     is_drawable=node_id in ( k.value for k in Renderable ),
+                     drawn=False,
+                     valid=0 )
+
+
+def object_to_tree( obj: dict ) -> dict:
+    return get_node_dict( obj, "Problem", [] ).json
+
+
+def dump( item ):
+    match item:
+        case BaseModel() as model:
+            subitems: dict[ str, Any ] = dict()
+            model.model_fields
+
+            for field, value in model:
+
+                if isinstance( value, str ):
+                    subitems[ field ] = value
+                    continue
+
+            return subitems
+        case list() | tuple() | set():  # pyright: ignore
+            # Pyright finds this disgusting; this passes `mypy` though. `  # type:
+            # ignore` would fail `mypy` is it'd be unused (because there's nothing to
+            # ignore because `mypy` is content)
+            # return type(container)(  # pyright: ignore
+            #     _dump(i) for i in container  # pyright: ignore
+            # )
+            pass
+        case dict():
+            # return {
+            #     k: _dump(v)
+            #     for k, v in item.items()  # pyright: ignore[reportUnknownVariableType]
+            # }
+            pass
+        case _:
+            return item

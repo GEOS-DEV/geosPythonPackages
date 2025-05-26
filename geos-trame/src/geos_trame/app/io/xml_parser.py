@@ -22,7 +22,7 @@ class XMLParser( object ):
     Useful to be able to able to save it later.
     """
 
-    def __init__( self, filename: str ) -> None:
+    def __init__( self, filename: str ):
         """
         Constructor which takes in input the xml file used to generate pedantic file.
         """

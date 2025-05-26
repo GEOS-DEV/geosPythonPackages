@@ -3,23 +3,18 @@
 # SPDX-FileContributor: Lucas Givord - Kitware
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
-from trame.widgets import vuetify3 as vuetify
 from trame.widgets import html
+from trame.widgets import vuetify3 as vuetify
 
+import geos_trame.app.ui.viewer.perforationViewer as PerforationViewer
+import geos_trame.app.ui.viewer.regionViewer as RegionViewer
+import geos_trame.app.ui.viewer.wellViewer as WellViewer
 from geos_trame.schema_generated.schema_mod import (
     Vtkmesh,
     Vtkwell,
     Perforation,
     InternalWell,
 )
-
-import geos_trame.app.ui.viewer.regionViewer as RegionViewer
-import geos_trame.app.ui.viewer.wellViewer as WellViewer
-import geos_trame.app.ui.viewer.perforationViewer as PerforationViewer
-from geos_trame.app.geosTrameException import GeosTrameException
-
-import numpy as np
-from typing import Type, Any
 
 pv.OFF_SCREEN = True
 
@@ -41,7 +36,7 @@ class DeckViewer( vuetify.VCard ):
     Perforation settings.
     """
 
-    def __init__( self, source, **kwargs ):
+    def __init__( self, source, region_viewer: RegionViewer, well_viewer: WellViewer, **kwargs ):
         super().__init__( **kwargs )
 
         self._source = source
@@ -52,11 +47,11 @@ class DeckViewer( vuetify.VCard ):
         self.server.state[ self.CUT_PLANE ] = True
         self.server.state[ self.ZAMPLIFICATION ] = 1
 
-        self.region_engine = RegionViewer.RegionViewer()
-        self.well_engine = WellViewer.WellViewer( 5, 5 )
+        self.region_engine = region_viewer
+        self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer.PerforationViewer ] = dict()
 
-        self.state.change( "object_state" )( self.update_viewer )
+        self.ctrl.update_viewer.add( self.update_viewer )
 
         with self:
             vuetify.VCardTitle( "3D View" )
@@ -96,51 +91,24 @@ class DeckViewer( vuetify.VCard ):
                     )
             html.Span( "Show/Hide widgets" )
 
-    def update_viewer( self, object_state: list[ str, bool ], **kwargs ) -> None:
+    def update_viewer( self, active_block, path, show_obj ) -> None:
         """
         Add from path the dataset given by the user.
         Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation.
 
         object_state  : array used to store path to the data and if we want to show it or not.
         """
-        path = object_state[ 0 ]
-        show_obj = object_state[ 1 ]
-
-        if path == "":
-            return
-        active_block = self.source.decode( path )
 
         if isinstance( active_block, Vtkmesh ):
-            self._update_vtkmesh( active_block, show_obj )
+            self._update_vtkmesh( show_obj )
 
         if isinstance( active_block, Vtkwell ):
-            if self.region_engine.input.number_of_cells == 0 and show_obj:
-
-                self.ctrl.on_add_warning(
-                    "Can't display " + active_block.name,
-                    "Please display the mesh before creating a well.",
-                )
-                return
-
-            self._update_vtkwell( active_block, path, show_obj )
+            self._update_vtkwell( path, show_obj )
 
         if isinstance( active_block, InternalWell ):
-            if self.region_engine.input.number_of_cells == 0 and show_obj:
-                self.ctrl.on_add_warning(
-                    "Can't display " + active_block.name,
-                    "Please display the mesh before creating a well",
-                )
-                return
-
-            self._update_internalwell( active_block, path, show_obj )
+            self._update_internalwell( path, show_obj )
 
         if isinstance( active_block, Perforation ):
-            if self.well_engine.get_number_of_wells() == 0 and show_obj:
-                self.ctrl.on_add_warning(
-                    "Can't display " + active_block.name,
-                    "Please display a well before creating a perforation",
-                )
-                return
             self._update_perforation( active_block, show_obj, path )
 
     def _on_clip_visibility_change( self, **kwargs ):
@@ -210,58 +178,43 @@ class DeckViewer( vuetify.VCard ):
         for key, perforation in self._perforations.items():
             perforation.update_perforation_radius( value )
 
-    def _get_perforation_size( self ) -> float:
+    def _get_perforation_size( self ) -> float | None:
         if len( self._perforations ) <= 0:
-            return 5
+            return 5.0
 
         for key, perforation in self._perforations.items():
             return perforation.get_perforation_size()
+        return None
 
-    def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
+    def _update_internalwell( self, path: str, show: bool ) -> None:
         """
         Used to control the visibility of the InternalWell.
         This method will create the mesh if it doesn't exist.
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )
-            self.well_engine.remove( path )
             return
 
-        points = self.__parse_polyline_property( well.polyline_node_coords, dtype=float )
-        connectivity = self.__parse_polyline_property( well.polyline_segment_conn, dtype=int )
-        connectivity = connectivity.flatten()
-
-        sorted_points = []
-        for id in connectivity:
-            sorted_points.append( points[ id ] )
-
-        well_polydata = pv.MultipleLines( sorted_points )
-        index = self.well_engine.add_mesh( well_polydata, path )
-
-        tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( index ) )
+        tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
         self.well_engine.append_actor( path, tube_actor )
 
         self.server.controller.view_update()
 
-    def _update_vtkwell( self, well: Vtkwell, path: str, show: bool ) -> None:
+    def _update_vtkwell( self, path: str, show: bool ) -> None:
         """
         Used to control the visibility of the Vtkwell.
         This method will create the mesh if it doesn't exist.
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )
-            self.well_engine.remove( path )
             return
 
-        well_polydata = pv.PolyData.SafeDownCast( pv.read( self.source.get_abs_path( well.file ) ) )
-        index = self.well_engine.add_mesh( well_polydata, path )
-
-        tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( index ) )
+        tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
         self.well_engine.append_actor( path, tube_actor )
 
         self.server.controller.view_update()
 
-    def _update_vtkmesh( self, mesh: Vtkmesh, show: bool ) -> None:
+    def _update_vtkmesh( self, show: bool ) -> None:
         """
         Used to control the visibility of the Vtkmesh.
         This method will create the mesh if it doesn't exist.
@@ -270,13 +223,10 @@ class DeckViewer( vuetify.VCard ):
         """
 
         if not show:
-            self.region_engine.reset()
             self.plotter.clear_plane_widgets()
             self.plotter.remove_actor( self._clip_mesh )
             return
 
-        unsctructured_grid = pv.UnstructuredGrid.SafeDownCast( pv.read( self.source.get_abs_path( mesh.file ) ) )
-        self.region_engine.add_mesh( unsctructured_grid )
         active_scalar = self.region_engine.input.active_scalars_name
         self._clip_mesh = self.plotter.add_mesh_clip_plane(
             self.region_engine.input,
@@ -328,41 +278,15 @@ class DeckViewer( vuetify.VCard ):
             point[ 2 ] - distance_from_head,
         ]
 
-        center = [ point[ 0 ], point[ 1 ], point[ 2 ] - float( distance_from_head ) ]
+        center = [ float( point[ 0 ] ), float( point[ 1 ] ), point[ 2 ] - float( distance_from_head ) ]
         sphere = pv.Sphere( radius=5, center=center )
 
         perforation_actor = self.plotter.add_mesh( sphere )
         saved_perforation = PerforationViewer.PerforationViewer( sphere, center, 5, perforation_actor )
 
-        id = self.region_engine.input.find_closest_cell( point_offsetted )
-        cell = self.region_engine.input.extract_cells( [ id ] )
+        cell_id = self.region_engine.input.find_closest_cell( point_offsetted )
+        cell = self.region_engine.input.extract_cells( [ cell_id ] )
         cell_actor = self.plotter.add_mesh( cell )
         saved_perforation.add_extracted_cell( cell_actor )
 
         self._perforations[ path ] = saved_perforation
-
-    def __parse_polyline_property( self, property: str, dtype: Type[ Any ] ) -> np.ndarray[ Any ]:
-        """
-        Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
-        This string always follow this for :
-            "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"
-        """
-        try:
-            nodes_str = property.split( "}, {" )
-            points = []
-            for i in range( 0, len( nodes_str ) ):
-
-                nodes_str[ i ] = nodes_str[ i ].replace( " ", "" )
-                nodes_str[ i ] = nodes_str[ i ].replace( "{", "" )
-                nodes_str[ i ] = nodes_str[ i ].replace( "}", "" )
-
-                point = np.array( nodes_str[ i ].split( "," ), dtype=dtype )
-
-                points.append( point )
-
-            return np.array( points, dtype=dtype )
-        except ValueError:
-            raise GeosTrameException(
-                "cannot be able to convert the property into a numeric array: ",
-                ValueError,
-            )
