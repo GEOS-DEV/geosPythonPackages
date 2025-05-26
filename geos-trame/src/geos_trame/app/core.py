@@ -68,7 +68,7 @@ class GeosTrame:
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
 
         # Properties checker
-        self.properties_checker = PropertiesChecker( self.tree, trame_server=server )
+        self.properties_checker = PropertiesChecker( self.tree, self.region_viewer, trame_server=server )
 
         # TODO put as a modal window
         self.set_input_file( file_name=self.state.input_file )
