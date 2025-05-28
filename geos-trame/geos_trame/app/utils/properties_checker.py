@@ -5,6 +5,7 @@
 from trame_client.widgets.core import AbstractElement
 from trame_simput import get_simput_manager
 
+from geos_trame.app.data_types.field_status import FieldStatus
 from geos_trame.app.deck.tree import DeckTree
 from geos_trame.app.ui.viewer.regionViewer import RegionViewer
 
@@ -24,6 +25,10 @@ class PropertiesChecker( AbstractElement ):
         self.simput_manager = get_simput_manager( id=self.state.sm_id )
 
     def check_fields( self ):
+        """
+        Get the names of all the cell data arrays from the input of the region viewer, then check that all the attributes
+        in `attributes_to_check` have a value corresponding to one of the array names.
+        """
         cellData = self.region_viewer.input.GetCellData()
         arrayNames = [ cellData.GetArrayName( i ) for i in range( cellData.GetNumberOfArrays() ) ]
         arrayNames.extend( [ "", "{}" ] )  # default values
@@ -33,7 +38,11 @@ class PropertiesChecker( AbstractElement ):
         self.state.flush()
 
     def check_field( self, field, array_names: list[ str ] ):
-        field[ "valid" ] = 1
+        """
+        Check that all the attributes in `attributes_to_check` have a value corresponding to one of the array names.
+        Set the `valid` property to the result of this check, and if necessary, indicate which properties are invalid.
+        """
+        field[ "valid" ] = FieldStatus.VALID.value
         field[ "invalid_properties" ] = []
 
         proxy = self.simput_manager.proxymanager.get( field[ "id" ] )
@@ -43,7 +52,7 @@ class PropertiesChecker( AbstractElement ):
                     field[ "invalid_properties" ].append( attr )
 
         if len( field[ "invalid_properties" ] ) != 0:
-            field[ "valid" ] = 2
+            field[ "valid" ] = FieldStatus.INVALID.value
         else:
             field.pop( "invalid_properties", None )
 
@@ -52,8 +61,8 @@ class PropertiesChecker( AbstractElement ):
             field[ "invalid_children" ] = []
             for child in field[ "children" ]:
                 self.check_field( child, array_names )
-                if child[ "valid" ] == 2:
-                    field[ "valid" ] = 2
+                if child[ "valid" ] == FieldStatus.INVALID.value:
+                    field[ "valid" ] = FieldStatus.INVALID.value
                     field[ "invalid_children" ].append( child[ "title" ] )
             if len( field[ "invalid_children" ] ) == 0:
                 field.pop( "invalid_children", None )

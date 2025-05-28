@@ -11,11 +11,11 @@ def trame_server_layout():
     server = Server()
     server.debug = True
 
-    with VAppLayout(server) as layout:
+    with VAppLayout( server ) as layout:
         yield server, layout
 
 
 @pytest.fixture
-def trame_state(trame_server_layout):
-    trame_server_layout[0].state.ready()
-    yield trame_server_layout[0].state
+def trame_state( trame_server_layout ):
+    trame_server_layout[ 0 ].state.ready()
+    yield trame_server_layout[ 0 ].state

@@ -19,7 +19,7 @@ from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
 from geos_trame.app.ui.timeline import TimelineEditor
 from geos_trame.app.ui.viewer.viewer import DeckViewer
-from geos_trame.app.ui.alertHandler import AlertHandler
+from geos_trame.app.components.alertHandler import AlertHandler
 
 import sys
 
@@ -29,12 +29,12 @@ class GeosTrame:
 
     def __init__( self, server, file_name: str ):
 
-        self.alertHandler = None
-        self.deckPlotting = None
-        self.deckViewer = None
-        self.deckEditor = None
-        self.timelineEditor = None
-        self.deckInspector = None
+        self.alertHandler: AlertHandler | None = None
+        self.deckPlotting: DeckPlotting | None = None
+        self.deckViewer: DeckViewer | None = None
+        self.deckEditor: DeckEditor | None = None
+        self.timelineEditor: TimelineEditor | None = None
+        self.deckInspector: DeckInspector | None = None
         self.server = server
         server.enable_module( module )
 

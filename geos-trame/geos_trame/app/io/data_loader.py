@@ -20,6 +20,9 @@ from geos_trame.schema_generated.schema_mod import (
 
 
 class DataLoader( AbstractElement ):
+    """
+    Helper class to handle IO operations for data loading.
+    """
 
     def __init__( self, source, region_viewer: RegionViewer, well_viewer: WellViewer, **kwargs ):
         super().__init__( "span", **kwargs )
@@ -85,7 +88,9 @@ class DataLoader( AbstractElement ):
             self.well_viewer.remove( path )
             return
 
-        well_polydata = pv.read( self.source.get_abs_path( well.file ) ).cast_to_poly_points()
+        well_polydata = pv.read( self.source.get_abs_path( well.file ) )
+        if not isinstance( well_polydata, pv.PolyData ):
+            raise GeosTrameException( f"Expected PolyData, got {type(well_polydata).__name__}" )
         self.well_viewer.add_mesh( well_polydata, path )
 
     def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
@@ -94,7 +99,7 @@ class DataLoader( AbstractElement ):
         This method will create the mesh if it doesn't exist.
         """
         if not show:
-            self.well_engine.remove( path )
+            self.well_viewer.remove( path )
             return
 
         points = self.__parse_polyline_property( well.polyline_node_coords, dtype=float )
@@ -106,7 +111,7 @@ class DataLoader( AbstractElement ):
             sorted_points.append( points[ point_id ] )
 
         well_polydata = pv.MultipleLines( sorted_points )
-        self.well_engine.add_mesh( well_polydata, path )
+        self.well_viewer.add_mesh( well_polydata, path )
 
     @staticmethod
     def __parse_polyline_property( polyline_property: str, dtype: Type[ Any ] ) -> np.ndarray:

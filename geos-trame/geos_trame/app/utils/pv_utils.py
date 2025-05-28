@@ -4,5 +4,8 @@
 import pyvista as pv
 
 
-def read_unstructured_grid( filename ):
+def read_unstructured_grid( filename ) -> pv.UnstructuredGrid:
+    """
+    Read an unstructured grid from a .vtu file.
+    """
     return pv.read( filename ).cast_to_unstructured_grid()

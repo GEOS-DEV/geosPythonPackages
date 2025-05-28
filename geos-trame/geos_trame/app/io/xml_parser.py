@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
-import os
+import sys
 import re
 from os.path import expandvars
 from pathlib import Path
@@ -19,7 +19,7 @@ class XMLParser( object ):
     Class used to parse a valid XML geos file and construct a link between
     each file when they are included.
 
-    Useful to be able to able to save it later.
+    Useful to be able to save it later.
     """
 
     def __init__( self, filename: str ):
@@ -28,8 +28,8 @@ class XMLParser( object ):
         """
 
         self.filename = filename
-        self.file_to_tags = defaultdict( list )
-        self.file_to_relative_path = {}
+        self.file_to_tags: defaultdict = defaultdict( list )
+        self.file_to_relative_path: dict = {}
 
         expanded_file = Path( expandvars( self.filename ) ).expanduser().resolve()
         self.file_path = expanded_file.parent
@@ -40,14 +40,14 @@ class XMLParser( object ):
             tree = ElementTree.parse( expanded_file, parser=parser )
             self.root = tree.getroot()
         except XMLSyntaxError as err:
-            error_msg = "Invalid XML file. Cannot load " + expanded_file
+            error_msg = "Invalid XML file. Cannot load " + str( expanded_file )
             error_msg += ". Outputted error:\n" + err.msg
-            print( error_msg, file=os.sys.stderr )
+            print( error_msg, file=sys.stderr )
             self._is_valid = False
 
     def is_valid( self ) -> bool:
         if not self._is_valid:
-            print( "XMLParser isn't valid", file=os.sys.stderr )
+            print( "XMLParser isn't valid", file=sys.stderr )
         return self._is_valid
 
     def build( self ) -> None:
@@ -58,7 +58,6 @@ class XMLParser( object ):
     def get_simulation_deck( self ) -> ElementTree.Element:
         if not self.is_valid():
             raise GeosTrameException( "Not valid file, cannot return the deck." )
-            return
         return self.simulation_deck
 
     def contains_include_files( self ) -> bool:
@@ -74,10 +73,7 @@ class XMLParser( object ):
         return self.file_to_relative_path[ filename ]
 
     def _read( self ) -> ElementTree.Element:
-        """Reads an xml file (and recursively its included files) into memory
-
-        Args:
-            xmlFilepath (str): The path the file to read.
+        """Reads a xml file (and recursively its included files) into memory
 
         Returns:
             SimulationDeck: The simulation deck
@@ -91,7 +87,7 @@ class XMLParser( object ):
             if include_node.tag == "Included":
                 for f in include_node.findall( "File" ):
                     self.file_to_relative_path[ self.filename ] = f.get( "name" )
-                    self._merge_included_xml_files( self.root, self.file_path, f.get( "name" ), includeCount )
+                    self._merge_included_xml_files( self.root, str( self.file_path ), f.get( "name" ), includeCount )
 
         # Remove 'Included' nodes
         for include_node in self.root.findall( "Included" ):
@@ -107,30 +103,29 @@ class XMLParser( object ):
 
     def _merge_xml_nodes(
         self,
-        existingNode: ElementTree.Element,
-        targetNode: ElementTree.Element,
+        existing_node: ElementTree.Element,
+        target_node: ElementTree.Element,
         fname: str,
         level: int,
     ) -> None:
         """Merge nodes in an included file into the current structure level by level.
 
         Args:
-            existingNode (lxml.etree.Element): The current node in the base xml structure.
-            targetNode (lxml.etree.Element): The node to insert.
+            existing_node (lxml.etree.Element): The current node in the base xml structure.
+            target_node (lxml.etree.Element): The node to insert.
             level (int): The xml file depth.
         """
         if not self.is_valid():
             raise GeosTrameException( "Not valid file, cannot merge nodes" )
-            return
         # Copy attributes on the current level
-        for tk in targetNode.attrib.keys():
-            existingNode.set( tk, targetNode.get( tk ) )
+        for tk in target_node.attrib.keys():
+            existing_node.set( tk, target_node.get( tk ) )
 
         # Copy target children into the xml structure
         currentTag = ""
         matchingSubNodes = []
 
-        for target in targetNode.getchildren():
+        for target in target_node.getchildren():
             tags = self.file_to_tags[ fname ]
             tags.append( target.tag )
             insertCurrentLevel = True
@@ -139,7 +134,7 @@ class XMLParser( object ):
             # exists at this level
             if currentTag != target.tag:
                 currentTag = target.tag
-                matchingSubNodes = existingNode.findall( target.tag )
+                matchingSubNodes = existing_node.findall( target.tag )
 
             if matchingSubNodes:
                 targetName = target.get( "name" )
@@ -159,42 +154,41 @@ class XMLParser( object ):
             # Insert any unnamed nodes or named nodes that aren't present
             # in the current xml structure
             if insertCurrentLevel:
-                existingNode.insert( -1, target )
+                existing_node.insert( -1, target )
 
     def _merge_included_xml_files(
         self,
         root: ElementTree.Element,
         file_path: str,
         fname: str,
-        includeCount: int,
-        maxInclude: int = 100,
+        include_count: int,
+        max_include: int = 100,
     ) -> None:
         """Recursively merge included files into the current structure.
 
         Args:
             root (lxml.etree.Element): The root node of the base xml structure.
             fname (str): The name of the target xml file to merge.
-            includeCount (int): The current recursion depth.
-            maxInclude (int): The maximum number of xml files to include (default = 100)
+            include_count (int): The current recursion depth.
+            max_include (int): The maximum number of xml files to include (default = 100)
         """
         if not self.is_valid():
             raise GeosTrameException( "Not valid file, cannot merge nodes" )
-            return
         included_file_path = Path( expandvars( file_path ), fname )
         expanded_file = included_file_path.expanduser().resolve()
 
         self.file_to_relative_path[ fname ] = ""
 
         # Check to see if the code has fallen into a loop
-        includeCount += 1
-        if includeCount > maxInclude:
+        include_count += 1
+        if include_count > max_include:
             raise Exception( "Reached maximum recursive includes...  Is there an include loop?" )
 
         # Check to make sure the file exists
         if not included_file_path.is_file():
             print(
-                "Included file does not exist: %s" % ( included_file_path ),
-                file=os.sys.stderr,
+                "Included file does not exist: %s" % included_file_path,
+                file=sys.stderr,
             )
             raise Exception( "Check included file path!" )
 
@@ -204,7 +198,7 @@ class XMLParser( object ):
             includeTree = ElementTree.parse( included_file_path, parser )
             includeRoot = includeTree.getroot()
         except XMLSyntaxError as err:
-            print( "\nCould not load included file: %s" % ( included_file_path ) )
+            print( "\nCould not load included file: %s" % included_file_path )
             print( err.msg )
             raise Exception( "\nCheck included file!" ) from err
 
@@ -212,7 +206,7 @@ class XMLParser( object ):
         for include_node in includeRoot.findall( "Included" ):
             for f in include_node.findall( "File" ):
                 self.file_to_relative_path[ fname ] = f.get( "name" )
-                self._merge_included_xml_files( root, expanded_file.parent, f.get( "name" ), includeCount )
+                self._merge_included_xml_files( root, str( expanded_file.parent ), f.get( "name" ), include_count )
 
         # Merge the results into the xml tree
         self._merge_xml_nodes( root, includeRoot, fname, 0 )

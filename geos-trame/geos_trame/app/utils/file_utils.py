@@ -92,7 +92,6 @@ def format_xml_level(
                 attribute_indent = " " * ( len( opening_line ) )
 
             # Get a copy of the attributes
-            attribute_dict = {}
             attribute_dict = node.attrib
 
             # Sort attribute names
@@ -148,28 +147,27 @@ def format_xml_level(
 
 
 def format_xml(
-    input: str,
+    input_str: str,
     indent_size: int = 2,
     indent_style: bool = False,
     block_separation_max_depth: int = 2,
-    alphebitize_attributes: bool = False,
+    alphabetize_attributes: bool = False,
     close_style: bool = False,
     namespace: bool = False,
-) -> None:
+) -> str:
     """Script to format xml files
 
     Args:
-        input (str): Input str
+        input_str (str): Input str
         indent_size (int): Indent size
         indent_style (bool): Style of indentation (0=fixed, 1=hanging)
         block_separation_max_depth (int): Max depth to separate xml blocks
-        alphebitize_attributes (bool): Alphebitize attributes
+        alphabetize_attributes (bool): Alphebitize attributes
         close_style (bool): Style of close tag (0=same line, 1=new line)
         namespace (bool): Insert this namespace in the xml description
     """
     try:
-        root = ElementTree.fromstring( input )
-        # root = tree.getroot()
+        root = ElementTree.fromstring( input_str )
         prologue_comments = [ tmp.text for tmp in root.itersiblings( preceding=True ) ]
         epilog_comments = [ tmp.text for tmp in root.itersiblings() ]
 
@@ -177,7 +175,7 @@ def format_xml(
         f.write( '<?xml version="1.0" ?>\n' )
 
         for comment in reversed( prologue_comments ):
-            f.write( "\n<!--%s-->" % ( comment ) )
+            f.write( "\n<!--%s-->" % comment )
 
         format_xml_level(
             f,
@@ -186,18 +184,17 @@ def format_xml(
             indent=" " * indent_size,
             block_separation_max_depth=block_separation_max_depth,
             modify_attribute_indent=indent_style,
-            sort_attributes=alphebitize_attributes,
+            sort_attributes=alphabetize_attributes,
             close_tag_newline=close_style,
             include_namespace=namespace,
         )
 
         for comment in epilog_comments:
-            f.write( "\n<!--%s-->" % ( comment ) )
+            f.write( "\n<!--%s-->" % comment )
         f.write( "\n" )
 
         return f.getvalue()
 
     except ElementTree.ParseError as err:
-        print( "\nCould not load file: %s" % ( f ) )
         print( err.msg )
-        raise Exception( "\nCheck input file!" )
+        raise Exception( "Failed to format xml file" )

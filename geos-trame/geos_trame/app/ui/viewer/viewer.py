@@ -5,10 +5,11 @@ import pyvista as pv
 from pyvista.trame.ui import plotter_ui
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
+from vtkmodules.vtkRenderingCore import vtkActor
 
-import geos_trame.app.ui.viewer.perforationViewer as PerforationViewer
-import geos_trame.app.ui.viewer.regionViewer as RegionViewer
-import geos_trame.app.ui.viewer.wellViewer as WellViewer
+from geos_trame.app.ui.viewer.perforationViewer import PerforationViewer
+from geos_trame.app.ui.viewer.regionViewer import RegionViewer
+from geos_trame.app.ui.viewer.wellViewer import WellViewer
 from geos_trame.schema_generated.schema_mod import (
     Vtkmesh,
     Vtkwell,
@@ -49,7 +50,7 @@ class DeckViewer( vuetify.VCard ):
 
         self.region_engine = region_viewer
         self.well_engine = well_viewer
-        self._perforations: dict[ str, PerforationViewer.PerforationViewer ] = dict()
+        self._perforations: dict[ str, PerforationViewer ] = dict()
 
         self.ctrl.update_viewer.add( self.update_viewer )
 
@@ -228,7 +229,7 @@ class DeckViewer( vuetify.VCard ):
             return
 
         active_scalar = self.region_engine.input.active_scalars_name
-        self._clip_mesh = self.plotter.add_mesh_clip_plane(
+        self._clip_mesh: vtkActor = self.plotter.add_mesh_clip_plane(
             self.region_engine.input,
             origin=self.region_engine.input.center,
             normal=[ -1, 0, 0 ],
@@ -257,7 +258,7 @@ class DeckViewer( vuetify.VCard ):
         """
         Remove all actor related to the given path and clean the stored perforation
         """
-        saved_perforation: PerforationViewer.PerforationViewer = self._perforations[ path ]
+        saved_perforation: PerforationViewer = self._perforations[ path ]
         self.plotter.remove_actor( saved_perforation.extracted_cell )
         self.plotter.remove_actor( saved_perforation.perforation_actor )
         saved_perforation.reset()
@@ -267,7 +268,7 @@ class DeckViewer( vuetify.VCard ):
         Generate perforation dataset based on the distance from the top of a polyline
         """
 
-        polyline: pv.PolyData = self.well_engine.get_mesh( path )
+        polyline: pv.PolyData | None = self.well_engine.get_mesh( path )
         if polyline is None:
             return
 
@@ -282,7 +283,7 @@ class DeckViewer( vuetify.VCard ):
         sphere = pv.Sphere( radius=5, center=center )
 
         perforation_actor = self.plotter.add_mesh( sphere )
-        saved_perforation = PerforationViewer.PerforationViewer( sphere, center, 5, perforation_actor )
+        saved_perforation = PerforationViewer( sphere, center, 5, perforation_actor )
 
         cell_id = self.region_engine.input.find_closest_cell( point_offsetted )
         cell = self.region_engine.input.extract_cells( [ cell_id ] )
