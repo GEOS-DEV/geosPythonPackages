@@ -8,8 +8,9 @@ from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify, html
 from trame_simput import get_simput_manager
 
-from geos_trame.app.types.renderable import Renderable
-from geos_trame.app.types.tree_node import TreeNode
+from geos_trame.app.data_types.field_status import FieldStatus
+from geos_trame.app.data_types.renderable import Renderable
+from geos_trame.app.data_types.tree_node import TreeNode
 from geos_trame.app.utils.dict_utils import iterate_nested_dict
 
 vuetify.enable_lab()
@@ -53,7 +54,7 @@ class DeckInspector( vuetify.VTreeview ):
 
         self.set_source( source.input_file.problem )
 
-        def on_change( topic, ids=None, **kwargs ):
+        def on_change( topic, ids=None, **_ ):
             if topic == "changed":
                 for obj_id in ids:
                     proxy = self.simput_manager.proxymanager.get( obj_id )
@@ -158,7 +159,7 @@ class DeckInspector( vuetify.VTreeview ):
         This function is called when the user click on the tree.
         """
         if item_id is None:
-            # Silently ignore, it could occurs is the user click on the tree
+            # Silently ignore, it could occur if the user click on the tree
             # and this item is already selected
             return
 
@@ -184,39 +185,36 @@ def get_node_dict( obj, node_id, path ):
                      hidden_children=[],
                      is_drawable=node_id in ( k.value for k in Renderable ),
                      drawn=False,
-                     valid=0 )
+                     valid=FieldStatus.UNCHECKED.value )
 
 
 def object_to_tree( obj: dict ) -> dict:
     return get_node_dict( obj, "Problem", [] ).json
 
 
-def dump( item ):
-    match item:
-        case BaseModel() as model:
-            subitems: dict[ str, Any ] = dict()
-            model.model_fields
+def dump( item ) -> dict[ str, Any ] | None:
+    if isinstance( item, BaseModel ):
+        subitems: dict[ str, Any ] = dict()
 
-            for field, value in model:
+        for field, value in item:
 
-                if isinstance( value, str ):
-                    subitems[ field ] = value
-                    continue
-
-            return subitems
-        case list() | tuple() | set():  # pyright: ignore
-            # Pyright finds this disgusting; this passes `mypy` though. `  # type:
-            # ignore` would fail `mypy` is it'd be unused (because there's nothing to
-            # ignore because `mypy` is content)
-            # return type(container)(  # pyright: ignore
-            #     _dump(i) for i in container  # pyright: ignore
-            # )
-            pass
-        case dict():
-            # return {
-            #     k: _dump(v)
-            #     for k, v in item.items()  # pyright: ignore[reportUnknownVariableType]
-            # }
-            pass
-        case _:
-            return item
+            if isinstance( value, str ):
+                subitems[ field ] = value
+                continue
+        return subitems
+    elif isinstance( item, ( list, tuple, set ) ):  # pyright: ignore
+        # Pyright finds this disgusting; this passes `mypy` though. `  # type:
+        # ignore` would fail `mypy` is it'd be unused (because there's nothing to
+        # ignore because `mypy` is content)
+        # return type(container)(  # pyright: ignore
+        #     _dump(i) for i in container  # pyright: ignore
+        # )
+        return None
+    elif isinstance( item, dict ):
+        # return {
+        #     k: _dump(v)
+        #     for k, v in item.items()  # pyright: ignore[reportUnknownVariableType]
+        # }
+        return None
+    else:
+        return item

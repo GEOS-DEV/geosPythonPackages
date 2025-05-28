@@ -3,9 +3,14 @@
 # SPDX-FileContributor: Kitware
 from dataclasses import dataclass
 
+from geos_trame.app.data_types.field_status import FieldStatus
+
 
 @dataclass
 class TreeNode:
+    """
+    Single element of the tree, used by `DeckTree`.
+    """
     id: str
     title: str
     children: list

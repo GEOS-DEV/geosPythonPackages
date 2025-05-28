@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
+import os
+from collections import defaultdict
+
 import dpath
 import funcy
-
-import os
-
+from trame_simput import get_simput_manager
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
@@ -14,10 +15,7 @@ from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
 from geos_trame.app.deck.file import DeckFile
 from geos_trame.app.geosTrameException import GeosTrameException
 from geos_trame.app.utils.file_utils import normalize_path, format_xml
-from geos_trame.schema_generated.schema_mod import BaseModel, Problem, Included, File
-
-from collections import defaultdict
-from trame_simput import get_simput_manager
+from geos_trame.schema_generated.schema_mod import Problem, Included, File
 
 
 class DeckTree( object ):
@@ -25,11 +23,11 @@ class DeckTree( object ):
     A tree that represents a deck file along with all the available blocks and parameters.
     """
 
-    def __init__( self, sm_id=None, **kwds ):
+    def __init__( self, sm_id=None, **kwargs ):
         """
         Constructor.
         """
-        super( DeckTree, self ).__init__( **kwds )
+        super( DeckTree, self ).__init__( **kwargs )
 
         self.input_file = None
         self.input_filename = None
@@ -54,9 +52,8 @@ class DeckTree( object ):
             self.input_file = DeckFile( self.input_filename )
             self.input_folder = os.path.dirname( self.input_file.filename )
             self.input_real_filename = os.path.basename( self.input_file.filename )
-        except Exception as e:
-            msg = "set_input_file exception: %s" % e
-            return GeosTrameException( msg )
+        except GeosTrameException:
+            return
 
     def root_fields( self ) -> list[ str ]:
         return self.input_file.root_fields
@@ -97,22 +94,21 @@ class DeckTree( object ):
         node = decoder.decode( data[ 0 ] )
         return node
 
-    def decode_data( self, data: BaseModel | None ) -> str:
+    @staticmethod
+    def decode_data( data: dict ) -> Problem:
         """
         Convert a data to a xml serializable file
         """
-        if data is None:
-            return
-
         context = XmlContext(
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
         )
         decoder = DictDecoder( context=context, config=ParserConfig() )
-        node = decoder.decode( data )
+        node: Problem = decoder.decode( data )
         return node
 
-    def to_xml( self, obj ) -> str:
+    @staticmethod
+    def to_xml( obj ) -> str:
         context = XmlContext(
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
@@ -123,13 +119,13 @@ class DeckTree( object ):
 
         return format_xml( serializer.render( obj ) )
 
-    def timeline( self ) -> dict:
+    def timeline( self ) -> list[ dict ] | None:
         if self.input_file is None:
-            return
+            return None
         if self.input_file.problem is None:
-            return
+            return None
         if self.input_file.problem.events is None:
-            return
+            return None
 
         timeline = list()
         # list root events
@@ -147,32 +143,34 @@ class DeckTree( object ):
     def plots( self ):
         return self.input_file.problem.functions
 
-    def write_files( self ):
+    def write_files( self ) -> None:
         """
         Write geos files with all changes made by the user.
         """
 
         pb = self.search( "Problem" )
+        if pb is None:
+            return
         files = self._split( pb )
 
         for filepath, content in files.items():
-            model_loaded: BaseModel = self.decode_data( content )
-            model_with_changes: BaseModel = self._apply_changed_properties( model_loaded )
+            model_loaded: Problem = DeckTree.decode_data( content )
+            model_with_changes: Problem = self._apply_changed_properties( model_loaded )
 
             if self.input_file.xml_parser.contains_include_files():
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
-                self._append_include_file( model_with_changes, includeName )
+                DeckTree._append_include_file( model_with_changes, includeName )
 
-            model_as_xml: str = self.to_xml( model_with_changes )
+            model_as_xml: str = DeckTree.to_xml( model_with_changes )
 
             basename = os.path.basename( filepath )
             edited_folder_path = self.input_folder
-            location = edited_folder_path + "/" + self._append_id( basename )
+            location = edited_folder_path + "/" + DeckTree._append_id( basename )
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
 
-    def _setInputFile( self, input_file ):
+    def _set_input_file( self, input_file ):
         """
         Copies the nodes of an input file into the tree
         Input:
@@ -188,26 +186,28 @@ class DeckTree( object ):
 
         return False
 
-    def _append_include_file( self, model: Problem, includedFilePath: str ) -> None:
+    @staticmethod
+    def _append_include_file( model: Problem, included_file_path: str ) -> None:
         """
         Append an Included object which follows this structure according to the documentation:
         <Included>
             <File name="./included_file.xml" />
         </Included>
 
-        Only Problem can contains an included tag:
+        Only Problem can contain an included tag:
         https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/CompleteXMLSchema.html
 
         """
-        if len( includedFilePath ) == 0:
-            return None
+        if len( included_file_path ) == 0:
+            return
 
         includedTag = Included()
-        includedTag.file.append( File( name=self._append_id( includedFilePath ) ) )
+        includedTag.file.append( File( name=DeckTree._append_id( included_file_path ) ) )
 
         model.included.append( includedTag )
 
-    def _append_id( self, filename: str ) -> str:
+    @staticmethod
+    def _append_id( filename: str ) -> str:
         """
         Return the new filename with the correct suffix and his extension. The suffix
         added will be '_vX' where X is the incremented value of the current version.
@@ -227,7 +227,8 @@ class DeckTree( object ):
         suffix += str( version )
         return f"{name}{suffix}{ext}"
 
-    def _convert_to_camel_case( self, content: str ) -> str:
+    @staticmethod
+    def _convert_to_camel_case( content: str ) -> str:
         """
         Convert any given string in CamelCase.
 
@@ -236,7 +237,8 @@ class DeckTree( object ):
         camel_case_str: str = content.title()
         return camel_case_str.replace( "_", "" )
 
-    def _convert_to_snake_case( self, content: str ) -> str:
+    @staticmethod
+    def _convert_to_snake_case( content: str ) -> str:
         """
         Convert any given string in snake case.
 
@@ -261,39 +263,39 @@ class DeckTree( object ):
 
         for proxy_id in modified_proxy_ids:
             properties = manager.data( proxy_id )[ "properties" ]
-            events = self._get_base_model_from_path( model_as_dict, proxy_id )
-            if events is None:
-                continue
+            events = DeckTree._get_base_model_from_path( model_as_dict, proxy_id )
             events_as_dict = dict( events )
             for property_name, value in properties.items():
                 events_as_dict[ property_name ] = value
 
-            self._set_base_model_properties( model_as_dict, proxy_id, events_as_dict )
+            DeckTree._set_base_model_properties( model_as_dict, proxy_id, events_as_dict )
 
         model = getattr( model, "model_validate" )( model_as_dict )
         return model
 
-    def _convert_proxy_path_into_proxy_names( self, proxy_path: str ) -> list[ str ]:
+    @staticmethod
+    def _convert_proxy_path_into_proxy_names( proxy_path: str ) -> list[ str ]:
         """
         Split a given proxy path into a list of proxy names.
 
         note: each proxy name will be converted in snake case to fit with the
         pydantic model naming convention.
         """
-        splitted_path = proxy_path.split( "/" )
-        splitted_path_without_root = splitted_path[ 1: ]
+        split_path = proxy_path.split( "/" )
+        split_path_without_root = split_path[ 1: ]
 
-        return [ self._convert_to_snake_case( proxy ) for proxy in splitted_path_without_root ]
+        return [ DeckTree._convert_to_snake_case( proxy ) for proxy in split_path_without_root ]
 
-    def _set_base_model_properties( self, model: dict, proxy_path: str, properties: dict ) -> None:
+    @staticmethod
+    def _set_base_model_properties( model: dict, proxy_path: str, properties: dict ) -> None:
         """
         Apply all changed property to the model for a specific proxy.
         """
 
         # retrieve the whole BaseModel list to the modified proxy
-        proxy_names = self._convert_proxy_path_into_proxy_names( proxy_path )
+        proxy_names = DeckTree._convert_proxy_path_into_proxy_names( proxy_path )
         model_copy = model
-        models = []
+        models: list[ tuple[ str, dict ] ] = []
         for proxy_name in proxy_names:
             is_dict = type( model_copy ) is dict
             is_list = type( model_copy ) is list
@@ -303,22 +305,22 @@ class DeckTree( object ):
                 model_copy = dict( model_copy )
 
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_copy ):
-                models.append( [ proxy_name, model_copy ] )
-                model_copy = model_copy[ int( proxy_name ) ]
+                models.append( ( proxy_name, model_copy ) )
+                model_copy = model_copy[ proxy_name ]
                 continue
 
             if proxy_name in model_copy:
-                models.append( [ proxy_name, model_copy ] )
+                models.append( ( proxy_name, model_copy ) )
                 model_copy = model_copy[ proxy_name ]
             else:
-                return None
+                return
 
         models.reverse()
 
         # propagate the modification to the parent node
         index = -1
         for model_inverted in models:
-            prop_identifier = model_inverted[ 0 ]
+            prop_identifier: str = model_inverted[ 0 ]
 
             if prop_identifier.isnumeric():
                 index = int( prop_identifier )
@@ -333,18 +335,17 @@ class DeckTree( object ):
 
             current_node[ prop_identifier ][ index ] = current_base_model
 
-            properties = dict( current_base_model )
             break
 
         models.reverse()
-        model = models[ 0 ]
 
-    def _get_base_model_from_path( self, model: dict, proxy_id: str ) -> BaseModel:
+    @staticmethod
+    def _get_base_model_from_path( model: dict, proxy_id: str ) -> dict:
         """
         Retrieve the BaseModel changed from the proxy id. The proxy_id is a unique path
         from the simput manager.
         """
-        proxy_names = self._convert_proxy_path_into_proxy_names( proxy_id )
+        proxy_names = DeckTree._convert_proxy_path_into_proxy_names( proxy_id )
 
         model_found: dict = model
 
@@ -357,7 +358,7 @@ class DeckTree( object ):
             if is_class:
                 model_found = dict( model_found )
 
-            # path can contains a numerical index, useful to be sure that each
+            # path can contain a numerical index, useful to be sure that each
             # proxy is unique, typically used for a list of proxy located at the same level
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_found ):
                 model_found = model_found[ int( proxy_name ) ]
@@ -368,9 +369,9 @@ class DeckTree( object ):
 
         return model_found
 
-    def _split( self, xml: str ) -> dict[ str, str ]:
+    def _split( self, xml: list ) -> defaultdict[ str, dict[ str, str ] ]:
         data = self.input_file.xml_parser.file_to_tags
-        restructured_files = defaultdict( dict )
+        restructured_files: defaultdict[ str, dict ] = defaultdict( dict )
         for file_path, associated_tags in data.items():
             restructured_files[ file_path ] = dict()
             for tag, contents in xml[ 0 ].items():

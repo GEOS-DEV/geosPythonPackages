@@ -10,10 +10,10 @@ class RegionViewer:
 
     This mesh is represented in GEOS with a Region.
     """
-    input: pv.UnstructuredGrid
-    clip: pv.UnstructuredGrid
 
     def __init__( self ) -> None:
+        self.input = pv.UnstructuredGrid()
+        self.clip = self.input
         self.reset()
 
     def __call__( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
