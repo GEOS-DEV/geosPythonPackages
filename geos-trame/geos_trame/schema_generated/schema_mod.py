@@ -16302,8 +16302,3 @@ class Problem( BaseModel ):
             "namespace": "",
         },
     )
-
-
-class Problem( Problem ):
-    pass
-    model_config = ConfigDict( defer_build=True )

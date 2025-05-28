@@ -57,13 +57,15 @@ dev = [
     "pylint",
     "mypy",
     "black",
-    "isort"
+    "isort",
+    "mypy",
 ]
 test = [
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",
     "Pillow==11.0.0",
+    "pytest-mypy==0.10.3",
     "pytest-xprocess==1.0.2"
 ]
 

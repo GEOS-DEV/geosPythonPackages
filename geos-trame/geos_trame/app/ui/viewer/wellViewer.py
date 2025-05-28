@@ -38,6 +38,9 @@ class WellViewer:
     def __call__( self, value: float ) -> None:
         self.update( value )
 
+    def get_last_mesh_idx( self ):
+        return len( self._wells ) - 1
+
     def add_mesh( self, mesh: pv.PolyData, mesh_path: str ) -> int:
         """
         Store a given mesh representing a polyline.
@@ -88,7 +91,7 @@ class WellViewer:
         index = self._get_index_from_perforation( perforation_path )
         if index == -1:
             print( "Cannot found the well to remove from path: ", perforation_path )
-            return None
+            return
 
         self._wells[ index ].actor = tube_actor
 

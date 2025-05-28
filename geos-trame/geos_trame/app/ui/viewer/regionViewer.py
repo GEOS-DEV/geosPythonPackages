@@ -12,8 +12,8 @@ class RegionViewer:
     """
 
     def __init__( self ) -> None:
-        self.input: pv.UnstructuredGrid
-        self.clip: pv.UnstructuredGrid
+        self.input = pv.UnstructuredGrid()
+        self.clip = self.input
         self.reset()
 
     def __call__( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:

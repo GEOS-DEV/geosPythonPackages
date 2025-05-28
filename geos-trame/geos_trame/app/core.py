@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
+
 from trame.ui.vuetify3 import VAppLayout
 from trame.decorators import TrameApp
 from trame.widgets import html, simput
@@ -9,12 +10,16 @@ from trame_simput import get_simput_manager
 
 from geos_trame import module
 from geos_trame.app.deck.tree import DeckTree
+from geos_trame.app.io.data_loader import DataLoader
+from geos_trame.app.ui.viewer.regionViewer import RegionViewer
+from geos_trame.app.ui.viewer.wellViewer import WellViewer
+from geos_trame.app.utils.properties_checker import PropertiesChecker
 from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
 from geos_trame.app.ui.timeline import TimelineEditor
 from geos_trame.app.ui.viewer.viewer import DeckViewer
-from geos_trame.app.ui.alertHandler import AlertHandler
+from geos_trame.app.components.alertHandler import AlertHandler
 
 import sys
 
@@ -24,6 +29,12 @@ class GeosTrame:
 
     def __init__( self, server, file_name: str ):
 
+        self.alertHandler: AlertHandler | None = None
+        self.deckPlotting: DeckPlotting | None = None
+        self.deckViewer: DeckViewer | None = None
+        self.deckEditor: DeckEditor | None = None
+        self.timelineEditor: TimelineEditor | None = None
+        self.deckInspector: DeckInspector | None = None
         self.server = server
         server.enable_module( module )
 
@@ -49,11 +60,21 @@ class GeosTrame:
         # Tree
         self.tree = DeckTree( self.state.sm_id )
 
+        # Viewers
+        self.region_viewer = RegionViewer()
+        self.well_viewer = WellViewer( 5, 5 )
+
+        # Data loader
+        self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
+
+        # Properties checker
+        self.properties_checker = PropertiesChecker( self.tree, self.region_viewer, trame_server=server )
+
         # TODO put as a modal window
         self.set_input_file( file_name=self.state.input_file )
 
         # Load components
-        self.ui = self.build_ui()
+        self.build_ui()
 
     @property
     def state( self ):
@@ -63,7 +84,7 @@ class GeosTrame:
     def ctrl( self ):
         return self.server.controller
 
-    def set_input_file( self, file_name, file_str=None ):
+    def set_input_file( self, file_name ):
         """sets the input file of the InputTree object and populates simput/ui"""
         self.tree.set_input_file( file_name )
 
@@ -74,7 +95,8 @@ class GeosTrame:
                     cols=2,
                     order=1,
             ):
-                self.deckInspector = DeckInspector( source=self.tree, classes="fill-height" )
+                self.deckInspector = DeckInspector( source=self.tree, classes="fit-content" )
+                vuetify.VBtn( text="Check fields", classes="ma-4", click=( self.properties_checker.check_fields, ) )
 
             with vuetify.VCol(
                     cols=10,
@@ -99,6 +121,8 @@ class GeosTrame:
                     ):
                         self.deckViewer = DeckViewer(
                             source=self.tree,
+                            region_viewer=self.region_viewer,
+                            well_viewer=self.well_viewer,
                             classes="ma-2",
                             style="flex: 1; height: 60%; width: 100%;",
                         )
@@ -109,7 +133,7 @@ class GeosTrame:
                             style="flex: 1; height: 40%; width: 100%;",
                         )
 
-    def build_ui( self, *args, **kwargs ):
+    def build_ui( self ):
         """Generates the full UI for the GEOS Trame Application"""
 
         with VAppLayout( self.server ) as layout:
@@ -117,15 +141,11 @@ class GeosTrame:
 
             self.alertHandler = AlertHandler()
 
-            def on_tab_change( tab_idx ):
-                pass
-
             with html.Div( style="position: relative; display: flex; border-bottom: 1px solid gray", ):
                 with vuetify.VTabs(
                         v_model=( "tab_idx", 0 ),
                         style="z-index: 1;",
                         color="grey",
-                        change=( on_tab_change, "[$event]" ),
                 ):
                     for tab_label in [ "Input File", "Execute", "Results Viewer" ]:
                         vuetify.VTab( tab_label )
@@ -154,21 +174,14 @@ class GeosTrame:
                     ):
                         vuetify.VBtn(
                             "Run",
-                            # click=self.executor.run,
-                            # disabled=(
-                            #     "exe_running || exe_use_threading && exe_threads < 2 || exe_use_mpi && exe_processes < 2",
-                            # ),
                             style="z-index: 1;",
                         )
                         vuetify.VBtn(
                             "Kill",
-                            # click=self.executor.kill,
-                            # disabled=("!exe_running",),
                             style="z-index: 1;",
                         )
                         vuetify.VBtn(
                             "Clear",
-                            # click=self.ctrl.terminal_clear,
                             style="z-index: 1;",
                         )
 

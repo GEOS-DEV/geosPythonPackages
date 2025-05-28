@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
-from trame.widgets import code, gantt, html, simput
+from trame.widgets import gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
@@ -15,32 +15,6 @@ class TimelineEditor( vuetify.VCard ):
         self.simput_manager = get_simput_manager( id=self.state.sm_id )
 
         items = self.tree.timeline()
-        # print(items)
-
-        # DRAFT
-        # items = [
-        #     {"id": 1,
-        #     "summary": "outputInjectionPeriod",
-        #     "start_date": "2024-11-02 00:00",
-        #     "end_date": "2024-11-02 00:00",
-        #     "duration": 23
-        #     },
-        #     {
-        #     "id": 2,
-        #     "summary": "This is a task with a longer description.",
-        #     "start_date": "2024-11-03 00:00",
-        #     "end_date": "2024-11-04 00:00",
-        #     "duration": 1
-        #     }
-        # ]
-
-        items_alt = [ {
-            "id": 3,
-            "summary": "Lorem ipsum.",
-            "start_date": "2024-11-07 00:00",
-            "end_date": "2024-11-09 00:00",
-            "duration": 2,
-        } ]
 
         fields = [ {
             "summary": {
@@ -72,12 +46,6 @@ class TimelineEditor( vuetify.VCard ):
         } ]
 
         with self:
-            # with vuetify.VRow(
-            # rows=2,
-            # style="width: 100%;",
-            # dense=True
-            # classes="fill-height"
-            # ):
             vuetify.VCardTitle( "Events View" )
             vuetify.VDateInput(
                 label="Select starting simulation date",
