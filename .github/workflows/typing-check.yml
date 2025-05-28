@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         # add packages to check typing
-        package-name: ["geos-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-xml-tools", "hdf5-wrapper"]
+        package-name: ["geos-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper"]
 
     steps:
     - uses: actions/checkout@v4
@@ -35,6 +35,7 @@ jobs:
     - name: Typing check with mypy
       #  working-directory: ./${{ matrix.package-name }}
       run:  |
+        python -m mypy geos-trame/geos_trame/app/__main__.py --install-types --non-interactive
         python -m mypy --config-file ./.mypy.ini --check-untyped-defs ./${{ matrix.package-name }}
 
     - name: Format and linting check with ruff
