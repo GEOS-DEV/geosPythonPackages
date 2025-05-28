@@ -118,7 +118,7 @@ Installation
     python -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install ./<PACKAGE_NAME>
+    python -m pip install --upgrade ./<PACKAGE_NAME>
     ```
 
     You can test installed package by running the commands:
@@ -129,8 +129,7 @@ Installation
     ```
 
   [!WARNING]
-  Due to local package conflicts with `pip install`, it is recommended either to build the packages one by one, or to inlude only top-level packages (see dependency tree hereabove) in the build list.
-
+   Due to local package conflicts with `pip install`, it is recommended to use the `--upgrade` option when building packages, or to use the script `install_packages.sh` located at the root of the repository.
   [!NOTE]
   geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).
 
