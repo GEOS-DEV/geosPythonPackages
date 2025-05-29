@@ -19,7 +19,7 @@ class Result:
     wrong_support_elements: Collection[ int ]  # Element indices with support node indices appearing more than once.
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     points = mesh.GetPoints()
 
     locator = vtkIncrementalOctreePointLocator()
@@ -63,6 +63,6 @@ def __check( mesh, options: Options ) -> Result:
     return Result( nodes_buckets=tmp, wrong_support_elements=wrong_support_elements )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

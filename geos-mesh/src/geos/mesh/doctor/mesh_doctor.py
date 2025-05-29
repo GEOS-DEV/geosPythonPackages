@@ -1,15 +1,14 @@
 import sys
 
+min_python_version = ( 3, 7 )
 try:
-    min_python_version = ( 3, 7 )
     assert sys.version_info >= min_python_version
-except AssertionError as e:
+except AssertionError:
     print( f"Please update python to at least version {'.'.join(map(str, min_python_version))}." )
     sys.exit( 1 )
 
 import logging
-
-from geos.mesh.doctor.parsing import CheckHelper
+from geos.mesh.doctor.parsing import ActionHelper
 from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity
 import geos.mesh.doctor.register as register
 
@@ -17,18 +16,18 @@ import geos.mesh.doctor.register as register
 def main():
     logging.basicConfig( format='[%(asctime)s][%(levelname)s] %(message)s' )
     parse_and_set_verbosity( sys.argv )
-    main_parser, all_checks, all_checks_helpers = register.register()
+    main_parser, all_actions, all_actions_helpers = register.register()
     args = main_parser.parse_args( sys.argv[ 1: ] )
-    logging.info( f"Checking mesh \"{args.vtk_input_file}\"." )
-    check_options = all_checks_helpers[ args.subparsers ].convert( vars( args ) )
+    logging.info( f"Working on mesh \"{args.vtk_input_file}\"." )
+    action_options = all_actions_helpers[ args.subparsers ].convert( vars( args ) )
     try:
-        check = all_checks[ args.subparsers ]
-    except KeyError as e:
-        logging.critical( f"Check {args.subparsers} is not a valid check." )
+        action = all_actions[ args.subparsers ]
+    except KeyError:
+        logging.critical( f"Action {args.subparsers} is not a valid action." )
         sys.exit( 1 )
-    helper: CheckHelper = all_checks_helpers[ args.subparsers ]
-    result = check( args.vtk_input_file, check_options )
-    helper.display_results( check_options, result )
+    helper: ActionHelper = all_actions_helpers[ args.subparsers ]
+    result = action( args.vtk_input_file, action_options )
+    helper.display_results( action_options, result )
 
 
 if __name__ == '__main__':

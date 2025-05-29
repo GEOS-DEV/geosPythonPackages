@@ -105,7 +105,7 @@ class IsPolyhedronConvertible:
             return ic
 
 
-def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     if hasattr( mesh, "GetDistinctCellTypesArray" ):  # For more recent versions of vtk.
         cell_types = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
     else:
@@ -132,6 +132,6 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                    unsupported_polyhedron_elements=frozenset( unsupported_polyhedron_elements ) )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh: vtkUnstructuredGrid = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

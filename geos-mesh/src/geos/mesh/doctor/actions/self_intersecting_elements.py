@@ -21,7 +21,7 @@ class Result:
     faces_are_oriented_incorrectly_elements: Collection[ int ]
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     err_out = vtkFileOutputWindow()
     err_out.SetFileName( "/dev/null" )  # vtkCellValidator outputs loads for each cell...
     vtk_std_err_out = vtkOutputWindow()
@@ -74,6 +74,6 @@ def __check( mesh, options: Options ) -> Result:
                    faces_are_oriented_incorrectly_elements=faces_are_oriented_incorrectly_elements )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

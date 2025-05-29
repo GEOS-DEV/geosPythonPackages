@@ -18,7 +18,7 @@ class Result:
     element_volumes: List[ Tuple[ int, float ] ]
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     cs = vtkCellSizeFilter()
 
     cs.ComputeAreaOff()
@@ -66,6 +66,6 @@ def __check( mesh, options: Options ) -> Result:
     return Result( element_volumes=small_volumes )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

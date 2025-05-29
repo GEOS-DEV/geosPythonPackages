@@ -546,7 +546,7 @@ def __split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
     return ( output_mesh, fracture_meshes )
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     output_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
     write_mesh( output_mesh, options.mesh_VtkOutput )
     for i, fracture_mesh in enumerate( fracture_meshes ):
@@ -555,7 +555,7 @@ def __check( mesh, options: Options ) -> Result:
     return Result( info="OK" )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         mesh = read_mesh( vtk_input_file )
         # Mesh cannot contain global ids before splitting.
@@ -564,7 +564,7 @@ def check( vtk_input_file: str, options: Options ) -> Result:
                              " is to split the mesh and then generate global ids for new split meshes." )
             logging.error( err_msg )
             raise ValueError( err_msg )
-        return __check( mesh, options )
+        return __action( mesh, options )
     except BaseException as e:
         logging.error( e )
         return Result( info="Something went wrong" )

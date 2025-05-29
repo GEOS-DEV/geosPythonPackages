@@ -48,7 +48,7 @@ def init_parser() -> argparse.ArgumentParser:
         Increase verbosity (-{__VERBOSITY_FLAG}, -{__VERBOSITY_FLAG * 2}) to get full information.
         """
     formatter = lambda prog: argparse.RawTextHelpFormatter( prog, max_help_position=8 )
-    parser = argparse.ArgumentParser( description='Inspects meshes for GEOSX.',
+    parser = argparse.ArgumentParser( description='Inspects meshes for GEOS.',
                                       epilog=textwrap.dedent( epilog_msg ),
                                       formatter_class=formatter )
     # Nothing will be done with this verbosity/quiet input.
