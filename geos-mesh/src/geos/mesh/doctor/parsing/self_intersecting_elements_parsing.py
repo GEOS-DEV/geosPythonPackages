@@ -1,13 +1,12 @@
 import logging
-
 import numpy
-
 from geos.mesh.doctor.checks.self_intersecting_elements import Options, Result
-
-from . import SELF_INTERSECTING_ELEMENTS
+from geos.mesh.doctor.parsing import SELF_INTERSECTING_ELEMENTS
 
 __TOLERANCE = "min"
 __TOLERANCE_DEFAULT = numpy.finfo( float ).eps
+
+__SELF_INTERSECTING_ELEMENTS_DEFAULT = { __TOLERANCE: __TOLERANCE_DEFAULT }
 
 
 def convert( parsed_options ) -> Options:

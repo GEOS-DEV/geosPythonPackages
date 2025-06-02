@@ -1,11 +1,11 @@
 import logging
-
 from geos.mesh.doctor.checks.element_volumes import Options, Result
+from geos.mesh.doctor.parsing import ELEMENT_VOLUMES
 
-from . import ELEMENT_VOLUMES
-
-__MIN_VOLUME = "min"
+__MIN_VOLUME = "min_vol"
 __MIN_VOLUME_DEFAULT = 0.
+
+__ELEMENT_VOLUMES_DEFAULT = { __MIN_VOLUME: __MIN_VOLUME_DEFAULT }
 
 
 def fill_subparser( subparsers ) -> None:

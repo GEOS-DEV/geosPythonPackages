@@ -52,9 +52,10 @@ def register(
         __ACTIONS[ action_name ] = lambda: __load_module_action( cn )
 
     # Register the modules to load here.
-    for action_name in ( parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES, parsing.FIX_ELEMENTS_ORDERINGS,
-                         parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES, parsing.GENERATE_GLOBAL_IDS,
-                         parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS ):
+    for action_name in ( parsing.ALL_CHECKS, parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES,
+                         parsing.FIX_ELEMENTS_ORDERINGS, parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES,
+                         parsing.GENERATE_GLOBAL_IDS, parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS,
+                         parsing.SUPPORTED_ELEMENTS ):
         closure_trick( action_name )
     loaded_actions: Dict[ str, Callable[ [ str, Any ], Any ] ] = __load_actions()
     loaded_actions_helpers: Dict[ str, ActionHelper ] = dict()

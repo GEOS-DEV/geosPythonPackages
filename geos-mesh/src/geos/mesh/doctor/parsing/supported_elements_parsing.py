@@ -8,10 +8,10 @@ from . import SUPPORTED_ELEMENTS
 __CHUNK_SIZE = "chunck_size"
 __NUM_PROC = "nproc"
 
-__ALL_KEYWORDS = { __CHUNK_SIZE, __NUM_PROC }
-
 __CHUNK_SIZE_DEFAULT = 1
 __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
+
+__SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC: __NUM_PROC_DEFAULT }
 
 
 def convert( parsed_options ) -> Options:

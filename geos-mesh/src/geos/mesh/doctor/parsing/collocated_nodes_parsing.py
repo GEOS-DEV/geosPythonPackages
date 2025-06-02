@@ -6,10 +6,12 @@ from typing import (
 )
 
 from geos.mesh.doctor.checks.collocated_nodes import Options, Result
-
-from . import COLLOCATES_NODES
+from geos.mesh.doctor.parsing import COLLOCATES_NODES
 
 __TOLERANCE = "tolerance"
+__TOLERANCE_DEFAULT = 0.
+
+__COLLOCATED_NODES_DEFAULT = { __TOLERANCE: __TOLERANCE_DEFAULT }
 
 
 def convert( parsed_options ) -> Options:
@@ -20,6 +22,8 @@ def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( COLLOCATES_NODES, help="Checks if nodes are collocated." )
     p.add_argument( '--' + __TOLERANCE,
                     type=float,
+                    metavar=__TOLERANCE_DEFAULT,
+                    default=__TOLERANCE_DEFAULT,
                     required=True,
                     help="[float]: The absolute distance between two nodes for them to be considered collocated." )
 
