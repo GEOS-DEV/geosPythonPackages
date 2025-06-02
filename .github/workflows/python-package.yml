@@ -53,6 +53,8 @@ jobs:
           - hdf5-wrapper
           - pygeos-tools
         include:
+          - package-name: geos-geomechanics
+            dependencies: "geos-utils"
           - package-name: geos-mesh
             dependencies: "geos-utils geos-geomechanics"
           - package-name: geos-posp
