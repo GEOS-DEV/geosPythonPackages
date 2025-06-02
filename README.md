@@ -169,12 +169,12 @@ If you want a package to depend on another GEOS Python package (let's say `geos-
 ```
 dependencies = [
     ...
-    "geos-utils @ file:./geos-utils",
+    "geos-utils",
 ]
 ```
 
 [!IMPORTANT]
-geos-pv dependencies are managed using a requirements.txt (together with the setup.py) file where all internal (and external if needed) dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
+geos-pv dependencies are managed using a `requirements.txt` (together with the `setup.py`) file where all internal (and external if needed) dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
 
 Release
 -------
