@@ -13,7 +13,8 @@ from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
 from geos_trame.app.ui.timeline import TimelineEditor
-from geos_trame.app.ui.viewer import DeckViewer
+from geos_trame.app.ui.viewer.viewer import DeckViewer
+from geos_trame.app.ui.alertHandler import AlertHandler
 
 import sys
 
@@ -114,6 +115,8 @@ class GeosTrame:
         with VAppLayout( self.server ) as layout:
             self.simput_widget.register_layout( layout )
 
+            self.alertHandler = AlertHandler()
+
             def on_tab_change( tab_idx ):
                 pass
 
@@ -174,8 +177,11 @@ class GeosTrame:
                 if self.tree.input_file is not None:
                     self.deck_ui()
                 else:
-
+                    self.ctrl.on_add_error(
+                        "Error",
+                        "The file " + self.state.input_file + " cannot be parsed.",
+                    )
                     print(
-                        "Cannot build ui as the input file cannot be parse.",
+                        "The file " + self.state.input_file + " cannot be parsed.",
                         file=sys.stderr,
                     )

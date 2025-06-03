@@ -61,6 +61,18 @@ class XMLParser( object ):
             return
         return self.simulation_deck
 
+    def contains_include_files( self ) -> bool:
+        """
+        Return True if the parsed file contains included file or not.
+        """
+        return len( self.file_to_relative_path ) > 0
+
+    def get_relative_path_of_file( self, filename: str ) -> str:
+        """
+        Return the relative path of a given filename.
+        """
+        return self.file_to_relative_path[ filename ]
+
     def _read( self ) -> ElementTree.Element:
         """Reads an xml file (and recursively its included files) into memory
 
