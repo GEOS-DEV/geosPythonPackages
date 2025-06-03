@@ -7,6 +7,7 @@ import numpy as np
 from trame_client.widgets.core import AbstractElement
 import pyvista as pv
 
+from geos_trame.app.deck.tree import DeckTree
 from geos_trame.app.geosTrameException import GeosTrameException
 from geos_trame.app.ui.viewer.regionViewer import RegionViewer
 from geos_trame.app.ui.viewer.wellViewer import WellViewer
@@ -20,20 +21,25 @@ from geos_trame.schema_generated.schema_mod import (
 
 
 class DataLoader( AbstractElement ):
-    """
-    Helper class to handle IO operations for data loading.
-    """
+    """Helper class to handle IO operations for data loading."""
 
-    def __init__( self, source, region_viewer: RegionViewer, well_viewer: WellViewer, **kwargs ):
+    def __init__(
+        self,
+        source: DeckTree,
+        region_viewer: RegionViewer,
+        well_viewer: WellViewer,
+        **kwargs: Any,
+    ) -> None:
+        """Constructor."""
         super().__init__( "span", **kwargs )
 
         self.source = source
         self.region_viewer = region_viewer
         self.well_viewer = well_viewer
 
-        self.state.change( "object_state" )( self.update_object_state )
+        self.state.change( "object_state" )( self._update_object_state )
 
-    def update_object_state( self, object_state: tuple[ str, bool ], **_ ):
+    def _update_object_state( self, object_state: tuple[ str, bool ], **_: dict ) -> None:
 
         path, show_obj = object_state
 
@@ -65,13 +71,12 @@ class DataLoader( AbstractElement ):
 
             self._update_internalwell( active_block, path, show_obj )
 
-        if isinstance( active_block, Perforation ):
-            if self.well_viewer.get_number_of_wells() == 0 and show_obj:
-                self.ctrl.on_add_warning(
-                    "Can't display " + active_block.name,
-                    "Please display a well before creating a perforation",
-                )
-                return
+        if ( isinstance( active_block, Perforation ) and self.well_viewer.get_number_of_wells() == 0 and show_obj ):
+            self.ctrl.on_add_warning(
+                "Can't display " + active_block.name,
+                "Please display a well before creating a perforation",
+            )
+            return
 
         self.ctrl.update_viewer( active_block, path, show_obj )
 
@@ -94,8 +99,8 @@ class DataLoader( AbstractElement ):
         self.well_viewer.add_mesh( well_polydata, path )
 
     def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
-        """
-        Used to control the visibility of the InternalWell.
+        """Used to control the visibility of the InternalWell.
+
         This method will create the mesh if it doesn't exist.
         """
         if not show:
@@ -115,8 +120,8 @@ class DataLoader( AbstractElement ):
 
     @staticmethod
     def __parse_polyline_property( polyline_property: str, dtype: Type[ Any ] ) -> np.ndarray:
-        """
-        Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
+        """Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
+
         This string always follow this for :
             "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"
         """
@@ -134,8 +139,8 @@ class DataLoader( AbstractElement ):
                 points.append( point )
 
             return np.array( points, dtype=dtype )
-        except ValueError:
+        except ValueError as e:
             raise GeosTrameException(
                 "cannot be able to convert the property into a numeric array: ",
                 ValueError,
-            )
+            ) from e

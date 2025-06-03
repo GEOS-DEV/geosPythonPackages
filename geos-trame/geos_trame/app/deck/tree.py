@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Lionel Untereiner
 import os
 from collections import defaultdict
+from typing import Any
 
 import dpath
 import funcy
@@ -16,31 +17,26 @@ from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
 from geos_trame.app.deck.file import DeckFile
 from geos_trame.app.geosTrameException import GeosTrameException
 from geos_trame.app.utils.file_utils import normalize_path, format_xml
-from geos_trame.schema_generated.schema_mod import Problem, Included, File
+from geos_trame.schema_generated.schema_mod import Problem, Included, File, Functions
 
 
 class DeckTree( object ):
-    """
-    A tree that represents a deck file along with all the available blocks and parameters.
-    """
+    """A tree that represents a deck file along with all the available blocks and parameters."""
 
-    def __init__( self, sm_id=None, **kwargs ):
-        """
-        Constructor.
-        """
+    def __init__( self, sm_id: str | None = None, **kwargs: Any ) -> None:
+        """Constructor."""
         super( DeckTree, self ).__init__( **kwargs )
 
         self.input_file: DeckFile | None = None
         self.input_filename: str | None = None
         self.input_folder: str | None = None
         self.root = None
-        self.path_map = {}
         self.input_has_errors = False
         self._sm_id = sm_id
 
-    def set_input_file( self, input_filename: str ):
-        """
-        Set a new input file
+    def set_input_file( self, input_filename: str ) -> None:
+        """Set a new input file.
+
         Input:
             input_filename[str]: The name of the input file
         Return:
@@ -54,36 +50,42 @@ class DeckTree( object ):
             return
 
     def get_mesh( self ) -> str:
+        """Get the path of the mesh."""
         assert self.input_file is not None and self.input_file.problem is not None
         return normalize_path( self.input_file.path + "/" + self.input_file.problem.mesh[ 0 ].vtkmesh[ 0 ].file )
 
-    def get_abs_path( self, file ) -> str:
+    def get_abs_path( self, file: str ) -> str:
+        """Get the absolute path from a path."""
         assert self.input_file is not None and self.input_file.path is not None
         return normalize_path( self.input_file.path + "/" + file )
 
     def to_str( self ) -> str:
+        """Get the input file as a string."""
         assert self.input_file is not None
         return self.input_file.to_str()
 
     def get_tree( self ) -> dict:
+        """Get the tree from the input file."""
         assert self.input_file is not None and self.input_file.inspect_tree is not None
         return self.input_file.inspect_tree
 
-    def update( self, path, key, value ) -> None:
+    def update( self, path: str, key: str, value: Any ) -> None:
+        """Update the tree."""
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         new_path.append( key )
         assert self.input_file is not None and self.input_file.pb_dict is not None
         funcy.set_in( self.input_file.pb_dict, new_path, value )
 
-    def search( self, path ) -> list | None:
+    def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
         if self.input_file is None:
             return None
         assert self.input_file.pb_dict is not None
         return dpath.values( self.input_file.pb_dict, new_path )
 
-    def decode( self, path ) -> BaseModel | None:
-        data = self.search( path )
+    def decode( self, path: str ) -> BaseModel | None:
+        """Decode the given file to a BaseModel."""
+        data = self._search( path )
         if data is None:
             return None
 
@@ -96,9 +98,7 @@ class DeckTree( object ):
 
     @staticmethod
     def decode_data( data: dict ) -> Problem:
-        """
-        Convert a data to a xml serializable file
-        """
+        """Convert a data to a xml serializable file."""
         context = XmlContext(
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
@@ -108,7 +108,8 @@ class DeckTree( object ):
         return node
 
     @staticmethod
-    def to_xml( obj ) -> str:
+    def to_xml( obj: BaseModel ) -> str:
+        """Convert the given obj to xml."""
         context = XmlContext(
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
@@ -120,34 +121,34 @@ class DeckTree( object ):
         return format_xml( serializer.render( obj ) )
 
     def timeline( self ) -> list[ dict ] | None:
+        """Get the timeline."""
         if self.input_file is None:
             return None
         if self.input_file.problem is None:
             return None
 
-        timeline = list()
+        timeline = []
         # list root events
         global_id = 0
         for e in self.input_file.problem.events[ 0 ].periodic_event:
-            item: dict[ str, str | int ] = dict()
-            item[ "id" ] = global_id
-            item[ "summary" ] = e.name
-            item[ "start_date" ] = e.begin_time
+            item: dict[ str, str | int ] = {
+                "id": global_id,
+                "summary": e.name,
+                "start_date": e.begin_time,
+            }
             timeline.append( item )
             global_id = global_id + 1
 
         return timeline
 
-    def plots( self ):
+    def plots( self ) -> list[ Functions ]:
+        """Get the functions in the current problem."""
         assert self.input_file is not None and self.input_file.problem is not None
         return self.input_file.problem.functions
 
     def write_files( self ) -> None:
-        """
-        Write geos files with all changes made by the user.
-        """
-
-        pb = self.search( "Problem" )
+        """Write geos files with all changes made by the user."""
+        pb = self._search( "Problem" )
         if pb is None:
             return
         files = self._split( pb )
@@ -156,7 +157,7 @@ class DeckTree( object ):
             model_loaded: Problem = DeckTree.decode_data( content )
             model_with_changes: Problem = self._apply_changed_properties( model_loaded )
 
-            assert self.input_file is not None and self.input_file.xml_parser is not None
+            assert ( self.input_file is not None and self.input_file.xml_parser is not None )
             if self.input_file.xml_parser.contains_include_files():
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
                 DeckTree._append_include_file( model_with_changes, includeName )
@@ -171,26 +172,10 @@ class DeckTree( object ):
                 file.write( model_as_xml )
                 file.close()
 
-    def _set_input_file( self, input_file ):
-        """
-        Copies the nodes of an input file into the tree
-        Input:
-            input_file[InputFile]: Input file to copy
-        Return:
-            bool: True if successful
-        """
-        self.input_has_errors = False
-        if input_file.root_node is None:
-            return False
-        self.input_file = input_file
-        self.input_filename = input_file.filename
-
-        return False
-
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:
-        """
-        Append an Included object which follows this structure according to the documentation:
+        """Append an Included object which follows this structure according to the documentation.
+
         <Included>
             <File name="./included_file.xml" />
         </Included>
@@ -209,9 +194,9 @@ class DeckTree( object ):
 
     @staticmethod
     def _append_id( filename: str ) -> str:
-        """
-        Return the new filename with the correct suffix and his extension. The suffix
-        added will be '_vX' where X is the incremented value of the current version.
+        """Return the new filename with the correct suffix and his extension.
+
+        The suffix added will be '_vX' where X is the incremented value of the current version.
         '_v0' if any suffix is present.
         """
         name, ext = os.path.splitext( filename )
@@ -230,8 +215,7 @@ class DeckTree( object ):
 
     @staticmethod
     def _convert_to_camel_case( content: str ) -> str:
-        """
-        Convert any given string in CamelCase.
+        """Convert any given string in CamelCase.
 
         Useful to transform trame_simput convention in geos schema names convention.
         """
@@ -240,20 +224,14 @@ class DeckTree( object ):
 
     @staticmethod
     def _convert_to_snake_case( content: str ) -> str:
-        """
-        Convert any given string in snake case.
+        """Convert any given string in snake case.
 
         Useful to transform geos schema names convention in trame_simput convention.
         """
         return "".join( [ "_" + char.lower() if char.isupper() else char for char in content ] ).lstrip( "_" )
 
     def _apply_changed_properties( self, model: Problem ) -> Problem:
-        """
-        Retrieves all edited 'properties' from the simput_manager and apply it to a
-        given model.
-
-        """
-
+        """Retrieves all edited 'properties' from the simput_manager and apply it to a given model."""
         manager = get_simput_manager( self._sm_id )
         modified_proxy_ids: set[ str ] = manager.proxymanager.dirty_proxy_data
 
@@ -271,13 +249,12 @@ class DeckTree( object ):
 
             DeckTree._set_base_model_properties( model_as_dict, proxy_id, events_as_dict )
 
-        model = getattr( model, "model_validate" )( model_as_dict )
+        model = model.model_validate( model_as_dict )
         return model
 
     @staticmethod
     def _convert_proxy_path_into_proxy_names( proxy_path: str ) -> list[ str ]:
-        """
-        Split a given proxy path into a list of proxy names.
+        """Split a given proxy path into a list of proxy names.
 
         note: each proxy name will be converted in snake case to fit with the
         pydantic model naming convention.
@@ -289,10 +266,7 @@ class DeckTree( object ):
 
     @staticmethod
     def _set_base_model_properties( model: dict, proxy_path: str, properties: dict ) -> None:
-        """
-        Apply all changed property to the model for a specific proxy.
-        """
-
+        """Apply all changed property to the model for a specific proxy."""
         # retrieve the whole BaseModel list to the modified proxy
         proxy_names = DeckTree._convert_proxy_path_into_proxy_names( proxy_path )
         model_copy = model
@@ -332,7 +306,7 @@ class DeckTree( object ):
 
             current_node = model_inverted[ 1 ]
             current_base_model = current_node[ prop_identifier ][ index ]
-            current_base_model = getattr( current_base_model, "model_validate" )( properties )
+            current_base_model = current_base_model.model_validate( properties )
 
             current_node[ prop_identifier ][ index ] = current_base_model
 
@@ -342,10 +316,7 @@ class DeckTree( object ):
 
     @staticmethod
     def _get_base_model_from_path( model: dict, proxy_id: str ) -> dict:
-        """
-        Retrieve the BaseModel changed from the proxy id. The proxy_id is a unique path
-        from the simput manager.
-        """
+        """Retrieve the BaseModel changed from the proxy id. The proxy_id is a unique path from the simput manager."""
         proxy_names = DeckTree._convert_proxy_path_into_proxy_names( proxy_id )
 
         model_found: dict = model
@@ -375,7 +346,7 @@ class DeckTree( object ):
         data = self.input_file.xml_parser.file_to_tags
         restructured_files: defaultdict[ str, dict ] = defaultdict( dict )
         for file_path, associated_tags in data.items():
-            restructured_files[ file_path ] = dict()
+            restructured_files[ file_path ] = {}
             for tag, contents in xml[ 0 ].items():
                 if len( contents ) == 0:
                     continue

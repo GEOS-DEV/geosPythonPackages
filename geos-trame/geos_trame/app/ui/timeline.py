@@ -1,14 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
+from typing import Any
+
 from trame.widgets import gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
+from geos_trame.app.deck.tree import DeckTree
+
 
 class TimelineEditor( vuetify.VCard ):
 
-    def __init__( self, source=None, **kwargs ):
+    def __init__( self, source: DeckTree, **kwargs: Any ) -> None:
+        """Constructor."""
         super().__init__( **kwargs )
 
         self.tree = source
@@ -54,16 +59,18 @@ class TimelineEditor( vuetify.VCard ):
                 placeholder="09/18/2024",
             )
             vuetify.VDivider()
-            with vuetify.VContainer( "Events timeline" ):
-                with vuetify.VTimeline(
+            with (
+                    vuetify.VContainer( "Events timeline" ),
+                    vuetify.VTimeline(
                         direction="horizontal",
                         truncate_line="both",
                         align="center",
                         side="end",
-                ):  # , truncate_line="both", side="end", line_inset="12"):
-                    with vuetify.VTimelineItem( v_for=( f"item in {items}", ), key="i", value="item", size="small" ):
-                        vuetify.VAlert( "{{ item.summary }}" )
-                        vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
+                    ),
+                    vuetify.VTimelineItem( v_for=( f"item in {items}", ), key="i", value="item", size="small" ),
+            ):
+                vuetify.VAlert( "{{ item.summary }}" )
+                vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
 
             with vuetify.VContainer( "Events chart" ):
                 gantt.Gantt(
@@ -78,5 +85,6 @@ class TimelineEditor( vuetify.VCard ):
                     classes="fill_height",
                 )
 
-    def update_from_js( self, *items ):
+    def update_from_js( self, *items: tuple ) -> None:
+        """Update method called from javascript."""
         self.state.items = list( items )

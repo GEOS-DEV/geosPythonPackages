@@ -6,6 +6,9 @@ from trame.ui.vuetify3 import VAppLayout
 from trame.decorators import TrameApp
 from trame.widgets import html, simput
 from trame.widgets import vuetify3 as vuetify
+from trame_server import Server
+from trame_server.controller import Controller
+from trame_server.state import State
 from trame_simput import get_simput_manager
 
 from geos_trame import module
@@ -13,7 +16,7 @@ from geos_trame.app.deck.tree import DeckTree
 from geos_trame.app.io.data_loader import DataLoader
 from geos_trame.app.ui.viewer.regionViewer import RegionViewer
 from geos_trame.app.ui.viewer.wellViewer import WellViewer
-from geos_trame.app.utils.properties_checker import PropertiesChecker
+from geos_trame.app.components.properties_checker import PropertiesChecker
 from geos_trame.app.ui.editor import DeckEditor
 from geos_trame.app.ui.inspector import DeckInspector
 from geos_trame.app.ui.plotting import DeckPlotting
@@ -27,8 +30,8 @@ import sys
 @TrameApp()
 class GeosTrame:
 
-    def __init__( self, server, file_name: str ):
-
+    def __init__( self, server: Server, file_name: str ) -> None:
+        """Constructor."""
         self.alertHandler: AlertHandler | None = None
         self.deckPlotting: DeckPlotting | None = None
         self.deckViewer: DeckViewer | None = None
@@ -77,26 +80,32 @@ class GeosTrame:
         self.build_ui()
 
     @property
-    def state( self ):
+    def state( self ) -> State:
+        """Getter for the state."""
         return self.server.state
 
     @property
-    def ctrl( self ):
+    def ctrl( self ) -> Controller:
+        """Getter for the controller."""
         return self.server.controller
 
-    def set_input_file( self, file_name ):
-        """sets the input file of the InputTree object and populates simput/ui"""
+    def set_input_file( self, file_name: str ) -> None:
+        """Sets the input file of the InputTree object and populates simput/ui."""
         self.tree.set_input_file( file_name )
 
-    def deck_ui( self ):
-        """Generates the UI for the deck edition / visualization tab"""
+    def deck_ui( self ) -> None:
+        """Generates the UI for the deck edition / visualization tab."""
         with vuetify.VRow( classes="mb-6 fill-height" ):
             with vuetify.VCol(
                     cols=2,
                     order=1,
             ):
                 self.deckInspector = DeckInspector( source=self.tree, classes="fit-content" )
-                vuetify.VBtn( text="Check fields", classes="ma-4", click=( self.properties_checker.check_fields, ) )
+                vuetify.VBtn(
+                    text="Check fields",
+                    classes="ma-4",
+                    click=( self.properties_checker.check_fields, ),
+                )
 
             with vuetify.VCol(
                     cols=10,
@@ -133,9 +142,8 @@ class GeosTrame:
                             style="flex: 1; height: 40%; width: 100%;",
                         )
 
-    def build_ui( self ):
-        """Generates the full UI for the GEOS Trame Application"""
-
+    def build_ui( self ) -> None:
+        """Generates the full UI for the GEOS Trame Application."""
         with VAppLayout( self.server ) as layout:
             self.simput_widget.register_layout( layout )
 
@@ -154,18 +162,20 @@ class GeosTrame:
                         style=
                         "position: absolute; top: 0; left: 0; height: 100%; width: 100%; display: flex; align-items: center; justify-content: center;",
                 ):
-                    with html.Div(
-                            v_if=( "tab_idx == 0", ),
-                            style=
-                            "height: 100%; width: 100%; display: flex; align-items: center; justify-content: flex-end;",
-                    ):
-                        with vuetify.VBtn(
+                    with (
+                            html.Div(
+                                v_if=( "tab_idx == 0", ),
+                                style=
+                                "height: 100%; width: 100%; display: flex; align-items: center; justify-content: flex-end;",
+                            ),
+                            vuetify.VBtn(
                                 click=self.tree.write_files,
                                 icon=True,
                                 style="z-index: 1;",
                                 id="save-button",
-                        ):
-                            vuetify.VIcon( "mdi-content-save-outline" )
+                            ),
+                    ):
+                        vuetify.VIcon( "mdi-content-save-outline" )
 
                     with html.Div(
                             style=

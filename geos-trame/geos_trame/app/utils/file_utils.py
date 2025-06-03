@@ -8,7 +8,8 @@ from typing import Any, List, TextIO
 from lxml import etree as ElementTree  # type: ignore[import-untyped]
 
 
-def normalize_path( x ):
+def normalize_path( x: str ) -> str:
+    """Normalize the given path."""
     tmp = os.path.expanduser( x )
     tmp = os.path.abspath( tmp )
     if os.path.isfile( tmp ):
@@ -17,7 +18,7 @@ def normalize_path( x ):
 
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
-    """Format xml attribute strings
+    """Format xml attribute strings.
 
     Args:
         attribute_indent (str): Attribute indent string
@@ -61,7 +62,7 @@ def format_xml_level(
     close_tag_newline: bool = False,
     include_namespace: bool = False,
 ) -> None:
-    """Iteratively format the xml file
+    """Iteratively format the xml file.
 
     Args:
         output (file): the output text file handle
@@ -74,7 +75,6 @@ def format_xml_level(
         close_tag_newline (bool): option to place close tag on a separate line
         include_namespace (bool): option to include the xml namespace in the output
     """
-
     # Handle comments
     if node.tag is ElementTree.Comment:
         output.write( "\n%s<!--%s-->" % ( indent * level, node.text ) )
@@ -155,7 +155,7 @@ def format_xml(
     close_style: bool = False,
     namespace: bool = False,
 ) -> str:
-    """Script to format xml files
+    """Script to format xml files.
 
     Args:
         input_str (str): Input str
@@ -197,4 +197,4 @@ def format_xml(
 
     except ElementTree.ParseError as err:
         print( err.msg )
-        raise Exception( "Failed to format xml file" )
+        raise Exception( "Failed to format xml file" ) from err

@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lucas Givord - Kitware
+# ruff: noqa
 from pathlib import Path
 
+from trame_server import Server
+from trame_server.state import State
+from trame_vuetify.ui.vuetify3 import VAppLayout
+from tests.trame_fixtures import trame_server_layout, trame_state
+
 from geos_trame.app.core import GeosTrame
-from tests.trame_fixtures import trame_state, trame_server_layout
 
 
-def test_internal_well_intersection( trame_server_layout, trame_state ):
+def test_internal_well_intersection( trame_server_layout: tuple[ Server, VAppLayout ], trame_state: State ) -> None:
+    """Test internal well intersection."""
     root_path = Path( __file__ ).parent.absolute().__str__()
     file_name = root_path + "/data/geosDeck/geosDeck.xml"
 
@@ -38,7 +44,8 @@ def test_internal_well_intersection( trame_server_layout, trame_state ):
     assert len( app.deckViewer._perforations ) == 2
 
 
-def test_vtk_well_intersection( trame_server_layout, trame_state ):
+def test_vtk_well_intersection( trame_server_layout: tuple[ Server, VAppLayout ], trame_state: State ) -> None:
+    """Test vtk well intersection."""
     root_path = Path( __file__ ).parent.absolute().__str__()
     file_name = root_path + "/data/geosDeck/geosDeck.xml"
 

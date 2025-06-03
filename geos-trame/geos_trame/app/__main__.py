@@ -2,13 +2,16 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
 from pathlib import Path
+from typing import Any
 
 from trame.app import get_server
+from trame_server import Server
 
 from geos_trame.app.core import GeosTrame
 
 
-def main( server=None, **kwargs ):
+def main( server: Server = None, **kwargs: Any ) -> None:
+    """Main function."""
     # Get or create server
     if server is None:
         server = get_server()

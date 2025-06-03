@@ -1,14 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
+from typing import Any
+
 from trame.widgets import code, simput
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
+from geos_trame.app.deck.tree import DeckTree
+
 
 class DeckEditor( vuetify.VCard ):
 
-    def __init__( self, source=None, **kwargs ):
+    def __init__( self, source: DeckTree, **kwargs: Any ) -> None:
+        """Constructor."""
         super().__init__( **kwargs )
 
         self.tree = source
@@ -19,7 +24,7 @@ class DeckEditor( vuetify.VCard ):
         self.state.active_name = "Problem"
 
         self.state.active_snippet = ""
-        self.state.change( "active_id" )( self.on_active_id )
+        self.state.change( "active_id" )( self._on_active_id )
 
         with self:
             with vuetify.VCardTitle( "Components editor" ):
@@ -68,7 +73,7 @@ class DeckEditor( vuetify.VCard ):
                 textmate=( "editor_textmate", None ),
             )
 
-    def on_active_id( self, active_id, **kwargs ):
+    def _on_active_id( self, active_id: str | None, **_: Any ) -> None:
         # this function triggers when a block is selected from the tree in the ui
 
         if active_id is None:
@@ -86,7 +91,7 @@ class DeckEditor( vuetify.VCard ):
         self.state.active_id = active_id
         self.state.active_ids = [ active_id ]
 
-        if hasattr( active_block, "name" ):
+        if active_block is not None and hasattr( active_block, "name" ):
             self.state.active_name = active_block.name
         else:
             self.state.active_name = None
@@ -97,4 +102,4 @@ class DeckEditor( vuetify.VCard ):
         self.state.active_type = simput_type
         self.state.active_types = [ simput_type ]
 
-        self.state.active_snippet = self.tree.to_xml( active_block )
+        self.state.active_snippet = DeckTree.to_xml( active_block )

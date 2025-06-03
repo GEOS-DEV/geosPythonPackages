@@ -20,6 +20,6 @@ vue_use = [ "geos_trame" ]
 
 
 # Optional if you want to execute custom initialization at module load
-def setup( app, **kwargs ):
-    """Method called at initialization with possibly some custom keyword arguments"""
+def setup( app, **kwargs ):  # noqa
+    """Method called at initialization with possibly some custom keyword arguments."""
     pass

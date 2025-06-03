@@ -3,14 +3,17 @@
 # SPDX-FileContributor: Kitware
 from dataclasses import dataclass
 
-from geos_trame.app.data_types.field_status import FieldStatus
-
 
 @dataclass
 class TreeNode:
+    """Single element of the tree, used by `DeckTree`.
+
+    `valid` has to be an int for serialization purposes, but is actually a FieldStatus so only possibles values are:
+        - 0 (UNCHECKED): Validity check has not been performed.
+        - 1 (VALID): TreeNode is checked and valid.
+        - 2 (INVALID): TreeNode is checked and invalid.
     """
-    Single element of the tree, used by `DeckTree`.
-    """
+
     id: str
     title: str
     children: list
@@ -21,22 +24,13 @@ class TreeNode:
 
     @property
     def json( self ) -> dict:
-        if self.children:
-            return dict(
-                id=self.id,
-                title=self.title,
-                is_drawable=self.is_drawable,
-                drawn=self.drawn,
-                valid=self.valid,
-                children=[ c.json for c in self.children ],
-                hidden_children=[ c.json for c in self.hidden_children ],
-            )
-        return dict(
-            id=self.id,
-            title=self.title,
-            is_drawable=self.is_drawable,
-            drawn=self.drawn,
-            valid=self.valid,
-            children=None,
-            hidden_children=[],
-        )
+        """Get the tree node as json."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "is_drawable": self.is_drawable,
+            "drawn": self.drawn,
+            "valid": self.valid,
+            "children": [ c.json for c in self.children ] if self.children else None,
+            "hidden_children": ( [ c.json for c in self.hidden_children ] if self.hidden_children else [] ),
+        }

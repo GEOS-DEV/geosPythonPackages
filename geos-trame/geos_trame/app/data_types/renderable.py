@@ -5,6 +5,7 @@ from enum import Enum
 
 
 class Renderable( Enum ):
+    """Enum class for renderable types and their ids."""
     VTKMESH = "VTKMesh"
     INTERNALMESH = "InternalMesh"
     INTERNALWELL = "InternalWell"

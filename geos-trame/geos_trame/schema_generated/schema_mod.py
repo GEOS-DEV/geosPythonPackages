@@ -4,6 +4,8 @@ Generator: PydanticGenerator
 See: https://xsdata.readthedocs.io/
 """
 
+# ruff: noqa
+
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict

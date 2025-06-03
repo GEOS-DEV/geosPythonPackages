@@ -4,6 +4,8 @@ Generator: PydanticGenerator
 See: https://xsdata.readthedocs.io/
 """
 
+# ruff: noqa
+
 from __future__ import annotations
 
 from dataclasses import field

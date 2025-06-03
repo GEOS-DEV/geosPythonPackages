@@ -11,6 +11,8 @@ from seleniumbase import SB
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
+# ruff: noqa
+
 
 @pytest.mark.skip( "Test to fix" )
 @pytest.mark.parametrize( "server_path", [ "tests/utils/start_geos_trame_for_testing.py" ] )

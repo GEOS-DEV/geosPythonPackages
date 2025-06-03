@@ -15,18 +15,13 @@ from geos_trame.app.geosTrameException import GeosTrameException
 
 
 class XMLParser( object ):
-    """
-    Class used to parse a valid XML geos file and construct a link between
-    each file when they are included.
+    """Class used to parse a valid XML geos file and construct a link between each file when they are included.
 
     Useful to be able to save it later.
     """
 
-    def __init__( self, filename: str ):
-        """
-        Constructor which takes in input the xml file used to generate pedantic file.
-        """
-
+    def __init__( self, filename: str ) -> None:
+        """Constructor which takes in input the xml file used to generate pedantic file."""
         self.filename = filename
         self.file_to_tags: defaultdict = defaultdict( list )
         self.file_to_relative_path: dict = {}
@@ -46,34 +41,33 @@ class XMLParser( object ):
             self._is_valid = False
 
     def is_valid( self ) -> bool:
+        """Getter for is_valid."""
         if not self._is_valid:
             print( "XMLParser isn't valid", file=sys.stderr )
         return self._is_valid
 
     def build( self ) -> None:
+        """Read the file."""
         if not self.is_valid():
             raise GeosTrameException( "Cannot parse this file." )
         self._read()
 
     def get_simulation_deck( self ) -> ElementTree.Element:
+        """Get the simulation deck."""
         if not self.is_valid():
             raise GeosTrameException( "Not valid file, cannot return the deck." )
         return self.simulation_deck
 
     def contains_include_files( self ) -> bool:
-        """
-        Return True if the parsed file contains included file or not.
-        """
+        """Return True if the parsed file contains included file or not."""
         return len( self.file_to_relative_path ) > 0
 
     def get_relative_path_of_file( self, filename: str ) -> str:
-        """
-        Return the relative path of a given filename.
-        """
+        """Return the relative path of a given filename."""
         return self.file_to_relative_path[ filename ]
 
     def _read( self ) -> ElementTree.Element:
-        """Reads a xml file (and recursively its included files) into memory
+        """Reads a xml file (and recursively its included files) into memory.
 
         Returns:
             SimulationDeck: The simulation deck
@@ -94,7 +88,7 @@ class XMLParser( object ):
             self.root.remove( include_node )
 
         for neighbor in self.root.iter():
-            for key in neighbor.attrib.keys():
+            for key in neighbor.attrib:
                 # remove unnecessary whitespaces for indentation
                 s = re.sub( r"\s{2,}", " ", neighbor.get( key ) )
                 neighbor.set( key, s )
@@ -113,12 +107,13 @@ class XMLParser( object ):
         Args:
             existing_node (lxml.etree.Element): The current node in the base xml structure.
             target_node (lxml.etree.Element): The node to insert.
+            fname (str): The target file name.
             level (int): The xml file depth.
         """
         if not self.is_valid():
             raise GeosTrameException( "Not valid file, cannot merge nodes" )
         # Copy attributes on the current level
-        for tk in target_node.attrib.keys():
+        for tk in target_node.attrib:
             existing_node.set( tk, target_node.get( tk ) )
 
         # Copy target children into the xml structure
@@ -168,6 +163,7 @@ class XMLParser( object ):
 
         Args:
             root (lxml.etree.Element): The root node of the base xml structure.
+            file_path (str): The file path.
             fname (str): The name of the target xml file to merge.
             include_count (int): The current recursion depth.
             max_include (int): The maximum number of xml files to include (default = 100)

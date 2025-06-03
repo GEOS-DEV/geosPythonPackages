@@ -10,6 +10,7 @@ from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictEncoder, XmlContext, XmlParser, XmlSerializer
 
+from geos_trame.app.data_types.renderable import Renderable
 from geos_trame.app.geosTrameException import GeosTrameException
 from geos_trame.app.io.xml_parser import XMLParser
 from geos_trame.app.utils.file_utils import normalize_path
@@ -17,14 +18,11 @@ from geos_trame.schema_generated.schema_mod import Problem
 
 
 class DeckFile( object ):
-    """
-    Holds the information of a deck file.
-    Can be empty.
-    """
+    """Holds the information of a deck file. Can be empty."""
 
-    def __init__( self, filename: str, **kwargs ) -> None:
-        """
-        Constructor.
+    def __init__( self, filename: str, **kwargs: Any ) -> None:
+        """Constructor.
+
         Input:
             filename: file name of the deck file
         """
@@ -44,8 +42,8 @@ class DeckFile( object ):
         self.path = os.path.dirname( self.filename )
 
     def open_deck_file( self, filename: str ) -> None:
-        """
-        Opens a file and parses it.
+        """Opens a file and parses it.
+
         Input:
             filename: file name of the input file
         Signals:
@@ -53,7 +51,6 @@ class DeckFile( object ):
         Raises:
             GeosTrameException: On invalid input file
         """
-
         self.changed = False
         self.root_node = None
 
@@ -80,19 +77,19 @@ class DeckFile( object ):
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
         )
-        parser = XmlParser( context=context, config=ParserConfig(
-        ) )  # fail_on_unknown_properties=True, fail_on_unknown_attributes=True, fail_on_converter_warnings=True
+        parser = XmlParser( context=context, config=ParserConfig() )
         try:
             self.problem = parser.parse( simulation_deck, Problem )
         except ElementTree.XMLSyntaxError as e:
             msg = "Failed to parse input file %s:\n%s\n" % ( filename, e )
-            raise GeosTrameException( msg )
+            raise GeosTrameException( msg ) from e
 
         encoder = DictEncoder( context=context, config=SerializerConfig( indent="  " ) )
         self.pb_dict = { "Problem": encoder.encode( self.problem ) }
         self.inspect_tree = build_inspect_tree( encoder.encode( self.problem ) )
 
     def to_str( self ) -> str:
+        """Get the problem as a string."""
         config = SerializerConfig( indent="  ", xml_declaration=False )
         context = XmlContext(
             element_name_generator=text.pascal_case,
@@ -102,9 +99,8 @@ class DeckFile( object ):
         return serializer.render( self.problem )
 
 
-def build_inspect_tree( obj ) -> dict:
-    """Return the fields of a dataclass instance as a new dictionary mapping
-    field names to field values.
+def build_inspect_tree( obj: dict ) -> dict:
+    """Return the fields of a dataclass instance as a new dictionary mapping field names to field values.
 
     Example usage::
 
@@ -121,25 +117,16 @@ def build_inspect_tree( obj ) -> dict:
     dataclass instances. This will also look into built-in containers:
     tuples, lists, and dicts. Other objects are copied with 'copy.deepcopy()'.
     """
-
     return _build_inspect_tree_inner( "Problem", obj, [] )
 
 
-def _build_inspect_tree_inner( key, obj, path ) -> dict:
-    sub_node = dict()
-    if "name" in obj:
-        sub_node[ "title" ] = obj[ "name" ]
-    else:
-        sub_node[ "title" ] = key
-    sub_node[ "children" ] = list()
-    sub_node[ "is_drawable" ] = key in [
-        "VTKMesh",
-        "InternalMesh",
-        "InternalWell",
-        "VTKWell",
-        "Perforation",
-    ]
-    sub_node[ "drawn" ] = False
+def _build_inspect_tree_inner( key: str, obj: dict, path: list ) -> dict:
+    sub_node = {
+        "title": obj.get( "name", key ),
+        "children": [],
+        "is_drawable": key in ( item.value for item in Renderable ),
+        "drawn": False,
+    }
 
     for key, value in obj.items():
 
