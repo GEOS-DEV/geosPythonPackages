@@ -11,10 +11,12 @@ from trame.widgets import vuetify3 as vuetify
 from vtkmodules.vtkRenderingCore import vtkActor
 
 from geos_trame.app.deck.tree import DeckTree
+from geos_trame.app.ui.viewer.boxViewer import BoxViewer
 from geos_trame.app.ui.viewer.perforationViewer import PerforationViewer
 from geos_trame.app.ui.viewer.regionViewer import RegionViewer
 from geos_trame.app.ui.viewer.wellViewer import WellViewer
 from geos_trame.schema_generated.schema_mod import (
+    Box,
     Vtkmesh,
     Vtkwell,
     Perforation,
@@ -40,6 +42,7 @@ class DeckViewer( vuetify.VCard ):
          - Vtkwell,
          - Perforation,
          - InternalWell
+         - Box
 
         Everything is handle in the method 'update_viewer()' which is trigger when the
         'state.object_state' changed (see DeckTree).
@@ -57,6 +60,7 @@ class DeckViewer( vuetify.VCard ):
         self.server.state[ self.CUT_PLANE ] = True
         self.server.state[ self.ZAMPLIFICATION ] = 1
 
+        self.box_engine: BoxViewer | None = None
         self.region_engine = region_viewer
         self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer ] = {}
@@ -122,6 +126,24 @@ class DeckViewer( vuetify.VCard ):
 
         if isinstance( active_block, Perforation ):
             self._update_perforation( active_block, show_obj, path )
+
+        if isinstance( active_block, Box ):
+            if self.region_engine.input.number_of_cells == 0 and show_obj:
+                self.ctrl.on_add_warning(
+                    "Can't display " + active_block.name,
+                    "Please display the mesh before creating a well",
+                )
+                return
+
+            if self.box_engine is not None:
+                self.box_engine.reset( self.plotter )
+
+            if not show_obj:
+                return
+
+            box: Box = active_block
+            self.box_engine = BoxViewer( self.region_engine.input, box )
+            self.box_engine.append_to_plotter( self.plotter )
 
     def _on_clip_visibility_change( self, **kwargs: Any ) -> None:
         """Toggle cut plane visibility for all actors.

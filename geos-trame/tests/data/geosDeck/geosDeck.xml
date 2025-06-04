@@ -127,8 +127,8 @@
     <Geometry>
         <Box
         name="box_1"
-        xMin="{ 1150, 700, 62 }"
-        xMax="{ 1250, 800, 137 }"/>
+        xMin="{ 3509, 4117, -596 }"
+        xMax="{ 4482, 5041, -500 }"/>
     </Geometry>
     <!-- End Block to comment to deactivate box definition -->
 
