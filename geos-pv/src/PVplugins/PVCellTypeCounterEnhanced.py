@@ -94,7 +94,7 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         """Specify filename for the filter to write.
 
         Args:
-            fname (str): file path
+            fname (str): File path
         """
         if self._filename != fname:
             self._filename = fname
@@ -125,9 +125,9 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.

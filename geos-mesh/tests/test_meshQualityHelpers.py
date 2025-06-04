@@ -158,7 +158,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for metric in list( VtkCellQualityMetricEnum ):
         yield TestCase( metric.metricIndex, metric.metricName )

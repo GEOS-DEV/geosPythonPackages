@@ -38,9 +38,9 @@ class MeshQualityMetricEnum( Enum ):
         """Define the enumeration to add attributes to mesh quality measures.
 
         Args:
-            metricIndex (int): index of QualityMeasureTypes
-            name (str): name of the metric
-            applicableToCellTypes (tuple[bool, ...]): tuple defining for each cell type if the
+            metricIndex (int): Index of QualityMeasureTypes
+            name (str): Name of the metric
+            applicableToCellTypes (tuple[bool, ...]): Tuple defining for each cell type if the
                 metric is applicable.
         """
         self.metricIndex: int = int( metricIndex )
@@ -50,7 +50,7 @@ class MeshQualityMetricEnum( Enum ):
         """Get metric index.
 
         Returns:
-            int: metric index
+            int: Metric index
         """
         return self.metricIndex
 
@@ -58,7 +58,7 @@ class MeshQualityMetricEnum( Enum ):
         """Get metric name.
 
         Returns:
-            str: metric name
+            str: Metric name
         """
         return self.metricName
 
@@ -75,11 +75,11 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         """Define the enumeration to add attributes to mesh quality measures.
 
         Args:
-            metricIndex (int): index of QualityMeasureTypes
-            name (str): name of the metric
-            applicableToCellTypes (tuple[bool, ...]): tuple defining for each cell type if the
+            metricIndex (int): Index of QualityMeasureTypes
+            name (str): Name of the metric
+            applicableToCellTypes (tuple[bool, ...]): Tuple defining for each cell type if the
                 metric is applicable.
-            qualityRanges (tuple[QualityRange | None,...]): quality range limits for each cell type
+            qualityRanges (tuple[QualityRange | None,...]): Quality range limits for each cell type
                 starting from best to worst quality.
         """
         super().__init__( metricIndex, name )
@@ -90,7 +90,7 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         """Get the list of cell type indexes the metric applies to.
 
         Returns:
-            set[int]: set of cell type indexes
+            set[int]: Set of cell type indexes
         """
         cellTypes = set()
         for i, cellType in enumerate( getAllCellTypes() ):
@@ -102,7 +102,7 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         """Return True if the metric is applicable to input cell type, False otherwise.
 
         Args:
-            cellType (int): cell type index
+            cellType (int): Cell type index
 
         Returns:
             bool: True if the metric is applicable
@@ -125,10 +125,10 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         """Get quality range for input cell type.
 
         Args:
-            cellType (int): cell type index
+            cellType (int): Cell type index
 
         Returns:
-            tuple[float, float, float, float, bool] | None: quality range from best to worst. Last element
+            tuple[float, float, float, float, bool] | None: Quality range from best to worst. Last element
                 yields True if the range is symmetrical to negative values.
         """
         if cellType not in getAllCellTypes():
@@ -479,7 +479,7 @@ def getAllCellTypesExtended() -> list[ int ]:
     """Get all cell type ids.
 
     Returns:
-        tuple[int,...]: tuple containing cell type ids.
+        tuple[int,...]: Tuple containing cell type ids.
     """
     return getPolygonCellTypes() + getPolyhedronCellTypes() + [ VTK_POLYGON, VTK_POLYHEDRON ]
 
@@ -488,7 +488,7 @@ def getAllCellTypes() -> list[ int ]:
     """Get all cell type ids.
 
     Returns:
-        tuple[int,...]: tuple containing cell type ids.
+        tuple[int,...]: Tuple containing cell type ids.
     """
     return getPolygonCellTypes() + getPolyhedronCellTypes()
 
@@ -497,7 +497,7 @@ def getChildrenCellTypes( parent: int ) -> list[ int ]:
     """Get children cell type ids from parent id.
 
     Returns:
-        tuple[int,...]: tuple containing cell type ids.
+        tuple[int,...]: Tuple containing cell type ids.
     """
     if parent == VTK_POLYGON:
         return getPolygonCellTypes()
@@ -511,7 +511,7 @@ def getPolygonCellTypes() -> list[ int ]:
     """Get polygonal cell type ids.
 
     Returns:
-        tuple[int,...]: tuple containing cell type ids.
+        tuple[int,...]: Tuple containing cell type ids.
     """
     return [ VTK_TRIANGLE, VTK_QUAD ]
 
@@ -520,7 +520,7 @@ def getPolyhedronCellTypes() -> list[ int ]:
     """Get polyhedra cell type ids.
 
     Returns:
-        tuple[int,...]: tuple containing cell type ids.
+        tuple[int,...]: Tuple containing cell type ids.
     """
     return [ VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON ]
 
@@ -529,13 +529,13 @@ def getQualityMetricFromIndex( metricIndex: int ) -> Optional[ MeshQualityMetric
     """Get quality metric from its index.
 
     Args:
-        metricIndex (int): metric index
+        metricIndex (int): Metric index
 
     Raises:
         IndexError: Metric index is out of range
 
     Returns:
-        MeshQualityMetricEnum | None: quality metric
+        MeshQualityMetricEnum | None: Quality metric
     """
     if metricIndex < CELL_QUALITY_METRIC_ADDITIONAL_START_INDEX:
         return list( VtkCellQualityMetricEnum )[ metricIndex ]
@@ -550,10 +550,10 @@ def getQualityMeasureNameFromIndex( metricIndex: int ) -> Optional[ str ]:
     """Get quality metric name from index.
 
     Args:
-        metricIndex (int): index of quality measure
+        metricIndex (int): Index of quality measure
 
     Returns:
-        str | None: name of quality measure. Returns None if metricIndex is undefined.
+        str | None: Name of quality measure. Returns None if metricIndex is undefined.
     """
     metric = getQualityMetricFromIndex( metricIndex )
     if metric is None:
@@ -565,10 +565,10 @@ def getQualityMeasureIndexFromName( name: str ) -> int:
     """Get quality metric index from name.
 
     Args:
-        name (str): name of quality measure
+        name (str): Name of quality measure
 
     Returns:
-        int: index of quality measure
+        int: Index of quality measure
     """
     for metric in list( VtkCellQualityMetricEnum ) + list( CellQualityMetricAdditionalEnum ) + list(
             QualityMetricOtherEnum ):
@@ -581,7 +581,7 @@ def getCellQualityMeasureFromCellType( cellType: int ) -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for triangles.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     if cellType not in getAllCellTypesExtended():
         raise ValueError( f"Cell type {cellType} not in supported cell types {getAllCellTypesExtended()}." )
@@ -596,7 +596,7 @@ def getTriangleQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for triangles.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_TRIANGLE )
 
@@ -605,7 +605,7 @@ def getQuadQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_QUAD )
 
@@ -614,7 +614,7 @@ def getCommonPolygonQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for both triangles and quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     triangleMetrics: set[ int ] = getTriangleQualityMeasure()
     quadMetrics: set[ int ] = getQuadQualityMeasure()
@@ -625,7 +625,7 @@ def getTetQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_TETRA )
 
@@ -634,7 +634,7 @@ def getPyramidQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_PYRAMID )
 
@@ -643,7 +643,7 @@ def getWedgeQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_WEDGE )
 
@@ -652,7 +652,7 @@ def getHexQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     return getCellQualityMeasureFromCellType( VTK_HEXAHEDRON )
 
@@ -661,7 +661,7 @@ def getCommonPolyhedraQualityMeasure() -> set[ int ]:
     """Get the indexes of mesh quality metrics defined for both triangles and quads.
 
     Returns:
-        set[int]: set of possible indexes.
+        set[int]: Set of possible indexes.
     """
     tetMetrics: set[ int ] = getTetQualityMeasure()
     pyrMetrics: set[ int ] = getPyramidQualityMeasure()
@@ -674,7 +674,7 @@ def getQualityMetricsOther() -> set[ int ]:
     """Get the set of indexes of other mesh quality metric.
 
     Returns:
-        set[int]: other mesh quality metric indexes
+        set[int]: Other mesh quality metric indexes
     """
     return { metric.getMetricIndex() for metric in list( QualityMetricOtherEnum ) }
 

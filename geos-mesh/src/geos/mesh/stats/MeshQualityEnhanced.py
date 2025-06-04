@@ -90,7 +90,7 @@ def getQualityMetricArrayName( metric: int ) -> str:
     """Get the name of the array from quality metric index.
 
     Args:
-        metric (int): metric index
+        metric (int): Metric index
 
     Returns:
         str: name of output array
@@ -127,8 +127,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            port (int): input port
-            info (vtkInformationVector): info
+            port (int): Input port
+            info (vtkInformationVector): Info
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -146,9 +146,9 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -173,7 +173,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_TRIANGLE ] = metrics
 
@@ -181,7 +181,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_QUAD ] = metrics
 
@@ -189,7 +189,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_TETRA ] = metrics
 
@@ -197,7 +197,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_PYRAMID ] = metrics
 
@@ -205,7 +205,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_WEDGE ] = metrics
 
@@ -213,7 +213,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set triangle quality metrics to compute.
 
         Args:
-            metrics (Iterable[int]): metrics to compute
+            metrics (Iterable[int]): Metrics to compute
         """
         self._MetricsAll[ VTK_HEXAHEDRON ] = metrics
 
@@ -229,22 +229,22 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set all quality metrics to compute.
 
         Args:
-            triangleMetrics (Iterable[int]): triangle metrics to compute.
+            triangleMetrics (Iterable[int]): Triangle metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
-            quadMetrics (Iterable[int]): quad metrics to compute.
+            quadMetrics (Iterable[int]): Quad metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
-            tetraMetrics (Iterable[int]): tetrahedron metrics to compute.
+            tetraMetrics (Iterable[int]): Tetrahedron metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
-            pyramidMetrics (Iterable[int]): pyramid metrics to compute.
+            pyramidMetrics (Iterable[int]): Pyramid metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
-            wedgeMetrics (Iterable[int]): wedge metrics to compute.
+            wedgeMetrics (Iterable[int]): Wedge metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
-            hexaMetrics (Iterable[int]): hexahedron metrics to compute.
+            hexaMetrics (Iterable[int]): Hexahedron metrics to compute.
 
                 Defaults to [vtkMeshQuality.QualityMeasureTypes.NONE,].
         """
@@ -259,7 +259,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Set additional metrics unrelated to cell types.
 
         Args:
-            metrics (set[QualityMetricOtherEnum]): set of QualityMetricOtherEnum
+            metrics (set[QualityMetricOtherEnum]): Set of QualityMetricOtherEnum
         """
         if len( metrics ) > 0:
             self._otherMetrics = metrics
@@ -270,10 +270,10 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Get the set of metrics computed for input cell type.
 
         Args:
-            cellType (int): cell type index
+            cellType (int): Cell type index
 
         Returns:
-            Optional[set[int]]: set of computed quality metrics
+            Optional[set[int]]: Set of computed quality metrics
         """
         # child cell type
         if cellType in self._allCellTypes:
@@ -300,9 +300,9 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -356,8 +356,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Compute mesh input quality metric for input cell type.
 
         Args:
-            metricIndex (int): quality metric index
-            cellType (int): cell type index
+            metricIndex (int): Quality metric index
+            cellType (int): Cell type index
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
         if arrayName in getAttributesFromDataSet( self._outputMesh, False ):
@@ -396,11 +396,11 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Apply vtkMeshQuality filter.
 
         Args:
-            metric (int): quality metric index
-            cellType (int): cell type
+            metric (int): Quality metric index
+            cellType (int): Cell type
 
         Returns:
-            vtkUnstructuredGrid: _description_
+            vtkUnstructuredGrid: Filtered mesh
         """
         meshQualityFilter = vtkMeshQuality()
         meshQualityFilter.SetInputDataObject( self._outputMesh )
@@ -428,7 +428,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         Output is an cell array in output mesh.
 
         Args:
-            metricIndex (int): metric index
+            metricIndex (int): Metric index
         """
         metric = getQualityMetricFromIndex( metricIndex )
         assert metric is not None, f"Additional cell quality metric index {metricIndex} is undefined."
@@ -464,10 +464,10 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         default metric is replaced by nan values.
 
         Args:
-            serverMesh (vtkUnstructuredGrid): server mesh where Quality metric is
-            serverAttributeName (str): name of the attribute in the server mesh
-            clientAttributeName (str): name of the attribute in the client mesh
-            qualityMetric (int): index of quality metric.
+            serverMesh (vtkUnstructuredGrid): Server mesh where Quality metric is
+            serverAttributeName (str): Name of the attribute in the server mesh
+            clientAttributeName (str): Name of the attribute in the client mesh
+            qualityMetric (int): Index of quality metric.
 
         Returns:
             bool: True if the attribute was successfully transfered, False otherwise
@@ -496,9 +496,9 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         whereas input metric does not applies to the cell type.
 
         Args:
-            array (vtkDataArray): array to update
-            mesh (vtkUnstructuredGrid): mesh
-            qualityMetric (int): quality metric index
+            array (vtkDataArray): Array to update
+            mesh (vtkUnstructuredGrid): Mesh
+            qualityMetric (int): Quality metric index
         """
         for cellId in range( mesh.GetNumberOfCells() ):
             cell: vtkCell = mesh.GetCell( cellId )
@@ -535,8 +535,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Compute input quality metric statistics for input cell types.
 
         Args:
-            metricIndex (int): quality metric index
-            cellType (int): cell type index
+            metricIndex (int): Quality metric index
+            cellType (int): Cell type index
         """
         cellArrays: vtkCellData = self._outputMesh.GetCellData()
         assert cellArrays is not None, "Cell data from input mesh is undefined."
@@ -613,9 +613,9 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Concatenate cell type, metric name, and statistic name in array name.
 
         Args:
-            cellType (int): cell type index
-            metricIndex (int): quality metric index
-            statType (StatTypes): statistic type
+            cellType (int): Cell type index
+            metricIndex (int): Quality metric index
+            statType (StatTypes): Statistic type
 
         Returns:
             str: array name
@@ -627,8 +627,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Compute additional metrics from metrics defined for tetrahedron for a cell.
 
         Args:
-            metricIndex (int): metric index
-            cell (vtkCell): cell
+            metricIndex (int): Metric index
+            cell (vtkCell): Cell
 
         Returns:
             float: outout value
@@ -760,9 +760,9 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Compute cell center.
 
         Args:
-            cell (vtkCell): input cell
-            ptsIds (vtkIdTypeArray | None): cell point ids. Defaults to None.
-            points (vtkPoints | None): mesh point coordinates. Defaults to None.
+            cell (vtkCell): Input cell
+            ptsIds (vtkIdTypeArray | None): Cell point ids. Defaults to None.
+            points (vtkPoints | None): Mesh point coordinates. Defaults to None.
 
         Returns:
             npt.NDArray[np.float64]: output cell center
@@ -785,14 +785,14 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
     def _getNormalVector( self: Self, points: vtkPoints, face: vtkCell ) -> npt.NDArray[ np.float64 ]:
         """Get the normal to the input face.
 
-        .. NOTE:: this method consider the faces as planes.
+        .. NOTE:: This method consider the faces as planes.
 
         Args:
-            points (vtkPoints): mesh points
-            face (vtkCell): face
+            points (vtkPoints): Mesh points
+            face (vtkCell): Face
 
         Returns:
-            npt.NDArray[np.float64]: coordinates of the normal vector
+            npt.NDArray[np.float64]: Coordinates of the normal vector
         """
         assert face.GetCellDimension() == 2, "Cell must be a planar polygon."
         facePtsIds: vtkIdList = face.GetPointIds()

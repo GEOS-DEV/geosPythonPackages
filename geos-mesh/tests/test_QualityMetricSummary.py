@@ -66,7 +66,7 @@ def __generate_test_data_for_StatsType() -> Iterator[ TestCase_StatsType ]:
     """Generate test cases for StatsType.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases for StatsType
+        Iterator[ TestCase ]: Iterator on test cases for StatsType
     """
     rd.seed( 10 )
     np.random.seed( 10 )
@@ -89,7 +89,7 @@ def test_StatsType_compute( test_case: TestCase_StatsType ) -> None:
     """Test of StatsType compute method.
 
     Args:
-        test_case (TestCase_StatsType): test case
+        test_case (TestCase_StatsType): Test case
     """
     obs: int | float = test_case.statType.compute( test_case.values )
     assert abs(
@@ -112,7 +112,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     rd.seed( 10 )
     for cellMetricIndexes, cellType in zip( cellMetricIndexes_all, cellType_all, strict=True ):
@@ -131,7 +131,7 @@ def __generate_failed_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for metricIndexes, cellType in zip( metricIndexesFail_all, cellType_all, strict=True ):
         otherMetricIndexes: tuple = ()
@@ -152,7 +152,7 @@ def test_QualityMetricSummary_setter( test_case: TestCase ) -> None:
     """Test of setStatsToMetricAndCellType method for IndexError.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
     stats: QualityMetricSummary = QualityMetricSummary()
     statType: StatTypes = StatTypes.COUNT
@@ -168,7 +168,7 @@ def test_QualityMetricSummary_setterGetter( test_case: TestCase ) -> None:
     """Test of setter and getter methods.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
     stats: QualityMetricSummary = QualityMetricSummary()
     for cellMetricIndex in test_case.cellMetricIndexes:
@@ -184,25 +184,25 @@ def test_QualityMetricSummary_setterGetter( test_case: TestCase ) -> None:
         for statType, val in zip( test_case.statTypes, test_case.values, strict=True ):
             subSet: pd.DataFrame = stats.getCellStatsFromCellType( test_case.cellType )
             assert subSet[ cellMetricIndex ][ statType.getIndex(
-            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getCellStatsFromCellType is exepected to be equal to {val}."
+            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getCellStatsFromCellType is expected to be equal to {val}."
 
             subSet2: pd.DataFrame = stats.getStatsFromMetric( cellMetricIndex )
             assert subSet2[ test_case.cellType ][ statType.getIndex(
-            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatsFromMetric is exepected to be equal to {val}."
+            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatsFromMetric is expected to be equal to {val}."
 
             subSet3: pd.Series = stats.getStatsFromMetricAndCellType( cellMetricIndex, test_case.cellType )
             assert subSet3[ statType.getIndex(
-            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatsFromMetricAndCellType is exepected to be equal to {val}."
+            ) ] == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatsFromMetricAndCellType is expected to be equal to {val}."
 
             valObs: float = stats.getCellStatValueFromStatMetricAndCellType( cellMetricIndex, test_case.cellType,
                                                                              statType )
-            assert valObs == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatValueFromMetricAndCellType is exepected to be equal to {val}."
+            assert valObs == val, f"Stats at ({cellMetricIndex}, {test_case.cellType}, {statType}) from getStatValueFromMetricAndCellType is expected to be equal to {val}."
 
     for cellMetricIndex in test_case.otherMetricIndexes:
         for statType, val in zip( test_case.statTypes, test_case.values, strict=True ):
             subSet4: pd.DataFrame = stats.getStatsFromMetric( cellMetricIndex )
             assert subSet4[ statType.getIndex(
-            ) ] == val, f"Stats at ({cellMetricIndex}, {statType}) from getStatsFromMetric is exepected to be equal to {val}."
+            ) ] == val, f"Stats at ({cellMetricIndex}, {statType}) from getStatsFromMetric is expected to be equal to {val}."
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data() )
@@ -210,7 +210,7 @@ def test_QualityMetricSummary_plotSummaryFigure( test_case: TestCase ) -> None:
     """Test of plotSummaryFigure method.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
     stats: QualityMetricSummary = QualityMetricSummary()
     for cellMetricIndex in test_case.cellMetricIndexes:

@@ -60,7 +60,7 @@ class StatTypes( Enum ):
         """Get stat index.
 
         Returns:
-            int: index
+            int: Index
         """
         return self.value[ 0 ]
 
@@ -68,7 +68,7 @@ class StatTypes( Enum ):
         """Get stat name.
 
         Returns:
-            str: name
+            str: Name
         """
         return self.value[ 1 ]
 
@@ -76,7 +76,7 @@ class StatTypes( Enum ):
         """Get stat type.
 
         Returns:
-            object: type
+            object: Type
         """
         return self.value[ 2 ]
 
@@ -84,10 +84,10 @@ class StatTypes( Enum ):
         """Compute statistics using function.
 
         Args:
-            array (Iterable[float]): input array
+            array (Iterable[float]): Input array
 
         Returns:
-            int | float: output stat
+            int | float: Output stat
         """
         return self.value[ 3 ]( array )
 
@@ -96,10 +96,10 @@ class StatTypes( Enum ):
         """Get stat name from index.
 
         Args:
-            index (int): index
+            index (int): Index
 
         Returns:
-            str: name
+            str: Name
         """
         return list( StatTypes )[ index ].getString()
 
@@ -108,10 +108,10 @@ class StatTypes( Enum ):
         """Get stat index from name.
 
         Args:
-            name (str): name
+            name (str): Name
 
         Returns:
-            int: index
+            int: Index
         """
         for stat in list( StatTypes ):
             if stat.getString() == name:
@@ -123,10 +123,10 @@ class StatTypes( Enum ):
         """Get stat type from index.
 
         Args:
-            index (int): index
+            index (int): Index
 
         Returns:
-            object: type
+            object: Type
         """
         return list( StatTypes )[ index ].getType()
 
@@ -184,7 +184,7 @@ class QualityMetricSummary():
         """Get cell type counts.
 
         Returns:
-            int: number of cell
+            int: Number of cell
         """
         return self._counts
 
@@ -192,7 +192,7 @@ class QualityMetricSummary():
         """Get cell type counts.
 
         Returns:
-            int: number of cell
+            int: Number of cell
         """
         return self._counts.getTypeCount( cellType )
 
@@ -204,8 +204,8 @@ class QualityMetricSummary():
         """Returns True if input quality metric applies to input cell type.
 
         Args:
-            metricIndex (int): metric index
-            cellType (int): cell type index
+            metricIndex (int): Metric index
+            cellType (int): Cell type index
 
         Returns:
             bool: True if input quality metric applies
@@ -216,7 +216,7 @@ class QualityMetricSummary():
         """Get all cell stats including nan values.
 
         Returns:
-            pd.DataFrame: stats
+            pd.DataFrame: Stats
         """
         return self._cellStats
 
@@ -224,7 +224,7 @@ class QualityMetricSummary():
         """Get all valid cell stats.
 
         Returns:
-            pd.DataFrame: stats
+            pd.DataFrame: Stats
         """
         return self._cellStats.dropna( axis=1 )
 
@@ -232,7 +232,7 @@ class QualityMetricSummary():
         """Get all valid other metric stats.
 
         Returns:
-            pd.DataFrame: stats
+            pd.DataFrame: Stats
         """
         print( self._meshOtherStats.head() )
         return self._meshOtherStats.dropna( axis=1 )
@@ -246,12 +246,12 @@ class QualityMetricSummary():
         """Get cell stat value for the given metric and cell types.
 
         Args:
-            metricIndex (int): metric index
-            cellType (int): cell type index
-            statType (StatTypes): stat number
+            metricIndex (int): Metric index
+            cellType (int): Cell type index
+            statType (StatTypes): Stat number
 
         Returns:
-            float: stats value
+            float: Stats value
         """
         if ( metricIndex, cellType ) not in self._cellStats.columns:
             raise IndexError( f"Index ({metricIndex}, {cellType}) not in QualityMetricSummary stats" )
@@ -261,11 +261,11 @@ class QualityMetricSummary():
         """Get stats for the given metric and cell types.
 
         Args:
-            metricIndex (int): metric index
-            cellType (int): cell type index
+            metricIndex (int): Metric index
+            cellType (int): Cell type index
 
         Returns:
-            pd.Series: stats
+            pd.Series: Stats
         """
         if ( metricIndex, cellType ) not in self._cellStats.columns:
             raise IndexError( f"Index ({metricIndex}, {cellType}) not in QualityMetricSummary stats" )
@@ -278,10 +278,10 @@ class QualityMetricSummary():
         """Get stats for the given metric index.
 
         Args:
-            metricIndex (int): metric index
+            metricIndex (int): Metric index
 
         Returns:
-            pd.DataFrame: stats
+            pd.DataFrame: Stats
         """
         if metricIndex < QUALITY_METRIC_OTHER_START_INDEX:
             return self._cellStats.xs( metricIndex, level=self._LEVELS[ 0 ], axis=1 )
@@ -292,9 +292,9 @@ class QualityMetricSummary():
         """Set other stat value for the given metric.
 
         Args:
-            metricIndex (int): metric index
-            statType (StatTypes): stat number
-            value (int | float): value
+            metricIndex (int): Metric index
+            statType (StatTypes): Stat number
+            value (int | float): Value
         """
         if metricIndex not in self._meshOtherStats.columns:
             raise IndexError( f"Index {metricIndex} not in QualityMetricSummary meshOtherStats" )
@@ -307,10 +307,10 @@ class QualityMetricSummary():
         """Get cell stats for the given cell type.
 
         Args:
-            cellType (int): cell type index
+            cellType (int): Cell type index
 
         Returns:
-            pd.DataFrame: stats
+            pd.DataFrame: Stats
         """
         return self._cellStats.xs( cellType, level=self._LEVELS[ 1 ], axis=1 )
 
@@ -319,10 +319,10 @@ class QualityMetricSummary():
         """Set cell stats for the given metric and cell types.
 
         Args:
-            metricIndex (int): metric index
-            cellType (int): cell type index
-            statType (StatTypes): stat number
-            value (int | float): value
+            metricIndex (int): Metric index
+            cellType (int): Cell type index
+            statType (StatTypes): Stat number
+            value (int | float): Value
         """
         if ( metricIndex, cellType ) not in self._cellStats.columns:
             raise IndexError( f"Index ({metricIndex}, {cellType}) not in QualityMetricSummary stats" )
@@ -332,7 +332,7 @@ class QualityMetricSummary():
         """Get the list of index of computed cell quality metrics.
 
         Returns:
-            tuple[int]: list of metrics index
+            tuple[int]: List of metrics index
         """
         validCellStats: pd.DataFrame = self.getAllValidCellStats()
         columns: list[ int ] = validCellStats.columns.get_level_values( 0 ).to_list()
@@ -342,7 +342,7 @@ class QualityMetricSummary():
         """Get the list of index of computed other quality metrics.
 
         Returns:
-            tuple[int]: list of metrics index
+            tuple[int]: List of metrics index
         """
         validOtherStats: pd.DataFrame = self.getAllValidOtherMetricStats()
         columns: list[ int ] = [ validOtherStats.columns.to_list() ]
@@ -352,7 +352,7 @@ class QualityMetricSummary():
         """Get the list of index of all computed metrics.
 
         Returns:
-            tuple[int]: list of metrics index
+            tuple[int]: List of metrics index
         """
         return self.getComputedCellMetricIndexes() + self.getComputedOtherMetricIndexes()
 
@@ -360,7 +360,7 @@ class QualityMetricSummary():
         """Plot quality metric summary figure.
 
         Returns:
-            plt.figure: output Figure
+            plt.figure: Output Figure
         """
         computedCellMetrics: list[ int ] = self.getComputedCellMetricIndexes()
         computedOtherMetrics: list[ int ] = self.getComputedOtherMetricIndexes()
@@ -423,7 +423,7 @@ class QualityMetricSummary():
 
         Args:
             ax0 (Axes): Axes object
-            metricIndex (int): metric index
+            metricIndex (int): Metric index
         """
         # order of cell types in each axes
         computedMetrics: list[ int ] = self.getComputedOtherMetricIndexes()
@@ -470,7 +470,7 @@ class QualityMetricSummary():
 
         Args:
             ax (Axes): Axes object
-            metricIndex (int): metric index
+            metricIndex (int): Metric index
         """
         # get data to plot
         maxs: pd.Series = self._cellStats.loc[ StatTypes.MAX.getIndex(), metricIndex ]
@@ -515,16 +515,16 @@ class QualityMetricSummary():
         """Plot quality metric ranges.
 
         Args:
-            ax (Axes): axes object
-            metricIndex (int): metric index
-            cellType (int): cell type index
-            ylim0 (float): min y
-            ylim1 (float): max y
-            xtick (float): abscissa
-            rangeRecWidth (float): patch width
+            ax (Axes): Axes object
+            metricIndex (int): Metric index
+            cellType (int): Cell type index
+            ylim0 (float): Min y
+            ylim1 (float): Max y
+            xtick (float): Abscissa
+            rangeRecWidth (float): Patch width
 
         Returns:
-            tuple[float, float]: tuple containing miny and max y
+            tuple[float, float]: Tuple containing min y and max y
         """
         try:
             metric: MeshQualityMetricEnum = getQualityMetricFromIndex( metricIndex )
@@ -553,14 +553,14 @@ class QualityMetricSummary():
         """Plot quality range patches.
 
         Args:
-            ax (Axes): axes object
-            qualityRange (QualityRange): quality ranges to plot
-            x (float): origin abscissa of the patches
-            ylim (tuple[float, float]): y limits for updates
-            rangeRecWidth (float): patch width
+            ax (Axes): Axes object
+            qualityRange (QualityRange): Quality ranges to plot
+            x (float): Origin abscissa of the patches
+            ylim (tuple[float, float]): Y limits for updates
+            rangeRecWidth (float): Patch width
 
         Returns:
-            tuple[float, float]: y limits for updates
+            tuple[float, float]: Y limits for updates
         """
         ylim0: float = ylim[ 0 ]
         ylim1: float = ylim[ 1 ]

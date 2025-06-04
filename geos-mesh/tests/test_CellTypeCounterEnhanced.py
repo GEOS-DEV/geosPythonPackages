@@ -51,7 +51,7 @@ def __generate_test_data_single_cell() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for cellType, filename in zip( cellType_all, filename_all, strict=True ):
         ptsCoord: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ),
@@ -69,7 +69,7 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
     """Test of CellTypeCounterEnhanced filter.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
     filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )
@@ -104,7 +104,7 @@ def __generate_test_data_multi_cell() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for cellType, filename, nbPtsCell in zip( cellType_all2, filename_all2, nbPtsCell_all2, strict=True ):
         ptsCoords: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ),
@@ -128,7 +128,7 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     """Test of CellTypeCounterEnhanced filter.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
     filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )

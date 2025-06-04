@@ -27,7 +27,7 @@ To use the filter:
     # filter inputs
     input :vtkUnstructuredGrid
 
-    # instanciate the filter
+    # instantiate the filter
     filter :CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     # set input data object
     filter.SetInputDataObject(input)
@@ -49,8 +49,8 @@ class CellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            port (int): input port
-            info (vtkInformationVector): info
+            port (int): Input port
+            info (vtkInformationVector): Info
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -68,9 +68,9 @@ class CellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.

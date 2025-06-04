@@ -162,7 +162,7 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Setter to save the stats into a file.
 
         Args:
-            saveToFile (bool): if True, a file will be saved.
+            saveToFile (bool): If True, a file will be saved.
         """
         if self._saveToFile != saveToFile:
             self._saveToFile = saveToFile
@@ -181,7 +181,7 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Specify filename for the filter to write.
 
         Args:
-            fname (str): file path
+            fname (str): File path
         """
         if self._filename != fname:
             self._filename = fname
@@ -217,9 +217,9 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -241,9 +241,9 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -284,7 +284,7 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """Get mesh quality metric indexes from user selection.
 
         Returns:
-            list[int]: list of quality metric indexes
+            list[int]: List of quality metric indexes
         """
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }

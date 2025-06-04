@@ -77,7 +77,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for meshName, cellType, qualityMetrics, cellTypeCounts, metricsSummary in zip( meshName_all,
                                                                                    cellTypes_all,
@@ -96,7 +96,7 @@ def test_MeshQualityEnhanced( test_case: TestCase, dataSetTest: vtkUnstructuredG
     """Test of CellTypeCounterEnhanced filter.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
         dataSetTest: vtkUnstructuredGrid
     """
     mesh: vtkUnstructuredGrid = dataSetTest( test_case.meshName )
