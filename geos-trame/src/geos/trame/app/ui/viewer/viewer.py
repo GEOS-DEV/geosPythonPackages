@@ -11,10 +11,11 @@ from trame.widgets import vuetify3 as vuetify
 from vtkmodules.vtkRenderingCore import vtkActor
 
 from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.ui.viewer.boxViewer import BoxViewer
 from geos.trame.app.ui.viewer.perforationViewer import PerforationViewer
 from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
-from geos.trame.schema_generated.schema_mod import Vtkmesh, Vtkwell, InternalWell, Perforation
+from geos.trame.schema_generated.schema_mod import Box, Vtkmesh, Vtkwell, InternalWell, Perforation
 
 pv.OFF_SCREEN = True
 
@@ -59,6 +60,7 @@ class DeckViewer( vuetify.VCard ):
         self.SELECTED_DATA_ARRAY = "viewer_selected_data_array"
         self.state.change( self.SELECTED_DATA_ARRAY )( self._update_actor_array )
 
+        self.box_engine: BoxViewer | None = None
         self.region_engine = region_viewer
         self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer ] = {}
@@ -137,6 +139,24 @@ class DeckViewer( vuetify.VCard ):
 
         if isinstance( active_block, Perforation ):
             self._update_perforation( active_block, show_obj, path )
+
+        if isinstance( active_block, Box ):
+            if self.region_engine.input.number_of_cells == 0 and show_obj:
+                self.ctrl.on_add_warning(
+                    "Can't display " + active_block.name,
+                    "Please display the mesh before creating a well",
+                )
+                return
+
+            if self.box_engine is not None:
+                self.box_engine.reset( self.plotter )
+
+            if not show_obj:
+                return
+
+            box: Box = active_block
+            self.box_engine = BoxViewer( self.region_engine.input, box )
+            self.box_engine.append_to_plotter( self.plotter )
 
     def _on_clip_visibility_change( self, **kwargs: Any ) -> None:
         """Toggle cut plane visibility for all actors.
