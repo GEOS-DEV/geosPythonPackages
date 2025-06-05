@@ -1,11 +1,11 @@
-import logging
 import multiprocessing
+from geos.mesh.doctor.actions.supported_elements import Options, Result
+from geos.mesh.doctor.parsing import SUPPORTED_ELEMENTS
+from geos.utils.Logger import getLogger
 
-from geos.mesh.doctor.checks.supported_elements import Options, Result
+logger = getLogger( "supported_elements" )
 
-from . import SUPPORTED_ELEMENTS
-
-__CHUNK_SIZE = "chunck_size"
+__CHUNK_SIZE = "chunk_size"
 __NUM_PROC = "nproc"
 
 __CHUNK_SIZE_DEFAULT = 1
@@ -15,7 +15,7 @@ __SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC:
 
 
 def convert( parsed_options ) -> Options:
-    return Options( chunk_size=parsed_options[ __CHUNK_SIZE ], num_proc=parsed_options[ __NUM_PROC ] )
+    return Options( chunk_size=parsed_options[ __CHUNK_SIZE ], nproc=parsed_options[ __NUM_PROC ] )
 
 
 def fill_subparser( subparsers ) -> None:
@@ -39,16 +39,16 @@ def fill_subparser( subparsers ) -> None:
 
 def display_results( options: Options, result: Result ):
     if result.unsupported_polyhedron_elements:
-        logging.error(
+        logger.error(
             f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
         )
-        logging.error(
+        logger.error(
             f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}." )
     else:
-        logging.info( "All the polyhedra (if any) can be converted to supported elements." )
+        logger.info( "All the polyhedra (if any) can be converted to supported elements." )
     if result.unsupported_std_elements_types:
-        logging.error(
+        logger.error(
             f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}."
         )
     else:
-        logging.info( "All the standard vtk element types (if any) are supported." )
+        logger.info( "All the standard vtk element types (if any) are supported." )

@@ -1,12 +1,9 @@
-import argparse  # Assuming argparse is used for fill_subparser
+import argparse
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Type
-
-# Assuming these are the container classes for all checks
 from geos.mesh.doctor.actions.all_checks import Options as AllChecksOptions
 from geos.mesh.doctor.actions.all_checks import Result as AllChecksResult
-
 # Import constants for check names
 from geos.mesh.doctor.parsing import (
     ALL_CHECKS,  # Name for the subparser
@@ -14,16 +11,15 @@ from geos.mesh.doctor.parsing import (
     ELEMENT_VOLUMES,
     NON_CONFORMAL,
     SELF_INTERSECTING_ELEMENTS,
-    # SUPPORTED_ELEMENTS,
+    SUPPORTED_ELEMENTS,
 )
-
 # Import module-specific Options, Result, and defaults
 # Using module aliases for clarity
 from geos.mesh.doctor.parsing import collocated_nodes_parsing as cn_parser
 from geos.mesh.doctor.parsing import element_volumes_parsing as ev_parser
 from geos.mesh.doctor.parsing import non_conformal_parsing as nc_parser
 from geos.mesh.doctor.parsing import self_intersecting_elements_parsing as sie_parser
-# from geos.mesh.doctor.parsing import supported_elements_parsing as se_parser
+from geos.mesh.doctor.parsing import supported_elements_parsing as se_parser
 from geos.mesh.doctor.parsing.cli_parsing import parse_comma_separated_string
 from geos.utils.Logger import getLogger
 
@@ -68,12 +64,12 @@ CHECK_FEATURES_CONFIG = {
                   result_cls=sie_parser.Result,
                   default_params=deepcopy( sie_parser.__SELF_INTERSECTING_ELEMENTS_DEFAULT ),
                   display=sie_parser.display_results ),
-    # SUPPORTED_ELEMENTS:
-    # CheckFeature( name=SUPPORTED_ELEMENTS,
-    #               options_cls=se_parser.Options,
-    #               result_cls=se_parser.Result,
-    #               default_params=deepcopy( se_parser.__SUPPORTED_ELEMENTS_DEFAULT ),
-    #               display=se_parser.display_results ),
+    SUPPORTED_ELEMENTS:
+    CheckFeature( name=SUPPORTED_ELEMENTS,
+                  options_cls=se_parser.Options,
+                  result_cls=se_parser.Result,
+                  default_params=deepcopy( se_parser.__SUPPORTED_ELEMENTS_DEFAULT ),
+                  display=se_parser.display_results ),
 }
 
 # Ordered list of check names, defining the default order and for consistent help messages
@@ -82,7 +78,7 @@ ORDERED_CHECK_NAMES: list[ str ] = [
     ELEMENT_VOLUMES,
     NON_CONFORMAL,
     SELF_INTERSECTING_ELEMENTS,
-    # SUPPORTED_ELEMENTS,
+    SUPPORTED_ELEMENTS,
 ]
 DEFAULT_PARAMS: dict[ str, dict[ str, float ] ] = {
     name: feature.default_params.copy() for name, feature in CHECK_FEATURES_CONFIG.items()
@@ -156,7 +152,7 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
     final_selected_check_params: dict[ str, dict[ str, float ] ] = deepcopy( DEFAULT_PARAMS )
     for name in list( final_selected_check_params.keys() ):
         if name not in final_selected_check_names:
-            del final_selected_check_params[name]  # Remove non-used check features
+            del final_selected_check_params[ name ]  # Remove non-used check features
 
     if not parsed_args[ PARAMETERS_ARG ]:  # handles default and if user explicitly provides --set_parameters ""
         logger.info( "Default configuation of parameters adopted for every check to perform." )

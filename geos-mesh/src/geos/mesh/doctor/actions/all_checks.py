@@ -18,7 +18,7 @@ class Result:
 
 
 def action( vtk_input_file: str, options: Options ) -> list[ Result ]:
-    check_results = dict()
+    check_results: dict[ str, any ] = dict()
     for check_name in options.checks_to_perform:
         check_action = __load_module_action( check_name )
         logger.info( f"Performing check '{check_name}'." )
