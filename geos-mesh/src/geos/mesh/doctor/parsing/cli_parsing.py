@@ -38,15 +38,12 @@ def parse_and_set_verbosity( cli_args: List[ str ] ) -> None:
         '--' + __VERBOSE_KEY,
         action='count',
         default=0,  # Base default, actual interpretation depends on help text mapping
-        dest=__VERBOSE_KEY
-    )
-    dummy_verbosity_parser.add_argument(
-        '-' + __QUIET_FLAG,
-        '--' + __QUIET_KEY,
-        action='count',
-        default=0,
-        dest=__QUIET_KEY
-    )
+        dest=__VERBOSE_KEY )
+    dummy_verbosity_parser.add_argument( '-' + __QUIET_FLAG,
+                                         '--' + __QUIET_KEY,
+                                         action='count',
+                                         default=0,
+                                         dest=__QUIET_KEY )
 
     # Parse only known args to extract verbosity/quiet flags
     # cli_args[1:] is used assuming cli_args[0] is the script name (like sys.argv)

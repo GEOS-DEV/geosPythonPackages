@@ -141,11 +141,13 @@ class TestAllChecks:
     def test_action_with_multiple_checks( self, mock_check_action ):
         # Setup mock options with multiple checks
         check_names = [ ORDERED_CHECK_NAMES[ 0 ], ORDERED_CHECK_NAMES[ 1 ] ]
-        mock_options = AllChecksOptions(
-            checks_to_perform=check_names,
-            checks_options={ name: f"mock_options_{i}" for i, name in enumerate( check_names ) },
-            check_displays={ name: MagicMock() for name in check_names }
-        )
+        mock_options = AllChecksOptions( checks_to_perform=check_names,
+                                         checks_options={
+                                             name: f"mock_options_{i}"
+                                             for i, name in enumerate( check_names )
+                                         },
+                                         check_displays={ name: MagicMock()
+                                                          for name in check_names } )
         # Mock the module loading function
         with patch( 'geos.mesh.doctor.actions.all_checks.__load_module_action',
                     return_value=mock_check_action ) as mock_load:

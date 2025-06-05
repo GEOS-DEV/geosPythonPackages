@@ -25,7 +25,8 @@ class Options:
 @dataclass( frozen=True )
 class Result:
     unsupported_std_elements_types: FrozenSet[ int ]  # list of unsupported types
-    unsupported_polyhedron_elements: FrozenSet[ int ]  # list of polyhedron elements that could not be converted to supported std elements
+    unsupported_polyhedron_elements: FrozenSet[
+        int ]  # list of polyhedron elements that could not be converted to supported std elements
 
 
 # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
@@ -39,16 +40,22 @@ def init_worker_mesh( input_file_for_worker: str ):
         input_file_for_worker (str): Filepath to vtk grid
     """
     global MESH
-    logger.debug(f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {input_file_for_worker}")
+    logger.debug(
+        f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {input_file_for_worker}"
+    )
     MESH = read_mesh( input_file_for_worker )
     if MESH is None:
-        logger.error(f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {input_file_for_worker}")
+        logger.error(
+            f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {input_file_for_worker}"
+        )
         # You might want to raise an error here or ensure MESH being None is handled downstream
         # For now, the assert MESH is not None in __call__ will catch this.
 
 
 class IsPolyhedronConvertible:
+
     def __init__( self ):
+
         def build_prism_graph( n: int, name: str ) -> networkx.Graph:
             """Builds the face to face connectivities (through edges) for prism graphs.
 
@@ -123,7 +130,9 @@ class IsPolyhedronConvertible:
             logger.debug( f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"" )
             return -1
         else:
-            logger.debug( f"Polyhedron cell {ic} (in PID {multiprocessing.current_process().pid}) cannot be converted into any supported element." )
+            logger.debug(
+                f"Polyhedron cell {ic} (in PID {multiprocessing.current_process().pid}) cannot be converted into any supported element."
+            )
             return ic
 
 
@@ -131,13 +140,13 @@ def __action( vtk_input_file: str, options: Options ) -> Result:
     # Main process loads the mesh for its own use
     mesh = read_mesh( vtk_input_file )
     if mesh is None:
-        logger.error(f"Main process failed to load mesh from {vtk_input_file}. Aborting.")
+        logger.error( f"Main process failed to load mesh from {vtk_input_file}. Aborting." )
         # Return an empty/error result or raise an exception
-        return Result(unsupported_std_elements_types=frozenset(), unsupported_polyhedron_elements=frozenset())
+        return Result( unsupported_std_elements_types=frozenset(), unsupported_polyhedron_elements=frozenset() )
 
     if hasattr( mesh, "GetDistinctCellTypesArray" ):
         cell_types_numpy = vtk_to_numpy( mesh.GetDistinctCellTypesArray() )
-        cell_types = set(cell_types_numpy.tolist())
+        cell_types = set( cell_types_numpy.tolist() )
     else:
         vtk_cell_types_obj = vtkCellTypes()
         mesh.GetCellTypes( vtk_cell_types_obj )
@@ -155,15 +164,12 @@ def __action( vtk_input_file: str, options: Options ) -> Result:
 
     unsupported_polyhedron_indices = []
     # Pass the vtk_input_file to the initializer
-    with multiprocessing.Pool( processes=options.nproc,
-                               initializer=init_worker_mesh,
-                               initargs=(vtk_input_file,) ) as pool:  # Comma makes it a tuple
-        generator = pool.imap_unordered( polyhedron_converter,
-                                         range( num_cells ),
-                                         chunksize=options.chunk_size )
+    with multiprocessing.Pool( processes=options.nproc, initializer=init_worker_mesh,
+                               initargs=( vtk_input_file, ) ) as pool:  # Comma makes it a tuple
+        generator = pool.imap_unordered( polyhedron_converter, range( num_cells ), chunksize=options.chunk_size )
         for cell_index_or_neg_one in tqdm( generator, total=num_cells, desc="Testing support for elements" ):
             if cell_index_or_neg_one != -1:
-                unsupported_polyhedron_indices.append(cell_index_or_neg_one)
+                unsupported_polyhedron_indices.append( cell_index_or_neg_one )
 
     return Result( unsupported_std_elements_types=frozenset( unsupported_std_elements_types ),
                    unsupported_polyhedron_elements=frozenset( unsupported_polyhedron_indices ) )

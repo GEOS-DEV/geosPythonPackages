@@ -116,7 +116,7 @@ def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGri
                 found += 1
         if found != 2:
             logger.warning( f"Something went wrong since we should have found 2 fractures faces (we found {found})" +
-                             f" for collocated nodes {cns}." )
+                            f" for collocated nodes {cns}." )
 
 
 def __action( vtk_input_file: str, options: Options ) -> Result:

@@ -81,7 +81,8 @@ ORDERED_CHECK_NAMES: list[ str ] = [
     SUPPORTED_ELEMENTS,
 ]
 DEFAULT_PARAMS: dict[ str, dict[ str, float ] ] = {
-    name: feature.default_params.copy() for name, feature in CHECK_FEATURES_CONFIG.items()
+    name: feature.default_params.copy()
+    for name, feature in CHECK_FEATURES_CONFIG.items()
 }
 
 # --- Argument Parser Constants ---

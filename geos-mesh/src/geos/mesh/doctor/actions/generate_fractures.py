@@ -472,7 +472,7 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
         # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
         #              + "from the fracture mesh because none of their/its nodes were duplicated.")
         logger.info( f"The faces made of nodes [{msg}] were/was discarded" +
-                      "from the fracture mesh because none of their/its nodes were duplicated." )
+                     "from the fracture mesh because none of their/its nodes were duplicated." )
 
     fracture_nodes_tmp = ones( mesh_points.GetNumberOfPoints(), dtype=int ) * -1
     for ns in face_nodes:

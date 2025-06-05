@@ -32,7 +32,9 @@ def fill_subparser( subparsers ) -> None:
         required=False,
         metavar=__MIN_DISTANCE_DEFAULT,
         default=__MIN_DISTANCE_DEFAULT,
-        help=f"[float]: The minimum distance in the computation. Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." )
+        help=
+        f"[float]: The minimum distance in the computation. Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}."
+    )
 
 
 def display_results( options: Options, result: Result ):
