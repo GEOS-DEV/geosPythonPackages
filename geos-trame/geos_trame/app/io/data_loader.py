@@ -38,6 +38,14 @@ class DataLoader( AbstractElement ):
         self.well_viewer = well_viewer
 
         self.state.change( "object_state" )( self._update_object_state )
+        self.ctrl.load_vtkmesh_from_id.add( self.load_vtkmesh_from_id )
+
+    def load_vtkmesh_from_id( self, node_id: str ) -> None:
+        """Load the data at the given id if none is already loaded."""
+        if self.region_viewer.input.number_of_cells == 0:
+            active_block = self.source.decode( node_id )
+            if isinstance( active_block, Vtkmesh ):
+                self._read_mesh( active_block )
 
     def _update_object_state( self, object_state: tuple[ str, bool ], **_: dict ) -> None:
 
@@ -85,6 +93,9 @@ class DataLoader( AbstractElement ):
             self.region_viewer.reset()
             return
 
+        self._read_mesh( mesh )
+
+    def _read_mesh( self, mesh: Vtkmesh ) -> None:
         unstructured_grid = read_unstructured_grid( self.source.get_abs_path( mesh.file ) )
         self.region_viewer.add_mesh( unstructured_grid )
 

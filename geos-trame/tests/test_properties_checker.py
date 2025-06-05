@@ -22,5 +22,11 @@ def test_properties_checker( trame_server_layout: tuple[ Server, VAppLayout ], t
 
     field = trame_state.deck_tree[ 4 ][ "children" ][ 0 ]
     assert field[ "valid" ] == FieldStatus.UNCHECKED.value
+
+    geos_trame.simput_manager.proxymanager.get( "Problem/Mesh/0/VTKMesh/0" )[ "region_attribute" ] = "invalid"
     geos_trame.properties_checker.check_fields()
     assert field[ "valid" ] == FieldStatus.INVALID.value
+
+    geos_trame.simput_manager.proxymanager.get( "Problem/Mesh/0/VTKMesh/0" )[ "region_attribute" ] = "attribute"
+    geos_trame.properties_checker.check_fields()
+    assert field[ "valid" ] == FieldStatus.VALID.value

@@ -7,6 +7,7 @@ from trame_client.widgets.core import AbstractElement
 from trame_simput import get_simput_manager
 
 from geos_trame.app.data_types.field_status import FieldStatus
+from geos_trame.app.data_types.renderable import Renderable
 from geos_trame.app.deck.tree import DeckTree
 from geos_trame.app.ui.viewer.regionViewer import RegionViewer
 from geos_trame.app.utils.geos_utils import group_name_ref_array_to_list
@@ -32,18 +33,21 @@ class PropertiesChecker( AbstractElement ):
         Get the names of all the cell data arrays from the input of the region viewer, then check that
         all the attributes in `attributes_to_check` have a value corresponding to one of the array names.
         """
-        cellData = self.region_viewer.input.GetCellData()
-        arrayNames = [ cellData.GetArrayName( i ) for i in range( cellData.GetNumberOfArrays() ) ]
+        array_names = self._get_array_names()
         for field in self.state.deck_tree:
-            self.check_field( field, arrayNames )
+            self._check_field( field, array_names )
         self.state.dirty( "deck_tree" )
         self.state.flush()
 
-    def check_field( self, field: dict, array_names: list[ str ] ) -> None:
+    def _check_field( self, field: dict, array_names: list[ str ] ) -> None:
         """Check that all the attributes in `attributes_to_check` have a value corresponding to one of the array names.
 
         Set the `valid` property to the result of this check, and if necessary, indicate which properties are invalid.
         """
+        if len( array_names ) == 0 and Renderable.VTKMESH.value in field[ "id" ]:
+            self.ctrl.load_vtkmesh_from_id( field[ "id" ] )
+            array_names = self._get_array_names()
+            field[ "drawn" ] = True
         field[ "valid" ] = FieldStatus.VALID.value
         field[ "invalid_properties" ] = []
 
@@ -74,9 +78,13 @@ class PropertiesChecker( AbstractElement ):
             # Parents are only valid if all children are valid
             field[ "invalid_children" ] = []
             for child in field[ "children" ]:
-                self.check_field( child, array_names )
+                self._check_field( child, array_names )
                 if child[ "valid" ] == FieldStatus.INVALID.value:
                     field[ "valid" ] = FieldStatus.INVALID.value
                     field[ "invalid_children" ].append( child[ "title" ] )
             if len( field[ "invalid_children" ] ) == 0:
                 field.pop( "invalid_children", None )
+
+    def _get_array_names( self ) -> list[ str ]:
+        cellData = self.region_viewer.input.GetCellData()
+        return [ cellData.GetArrayName( i ) for i in range( cellData.GetNumberOfArrays() ) ]
