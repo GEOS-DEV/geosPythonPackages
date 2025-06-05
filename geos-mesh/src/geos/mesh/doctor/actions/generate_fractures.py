@@ -1,7 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-import logging
 import networkx
 from numpy import empty, ones, zeros
 from tqdm import tqdm
@@ -12,15 +11,17 @@ from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, v
                                             VTK_POLYHEDRON )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.util.vtkConstants import VTK_ID_TYPE
-from geos.mesh.doctor.checks.vtk_polyhedron import FaceStream
+from geos.mesh.doctor.actions.vtk_polyhedron import FaceStream
 from geos.mesh.utils.arrayHelpers import has_array
-
 from geos.mesh.utils.genericHelpers import to_vtk_id_list, vtk_iter
 from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.utils.Logger import getLogger
 """
 TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
 https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
 """
+logger = getLogger( "generate_fractures" )
+
 IDMapping = Mapping[ int, int ]
 CellsPointsCoords = dict[ int, list[ tuple[ float ] ] ]
 Coordinates3D = tuple[ float ]
@@ -254,7 +255,7 @@ def __copy_fields_splitted_mesh( old_mesh: vtkUnstructuredGrid, splitted_mesh: v
     input_cell_data = old_mesh.GetCellData()
     for i in range( input_cell_data.GetNumberOfArrays() ):
         input_array: vtkDataArray = input_cell_data.GetArray( i )
-        logging.info( f"Copying cell field \"{input_array.GetName()}\"." )
+        logger.info( f"Copying cell field \"{input_array.GetName()}\"." )
         tmp = input_array.NewInstance()
         tmp.DeepCopy( input_array )
         splitted_mesh.GetCellData().AddArray( input_array )
@@ -263,7 +264,7 @@ def __copy_fields_splitted_mesh( old_mesh: vtkUnstructuredGrid, splitted_mesh: v
     input_field_data = old_mesh.GetFieldData()
     for i in range( input_field_data.GetNumberOfArrays() ):
         input_array = input_field_data.GetArray( i )
-        logging.info( f"Copying field data \"{input_array.GetName()}\"." )
+        logger.info( f"Copying field data \"{input_array.GetName()}\"." )
         tmp = input_array.NewInstance()
         tmp.DeepCopy( input_array )
         splitted_mesh.GetFieldData().AddArray( input_array )
@@ -274,7 +275,7 @@ def __copy_fields_splitted_mesh( old_mesh: vtkUnstructuredGrid, splitted_mesh: v
     for i in range( input_point_data.GetNumberOfArrays() ):
         old_points_array = vtk_to_numpy( input_point_data.GetArray( i ) )
         name: str = input_point_data.GetArrayName( i )
-        logging.info( f"Copying point data \"{name}\"." )
+        logger.info( f"Copying point data \"{name}\"." )
         old_nrows: int = old_points_array.shape[ 0 ]
         old_ncols: int = 1 if len( old_points_array.shape ) == 1 else old_points_array.shape[ 1 ]
         # Reshape old_points_array if it is 1-dimensional
@@ -313,7 +314,7 @@ def __copy_fields_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_mesh: v
         if len( old_cells_array.shape ) == 1:
             old_cells_array = old_cells_array.reshape( ( old_nrows, 1 ) )
         name: str = input_cell_data.GetArrayName( i )
-        logging.info( f"Copying cell data \"{name}\"." )
+        logger.info( f"Copying cell data \"{name}\"." )
         new_array = old_cells_array[ face_cell_id, : ]
         # Reshape the VTK array to match the original dimensions
         old_ncols: int = 1 if len( old_cells_array.shape ) == 1 else old_cells_array.shape[ 1 ]
@@ -334,7 +335,7 @@ def __copy_fields_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_mesh: v
         if len( old_points_array.shape ) == 1:
             old_points_array = old_points_array.reshape( ( old_nrows, 1 ) )
         name = input_point_data.GetArrayName( i )
-        logging.info( f"Copying point data \"{name}\"." )
+        logger.info( f"Copying point data \"{name}\"." )
         new_array = old_points_array[ list( node_3d_to_node_2d.keys() ), : ]
         old_ncols = 1 if len( old_points_array.shape ) == 1 else old_points_array.shape[ 1 ]
         if old_ncols > 1:
@@ -433,7 +434,7 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
     :param cell_to_node_mapping: For each cell, gives the nodes that must be duplicated and their new index.
     :return: The fracture mesh.
     """
-    logging.info( "Generating the meshes" )
+    logger.info( "Generating the meshes" )
 
     mesh_points: vtkPoints = old_mesh.GetPoints()
     is_node_duplicated = zeros( mesh_points.GetNumberOfPoints(), dtype=bool )  # defaults to False
@@ -466,11 +467,11 @@ def __generate_fracture_mesh( old_mesh: vtkUnstructuredGrid, fracture_info: Frac
         # for dfns in discarded_face_nodes:
         #     tmp.append(", ".join(map(str, dfns)))
         msg: str = "(" + '), ('.join( map( lambda dfns: ", ".join( map( str, dfns ) ), discarded_face_nodes ) ) + ")"
-        # logging.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
+        # logger.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
         #              + "from the fracture mesh because none of their/its nodes were duplicated.")
         # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
         #              + "from the fracture mesh because none of their/its nodes were duplicated.")
-        logging.info( f"The faces made of nodes [{msg}] were/was discarded" +
+        logger.info( f"The faces made of nodes [{msg}] were/was discarded" +
                       "from the fracture mesh because none of their/its nodes were duplicated." )
 
     fracture_nodes_tmp = ones( mesh_points.GetNumberOfPoints(), dtype=int ) * -1
@@ -562,9 +563,9 @@ def action( vtk_input_file: str, options: Options ) -> Result:
         if has_array( mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             err_msg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +
                              " is to split the mesh and then generate global ids for new split meshes." )
-            logging.error( err_msg )
+            logger.error( err_msg )
             raise ValueError( err_msg )
         return __action( mesh, options )
     except BaseException as e:
-        logging.error( e )
+        logger.error( e )
         return Result( info="Something went wrong" )

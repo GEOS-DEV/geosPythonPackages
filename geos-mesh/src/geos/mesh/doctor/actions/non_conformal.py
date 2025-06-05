@@ -12,8 +12,7 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter, vtkLinearExtrusionFilter
-from geos.mesh.doctor.checks import reorient_mesh
-from geos.mesh.doctor.checks import triangle_distance
+from geos.mesh.doctor.actions import reorient_mesh, triangle_distance
 from geos.mesh.utils.genericHelpers import vtk_iter
 from geos.mesh.io.vtkIO import read_mesh
 

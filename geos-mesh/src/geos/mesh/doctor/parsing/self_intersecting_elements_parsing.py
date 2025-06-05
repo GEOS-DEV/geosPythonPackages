@@ -1,39 +1,41 @@
-import logging
 import numpy
-from geos.mesh.doctor.checks.self_intersecting_elements import Options, Result
+from geos.mesh.doctor.actions.self_intersecting_elements import Options, Result
 from geos.mesh.doctor.parsing import SELF_INTERSECTING_ELEMENTS
+from geos.utils.Logger import getLogger
 
-__TOLERANCE = "min"
-__TOLERANCE_DEFAULT = numpy.finfo( float ).eps
+logger = getLogger( "self_intersecting_elements" )
 
-__SELF_INTERSECTING_ELEMENTS_DEFAULT = { __TOLERANCE: __TOLERANCE_DEFAULT }
+__MIN_DISTANCE = "min_distance"
+__MIN_DISTANCE_DEFAULT = numpy.finfo( float ).eps
+
+__SELF_INTERSECTING_ELEMENTS_DEFAULT = { __MIN_DISTANCE: __MIN_DISTANCE_DEFAULT }
 
 
 def convert( parsed_options ) -> Options:
-    tolerance = parsed_options[ __TOLERANCE ]
-    if tolerance == 0:
-        logging.warning(
-            "Having tolerance set to 0 can induce lots of false positive results (adjacent faces may be considered intersecting)."
+    min_distance = parsed_options[ __MIN_DISTANCE ]
+    if min_distance == 0:
+        logger.warning(
+            "Having minimum distance set to 0 can induce lots of false positive results (adjacent faces may be considered intersecting)."
         )
-    elif tolerance < 0:
+    elif min_distance < 0:
         raise ValueError(
-            f"Negative tolerance ({tolerance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
-    return Options( tolerance=tolerance )
+            f"Negative minimum distance ({min_distance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
+    return Options( min_distance=min_distance )
 
 
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( SELF_INTERSECTING_ELEMENTS,
                                help="Checks if the faces of the elements are self intersecting." )
     p.add_argument(
-        '--' + __TOLERANCE,
+        '--' + __MIN_DISTANCE,
         type=float,
         required=False,
-        metavar=__TOLERANCE_DEFAULT,
-        default=__TOLERANCE_DEFAULT,
-        help=f"[float]: The tolerance in the computation. Defaults to your machine precision {__TOLERANCE_DEFAULT}." )
+        metavar=__MIN_DISTANCE_DEFAULT,
+        default=__MIN_DISTANCE_DEFAULT,
+        help=f"[float]: The minimum distance in the computation. Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." )
 
 
 def display_results( options: Options, result: Result ):
-    logging.error( f"You have {len(result.intersecting_faces_elements)} elements with self intersecting faces." )
+    logger.error( f"You have {len(result.intersecting_faces_elements)} elements with self intersecting faces." )
     if result.intersecting_faces_elements:
-        logging.error( "The elements indices are:\n" + ", ".join( map( str, result.intersecting_faces_elements ) ) )
+        logger.error( "The elements indices are:\n" + ", ".join( map( str, result.intersecting_faces_elements ) ) )

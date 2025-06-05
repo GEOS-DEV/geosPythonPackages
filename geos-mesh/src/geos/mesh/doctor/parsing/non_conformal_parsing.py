@@ -1,6 +1,8 @@
-import logging
-from geos.mesh.doctor.checks.non_conformal import Options, Result
+from geos.mesh.doctor.actions.non_conformal import Options, Result
 from geos.mesh.doctor.parsing import NON_CONFORMAL
+from geos.utils.Logger import getLogger
+
+logger = getLogger( "non_conformal parsing" )
 
 __ANGLE_TOLERANCE = "angle_tolerance"
 __POINT_TOLERANCE = "point_tolerance"
@@ -49,6 +51,6 @@ def display_results( options: Options, result: Result ):
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
     non_conformal_cells: frozenset[ int ] = frozenset( non_conformal_cells )
-    logging.error(
+    logger.error(
         f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}"
     )

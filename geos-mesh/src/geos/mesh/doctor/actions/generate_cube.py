@@ -1,13 +1,15 @@
 from dataclasses import dataclass
-import logging
 import numpy
 from typing import Iterable, Sequence
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
-from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.actions.generate_global_ids import __build_global_ids
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
+from geos.utils.Logger import getLogger
+
+logger = getLogger( "generate_cube" )
 
 
 @dataclass( frozen=True )
@@ -142,5 +144,5 @@ def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         return __action( options )
     except BaseException as e:
-        logging.error( e )
+        logger.error( e )
         return Result( info="Something went wrong." )

@@ -8,7 +8,7 @@ from geos.mesh.io.vtkIO import read_mesh
 
 @dataclass( frozen=True )
 class Options:
-    tolerance: float
+    min_distance: float
 
 
 @dataclass( frozen=True )
@@ -43,7 +43,7 @@ def __action( mesh, options: Options ) -> Result:
     faces_are_oriented_incorrectly_elements: List[ int ] = []
 
     f = vtkCellValidator()
-    f.SetTolerance( options.tolerance )
+    f.SetTolerance( options.min_distance )
 
     f.SetInputData( mesh )
     f.Update()

@@ -1,6 +1,4 @@
-import logging
 import random
-
 from vtkmodules.vtkCommonDataModel import (
     VTK_HEXAGONAL_PRISM,
     VTK_HEXAHEDRON,
@@ -10,10 +8,11 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VOXEL,
     VTK_WEDGE,
 )
+from geos.mesh.doctor.actions.fix_elements_orderings import Options, Result
+from geos.mesh.doctor.parsing import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
+from geos.utils.Logger import getLogger
 
-from geos.mesh.doctor.checks.fix_elements_orderings import Options, Result
-
-from . import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
+logger = getLogger( "fix_elements_orderings parsing" )
 
 __CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
@@ -63,7 +62,7 @@ def convert( parsed_options ) -> Options:
             tmp = tuple( map( int, raw_mapping.split( "," ) ) )
             if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) ):
                 err_msg = f"Permutation {raw_mapping} for type {key} is not valid."
-                logging.error( err_msg )
+                logger.error( err_msg )
                 raise ValueError( err_msg )
             cell_type_to_ordering[ vtk_key ] = tmp
     vtk_output = vtk_output_parsing.convert( parsed_options )
@@ -72,10 +71,10 @@ def convert( parsed_options ) -> Options:
 
 def display_results( options: Options, result: Result ):
     if result.output:
-        logging.info( f"New mesh was written to file '{result.output}'" )
+        logger.info( f"New mesh was written to file '{result.output}'" )
         if result.unchanged_cell_types:
-            logging.info( f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
+            logger.info( f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
         else:
-            logging.info( "All the cells of the mesh were reordered." )
+            logger.info( "All the cells of the mesh were reordered." )
     else:
-        logging.info( "No output file was written." )
+        logger.info( "No output file was written." )

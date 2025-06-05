@@ -1,4 +1,3 @@
-import logging
 import numpy
 from dataclasses import dataclass
 from tqdm import tqdm
@@ -7,8 +6,11 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from geos.mesh.doctor.checks.generate_fractures import Coordinates3D
+from geos.mesh.doctor.actions.generate_fractures import Coordinates3D
 from geos.mesh.utils.genericHelpers import vtk_iter
+from geos.utils.Logger import getLogger
+
+logger = getLogger( "check_fractures" )
 
 
 @dataclass( frozen=True )
@@ -113,7 +115,7 @@ def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGri
             if f in fracture_faces:
                 found += 1
         if found != 2:
-            logging.warning( f"Something went wrong since we should have found 2 fractures faces (we found {found})" +
+            logger.warning( f"Something went wrong since we should have found 2 fractures faces (we found {found})" +
                              f" for collocated nodes {cns}." )
 
 
@@ -152,5 +154,5 @@ def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         return __action( vtk_input_file, options )
     except BaseException as e:
-        logging.error( e )
+        logger.error( e )
         return Result( errors=() )
