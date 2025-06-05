@@ -178,8 +178,8 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
                 continue
 
             for check_name_key in final_selected_check_params.keys():  # Iterate through all possible checks
-                if param in final_selected_check_params[ check_name_key ]:
-                    final_selected_check_params[ check_name_key ][ param ] = value_float
+                if name in final_selected_check_params[ check_name_key ]:
+                    final_selected_check_params[ check_name_key ][ name ] = value_float
                     break
 
     # 3. Instantiate the Options objects for the selected checks using their effective parameters
