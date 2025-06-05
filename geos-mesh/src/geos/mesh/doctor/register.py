@@ -1,9 +1,9 @@
 import argparse
 import importlib
-import logging
 from typing import Dict, Callable, Any, Tuple
 import geos.mesh.doctor.parsing as parsing
 from geos.mesh.doctor.parsing import ActionHelper, cli_parsing
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __HELPERS: Dict[ str, Callable[ [ None ], ActionHelper ] ] = dict()
 __ACTIONS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
@@ -32,13 +32,13 @@ def __load_actions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
     for action_name, action_provider in __ACTIONS.items():
         try:
             loaded_actions[ action_name ] = action_provider()
-            logging.debug( f"Action \"{action_name}\" is loaded." )
+            setup_logger.debug( f"Action \"{action_name}\" is loaded." )
         except Exception as e:
-            logging.warning( f"Could not load module \"{action_name}\": {e}" )
+            setup_logger.warning( f"Could not load module \"{action_name}\": {e}" )
     return loaded_actions
 
 
-def register(
+def register_parsing_actions(
 ) -> Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
     """
     Register all the parsing actions. Eventually initiate the registration of all the actions too.
@@ -63,5 +63,5 @@ def register(
         h = __HELPERS[ action_name ]()
         h.fill_subparser( subparsers )
         loaded_actions_helpers[ action_name ] = h
-        logging.debug( f"Parsing for action \"{action_name}\" is loaded." )
+        setup_logger.debug( f"Parsing for action \"{action_name}\" is loaded." )
     return parser, loaded_actions, loaded_actions_helpers
