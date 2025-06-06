@@ -22,7 +22,7 @@ classifiers = [
     "Programming Language :: Python"
 ]
 dependencies=[
-    "geos-utils @ file:./geos-utils",
+    "geos-utils",
     "vtk >= 9.3",
     "numpy >= 2.2",
     "pandas >= 2.2",
