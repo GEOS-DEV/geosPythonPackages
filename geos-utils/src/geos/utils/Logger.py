@@ -69,11 +69,13 @@ class CustomLoggerFormatter( logging.Formatter ):
 
     # Pre-compiled formatters for efficiency
     _compiled_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt ) for level, fmt in FORMATS_PLAIN.items()
+        level: logging.Formatter( fmt )
+        for level, fmt in FORMATS_PLAIN.items()
     }
 
     _compiled_color_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt ) for level, fmt in FORMATS_COLOR.items()
+        level: logging.Formatter( fmt )
+        for level, fmt in FORMATS_COLOR.items()
     }
 
     def __init__( self: Self, use_color=False ):
