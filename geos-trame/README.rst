@@ -47,6 +47,15 @@ To be able to run the test suite, make sure to install the additionals dependenc
 
 Then you can run the test with `pytest .`
 
+Optional
+--------
+
+To use pre-commit hooks (ruff, mypy, yapf,...), make sure to install the dev dependencies:
+
+.. code-block:: console
+
+    pip install -e '.[dev]'
+
 Regarding GEOS
 --------------
 
@@ -54,7 +63,7 @@ This application takes an XML file from the GEOS project to load dynamically all
 To be able to do that, we need first to generate the corresponding python class based on a
 xsd schema provided by GEOS.
 
-`For more details <src/geos_trame/schema_generated/README.md>`_
+`For more details <src/geos/trame/schema_generated/README.md>`_
 
 Features
 --------

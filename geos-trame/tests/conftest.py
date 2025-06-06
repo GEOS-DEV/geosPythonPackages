@@ -5,6 +5,8 @@ import pytest
 from pathlib import Path
 from trame_client.utils.testing import FixtureHelper
 
+# ruff: noqa
+
 ROOT_PATH = Path( __file__ ).parent.parent.absolute()
 print( ROOT_PATH )
 HELPER = FixtureHelper( ROOT_PATH )
@@ -18,7 +20,7 @@ def baseline_image():
 
 
 @pytest.fixture
-def server( xprocess, server_path ):
+def server( xprocess, server_path: str ):
     name, Starter, Monitor = HELPER.get_xprocess_args( server_path )
     Starter.timeout = 10
 

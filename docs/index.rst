@@ -51,6 +51,8 @@ To do this, you can clone a copy of the geosPythonPackages repository and instal
 .. note::
     To upgrade an existing installation, the python executable in the above command should correspond to the version you indicated in your host config.  If you have previously built the tools, this version will be linked in the build directory: `build_dir/bin/python`.
 
+.. Important::
+    Due to local package dependencies, it is advised to always use the `--upgrade` option when building with the `pip install` option.
 
 Development & Debugging
 ---------------------------

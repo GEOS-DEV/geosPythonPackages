@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         # add packages to check typing
-        package-name: ["geos-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-xml-tools", "hdf5-wrapper"]
+        package-name: ["geos-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper"]
 
     steps:
     - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
-        python -m pip install mypy ruff
+        python -m pip install mypy ruff types-PyYAML
 
     - name: Typing check with mypy
       #  working-directory: ./${{ matrix.package-name }}

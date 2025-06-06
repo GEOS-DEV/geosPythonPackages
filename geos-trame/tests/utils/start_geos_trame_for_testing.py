@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
 from trame_client.utils.testing import enable_testing
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 from trame.app import get_server
 from pathlib import Path
 
