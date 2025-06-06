@@ -5,11 +5,13 @@ import pytest
 import os
 
 from trame.app import get_server
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 
 from seleniumbase import SB
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+
+# ruff: noqa
 
 
 @pytest.mark.skip( "Test to fix" )

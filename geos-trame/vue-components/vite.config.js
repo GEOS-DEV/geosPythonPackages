@@ -15,7 +15,7 @@ export default {
         },
       },
     },
-    outDir: "../src/geos_trame/module/serve",
+    outDir: "../src/geos/trame/module/serve",
     assetsDir: ".",
   },
 };

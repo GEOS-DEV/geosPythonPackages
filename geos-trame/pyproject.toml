@@ -47,6 +47,7 @@ dependencies = [
     "funcy==2.0",
     "typing_inspect==0.9.0",
     "typing_extensions>=4.12",
+    "PyYAML",
 ]
 
 [project.optional-dependencies]
@@ -56,14 +57,16 @@ build = [
 dev = [
     "pylint",
     "mypy",
-    "black",
-    "isort"
+    "types-PyYAML",
+    "ruff",
+    "pre-commit"
 ]
 test = [
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",
     "Pillow==11.0.0",
+    "pytest-mypy==0.10.3",
     "pytest-xprocess==1.0.2"
 ]
 
@@ -72,10 +75,10 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.scripts]
-geos-trame = "geos_trame.app.__main__:main"
+geos-trame = "geos.trame.app.main:main"
 
 [project.entry-points.jupyter_serverproxy_servers]
-geos-trame = "geos_trame.app.jupyter:jupyter_proxy_info"
+geos-trame = "geos.trame.app.jupyter:jupyter_proxy_info"
 
 [tool.setuptools]
 license-files = ["LICENSE"]
@@ -116,18 +119,3 @@ disable = [
     "R0913", # (too-many-arguments)
     "W0105", # (pointless-string-statement)
 ]
-
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?$'
-extend-exclude = '''
-src/geos_trame/schema_generated/*.py
-'''
-
-[tool.isort]
-profile = "black"
-src_paths = ["src", "tests"]
-blackArgs = ["--preview"]
-py_version = 310
-
