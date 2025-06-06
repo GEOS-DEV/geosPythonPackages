@@ -35,7 +35,7 @@ jobs:
     - name: Typing check with mypy
       #  working-directory: ./${{ matrix.package-name }}
       run:  |
-        python -m mypy geos-trame/geos_trame/app/__main__.py --install-types --non-interactive
+        python -m mypy geos-trame/src/geos/trame/app/main.py --install-types --non-interactive
         python -m mypy --config-file ./.mypy.ini --check-untyped-defs ./${{ matrix.package-name }}
 
     - name: Format and linting check with ruff
