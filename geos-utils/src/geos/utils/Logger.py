@@ -78,7 +78,13 @@ class CustomLoggerFormatter( logging.Formatter ):
         for level, fmt in FORMATS_COLOR.items()
     }
 
-    def __init__( self: Self, use_color=False ):
+    def __init__( self: Self, use_color: bool = False ) -> None:
+        """Initialize the log formatter.
+
+        Args:
+            use_color (bool): If True, use color-coded log formatters.
+                            Defaults to False.
+        """
         if use_color:
             self.active_formatters = self._compiled_color_formatters
         else:
@@ -128,6 +134,8 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
 
     Args:
         title (str): Name of the logger.
+        use_color (bool): If True, configure the logger to output with color.
+                          Defaults to False.
 
     Returns:
         Logger: logger
