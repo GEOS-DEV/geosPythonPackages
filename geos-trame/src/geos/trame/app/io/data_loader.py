@@ -7,12 +7,12 @@ import numpy as np
 from trame_client.widgets.core import AbstractElement
 import pyvista as pv
 
-from geos_trame.app.deck.tree import DeckTree
-from geos_trame.app.geosTrameException import GeosTrameException
-from geos_trame.app.ui.viewer.regionViewer import RegionViewer
-from geos_trame.app.ui.viewer.wellViewer import WellViewer
-from geos_trame.app.utils.pv_utils import read_unstructured_grid
-from geos_trame.schema_generated.schema_mod import (
+from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.geosTrameException import GeosTrameException
+from geos.trame.app.ui.viewer.regionViewer import RegionViewer
+from geos.trame.app.ui.viewer.wellViewer import WellViewer
+from geos.trame.app.utils.pv_utils import read_unstructured_grid
+from geos.trame.schema_generated.schema_mod import (
     Vtkmesh,
     Vtkwell,
     Perforation,

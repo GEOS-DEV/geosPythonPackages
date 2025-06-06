@@ -6,11 +6,11 @@ from typing import Any
 from trame_client.widgets.core import AbstractElement
 from trame_simput import get_simput_manager
 
-from geos_trame.app.data_types.field_status import FieldStatus
-from geos_trame.app.data_types.renderable import Renderable
-from geos_trame.app.deck.tree import DeckTree
-from geos_trame.app.ui.viewer.regionViewer import RegionViewer
-from geos_trame.app.utils.geos_utils import group_name_ref_array_to_list
+from geos.trame.app.data_types.field_status import FieldStatus
+from geos.trame.app.data_types.renderable import Renderable
+from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.ui.viewer.regionViewer import RegionViewer
+from geos.trame.app.utils.geos_utils import group_name_ref_array_to_list
 
 # Doc reference: https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/CompleteXMLSchema.html
 attributes_to_check = [ ( "region_attribute", str ), ( "fields_to_import", list ), ( "surfacicFieldsToImport", list ) ]

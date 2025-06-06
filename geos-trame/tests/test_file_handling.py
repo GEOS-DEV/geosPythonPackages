@@ -4,7 +4,7 @@
 from _pytest.capture import CaptureFixture
 from trame.app import get_server
 from trame_client.utils.testing import enable_testing
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 
 
 def test_unsupported_file( capsys: CaptureFixture[ str ] ) -> None:

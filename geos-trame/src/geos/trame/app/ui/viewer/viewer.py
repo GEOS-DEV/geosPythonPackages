@@ -10,11 +10,11 @@ from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
 from vtkmodules.vtkRenderingCore import vtkActor
 
-from geos_trame.app.deck.tree import DeckTree
-from geos_trame.app.ui.viewer.perforationViewer import PerforationViewer
-from geos_trame.app.ui.viewer.regionViewer import RegionViewer
-from geos_trame.app.ui.viewer.wellViewer import WellViewer
-from geos_trame.schema_generated.schema_mod import (
+from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.ui.viewer.perforationViewer import PerforationViewer
+from geos.trame.app.ui.viewer.regionViewer import RegionViewer
+from geos.trame.app.ui.viewer.wellViewer import WellViewer
+from geos.trame.schema_generated.schema_mod import (
     Vtkmesh,
     Vtkwell,
     Perforation,

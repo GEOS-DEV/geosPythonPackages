@@ -10,11 +10,11 @@ from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictEncoder, XmlContext, XmlParser, XmlSerializer
 
-from geos_trame.app.data_types.renderable import Renderable
-from geos_trame.app.geosTrameException import GeosTrameException
-from geos_trame.app.io.xml_parser import XMLParser
-from geos_trame.app.utils.file_utils import normalize_path
-from geos_trame.schema_generated.schema_mod import Problem
+from geos.trame.app.data_types.renderable import Renderable
+from geos.trame.app.geosTrameException import GeosTrameException
+from geos.trame.app.io.xml_parser import XMLParser
+from geos.trame.app.utils.file_utils import normalize_path
+from geos.trame.schema_generated.schema_mod import Problem
 
 
 class DeckFile( object ):

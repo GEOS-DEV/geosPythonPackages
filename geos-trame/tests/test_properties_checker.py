@@ -8,8 +8,8 @@ from trame_server import Server
 from trame_server.state import State
 from trame_vuetify.ui.vuetify3 import VAppLayout
 
-from geos_trame.app.core import GeosTrame
-from geos_trame.app.data_types.field_status import FieldStatus
+from geos.trame.app.core import GeosTrame
+from geos.trame.app.data_types.field_status import FieldStatus
 from tests.trame_fixtures import trame_server_layout, trame_state
 
 

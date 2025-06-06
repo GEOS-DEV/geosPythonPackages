@@ -11,18 +11,18 @@ from trame_server.controller import Controller
 from trame_server.state import State
 from trame_simput import get_simput_manager
 
-from geos_trame import module
-from geos_trame.app.deck.tree import DeckTree
-from geos_trame.app.io.data_loader import DataLoader
-from geos_trame.app.ui.viewer.regionViewer import RegionViewer
-from geos_trame.app.ui.viewer.wellViewer import WellViewer
-from geos_trame.app.components.properties_checker import PropertiesChecker
-from geos_trame.app.ui.editor import DeckEditor
-from geos_trame.app.ui.inspector import DeckInspector
-from geos_trame.app.ui.plotting import DeckPlotting
-from geos_trame.app.ui.timeline import TimelineEditor
-from geos_trame.app.ui.viewer.viewer import DeckViewer
-from geos_trame.app.components.alertHandler import AlertHandler
+from geos.trame import module
+from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.io.data_loader import DataLoader
+from geos.trame.app.ui.viewer.regionViewer import RegionViewer
+from geos.trame.app.ui.viewer.wellViewer import WellViewer
+from geos.trame.app.components.properties_checker import PropertiesChecker
+from geos.trame.app.ui.editor import DeckEditor
+from geos.trame.app.ui.inspector import DeckInspector
+from geos.trame.app.ui.plotting import DeckPlotting
+from geos.trame.app.ui.timeline import TimelineEditor
+from geos.trame.app.ui.viewer.viewer import DeckViewer
+from geos.trame.app.components.alertHandler import AlertHandler
 
 import sys
 

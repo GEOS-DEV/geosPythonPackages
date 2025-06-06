@@ -73,10 +73,10 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.scripts]
-geos-trame = "geos_trame.app.__main__:main"
+geos-trame = "geos.trame.app.main:main"
 
 [project.entry-points.jupyter_serverproxy_servers]
-geos-trame = "geos_trame.app.jupyter:jupyter_proxy_info"
+geos-trame = "geos.trame.app.jupyter:jupyter_proxy_info"
 
 [tool.setuptools]
 license-files = ["LICENSE"]

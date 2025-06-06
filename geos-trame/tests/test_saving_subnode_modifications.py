@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from trame.app import get_server
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 from trame_client.utils.testing import enable_testing
 
 from seleniumbase import SB

@@ -5,7 +5,7 @@ import pytest
 import os
 
 from trame.app import get_server
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 
 from seleniumbase import SB
 from selenium.webdriver.common.action_chains import ActionChains

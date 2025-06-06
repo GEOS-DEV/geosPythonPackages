@@ -54,7 +54,7 @@ To use pre-commit hooks (ruff, mypy, yapf,...), make sure to install the dev dep
 
 .. code-block:: console
 
-    pip install -e .[dev]
+    pip install -e '.[dev]'
 
 Regarding GEOS
 --------------
@@ -63,7 +63,7 @@ This application takes an XML file from the GEOS project to load dynamically all
 To be able to do that, we need first to generate the corresponding python class based on a
 xsd schema provided by GEOS.
 
-`For more details <src/geos_trame/schema_generated/README.md>`_
+`For more details <src/geos/trame/schema_generated/README.md>`_
 
 Features
 --------

@@ -8,12 +8,12 @@ from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify, html
 from trame_simput import get_simput_manager
 
-from geos_trame.app.data_types.field_status import FieldStatus
-from geos_trame.app.data_types.renderable import Renderable
-from geos_trame.app.data_types.tree_node import TreeNode
-from geos_trame.app.deck.tree import DeckTree
-from geos_trame.app.utils.dict_utils import iterate_nested_dict
-from geos_trame.schema_generated.schema_mod import Problem
+from geos.trame.app.data_types.field_status import FieldStatus
+from geos.trame.app.data_types.renderable import Renderable
+from geos.trame.app.data_types.tree_node import TreeNode
+from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.utils.dict_utils import iterate_nested_dict
+from geos.trame.schema_generated.schema_mod import Problem
 
 vuetify.enable_lab()
 

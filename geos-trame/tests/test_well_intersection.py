@@ -9,7 +9,7 @@ from trame_server.state import State
 from trame_vuetify.ui.vuetify3 import VAppLayout
 from tests.trame_fixtures import trame_server_layout, trame_state
 
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 
 
 def test_internal_well_intersection( trame_server_layout: tuple[ Server, VAppLayout ], trame_state: State ) -> None:

@@ -14,10 +14,10 @@ from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
 
-from geos_trame.app.deck.file import DeckFile
-from geos_trame.app.geosTrameException import GeosTrameException
-from geos_trame.app.utils.file_utils import normalize_path, format_xml
-from geos_trame.schema_generated.schema_mod import Problem, Included, File, Functions
+from geos.trame.app.deck.file import DeckFile
+from geos.trame.app.geosTrameException import GeosTrameException
+from geos.trame.app.utils.file_utils import normalize_path, format_xml
+from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
 
 
 class DeckTree( object ):

@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from trame.widgets import matplotlib
 from trame.widgets import vuetify3 as vuetify
 
-from geos_trame.app.deck.tree import DeckTree
+from geos.trame.app.deck.tree import DeckTree
 
 
 class DeckPlotting( vuetify.VCard ):

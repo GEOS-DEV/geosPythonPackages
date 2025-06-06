@@ -7,7 +7,7 @@ from trame.widgets import code, simput
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
-from geos_trame.app.deck.tree import DeckTree
+from geos.trame.app.deck.tree import DeckTree
 
 
 class DeckEditor( vuetify.VCard ):

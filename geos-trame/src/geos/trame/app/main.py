@@ -4,10 +4,10 @@
 from pathlib import Path
 from typing import Any
 
-from trame.app import get_server
+from trame.app import get_server  # type: ignore
 from trame_server import Server
 
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 
 
 def main( server: Server = None, **kwargs: Any ) -> None:

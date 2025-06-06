@@ -11,7 +11,7 @@ from lxml.etree import XMLSyntaxError
 
 from collections import defaultdict
 
-from geos_trame.app.geosTrameException import GeosTrameException
+from geos.trame.app.geosTrameException import GeosTrameException
 
 
 class XMLParser( object ):
