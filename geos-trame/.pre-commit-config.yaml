@@ -1,17 +1,23 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        exclude: ^.*\b(schema_generated)\b.*$
-        entry: black --check --force-exclude
-
   - repo: https://github.com/codespell-project/codespell
     rev: v2.1.0
     hooks:
       - id: codespell
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
     hooks:
-      - id: flake8
+      - id: ruff
+        args: ["--config", "./.ruff.toml"]
+
+  - repo: https://github.com/google/yapf
+    rev: v0.43.0
+    hooks:
+      - id: yapf
+        args: ["-ir", "--style", "./.style.yapf"]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-PyYAML]

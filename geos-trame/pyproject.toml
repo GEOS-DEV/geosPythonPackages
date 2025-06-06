@@ -56,14 +56,16 @@ build = [
 dev = [
     "pylint",
     "mypy",
-    "black",
-    "isort"
+    "mypy",
+    "ruff",
+    "pre-commit"
 ]
 test = [
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",
     "Pillow==11.0.0",
+    "pytest-mypy==0.10.3",
     "pytest-xprocess==1.0.2"
 ]
 
@@ -116,18 +118,3 @@ disable = [
     "R0913", # (too-many-arguments)
     "W0105", # (pointless-string-statement)
 ]
-
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?$'
-extend-exclude = '''
-src/geos_trame/schema_generated/*.py
-'''
-
-[tool.isort]
-profile = "black"
-src_paths = ["src", "tests"]
-blackArgs = ["--preview"]
-py_version = 310
-
