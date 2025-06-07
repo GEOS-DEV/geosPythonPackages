@@ -1,11 +1,13 @@
 from dataclasses import dataclass
-import logging
 from typing import List, Tuple
 import uuid
 from vtkmodules.vtkCommonDataModel import VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from geos.mesh.io.vtkIO import read_mesh
+from geos.utils.Logger import getLogger
+
+logger = getLogger( "element_volumes" )
 
 
 @dataclass( frozen=True )
@@ -18,7 +20,7 @@ class Result:
     element_volumes: List[ Tuple[ int, float ] ]
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     cs = vtkCellSizeFilter()
 
     cs.ComputeAreaOff()
@@ -43,7 +45,7 @@ def __check( mesh, options: Options ) -> Result:
         mq.SetWedgeQualityMeasureToVolume()
         SUPPORTED_TYPES.append( VTK_WEDGE )
     else:
-        logging.warning(
+        logger.warning(
             "Your \"pyvtk\" version does not bring pyramid nor wedge support with vtkMeshQuality. Using the fallback solution."
         )
 
@@ -66,6 +68,6 @@ def __check( mesh, options: Options ) -> Result:
     return Result( element_volumes=small_volumes )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

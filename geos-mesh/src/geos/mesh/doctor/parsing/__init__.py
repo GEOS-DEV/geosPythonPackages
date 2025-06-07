@@ -2,6 +2,7 @@ import argparse
 from dataclasses import dataclass
 from typing import Callable, Any
 
+ALL_CHECKS = "all_checks"
 COLLOCATES_NODES = "collocated_nodes"
 ELEMENT_VOLUMES = "element_volumes"
 FIX_ELEMENTS_ORDERINGS = "fix_elements_orderings"
@@ -14,7 +15,7 @@ SUPPORTED_ELEMENTS = "supported_elements"
 
 
 @dataclass( frozen=True )
-class CheckHelper:
+class ActionHelper:
     fill_subparser: Callable[ [ Any ], argparse.ArgumentParser ]
     convert: Callable[ [ Any ], Any ]
     display_results: Callable[ [ Any, Any ], None ]

@@ -12,8 +12,7 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter, vtkLinearExtrusionFilter
-from geos.mesh.doctor.checks import reorient_mesh
-from geos.mesh.doctor.checks import triangle_distance
+from geos.mesh.doctor.actions import reorient_mesh, triangle_distance
 from geos.mesh.utils.genericHelpers import vtk_iter
 from geos.mesh.io.vtkIO import read_mesh
 
@@ -345,7 +344,7 @@ def are_faces_conformal_using_distances( i: int, j: int, boundary_mesh: vtkUnstr
     return are_points_conformal( point_tolerance, cp_i, cp_j )
 
 
-def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     """
     Checks if the mesh is "conformal" (i.e. if some of its boundary faces may not be too close to each other without matching nodes).
     :param mesh: The vtk mesh
@@ -404,6 +403,6 @@ def __check( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     return Result( non_conformal_cells=tmp )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )

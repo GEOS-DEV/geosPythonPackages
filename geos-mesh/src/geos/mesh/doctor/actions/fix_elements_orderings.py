@@ -17,7 +17,7 @@ class Result:
     unchanged_cell_types: FrozenSet[ int ]
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     # The vtk cell type is an int and will be the key of the following mapping,
     # that will point to the relevant permutation.
     cell_type_to_ordering: Dict[ int, List[ int ] ] = options.cell_type_to_ordering
@@ -48,6 +48,6 @@ def __check( mesh, options: Options ) -> Result:
                    unchanged_cell_types=frozenset( unchanged_cell_types ) )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __check( mesh, options )
+    return __action( mesh, options )
