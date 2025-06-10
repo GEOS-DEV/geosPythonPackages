@@ -11,8 +11,24 @@ Logger module manages logging tools.
 Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
 """
 
-# types redefinition to import logging.* from this module
-Logger = logging.Logger  #: logger type
+
+# Add the convenience method for the logger
+def results( self, message: str, *args: any, **kws: any ) -> None:  # noqa: ANN001
+    """Logs a message with the custom 'RESULTS' severity level.
+
+    This level is designed for summary information that should always be
+    visible, regardless of the logger's verbosity setting.
+
+    Args:
+        self (Self): The logger instance.
+        message (str): The primary log message, with optional format specifiers
+                     (e.g., "Found %d issues.").
+        *args: The arguments to be substituted into the `message` string.
+        **kws: Keyword arguments for special functionality.
+    """
+    if self.isEnabledFor( RESULTS_LEVEL_NUM ):
+        self._log( RESULTS_LEVEL_NUM, message, args, **kws )
+
 
 # Define logging levels at the module level so they are available for the Formatter class
 DEBUG: int = logging.DEBUG
@@ -20,6 +36,12 @@ INFO: int = logging.INFO
 WARNING: int = logging.WARNING
 ERROR: int = logging.ERROR
 CRITICAL: int = logging.CRITICAL
+
+# Define and register the new level for check results
+RESULTS_LEVEL_NUM: int = 60
+RESULTS_LEVEL_NAME: str = "RESULTS"
+logging.addLevelName( RESULTS_LEVEL_NUM, RESULTS_LEVEL_NAME )
+logging.Logger.results = results  # type: ignore[attr-defined]
 
 
 class CustomLoggerFormatter( logging.Formatter ):
@@ -39,6 +61,7 @@ class CustomLoggerFormatter( logging.Formatter ):
             logger.addHandler(ch)
     """
     # define color codes
+    green: str = "\x1b[32;20m"
     grey: str = "\x1b[38;20m"
     yellow: str = "\x1b[33;20m"
     red: str = "\x1b[31;20m"
@@ -48,6 +71,7 @@ class CustomLoggerFormatter( logging.Formatter ):
     # define prefix of log messages
     format1: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     format2: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
+    format_results: str = "%(name)s - %(levelname)s - %(message)s"
 
     #: format for each logger output type with colors
     FORMATS_COLOR: dict[ int, str ] = {
@@ -56,6 +80,7 @@ class CustomLoggerFormatter( logging.Formatter ):
         WARNING: yellow + format1 + reset,
         ERROR: red + format1 + reset,
         CRITICAL: bold_red + format2 + reset,
+        RESULTS_LEVEL_NUM: green + format_results + reset,
     }
 
     #: format for each logger output type without colors (e.g., for Paraview)
@@ -65,6 +90,7 @@ class CustomLoggerFormatter( logging.Formatter ):
         WARNING: format1,
         ERROR: format1,
         CRITICAL: format2,
+        RESULTS_LEVEL_NUM: format_results,
     }
 
     # Pre-compiled formatters for efficiency
@@ -85,6 +111,7 @@ class CustomLoggerFormatter( logging.Formatter ):
             use_color (bool): If True, use color-coded log formatters.
                             Defaults to False.
         """
+        super().__init__()
         if use_color:
             self.active_formatters = self._compiled_color_formatters
         else:
@@ -108,7 +135,7 @@ class CustomLoggerFormatter( logging.Formatter ):
             return logging.Formatter().format( record )
 
 
-def getLogger( title: str, use_color: bool = False ) -> Logger:
+def getLogger( title: str, use_color: bool = False ) -> logging.Logger:
     """Return the Logger with pre-defined configuration.
 
     This function is now idempotent regarding handler addition.
@@ -140,7 +167,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     Returns:
         Logger: logger
     """
-    logger: Logger = logging.getLogger( title )
+    logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
     if not logger.hasHandlers():  # More Pythonic way to check if logger.handlers is empty
         logger.setLevel( INFO )  # Set the desired default level for this logger
