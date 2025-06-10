@@ -11,7 +11,7 @@ from geos.trame.app.deck.tree import DeckTree
 from geos.trame.app.geosTrameException import GeosTrameException
 from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
-from geos.trame.app.utils.pv_utils import read_unstructured_grid
+from geos.trame.app.utils.pv_utils import read_unstructured_grid, split_vector_arrays
 from geos.trame.schema_generated.schema_mod import (
     Vtkmesh,
     Vtkwell,
@@ -97,6 +97,7 @@ class DataLoader( AbstractElement ):
 
     def _read_mesh( self, mesh: Vtkmesh ) -> None:
         unstructured_grid = read_unstructured_grid( self.source.get_abs_path( mesh.file ) )
+        split_vector_arrays( unstructured_grid )
         self.region_viewer.add_mesh( unstructured_grid )
 
     def _update_vtkwell( self, well: Vtkwell, path: str, show: bool ) -> None:
