@@ -21,7 +21,7 @@ def main():
     try:
         action = all_actions[ args.subparsers ]
     except KeyError:
-        setup_logger.critical( f"Action {args.subparsers} is not a valid action." )
+        setup_logger.error( f"Action {args.subparsers} is not a valid action." )
         sys.exit( 1 )
     helper: ActionHelper = all_actions_helpers[ args.subparsers ]
     result = action( args.vtk_input_file, action_options )

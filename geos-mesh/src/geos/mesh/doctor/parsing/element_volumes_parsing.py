@@ -1,8 +1,6 @@
 from geos.mesh.doctor.actions.element_volumes import Options, Result
 from geos.mesh.doctor.parsing import ELEMENT_VOLUMES
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "element_volumes parsing" )
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __MIN_VOLUME = "min_volume"
 __MIN_VOLUME_DEFAULT = 0.
@@ -31,6 +29,8 @@ def convert( parsed_options ) -> Options:
 
 
 def display_results( options: Options, result: Result ):
-    logger.error( f"You have {len(result.element_volumes)} elements with volumes smaller than {options.min_volume}." )
+    setup_logger.results(
+        f"You have {len(result.element_volumes)} elements with volumes smaller than {options.min_volume}." )
     if result.element_volumes:
-        logger.error( "The elements indices and their volumes are:\n\n".join( map( str, result.element_volumes ) ) )
+        setup_logger.results( "The elements indices and their volumes are:\n\n".join( map(
+            str, result.element_volumes ) ) )

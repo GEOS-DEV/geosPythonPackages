@@ -20,10 +20,7 @@ from geos.mesh.doctor.parsing import element_volumes_parsing as ev_parser
 from geos.mesh.doctor.parsing import non_conformal_parsing as nc_parser
 from geos.mesh.doctor.parsing import self_intersecting_elements_parsing as sie_parser
 from geos.mesh.doctor.parsing import supported_elements_parsing as se_parser
-from geos.mesh.doctor.parsing.cli_parsing import parse_comma_separated_string
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "All_checks_parsing" )
+from geos.mesh.doctor.parsing.cli_parsing import parse_comma_separated_string, setup_logger
 
 # --- Centralized Configuration for Check Features ---
 # This structure makes it easier to manage checks and their properties.
@@ -133,20 +130,20 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
     # 1. Determine which checks to perform
     final_selected_check_names: list[ str ] = deepcopy( ORDERED_CHECK_NAMES )
     if not parsed_args[ CHECKS_TO_DO_ARG ]:  # handles default and if user explicitly provides --checks_to_perform ""
-        logger.info( "All current available checks in mesh-doctor will be performed." )
+        setup_logger.info( "All current available checks in mesh-doctor will be performed." )
     else:  # the user specifically entered check names to perform
         checks_to_do: list[ str ] = parse_comma_separated_string( parsed_args[ CHECKS_TO_DO_ARG ] )
         final_selected_check_names = list()
         for name in checks_to_do:
             if name not in CHECK_FEATURES_CONFIG:
-                logger.warning( f"The given check '{name}' does not exist. Cannot perform this check."
-                                f" Choose from: {ORDERED_CHECK_NAMES}." )
+                setup_logger.warning( f"The given check '{name}' does not exist. Cannot perform this check."
+                                      f" Choose from: {ORDERED_CHECK_NAMES}." )
             elif name not in final_selected_check_names:  # Add if valid and not already added
                 final_selected_check_names.append( name )
 
         # If after parsing, no valid checks are selected (e.g., all inputs were invalid)
         if not final_selected_check_names:
-            logger.error( "No valid checks selected based on input. No operations will be configured." )
+            setup_logger.error( "No valid checks selected based on input. No operations will be configured." )
             raise ValueError( "No valid checks selected based on input. No operations will be configured." )
 
     # 2. Prepare parameters of Options for every check feature that will be used
@@ -156,12 +153,13 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
             del final_selected_check_params[ name ]  # Remove non-used check features
 
     if not parsed_args[ PARAMETERS_ARG ]:  # handles default and if user explicitly provides --set_parameters ""
-        logger.info( "Default configuation of parameters adopted for every check to perform." )
+        setup_logger.info( "Default configuation of parameters adopted for every check to perform." )
     else:
         set_parameters = parse_comma_separated_string( parsed_args[ PARAMETERS_ARG ] )
         for param in set_parameters:
             if ':' not in param:
-                logger.warning( f"Parameter '{param}' in --{PARAMETERS_ARG} is not in 'name:value' format. Skipping." )
+                setup_logger.warning(
+                    f"Parameter '{param}' in --{PARAMETERS_ARG} is not in 'name:value' format. Skipping." )
                 continue
             name, *value = param.split( ':', 1 )
             name = name.strip()
@@ -169,12 +167,12 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
                 value_str = value[ 0 ].strip()
             else:
                 # Handle cases where there's nothing after the colon, if necessary
-                logger.warning( f"Parameter '{name}' has no value after the colon. Skipping or using default." )
+                setup_logger.warning( f"Parameter '{name}' has no value after the colon. Skipping or using default." )
                 continue
             try:
                 value_float = float( value_str )
             except ValueError:
-                logger.warning(
+                setup_logger.warning(
                     f"Invalid value for parameter '{name}': '{value_str}'. Must be a number. Skipping this override." )
                 continue
 
@@ -193,7 +191,7 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
             individual_check_options[ check_name ] = feature_config.options_cls( **options_constructor_params )
             individual_check_display[ check_name ] = feature_config.display
         except Exception as e:  # Catch potential errors during options instantiation
-            logger.error(
+            setup_logger.error(
                 f"Failed to create options for check '{check_name}' with params {options_constructor_params}: {e}."
                 f" Therefore the check '{check_name}' will not be performed." )
             final_selected_check_names.remove( check_name )
@@ -206,7 +204,8 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
 # --- Display Results ---
 def display_results( options: AllChecksOptions, result: AllChecksResult ) -> None:
     """Displays the results of the checks."""
+    max_length = max( len( name ) for name in options.checks_to_perform )
     # Implementation for displaying results based on the structured options and results.
-    logger.info( f"Displaying results for checks: {options.checks_to_perform}" )
     for name, res in result.check_results.items():
+        setup_logger.results( f"******** {name:<{max_length}} ********" )
         options.check_displays[ name ]( options.checks_options[ name ], res )

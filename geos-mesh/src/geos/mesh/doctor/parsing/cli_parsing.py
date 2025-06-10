@@ -2,7 +2,7 @@ import argparse
 import logging
 import textwrap
 from typing import List
-from geos.utils.Logger import getLogger as get_custom_logger  # Alias for clarity
+from geos.utils.Logger import getLogger  # Alias for clarity
 
 __VERBOSE_KEY = "verbose"
 __QUIET_KEY = "quiet"
@@ -12,7 +12,8 @@ __QUIET_FLAG = "q"
 
 # Get a logger for this setup module itself, using your custom logger
 # This ensures its messages (like the "Logger level set to...") use your custom format.
-setup_logger = get_custom_logger( "mesh-doctor" )
+setup_logger = getLogger( "mesh-doctor" )
+setup_logger.propagate = False
 
 
 # --- Conversion Logic ---

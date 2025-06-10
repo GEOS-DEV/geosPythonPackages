@@ -1,9 +1,7 @@
 import os.path
 import textwrap
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "vtk_output_parsing" )
 
 __OUTPUT_FILE = "output"
 __OUTPUT_BINARY_MODE = "data-mode"
@@ -42,6 +40,6 @@ def convert( parsed_options, prefix="" ) -> VtkOutput:
     binary_mode_key = __build_arg( prefix, __OUTPUT_BINARY_MODE ).replace( "-", "_" )
     output = parsed_options[ output_key ]
     if parsed_options[ binary_mode_key ] and os.path.splitext( output )[ -1 ] == ".vtk":
-        logger.info( "VTK data mode will be ignored for legacy file format \"vtk\"." )
+        setup_logger.info( "VTK data mode will be ignored for legacy file format \"vtk\"." )
     is_data_mode_binary: bool = parsed_options[ binary_mode_key ] == __OUTPUT_BINARY_MODE_DEFAULT
     return VtkOutput( output=output, is_data_mode_binary=is_data_mode_binary )

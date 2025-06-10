@@ -6,10 +6,8 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
 from geos.mesh.doctor.actions.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "generate_cube" )
 
 
 @dataclass( frozen=True )
@@ -144,5 +142,5 @@ def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         return __action( options )
     except BaseException as e:
-        logger.error( e )
+        setup_logger.error( e )
         return Result( info="Something went wrong." )

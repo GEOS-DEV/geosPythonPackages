@@ -1,9 +1,7 @@
 import multiprocessing
 from geos.mesh.doctor.actions.supported_elements import Options, Result
 from geos.mesh.doctor.parsing import SUPPORTED_ELEMENTS
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "supported_elements" )
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __CHUNK_SIZE = "chunk_size"
 __NUM_PROC = "nproc"
@@ -39,16 +37,16 @@ def fill_subparser( subparsers ) -> None:
 
 def display_results( options: Options, result: Result ):
     if result.unsupported_polyhedron_elements:
-        logger.error(
+        setup_logger.results(
             f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
         )
-        logger.error(
+        setup_logger.results(
             f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}." )
     else:
-        logger.info( "All the polyhedra (if any) can be converted to supported elements." )
+        setup_logger.results( "All the polyhedra (if any) can be converted to supported elements." )
     if result.unsupported_std_elements_types:
-        logger.error(
+        setup_logger.results(
             f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}."
         )
     else:
-        logger.info( "All the standard vtk element types (if any) are supported." )
+        setup_logger.results( "All the standard vtk element types (if any) are supported." )

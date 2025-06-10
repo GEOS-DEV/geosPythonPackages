@@ -49,7 +49,7 @@ class TestAllChecksParsing:
     def test_convert_with_default_checks( self ):
         # Test with empty string for checks_to_perform (should use all checks)
         args = { "checks_to_perform": "", "set_parameters": "" }
-        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.logger' ) as mock_logger:
+        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.setup_logger' ) as mock_logger:
             options = convert( args )
 
             # Should log that all checks will be performed
@@ -63,7 +63,7 @@ class TestAllChecksParsing:
                 assert check_name in options.checks_options
 
     def test_convert_with_specific_checks( self, mock_args ):
-        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.logger' ):
+        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.setup_logger' ):
             options = convert( mock_args )
 
             # Should only include the specified checks
@@ -75,7 +75,7 @@ class TestAllChecksParsing:
 
     def test_convert_with_invalid_check( self ):
         args = { "checks_to_perform": "invalid_check_name", "set_parameters": "" }
-        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.logger' ) as mock_logger:
+        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.setup_logger' ) as mock_logger:
             with pytest.raises( ValueError, match="No valid checks selected" ):
                 convert( args )
 
@@ -87,7 +87,7 @@ class TestAllChecksParsing:
         check_name = "collocated_nodes"
         param_name = next( iter( CHECK_FEATURES_CONFIG[ check_name ].default_params.keys() ) )
         args = { "checks_to_perform": check_name, "set_parameters": f"{param_name}:99.9" }
-        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.logger' ):
+        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.setup_logger' ):
             options = convert( args )
 
             # Get the options object for the check
@@ -106,7 +106,7 @@ class TestAllChecksParsing:
                                     checks_options={ check_name: "mock_options" },
                                     check_displays={ check_name: mock_display_func } )
         result = AllChecksResult( check_results={ check_name: "mock_result" } )
-        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.logger' ):
+        with patch( 'geos.mesh.doctor.parsing.all_checks_parsing.setup_logger' ):
             display_results( options, result )
 
             # Verify display function was called with correct arguments
@@ -125,7 +125,7 @@ class TestAllChecks:
         # Mock the module loading function
         with patch( 'geos.mesh.doctor.actions.all_checks.__load_module_action',
                     return_value=mock_check_action ) as mock_load:
-            with patch( 'geos.mesh.doctor.actions.all_checks.logger' ):
+            with patch( 'geos.mesh.doctor.actions.all_checks.setup_logger' ):
                 result = action( "test_file.vtk", mock_options )
 
                 # Verify the module was loaded
@@ -151,7 +151,7 @@ class TestAllChecks:
         # Mock the module loading function
         with patch( 'geos.mesh.doctor.actions.all_checks.__load_module_action',
                     return_value=mock_check_action ) as mock_load:
-            with patch( 'geos.mesh.doctor.actions.all_checks.logger' ):
+            with patch( 'geos.mesh.doctor.actions.all_checks.setup_logger' ):
                 result = action( "test_file.vtk", mock_options )
 
                 # Verify the modules were loaded

@@ -10,9 +10,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from geos.mesh.doctor.actions.fix_elements_orderings import Options, Result
 from geos.mesh.doctor.parsing import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "fix_elements_orderings parsing" )
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
@@ -62,7 +60,7 @@ def convert( parsed_options ) -> Options:
             tmp = tuple( map( int, raw_mapping.split( "," ) ) )
             if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) ):
                 err_msg = f"Permutation {raw_mapping} for type {key} is not valid."
-                logger.error( err_msg )
+                setup_logger.error( err_msg )
                 raise ValueError( err_msg )
             cell_type_to_ordering[ vtk_key ] = tmp
     vtk_output = vtk_output_parsing.convert( parsed_options )
@@ -71,10 +69,11 @@ def convert( parsed_options ) -> Options:
 
 def display_results( options: Options, result: Result ):
     if result.output:
-        logger.info( f"New mesh was written to file '{result.output}'" )
+        setup_logger.info( f"New mesh was written to file '{result.output}'" )
         if result.unchanged_cell_types:
-            logger.info( f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
+            setup_logger.info(
+                f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
         else:
-            logger.info( "All the cells of the mesh were reordered." )
+            setup_logger.info( "All the cells of the mesh were reordered." )
     else:
-        logger.info( "No output file was written." )
+        setup_logger.info( "No output file was written." )

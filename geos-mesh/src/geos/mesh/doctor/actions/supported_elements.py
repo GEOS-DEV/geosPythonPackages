@@ -9,11 +9,9 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
                                             VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
                                             VTK_WEDGE )
 from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
-from geos.mesh.utils.genericHelpers import vtk_iter
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import read_mesh
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "supported_elements" )
+from geos.mesh.utils.genericHelpers import vtk_iter
 
 
 @dataclass( frozen=True )
@@ -40,12 +38,12 @@ def init_worker_mesh( input_file_for_worker: str ):
         input_file_for_worker (str): Filepath to vtk grid
     """
     global MESH
-    logger.debug(
+    setup_logger.debug(
         f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {input_file_for_worker}"
     )
     MESH = read_mesh( input_file_for_worker )
     if MESH is None:
-        logger.error(
+        setup_logger.error(
             f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {input_file_for_worker}"
         )
         # You might want to raise an error here or ensure MESH being None is handled downstream
@@ -127,10 +125,10 @@ class IsPolyhedronConvertible:
         face_stream = FaceStream.build_from_vtk_id_list( pt_ids )
         converted_type_name = self.__is_polyhedron_supported( face_stream )
         if converted_type_name:
-            logger.debug( f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"" )
+            setup_logger.debug( f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"" )
             return -1
         else:
-            logger.debug(
+            setup_logger.debug(
                 f"Polyhedron cell {ic} (in PID {multiprocessing.current_process().pid}) cannot be converted into any supported element."
             )
             return ic
@@ -140,7 +138,7 @@ def __action( vtk_input_file: str, options: Options ) -> Result:
     # Main process loads the mesh for its own use
     mesh = read_mesh( vtk_input_file )
     if mesh is None:
-        logger.error( f"Main process failed to load mesh from {vtk_input_file}. Aborting." )
+        setup_logger.error( f"Main process failed to load mesh from {vtk_input_file}. Aborting." )
         # Return an empty/error result or raise an exception
         return Result( unsupported_std_elements_types=frozenset(), unsupported_polyhedron_elements=frozenset() )
 

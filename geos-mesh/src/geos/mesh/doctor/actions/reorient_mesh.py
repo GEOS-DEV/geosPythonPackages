@@ -7,10 +7,8 @@ from vtkmodules.vtkCommonDataModel import ( VTK_POLYHEDRON, VTK_TRIANGLE, vtkCel
                                             vtkUnstructuredGrid, vtkTetra )
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter
 from geos.mesh.doctor.actions.vtk_polyhedron import FaceStream, build_face_to_face_connectivity_through_edges
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
-from geos.utils.Logger import getLogger
-
-logger = getLogger( "reorient_mesh" )
 
 
 def __compute_volume( mesh_points: vtkPoints, face_stream: FaceStream ) -> float:
@@ -131,7 +129,7 @@ def reorient_mesh( mesh, cell_indices: Iterator[ int ] ) -> vtkUnstructuredGrid:
     # I did not manage to call `output_mesh.CopyStructure(mesh)` because I could not modify the polyhedron in place.
     # Therefore, I insert the cells one by one...
     output_mesh.SetPoints( mesh.GetPoints() )
-    logger.info( "Reorienting the polyhedron cells to enforce normals directed outward." )
+    setup_logger.info( "Reorienting the polyhedron cells to enforce normals directed outward." )
     with tqdm( total=needs_to_be_reoriented.sum(), desc="Reorienting polyhedra"
               ) as progress_bar:  # For smoother progress, we only update on reoriented elements.
         for ic in range( num_cells ):
