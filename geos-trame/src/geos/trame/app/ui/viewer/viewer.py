@@ -8,18 +8,14 @@ from pydantic import BaseModel
 from pyvista.trame.ui import plotter_ui
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from vtkmodules.vtkRenderingCore import vtkActor
 
 from geos.trame.app.deck.tree import DeckTree
 from geos.trame.app.ui.viewer.perforationViewer import PerforationViewer
 from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
-from geos.trame.schema_generated.schema_mod import (
-    Vtkmesh,
-    Vtkwell,
-    Perforation,
-    InternalWell,
-)
+from geos.trame.schema_generated.schema_mod import Vtkmesh, Vtkwell, InternalWell, Perforation
 
 pv.OFF_SCREEN = True
 
@@ -49,13 +45,24 @@ class DeckViewer( vuetify.VCard ):
         """
         super().__init__( **kwargs )
 
+        self._picked_actor: vtkActor | None = None
+        self._point_data_array_names: list[ str ] = []
+        self._cell_data_array_names: list[ str ] = []
         self._source = source
         self._pl = pv.Plotter()
+        self._pl.enable_mesh_picking( callback=self._picking_callback,
+                                      show_message=False,
+                                      line_width=2,
+                                      use_actor=True )
 
         self.CUT_PLANE = "on_cut_plane_visibility_change"
         self.ZAMPLIFICATION = "_z_amplification"
-        self.server.state[ self.CUT_PLANE ] = True
-        self.server.state[ self.ZAMPLIFICATION ] = 1
+        self.state[ self.CUT_PLANE ] = True
+        self.state[ self.ZAMPLIFICATION ] = 1
+
+        self.DATA_ARRAYS = "viewer_data_arrays_items"
+        self.SELECTED_DATA_ARRAY = "viewer_selected_data_array"
+        self.state.change( self.SELECTED_DATA_ARRAY )( self._update_actor_array )
 
         self.region_engine = region_viewer
         self.well_engine = well_viewer
@@ -68,8 +75,9 @@ class DeckViewer( vuetify.VCard ):
             view = plotter_ui(
                 self._pl,
                 add_menu_items=self.rendering_menu_extra_items,
-                style="position: absolute;",
             )
+            view.menu.style += "; height: 50px; min-width: 50px;"
+            view.menu.children[ 0 ].style += "; justify-content: center;"
             self.ctrl.view_update = view.update
 
     @property
@@ -88,21 +96,65 @@ class DeckViewer( vuetify.VCard ):
         For now, adding a button to show/hide all widgets.
         """
         self.state.change( self.CUT_PLANE )( self._on_clip_visibility_change )
-        vuetify.VDivider( vertical=True, classes="mr-1" )
-        with vuetify.VTooltip( location="bottom" ):
-            with (
-                    vuetify.Template( v_slot_activator=( "{ props }", ) ),
-                    html.Div( v_bind=( "props", ) ),
-            ):
-                vuetify.VCheckbox(
-                    v_model=( self.CUT_PLANE, True ),
-                    icon=True,
-                    true_icon="mdi-eye",
-                    false_icon="mdi-eye-off",
-                    dense=True,
-                    hide_details=True,
-                )
-            html.Span( "Show/Hide widgets" )
+        with vuetify.VRow(
+                classes='pa-0 ma-0 align-center fill-height',
+                style="flex-wrap: nowrap",
+        ):
+            vuetify.VDivider( vertical=True, classes="mr-1" )
+            with vuetify.VTooltip( location="bottom" ):
+                with (
+                        vuetify.Template( v_slot_activator=( "{ props }", ) ),
+                        html.Div( v_bind=( "props", ) ),
+                ):
+                    vuetify.VCheckbox(
+                        v_model=( self.CUT_PLANE, True ),
+                        icon=True,
+                        true_icon="mdi-eye",
+                        false_icon="mdi-eye-off",
+                        dense=True,
+                        hide_details=True,
+                    )
+                html.Span( "Show/Hide widgets" )
+            vuetify.VDivider( vertical=True, classes="mr-1" )
+            vuetify.VSelect(
+                hide_details=True,
+                label="Data Array",
+                items=( self.DATA_ARRAYS, [] ),
+                v_model=( self.SELECTED_DATA_ARRAY, None ),
+                min_width="150px",
+            )
+
+    def _picking_callback( self, actor: vtkActor | None ) -> None:
+        """Actor picking callback.
+
+        Get the data arrays from its mesh.
+        """
+        if actor is None:
+            self.state[ self.DATA_ARRAYS ] = []
+        else:
+            mesh = actor.mapper.GetInputDataObject( 0, 0 )
+            self._point_data_array_names = list( mesh.point_data.keys() )
+            self._cell_data_array_names = list( mesh.cell_data.keys() )
+            self.state[ self.DATA_ARRAYS ] = self._point_data_array_names + self._cell_data_array_names
+            self._picked_actor = actor
+
+        self.state[ self.SELECTED_DATA_ARRAY ] = None
+
+    def _update_actor_array( self, **_: Any ) -> None:
+        """Update the picked actor scalar array."""
+        array_name = self.state[ self.SELECTED_DATA_ARRAY ]
+        if array_name is None or self._picked_actor is None:
+            return
+        mapper: pv.DataSetMapper = self._picked_actor.mapper
+        mesh: vtkUnstructuredGrid = mapper.GetInputDataObject( 0, 0 )
+
+        data = mesh.GetPointData() if array_name in self._point_data_array_names else mesh.GetCellData()
+        data.SetActiveScalars( array_name )
+        mapper.scalar_range = data.GetArray( array_name ).GetRange()
+        mapper.scalar_map_mode = "point" if array_name in self._point_data_array_names else "cell"
+
+        self.plotter.scalar_bar.title = array_name
+        self.ctrl.view_update()
 
     def update_viewer( self, active_block: BaseModel, path: str, show_obj: bool ) -> None:
         """Add from path the dataset given by the user.
@@ -205,7 +257,7 @@ class DeckViewer( vuetify.VCard ):
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
         self.well_engine.append_actor( path, tube_actor )
 
-        self.server.controller.view_update()
+        self.ctrl.view_update()
 
     def _update_vtkwell( self, path: str, show: bool ) -> None:
         """Used to control the visibility of the Vtkwell.
@@ -219,7 +271,7 @@ class DeckViewer( vuetify.VCard ):
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
         self.well_engine.append_actor( path, tube_actor )
 
-        self.server.controller.view_update()
+        self.ctrl.view_update()
 
     def _update_vtkmesh( self, show: bool ) -> None:
         """Used to control the visibility of the Vtkmesh.
@@ -233,18 +285,14 @@ class DeckViewer( vuetify.VCard ):
             self.plotter.remove_actor( self._clip_mesh )  # type: ignore
             return
 
-        active_scalar = self.region_engine.input.active_scalars_name
         self._clip_mesh: vtkActor = self.plotter.add_mesh_clip_plane(
             self.region_engine.input,
             origin=self.region_engine.input.center,
             normal=[ -1, 0, 0 ],
             crinkle=True,
             show_edges=False,
-            cmap="glasbey_bw",
-            scalars=active_scalar,
         )
-
-        self.server.controller.view_update()
+        self._picking_callback( self._clip_mesh )
 
     def _update_perforation( self, perforation: Perforation, show: bool, path: str ) -> None:
         """Generate VTK dataset from a perforation."""
