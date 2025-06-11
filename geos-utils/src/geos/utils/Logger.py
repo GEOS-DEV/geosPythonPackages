@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 import logging
-from typing import Union
+from typing import Any, Union
 from typing_extensions import Self
 
 __doc__ = """
@@ -13,7 +13,7 @@ Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-col
 
 
 # Add the convenience method for the logger
-def results( self, message: str, *args: any, **kws: any ) -> None:  # noqa: ANN001
+def results( self, message: str, *args: Any, **kws: Any ) -> None:  # noqa: ANN001
     """Logs a message with the custom 'RESULTS' severity level.
 
     This level is designed for summary information that should always be
@@ -42,6 +42,8 @@ RESULTS_LEVEL_NUM: int = 60
 RESULTS_LEVEL_NAME: str = "RESULTS"
 logging.addLevelName( RESULTS_LEVEL_NUM, RESULTS_LEVEL_NAME )
 logging.Logger.results = results  # type: ignore[attr-defined]
+# types redefinition to import logging.* from this module
+Logger = logging.Logger  #: logger type
 
 
 class CustomLoggerFormatter( logging.Formatter ):
@@ -135,7 +137,7 @@ class CustomLoggerFormatter( logging.Formatter ):
             return logging.Formatter().format( record )
 
 
-def getLogger( title: str, use_color: bool = False ) -> logging.Logger:
+def getLogger( title: str, use_color: bool = False ) -> Logger:
     """Return the Logger with pre-defined configuration.
 
     This function is now idempotent regarding handler addition.
