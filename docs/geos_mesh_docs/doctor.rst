@@ -87,12 +87,14 @@ Here is a list and brief description of all the modules available.
 ``all_checks``
 """"""""""""""
 
-``mesh-doctor`` modules are called ``actions`` and they can be splitted into 2 different categories:
+``mesh-doctor`` modules are called ``actions`` and they can be split into 2 different categories:
 ``check actions`` that will give you a feedback on a .vtu mesh that you would like to use in GEOS.
-``operate actions`` that will either create a new mesh or modify a mesh.
+``operate actions`` that will either create a new mesh or modify an existing mesh.
 
-``all_checks`` aims at applying every single ``check`` action in one single command. The list is the following:
+``all_checks`` aims at applying every single ``check`` action in one single command. The available list is of check is:
 ``collocated_nodes``, ``element_volumes``, ``non_conformal``, ``self_intersecting_elements``, ``supported_elements``.
+By default, only ``collocated_nodes``, ``element_volumes``, ``self_intersecting_elements`` will be performed because
+``non_conformal`` and ``supported_elements`` are slower to perform.
 
 .. code-block::
 
@@ -102,13 +104,15 @@ Here is a list and brief description of all the modules available.
       options:
       -h, --help            show this help message and exit
       --checks_to_perform CHECKS_TO_PERFORM
-                              Comma-separated list of mesh-doctor checks to perform. If no input was given, all of the following checks will be executed by default:
-                              ['collocated_nodes', 'element_volumes', 'non_conformal', 'self_intersecting_elements', 'supported_elements'].
+                              Comma-separated list of mesh-doctor checks to perform.
+                              If no input was given, all of the following checks will be executed by default: ['collocated_nodes', 'element_volumes', 'self_intersecting_elements'].
+                              The available choices for checks are ['collocated_nodes', 'element_volumes', 'non_conformal', 'self_intersecting_elements', 'supported_elements'].
                               If you want to choose only certain of them, you can name them individually.
                               Example: --checks_to_perform collocated_nodes,element_volumes (default: )
       --set_parameters SET_PARAMETERS
                               Comma-separated list of parameters to set for the checks (e.g., 'param_name:value'). These parameters override the defaults.
-                              Default parameters are: For collocated_nodes: tolerance:0.0. For element_volumes: min_volume:0.0. For non_conformal: angle_tolerance:10.0, point_tolerance:0.0, face_tolerance:0.0.
+                              Default parameters are: For collocated_nodes: tolerance:0.0. For element_volumes: min_volume:0.0.
+                              For non_conformal: angle_tolerance:10.0, point_tolerance:0.0, face_tolerance:0.0.
                               For self_intersecting_elements: min_distance:2.220446049250313e-16. For supported_elements: chunk_size:1, nproc:8.
                               Example: --set_parameters parameter_name:10.5,other_param:25 (default: )
 

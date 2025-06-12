@@ -77,6 +77,12 @@ ORDERED_CHECK_NAMES: list[ str ] = [
     SELF_INTERSECTING_ELEMENTS,
     SUPPORTED_ELEMENTS,
 ]
+# Because some checks are slower to perform, the default checks have to be only the following
+DEFAULT_CHECK_NAMES: list[ str ] = [
+    COLLOCATES_NODES,
+    ELEMENT_VOLUMES,
+    SELF_INTERSECTING_ELEMENTS,
+]
 DEFAULT_PARAMS: dict[ str, dict[ str, float ] ] = {
     name: feature.default_params.copy()
     for name, feature in CHECK_FEATURES_CONFIG.items()
@@ -110,8 +116,9 @@ def fill_subparser( subparsers: argparse._SubParsersAction ) -> None:
                          default="",
                          required=False,
                          help=( "Comma-separated list of mesh-doctor checks to perform. If no input was given, all of"
-                                f" the following checks will be executed by default: {ORDERED_CHECK_NAMES}. If you want"
-                                " to choose only certain of them, you can name them individually."
+                                f" the following checks will be executed by default: {DEFAULT_CHECK_NAMES}."
+                                f" The available choices for checks are {ORDERED_CHECK_NAMES}."
+                                " If you want to choose only certain of them, you can name them individually."
                                 f" Example: --{CHECKS_TO_DO_ARG} {ORDERED_CHECK_NAMES[0]},{ORDERED_CHECK_NAMES[1]}" ) )
     parser.add_argument(
         f"--{PARAMETERS_ARG}",
@@ -128,7 +135,7 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
     Converts parsed command-line arguments into an AllChecksOptions object.
     """
     # 1. Determine which checks to perform
-    final_selected_check_names: list[ str ] = deepcopy( ORDERED_CHECK_NAMES )
+    final_selected_check_names: list[ str ] = deepcopy( DEFAULT_CHECK_NAMES )
     if not parsed_args[ CHECKS_TO_DO_ARG ]:  # handles default and if user explicitly provides --checks_to_perform ""
         setup_logger.info( "All current available checks in mesh-doctor will be performed." )
     else:  # the user specifically entered check names to perform
@@ -153,7 +160,7 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
             del final_selected_check_params[ name ]  # Remove non-used check features
 
     if not parsed_args[ PARAMETERS_ARG ]:  # handles default and if user explicitly provides --set_parameters ""
-        setup_logger.info( "Default configuation of parameters adopted for every check to perform." )
+        setup_logger.info( "Default configuration of parameters adopted for every check to perform." )
     else:
         set_parameters = parse_comma_separated_string( parsed_args[ PARAMETERS_ARG ] )
         for param in set_parameters:
@@ -203,7 +210,12 @@ def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
 
 # --- Display Results ---
 def display_results( options: AllChecksOptions, result: AllChecksResult ) -> None:
-    """Displays the results of the checks."""
+    """Displays the results of all the checks that have been performed.
+
+    Args:
+        options (AllChecksOptions): The options chosen for every check performed.
+        result (AllChecksResult): The result obtained for every check performed.
+    """
     max_length = max( len( name ) for name in options.checks_to_perform )
     # Implementation for displaying results based on the structured options and results.
     for name, res in result.check_results.items():
