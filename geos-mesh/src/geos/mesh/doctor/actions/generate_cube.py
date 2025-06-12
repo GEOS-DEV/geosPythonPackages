@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-import logging
 import numpy
 from typing import Iterable, Sequence
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
-from geos.mesh.doctor.checks.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.actions.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
 
@@ -132,15 +132,15 @@ def __build( options: Options ):
     return cube
 
 
-def __check( options: Options ) -> Result:
+def __action( options: Options ) -> Result:
     output_mesh = __build( options )
     write_mesh( output_mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     try:
-        return __check( options )
+        return __action( options )
     except BaseException as e:
-        logging.error( e )
+        setup_logger.error( e )
         return Result( info="Something went wrong." )

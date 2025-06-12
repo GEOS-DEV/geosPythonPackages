@@ -1,7 +1,7 @@
 import numpy
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import VTK_TETRA, vtkCellArray, vtkTetra, vtkUnstructuredGrid
-from geos.mesh.doctor.checks.element_volumes import Options, __check
+from geos.mesh.doctor.actions.element_volumes import Options, __action
 
 
 def test_simple_tet():
@@ -28,12 +28,12 @@ def test_simple_tet():
     mesh.SetPoints( points )
     mesh.SetCells( cell_types, cells )
 
-    result = __check( mesh, Options( min_volume=1. ) )
+    result = __action( mesh, Options( min_volume=1. ) )
 
     assert len( result.element_volumes ) == 1
     assert result.element_volumes[ 0 ][ 0 ] == 0
     assert abs( result.element_volumes[ 0 ][ 1 ] - 1. / 6. ) < 10 * numpy.finfo( float ).eps
 
-    result = __check( mesh, Options( min_volume=0. ) )
+    result = __action( mesh, Options( min_volume=0. ) )
 
     assert len( result.element_volumes ) == 0

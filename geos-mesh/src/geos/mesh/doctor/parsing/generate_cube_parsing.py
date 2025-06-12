@@ -1,9 +1,7 @@
-import logging
-
-from geos.mesh.doctor.checks.generate_cube import Options, Result, FieldInfo
-
-from . import vtk_output_parsing, generate_global_ids_parsing, GENERATE_CUBE
-from .generate_global_ids_parsing import GlobalIdsInfo
+from geos.mesh.doctor.actions.generate_cube import Options, Result, FieldInfo
+from geos.mesh.doctor.parsing import vtk_output_parsing, generate_global_ids_parsing, GENERATE_CUBE
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.generate_global_ids_parsing import GlobalIdsInfo
 
 __X, __Y, __Z, __NX, __NY, __NZ = "x", "y", "z", "nx", "ny", "nz"
 __FIELDS = "fields"
@@ -84,4 +82,4 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
-    logging.info( result.info )
+    setup_logger.info( result.info )

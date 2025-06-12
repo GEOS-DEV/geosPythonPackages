@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-import logging
-
-from geos.mesh.doctor.checks.generate_global_ids import Options, Result
-
-from . import vtk_output_parsing, GENERATE_GLOBAL_IDS
+from geos.mesh.doctor.actions.generate_global_ids import Options, Result
+from geos.mesh.doctor.parsing import vtk_output_parsing, GENERATE_GLOBAL_IDS
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __CELLS, __POINTS = "cells", "points"
 
@@ -51,4 +49,4 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
-    logging.info( result.info )
+    setup_logger.info( result.info )
