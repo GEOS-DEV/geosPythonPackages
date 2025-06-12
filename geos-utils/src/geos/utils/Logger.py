@@ -13,16 +13,15 @@ Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-col
 
 
 # Add the convenience method for the logger
-def results( self, message: str, *args: Any, **kws: Any ) -> None:  # noqa: ANN001
+def results( self: logging.Logger, message: str, *args: Any, **kws: Any ) -> None:
     """Logs a message with the custom 'RESULTS' severity level.
 
     This level is designed for summary information that should always be
     visible, regardless of the logger's verbosity setting.
 
     Args:
-        self (Self): The logger instance.
-        message (str): The primary log message, with optional format specifiers
-                     (e.g., "Found %d issues.").
+        self (logging.Logger): The logger instance.
+        message (str): The primary log message, with optional format specifiers (e.g., "Found %d issues.").
         *args: The arguments to be substituted into the `message` string.
         **kws: Keyword arguments for special functionality.
     """
@@ -42,8 +41,9 @@ RESULTS_LEVEL_NUM: int = 60
 RESULTS_LEVEL_NAME: str = "RESULTS"
 logging.addLevelName( RESULTS_LEVEL_NUM, RESULTS_LEVEL_NAME )
 logging.Logger.results = results  # type: ignore[attr-defined]
+
 # types redefinition to import logging.* from this module
-Logger = logging.Logger  #: logger type
+Logger = logging.Logger  # logger type
 
 
 class CustomLoggerFormatter( logging.Formatter ):
@@ -111,7 +111,7 @@ class CustomLoggerFormatter( logging.Formatter ):
 
         Args:
             use_color (bool): If True, use color-coded log formatters.
-                            Defaults to False.
+                              Defaults to False.
         """
         super().__init__()
         if use_color:
@@ -160,6 +160,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
         logger.warning("warning message")
         logger.error("error message")
         logger.critical("critical message")
+        logger.results("results message")
 
     Args:
         title (str): Name of the logger.

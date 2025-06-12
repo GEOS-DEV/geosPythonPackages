@@ -219,5 +219,7 @@ def display_results( options: AllChecksOptions, result: AllChecksResult ) -> Non
     max_length = max( len( name ) for name in options.checks_to_perform )
     # Implementation for displaying results based on the structured options and results.
     for name, res in result.check_results.items():
+        setup_logger.results( "" )  # insert blank line for better visibility between each results
         setup_logger.results( f"******** {name:<{max_length}} ********" )
         options.check_displays[ name ]( options.checks_options[ name ], res )
+    setup_logger.results( "" )

@@ -5,7 +5,7 @@ from geos.mesh.doctor.actions.all_checks import Options as AllChecksOptions
 from geos.mesh.doctor.actions.all_checks import Result as AllChecksResult
 from geos.mesh.doctor.actions.all_checks import action
 from geos.mesh.doctor.parsing.all_checks_parsing import convert, fill_subparser, display_results
-from geos.mesh.doctor.parsing.all_checks_parsing import ORDERED_CHECK_NAMES, CHECK_FEATURES_CONFIG
+from geos.mesh.doctor.parsing.all_checks_parsing import DEFAULT_CHECK_NAMES, ORDERED_CHECK_NAMES, CHECK_FEATURES_CONFIG
 
 
 # Mock data and fixtures
@@ -56,10 +56,10 @@ class TestAllChecksParsing:
             mock_logger.info.assert_any_call( "All current available checks in mesh-doctor will be performed." )
 
             # Should include all checks
-            assert options.checks_to_perform == ORDERED_CHECK_NAMES
+            assert options.checks_to_perform == DEFAULT_CHECK_NAMES
 
             # Should use default parameters
-            for check_name in ORDERED_CHECK_NAMES:
+            for check_name in DEFAULT_CHECK_NAMES:
                 assert check_name in options.checks_options
 
     def test_convert_with_specific_checks( self, mock_args ):
