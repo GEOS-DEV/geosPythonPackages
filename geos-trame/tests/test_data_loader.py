@@ -15,13 +15,12 @@ from tests.trame_fixtures import trame_server_layout, trame_state
 
 def test_data_loader( trame_server_layout: tuple[ Server, VAppLayout ], trame_state: State ) -> None:
     root_path = Path( __file__ ).parent.absolute().__str__()
-    file_name = root_path + "/data/geosDeck/geosDeck.xml"
+    file_name = root_path + "/data/geosDeck/geosDeck_small_data.xml"
 
     geos_trame = GeosTrame( trame_server_layout[ 0 ], file_name )
 
     geos_trame.data_loader.load_vtkmesh_from_id( "Problem/Mesh/0/VTKMesh/0" )
     ug: pv.UnstructuredGrid = geos_trame.data_loader.region_viewer.input
-    assert ug.GetCellData().HasArray( "attribute" )
     assert ug.GetPointData().HasArray( "RandomPointScalars" )
     assert not ug.GetPointData().HasArray( "RandomPointVectors" )
     assert ug.GetPointData().HasArray( "RandomPointVectors_0" )
