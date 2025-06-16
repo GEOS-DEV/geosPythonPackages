@@ -38,25 +38,21 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet" )
 
-        self._clearSelectedAttributeMulti: bool = True
-        self._selectedAttributeMulti: list[ str ] = []
+        # Initialisation of the empty list of the selected attribute name
+        self.SetSelectedAttributeMulti()
 
         # logger
         self.m_logger: Logger = getLogger( "Fill Partial Attributes" )
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+    def SetSelectedAttributeMulti( self: Self, selectedAttributeMulti: list[ str ] = []) -> None:
+        """Set the list of the attribute name.
 
         Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            selectesAttributeMulti (list[str]): list of all the attribute name.
+        
         """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet" )
-        return 1
+        self._selectedAttributeMulti: list[ str ] = selectedAttributeMulti
+        
 
     def RequestDataObject(
         self: Self,
@@ -74,12 +70,11 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        print( "RequestDataObject" )
-        inData1 = self.GetInputData( inInfoVec, 0, 0 )
+        inData = self.GetInputData( inInfoVec, 0, 0 )
         outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData1 is not None
-        if outData is None or ( not outData.IsA( inData1.GetClassName() ) ):
-            outData = inData1.NewInstance()
+        assert inData is not None
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
+            outData = inData.NewInstance()
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
@@ -115,8 +110,8 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
                         nbComponents = getNumberOfComponents( outData, attributeName, onPoints )
                         fillPartialAttributes( outData, attributeName, nbComponents, onPoints )
             outData.Modified()
-
-            mess: str = "Partial arrays were successfully completed ."
+            
+            mess: str = "Fill Partial arrays were successfully completed ."
             self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "Partial arrays filling failed due to:"
@@ -129,5 +124,4 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
             self.m_logger.critical( e, exc_info=True )
             return 0
 
-        self._clearSelectedAttributeMulti = True
         return 1
