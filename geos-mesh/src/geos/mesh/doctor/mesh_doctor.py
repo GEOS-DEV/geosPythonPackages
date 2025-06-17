@@ -1,12 +1,4 @@
 import sys
-
-min_python_version = ( 3, 7 )
-try:
-    assert sys.version_info >= min_python_version
-except AssertionError:
-    print( f"Please update python to at least version {'.'.join(map(str, min_python_version))}." )
-    sys.exit( 1 )
-
 from geos.mesh.doctor.parsing import ActionHelper
 from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity, setup_logger
 from geos.mesh.doctor.register import register_parsing_actions

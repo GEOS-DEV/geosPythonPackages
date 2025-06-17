@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Callable, Any
 
 ALL_CHECKS = "all_checks"
+MAIN_CHECKS = "main_checks"
 COLLOCATES_NODES = "collocated_nodes"
 ELEMENT_VOLUMES = "element_volumes"
 FIX_ELEMENTS_ORDERINGS = "fix_elements_orderings"

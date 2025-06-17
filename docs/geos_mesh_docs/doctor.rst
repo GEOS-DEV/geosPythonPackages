@@ -84,8 +84,8 @@ You can solve this issue by installing the dependencies of ``mesh-doctor`` defin
 
 Here is a list and brief description of all the modules available.
 
-``all_checks``
-""""""""""""""
+``all_checks`` and ``main_checks``
+""""""""""""""""""""""""""""""""""
 
 ``mesh-doctor`` modules are called ``actions`` and they can be split into 2 different categories:
 ``check actions`` that will give you a feedback on a .vtu mesh that you would like to use in GEOS.
@@ -93,8 +93,12 @@ Here is a list and brief description of all the modules available.
 
 ``all_checks`` aims at applying every single ``check`` action in one single command. The available list is of check is:
 ``collocated_nodes``, ``element_volumes``, ``non_conformal``, ``self_intersecting_elements``, ``supported_elements``.
-By default, only ``collocated_nodes``, ``element_volumes``, ``self_intersecting_elements`` will be performed because
-``non_conformal`` and ``supported_elements`` are slower to perform.
+
+``main_checks`` does only the fastest checks ``collocated_nodes``, ``element_volumes`` and ``self_intersecting_elements``
+that can quickly highlight some issues to deal with before investigating the other checks.
+
+Both ``all_checks`` and ``main_checks`` have the same keywords and can be operated in the same way. The example below shows
+the case of ``all_checks``, but it can be swapped for ``main_checks``.
 
 .. code-block::
 
