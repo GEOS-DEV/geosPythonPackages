@@ -44,26 +44,27 @@ def fillPartialAttributes(
     attributeName: str,
     nbComponents: int,
     onPoints: bool = False,
+    value: float = np.nan
 ) -> bool:
-    """Fill input partial attribute of multiBlockMesh with nan values.
+    """Fill input partial attribute of multiBlockMesh with values.
 
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlock
-            mesh where to fill the attribute
-        attributeName (str): attribute name
-        nbComponents (int): number of components
-        onPoints (bool, optional): Attribute is on Points (False) or
-            on Cells.
-
+            mesh where to fill the attribute.
+        attributeName (str): attribute name.
+        nbComponents (int): number of components.
+        onPoints (bool, optional): Attribute is on Points (False) or on Cells (True).
             Defaults to False.
+        value (float, optional): value to fill in the partial atribute.
+            Defaults to nan.
 
     Returns:
-        bool: True if calculation successfully ended, False otherwise
+        bool: True if calculation successfully ended, False otherwise.
     """
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockMesh, attributeName, onPoints )
-    values: list[ float ] = [ np.nan for _ in range( nbComponents ) ]
+    values: list[ float ] = [ value for _ in range( nbComponents ) ]
     createConstantAttribute( multiBlockMesh, values, attributeName, componentNames, onPoints )
     multiBlockMesh.Modified()
     return True
