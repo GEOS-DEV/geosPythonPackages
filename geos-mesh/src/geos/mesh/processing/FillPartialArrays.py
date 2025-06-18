@@ -24,9 +24,10 @@ from vtkmodules.vtkCommonDataModel import (
 import numpy as np
 
 __doc__="""
-Fill partial arrays of input mesh.
+Fill partial arrays of input mesh with values (defaults to nan).
+Several attributes can be fill in the same time but with the same value.
 
-Input and output are vtkMultiBlockDataSet.
+Input and output mesh are vtkMultiBlockDataSet.
 
 To use it:
 
@@ -36,15 +37,18 @@ To use it:
 
     # filter inputs
     input_mesh: vtkMultiBlockDataSet
-    input_attribute: list[str]
+    input_attributesNameList: list[str]
+    input_valueToFill: float, optional defaults to nan
 
-    # instanciate the filter
+    # Instanciate the filter
     filter: FillPartialArrays = FillPartialArrays()
-    # set the list of the selected atribute to fill
-    filter.SetSelectedAttributeMulti( input_attribute )
-    # set the mesh
+    # Set the list of the partial atributes to fill
+    filter._SetAttributesNameList( input_attribute )
+    # Set the value to fill in the partial attributes if not nan
+    filter._SetValueToFill( input_valueToFill )
+    # Set the mesh
     filter.SetInputDataObject( input_mesh )
-    # do calculations
+    # Do calculations
     filter.Update()
 
     # get output object
@@ -57,13 +61,13 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet" )
 
-        # initialisation of empty list of selected attribute name
-        self._SetSelectedAttributeMulti()
+        # Initialisation of an empty list of the attribute's name
+        self._SetAttributesNameList()
 
-        # initialisation of the value to fill in the partial attribute
+        # Initialisation of the value (nan) to fill in the partial attributes
         self._SetValueToFill()
 
-        # logger
+        # Logger
         self.m_logger: Logger = getLogger( "Fill Partial Attributes" ) 
 
     def RequestDataObject(
@@ -115,12 +119,12 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
             assert outData is not None, "Output pipeline is null."
 
             outData.ShallowCopy( inputMesh )
-            for attributeName in self._selectedAttributeMulti:
+            for attributeName in self._attributesNameList:
                 # cell and point arrays
                 for onPoints in (False, True):
                     if isAttributeInObject(outData, attributeName, onPoints):
                         nbComponents = getNumberOfComponents( outData, attributeName, onPoints )
-                        fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._value )
+                        fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._valueToFill )
             outData.Modified()
             
             mess: str = "Fill Partial arrays were successfully completed ."
@@ -138,20 +142,21 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
 
         return 1
     
-    def _SetSelectedAttributeMulti( self: Self, selectedAttributeMulti: list[ str ] = []) -> None:
-        """Set the list of the attribute name.
+    def _SetAttributesNameList( self: Self, attributesNameList: list[ str ] = []) -> None:
+        """Set the list of the partial attributes to fill.
 
         Args:
-            selectesAttributeMulti (list[str], optional): list of all the attribute name.
+            attributesNameList (list[str], optional): list of all the attributes name.
                 Defaults to an empty list.
         """
-        self._selectedAttributeMulti: list[ str ] = selectedAttributeMulti
+        self._attributesNameList: list[ str ] = attributesNameList
     
-    def _SetValueToFill( self: Self, value: float = np.nan ) -> None:
+    def _SetValueToFill( self: Self, valueToFill: float = np.nan ) -> None:
         """Set the value to fill in the partial attribute.
 
         Args:
-            value (float, optional): value to fill in the partial attribute.
+            valueToFill (float, optional): value to fill in the partial attribute.
                 Defaults to nan.
         """
-        self._value: float = value
+        self._valueToFill: float = valueToFill
+
