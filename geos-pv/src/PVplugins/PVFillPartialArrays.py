@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing_extensions import Self
 
+import numpy as np
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -60,13 +61,15 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         self._clearSelectedAttributeMulti: bool = True
         self._selectedAttributeMulti: list[ str ] = []
 
+        self._doubleSingle: float = np.nan
+
     @smproperty.stringvector(
         name="SelectMultipleAttribute",
         label="Select Multiple Attribute",
         repeat_command=1,
         number_of_elements_per_command="1",
         element_types="2",
-        default_values="",
+        default_values="N/A",
         panel_visibility="default",
     )
     @smdomain.xml( """
@@ -85,8 +88,10 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                     function from <InputArrayDomain/> tag from filter @smdomain.xml.
                     Attribute type is defined by keyword `attribute_type`: Scalars or Vectors
                 </Documentation>
+                <Hints>
+                    <NoDefault />
+                </Hints>
                   """ )
-    
     def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
         """Set selected attribute name.
 
@@ -95,9 +100,33 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """
         if self._clearSelectedAttributeMulti:
             self._selectedAttributeMulti.clear()
-        self._clearSelectedAttributeMulti = False
-        self._selectedAttributeMulti.append( name )
-        self.Modified()
+            self._clearSelectedAttributeMulti = False
+
+        if name != "N/A":
+            self._selectedAttributeMulti.append( name )
+            self.Modified()
+
+    @smproperty.stringvector(
+        name="StringSingle",
+        label="Value to fill",
+        number_of_elements="1",
+        default_values="nan",
+        panel_visibility="default",
+    )
+    def a01StringSingle( self: Self, value: str, ) -> None:
+        """Define an input string field.
+
+        Args:
+            value (str): Input
+        """
+        if value == "nan":
+            value = np.nan
+        else:
+            value = float( value )
+        
+        if value != self._doubleSingle:
+            self._doubleSingle = value 
+            self.Modified()
 
     def RequestDataObject(
         self: Self,
@@ -145,7 +174,8 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         assert outputMesh is not None, "Output pipeline is null."
         
         filter: FillPartialArrays = FillPartialArrays()
-        filter.SetSelectedAttributeMulti( self._selectedAttributeMulti )
+        filter._SetSelectedAttributeMulti( self._selectedAttributeMulti )
+        filter._SetValueToFill( self._doubleSingle )
         filter.SetInputDataObject( inputMesh )
         filter.Update()
         outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )

@@ -21,6 +21,8 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
 )
 
+import numpy as np
+
 __doc__="""
 Fill partial arrays of input mesh.
 
@@ -28,8 +30,25 @@ Input and output are vtkMultiBlockDataSet.
 
 To use it:
 
-* TODO
+.. code-block:: python
 
+    from geos.mesh.processing.FillPartialArrays import FillPartialArrays
+
+    # filter inputs
+    input_mesh: vtkMultiBlockDataSet
+    input_attribute: list[str]
+
+    # instanciate the filter
+    filter: FillPartialArrays = FillPartialArrays()
+    # set the list of the selected atribute to fill
+    filter.SetSelectedAttributeMulti( input_attribute )
+    # set the mesh
+    filter.SetInputDataObject( input_mesh )
+    # do calculations
+    filter.Update()
+
+    # get output object
+    output: vtkMultiBlockDataSet = filter.GetOutputDataObject( 0 ) )
 """
 
 class FillPartialArrays( VTKPythonAlgorithmBase ):
@@ -38,21 +57,14 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Map the properties of a server mesh to a client mesh."""
         super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet" )
 
-        # Initialisation of the empty list of the selected attribute name
-        self.SetSelectedAttributeMulti()
+        # initialisation of empty list of selected attribute name
+        self._SetSelectedAttributeMulti()
+
+        # initialisation of the value to fill in the partial attribute
+        self._SetValueToFill()
 
         # logger
-        self.m_logger: Logger = getLogger( "Fill Partial Attributes" )
-
-    def SetSelectedAttributeMulti( self: Self, selectedAttributeMulti: list[ str ] = []) -> None:
-        """Set the list of the attribute name.
-
-        Args:
-            selectesAttributeMulti (list[str]): list of all the attribute name.
-        
-        """
-        self._selectedAttributeMulti: list[ str ] = selectedAttributeMulti
-        
+        self.m_logger: Logger = getLogger( "Fill Partial Attributes" ) 
 
     def RequestDataObject(
         self: Self,
@@ -108,7 +120,7 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
                 for onPoints in (False, True):
                     if isAttributeInObject(outData, attributeName, onPoints):
                         nbComponents = getNumberOfComponents( outData, attributeName, onPoints )
-                        fillPartialAttributes( outData, attributeName, nbComponents, onPoints )
+                        fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._value )
             outData.Modified()
             
             mess: str = "Fill Partial arrays were successfully completed ."
@@ -125,3 +137,21 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
             return 0
 
         return 1
+    
+    def _SetSelectedAttributeMulti( self: Self, selectedAttributeMulti: list[ str ] = []) -> None:
+        """Set the list of the attribute name.
+
+        Args:
+            selectesAttributeMulti (list[str], optional): list of all the attribute name.
+                Defaults to an empty list.
+        """
+        self._selectedAttributeMulti: list[ str ] = selectedAttributeMulti
+    
+    def _SetValueToFill( self: Self, value: float = np.nan ) -> None:
+        """Set the value to fill in the partial attribute.
+
+        Args:
+            value (float, optional): value to fill in the partial attribute.
+                Defaults to nan.
+        """
+        self._value: float = value
