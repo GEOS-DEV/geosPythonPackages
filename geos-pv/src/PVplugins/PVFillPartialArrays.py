@@ -40,6 +40,7 @@ To use it:
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVFillPartialArrays.
 * Select the input mesh.
 * Select the partial arrays to fill.
+* Set the value to fill (optinal defaults to nan).
 * Apply.
 
 """
@@ -58,14 +59,16 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Map the properties of a server mesh to a client mesh."""
         super().__init__(nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet")
 
+        # Initialisation of an empty list of the attribute's name 
         self._clearSelectedAttributeMulti: bool = True
-        self._selectedAttributeMulti: list[ str ] = []
+        self._attributesNameList: list[ str ] = []
 
-        self._doubleSingle: float = np.nan
+        # Initialisation of the value (nan) to fill in the partial attributes
+        self._valueToFill: float = np.nan
 
     @smproperty.stringvector(
         name="SelectMultipleAttribute",
-        label="Select Multiple Attribute",
+        label="Select Attributes to fill",
         repeat_command=1,
         number_of_elements_per_command="1",
         element_types="2",
@@ -82,28 +85,25 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                     </RequiredProperties>
                 </ArrayListDomain>
                 <Documentation>
-                    Select a unique attribute from all the scalars cell attributes from input object.
-                    Input object is defined by its name Input that must corresponds to the name in @smproperty.input
-                    Attribute support is defined by input_domain_name: inputs_array (all arrays) or user defined
-                    function from <InputArrayDomain/> tag from filter @smdomain.xml.
-                    Attribute type is defined by keyword `attribute_type`: Scalars or Vectors
+                    Select all the attributes to fill. If several attributes 
+                    are selected, they will be fill with the same value.
                 </Documentation>
                 <Hints>
                     <NoDefault />
                 </Hints>
                   """ )
     def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
-        """Set selected attribute name.
+        """Set the list of the names of the selected attributes to fill.
 
         Args:
             name (str): Input value
         """
         if self._clearSelectedAttributeMulti:
-            self._selectedAttributeMulti.clear()
+            self._attributesNameList.clear()
             self._clearSelectedAttributeMulti = False
 
         if name != "N/A":
-            self._selectedAttributeMulti.append( name )
+            self._attributesNameList.append( name )
             self.Modified()
 
     @smproperty.stringvector(
@@ -113,19 +113,28 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         default_values="nan",
         panel_visibility="default",
     )
+    @smdomain.xml( """
+                <Documentation>
+                    Enter the value to fill in the partial attributes. The
+                    default value is nan
+                </Documentation>
+                  """ )
     def a01StringSingle( self: Self, value: str, ) -> None:
-        """Define an input string field.
+        """Set the value to fill in the attributes.
 
         Args:
             value (str): Input
         """
+        assert  value is not None, "Enter a number or nan"
+        assert "," not in value, "Use '.' not ',' for decimal numbers"
+
         if value == "nan":
             value = np.nan
         else:
             value = float( value )
         
-        if value != self._doubleSingle:
-            self._doubleSingle = value 
+        if value != self._valueToFill:
+            self._valueToFill = value 
             self.Modified()
 
     def RequestDataObject(
@@ -174,8 +183,8 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         assert outputMesh is not None, "Output pipeline is null."
         
         filter: FillPartialArrays = FillPartialArrays()
-        filter._SetSelectedAttributeMulti( self._selectedAttributeMulti )
-        filter._SetValueToFill( self._doubleSingle )
+        filter._SetAttributesNameList( self._attributesNameList )
+        filter._SetValueToFill( self._valueToFill )
         filter.SetInputDataObject( inputMesh )
         filter.Update()
         outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )

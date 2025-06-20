@@ -127,7 +127,7 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
                         fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._valueToFill )
             outData.Modified()
             
-            mess: str = "Fill Partial arrays were successfully completed ."
+            mess: str = "Fill Partial arrays were successfully completed. " + str(self._attributesNameList) + " filled with value " + str(self._valueToFill) 
             self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "Partial arrays filling failed due to:"
