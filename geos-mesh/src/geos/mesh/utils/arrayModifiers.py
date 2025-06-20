@@ -53,7 +53,7 @@ def fillPartialAttributes(
             mesh where to fill the attribute.
         attributeName (str): attribute name.
         nbComponents (int): number of components.
-        onPoints (bool, optional): Attribute is on Points (False) or on Cells (True).
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
         value (float, optional): value to fill in the partial atribute.
             Defaults to nan.
@@ -80,7 +80,7 @@ def fillAllPartialAttributes(
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject):
             multiBlockMesh where to fill the attribute
-        onPoints (bool, optional): Attribute is on Points (False) or on Cells (True).
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
         value (float, optional): value to fill in all the partial atributes.
             Defaults to nan.

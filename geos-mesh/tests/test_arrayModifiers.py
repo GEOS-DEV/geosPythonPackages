@@ -22,61 +22,102 @@ from vtk import (  # type: ignore[import-untyped]
 from geos.mesh.utils import arrayModifiers
 
 
-@pytest.mark.parametrize( "attributeName, onpoints", [ ( "CellAttribute", False ), ( "PointAttribute", True ) ] )
+@pytest.mark.parametrize( "attributeName, nbComponents, onpoints, value_test", [ 
+    ( "CellAttribute", 3, False, np.nan ), 
+    ( "PointAttribute", 3, True, np.nan ),
+    ( "CELL_MARKERS", 1, False, np.nan ), 
+    ( "CellAttribute", 3, False, 2. ), 
+    ( "PointAttribute", 3, True, 2. ),
+    ( "CELL_MARKERS", 1, False, 2. ),
+    ] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
     attributeName: str,
+    nbComponents: int,
     onpoints: bool,
+    value_test: float,
 ) -> None:
-    """Test filling a partial attribute from a multiblock with nan values."""
+    """Test filling a partial attribute from a multiblock with values."""
+    vtkMultiBlockDataSetTestRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    arrayModifiers.fillPartialAttributes( vtkMultiBlockDataSetTest, attributeName, nbComponents=3, onPoints=onpoints )
+    arrayModifiers.fillPartialAttributes( vtkMultiBlockDataSetTest, attributeName, nbComponents, onPoints=onpoints, value=value_test )
 
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( vtkMultiBlockDataSetTest )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataset: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
-        data: Union[ vtkPointData, vtkCellData ]
+    nbBlock: int = vtkMultiBlockDataSetTestRef.GetNumberOfBlocks()
+    for block_id in range( nbBlock ):
+        datasetRef: vtkDataSet = vtkMultiBlockDataSetTestRef.GetBlock( block_id )
+        dataset: vtkDataSet = vtkMultiBlockDataSetTest.GetBlock( block_id )
+        expected_array: npt.NDArray[ np.float64 ]
+        array: npt.NDArray[ np.float64 ]
         if onpoints:
-            data = dataset.GetPointData()
+            array = vnp.vtk_to_numpy( dataset.GetPointData().GetArray( attributeName ) )
+            if block_id == 0 :
+                expected_array = vnp.vtk_to_numpy( datasetRef.GetPointData().GetArray( attributeName ) )
+            else:
+                expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(212)])
         else:
-            data = dataset.GetCellData()
-        assert data.HasArray( attributeName ) == 1
+            array = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( attributeName ) )
+            if block_id == 0 :
+                expected_array = vnp.vtk_to_numpy( datasetRef.GetCellData().GetArray( attributeName ) )
+            else:
+                expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(156)])
+        
+        if block_id == 0:
+            assert (array == expected_array).all()
+        else :
+            if np.isnan(value_test):
+                assert np.all(np.isnan(array) == np.isnan(expected_array))
+            else:
+                assert (array == expected_array).all()
 
-        iter.GoToNextItem()
 
-
-@pytest.mark.parametrize( "onpoints, expectedArrays", [
-    ( True, ( "PointAttribute", "collocated_nodes" ) ),
-    ( False, ( "CELL_MARKERS", "CellAttribute", "FAULT", "PERM", "PORO" ) ),
+@pytest.mark.parametrize( "onpoints, attributesList, value_test", [
+    ( True, ( (0, "PointAttribute", 3), (1, "collocated_nodes", 2) ), np.nan ),
+    ( False, ( (0, "CELL_MARKERS", 1), (0, "CellAttribute", 3), (0, "FAULT", 1), (0, "PERM", 3), (0, "PORO", 1) ), np.nan ),
+    ( True, ( (0, "PointAttribute", 3), (1, "collocated_nodes", 2) ), 2. ),
+    ( False, ( (0, "CELL_MARKERS", 1), (0, "CellAttribute", 3), (0, "FAULT", 1), (0, "PERM", 3), (0, "PORO", 1) ), 2. ),
 ] )
 def test_fillAllPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
     onpoints: bool,
-    expectedArrays: tuple[ str, ...],
+    attributesList: tuple[ (int, str, int), ...],
+    value_test: float,
 ) -> None:
-    """Test filling all partial attributes from a multiblock with nan values."""
+    """Test filling all partial attributes from a multiblock with values."""
+    vtkMultiBlockDataSetTestRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     arrayModifiers.fillAllPartialAttributes( vtkMultiBlockDataSetTest, onpoints )
 
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( vtkMultiBlockDataSetTest )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataset: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+    nbBlock: int = vtkMultiBlockDataSetTestRef.GetNumberOfBlocks()
+    for block_id in range( nbBlock ):
+        datasetRef: vtkDataSet = vtkMultiBlockDataSetTestRef.GetBlock( block_id )
+        dataset: vtkDataSet = vtkMultiBlockDataSetTest.GetBlock( block_id )
+        expected_array: npt.NDArray[ np.float64 ]
+        array: npt.NDArray[ np.float64 ]
+        dataRef: Union[ vtkPointData, vtkCellData ]
         data: Union[ vtkPointData, vtkCellData ]
+        nbElements: list[ int, int]
         if onpoints:
+            dataRef = datasetRef.GetPointData()
             data = dataset.GetPointData()
+            nbElements = [212, 4092]
         else:
+            dataRef = datasetRef.GetCellData()
             data = dataset.GetCellData()
+            nbElements = [156, 1740]
 
-        for attribute in expectedArrays:
-            assert data.HasArray( attribute ) == 1
-
-        iter.GoToNextItem()
+        for inBlock, attribute, nbComponents in attributesList:
+            array = vnp.vtk_to_numpy( data.GetArray( attribute ) )
+            print(block_id)
+            if block_id == inBlock :
+                expected_array = vnp.vtk_to_numpy( dataRef.GetArray( attribute ) )
+                assert (array == expected_array).all()
+            else:
+                expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(nbElements[inBlock])])
+            
+                if np.isnan(value_test):
+                    assert np.all(np.isnan(array) == np.isnan(expected_array))
+                else:
+                    assert (array == expected_array).all()
 
 
 @pytest.mark.parametrize( "attributeName, dataType, expectedDatatypeArray", [
