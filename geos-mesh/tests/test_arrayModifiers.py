@@ -22,11 +22,11 @@ from vtk import (  # type: ignore[import-untyped]
 from geos.mesh.utils import arrayModifiers
 
 
-@pytest.mark.parametrize( "attributeName, nbComponents, onpoints, value_test", [ 
-    ( "CellAttribute", 3, False, np.nan ), 
+@pytest.mark.parametrize( "attributeName, nbComponents, onpoints, value_test", [
+    ( "CellAttribute", 3, False, np.nan ),
     ( "PointAttribute", 3, True, np.nan ),
-    ( "CELL_MARKERS", 1, False, np.nan ), 
-    ( "CellAttribute", 3, False, 2. ), 
+    ( "CELL_MARKERS", 1, False, np.nan ),
+    ( "CellAttribute", 3, False, 2. ),
     ( "PointAttribute", 3, True, 2. ),
     ( "CELL_MARKERS", 1, False, 2. ),
     ] )
@@ -44,8 +44,8 @@ def test_fillPartialAttributes(
 
     nbBlock: int = vtkMultiBlockDataSetTestRef.GetNumberOfBlocks()
     for block_id in range( nbBlock ):
-        datasetRef: vtkDataSet = vtkMultiBlockDataSetTestRef.GetBlock( block_id )
-        dataset: vtkDataSet = vtkMultiBlockDataSetTest.GetBlock( block_id )
+        datasetRef: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTestRef.GetBlock( block_id ) )
+        dataset: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTest.GetBlock( block_id ) )
         expected_array: npt.NDArray[ np.float64 ]
         array: npt.NDArray[ np.float64 ]
         if onpoints:
@@ -60,7 +60,7 @@ def test_fillPartialAttributes(
                 expected_array = vnp.vtk_to_numpy( datasetRef.GetCellData().GetArray( attributeName ) )
             else:
                 expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(156)])
-        
+
         if block_id == 0:
             assert (array == expected_array).all()
         else :
@@ -79,7 +79,7 @@ def test_fillPartialAttributes(
 def test_fillAllPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
     onpoints: bool,
-    attributesList: tuple[ (int, str, int), ...],
+    attributesList: tuple[ tuple[ int, str, int ], ...],
     value_test: float,
 ) -> None:
     """Test filling all partial attributes from a multiblock with values."""
@@ -89,13 +89,13 @@ def test_fillAllPartialAttributes(
 
     nbBlock: int = vtkMultiBlockDataSetTestRef.GetNumberOfBlocks()
     for block_id in range( nbBlock ):
-        datasetRef: vtkDataSet = vtkMultiBlockDataSetTestRef.GetBlock( block_id )
-        dataset: vtkDataSet = vtkMultiBlockDataSetTest.GetBlock( block_id )
+        datasetRef: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTestRef.GetBlock( block_id ) )
+        dataset: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTest.GetBlock( block_id ) )
         expected_array: npt.NDArray[ np.float64 ]
         array: npt.NDArray[ np.float64 ]
         dataRef: Union[ vtkPointData, vtkCellData ]
         data: Union[ vtkPointData, vtkCellData ]
-        nbElements: list[ int, int]
+        nbElements: list[ int ]
         if onpoints:
             dataRef = datasetRef.GetPointData()
             data = dataset.GetPointData()
@@ -107,13 +107,12 @@ def test_fillAllPartialAttributes(
 
         for inBlock, attribute, nbComponents in attributesList:
             array = vnp.vtk_to_numpy( data.GetArray( attribute ) )
-            print(block_id)
             if block_id == inBlock :
                 expected_array = vnp.vtk_to_numpy( dataRef.GetArray( attribute ) )
                 assert (array == expected_array).all()
             else:
                 expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(nbElements[inBlock])])
-            
+
                 if np.isnan(value_test):
                     assert np.all(np.isnan(array) == np.isnan(expected_array))
                 else:

@@ -59,7 +59,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Map the properties of a server mesh to a client mesh."""
         super().__init__(nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet")
 
-        # Initialisation of an empty list of the attribute's name 
+        # Initialisation of an empty list of the attribute's name
         self._clearSelectedAttributeMulti: bool = True
         self._attributesNameList: list[ str ] = []
 
@@ -85,7 +85,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                     </RequiredProperties>
                 </ArrayListDomain>
                 <Documentation>
-                    Select all the attributes to fill. If several attributes 
+                    Select all the attributes to fill. If several attributes
                     are selected, they will be fill with the same value.
                 </Documentation>
                 <Hints>
@@ -119,7 +119,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                     default value is nan
                 </Documentation>
                   """ )
-    def a01StringSingle( self: Self, value: str, ) -> None:
+    def a01StringSingle( self: Self, value: str ) -> None:
         """Set the value to fill in the attributes.
 
         Args:
@@ -128,13 +128,11 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         assert  value is not None, "Enter a number or nan"
         assert "," not in value, "Use '.' not ',' for decimal numbers"
 
-        if value == "nan":
-            value = np.nan
-        else:
-            value = float( value )
-        
-        if value != self._valueToFill:
-            self._valueToFill = value 
+        value_float: float
+        value_float = np.nan if value == "nan" else float(value)
+
+        if value_float != self._valueToFill:
+            self._valueToFill = value_float
             self.Modified()
 
     def RequestDataObject(
@@ -181,7 +179,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
         assert inputMesh is not None, "Input server mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
-        
+
         filter: FillPartialArrays = FillPartialArrays()
         filter._SetAttributesNameList( self._attributesNameList )
         filter._SetValueToFill( self._valueToFill )

@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Romain Baville, Martin Lemay
 
 from typing_extensions import Self
+from typing import Union
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from geos.utils.Logger import Logger, getLogger
@@ -68,7 +69,7 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         self._SetValueToFill()
 
         # Logger
-        self.m_logger: Logger = getLogger( "Fill Partial Attributes" ) 
+        self.m_logger: Logger = getLogger( "Fill Partial Attributes" )
 
     def RequestDataObject(
         self: Self,
@@ -126,8 +127,8 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
                         nbComponents = getNumberOfComponents( outData, attributeName, onPoints )
                         fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._valueToFill )
             outData.Modified()
-            
-            mess: str = "Fill Partial arrays were successfully completed. " + str(self._attributesNameList) + " filled with value " + str(self._valueToFill) 
+
+            mess: str = "Fill Partial arrays were successfully completed. " + str(self._attributesNameList) + " filled with value " + str(self._valueToFill)
             self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "Partial arrays filling failed due to:"
@@ -141,16 +142,16 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
             return 0
 
         return 1
-    
-    def _SetAttributesNameList( self: Self, attributesNameList: list[ str ] = []) -> None:
+
+    def _SetAttributesNameList( self: Self, attributesNameList: Union[ list[ str ], tuple ]  = () ) -> None:
         """Set the list of the partial attributes to fill.
 
         Args:
-            attributesNameList (list[str], optional): list of all the attributes name.
-                Defaults to an empty list.
+            attributesNameList (Union[list[str], tuple], optional): list of all the attributes name.
+                Defaults to a empty list
         """
-        self._attributesNameList: list[ str ] = attributesNameList
-    
+        self._attributesNameList: Union[ list[ str ], tuple ] = attributesNameList
+
     def _SetValueToFill( self: Self, valueToFill: float = np.nan ) -> None:
         """Set the value to fill in the partial attribute.
 
