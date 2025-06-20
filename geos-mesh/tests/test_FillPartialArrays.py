@@ -11,19 +11,20 @@ import numpy as np
 import numpy.typing as npt
 
 import vtkmodules.util.numpy_support as vnp
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData,
-                                            vtkCellData )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
 
 from geos.mesh.processing.FillPartialArrays import FillPartialArrays
 
 
 @pytest.mark.parametrize( "onpoints, attributesList, value_test", [
-    ( False, ( (0, "PORO", 1), ), np.nan ),
-    ( True, ( (0, "PointAttribute", 3), (1, "collocated_nodes", 2) ), 2. ),
-    ( False, ( (0, "CELL_MARKERS", 1), (0, "CellAttribute", 3), (0, "FAULT", 1), (0, "PERM", 3), (0, "PORO", 1) ), 2. ),
-    ( False, ( (0, "PORO", 1), ), 2.0 ),
-    ( True, ( (0, "PointAttribute", 3), (1, "collocated_nodes", 2) ), np.nan ),
-    ( False, ( (0, "CELL_MARKERS", 1), (0, "CellAttribute", 3), (0, "FAULT", 1), (0, "PERM", 3), (0, "PORO", 1) ), np.nan ),
+    ( False, ( ( 0, "PORO", 1 ), ), np.nan ),
+    ( True, ( ( 0, "PointAttribute", 3 ), ( 1, "collocated_nodes", 2 ) ), 2. ),
+    ( False, ( ( 0, "CELL_MARKERS", 1 ), ( 0, "CellAttribute", 3 ), ( 0, "FAULT", 1 ), ( 0, "PERM", 3 ),
+               ( 0, "PORO", 1 ) ), 2. ),
+    ( False, ( ( 0, "PORO", 1 ), ), 2.0 ),
+    ( True, ( ( 0, "PointAttribute", 3 ), ( 1, "collocated_nodes", 2 ) ), np.nan ),
+    ( False, ( ( 0, "CELL_MARKERS", 1 ), ( 0, "CellAttribute", 3 ), ( 0, "FAULT", 1 ), ( 0, "PERM", 3 ),
+               ( 0, "PORO", 1 ) ), np.nan ),
 ] )
 def test_FillPartialArrays(
     dataSetTest: vtkMultiBlockDataSet,
@@ -54,21 +55,21 @@ def test_FillPartialArrays(
         if onpoints:
             dataRef = datasetRef.GetPointData()
             data = dataset.GetPointData()
-            nbElements = [212, 4092]
+            nbElements = [ 212, 4092 ]
         else:
             dataRef = datasetRef.GetCellData()
             data = dataset.GetCellData()
-            nbElements = [156, 1740]
+            nbElements = [ 156, 1740 ]
 
         for inBlock, attribute, nbComponents in attributesList:
             array = vnp.vtk_to_numpy( data.GetArray( attribute ) )
-            if block_id == inBlock :
+            if block_id == inBlock:
                 expected_array = vnp.vtk_to_numpy( dataRef.GetArray( attribute ) )
-                assert (array == expected_array).all()
+                assert ( array == expected_array ).all()
             else:
-                expected_array = np.array([[value_test for i in range( nbComponents )] for _ in range(nbElements[inBlock])])
-                if np.isnan(value_test):
-                    assert np.all(np.isnan(array) == np.isnan(expected_array))
+                expected_array = np.array( [ [ value_test for i in range( nbComponents ) ]
+                                             for _ in range( nbElements[ inBlock ] ) ] )
+                if np.isnan( value_test ):
+                    assert np.all( np.isnan( array ) == np.isnan( expected_array ) )
                 else:
-                    assert (array == expected_array).all()
-
+                    assert ( array == expected_array ).all()

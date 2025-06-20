@@ -13,8 +13,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 )
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-)
+    vtkMultiBlockDataSet, )
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -55,9 +54,12 @@ To use it:
 )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self,) -> None:
+    def __init__( self: Self, ) -> None:
         """Map the properties of a server mesh to a client mesh."""
-        super().__init__(nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet")
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType="vtkMultiBlockDataSet",
+                          outputType="vtkMultiBlockDataSet" )
 
         # Initialisation of an empty list of the attribute's name
         self._clearSelectedAttributeMulti: bool = True
@@ -125,15 +127,15 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         Args:
             value (str): Input
         """
-        assert  value is not None, "Enter a number or nan"
+        assert value is not None, "Enter a number or nan"
         assert "," not in value, "Use '.' not ',' for decimal numbers"
 
         value_float: float
-        value_float = np.nan if value == "nan" else float(value)
+        value_float = np.nan if value == "nan" else float( value )
 
         if value_float != self._valueToFill:
             self._valueToFill = value_float
-            self.Modified()
+        self.Modified()
 
     def RequestDataObject(
         self: Self,

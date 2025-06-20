@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Romain Baville, Martin Lemay
 
 from typing_extensions import Self
-from typing import Union
+from typing import Union, Tuple
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from geos.utils.Logger import Logger, getLogger
@@ -19,12 +19,11 @@ from vtkmodules.vtkCommonCore import (
 )
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-)
+    vtkMultiBlockDataSet, )
 
 import numpy as np
 
-__doc__="""
+__doc__ = """
 Fill partial arrays of input mesh with values (defaults to nan).
 Several attributes can be fill in the same time but with the same value.
 
@@ -44,7 +43,7 @@ To use it:
     # Instanciate the filter
     filter: FillPartialArrays = FillPartialArrays()
     # Set the list of the partial atributes to fill
-    filter._SetAttributesNameList( input_attribute )
+    filter._SetAttributesNameList( input_attributesNameList )
     # Set the value to fill in the partial attributes if not nan
     filter._SetValueToFill( input_valueToFill )
     # Set the mesh
@@ -56,11 +55,15 @@ To use it:
     output: vtkMultiBlockDataSet = filter.GetOutputDataObject( 0 ) )
 """
 
+
 class FillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Map the properties of a server mesh to a client mesh."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkMultiBlockDataSet", outputType="vtkMultiBlockDataSet" )
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType="vtkMultiBlockDataSet",
+                          outputType="vtkMultiBlockDataSet" )
 
         # Initialisation of an empty list of the attribute's name
         self._SetAttributesNameList()
@@ -122,13 +125,14 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
             outData.ShallowCopy( inputMesh )
             for attributeName in self._attributesNameList:
                 # cell and point arrays
-                for onPoints in (False, True):
-                    if isAttributeInObject(outData, attributeName, onPoints):
+                for onPoints in ( False, True ):
+                    if isAttributeInObject( outData, attributeName, onPoints ):
                         nbComponents = getNumberOfComponents( outData, attributeName, onPoints )
                         fillPartialAttributes( outData, attributeName, nbComponents, onPoints, self._valueToFill )
             outData.Modified()
 
-            mess: str = "Fill Partial arrays were successfully completed. " + str(self._attributesNameList) + " filled with value " + str(self._valueToFill)
+            mess: str = "Fill Partial arrays were successfully completed. " + str(
+                self._attributesNameList ) + " filled with value " + str( self._valueToFill )
             self.m_logger.info( mess )
         except AssertionError as e:
             mess1: str = "Partial arrays filling failed due to:"
@@ -143,14 +147,14 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
 
         return 1
 
-    def _SetAttributesNameList( self: Self, attributesNameList: Union[ list[ str ], tuple ]  = () ) -> None:
+    def _SetAttributesNameList( self: Self, attributesNameList: Union[ list[ str ], Tuple ] = () ) -> None:
         """Set the list of the partial attributes to fill.
 
         Args:
-            attributesNameList (Union[list[str], tuple], optional): list of all the attributes name.
+            attributesNameList (Union[list[str], Tuple], optional): list of all the attributes name.
                 Defaults to a empty list
         """
-        self._attributesNameList: Union[ list[ str ], tuple ] = attributesNameList
+        self._attributesNameList: Union[ list[ str ], Tuple ] = attributesNameList
 
     def _SetValueToFill( self: Self, valueToFill: float = np.nan ) -> None:
         """Set the value to fill in the partial attribute.
@@ -160,4 +164,3 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
                 Defaults to nan.
         """
         self._valueToFill: float = valueToFill
-
