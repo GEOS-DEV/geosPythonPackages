@@ -39,13 +39,11 @@ These methods include:
 """
 
 
-def fillPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    attributeName: str,
-    nbComponents: int,
-    onPoints: bool = False,
-    value: float = np.nan
-) -> bool:
+def fillPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                           attributeName: str,
+                           nbComponents: int,
+                           onPoints: bool = False,
+                           value: float = np.nan ) -> bool:
     """Fill input partial attribute of multiBlockMesh with values (defaults to nan).
 
     Args:
@@ -70,11 +68,9 @@ def fillPartialAttributes(
     return True
 
 
-def fillAllPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    onPoints: bool = False,
-    value: float = np.nan
-) -> bool:
+def fillAllPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                              onPoints: bool = False,
+                              value: float = np.nan ) -> bool:
     """Fill all the partial attributes of multiBlockMesh with values (defaults to nan).
 
     Args:
