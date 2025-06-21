@@ -1,5 +1,6 @@
 from geos.mesh.doctor.actions.non_conformal import Options, Result
 from geos.mesh.doctor.parsing import NON_CONFORMAL
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __ANGLE_TOLERANCE = "angle_tolerance"
@@ -45,10 +46,10 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
+    setup_logger.results( get_options_used_message( options ) )
     non_conformal_cells: list[ int ] = []
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
     non_conformal_cells: frozenset[ int ] = frozenset( non_conformal_cells )
-    setup_logger.results(
-        f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}"
-    )
+    setup_logger.results( f"You have {len( non_conformal_cells )} non conformal cells." )
+    setup_logger.results( f"{', '.join( map( str, sorted( non_conformal_cells ) ) )}" )

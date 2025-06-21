@@ -62,7 +62,7 @@ def __action( mesh, options: Options ) -> Result:
         v, q = pack
         vol = q if mesh.GetCellType( i ) in SUPPORTED_TYPES else v
         if vol < options.min_volume:
-            small_volumes.append( ( i, vol ) )
+            small_volumes.append( ( i, float( vol ) ) )
     return Result( element_volumes=small_volumes )
 
 

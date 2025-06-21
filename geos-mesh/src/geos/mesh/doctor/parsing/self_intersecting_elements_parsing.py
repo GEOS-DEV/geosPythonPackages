@@ -1,6 +1,7 @@
 import numpy
 from geos.mesh.doctor.actions.self_intersecting_elements import Options, Result
 from geos.mesh.doctor.parsing import SELF_INTERSECTING_ELEMENTS
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __MIN_DISTANCE = "min_distance"
@@ -36,6 +37,7 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
+    setup_logger.results( get_options_used_message( options ) )
     setup_logger.results( f"You have {len(result.intersecting_faces_elements)} elements with self intersecting faces." )
     if result.intersecting_faces_elements:
         setup_logger.results( "The elements indices are:\n" +

@@ -36,6 +36,22 @@ def _generate_parameters_help( ordered_check_names: list[ str ], check_features_
     return help_text
 
 
+def get_options_used_message( options_used: dataclass ) -> str:
+    """Dynamically generates the description of every parameter used when loaching a check.
+
+    Args:
+        options_used (dataclass)
+
+    Returns:
+        str: A message like "Parameters used: ( param1:value1 param2:value2 )" for as many paramters found.
+    """
+    options_msg: str = "Parameters used: ("
+    for attr_name in options_used.__dataclass_fields__:
+        attr_value = getattr( options_used, attr_name )
+        options_msg += f" {attr_name} = {attr_value}"
+    return options_msg + " )."
+
+
 # --- Generic Argument Parser Setup ---
 def fill_subparser( subparsers: argparse._SubParsersAction, subparser_name: str, help_message: str,
                     ordered_check_names: list[ str ], check_features_config: dict[ str, CheckFeature ] ) -> None:
@@ -151,7 +167,7 @@ def display_results( options: AllChecksOptions, result: AllChecksResult ) -> Non
         setup_logger.results( "No checks were performed or all failed during configuration." )
         return
 
-    max_length = max( len( name ) for name in options.checks_to_perform )
+    max_length: int = max( len( name ) for name in options.checks_to_perform )
     for name, res in result.check_results.items():
         setup_logger.results( "" )  # Blank line for visibility
         setup_logger.results( f"******** {name:<{max_length}} ********" )

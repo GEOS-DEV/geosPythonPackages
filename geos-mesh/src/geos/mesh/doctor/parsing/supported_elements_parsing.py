@@ -1,6 +1,7 @@
 import multiprocessing
 from geos.mesh.doctor.actions.supported_elements import Options, Result
 from geos.mesh.doctor.parsing import SUPPORTED_ELEMENTS
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __CHUNK_SIZE = "chunk_size"
@@ -36,6 +37,7 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
+    setup_logger.results( get_options_used_message( options ) )
     if result.unsupported_polyhedron_elements:
         setup_logger.results(
             f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
