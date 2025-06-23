@@ -1,21 +1,21 @@
-import logging
-
-from typing import (
-    FrozenSet,
-    List,
-)
-
-from geos.mesh.doctor.checks.non_conformal import Options, Result
-
-from . import NON_CONFORMAL
+from geos.mesh.doctor.actions.non_conformal import Options, Result
+from geos.mesh.doctor.parsing import NON_CONFORMAL
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
 __ANGLE_TOLERANCE = "angle_tolerance"
 __POINT_TOLERANCE = "point_tolerance"
 __FACE_TOLERANCE = "face_tolerance"
 
 __ANGLE_TOLERANCE_DEFAULT = 10.
+__POINT_TOLERANCE_DEFAULT = 0.
+__FACE_TOLERANCE_DEFAULT = 0.
 
-__ALL_KEYWORDS = { __ANGLE_TOLERANCE, __POINT_TOLERANCE, __FACE_TOLERANCE }
+__NON_CONFORMAL_DEFAULT = {
+    __ANGLE_TOLERANCE: __ANGLE_TOLERANCE_DEFAULT,
+    __POINT_TOLERANCE: __POINT_TOLERANCE_DEFAULT,
+    __FACE_TOLERANCE: __FACE_TOLERANCE_DEFAULT
+}
 
 
 def convert( parsed_options ) -> Options:
@@ -31,19 +31,25 @@ def fill_subparser( subparsers ) -> None:
                     metavar=__ANGLE_TOLERANCE_DEFAULT,
                     default=__ANGLE_TOLERANCE_DEFAULT,
                     help=f"[float]: angle tolerance in degrees. Defaults to {__ANGLE_TOLERANCE_DEFAULT}" )
-    p.add_argument( '--' + __POINT_TOLERANCE,
-                    type=float,
-                    help=f"[float]: tolerance for two points to be considered collocated." )
-    p.add_argument( '--' + __FACE_TOLERANCE,
-                    type=float,
-                    help=f"[float]: tolerance for two faces to be considered \"touching\"." )
+    p.add_argument(
+        '--' + __POINT_TOLERANCE,
+        type=float,
+        metavar=__POINT_TOLERANCE_DEFAULT,
+        default=__POINT_TOLERANCE_DEFAULT,
+        help=f"[float]: tolerance for two points to be considered collocated. Defaults to {__POINT_TOLERANCE_DEFAULT}" )
+    p.add_argument(
+        '--' + __FACE_TOLERANCE,
+        type=float,
+        metavar=__FACE_TOLERANCE_DEFAULT,
+        default=__FACE_TOLERANCE_DEFAULT,
+        help=f"[float]: tolerance for two faces to be considered \"touching\". Defaults to {__FACE_TOLERANCE_DEFAULT}" )
 
 
 def display_results( options: Options, result: Result ):
-    non_conformal_cells: List[ int ] = []
+    setup_logger.results( get_options_used_message( options ) )
+    non_conformal_cells: list[ int ] = []
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
-    non_conformal_cells: FrozenSet[ int ] = frozenset( non_conformal_cells )
-    logging.error(
-        f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}"
-    )
+    non_conformal_cells: frozenset[ int ] = frozenset( non_conformal_cells )
+    setup_logger.results( f"You have {len( non_conformal_cells )} non conformal cells." )
+    setup_logger.results( f"{', '.join( map( str, sorted( non_conformal_cells ) ) )}" )

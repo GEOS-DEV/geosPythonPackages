@@ -3,8 +3,8 @@ import pytest
 from typing import Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
-# from geos.mesh.doctor.checks.supported_elements import Options, check, __check
-from geos.mesh.doctor.checks.vtk_polyhedron import parse_face_stream, FaceStream
+# from geos.mesh.doctor.actions.supported_elements import Options, action, __action
+from geos.mesh.doctor.actions.vtk_polyhedron import parse_face_stream, FaceStream
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
 

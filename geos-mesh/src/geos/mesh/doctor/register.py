@@ -1,67 +1,67 @@
 import argparse
 import importlib
-import logging
 from typing import Dict, Callable, Any, Tuple
-
 import geos.mesh.doctor.parsing as parsing
-from geos.mesh.doctor.parsing import CheckHelper, cli_parsing
+from geos.mesh.doctor.parsing import ActionHelper, cli_parsing
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
-__HELPERS: Dict[ str, Callable[ [ None ], CheckHelper ] ] = dict()
-__CHECKS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
-
-
-def __load_module_check( module_name: str, check_fct="check" ):
-    module = importlib.import_module( "geos.mesh.doctor.checks." + module_name )
-    return getattr( module, check_fct )
+__HELPERS: Dict[ str, Callable[ [ None ], ActionHelper ] ] = dict()
+__ACTIONS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
 
 
-def __load_module_check_helper( module_name: str, parsing_fct_suffix="_parsing" ):
+def __load_module_action( module_name: str, action_fct="action" ):
+    module = importlib.import_module( "geos.mesh.doctor.actions." + module_name )
+    return getattr( module, action_fct )
+
+
+def __load_module_action_helper( module_name: str, parsing_fct_suffix="_parsing" ):
     module = importlib.import_module( "geos.mesh.doctor.parsing." + module_name + parsing_fct_suffix )
-    return CheckHelper( fill_subparser=module.fill_subparser,
-                        convert=module.convert,
-                        display_results=module.display_results )
+    return ActionHelper( fill_subparser=module.fill_subparser,
+                         convert=module.convert,
+                         display_results=module.display_results )
 
 
-def __load_checks() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
+def __load_actions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
     """
-    Loads all the checks.
+    Loads all the actions.
     This function acts like a protection layer if a module fails to load.
-    A check that fails to load won't stop the process.
-    :return: The checks.
+    A action that fails to load won't stop the process.
+    :return: The actions.
     """
-    loaded_checks: Dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
-    for check_name, check_provider in __CHECKS.items():
+    loaded_actions: Dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
+    for action_name, action_provider in __ACTIONS.items():
         try:
-            loaded_checks[ check_name ] = check_provider()
-            logging.debug( f"Check \"{check_name}\" is loaded." )
+            loaded_actions[ action_name ] = action_provider()
+            setup_logger.debug( f"Action \"{action_name}\" is loaded." )
         except Exception as e:
-            logging.warning( f"Could not load module \"{check_name}\": {e}" )
-    return loaded_checks
+            setup_logger.warning( f"Could not load module \"{action_name}\": {e}" )
+    return loaded_actions
 
 
-def register(
-) -> Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, CheckHelper ] ]:
+def register_parsing_actions(
+) -> Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
     """
-    Register all the parsing checks. Eventually initiate the registration of all the checks too.
-    :return: The checks and the checks helpers.
+    Register all the parsing actions. Eventually initiate the registration of all the actions too.
+    :return: The actions and the actions helpers.
     """
     parser = cli_parsing.init_parser()
     subparsers = parser.add_subparsers( help="Modules", dest="subparsers" )
 
     def closure_trick( cn: str ):
-        __HELPERS[ check_name ] = lambda: __load_module_check_helper( cn )
-        __CHECKS[ check_name ] = lambda: __load_module_check( cn )
+        __HELPERS[ action_name ] = lambda: __load_module_action_helper( cn )
+        __ACTIONS[ action_name ] = lambda: __load_module_action( cn )
 
     # Register the modules to load here.
-    for check_name in ( parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES, parsing.FIX_ELEMENTS_ORDERINGS,
-                        parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES, parsing.GENERATE_GLOBAL_IDS,
-                        parsing.NON_CONFORMAL, parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS ):
-        closure_trick( check_name )
-    loaded_checks: Dict[ str, Callable[ [ str, Any ], Any ] ] = __load_checks()
-    loaded_checks_helpers: Dict[ str, CheckHelper ] = dict()
-    for check_name in loaded_checks.keys():
-        h = __HELPERS[ check_name ]()
+    for action_name in ( parsing.ALL_CHECKS, parsing.COLLOCATES_NODES, parsing.ELEMENT_VOLUMES,
+                         parsing.FIX_ELEMENTS_ORDERINGS, parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES,
+                         parsing.GENERATE_GLOBAL_IDS, parsing.MAIN_CHECKS, parsing.NON_CONFORMAL,
+                         parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS ):
+        closure_trick( action_name )
+    loaded_actions: Dict[ str, Callable[ [ str, Any ], Any ] ] = __load_actions()
+    loaded_actions_helpers: Dict[ str, ActionHelper ] = dict()
+    for action_name in loaded_actions.keys():
+        h = __HELPERS[ action_name ]()
         h.fill_subparser( subparsers )
-        loaded_checks_helpers[ check_name ] = h
-        logging.debug( f"Parsing for check \"{check_name}\" is loaded." )
-    return parser, loaded_checks, loaded_checks_helpers
+        loaded_actions_helpers[ action_name ] = h
+        setup_logger.debug( f"Parsing for action \"{action_name}\" is loaded." )
+    return parser, loaded_actions, loaded_actions_helpers
