@@ -21,12 +21,8 @@ from vtkmodules.vtkCommonDataModel import (
     vtkCellLocator,
     vtkUnstructuredGrid,
 )
-
-from geos_posp.processing.vtkUtils import (
-    computeCellCenterCoordinates,
-    createEmptyAttribute,
-    getVtkArrayInObject,
-)
+from geos.mesh.utils.arrayModifiers import createEmptyAttribute
+from geos.mesh.utils.arrayHelpers import ( getVtkArrayInObject, computeCellCenterCoordinates )
 
 __doc__ = """
 AttributeMappingFromCellCoords module is a vtk filter that map two identical mesh (or a mesh is

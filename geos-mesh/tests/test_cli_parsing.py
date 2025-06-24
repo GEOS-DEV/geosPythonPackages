@@ -2,9 +2,9 @@ import argparse
 from dataclasses import dataclass
 import pytest
 from typing import Iterator, Sequence
-from geos.mesh.doctor.checks.generate_fractures import FracturePolicy, Options
+from geos.mesh.doctor.actions.generate_fractures import FracturePolicy, Options
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, display_results, fill_subparser
-from geos.mesh.vtk.io import VtkOutput
+from geos.mesh.io.vtkIO import VtkOutput
 
 
 @dataclass( frozen=True )

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from trame.app import get_server
-from geos_trame.app.core import GeosTrame
+from geos.trame.app.core import GeosTrame
 from trame_client.utils.testing import enable_testing
 
 from seleniumbase import SB
@@ -13,6 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
 
+# ruff: noqa
 @pytest.mark.skip( "Test to fix" )
 @pytest.mark.parametrize( "server_path", [ "tests/utils/start_geos_trame_for_testing.py" ] )
 def test_saving_attribute_modification( server, capsys ):

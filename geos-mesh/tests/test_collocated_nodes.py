@@ -2,13 +2,12 @@ import pytest
 from typing import Iterator, Tuple
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkTetra, vtkUnstructuredGrid, VTK_TETRA
-from geos.mesh.doctor.checks.collocated_nodes import Options, __check
+from geos.mesh.doctor.actions.collocated_nodes import Options, __action
 from geos.mesh.doctor.filters.CollocatedNodes import CollocatedNodes
 
 
 def get_points() -> Iterator[ Tuple[ vtkPoints, int ] ]:
-    """
-    Generates the data for the cases.
+    """Generates the data for the cases.
     One case has two nodes at the exact same position.
     The other has two differente nodes
     :return: Generator to (vtk points, number of expected duplicated locations)
@@ -29,7 +28,7 @@ def test_simple_collocated_points( data: Tuple[ vtkPoints, int ] ):
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
 
-    result = __check( mesh, Options( tolerance=1.e-12 ) )
+    result = __action( mesh, Options( tolerance=1.e-12 ) )
 
     assert len( result.wrong_support_elements ) == 0
     assert len( result.nodes_buckets ) == num_nodes_bucket
@@ -60,7 +59,7 @@ def test_wrong_support_elements():
     mesh.SetPoints( points )
     mesh.SetCells( cell_types, cells )
 
-    result = __check( mesh, Options( tolerance=1.e-12 ) )
+    result = __action( mesh, Options( tolerance=1.e-12 ) )
 
     assert len( result.nodes_buckets ) == 0
     assert len( result.wrong_support_elements ) == 1

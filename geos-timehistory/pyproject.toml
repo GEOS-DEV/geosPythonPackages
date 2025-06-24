@@ -21,7 +21,7 @@ dependencies = [
     "matplotlib",
     "h5py",
     "numpy",
-    "hdf5-wrapper @ file:./hdf5-wrapper",
+    "hdf5-wrapper",
 ]
 
 [project.scripts]

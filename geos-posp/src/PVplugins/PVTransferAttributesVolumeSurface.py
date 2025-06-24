@@ -17,11 +17,12 @@ import PVplugins  # noqa: F401
 from geos.utils.Logger import Logger, getLogger
 from geos_posp.filters.TransferAttributesVolumeSurface import (
     TransferAttributesVolumeSurface, )
-from geos_posp.processing.multiblockInpectorTreeFunctions import (
+from geos.mesh.utils.multiblockHelpers import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
 )
-from geos_posp.processing.vtkUtils import getAttributeSet, mergeBlocks
+from geos.mesh.utils.arrayHelpers import getAttributeSet
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices

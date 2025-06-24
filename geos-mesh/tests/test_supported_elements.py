@@ -5,17 +5,16 @@ from typing import Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, vtkTetra, vtkHexahedron, vtkPolyhedron,
                                             vtkCellArray, VTK_POLYHEDRON, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON )
-# from geos.mesh.doctor.checks.supported_elements import Options, check, __check
-from geos.mesh.doctor.checks.vtk_polyhedron import parse_face_stream, FaceStream
+# from geos.mesh.doctor.actions.supported_elements import Options, action, __action
+from geos.mesh.doctor.actions.vtk_polyhedron import parse_face_stream, FaceStream
 from geos.mesh.doctor.filters.SupportedElements import SupportedElements
-from geos.mesh.vtk.helpers import to_vtk_id_list
+from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
 
 # TODO Update this test to have access to another meshTests file
 @pytest.mark.parametrize( "base_name", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )
 def test_supported_elements( base_name ) -> None:
-    """
-    Testing that the supported elements are properly detected as supported!
+    """Testing that the supported elements are properly detected as supported!
     :param base_name: Supported elements are provided as standard elements or polyhedron elements.
     """
     ...
@@ -28,8 +27,7 @@ def test_supported_elements( base_name ) -> None:
 
 
 def make_dodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
-    """
-    Returns the points and faces for a dodecahedron.
+    """Returns the points and faces for a dodecahedron.
     This code was adapted from an official vtk example.
     :return: The tuple of points and faces (as vtk instances).
     """
@@ -84,8 +82,7 @@ def make_dodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
 
 # TODO make this test work
 def test_dodecahedron() -> None:
-    """
-    Tests whether a dodecahedron is support by GEOS or not.
+    """Tests whether a dodecahedron is support by GEOS or not.
     """
     points, faces = make_dodecahedron()
     mesh = vtkUnstructuredGrid()

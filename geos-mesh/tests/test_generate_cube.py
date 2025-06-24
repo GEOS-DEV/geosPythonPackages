@@ -1,7 +1,7 @@
 import pytest
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkPointData, vtkCellData
 from vtkmodules.vtkCommonCore import vtkDataArray
-from geos.mesh.doctor.checks.generate_cube import FieldInfo, Options, __build
+from geos.mesh.doctor.actions.generate_cube import FieldInfo, Options, __build
 from geos.mesh.doctor.filters.GenerateRectilinearGrid import GenerateRectilinearGrid
 
 

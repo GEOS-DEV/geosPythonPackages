@@ -4,12 +4,13 @@ import pytest
 from typing import Iterable, Iterator, Sequence
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
-from geos.mesh.doctor.checks.check_fractures import format_collocated_nodes
-from geos.mesh.doctor.checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from geos.mesh.doctor.checks.generate_fractures import ( split_mesh_on_fractures, Options, FracturePolicy,
-                                                         Coordinates3D, IDMapping )
+from geos.mesh.doctor.actions.check_fractures import format_collocated_nodes
+from geos.mesh.doctor.actions.generate_cube import build_rectilinear_blocks_mesh, XYZ
+from geos.mesh.doctor.actions.generate_fractures import ( split_mesh_on_fractures, Options, FracturePolicy,
+                                                          Coordinates3D, IDMapping )
 from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures
-from geos.mesh.vtk.helpers import to_vtk_id_list
+from geos.mesh.utils.genericHelpers import to_vtk_id_list
+
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
@@ -242,7 +243,7 @@ def test_GenerateFracture( test_case_filter: TestCase ):
 
 
 def add_simplified_field_for_cells( mesh: vtkUnstructuredGrid, field_name: str, field_dimension: int ):
-    """Reduce functionality obtained from src.geos.mesh.doctor.checks.generate_fracture.__add_fields
+    """Reduce functionality obtained from src.geos.mesh.doctor.actions.generate_fracture.__add_fields
     where the goal is to add a cell data array with incrementing values.
 
     Args:

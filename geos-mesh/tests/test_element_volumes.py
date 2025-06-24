@@ -4,7 +4,7 @@ import pytest
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkTetra, vtkUnstructuredGrid, VTK_TETRA
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from geos.mesh.doctor.checks.element_volumes import Options, __check
+from geos.mesh.doctor.actions.element_volumes import Options, __action
 from geos.mesh.doctor.filters.ElementVolumes import ElementVolumes
 
 
@@ -249,12 +249,12 @@ def test_simple_tet():
     mesh.SetPoints( points )
     mesh.SetCells( cell_types, cells )
 
-    result = __check( mesh, Options( min_volume=1. ) )
+    result = __action( mesh, Options( min_volume=1. ) )
 
     assert len( result.element_volumes ) == 1
     assert result.element_volumes[ 0 ][ 0 ] == 0
     assert abs( result.element_volumes[ 0 ][ 1 ] - 1. / 6. ) < 10 * np.finfo( float ).eps
 
-    result = __check( mesh, Options( min_volume=0. ) )
+    result = __action( mesh, Options( min_volume=0. ) )
 
     assert len( result.element_volumes ) == 0
