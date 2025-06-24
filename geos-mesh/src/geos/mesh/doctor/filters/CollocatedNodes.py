@@ -5,9 +5,9 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from geos.mesh.doctor.checks.collocated_nodes import find_collocated_nodes_buckets, find_wrong_support_elements
-from geos.mesh.vtk.io import VtkOutput, write_mesh
-from geos.utils.Logger import Logger, getLogger
+from geos.mesh.doctor.actions.collocated_nodes import find_collocated_nodes_buckets, find_wrong_support_elements
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
 __doc__ = """
 CollocatedNodes module is a vtk filter that allows to find the duplicated nodes of a vtkUnstructuredGrid.
@@ -39,7 +39,7 @@ class CollocatedNodes( VTKPythonAlgorithmBase ):
         self.m_paintWrongSupportElements: int = 0
         self.m_tolerance: float = 0.0
         self.m_wrongSupportElements: list[ int ] = list()
-        self.m_logger: Logger = getLogger( "Element Volumes Filter" )
+        self.m_logger = setup_logger
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -119,11 +119,11 @@ class CollocatedNodes( VTKPythonAlgorithmBase ):
 
         return 1
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
+    def SetLogger( self: Self, logger ) -> None:
         """Set the logger.
 
         Args:
-            logger (Logger): logger
+            logger
         """
         self.m_logger = logger
         self.Modified()

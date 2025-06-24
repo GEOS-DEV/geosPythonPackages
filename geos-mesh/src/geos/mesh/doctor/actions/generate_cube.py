@@ -6,7 +6,7 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
-from geos.mesh.doctor.checks.generate_global_ids import build_global_ids
+from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 

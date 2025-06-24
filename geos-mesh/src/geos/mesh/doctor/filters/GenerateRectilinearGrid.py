@@ -4,10 +4,10 @@ from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from geos.mesh.doctor.checks.generate_global_ids import build_global_ids
-from geos.mesh.doctor.checks.generate_cube import FieldInfo, add_fields, build_coordinates, build_rectilinear_grid
-from geos.mesh.vtk.io import VtkOutput, write_mesh
-from geos.utils.Logger import Logger, getLogger
+from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
+from geos.mesh.doctor.actions.generate_cube import FieldInfo, add_fields, build_coordinates, build_rectilinear_grid
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
 __doc__ = """
 GenerateRectilinearGrid module is a vtk filter that allows to create a simple vtkUnstructuredGrid rectilinear grid.
@@ -73,7 +73,7 @@ class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
         self.m_numberElementsY: Sequence[ int ] = None
         self.m_numberElementsZ: Sequence[ int ] = None
         self.m_fields: Iterable[ FieldInfo ] = list()
-        self.m_logger: Logger = getLogger( "Generate Rectilinear Grid Filter" )
+        self.m_logger = setup_logger
 
     def RequestData( self: Self, request: vtkInformation, inInfo: vtkInformationVector,
                      outInfo: vtkInformationVector ) -> int:
@@ -87,11 +87,11 @@ class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
         opt.ShallowCopy( output )
         return 1
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
+    def SetLogger( self: Self, logger ) -> None:
         """Set the logger.
 
         Args:
-            logger (Logger): logger
+            logger
         """
         self.m_logger = logger
         self.Modified()

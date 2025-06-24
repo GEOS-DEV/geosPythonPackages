@@ -6,8 +6,8 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
-from geos.mesh.vtk.io import VtkOutput, write_mesh
-from geos.utils.Logger import Logger, getLogger
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
 __doc__ = """
 ElementVolumes module is a vtk filter that allows to calculate the volumes of every elements in a vtkUnstructuredGrid.
@@ -37,7 +37,7 @@ class ElementVolumes( VTKPythonAlgorithmBase ):
                           outputType='vtkUnstructuredGrid' )
         self.m_returnNegativeZeroVolumes: bool = False
         self.m_volumes: npt.NDArray = None
-        self.m_logger: Logger = getLogger( "Element Volumes Filter" )
+        self.m_logger = setup_logger
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -118,11 +118,11 @@ class ElementVolumes( VTKPythonAlgorithmBase ):
 
         return 1
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
+    def SetLogger( self: Self, logger ) -> None:
         """Set the logger.
 
         Args:
-            logger (Logger): logger
+            logger
         """
         self.m_logger = logger
         self.Modified()

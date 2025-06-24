@@ -2,14 +2,14 @@ from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from geos.mesh.doctor.checks.generate_fractures import Options, split_mesh_on_fractures
+from geos.mesh.doctor.actions.generate_fractures import Options, split_mesh_on_fractures
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, convert_to_fracture_policy
 from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES,
                                                                   __FRACTURES_DATA_MODE, __FRACTURES_OUTPUT_DIR,
                                                                   __FRACTURES_DATA_MODE_VALUES, __POLICIES, __POLICY )
-from geos.mesh.vtk.io import VtkOutput, write_mesh
-from geos.mesh.vtk.helpers import has_invalid_field
-from geos.utils.Logger import Logger, getLogger
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.io.vtkIO import VtkOutput, write_mesh
+from geos.mesh.utils.arrayHelpers import has_array
 
 __doc__ = """
 GenerateFractures module is a vtk filter that takes as input a vtkUnstructuredGrid that needs to be splited along
@@ -52,7 +52,7 @@ class GenerateFractures( VTKPythonAlgorithmBase ):
         self.m_output_modes_binary: str = { "mesh": DATA_MODE[ 0 ], "fractures": DATA_MODE[ 1 ] }
         self.m_mesh_VtkOutput: VtkOutput = None
         self.m_all_fractures_VtkOutput: list[ VtkOutput ] = None
-        self.m_logger: Logger = getLogger( "Generate Fractures Filter" )
+        self.m_logger = setup_logger
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -95,7 +95,7 @@ class GenerateFractures( VTKPythonAlgorithmBase ):
         outInfo: list[ vtkInformationVector ]
     ) -> int:
         input_mesh = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
-        if has_invalid_field( input_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
+        if has_array( input_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             err_msg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +
                              " is to split the mesh and then generate global ids for new split meshes." )
             self.m_logger.error( err_msg )
@@ -121,11 +121,11 @@ class GenerateFractures( VTKPythonAlgorithmBase ):
 
         return 1
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
+    def SetLogger( self: Self, logger ) -> None:
         """Set the logger.
 
         Args:
-            logger (Logger): logger
+            logger
         """
         self.m_logger = logger
         self.Modified()
