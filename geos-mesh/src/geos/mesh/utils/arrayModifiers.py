@@ -26,6 +26,7 @@ from geos.mesh.utils.arrayHelpers import (
     getAttributeSet,
     getArrayInObject,
     isAttributeInObject,
+    getVtkArrayTypeInObject,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten, getBlockFromFlatIndex
 
@@ -39,56 +40,56 @@ These methods include:
 """
 
 
-def fillPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    attributeName: str,
-    nbComponents: int,
-    onPoints: bool = False,
-) -> bool:
-    """Fill input partial attribute of multiBlockMesh with nan values.
+def fillPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                           attributeName: str,
+                           nbComponents: int,
+                           onPoints: bool = False,
+                           value: float = np.nan,
+    ) -> bool:
+    """Fill input partial attribute of multiBlockMesh with values (defaults to nan).
 
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlock
-            mesh where to fill the attribute
-        attributeName (str): attribute name
-        nbComponents (int): number of components
-        onPoints (bool, optional): Attribute is on Points (False) or
-            on Cells.
-
+            mesh where to fill the attribute.
+        attributeName (str): attribute name.
+        nbComponents (int): number of components.
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
+        value (float, optional): value to fill in the partial atribute.
+            Defaults to nan.
 
     Returns:
-        bool: True if calculation successfully ended, False otherwise
+        bool: True if calculation successfully ended, False otherwise.
     """
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockMesh, attributeName, onPoints )
-    values: list[ float ] = [ np.nan for _ in range( nbComponents ) ]
+    values: list[ float ] = [ value for _ in range( nbComponents ) ]
     createConstantAttribute( multiBlockMesh, values, attributeName, componentNames, onPoints )
     multiBlockMesh.Modified()
     return True
 
 
-def fillAllPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    onPoints: bool = False,
-) -> bool:
-    """Fill all the partial attributes of multiBlockMesh with nan values.
+def fillAllPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                              onPoints: bool = False,
+                              value: float = np.nan,
+    ) -> bool:
+    """Fill all the partial attributes of multiBlockMesh with values (defaults to nan).
 
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject):
             multiBlockMesh where to fill the attribute
-        onPoints (bool, optional): Attribute is on Points (False) or
-            on Cells.
-
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
+        value (float, optional): value to fill in all the partial atributes.
+            Defaults to nan.
 
     Returns:
         bool: True if calculation successfully ended, False otherwise
     """
     attributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockMesh, onPoints )
     for attributeName, nbComponents in attributes.items():
-        fillPartialAttributes( multiBlockMesh, attributeName, nbComponents, onPoints )
+        fillPartialAttributes( multiBlockMesh, attributeName, nbComponents, onPoints, value )
     multiBlockMesh.Modified()
     return True
 
@@ -233,28 +234,29 @@ def createConstantAttributeDataSet(
 
 def createAttribute(
     dataSet: vtkDataSet,
-    array: npt.NDArray[ np.float64 ],
+    array: npt.NDArray[ any ],
     attributeName: str,
     componentNames: tuple[ str, ...],
     onPoints: bool,
+    vtkArrayType: int = VTK_DOUBLE,
 ) -> bool:
     """Create an attribute from the given array.
 
     Args:
-        dataSet (vtkDataSet): dataSet where to create the attribute
-        array (npt.NDArray[np.float64]): array that contains the values
-        attributeName (str): name of the attribute
-        componentNames (tuple[str,...]): name of the components for vectorial
-            attributes
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkDataSet): dataSet where to create the attribute.
+        array (npt.NDArray[np.float64]): array that contains the values.
+        attributeName (str): name of the attribute.
+        componentNames (tuple[str,...]): name of the components for vectorial attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+        vtkArrayType (int): vtk type of the array of the attribute to create.
+            Defaults to VTK_DOUBLE
 
     Returns:
-        bool: True if the attribute was correctly created
+        bool: True if the attribute was correctly created.
     """
     assert isinstance( dataSet, vtkDataSet ), "Attribute can only be created in vtkDataSet object."
 
-    newAttr: vtkDataArray = vnp.numpy_to_vtk( array, deep=True, array_type=VTK_DOUBLE )
+    newAttr: vtkDataArray = vnp.numpy_to_vtk( array, deep=True, array_type=vtkArrayType )
     newAttr.SetName( attributeName )
 
     nbComponents: int = newAttr.GetNumberOfComponents()
@@ -267,6 +269,7 @@ def createAttribute(
     else:
         dataSet.GetCellData().AddArray( newAttr )
     dataSet.Modified()
+
     return True
 
 
@@ -275,17 +278,20 @@ def copyAttribute(
     objectTo: vtkMultiBlockDataSet,
     attributNameFrom: str,
     attributNameTo: str,
+    onPoint: bool = False,
 ) -> bool:
-    """Copy a cell attribute from objectFrom to objectTo.
+    """Copy an attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkMultiBlockDataSet): object from which to copy the attribute.
         objectTo (vtkMultiBlockDataSet): object where to copy the attribute.
         attributNameFrom (str): attribute name in objectFrom.
         attributNameTo (str): attribute name in objectTo.
+        onPoint (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
 
     Returns:
-        bool: True if copy successfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise.
     """
     elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( objectTo )
     elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( objectFrom )
@@ -301,11 +307,13 @@ def copyAttribute(
         # get block from current time step object
         block: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
         assert block is not None, "Block at current time step is null."
+        
         try:
-            copyAttributeDataSet( blockT0, block, attributNameFrom, attributNameTo )
+            copyAttributeDataSet( blockT0, block, attributNameFrom, attributNameTo, onPoint )
         except AssertionError:
             # skip attribute if not in block
             continue
+
     return True
 
 
@@ -314,25 +322,30 @@ def copyAttributeDataSet(
     objectTo: vtkDataSet,
     attributNameFrom: str,
     attributNameTo: str,
+    onPoint: bool = False,
 ) -> bool:
-    """Copy a cell attribute from objectFrom to objectTo.
+    """Copy an attribute from objectFrom to objectTo.
 
     Args:
         objectFrom (vtkDataSet): object from which to copy the attribute.
         objectTo (vtkDataSet): object where to copy the attribute.
         attributNameFrom (str): attribute name in objectFrom.
         attributNameTo (str): attribute name in objectTo.
+        onPoint (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
 
     Returns:
-        bool: True if copy successfully ended, False otherwise
+        bool: True if copy successfully ended, False otherwise.
     """
     # get attribut from initial time step block
-    npArray: npt.NDArray[ np.float64 ] = getArrayInObject( objectFrom, attributNameFrom, False )
+    npArray: npt.NDArray[ any ] = getArrayInObject( objectFrom, attributNameFrom, onPoint )
     assert npArray is not None
-    componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributNameFrom, False )
+    componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributNameFrom, onPoint )
+    arrayType: int = getVtkArrayTypeInObject( objectFrom, attributNameFrom, onPoint )
     # copy attribut to current time step block
-    createAttribute( objectTo, npArray, attributNameTo, componentNames, False )
+    createAttribute( objectTo, npArray, attributNameTo, componentNames, onPoint, arrayType )
     objectTo.Modified()
+
     return True
 
 
