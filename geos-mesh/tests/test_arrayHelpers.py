@@ -99,6 +99,20 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
 
     assert ( obtained == expected ).all()
 
+@pytest.mark.parametrize( "attributeName, onPoint", [
+    ( "CellAttribute", False ),
+    ( "PointAttribute", True ),
+] )
+def test_getVtkArrayTypeInObject( dataSetTest: vtkDataSet, attributeName: str, onPoint: bool ) -> None:
+    """Test getting the type of the vtk array of an attribute from dataset."""
+    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
+
+    obtained: int = arrayHelpers.getVtkArrayTypeInObject(  vtkDataSetTest, attributeName, onPoint )
+    expected: int = 11
+
+    assert ( obtained == expected )
+
+
 
 @pytest.mark.parametrize( "arrayExpected, onpoints", [
     ( "PORO", False ),

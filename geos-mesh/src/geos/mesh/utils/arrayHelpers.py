@@ -343,7 +343,7 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     return bool( data.HasArray( attributeName ) )
 
 
-def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
+def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> npt.NDArray[ any ]:
     """Return the numpy array corresponding to input attribute name in table.
 
     Args:
@@ -355,12 +355,29 @@ def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -
     Returns:
         ArrayLike[float]: the array corresponding to input attribute name.
     """
-    array: vtkDoubleArray = getVtkArrayInObject( object, attributeName, onPoints )
-    nparray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
+    array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
+    nparray: npt.NDArray[ any ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
     return nparray
 
 
-def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> vtkDoubleArray:
+def getVtkArrayTypeInObject(  object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
+    """Return the type of the vtk array corrsponding to input attribute name in table.
+    
+    Args:
+        object (PointSet or UnstructuredGrid): input object.
+        attributeName (str): name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+    
+    Returns:
+        int: the type of the vtk array corrsponding to input attribute name.
+    """
+    array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
+    vtkArrayType: int = array.GetDataType()
+
+    return vtkArrayType
+
+
+def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> vtkDataArray:
     """Return the array corresponding to input attribute name in table.
 
     Args:
@@ -370,7 +387,7 @@ def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool 
             on cells.
 
     Returns:
-        vtkDoubleArray: the vtk array corresponding to input attribute name.
+        vtkDataArray: the vtk array corresponding to input attribute name.
     """
     assert isAttributeInObject( object, attributeName, onPoints ), f"{attributeName} is not in input object."
     return object.GetPointData().GetArray( attributeName ) if onPoints else object.GetCellData().GetArray(
