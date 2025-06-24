@@ -167,23 +167,24 @@ def test_createConstantAttributeDataSet(
     assert cnames == componentNames
 
 
-@pytest.mark.parametrize( "onpoints, arrayTest, arrayExpected", [
-    ( True, 4092, "random_4092" ),
-    ( False, 1740, "random_1740" ),
+@pytest.mark.parametrize( "onpoints, arrayTest, arrayExpected, arrayTypeTest", [
+    ( True, 4092, "random_4092", VTK_DOUBLE ),
+    ( False, 1740, "random_1740", VTK_DOUBLE ),
 ],
                           indirect=[ "arrayTest", "arrayExpected" ] )
 def test_createAttribute(
     dataSetTest: vtkDataSet,
-    arrayTest: npt.NDArray[ np.float64 ],
-    arrayExpected: npt.NDArray[ np.float64 ],
+    arrayTest: npt.NDArray[ any ],
+    arrayExpected: npt.NDArray[ any ],
     onpoints: bool,
+    arrayTypeTest: int,
 ) -> None:
     """Test creation of dataset in dataset from given array."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
     componentNames: tuple[ str, str, str ] = ( "XX", "YY", "ZZ" )
     attributeName: str = "AttributeName"
 
-    arrayModifiers.createAttribute( vtkDataSetTest, arrayTest, attributeName, componentNames, onpoints )
+    arrayModifiers.createAttribute( vtkDataSetTest, arrayTest, attributeName, componentNames, onpoints, arrayTypeTest )
 
     data: Union[ vtkPointData, vtkCellData ]
     if onpoints:
@@ -191,11 +192,13 @@ def test_createAttribute(
     else:
         data = vtkDataSetTest.GetCellData()
 
-    createdAttribute: vtkDoubleArray = data.GetArray( attributeName )
+    createdAttribute: vtkDataArray = data.GetArray( attributeName )
     cnames: Tuple[ str, ...] = tuple( createdAttribute.GetComponentName( i ) for i in range( 3 ) )
+    arrayTypeObtained: int = createdAttribute.GetDataType()
 
     assert ( vnp.vtk_to_numpy( createdAttribute ) == arrayExpected ).all()
     assert cnames == componentNames
+    assert arrayTypeTest == arrayTypeObtained
 
 
 @pytest.mark.parametrize( "attributeFrom, attributeTo, onPoint, idBlock", [
