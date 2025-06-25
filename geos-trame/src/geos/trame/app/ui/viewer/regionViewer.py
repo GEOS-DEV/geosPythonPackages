@@ -13,11 +13,6 @@ class RegionViewer:
         """
         self.input = pv.UnstructuredGrid()
         self.clip = self.input
-        self.reset()
-
-    def __call__( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
-        """Update clip."""
-        self.update_clip( normal, origin )
 
     def add_mesh( self, mesh: pv.UnstructuredGrid ) -> None:
         """Set the input to the given mesh."""
@@ -26,7 +21,7 @@ class RegionViewer:
 
     def update_clip( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
         """Update the current clip with the given normal and origin."""
-        self.clip.copy_from( self.input.clip( normal=normal, origin=origin, crinkle=True ) )  # type: ignore
+        self.clip = self.input.clip( normal=normal, origin=origin, crinkle=True )  # type: ignore
 
     def reset( self ) -> None:
         """Reset the input mesh and clip."""
