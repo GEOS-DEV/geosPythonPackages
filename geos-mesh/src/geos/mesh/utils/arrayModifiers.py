@@ -39,56 +39,54 @@ These methods include:
 """
 
 
-def fillPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    attributeName: str,
-    nbComponents: int,
-    onPoints: bool = False,
-) -> bool:
-    """Fill input partial attribute of multiBlockMesh with nan values.
+def fillPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                           attributeName: str,
+                           nbComponents: int,
+                           onPoints: bool = False,
+                           value: float = np.nan ) -> bool:
+    """Fill input partial attribute of multiBlockMesh with values (defaults to nan).
 
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlock
-            mesh where to fill the attribute
-        attributeName (str): attribute name
-        nbComponents (int): number of components
-        onPoints (bool, optional): Attribute is on Points (False) or
-            on Cells.
-
+            mesh where to fill the attribute.
+        attributeName (str): attribute name.
+        nbComponents (int): number of components.
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
+        value (float, optional): value to fill in the partial atribute.
+            Defaults to nan.
 
     Returns:
-        bool: True if calculation successfully ended, False otherwise
+        bool: True if calculation successfully ended, False otherwise.
     """
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockMesh, attributeName, onPoints )
-    values: list[ float ] = [ np.nan for _ in range( nbComponents ) ]
+    values: list[ float ] = [ value for _ in range( nbComponents ) ]
     createConstantAttribute( multiBlockMesh, values, attributeName, componentNames, onPoints )
     multiBlockMesh.Modified()
     return True
 
 
-def fillAllPartialAttributes(
-    multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    onPoints: bool = False,
-) -> bool:
-    """Fill all the partial attributes of multiBlockMesh with nan values.
+def fillAllPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                              onPoints: bool = False,
+                              value: float = np.nan ) -> bool:
+    """Fill all the partial attributes of multiBlockMesh with values (defaults to nan).
 
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject):
             multiBlockMesh where to fill the attribute
-        onPoints (bool, optional): Attribute is on Points (False) or
-            on Cells.
-
+        onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
+        value (float, optional): value to fill in all the partial atributes.
+            Defaults to nan.
 
     Returns:
         bool: True if calculation successfully ended, False otherwise
     """
     attributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockMesh, onPoints )
     for attributeName, nbComponents in attributes.items():
-        fillPartialAttributes( multiBlockMesh, attributeName, nbComponents, onPoints )
+        fillPartialAttributes( multiBlockMesh, attributeName, nbComponents, onPoints, value )
     multiBlockMesh.Modified()
     return True
 
