@@ -41,7 +41,7 @@ dependencies = [
     "trame-gantt==0.1.5",
     "xsdata==24.5",
     "xsdata-pydantic[lxml]==24.5",
-    "pyvista==0.44.1",
+    "pyvista==0.45.2",
     "dpath==2.2.0",
     "colorcet==3.1.0",
     "funcy==2.0",
