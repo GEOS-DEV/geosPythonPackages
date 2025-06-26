@@ -145,13 +145,11 @@ def createConstantAttribute(
 
     Args:
         object (vtkDataObject): object (vtkMultiBlockDataSet, vtkDataSet)
-            where to create the attribute
-        values ( list[float]): list of values of the attribute for each components
-        attributeName (str): name of the attribute
-        componentNames (tuple[str,...]): name of the components for vectorial
-            attributes
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+            where to create the attribute.
+        values ( list[float]): list of values of the attribute for each components.
+        attributeName (str): name of the attribute.
+        componentNames (tuple[str,...]): name of the components for vectorial attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
         bool: True if the attribute was correctly created
@@ -168,25 +166,30 @@ def createConstantAttribute(
 
 def createConstantAttributeMultiBlock(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-    values: list[ float ],
+    values: list[ any ],
     attributeName: str,
     componentNames: tuple[ str, ...],
     onPoints: bool,
+    vtkArrayType: Union[ int, any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere if absent.
 
     Args:
         multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): vtkMultiBlockDataSet
-            where to create the attribute
-        values (list[float]): list of values of the attribute for each components
-        attributeName (str): name of the attribute
-        componentNames (tuple[str,...]): name of the components for vectorial
-            attributes
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+            where to create the attribute.
+        values (list[any]): list of values of the attribute for each components.
+        attributeName (str): name of the attribute.
+        componentNames (tuple[str,...]): name of the components for vectorial attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+        vtkArrayType (Union(any, int), optional): vtk type of the array of the attribute to create.
+            Defaults to None, the type is given by the type of the array value.
+            Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
+                int8 -> VTK_SIGNED_CHAR
+                uint8 -> VTK_UNSIGNED_CHAR
+                int64 -> VTK_LONG_LONG
 
     Returns:
-        bool: True if the attribute was correctly created
+        bool: True if the attribute was correctly created.
     """
     # initialize data object tree iterator
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
@@ -197,38 +200,50 @@ def createConstantAttributeMultiBlock(
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
         listAttributes: set[ str ] = getAttributeSet( dataSet, onPoints )
         if attributeName not in listAttributes:
-            createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints )
+            createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkArrayType )
         iter.GoToNextItem()
     return True
 
 
 def createConstantAttributeDataSet(
     dataSet: vtkDataSet,
-    values: list[ float ],
+    values: list[ any ],
     attributeName: str,
-    componentNames: tuple[ str, ...],
-    onPoints: bool,
+    componentNames: tuple[ str, ...] = (),
+    onPoints: bool = False,
+    vtkArrayType: Union[ int, any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere.
 
     Args:
-        dataSet (vtkDataSet): vtkDataSet where to create the attribute
-        values ( list[float]): list of values of the attribute for each components
-        attributeName (str): name of the attribute
-        componentNames (tuple[str,...]): name of the components for vectorial
-            attributes
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkDataSet): vtkDataSet where to create the attribute.
+        values ( list[any]): list of values of the attribute for each components.
+        attributeName (str): name of the attribute.
+        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+            Defaults to an empty tuple.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+            Defaults to False.
+        vtkArrayType (Union(any, int), optional): vtk type of the array of the attribute to create.
+            Defaults to None, the type is given by the type of the array value.
+            Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
+                int8 -> VTK_SIGNED_CHAR
+                uint8 -> VTK_UNSIGNED_CHAR
+                int64 -> VTK_LONG_LONG
 
     Returns:
-        bool: True if the attribute was correctly created
+        bool: True if the attribute was correctly created.
     """
     nbElements: int = ( dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells() )
+
     nbComponents: int = len( values )
-    array: npt.NDArray[ np.float64 ] = np.ones( ( nbElements, nbComponents ) )
-    for i, val in enumerate( values ):
-        array[ :, i ] *= val
-    createAttribute( dataSet, array, attributeName, componentNames, onPoints )
+    array: npt.NDArray[ any ]
+    if nbComponents > 1:
+        array = np.array( [ [ val for val in values  ] for _ in range( nbElements ) ] )
+    else:
+        array = np.array( [ values[ 0 ] for _ in range( nbElements ) ] )
+
+    createAttribute( dataSet, array, attributeName, componentNames, onPoints, vtkArrayType )
+
     return True
 
 
@@ -236,20 +251,26 @@ def createAttribute(
     dataSet: vtkDataSet,
     array: npt.NDArray[ any ],
     attributeName: str,
-    componentNames: tuple[ str, ...],
-    onPoints: bool,
-    vtkArrayType: int = VTK_DOUBLE,
+    componentNames: tuple[ str, ...] = (),
+    onPoints: bool = False,
+    vtkArrayType: Union[ int, any ] = None,
 ) -> bool:
-    """Create an attribute from the given array.
+    """Create an attribute and its VTK array from the given array.
 
     Args:
         dataSet (vtkDataSet): dataSet where to create the attribute.
-        array (npt.NDArray[np.float64]): array that contains the values.
+        array (npt.NDArray[any]): array that contains the values.
         attributeName (str): name of the attribute.
-        componentNames (tuple[str,...]): name of the components for vectorial attributes.
+        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+            Defaults to an empty tuple.
         onPoints (bool): True if attributes are on points, False if they are on cells.
-        vtkArrayType (int): vtk type of the array of the attribute to create.
-            Defaults to VTK_DOUBLE
+            Defaults to False.
+        vtkArrayType (Union(any, int), optional): vtk type of the array of the attribute to create.
+            Defaults to None, the type is given by the type of the array value.
+            Waring with int8, uint8 and int64 type of value, several vtk array type use it. By default:
+                int8 -> VTK_SIGNED_CHAR
+                uint8 -> VTK_UNSIGNED_CHAR
+                int64 -> VTK_LONG_LONG
 
     Returns:
         bool: True if the attribute was correctly created.
@@ -261,6 +282,14 @@ def createAttribute(
 
     nbComponents: int = newAttr.GetNumberOfComponents()
     if nbComponents > 1:
+        nbNames = len( componentNames )
+
+        if nbNames < nbComponents :
+            componentNames = tuple( [ "Component" + str( i ) for i in range( nbComponents ) ] )
+            print( "Not enough component name enter, component names are seted to : Component0, Component1 ..." )
+        elif nbNames > nbComponents:
+            print( "To many component names enter, the lastest will not be taken into account." )
+        
         for i in range( nbComponents ):
             newAttr.SetComponentName( i, componentNames[ i ] )
 
@@ -276,8 +305,8 @@ def createAttribute(
 def copyAttribute(
     objectFrom: vtkMultiBlockDataSet,
     objectTo: vtkMultiBlockDataSet,
-    attributNameFrom: str,
-    attributNameTo: str,
+    attributeNameFrom: str,
+    attributeNameTo: str,
     onPoint: bool = False,
 ) -> bool:
     """Copy an attribute from objectFrom to objectTo.
@@ -285,8 +314,8 @@ def copyAttribute(
     Args:
         objectFrom (vtkMultiBlockDataSet): object from which to copy the attribute.
         objectTo (vtkMultiBlockDataSet): object where to copy the attribute.
-        attributNameFrom (str): attribute name in objectFrom.
-        attributNameTo (str): attribute name in objectTo.
+        attributeNameFrom (str): attribute name in objectFrom.
+        attributeNameTo (str): attribute name in objectTo.
         onPoint (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
 
@@ -309,7 +338,7 @@ def copyAttribute(
         assert block is not None, "Block at current time step is null."
         
         try:
-            copyAttributeDataSet( blockT0, block, attributNameFrom, attributNameTo, onPoint )
+            copyAttributeDataSet( blockT0, block, attributeNameFrom, attributeNameTo, onPoint )
         except AssertionError:
             # skip attribute if not in block
             continue
@@ -320,8 +349,8 @@ def copyAttribute(
 def copyAttributeDataSet(
     objectFrom: vtkDataSet,
     objectTo: vtkDataSet,
-    attributNameFrom: str,
-    attributNameTo: str,
+    attributeNameFrom: str,
+    attributeNameTo: str,
     onPoint: bool = False,
 ) -> bool:
     """Copy an attribute from objectFrom to objectTo.
@@ -329,8 +358,8 @@ def copyAttributeDataSet(
     Args:
         objectFrom (vtkDataSet): object from which to copy the attribute.
         objectTo (vtkDataSet): object where to copy the attribute.
-        attributNameFrom (str): attribute name in objectFrom.
-        attributNameTo (str): attribute name in objectTo.
+        attributeNameFrom (str): attribute name in objectFrom.
+        attributeNameTo (str): attribute name in objectTo.
         onPoint (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
 
@@ -338,12 +367,12 @@ def copyAttributeDataSet(
         bool: True if copy successfully ended, False otherwise.
     """
     # get attribut from initial time step block
-    npArray: npt.NDArray[ any ] = getArrayInObject( objectFrom, attributNameFrom, onPoint )
+    npArray: npt.NDArray[ any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoint )
     assert npArray is not None
-    componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributNameFrom, onPoint )
-    arrayType: int = getVtkArrayTypeInObject( objectFrom, attributNameFrom, onPoint )
+    componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributeNameFrom, onPoint )
+    vtkArrayType: int = getVtkArrayTypeInObject( objectFrom, attributeNameFrom, onPoint )
     # copy attribut to current time step block
-    createAttribute( objectTo, npArray, attributNameTo, componentNames, onPoint, arrayType )
+    createAttribute( objectTo, npArray, attributeNameTo, componentNames, onPoint, vtkArrayType )
     objectTo.Modified()
 
     return True

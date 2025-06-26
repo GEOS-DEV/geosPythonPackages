@@ -31,6 +31,36 @@ def arrayTest( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
     )
     return array
 
+@pytest.fixture
+def getArrayWithSpeTypeValue() -> npt.NDArray[ any ]:
+    def _getarray( nb_component: int, nb_elements: int, valueType: str ) :
+        if valueType == "int32":
+            if nb_component == 1:
+                return np.array( [ np.int32( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.int32( 1000 * np.random.random() ) for _ in range( nb_component ) ] for _ in range( nb_elements ) ] )
+
+
+        elif valueType == "int64":
+            if nb_component == 1:
+                return np.array( [ np.int64( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.int64( 1000 * np.random.random() ) for _ in range( nb_component ) ] for _ in range( nb_elements ) ] )
+    
+        elif valueType == "float32":
+            if nb_component == 1:
+                return np.array( [ np.float32( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.float32( 1000 * np.random.random() ) for _ in range( nb_component ) ] for _ in range( nb_elements ) ] )
+
+        elif valueType == "float64":
+            if nb_component == 1:
+                return np.array( [ np.float64( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.float64( 1000 * np.random.random() ) for _ in range( nb_component ) ] for _ in range( nb_elements ) ] )
+
+    return _getarray
+
 
 @pytest.fixture
 def dataSetTest() -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
