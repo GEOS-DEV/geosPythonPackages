@@ -7,9 +7,9 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 import vtkmodules.util.numpy_support as vnp
-from typing import Optional, Union, cast
+from typing import Optional, Union, Any, cast
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonCore import vtkDataArray, vtkDoubleArray, vtkPoints
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
                                             vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData,
                                             vtkDataObjectTreeIterator, vtkPolyData )
@@ -343,7 +343,7 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     return bool( data.HasArray( attributeName ) )
 
 
-def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> npt.NDArray[ any ]:
+def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> npt.NDArray[ Any ]:
     """Return the numpy array corresponding to input attribute name in table.
 
     Args:
@@ -356,18 +356,18 @@ def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -
         ArrayLike[float]: the array corresponding to input attribute name.
     """
     array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
-    nparray: npt.NDArray[ any ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
+    nparray: npt.NDArray[ Any ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
     return nparray
 
 
-def getVtkArrayTypeInObject(  object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
+def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
     """Return the type of the vtk array corrsponding to input attribute name in table.
-    
+
     Args:
         object (PointSet or UnstructuredGrid): input object.
         attributeName (str): name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
-    
+
     Returns:
         int: the type of the vtk array corrsponding to input attribute name.
     """
@@ -379,24 +379,23 @@ def getVtkArrayTypeInObject(  object: vtkDataSet, attributeName: str, onPoints: 
 
 def getVtkArrayTypeInMultiBlock( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> int:
     """Return the type of the vtk array corrsponding to input attribute name in the multiblock data set if it exist.
-    
+
     Args:
-        object (PointSet or UnstructuredGrid): input object.
+        multiBlockDataSet (PointSet or UnstructuredGrid): input object.
         attributeName (str): name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
-    
+
     Returns:
         int: type of the vtk array corrsponding to input attribute name, -1 if the multiblock has no attribute with given name.
     """
-
     nbBlocks = multiBlockDataSet.GetNumberOfBlocks()
     for idBlock in range( nbBlocks ):
-        object: vtkDataSet = multiBlockDataSet.GetBlock( idBlock )
+        object: vtkDataSet = cast( vtkDataSet, multiBlockDataSet.GetBlock( idBlock ) )
         listAttributes: set[ str ] = getAttributeSet( object, onPoints )
         if attributeName in listAttributes:
             return getVtkArrayTypeInObject( object, attributeName, onPoints )
 
-    print( "The vtkMultiBlockDataSet has no attribute with the name " + attributeName + ".")
+    print( "The vtkMultiBlockDataSet has no attribute with the name " + attributeName + "." )
     return -1
 
 
@@ -454,7 +453,7 @@ def getNumberOfComponentsDataSet( dataSet: vtkDataSet, attributeName: str, onPoi
     Returns:
         int: number of components.
     """
-    array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
+    array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
     return array.GetNumberOfComponents()
 
 
@@ -478,7 +477,7 @@ def getNumberOfComponentsMultiBlock(
     for blockIndex in elementaryBlockIndexes:
         block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )
         if isAttributeInObject( block, attributeName, onPoints ):
-            array: vtkDoubleArray = getVtkArrayInObject( block, attributeName, onPoints )
+            array: vtkDataArray = getVtkArrayInObject( block, attributeName, onPoints )
             return array.GetNumberOfComponents()
     return 0
 
@@ -522,7 +521,7 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
         tuple[str,...]: names of the components.
 
     """
-    array: vtkDoubleArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
+    array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
     componentNames: list[ str ] = []
 
     if array.GetNumberOfComponents() > 1:

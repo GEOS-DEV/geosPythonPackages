@@ -4,10 +4,9 @@
 import numpy as np
 import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
-from typing import Union
+from typing import Union, Any
 from vtk import (  # type: ignore[import-untyped]
-    VTK_DOUBLE,
-    VTK_FLOAT,
+    VTK_DOUBLE, VTK_FLOAT,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
@@ -50,12 +49,12 @@ These methods include:
 """
 
 
-def fillPartialAttributes( 
+def fillPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
     attributeName: str,
     onPoints: bool = False,
-    value: any = np.nan,
-    ) -> bool:
+    value: Any = np.nan,
+) -> bool:
     """Fill input partial attribute of multiBlockDataSet with the same value for all the components.
 
     Args:
@@ -79,22 +78,24 @@ def fillPartialAttributes(
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, onPoints )
 
-    valueType: str = type( value )
-    typeMapping: dict[ int, any ] = vnp.get_vtk_to_numpy_typemap()
-    valueTypeExpected: any = typeMapping[ vtkArrayType ]
+    valueType: Any = type( value )
+    typeMapping: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
+    valueTypeExpected: Any = typeMapping[ vtkArrayType ]
     if valueTypeExpected != valueType:
         if np.isnan( value ):
-            if vtkArrayType == VTK_DOUBLE or vtkArrayType == VTK_FLOAT:
+            if vtkArrayType in ( VTK_DOUBLE, VTK_FLOAT ):
                 value = valueTypeExpected( value )
             else:
-                print( attributeName + " vtk array type is " + str( valueTypeExpected ) + ", default value is automatically set to -1." )
+                print( attributeName + " vtk array type is " + str( valueTypeExpected ) +
+                       ", default value is automatically set to -1." )
                 value = valueTypeExpected( -1 )
 
         else:
-            print( "The value has the wrong type, it is update to " + str( valueTypeExpected ) + ", the type of the " + attributeName + " array to fill." )
-            value = valueTypeExpected( value  )
+            print( "The value has the wrong type, it is update to " + str( valueTypeExpected ) + ", the type of the " +
+                   attributeName + " array to fill." )
+            value = valueTypeExpected( value )
 
-    values: list[ any ] = [ value for _ in range( nbComponents ) ]
+    values: list[ Any ] = [ value for _ in range( nbComponents ) ]
 
     createConstantAttribute( multiBlockDataSet, values, attributeName, componentNames, onPoints, vtkArrayType )
     multiBlockDataSet.Modified()
@@ -102,10 +103,10 @@ def fillPartialAttributes(
     return True
 
 
-def fillAllPartialAttributes( 
+def fillAllPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    value: any = np.nan,
-    ) -> bool:
+    value: Any = np.nan,
+) -> bool:
     """Fill all the partial attributes of multiBlockDataSet with same value for all attributes and they components.
 
     Args:
@@ -118,7 +119,7 @@ def fillAllPartialAttributes(
     """
     for onPoints in [ True, False ]:
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
-        for attributeName in infoAttributes.keys():
+        for attributeName in infoAttributes:
             fillPartialAttributes( multiBlockDataSet, attributeName, onPoints, value )
 
     multiBlockDataSet.Modified()
@@ -142,9 +143,9 @@ def createEmptyAttribute(
         bool: True if the attribute was correctly created.
     """
     vtkDataTypeOk: dict = vnp.get_vtk_to_numpy_typemap()
-    if vtkDataType not in vtkDataTypeOk.keys():
+    if vtkDataType not in vtkDataTypeOk:
         raise ValueError( "Attribute type is unknown." )
-    
+
     nbComponents: int = len( componentNames )
 
     createdAttribute: vtkDataArray = vtkDataArray.CreateDataArray( vtkDataType )
@@ -158,12 +159,12 @@ def createEmptyAttribute(
 
 
 def createConstantAttribute(
-    object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    values: list[ float ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),
-    onPoints: bool = False,
-    vtkDataType: Union[ int, any ] = None,
+        object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+        values: list[ float ],
+        attributeName: str,
+        componentNames: tuple[ str, ...] = (),
+        onPoints: bool = False,
+        vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere if absent.
 
@@ -187,23 +188,24 @@ def createConstantAttribute(
     """
     if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return createConstantAttributeMultiBlock( object, values, attributeName, componentNames, onPoints, vtkDataType )
-    
+
     elif isinstance( object, vtkDataSet ):
         listAttributes: set[ str ] = getAttributeSet( object, onPoints )
         if attributeName not in listAttributes:
-            return createConstantAttributeDataSet( object, values, attributeName, componentNames, onPoints, vtkDataType )
+            return createConstantAttributeDataSet( object, values, attributeName, componentNames, onPoints,
+                                                   vtkDataType )
         print( "The attribute was already present in the vtkDataSet." )
         return False
     return False
 
 
 def createConstantAttributeMultiBlock(
-    multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-    values: list[ any ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),
-    onPoints: bool = False,
-    vtkDataType: Union[ int, any ] = None,
+        multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+        values: list[ Any ],
+        attributeName: str,
+        componentNames: tuple[ str, ...] = (),
+        onPoints: bool = False,
+        vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere if absent.
 
@@ -236,10 +238,11 @@ def createConstantAttributeMultiBlock(
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
         listAttributes: set[ str ] = getAttributeSet( dataSet, onPoints )
         if attributeName not in listAttributes:
-            checkCreat = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType )
-        
+            checkCreat = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints,
+                                                         vtkDataType )
+
         iter.GoToNextItem()
-    
+
     if checkCreat:
         return True
     else:
@@ -248,12 +251,12 @@ def createConstantAttributeMultiBlock(
 
 
 def createConstantAttributeDataSet(
-    dataSet: vtkDataSet,
-    values: list[ any ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),
-    onPoints: bool = False,
-    vtkDataType: Union[ int, any ] = None,
+        dataSet: vtkDataSet,
+        values: list[ Any ],
+        attributeName: str,
+        componentNames: tuple[ str, ...] = (),
+        onPoints: bool = False,
+        vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere.
 
@@ -278,9 +281,9 @@ def createConstantAttributeDataSet(
     nbElements: int = ( dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells() )
 
     nbComponents: int = len( values )
-    array: npt.NDArray[ any ]
+    array: npt.NDArray[ Any ]
     if nbComponents > 1:
-        array = np.array( [ [ val for val in values  ] for _ in range( nbElements ) ] )
+        array = np.array( [ values for _ in range( nbElements ) ] )
     else:
         array = np.array( [ values[ 0 ] for _ in range( nbElements ) ] )
 
@@ -288,12 +291,12 @@ def createConstantAttributeDataSet(
 
 
 def createAttribute(
-    dataSet: vtkDataSet,
-    array: npt.NDArray[ any ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),
-    onPoints: bool = False,
-    vtkDataType: Union[ int, any ] = None,
+        dataSet: vtkDataSet,
+        array: npt.NDArray[ Any ],
+        attributeName: str,
+        componentNames: tuple[ str, ...] = (),
+        onPoints: bool = False,
+        vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute and its VTK array from the given array.
 
@@ -324,12 +327,12 @@ def createAttribute(
     if nbComponents > 1:
         nbNames = len( componentNames )
 
-        if nbNames < nbComponents :
+        if nbNames < nbComponents:
             componentNames = tuple( [ "Component" + str( i ) for i in range( nbComponents ) ] )
             print( "Not enough component name enter, component names are seted to : Component0, Component1 ..." )
         elif nbNames > nbComponents:
             print( "To many component names enter, the lastest will not be taken into account." )
-        
+
         for i in range( nbComponents ):
             createdAttribute.SetComponentName( i, componentNames[ i ] )
 
@@ -337,7 +340,7 @@ def createAttribute(
         dataSet.GetPointData().AddArray( createdAttribute )
     else:
         dataSet.GetCellData().AddArray( createdAttribute )
-    
+
     dataSet.Modified()
 
     return True
@@ -357,7 +360,7 @@ def copyAttribute(
         objectTo (vtkMultiBlockDataSet): object where to copy the attribute.
         attributeNameFrom (str): attribute name in objectFrom.
         attributeNameTo (str): attribute name in objectTo.
-        onPoint (bool, optional): True if attributes are on points, False if they are on cells.
+        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
 
     Returns:
@@ -377,7 +380,7 @@ def copyAttribute(
         # get block from current time step object
         blockTo: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
         assert blockTo is not None, "Block at current time step is null."
-        
+
         try:
             copyAttributeDataSet( blockFrom, blockTo, attributeNameFrom, attributeNameTo, onPoints )
         except AssertionError:
@@ -408,7 +411,7 @@ def copyAttributeDataSet(
         bool: True if copy successfully ended, False otherwise.
     """
     # get attribut from initial time step block
-    npArray: npt.NDArray[ any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoints )
+    npArray: npt.NDArray[ Any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoints )
     assert npArray is not None
 
     componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributeNameFrom, onPoints )
