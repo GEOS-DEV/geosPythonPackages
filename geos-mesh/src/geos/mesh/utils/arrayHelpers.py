@@ -377,6 +377,29 @@ def getVtkArrayTypeInObject(  object: vtkDataSet, attributeName: str, onPoints: 
     return vtkArrayType
 
 
+def getVtkArrayTypeInMultiBlock( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> int:
+    """Return the type of the vtk array corrsponding to input attribute name in the multiblock data set if it exist.
+    
+    Args:
+        object (PointSet or UnstructuredGrid): input object.
+        attributeName (str): name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+    
+    Returns:
+        int: type of the vtk array corrsponding to input attribute name, -1 if the multiblock has no attribute with given name.
+    """
+
+    nbBlocks = multiBlockDataSet.GetNumberOfBlocks()
+    for idBlock in range( nbBlocks ):
+        object: vtkDataSet = multiBlockDataSet.GetBlock( idBlock )
+        listAttributes: set[ str ] = getAttributeSet( object, onPoints )
+        if attributeName in listAttributes:
+            return getVtkArrayTypeInObject( object, attributeName, onPoints )
+
+    print( "The vtkMultiBlockDataSet has no attribute with the name " + attributeName + ".")
+    return -1
+
+
 def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> vtkDataArray:
     """Return the array corresponding to input attribute name in table.
 

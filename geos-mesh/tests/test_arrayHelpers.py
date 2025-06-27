@@ -99,19 +99,35 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
 
     assert ( obtained == expected ).all()
 
-@pytest.mark.parametrize( "attributeName, onPoint", [
+
+@pytest.mark.parametrize( "attributeName, vtkDataType, onPoints", [
+    ( "CellAttribute", 11, False ),
+    ( "PointAttribute", 11, True ),
+    ( "collocated_nodes", 12, True ),
+    ( "collocated_nodes", -1, False ),
+    ( "newAttribute", -1, False ),
+] )
+def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attributeName: str,
+                                      vtkDataType: int, onPoints: bool ) -> None:
+    """Test getting the type of the vtk array of an attribute from multiBlockDataSet."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+
+    vtkDataTypeTest: int = arrayHelpers.getVtkArrayTypeInMultiBlock(  multiBlockDataSet, attributeName, onPoints )
+
+    assert ( vtkDataType == vtkDataTypeTest )
+
+@pytest.mark.parametrize( "attributeName, onPoints", [
     ( "CellAttribute", False ),
     ( "PointAttribute", True ),
 ] )
-def test_getVtkArrayTypeInObject( dataSetTest: vtkDataSet, attributeName: str, onPoint: bool ) -> None:
+def test_getVtkArrayTypeInObject( dataSetTest: vtkDataSet, attributeName: str, onPoints: bool ) -> None:
     """Test getting the type of the vtk array of an attribute from dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
 
-    obtained: int = arrayHelpers.getVtkArrayTypeInObject(  vtkDataSetTest, attributeName, onPoint )
+    obtained: int = arrayHelpers.getVtkArrayTypeInObject(  vtkDataSetTest, attributeName, onPoints )
     expected: int = 11
 
     assert ( obtained == expected )
-
 
 
 @pytest.mark.parametrize( "arrayExpected, onpoints", [
