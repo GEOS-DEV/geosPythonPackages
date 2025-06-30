@@ -25,9 +25,9 @@ import numpy as np
 
 __doc__ = """
 Fill partial arrays of input mesh with values (defaults to nan).
-Several attributes can be fill in the same time but with the same value.
+Several arrays can be filled in one application if the value is the same.
 
-Input and output mesh are vtkMultiBlockDataSet.
+Input and output meshes are vtkMultiBlockDataSet.
 
 To use it:
 
@@ -107,9 +107,9 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -151,7 +151,7 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Set the list of the partial attributes to fill.
 
         Args:
-            attributesNameList (Union[list[str], Tuple], optional): list of all the attributes name.
+            attributesNameList (Union[list[str], Tuple], optional): List of all the attributes name.
                 Defaults to a empty list
         """
         self._attributesNameList: Union[ list[ str ], Tuple ] = attributesNameList
@@ -160,7 +160,7 @@ class FillPartialArrays( VTKPythonAlgorithmBase ):
         """Set the value to fill in the partial attribute.
 
         Args:
-            valueToFill (float, optional): value to fill in the partial attribute.
+            valueToFill (float, optional): The filling value.
                 Defaults to nan.
         """
         self._valueToFill: float = valueToFill

@@ -49,11 +49,11 @@ def fillPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCompo
     Args:
         multiBlockMesh (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlock
             mesh where to fill the attribute.
-        attributeName (str): attribute name.
-        nbComponents (int): number of components.
+        attributeName (str): Attribute name.
+        nbComponents (int): Number of components.
         onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
-        value (float, optional): value to fill in the partial atribute.
+        value (float, optional): The filling value.
             Defaults to nan.
 
     Returns:
@@ -78,7 +78,7 @@ def fillAllPartialAttributes( multiBlockMesh: Union[ vtkMultiBlockDataSet, vtkCo
             multiBlockMesh where to fill the attribute
         onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
-        value (float, optional): value to fill in all the partial atributes.
+        value (float, optional): The filling value.
             Defaults to nan.
 
     Returns:

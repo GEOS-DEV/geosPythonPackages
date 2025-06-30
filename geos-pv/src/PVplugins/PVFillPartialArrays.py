@@ -39,7 +39,7 @@ To use it:
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVFillPartialArrays.
 * Select the input mesh.
 * Select the partial arrays to fill.
-* Set the value to fill (optinal defaults to nan).
+* Set the filling value (defaults to nan).
 * Apply.
 
 """
@@ -88,7 +88,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                 </ArrayListDomain>
                 <Documentation>
                     Select all the attributes to fill. If several attributes
-                    are selected, they will be fill with the same value.
+                    are selected, they will be filled with the same value.
                 </Documentation>
                 <Hints>
                     <NoDefault />
@@ -131,7 +131,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         assert "," not in value, "Use '.' not ',' for decimal numbers"
 
         value_float: float
-        value_float = np.nan if value == "nan" else float( value )
+        value_float = np.nan if value.lower() == "nan" else float( value )
 
         if value_float != self._valueToFill:
             self._valueToFill = value_float
@@ -170,9 +170,9 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
