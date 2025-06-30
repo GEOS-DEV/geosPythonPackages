@@ -1,54 +1,70 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Romain Baville
-from typing import Union
-
 import numpy as np
 import numpy.typing as npt
+from typing import Union, Any
 from typing_extensions import Self
 
 import vtkmodules.util.numpy_support as vnp
-from geos.utils.Logger import Logger, getLogger
-from geos.mesh.utils.multiblockHelpers import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from geos.mesh.utils.arrayHelpers import isAttributeInObject
-from geos.mesh.utils.arrayModifiers import createConstantAttribute
 
-from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase,
+)
 from vtkmodules.vtkCommonCore import (
-    vtkDataArray,
     vtkInformation,
     vtkInformationVector,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkDataObject,
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
+    vtkDataSet,
 )
+from geos.utils.Logger import Logger, getLogger
+
+from geos.mesh.utils.arrayHelpers import isAttributeInObject
+from geos.mesh.utils.arrayModifiers import createAttribute
 
 __doc__ = """
 TO DO
 
 """
 
-SOURCE_NAME: str = ""
-DEFAULT_REGION_ATTRIBUTE_NAME = "region"
 
 
 class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Create an attribute with constant value per region."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataSet" )
+        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkMultiBlockDataSet, vtkDataSet" )
 
-        self.m_table: list[ tuple[ int, float ] ] = []
-        self.m_regionAttributeName: str = DEFAULT_REGION_ATTRIBUTE_NAME
-        self.m_attributeName: str = "attribute"
+        self._SetRegionName()
+        self._SetAttributeName()
+        self._SetInfoRegion()
+
 
         # logger
         self.m_logger: Logger = getLogger( "Create Constant Attribute Per Region Filter" )
+
+    def _SetRegionName( self: Self, regionName: str = "Region" ) -> None:
+        self.regionName: str = regionName
+    
+    def _SetAttributeName( self: Self, attributeName: str = "Attribute" ) -> None:
+        self.attributeName: str = attributeName
+    
+    def _SetInfoRegion( self: Self, dictRegion: dict[ Any, Any ] = {}, valueType: int = 10, defaultValue: Any = np.nan ) -> None:
+        dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
+        self.valueType: type = dictType[ valueType ]
+
+        self.dictRegion: dict[ Any, Any ] = dictRegion
+        for idRegion in self.dictRegion.keys():
+            self.dictRegion[ idRegion ] = self.valueType( self.dictRegion[ idRegion ] )
+
+        if np.isnan( defaultValue ):
+            if valueType not in [ 10, 11 ]:
+                defaultValue = -1
+            
+        self.defaultValue = self.valueType(defaultValue)
 
     def SetLogger( self: Self, logger: Logger ) -> None:
         """Set filter logger.
@@ -108,14 +124,42 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
             output.ShallowCopy( input0 )
 
-            assert ( len( self.m_regionAttributeName )
-                     > 0 ), "Region attribute is undefined, please select an attribute."
-            if isinstance( output, vtkMultiBlockDataSet ):
-                self.createAttributesMultiBlock( output )
-            else:
-                self.createAttributes( output )
+            assert ( len( self.regionName ) > 0 ), "Region attribute is undefined, please select an attribute."
 
-            mess: str = ( f"The new attribute {self.m_attributeName} was successfully added." )
+            onPoints: bool
+            if isAttributeInObject( input0, self.regionName, False ):
+                onPoints = False
+            elif isAttributeInObject( input0, self.regionName, True ):
+                onPoints = True
+            else:
+                mess = f"{self.regionName} is not in the mesh."
+                self.m_logger.info( mess )
+                return 0
+            
+            regionNpArray: npt.NDArray[ Any ]
+            if isinstance( output, vtkMultiBlockDataSet ):
+                nbBlock: int = output.GetNumberOfBlocks()
+                for idBlock in range( nbBlock ):
+                    dataSetOutput: vtkDataSet = output.GetBlock( idBlock )
+                    dataSetInput0: vtkDataSet = input0.GetBlock( idBlock )
+                    if onPoints:
+                        regionNpArray = vnp.vtk_to_numpy( dataSetInput0.GetPointData().GetArray( self.regionName ) )
+                    else:
+                        regionNpArray = vnp.vtk_to_numpy( dataSetInput0.GetCellData().GetArray( self.regionName ) )
+
+                    npArray: npt.NDArray[ Any ] = self.createNpArray( regionNpArray )
+                    createAttribute( dataSetOutput, npArray, self.attributeName, onPoints=onPoints )
+    
+            else:
+                if onPoints:
+                    regionNpArray = vnp.vtk_to_numpy( input0.GetPointData().GetArray( self.regionName ) )
+                else:
+                    regionNpArray = vnp.vtk_to_numpy( input0.GetCellData().GetArray( self.regionName ) )
+
+                npArray: npt.NDArray[ Any ] = self.createNpArray( regionNpArray )
+                createAttribute( output, npArray, self.attributeName, onPoints=onPoints )
+
+            mess: str = ( f"The new attribute {self.attributeName} was successfully added." )
             self.Modified()
             self.m_logger.info( mess )
         except AssertionError as e:
@@ -131,58 +175,23 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.m_compute = True
         return 1
 
-    def createAttributesMultiBlock( self: Self, output: vtkMultiBlockDataSet ) -> None:
-        """Create attributes on vtkMultiBlockDataSet from input data.
 
-        Args:
-            output (vtkMultiBlockDataSet): mesh where to create the attributes.
-        """
-        # for each block
-        blockIndexes: list[ int ] = getBlockElementIndexesFlatten( output )
-        for blockIndex in blockIndexes:
-            block0: vtkDataObject = getBlockFromFlatIndex( output, blockIndex )
-            assert block0 is not None, "Block is undefined."
-            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( block0 )
-            try:
-                self.createAttributes( block )
-            except AssertionError as e:
-                self.m_logger.warning( f"Block {blockIndex}: {e}" )
-        output.Modified()
-
-    def createAttributes( self: Self, mesh: vtkUnstructuredGrid ) -> None:
-        """Create attributes on vtkUnstructuredGrid from input data.
-
-        Args:
-             mesh (vtkUnstructuredGrid): mesh where to create the attributes.
-        """
-        assert isAttributeInObject( mesh, self.m_regionAttributeName,
-                                    False ), f"{self.m_regionAttributeName} is not in the mesh."
-        regionAttr: vtkDataArray = mesh.GetCellData().GetArray( self.m_regionAttributeName )
-        assert regionAttr is not None, "Region attribute is undefined"
-        npArray: npt.NDArray[ np.float64 ] = self.createNpArray( regionAttr )
-        newAttr: vtkDataArray = vnp.numpy_to_vtk( npArray, True, VTK_DOUBLE )
-        newAttr.SetName( self.m_attributeName )
-        mesh.GetCellData().AddArray( newAttr )
-        mesh.GetCellData().Modified()
-        mesh.Modified()
-
-    def createNpArray( self: Self, regionAttr: vtkDataArray ) -> npt.NDArray[ np.float64 ]:
+    def createNpArray( self: Self, regionNpArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
         """Create numpy arrays from input data.
 
         Args:
-            regionAttr (vtkDataArray): Region attribute
+            regionNpArray (npt.NDArray[ Any ]): Region attribute
 
         Returns:
             npt.NDArray[np.float64]: numpy array of the new attribute.
         """
-        regionNpArray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( regionAttr )
-        npArray: npt.NDArray[ np.float64 ] = np.full_like( regionNpArray, np.nan )
-        # for each region
-        for regionIndex, value in self.m_table:
-            if regionIndex in np.unique( regionNpArray ):
-                mask: npt.NDArray[ np.bool_ ] = regionNpArray == regionIndex
-                npArray[ mask ] = value
+        nbElements: int = len ( regionNpArray )
+        npArray: npt.NDArray[ Any ] = np.ones( nbElements, self.valueType )
+        for elem in range( nbElements ):
+            idRegion: Any = regionNpArray[elem]
+            if idRegion in self.dictRegion.keys():
+                npArray[elem] = self.dictRegion[idRegion]
             else:
-                self.m_logger.warning( f"Index {regionIndex} is not in the values of the region" +
-                                       f" attribute '{regionAttr.GetName()}'" )
+                npArray[elem] = self.defaultValue
+
         return npArray
