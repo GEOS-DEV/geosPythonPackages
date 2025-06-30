@@ -29,8 +29,7 @@ def mergeBlocks(
 
     """
     if keepPartialAttributes:
-        fillAllPartialAttributes( input, False )
-        fillAllPartialAttributes( input, True )
+        fillAllPartialAttributes( input )
 
     af = vtkAppendDataSets()
     af.MergePointsOn()
