@@ -159,12 +159,12 @@ def createEmptyAttribute(
 
 
 def createConstantAttribute(
-        object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-        values: list[ float ],
-        attributeName: str,
-        componentNames: tuple[ str, ...] = (),
-        onPoints: bool = False,
-        vtkDataType: Union[ int, Any ] = None,
+    object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+    values: list[ float ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere if absent.
 
@@ -179,9 +179,9 @@ def createConstantAttribute(
         vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the array value.
             Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
-                int8 -> VTK_SIGNED_CHAR
-                uint8 -> VTK_UNSIGNED_CHAR
-                int64 -> VTK_LONG_LONG
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
 
     Returns:
         bool: True if the attribute was correctly created False if the attribute was already present.
@@ -200,12 +200,12 @@ def createConstantAttribute(
 
 
 def createConstantAttributeMultiBlock(
-        multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-        values: list[ Any ],
-        attributeName: str,
-        componentNames: tuple[ str, ...] = (),
-        onPoints: bool = False,
-        vtkDataType: Union[ int, Any ] = None,
+    multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+    values: list[ Any ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere if absent.
 
@@ -220,9 +220,9 @@ def createConstantAttributeMultiBlock(
         vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
             Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
-                int8 -> VTK_SIGNED_CHAR
-                uint8 -> VTK_UNSIGNED_CHAR
-                int64 -> VTK_LONG_LONG
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
 
     Returns:
         bool: True if the attribute was correctly created, False if the attribute was already present.
@@ -251,12 +251,12 @@ def createConstantAttributeMultiBlock(
 
 
 def createConstantAttributeDataSet(
-        dataSet: vtkDataSet,
-        values: list[ Any ],
-        attributeName: str,
-        componentNames: tuple[ str, ...] = (),
-        onPoints: bool = False,
-        vtkDataType: Union[ int, Any ] = None,
+    dataSet: vtkDataSet,
+    values: list[ Any ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute with a constant value everywhere.
 
@@ -271,9 +271,9 @@ def createConstantAttributeDataSet(
         vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
             Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
-                int8 -> VTK_SIGNED_CHAR
-                uint8 -> VTK_UNSIGNED_CHAR
-                int64 -> VTK_LONG_LONG
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
 
     Returns:
         bool: True if the attribute was correctly created.
@@ -291,12 +291,12 @@ def createConstantAttributeDataSet(
 
 
 def createAttribute(
-        dataSet: vtkDataSet,
-        array: npt.NDArray[ Any ],
-        attributeName: str,
-        componentNames: tuple[ str, ...] = (),
-        onPoints: bool = False,
-        vtkDataType: Union[ int, Any ] = None,
+    dataSet: vtkDataSet,
+    array: npt.NDArray[ Any ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
 ) -> bool:
     """Create an attribute and its VTK array from the given array.
 
@@ -311,9 +311,9 @@ def createAttribute(
         vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value in the array.
             Waring with int8, uint8 and int64 type of value, several vtk array type use it. By default:
-                int8 -> VTK_SIGNED_CHAR
-                uint8 -> VTK_UNSIGNED_CHAR
-                int64 -> VTK_LONG_LONG
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
 
     Returns:
         bool: True if the attribute was correctly created.
