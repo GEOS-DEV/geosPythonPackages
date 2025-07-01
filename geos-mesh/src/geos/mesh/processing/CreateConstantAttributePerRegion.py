@@ -42,29 +42,8 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self._SetAttributeName()
         self._SetInfoRegion()
 
-
         # logger
         self.m_logger: Logger = getLogger( "Create Constant Attribute Per Region Filter" )
-
-    def _SetRegionName( self: Self, regionName: str = "Region" ) -> None:
-        self.regionName: str = regionName
-    
-    def _SetAttributeName( self: Self, attributeName: str = "Attribute" ) -> None:
-        self.attributeName: str = attributeName
-    
-    def _SetInfoRegion( self: Self, dictRegion: dict[ Any, Any ] = {}, valueType: int = 10, defaultValue: Any = np.nan ) -> None:
-        dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        self.valueType: type = dictType[ valueType ]
-
-        self.dictRegion: dict[ Any, Any ] = dictRegion
-        for idRegion in self.dictRegion.keys():
-            self.dictRegion[ idRegion ] = self.valueType( self.dictRegion[ idRegion ] )
-
-        if np.isnan( defaultValue ):
-            if valueType not in [ 10, 11 ]:
-                defaultValue = -1
-            
-        self.defaultValue = self.valueType(defaultValue)
 
     def SetLogger( self: Self, logger: Logger ) -> None:
         """Set filter logger.
@@ -137,6 +116,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                 return 0
             
             regionNpArray: npt.NDArray[ Any ]
+            npArray: npt.NDArray[ Any ]
             if isinstance( output, vtkMultiBlockDataSet ):
                 nbBlock: int = output.GetNumberOfBlocks()
                 for idBlock in range( nbBlock ):
@@ -147,7 +127,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                     else:
                         regionNpArray = vnp.vtk_to_numpy( dataSetInput0.GetCellData().GetArray( self.regionName ) )
 
-                    npArray: npt.NDArray[ Any ] = self.createNpArray( regionNpArray )
+                    npArray = self.createNpArray( regionNpArray )
                     createAttribute( dataSetOutput, npArray, self.attributeName, onPoints=onPoints )
     
             else:
@@ -156,7 +136,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                 else:
                     regionNpArray = vnp.vtk_to_numpy( input0.GetCellData().GetArray( self.regionName ) )
 
-                npArray: npt.NDArray[ Any ] = self.createNpArray( regionNpArray )
+                npArray = self.createNpArray( regionNpArray )
                 createAttribute( output, npArray, self.attributeName, onPoints=onPoints )
 
             mess: str = ( f"The new attribute {self.attributeName} was successfully added." )
@@ -172,8 +152,31 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.m_logger.critical( mess0 )
             self.m_logger.critical( e, exc_info=True )
             return 0
-        self.m_compute = True
+
         return 1
+
+
+    def _SetRegionName( self: Self, regionName: str = "" ) -> None:
+        self.regionName: str = regionName
+    
+
+    def _SetAttributeName( self: Self, attributeName: str = "Attribute" ) -> None:
+        self.attributeName: str = attributeName
+
+
+    def _SetInfoRegion( self: Self, dictRegion: dict[ Any, Any ] = {}, valueType: int = 10, defaultValue: Any = np.nan ) -> None:
+        dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
+        self.valueType: type = dictType[ valueType ]
+
+        self.dictRegion: dict[ Any, Any ] = dictRegion
+        for idRegion in self.dictRegion.keys():
+            self.dictRegion[ idRegion ] = self.valueType( self.dictRegion[ idRegion ] )
+
+        if np.isnan( defaultValue ):
+            if valueType not in [ 10, 11 ]:
+                defaultValue = -1
+            
+        self.defaultValue = self.valueType(defaultValue)
 
 
     def createNpArray( self: Self, regionNpArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:

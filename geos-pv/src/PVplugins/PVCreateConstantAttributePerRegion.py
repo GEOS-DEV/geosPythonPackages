@@ -39,7 +39,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing import CreateConstantAttributePerRegion
+from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to
