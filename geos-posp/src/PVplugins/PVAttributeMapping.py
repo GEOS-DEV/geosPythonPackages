@@ -21,9 +21,7 @@ from geos_posp.filters.AttributeMappingFromCellCoords import (
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos.mesh.utils.arrayHelpers import (
-    getAttributeSet,
-    getNumberOfComponents,
-)
+    getAttributeSet, )
 from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
@@ -192,8 +190,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             outData.ShallowCopy( clientMesh )
             attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
             for attributeName in attributeNames:
-                nbComponents = getNumberOfComponents( serverMesh, attributeName, False )
-                fillPartialAttributes( serverMesh, attributeName, nbComponents, False )
+                fillPartialAttributes( serverMesh, attributeName, False )
 
             mergedServerMesh: vtkUnstructuredGrid
             if isinstance( serverMesh, vtkUnstructuredGrid ):

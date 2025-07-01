@@ -365,14 +365,9 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         Returns:
             vtkUnstructuredGrid: merged block
         """
-        # fill partial cell attributes in all children blocks
-        if not fillAllPartialAttributes( compositeBlock, False ):
-            self.m_logger.warning( "Some partial cell attributes may not have been " + "propagated to the whole mesh." )
-
-        # # fill partial point attributes in all children blocks
-        if not fillAllPartialAttributes( compositeBlock, True ):
-            self.m_logger.warning( "Some partial point attributes may not have been " +
-                                   "propagated to the whole mesh." )
+        # fill partial attributes in all children blocks
+        if not fillAllPartialAttributes( compositeBlock ):
+            self.m_logger.warning( "Some partial attributes may not have been " + "propagated to the whole mesh." )
 
         # merge blocks
         return mergeBlocks( compositeBlock )
