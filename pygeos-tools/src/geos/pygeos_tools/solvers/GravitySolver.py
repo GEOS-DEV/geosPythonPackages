@@ -84,7 +84,7 @@ class GravitySolver( Solver ):
             else:
                 return density
         else:
-            print( "getDensityModel: No velocity was found.", flush=True )
+            print( "getDensityModel: No density was found.", flush=True )
             return None
 
     def updateDensityModel( self: Self, density: npt.NDArray ) -> None:
@@ -136,8 +136,6 @@ class GravitySolver( Solver ):
         # Retrieve adjoint:
         #   * If any, gather all subdomains.
         #   * Make sure to remove ghosts.
-        adjoint = np.zeros( nm )
-
         try:
             localToGlobal_key = get_matching_wrapper_path(
                 self.geosx, [ self.discretization, 'elementSubRegions', 'localToGlobalMap' ] )
@@ -151,19 +149,7 @@ class GravitySolver( Solver ):
         adjoint_field = copy.deepcopy( allgather_wrapper( self.geosx, adjoint_key, ghost_key=ghost_key ) )
 
         localToGlobal_noGhost = allgather_wrapper( self.geosx, localToGlobal_key, ghost_key=ghost_key ).astype( int )
+        adjoint = np.zeros( nm )
         adjoint[ localToGlobal_noGhost ] = adjoint_field
-
-        #print(f'size adjoint {adjoint.shape}', flush=True)
-        #localToGlobal_noGhost = self.getLocalToGlobalMapFor1RegionWith1CellBlock(filterGhost=True)
-        #print(f'size localToGlobal_noGhost {localToGlobal_noGhost.shape} {np.min(localToGlobal_noGhost)} {np.max(localToGlobal_noGhost)}')
-
-        #        adjoint_field = self.getAdjoint()
-        #adjoint_field = self.getSolverFieldWithPrefix("adjoint")
-        #adjoint_key = get_matching_wrapper_path(self.geosx, [self.discretization, 'elementSubRegions', 'adjoint'])
-        #adjoint_field = allgather_wrapper(self.geosx, adjoint_key)
-
-        #print(f'size adjoint_field {adjoint_field.shape} {np.min(adjoint_field)} {np.max(adjoint_field)}', flush=True)
-
-        #adjoint[localToGlobal_noGhost] = adjoint_field
 
         return adjoint

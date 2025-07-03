@@ -6,7 +6,6 @@
 # Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
 # Copyright (c) 2023-2024 Chevron
 # Copyright (c) 2019-     GEOS/GEOSX Contributors
-# Copyright (c) 2019-     INRIA project-team Makutu
 # All rights reserved
 #
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,6 +18,7 @@ from mpi4py import MPI
 
 from geos.pygeos_tools.input import XML
 from geos.pygeos_tools.solvers import GravityLinearOpSolver
+from geos.pygeos_tools.solvers.InversionUtils import adjointTest
 
 __doc__ = """
 This is an example of how to set up and run an adjoint test for GEOS simulation using the GravitySolver.
@@ -43,7 +43,8 @@ def parse_args():
 
 
 def main():
-    rank = MPI.COMM_WORLD.Get_rank()
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
     verbose = ( rank == 0 )
 
     args = parse_args()
@@ -55,6 +56,8 @@ def main():
     # Load XML configuration
     xml = XML( xml_file )
 
+    # Generate random fields
+    np.random.seed( 42 )  # Set random seed for reproducibility
     if rank == 0:
         x = np.random.rand( nm )
         y = np.random.rand( nd )
@@ -62,35 +65,18 @@ def main():
         x = None
         y = None
 
-    x = MPI.COMM_WORLD.bcast( x, root=0 )
-    y = MPI.COMM_WORLD.bcast( y, root=0 )
+    x = comm.bcast( x, root=0 )
+    y = comm.bcast( y, root=0 )
 
     # Initialize solver as a linear operator
     solver = GravityLinearOpSolver( rank=rank, xml=xml, nm=args.n_model, nd=args.n_data, scaleData=scale )
 
-    Ax = solver._matvec( x )
-    ATy = solver._rmatvec( y )
-
-    IP1 = np.dot( Ax.T, y )
-    IP2 = np.dot( x.T, ATy )
-
-    nAx = np.linalg.norm( Ax, 2 )
-    nx = np.linalg.norm( x, 2 )
-    nATy = np.linalg.norm( ATy, 2 )
-    ny = np.linalg.norm( y, 2 )
-
-    e = abs( IP1 - IP2 ) / np.max( [ nAx * ny, nATy * nx ] )
-
-    if verbose:
-        print( "\n=== Adjoint Test Summary ===" )
-        print( f"IP1 = {IP1}" )
-        print( f"IP2 = {IP2}" )
-        print( f"Passed: {e < 1e-13}" )
-        print( f"Error: {e}" )
+    # Run the test
+    passed, error = adjointTest( solver._matvec, solver._rmatvec, x, y, flag_verbose=verbose )
 
     solver.finalize()
 
-    if e >= 1e-13:
+    if not passed:
         sys.exit( 1 )
 
 

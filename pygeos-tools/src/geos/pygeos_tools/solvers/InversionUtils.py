@@ -253,3 +253,57 @@ def plotGradientTestFromFile( filename: str,
     h = history[ column_h, : ]
     e1 = history[ column_error, : ]
     return plotGradientTest( h, e1, **kwargs )
+
+
+def adjointTest( A: callable,
+                 AT: callable,
+                 x: np.ndarray,
+                 y: np.ndarray,
+                 tol: float = 1e-13,
+                 flag_verbose: bool = True ) -> Tuple[ bool, float ]:
+    """
+    Perform an adjoint test to verify that <Ax, y> ≈ <x, A^T y>.
+
+    Parameters
+    ----------
+    A : callable
+        Function that computes the forward operation A(x).
+    AT : callable
+        Function that computes the adjoint operation A^T(y).
+    x : np.ndarray
+        Input vector for the forward operation.
+    y : np.ndarray
+        Input vector for the adjoint operation.
+    tol : float, optional
+        Tolerance for the error to consider the test passed.
+    flag_verbose : bool, optional
+        If True, prints the test summary.
+
+    Returns
+    -------
+    passed : bool
+        True if the adjoint test passed, False otherwise.
+    error : float
+        Relative error between the inner products.
+    """
+    Ax = A( x )
+    ATy = AT( y )
+
+    IP1 = np.dot( Ax.T, y )
+    IP2 = np.dot( x.T, ATy )
+
+    nAx = np.linalg.norm( Ax, 2 )
+    nx = np.linalg.norm( x, 2 )
+    nATy = np.linalg.norm( ATy, 2 )
+    ny = np.linalg.norm( y, 2 )
+
+    error = abs( IP1 - IP2 ) / max( nAx * ny, nATy * nx )
+    passed = error < tol
+    if flag_verbose:
+        print( "\n=== Adjoint Test Summary ===" )
+        print( f"<Ax, y>     = {IP1}" )
+        print( f"<x, A^T y>  = {IP2}" )
+        print( f"Passed      = {passed}" )
+        print( f"Error       = {error}" )
+
+    return passed, error
