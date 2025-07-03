@@ -17,7 +17,7 @@ from mpi4py import MPI
 
 import numpy as np
 from geos.pygeos_tools.input import XML
-from geos.pygeos_tools.solvers import GravityLinearOperatorSolver
+from geos.pygeos_tools.solvers import GravityLinearOpSolver
 from pygeosx import run, COMPLETED
 
 __doc__ = """
@@ -49,7 +49,7 @@ def main():
 
     m_true = np.load( args.m_true )
 
-    solver = GravityLinearOperatorSolver( rank=rank, xml=xml, nm=m_true.size )
+    solver = GravityLinearOpSolver( rank=rank, xml=xml, nm=m_true.size )
 
     print( f"Density min={np.min(m_true)}, max={np.max(m_true)}", flush=True )
 
