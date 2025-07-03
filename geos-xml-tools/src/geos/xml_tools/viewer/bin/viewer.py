@@ -15,8 +15,8 @@ from vtkmodules.vtkCommonDataModel import vtkDataAssembly, vtkPartitionedDataSet
 from vtkmodules.vtkRenderingCore import vtkActor
 from vtkmodules.vtkFiltersCore import vtkExtractCells
 
-from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
-from geos_xml_viewer.geos.models.schema import Problem
+from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
+from geos.xml_tools.viewer.geos.models.schema import Problem
 from xsdata.formats.dataclass.context import XmlContext
 from xsdata.formats.dataclass.parsers import XmlParser
 from xsdata.formats.dataclass.parsers.config import ParserConfig

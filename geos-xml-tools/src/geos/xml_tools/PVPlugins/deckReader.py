@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
-from typing_extensions import Self
-
 from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
+from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
@@ -32,7 +31,7 @@ class PVGeosDeckReader( VTKPythonAlgorithmBase ):
             outputType="vtkPartitionedDataSetCollection",
         )  # type: ignore
         self.__filename: str
-        from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
+        from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
 
         self.__realAlgorithm = GeosDeckReader()
 

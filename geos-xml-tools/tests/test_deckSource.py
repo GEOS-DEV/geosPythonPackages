@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
+from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
 
 # Dir containing the files
 FIXTURE_DIR = Path( __file__ ).parent.resolve() / "files"

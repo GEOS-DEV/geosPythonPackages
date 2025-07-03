@@ -2,12 +2,10 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
 from typing_extensions import Self
-
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-
-from geos_xml_viewer.algorithms.deck import SimulationDeck, build_model, read
+from geos.xml_tools.vtk_builder import SimulationDeck, build_model, read
 
 
 class GeosDeckReader( VTKPythonAlgorithmBase ):

@@ -4,7 +4,7 @@ import re
 import os
 import filecmp
 from geos.xml_tools import regex_tools, unit_manager, xml_processor
-from geos.xml_tools.tests import generate_test_xml
+from . import generate_test_xml
 import argparse
 from parameterized import parameterized
 

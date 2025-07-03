@@ -1,0 +1,497 @@
+from ast import literal_eval
+from enum import IntEnum
+from lxml import etree as ElementTree  # type: ignore[import-untyped]
+from lxml.etree import XMLSyntaxError  # type: ignore[import-untyped]
+import numpy as np
+import numpy.typing as npt
+from os.path import expandvars
+from pathlib import Path
+from typing import NamedTuple
+import vtk  # type: ignore[import-untyped]
+from vtkmodules.util.numpy_support import numpy_to_vtk as numpy_to_vtk_
+from geos.xml_tools import xml_processor
+
+__doc__ = """
+Converts a processed GEOSX XML element tree into a VTK data structure.
+
+This module is designed to work on an lxml ElementTree that has already
+been processed by geosx_xml_tools.xml_processor. It extracts geometric
+information (meshes, wells, boxes) and builds a vtk.vtkPartitionedDataSetCollection
+for visualization or further analysis.
+"""
+
+tr = str.maketrans( "{}", "[]" )
+
+CLASS_READERS = {
+    # Standard dataset readers:
+    ".pvti": vtk.vtkXMLPImageDataReader,
+    ".pvtr": vtk.vtkXMLPRectilinearGridReader,
+    ".pvtu": vtk.vtkXMLPUnstructuredGridReader,
+    ".vti": vtk.vtkXMLImageDataReader,
+    ".vtp": vtk.vtkXMLPolyDataReader,
+    ".vtr": vtk.vtkXMLRectilinearGridReader,
+    ".vts": vtk.vtkXMLStructuredGridReader,
+    ".vtu": vtk.vtkXMLUnstructuredGridReader,
+}
+
+COMPOSITE_DATA_READERS = {
+    ".vtm": vtk.vtkXMLMultiBlockDataReader,
+    ".vtmb": vtk.vtkXMLMultiBlockDataReader,
+}
+
+
+class SimulationDeck( NamedTuple ):
+    """A container for the path and parsed XML root of a simulation deck."""
+    file_path: str
+    xml_root: ElementTree.Element
+
+
+class TreeViewNodeType( IntEnum ):
+    """Enumeration for different types of nodes in the VTK data assembly."""
+    UNKNOWN = 1
+    REPRESENTATION = 2
+    PROPERTIES = 3
+    WELLBORETRAJECTORY = 4
+    WELLBOREFRAME = 5
+    WELLBORECHANNEL = 6
+    WELLBOREMARKER = 7
+    WELLBORECOMPLETION = 8
+    TIMESERIES = 9
+    PERFORATION = 10
+
+
+def numpy_to_vtk( a: npt.DTypeLike ) -> vtk.vtkDataArray:
+    """A wrapper for the vtk numpy_to_vtk utility to ensure deep copying."""
+    return numpy_to_vtk_( a, deep=1 )
+
+
+def read( xmlFilepath: str ) -> SimulationDeck:
+    """
+    Reads a GEOSX xml file and processes it using the geosx_xml_tools processor.
+    This handles recursive includes, parameter substitution, unit conversion,
+    and symbolic math.
+
+    Args:
+        xmlFilepath (str): The path to the top-level file to read.
+
+    Returns:
+        SimulationDeck: A named tuple containing the original file's directory
+                        and the fully processed XML root element.
+    """
+    # 1. Resolve the original file path to get its parent directory. This is
+    #    kept to ensure that relative paths to other files (like meshes)
+    #    can be resolved correctly later.
+    try:
+        expanded_file = Path( expandvars( xmlFilepath ) ).expanduser().resolve( strict=True )
+        original_file_directory = str( expanded_file.parent )
+    except FileNotFoundError:
+        print( f"\nCould not find input file: {xmlFilepath}" )
+        raise
+
+    # 2. Use the base processor to get a clean, fully resolved XML file.
+    #    This single call replaces the manual include/merge logic and adds
+    #    parameter/unit/math processing. The function returns the path to a
+    #    new, temporary file.
+    processed_xml_path = xml_processor.process( inputFiles=[ str( expanded_file ) ] )
+
+    # 3. Parse the new, clean XML file produced by the processor to get the
+    #    final XML tree.
+    try:
+        parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+        tree = ElementTree.parse( processed_xml_path, parser=parser )
+        processed_root = tree.getroot()
+    except XMLSyntaxError as err:
+        print( f"\nCould not parse the processed file at: {processed_xml_path}" )
+        print( f"This may indicate an error in the structure of the source XML files." )
+        print( f"Original error: {err.msg}" )
+        raise Exception( "\nAn error occurred after processing the XML deck." ) from err
+
+    # 4. Return the SimulationDeck, combining the original path with the
+    #    fully processed XML root element.
+    return SimulationDeck( file_path=original_file_directory, xml_root=processed_root )
+
+
+def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.vtkPartitionedDataSetCollection:
+    """
+    Processes a GEOSX XML deck and converts it into a VTK partitioned dataset collection.
+
+    This function serves as the primary entry point. It uses the standard `xml_processor`
+    to handle file inclusions and other preprocessing, then builds the VTK model.
+
+    Args:
+        xml_filepath (str): Path to the top-level XML input deck.
+        cell_attribute (str): The cell attribute name to use as a region marker for meshes.
+
+    Returns:
+        vtk.vtkPartitionedDataSetCollection: The fully constructed VTK data object.
+    """
+    print( "Step 1: Processing XML deck with geosx_xml_tools processor..." )
+    # Use the base processor to handle includes, parameters, units, etc.
+    # This returns the path to a temporary, fully resolved XML file.
+    processed_xml_path = xml_processor.process( inputFiles=[ xml_filepath ] )
+    print( f"Processed deck saved to: {processed_xml_path}" )
+
+    # Parse the final, clean XML file produced by the processor
+    try:
+        parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+        xml_tree = ElementTree.parse( processed_xml_path, parser=parser )
+        root = xml_tree.getroot()
+    except XMLSyntaxError as err:
+        print( f"\nCould not load processed input file: {processed_xml_path}" )
+        print( err.msg )
+        raise Exception( "\nCheck processed XML file for errors!" ) from err
+
+    # The `file_path` is the directory of the original XML file. This is crucial for
+    # correctly resolving relative paths t
+    # o mesh files (*.vtu, etc.) inside the XML.
+    original_deck_dir = str( Path( xml_filepath ).parent.resolve() )
+    deck = SimulationDeck( file_path=original_deck_dir, xml_root=root )
+
+    # Build the VTK model from the fully processed XML tree
+    print( "Step 2: Building VTK data model from processed XML..." )
+    collection = vtk.vtkPartitionedDataSetCollection()
+    build_model( deck, collection, cell_attribute )
+    print( "VTK model built successfully." )
+
+    return collection
+
+
+# --- Core VTK Building Logic (Kept from original, now operates on a clean XML tree) ---
+
+
+def build_model( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
+    """
+    Populates a VTK data collection from a processed SimulationDeck.
+    """
+    assembly = vtk.vtkDataAssembly()
+    # Use the original file's name for the root node, not the temporary processed file
+    root_name = Path( d.xml_root.get( "name", "Deck" ) ).stem
+    assembly.SetRootNodeName( root_name )
+    collection.SetDataAssembly( assembly )
+
+    # Step 1 - mesh
+    if _read_mesh( d, collection, attr ) < 0:
+        return 0
+    # Step 2 - wells
+    if _read_wells( d, collection ) < 0:
+        return 0
+    # Step 3 - boxes
+    if _read_boxes( d, collection ) < 0:
+        return 0
+
+    return 1
+
+
+def _read_boxes( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection ) -> int:
+    # (This function is identical to the original implementation)
+    geometric_objects = d.xml_root.find( "Geometry" )
+    if geometric_objects is None:
+        return 0
+    boxes = geometric_objects.findall( "Box" )
+    if not boxes:
+        return 0
+
+    count: int = collection.GetNumberOfPartitionedDataSets()
+    assembly = collection.GetDataAssembly()
+    node = assembly.AddNode( "Boxes" )
+
+    for idx, box_node in enumerate( boxes ):
+        p = vtk.vtkPartitionedDataSet()
+        xmin = np.array( literal_eval( box_node.attrib[ "xMin" ].translate( tr ) ), dtype=np.float64 )
+        xmax = np.array( literal_eval( box_node.attrib[ "xMax" ].translate( tr ) ), dtype=np.float64 )
+        bounds = ( xmin[ 0 ], xmax[ 0 ], xmin[ 1 ], xmax[ 1 ], xmin[ 2 ], xmax[ 2 ] )
+
+        box_source = vtk.vtkTessellatedBoxSource()
+        box_source.SetBounds( bounds )
+        box_source.Update()
+        b = box_source.GetOutput()
+        p.SetPartition( 0, b )
+
+        collection.SetPartitionedDataSet( count, p )
+        box_name = box_node.get( "name", f"Box{idx}" )
+        collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), box_name )
+
+        idbox = assembly.AddNode( "Box", node )
+        assembly.SetAttribute( idbox, "label", box_name )
+        assembly.SetAttribute( idbox, "type", TreeViewNodeType.REPRESENTATION )
+        assembly.AddDataSetIndex( idbox, count )
+        count += 1
+    return 1
+
+
+def _read_wells( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection ) -> int:
+    # (This function is identical to the original implementation)
+    meshes = d.xml_root.find( "Mesh" )
+    if meshes is None:
+        raise Exception( "\nMesh node not found in XML deck" )
+    wells = meshes.findall( ".//InternalWell" )
+    if not wells:
+        return 0
+
+    count: int = collection.GetNumberOfPartitionedDataSets()
+    assembly = collection.GetDataAssembly()
+    node = assembly.AddNode( "Wells" )
+
+    for well in wells:
+        points = np.array( literal_eval( well.attrib[ "polylineNodeCoords" ].translate( tr ) ), dtype=np.float64 )
+        lines = np.array( literal_eval( well.attrib[ "polylineSegmentConn" ].translate( tr ) ), dtype=np.int64 )
+        v_indices = np.unique( lines.flatten() )
+        r = literal_eval( well.attrib[ "radius" ].translate( tr ) )
+        radius = np.repeat( r, points.shape[ 0 ] )
+
+        vpoints = vtk.vtkPoints()
+        vpoints.SetData( numpy_to_vtk( points ) )
+
+        polyLine = vtk.vtkPolyLine()
+        polyLine.GetPointIds().SetNumberOfIds( len( v_indices ) )
+        for i, vidx in enumerate( v_indices ):
+            polyLine.GetPointIds().SetId( i, vidx )
+        cells = vtk.vtkCellArray()
+        cells.InsertNextCell( polyLine )
+
+        vradius = vtk.vtkDoubleArray()
+        vradius.SetName( "radius" )
+        vradius.SetNumberOfComponents( 1 )
+        vradius.SetArray( numpy_to_vtk( radius ), len( radius ), 1 )
+
+        polyData = vtk.vtkPolyData()
+        polyData.SetPoints( vpoints )
+        polyData.SetLines( cells )
+        polyData.GetPointData().AddArray( vradius )
+        polyData.GetPointData().SetActiveScalars( "radius" )
+
+        p = vtk.vtkPartitionedDataSet()
+        p.SetPartition( 0, polyData )
+        collection.SetPartitionedDataSet( count, p )
+        well_name = well.attrib[ "name" ]
+        collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), well_name )
+
+        idwell = assembly.AddNode( "Well", node )
+        assembly.SetAttribute( idwell, "label", well_name )
+        well_mesh_node = assembly.AddNode( "Mesh", idwell )
+        assembly.SetAttribute( well_mesh_node, "type", TreeViewNodeType.REPRESENTATION )
+        assembly.AddDataSetIndex( well_mesh_node, count )
+        count += 1
+
+        # Handle perforations
+        perforations = well.findall( "Perforation" )
+        if perforations:
+            perf_node = assembly.AddNode( "Perforations", idwell )
+            assembly.SetAttribute( perf_node, "label", "Perforations" )
+            tip = points[ 0 ]
+            for perfo in perforations:
+                pp = vtk.vtkPartitionedDataSet()
+                name = perfo.attrib[ "name" ]
+                z = literal_eval( perfo.attrib[ "distanceFromHead" ].translate( tr ) )
+                perfo_point = np.array( [ tip[ 0 ], tip[ 1 ], tip[ 2 ] - z ], dtype=np.float64 )
+
+                ppoints = vtk.vtkPoints()
+                ppoints.SetNumberOfPoints( 1 )
+                ppoints.SetPoint( 0, perfo_point )
+
+                pperfo_poly = vtk.vtkPolyData()
+                pperfo_poly.SetPoints( ppoints )
+                pp.SetPartition( 0, pperfo_poly )
+
+                collection.SetPartitionedDataSet( count, pp )
+                collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), name )
+                idperf = assembly.AddNode( "Perforation", perf_node )
+                assembly.SetAttribute( idperf, "label", name )
+                assembly.SetAttribute( idperf, "type", TreeViewNodeType.REPRESENTATION )
+                assembly.AddDataSetIndex( idperf, count )
+                count += 1
+    return 1
+
+
+def _read_mesh( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
+    """Reads the mesh from the simulation deck and completes the collection with mesh information.
+
+    Args:
+        d (SimulationDeck): A container for the path and parsed XML root of a simulation deck.
+        collection (vtk.vtkPartitionedDataSetCollection): Current collection to update
+    
+    Returns:
+        vtk.vtkPartitionedDataSet: the mesh as a partition of the data from the deck
+    """
+    meshes = d.xml_root.find( "Mesh" )
+    if meshes is None:
+        raise Exception( "\nMesh node not found in XML deck" )
+
+    # Check for VTKMesh (external file)
+    vtk_mesh_node = meshes.find( "VTKMesh" )
+    if vtk_mesh_node is not None:
+        if _read_vtk_data_repository( d.file_path, vtk_mesh_node, collection, attr ) < 1:
+            return 0
+
+    # Check for InternalMesh (generated grid)
+    internal_mesh_node = meshes.find( "InternalMesh" )
+    if internal_mesh_node is not None:
+        _generate_grid( internal_mesh_node, collection )
+
+    return 1
+
+
+def _read_vtk_data_repository( file_path: str, mesh: ElementTree.Element,
+                               collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
+    """Reads the mesh added in the simulation deck and builds adds it as a partition
+
+    Args:
+        file_path (str): Path where the mesh is
+        mesh (ElementTree.Element): XML node of the mesh
+        collection (vtk.vtkPartitionedDataSetCollection): Current collection to update
+        attr (str): Cell attribute name to use as region marker
+
+    Returns:
+        int: Updated global dataset index
+    """
+    # The file_path argument is the fully-resolved path to the original deck's directory.
+    path = Path( file_path ) / mesh.attrib[ "file" ]
+    if not path.is_file():
+        raise FileNotFoundError( f"Mesh file not found at resolved path: {path}" )
+
+    try:
+        # Consolidated lookup for the correct VTK reader
+        Reader = ( CLASS_READERS | COMPOSITE_DATA_READERS )[ path.suffix ]
+    except KeyError:
+        # Active error message for unsupported file types
+        print( f"Error: Unsupported VTK file extension: {path.suffix}" )
+        return 0
+
+    reader = Reader()
+    reader.SetFileName( str( path ) )
+    reader.Update()
+
+    count: int = collection.GetNumberOfPartitionedDataSets()
+    assembly = collection.GetDataAssembly()
+
+    id_mesh = assembly.AddNode( "Mesh" )
+    assembly.SetAttribute( id_mesh, "label", mesh.attrib[ "name" ] )
+    assembly.SetAttribute( id_mesh, "type", TreeViewNodeType.REPRESENTATION )
+
+    id_surf = assembly.AddNode( "Surfaces" )
+
+    # This logic handles standard VTK files like .vtu, .vti, etc.
+    if path.suffix in CLASS_READERS:
+        ugrid: vtk.vtkUnstructuredGrid = reader.GetOutputDataObject( 0 )
+        attr_array = ugrid.GetCellData().GetArray( attr )
+        if not attr_array:
+            print( f"Attribute '{attr}' not found in mesh '{path}'. Skipping region/surface extraction." )
+            return 1
+
+        [ attr_min, attr_max ] = attr_array.GetRange()
+
+        # Load surfaces
+        for i in range( int( attr_min ), int( attr_max + 1 ) ):
+            threshold = vtk.vtkThreshold()
+            threshold.SetInputData( ugrid )
+            threshold.SetUpperThreshold( i )
+            threshold.SetLowerThreshold( i )
+            threshold.SetInputArrayToProcess( 0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, attr )
+
+            extract = vtk.vtkExtractCellsByType()
+            extract.SetInputConnection( threshold.GetOutputPort() )
+            extract.AddCellType( vtk.VTK_QUAD )
+            extract.AddCellType( vtk.VTK_TRIANGLE )
+            extract.AddCellType( vtk.VTK_POLYGON )
+            extract.Update()
+
+            if extract.GetOutputDataObject( 0 ).GetNumberOfCells() != 0:
+                p = vtk.vtkPartitionedDataSet()
+                p.SetNumberOfPartitions( 1 )
+                p.SetPartition( 0, extract.GetOutputDataObject( 0 ) )
+                collection.SetPartitionedDataSet( count, p )
+                collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), f"Surface{i - 1}" )
+
+                node = assembly.AddNode( "Surface", id_surf )
+                assembly.SetAttribute( node, "label", f"Surface{i - 1}" )
+                assembly.AddDataSetIndex( node, count )
+                count += 1
+
+        # Load regions
+        for i in range( int( attr_min ), int( attr_max + 1 ) ):
+            threshold = vtk.vtkThreshold()
+            threshold.SetInputData( ugrid )
+            threshold.SetUpperThreshold( i )
+            threshold.SetLowerThreshold( i )
+            threshold.SetInputArrayToProcess( 0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, attr )
+
+            extract = vtk.vtkExtractCellsByType()
+            extract.SetInputConnection( threshold.GetOutputPort() )
+            extract.AddCellType( vtk.VTK_HEXAHEDRON )
+            extract.AddCellType( vtk.VTK_TETRA )
+            extract.AddCellType( vtk.VTK_WEDGE )
+            extract.AddCellType( vtk.VTK_PYRAMID )
+            extract.AddCellType( vtk.VTK_VOXEL )
+            extract.AddCellType( vtk.VTK_PENTAGONAL_PRISM )
+            extract.AddCellType( vtk.VTK_HEXAGONAL_PRISM )
+            extract.AddCellType( vtk.VTK_POLYHEDRON )
+            extract.Update()
+
+            if extract.GetOutputDataObject( 0 ).GetNumberOfCells() != 0:
+                p = vtk.vtkPartitionedDataSet()
+                p.SetNumberOfPartitions( 1 )
+                p.SetPartition( 0, extract.GetOutputDataObject( 0 ) )
+                collection.SetPartitionedDataSet( count, p )
+                collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), f"Region{i - 1}" )
+
+                node = assembly.AddNode( "Region", id_mesh )
+                assembly.SetAttribute( node, "label", f"Region{i - 1}" )
+                assembly.AddDataSetIndex( node, count )
+                count += 1
+
+    # This logic handles composite VTK files like .vtm
+    elif path.suffix in COMPOSITE_DATA_READERS:
+        mb = reader.GetOutput()
+        mainBlockName = mesh.attrib.get( "mainBlockName", "main" )
+
+        for i in range( mb.GetNumberOfBlocks() ):
+            if mb.HasMetaData( i ):
+                unstructuredGrid = vtk.vtkUnstructuredGrid.SafeDownCast( mb.GetBlock( i ) )
+                if unstructuredGrid and unstructuredGrid.GetNumberOfPoints():
+                    blockName = mb.GetMetaData( i ).Get( vtk.vtkCompositeDataSet.NAME() )
+
+                    p = vtk.vtkPartitionedDataSet()
+                    p.SetNumberOfPartitions( 1 )
+                    p.SetPartition( 0, unstructuredGrid )
+                    collection.SetPartitionedDataSet( count, p )
+                    collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), blockName )
+
+                    node = None
+                    if blockName == mainBlockName:
+                        node = assembly.AddNode( "Region", id_mesh )
+                    else:
+                        node = assembly.AddNode( "Surface", id_surf )
+
+                    assembly.SetAttribute( node, "label", blockName )
+                    assembly.AddDataSetIndex( node, count )
+                    count += 1
+
+    return 1
+
+
+def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDataSetCollection ) -> int:
+    count: int = collection.GetNumberOfPartitionedDataSets()
+    elem_type = mesh.attrib[ "elementTypes" ].strip( "}{ " )
+
+    if elem_type == "C3D8":
+        xcoords_array = np.array( literal_eval( mesh.attrib[ "xCoords" ].translate( tr ) ), dtype=np.float64 )
+        ycoords_array = np.array( literal_eval( mesh.attrib[ "yCoords" ].translate( tr ) ), dtype=np.float64 )
+        zcoords_array = np.array( literal_eval( mesh.attrib[ "zCoords" ].translate( tr ) ), dtype=np.float64 )
+        nx = literal_eval( mesh.attrib[ "nx" ].translate( tr ) )[ 0 ]
+        ny = literal_eval( mesh.attrib[ "ny" ].translate( tr ) )[ 0 ]
+        nz = literal_eval( mesh.attrib[ "nz" ].translate( tr ) )[ 0 ]
+
+        grid = vtk.vtkImageData()
+        grid.SetDimensions( nx + 1, ny + 1, nz + 1 )
+        grid.SetOrigin( xcoords_array[ 0 ], ycoords_array[ 0 ], zcoords_array[ 0 ] )
+        grid.SetSpacing( ( xcoords_array[ 1 ] - xcoords_array[ 0 ] ) / nx,
+                         ( ycoords_array[ 1 ] - ycoords_array[ 0 ] ) / ny,
+                         ( zcoords_array[ 1 ] - zcoords_array[ 0 ] ) / nz )
+
+        p = vtk.vtkPartitionedDataSet()
+        p.SetPartition( 0, grid )
+        collection.SetPartitionedDataSet( count, p )
+        # Note: could add assembly info here if needed
+        return 1
+    else:
+        raise NotImplementedError( f"\nElement type '{elem_type}' for InternalMesh not handled yet" )

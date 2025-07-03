@@ -1,31 +1,70 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "geos-xml-tools"
-version = "0.6.0"
-description = "Tools for enabling advanced xml features in GEOSX"
-maintainers = [
-    {name = "Christopher Sherman", email = "sherman27@llnl.gov" }
-]
+version = "0.7.0"
+description = "Tools for enabling advanced xml features in GEOS"
+maintainers = [{name = "Christopher Sherman", email = "sherman27@llnl.gov" }]
 license = {text = "LGPL-2.1"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License ",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
 
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 dependencies = [
-    "lxml>=4.5.0",
+    "pyvista >= 0.42",
+    "lxml>=4.9",
+    "xsdata >= 24",
+    "colorcet >= 3.0.1",
     "parameterized",
     "numpy>=1.16.2",
     "typing_extensions>=4.12"
 ]
 
+[project.urls]
+Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
+Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
+Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
+"Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
+
+[project.optional-dependencies]
+cli = ["xsdata[cli]>=24"]
+build = [
+  "build >= 1.2"
+]
+dev = [
+    "yapf",
+    "mypy",
+    "xmlschema"
+]
+test = [
+    "pytest-cov", 
+    "pytest"
+]
+
 [project.scripts]
-    preprocess_xml = "geos.xml_tools.main:preprocess_serial"
-    format_xml = "geos.xml_tools.xml_formatter:main"
-    test_geosx_xml_tools = "geos.xml_tools.tests.test_manager:main"
-    check_xml_attribute_coverage = "geos.xml_tools.attribute_coverage:main"
-    check_xml_redundancy = "geos.xml_tools.xml_redundancy_check:main"
+preprocess_xml = "geos.xml_tools.main:preprocess_serial"
+format_xml = "geos.xml_tools.xml_formatter:main"
+check_xml_attribute_coverage = "geos.xml_tools.attribute_coverage:main"
+check_xml_redundancy = "geos.xml_tools.xml_redundancy_check:main"
+geos-viewer = "geos.xml_tools.viewer.bin.viewer:run"
+geos-exporter = "geos.xml_tools.viewer.bin.exporter:run"
+#validate = "geos.xml_tools.viewer.bin.validate:run"
+#xsd = "geos.xml_tools.viewer.bin.test_xsdata:run"
+geos-modifier = "geos.xml_tools.viewer.bin.modifier:run"
+#testCellLocator = "geos.xml_tools.viewer.bin.testCellLocator:run"
+geos-splitter = "geos.xml_tools.viewer.bin.splitter:run"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -37,3 +76,10 @@ python_functions = "test*"
 testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
+
+[tool.coverage.run]
+branch = true
+source = ["geos"]
+omit = [
+    "*/PVplugins/*",
+]

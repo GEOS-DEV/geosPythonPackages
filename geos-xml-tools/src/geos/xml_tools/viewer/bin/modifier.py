@@ -4,11 +4,9 @@
 
 import argparse
 from pathlib import PurePath
-
-from geos_xml_viewer.filters.geosDeckReader import GeosDeckReader
-
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetCollectionReader
 from vtkmodules.vtkCommonDataModel import vtkDataAssembly
+from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
 
 
 def valid_file( param: str ) -> str:

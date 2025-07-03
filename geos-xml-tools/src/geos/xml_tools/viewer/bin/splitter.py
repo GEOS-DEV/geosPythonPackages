@@ -4,9 +4,8 @@
 
 import argparse
 from pathlib import PurePath
-
-from geos_xml_viewer.algorithms.deck import SimulationDeck, read
 from lxml import etree as ElementTree  # type: ignore[import-untyped]
+from geos.xml_tools.vtk_builder import SimulationDeck, read
 
 
 def valid_file( param: str ) -> str:
