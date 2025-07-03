@@ -143,8 +143,8 @@ class Solver:
                     raise ValueError(
                         f"The solver type '{self.type}' does not exist in your XML '{self.xml.filename}'." )
 
+        geosState: int = self._getGEOSState()
         if not self.alreadyInitialized:
-            geosState: int = self._getGEOSState()
             if geosState == GEOS_STATE.UNINITIALIZED.value:
                 self.geosx = pygeosx.initialize( rank, self.geosxArgs.getCommandLine() )
                 self.alreadyInitialized = True
@@ -167,6 +167,10 @@ class Solver:
             self.updateTargetRegions()
             self.updateOutputs()
             self.updateTimeVariables()
+
+        else:
+            if geosState == GEOS_STATE.COMPLETED.value:
+                self.geosx = pygeosx.reinit( self.geosxArgs.getCommandLine() )
 
     """
     Accessors from pygeosx and xml
