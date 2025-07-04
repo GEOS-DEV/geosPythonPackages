@@ -13,7 +13,7 @@
 
 import numpy as np
 import numpy.typing as npt
-from typing import Dict, List
+from typing import Dict, List, Optional
 from typing_extensions import Self
 from geos.pygeos_tools.solvers.Solver import Solver
 from geos.pygeos_tools.wrapper import get_matching_wrapper_path, set_wrapper_to_value, allgather_wrapper
@@ -55,7 +55,7 @@ class GravitySolver( Solver ):
         """
         return self.getGeosWrapperByName( "gzAtStations", [ "Solvers" ] )
 
-    def getDensityModel( self: Self, filterGhost: bool = False, **kwargs ) -> npt.NDArray:
+    def getDensityModel( self: Self, filterGhost: bool = False, **kwargs ) -> Optional[np.ndarray]:
         """
         Get the density values
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -81,6 +81,7 @@ class GravitySolver( Solver ):
                     return density_filtered
                 else:
                     print( "getDensityModel->filterGhostRank: No ghostRank was found.", flush=True )
+                    return None
             else:
                 return density
         else:

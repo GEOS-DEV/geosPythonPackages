@@ -58,7 +58,7 @@ def computeL2Loss( predicted: np.ndarray, observed: np.ndarray, scale: float = 1
     residual = computeResidual( predicted, observed )
     loss = 0.5 * np.linalg.norm( residual )**2
 
-    return scale * loss
+    return float(scale * loss)
 
 
 def gradientTest( f: Callable[ [ np.ndarray ], float ],
@@ -128,7 +128,7 @@ def gradientTest( f: Callable[ [ np.ndarray ], float ],
     if ind.size > 1:
         slope = np.diff( np.log( e1[ ind ] ) ) / np.diff( np.log( h[ ind ] ) )
         mean_slope = np.mean( slope )
-        passed = ( isclose( mean_slope, 2.0, abs_tol=0.1 ) or np.count_nonzero( slope > 1.9 ) > 2
+        passed = bool( isclose( mean_slope, 2.0, abs_tol=0.1 ) or np.count_nonzero( slope > 1.9 ) > 2
                    or np.all( e1 < 1e-15 ) )
     else:
         slope = np.array( [] )
@@ -174,8 +174,6 @@ def plotGradientTest( h: np.ndarray,
         warnings.warn( "matplotlib is not installed." )
         return None
 
-    import matplotlib
-    matplotlib.use( "Agg" )  # Safe for headless environments
     import matplotlib.pyplot as plt
 
     # Filter out invalid values
@@ -255,8 +253,8 @@ def plotGradientTestFromFile( filename: str,
     return plotGradientTest( h, e1, **kwargs )
 
 
-def adjointTest( A: callable,
-                 AT: callable,
+def adjointTest( A: Callable,
+                 AT: Callable,
                  x: np.ndarray,
                  y: np.ndarray,
                  tol: float = 1e-13,
@@ -266,9 +264,9 @@ def adjointTest( A: callable,
 
     Parameters
     ----------
-    A : callable
+    A : function
         Function that computes the forward operation A(x).
-    AT : callable
+    AT : function
         Function that computes the adjoint operation A^T(y).
     x : np.ndarray
         Input vector for the forward operation.

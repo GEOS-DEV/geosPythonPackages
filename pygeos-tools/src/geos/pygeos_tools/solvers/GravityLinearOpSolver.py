@@ -12,9 +12,11 @@
 # ------------------------------------------------------------------------------------------------------------
 
 import numpy as np
+from numpy.typing import DTypeLike
 from typing import Optional, Tuple
 from scipy.sparse.linalg import LinearOperator
 
+from geos.pygeos_tools.input.Xml import XML
 from geos.pygeos_tools.solvers.InversionUtils import computeResidual, computeL2Loss
 from geos.pygeos_tools.solvers.GravitySolver import GravitySolver
 
@@ -49,10 +51,10 @@ class GravityLinearOpSolver( LinearOperator ):
     def __init__( self,
                   rank: int = 0,
                   scaleData: float = 1.0,
-                  xml: Optional[ object ] = None,
+                  xml: Optional[ XML ] = None,
                   nm: int = 0,
                   nd: Optional[ int ] = None,
-                  dtype: np.dtype = np.float64 ) -> None:
+                  dtype: DTypeLike = np.float64 ) -> None:
 
         if nm <= 0:
             raise ValueError( f"Invalid dimensions: nm={nm}, must be a positive integer." )
