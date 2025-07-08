@@ -55,7 +55,7 @@ class GravitySolver( Solver ):
         """
         return self.getGeosWrapperByName( "gzAtStations", [ "Solvers" ] )
 
-    def getDensityModel( self: Self, filterGhost: bool = False, **kwargs ) -> Optional[np.ndarray]:
+    def getDensityModel( self: Self, filterGhost: bool = False, **kwargs ) -> Optional[ np.ndarray ]:
         """
         Get the density values
         WARNING: this function aims to work in the specific case of having only 1 CellElementRegion in your XML file
@@ -103,14 +103,15 @@ class GravitySolver( Solver ):
         mode_key = get_matching_wrapper_path( self.geosx, [ 'mode' ] )
         self.geosx.get_wrapper( mode_key ).set_value( mode )
 
-    def modeling( self: Self, model: npt.NDArray, scale_data: float = 1.0 ) -> npt.NDArray:
+    def modeling( self: Self, model: Optional[ npt.NDArray ], scale_data: float = 1.0 ) -> npt.NDArray:
 
         # Make sure we are in modeling mode.
         self.setMode( "modeling" )
         self.applyInitialConditions()
 
         # Send model.
-        self.updateDensityModel( model )
+        if model is not None:
+            self.updateDensityModel( model )
 
         # Run.
         while run() != COMPLETED:

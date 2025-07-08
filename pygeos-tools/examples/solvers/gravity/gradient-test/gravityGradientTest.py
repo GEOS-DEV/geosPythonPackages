@@ -21,7 +21,7 @@ from geos.pygeos_tools.solvers import GravityLinearOpSolver
 from geos.pygeos_tools.solvers.InversionUtils import gradientTest, plotGradientTestFromFile
 
 __doc__ = """
-This is an example of how to set up and run a gradient test for GEOS simulation using the GravitySolver.
+Example script demonstrating how to configure and run a gradient test for GEOS gravity simulation using the GravityLinearOpSolver.
 """
 
 

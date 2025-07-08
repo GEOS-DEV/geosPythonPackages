@@ -21,7 +21,7 @@ from geos.pygeos_tools.solvers import GravityLinearOpSolver
 from geos.pygeos_tools.solvers.InversionUtils import adjointTest
 
 __doc__ = """
-This is an example of how to set up and run an adjoint test for GEOS simulation using the GravitySolver.
+Example script demonstrating how to configure and run an adjoint test for GEOS gravity simulation using the GravityLinearOpSolver.
 """
 
 

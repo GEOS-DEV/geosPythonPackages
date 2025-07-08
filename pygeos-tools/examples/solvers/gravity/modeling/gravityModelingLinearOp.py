@@ -21,20 +21,31 @@ from geos.pygeos_tools.solvers import GravityLinearOpSolver
 from pygeosx import run, COMPLETED
 
 __doc__ = """
-“This is an example of how to set up and run your GEOS simulation using the GravitySolver.
+Example script demonstrating how to configure and run a GEOS gravity simulation using the GravityLinearOpSolver.
 """
 
 
 def parse_args():
-    """Get arguments
+    """
+    Parse command-line arguments for the simulation.
 
     Returns:
-        argument '--xml': Input xml file for GEOSX
+        argparse.Namespace: Parsed arguments including:
+            --xml (str): Path to the GEOS input XML file (required).
+            --model (str, optional): Path to a .npy file containing the density model.
+            --nm (int, optional): Number of model elements. Required if --model is not provided.
+            --save_gz (str, optional): Path to save the computed gz output as a .npy file.
     """
-    parser = argparse.ArgumentParser( description="Gravity simulation example" )
-    parser.add_argument( '--xml', type=str, required=True, help="Input xml file for GEOS" )
-    parser.add_argument( '--m_true', type=str, required=True, help="True model (.npy)" )
 
+    parser = argparse.ArgumentParser(description="Gravity modeling example")
+    parser.add_argument('--xml', type=str, required=True, help="Input xml file for GEOS")
+    parser.add_argument('--model', type=str, default=None,
+                        help="Density model file (.npy). If not provided, --nm must be specified")
+    parser.add_argument('--nm', type=int, default=None,
+                        help="Model size. Required if --model is not provided")
+    parser.add_argument("--save_gz", type=str, default=None,
+                        help="Optional output file to save gz (.npy)")
+    
     args, _ = parser.parse_known_args()
     return args
 
@@ -47,14 +58,30 @@ def main():
     xmlfile = args.xml
     xml = XML( xmlfile )
 
-    m_true = np.load( args.m_true )
+    if args.model is not None:
+        model = np.load(args.model)
+        print( f"Density min={np.min(model)}, max={np.max(model)}", flush=True )
+        if args.nm is not None and model.size != args.nm:
+            raise ValueError(f"Mismatch: model has size {model.size}, but nm={args.nm}")
+        nm = model.size
+    else:
+        if args.nm is None:
+            raise ValueError("Either --model or --nm must be provided")
+        model = None
+        nm = args.nm
 
-    solver = GravityLinearOpSolver( rank=rank, xml=xml, nm=m_true.size )
+    # Initialize solver
+    solver = GravityLinearOpSolver( rank=rank, xml=xml, nm=nm )
 
-    print( f"Density min={np.min(m_true)}, max={np.max(m_true)}", flush=True )
+    # Perform modeling
+    gz = solver.getData( model )
 
-    gz = solver.getData( m_true )
-    print( f"gz min={np.min(gz)}, max={np.max(gz)}" )
+    # Save output
+    if rank == 0:
+        print(f"gz min={np.min(gz)}, max={np.max(gz)}")
+        if args.save_gz:
+            np.save(args.save_gz, gz)
+            print(f"gz saved to {args.save_gz}")
 
     solver.finalize()
 

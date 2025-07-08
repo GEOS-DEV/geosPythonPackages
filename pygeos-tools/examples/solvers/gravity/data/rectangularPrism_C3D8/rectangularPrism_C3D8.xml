@@ -72,8 +72,7 @@
       targetRegions="{ region }"
       mode="adjoint"
       logLevel="1"
-      outputGz="1"
-      outputGzBasename="gz_C3D8"
+      outputGz="0"
       stationCoordinates="{
 { 0, 0, 10 },
 { 500, 0, 10 },

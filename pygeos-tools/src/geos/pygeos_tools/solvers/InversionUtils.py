@@ -58,7 +58,7 @@ def computeL2Loss( predicted: np.ndarray, observed: np.ndarray, scale: float = 1
     residual = computeResidual( predicted, observed )
     loss = 0.5 * np.linalg.norm( residual )**2
 
-    return float(scale * loss)
+    return float( scale * loss )
 
 
 def gradientTest( f: Callable[ [ np.ndarray ], float ],
@@ -98,7 +98,6 @@ def gradientTest( f: Callable[ [ np.ndarray ], float ],
         Slope of the error curve at every step (should be 2. if the jacobian is correct).
     history: :obj:`np.ndarray`
         Full convergence history (steps and errors), useful for further display.
-
     """
     f0 = f( m0 )
     g0_dm = np.dot( g( m0 ), dm )
@@ -128,8 +127,8 @@ def gradientTest( f: Callable[ [ np.ndarray ], float ],
     if ind.size > 1:
         slope = np.diff( np.log( e1[ ind ] ) ) / np.diff( np.log( h[ ind ] ) )
         mean_slope = np.mean( slope )
-        passed = bool( isclose( mean_slope, 2.0, abs_tol=0.1 ) or np.count_nonzero( slope > 1.9 ) > 2
-                   or np.all( e1 < 1e-15 ) )
+        passed = bool(
+            isclose( mean_slope, 2.0, abs_tol=0.1 ) or np.count_nonzero( slope > 1.9 ) > 2 or np.all( e1 < 1e-15 ) )
     else:
         slope = np.array( [] )
         passed = False
