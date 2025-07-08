@@ -17,6 +17,12 @@ class Well:
     well_path: str
     polyline: pv.PolyData
     tube: pv.PolyData
+
+
+@dataclass
+class WellActor:
+    """A WellActor stores the VTK Actor representing a well."""
+    well_path: str
     actor: pv.Actor
 
 
@@ -28,6 +34,7 @@ class WellViewer:
         A Well in GEOS could a InternalWell or a Vtkwell.
         """
         self._wells: list[ Well ] = []
+        self._wells_actors: list[ WellActor ] = []
 
         self.size: float = size
         self.amplification: float = amplification
@@ -51,7 +58,8 @@ class WellViewer:
         radius = self.size * ( self.STARTING_VALUE / 100 )
         tube = mesh.tube( radius=radius, n_sides=50 )
 
-        self._wells.append( Well( mesh_path, mesh, tube, pv.Actor() ) )
+        self._wells.append( Well( mesh_path, mesh, tube ) )
+        self._wells_actors.append( WellActor( mesh_path, pv.Actor() ) )
 
         return len( self._wells ) - 1
 
@@ -78,21 +86,21 @@ class WellViewer:
 
     def append_actor( self, perforation_path: str, tube_actor: pv.Actor ) -> None:
         """Append a given actor, typically the Actor returned by the pv.Plotter() when a given mes is added."""
-        index = self._get_index_from_perforation( perforation_path )
+        index = self._get_actor_index_from_perforation( perforation_path )
         if index == -1:
             print( "Cannot found the well to remove from path: ", perforation_path )
             return
 
-        self._wells[ index ].actor = tube_actor
+        self._wells_actors[ index ].actor = tube_actor
 
     def get_actor( self, perforation_path: str ) -> pv.Actor | None:
         """Retrieve the polyline linked to a given perforation path."""
-        index = self._get_index_from_perforation( perforation_path )
+        index = self._get_actor_index_from_perforation( perforation_path )
         if index == -1:
             print( "Cannot found the well to remove from path: ", perforation_path )
             return None
 
-        return self._wells[ index ].actor
+        return self._wells_actors[ index ].actor
 
     def update( self, value: float ) -> None:
         """Update the radius of the tubes."""
@@ -108,6 +116,14 @@ class WellViewer:
 
         self._wells.remove( self._wells[ index ] )
 
+    def remove_actor( self, perforation_path: str ) -> None:
+        """Clear all data stored in this class."""
+        index = self._get_actor_index_from_perforation( perforation_path )
+        if index == -1:
+            print( "Cannot found the well to remove from path: ", perforation_path )
+
+        self._wells_actors.remove( self._wells_actors[ index ] )
+
     def _get_index_from_perforation( self, perforation_path: str ) -> int:
         """Retrieve the well associated to a given perforation, otherwise return -1."""
         index = -1
@@ -116,6 +132,19 @@ class WellViewer:
 
         for i in range( 0, len( self._wells ) ):
             if self._wells[ i ].well_path in perforation_path:
+                index = i
+                break
+
+        return index
+
+    def _get_actor_index_from_perforation( self, perforation_path: str ) -> int:
+        """Retrieve the well actor associated to a given perforation, otherwise return -1."""
+        index = -1
+        if len( self._wells_actors ) == 0:
+            return index
+
+        for i in range( 0, len( self._wells_actors ) ):
+            if self._wells_actors[ i ].well_path in perforation_path:
                 index = i
                 break
 

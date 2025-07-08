@@ -235,6 +235,7 @@ class DeckViewer( vuetify.VCard ):
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )  # type: ignore
+            self.well_engine.remove_actor( path )
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
@@ -249,6 +250,7 @@ class DeckViewer( vuetify.VCard ):
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )  # type: ignore
+            self.well_engine.remove_actor( path )
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
