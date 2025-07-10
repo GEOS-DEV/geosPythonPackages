@@ -3,6 +3,7 @@ import unittest
 import re
 import os
 import filecmp
+import shutil
 from geos.xml_tools import regex_tools, unit_manager, xml_processor
 from . import generate_test_xml
 import argparse
@@ -146,28 +147,46 @@ class TestXMLProcessor( unittest.TestCase ):
 
     @classmethod
     def setUpClass( cls ) -> None:
-        """Set test up."""
-        generate_test_xml.generate_test_xml_files( '.' )
+        """Set test up by creating a dedicated folder for test files."""
+        # Get the absolute path of the directory containing this script.
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Define the path for the folder that will store generated test files.
+        cls.test_files_dir = os.path.join(script_dir, 'generated_test_files')
+        
+        # Create the folder. 'exist_ok=True' prevents an error if it already exists.
+        os.makedirs(cls.test_files_dir, exist_ok=True)
+        
+        # Generate the required XML files inside our new folder.
+        generate_test_xml.generate_test_xml_files(cls.test_files_dir)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """Clean up and remove the generated test files and folder."""
+        # Check if the directory exists and then remove it completely.
+        if os.path.exists(cls.test_files_dir):
+            shutil.rmtree(cls.test_files_dir)
 
     @parameterized.expand( [ [ 'no_advanced_features_input.xml', 'no_advanced_features_target.xml' ],
                              [ 'parameters_input.xml', 'parameters_target.xml' ],
                              [ 'included_input.xml', 'included_target.xml' ],
                              [ 'symbolic_parameters_input.xml', 'symbolic_parameters_target.xml' ] ] )
     def test_xml_processor( self: Self, input_file: str, target_file: str, expect_fail: bool = False ) -> None:
-        """Test of xml processor.
-
-        Args:
-            input_file (str): input file name
-            target_file (str): target file name
-            expect_fail (bool, optional): Accept failure if True. Defaults to False.
-        """
+        """Test of xml processor using files from the dedicated test folder."""
+        # Construct the full paths for the input, target, and processed output files.
+        input_path = os.path.join(self.test_files_dir, input_file)
+        target_path = os.path.join(self.test_files_dir, target_file)
+        output_path = input_path + '.processed'
+        
         try:
-            tmp = xml_processor.process( input_file,
-                                         outputFile=input_file + '.processed',
+            # Process the input file, saving the output to our test folder.
+            tmp = xml_processor.process( input_path,
+                                         outputFile=output_path,
                                          verbose=0,
                                          keep_parameters=False,
                                          keep_includes=False )
-            self.assertTrue( filecmp.cmp( tmp, target_file ) != expect_fail )
+            # Compare the processed file with the target file.
+            self.assertTrue( filecmp.cmp( tmp, target_path ) != expect_fail )
         except Exception:
             self.assertTrue( expect_fail )
 

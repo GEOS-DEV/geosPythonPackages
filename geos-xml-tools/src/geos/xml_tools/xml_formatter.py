@@ -71,20 +71,21 @@ def format_xml_level( output: TextIO,
         output.write( opening_line )
 
         # Write attributes
-        if ( len( node.attrib ) > 0 ):
+        if len( node.attrib ) > 0:
             # Choose indentation
             attribute_indent = '%s' % ( indent * ( level + 1 ) )
             if modify_attribute_indent:
                 attribute_indent = ' ' * ( len( opening_line ) )
 
             # Get a copy of the attributes
-            attribute_dict = {}
-            if ( ( level == 0 ) & include_namespace ):
-                # Handle the optional namespace information at the root level
-                # Note: preferably, this would point to a schema we host online
-                attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
-                attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
-            elif ( level > 0 ):
+            attribute_dict = dict( node.attrib )
+            # Conditionally add namespace attributes if at the root level
+            if level == 0 and include_namespace:
+                # Note: This will overwrite any existing namespace attributes with these default values.
+                # If you want to merge instead, you could use a dictionary update.
+                attribute_dict['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance'
+                attribute_dict['xsi:noNamespaceSchemaLocation'] = '/usr/gapps/GEOS/schema/schema.xsd'
+            elif level > 0:
                 attribute_dict = node.attrib
 
             # Sort attribute names
@@ -100,7 +101,7 @@ def format_xml_level( output: TextIO,
 
             for ii in range( 0, len( akeys ) ):
                 k = akeys[ ii ]
-                if ( ( ii == 0 ) & modify_attribute_indent ):
+                if ii == 0 and modify_attribute_indent:
                     output.write( ' %s=\"%s\"' % ( k, attribute_dict[ k ] ) )
                 else:
                     output.write( '\n%s%s=\"%s\"' % ( attribute_indent, k, attribute_dict[ k ] ) )
@@ -114,8 +115,7 @@ def format_xml_level( output: TextIO,
                                   sort_attributes, close_tag_newline, include_namespace )
 
                 # Add space between blocks
-                if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) &
-                     ( child.tag is not ElementTree.Comment ) ):
+                if level < block_separation_max_depth and ii < Nc - 1 and child.tag is not ElementTree.Comment:
                     output.write( '\n' )
 
             # Write the end tag

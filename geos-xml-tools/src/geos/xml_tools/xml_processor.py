@@ -10,11 +10,22 @@ from typing import Iterable, Tuple, List
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
-__doc__ = """Tools for processing xml files in GEOSX."""
+__doc__ = """
+Pre-processor for XML files in GEOS.
+The main goal of this script is to process and simplify complex XML configurations.
+It achieves this by performing several key actions in sequence:
+* Merging Files: Combines multiple XML files into one.
+* Substituting Variables: Replaces placeholders (like $pressure) with actual values.
+* Handling Units: Converts values with units (like 100[psi]) into a standard base unit.
+* Evaluating Math: Calculates mathematical expressions directly within the XML.
+* Validation: Optionally checks if the final XML conforms to a master schema.
+"""
 
 
 def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int ) -> None:
-    """Merge nodes in an included file into the current structure level by level.
+    """Merges two XML nodes. When it encounters a child node in the targetNode that has the same name
+    as one in the existingNode, it merges them recursively instead of just adding a duplicate.
+    Otherwise, it appends new children.
 
     Args:
         existingNode (lxml.etree.Element): The current node in the base xml structure.
@@ -60,7 +71,9 @@ def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.
 
 
 def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCount: int, maxInclude: int = 100 ) -> None:
-    """Recursively merge included files into the current structure.
+    """Opens an XML file specified in an <Included> tag, recursively calls itself for any includes within that file,
+    and then uses merge_xml_nodes to merge the contents into the main XML tree.
+    It includes a safety check to prevent infinite include loops.
 
     Args:
         root (lxml.etree.Element): The root node of the base xml structure.
@@ -104,7 +117,11 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
 
 
 def apply_regex_to_node( node: ElementTree.Element ) -> None:
-    """Apply regexes that handle parameters, units, and symbolic math to each xml attribute in the structure.
+    """Recursively going through every element in the XML tree and inspects its attributes.
+    For each attribute value, it sequentially applies regular expressions to:
+    * Replace parameter variables ($variable) with their values.
+    * Convert physical units (value[unit]) into base SI values.
+    * Evaluate symbolic math expressions (`1+2*3`) into a single number.
 
     Args:
         node (lxml.etree.Element): The target node in the xml structure.
@@ -164,7 +181,12 @@ def process(
         parameter_override: List[ Tuple[ str, str ] ] = [],  # noqa: B006
         keep_parameters: bool = True,
         keep_includes: bool = True ) -> str:
-    """Process an xml file.
+    """Process an xml file by:
+    1) Merging multiple input files specified via <Included> tags into a single one.
+    2) Building a map of variables from <Parameters> blocks.
+    3) Applying regex substitutions for parameters ($variable), units (10[m/s]), symbolic math expressions (`1+2*3`).
+    4) Write the XML after these first 3 steps as a new file.
+    4) Optionally validates the final XML against a schema.
 
     Args:
         inputFiles (list): Input file names.
@@ -251,19 +273,22 @@ def process(
     # Process any parameters, units, and symbolic math in the xml
     apply_regex_to_node( root )
 
-    # Comment out or remove the Parameter, Included nodes
-    for includeNode in root.findall( 'Included' ):
-        if keep_includes:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( includeNode ) ) )
-        root.remove( includeNode )
-    for parameterNode in root.findall( 'Parameters' ):
-        if keep_parameters:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( parameterNode ) ) )
-        root.remove( parameterNode )
-    for overrideNode in root.findall( 'CommandLineOverride' ):
-        if keep_parameters:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( overrideNode ) ) )
-        root.remove( overrideNode )
+    # A dictionary to map element tags to their cleanup flags
+    nodes_to_cleanup = {
+        'Included': keep_includes,
+        'Parameters': keep_parameters,
+        'CommandLineOverride': keep_parameters
+    }
+
+    # Iterate over a static copy of the children to safely modify the tree
+    for node in list(root):
+        # Check if the node's tag is one we need to process
+        if node.tag in nodes_to_cleanup:
+            # If the cleanup flag is True, create and append a comment
+            if nodes_to_cleanup[node.tag]:
+                root.insert( -1, ElementTree.Comment(ElementTree.tostring(node) ) )
+            # We remove the original node
+            root.remove(node)
 
     # Generate a random output name if not specified
     if not outputFile:

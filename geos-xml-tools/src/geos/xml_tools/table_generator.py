@@ -1,14 +1,16 @@
 import numpy as np
 from typing import Tuple, Iterable, Dict
 
-__doc__ = """Tools for reading/writing GEOSX ascii tables."""
+__doc__ = """
+Tools to save and load multi-dimensional data tables to and from a .geos file extension.
+"""
 
 
 def write_GEOS_table( axes_values: Iterable[ np.ndarray ],
                       properties: Dict[ str, np.ndarray ],
                       axes_names: Iterable[ str ] = [ 'x', 'y', 'z', 't' ],
                       string_format: str = '%1.5e' ) -> None:
-    """Write an GEOS-compatible ascii table.
+    """Write a GEOS-compatible ascii table.
 
     Args:
         axes_values (list): List of arrays containing the coordinates for each axis of the table.

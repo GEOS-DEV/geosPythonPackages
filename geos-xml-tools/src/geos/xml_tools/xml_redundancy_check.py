@@ -22,12 +22,19 @@ def check_redundancy_level( local_schema: Dict[ str, Any ],
     """
     node_is_required = 0
     for ka in node.attrib:
-        if ( ka in whitelist ) or ( ka not in local_schema[ 'attributes' ] ) or (
-                'default'
-                not in local_schema[ 'attributes' ][ ka ] ) or ( node.get( ka )
-                                                                 != local_schema[ 'attributes' ][ ka ][ 'default' ] ):
+        # An attribute is considered essential and is kept if it meets any of these conditions:
+        # * It's on the special whitelist (like component).
+        # * It's not defined in the schema (so we can't know if it's a default).
+        # * The schema doesn't specify a default value for it.
+        # * Its value is different from the schema's default value.
+        if ka in whitelist or \
+           ka not in local_schema[ 'attributes' ] or \
+           'default' not in local_schema[ 'attributes' ][ ka ] or \
+           node.get( ka ) != local_schema[ 'attributes' ][ ka ][ 'default' ]:
             node_is_required += 1
         else:
+            # If an attribute is not essential (meaning its value is exactly the same as the default in the schema),
+            # it's considered redundant and gets deleted from the node.
             node.attrib.pop( ka )
 
     for child in node:
