@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
+from geos.xml_tools.vtk_builder import create_vtk_deck
 
 # Dir containing the files
 FIXTURE_DIR = Path( __file__ ).parent.resolve() / "files"
@@ -15,9 +15,6 @@ def test_DeckReader() -> None:
     """Test the DeckReader."""
     datafile = Path( "singlePhaseFlow/FieldCaseTutorial3_smoke.xml" )
     path = str( FIXTURE_DIR / datafile )
-    reader = GeosDeckReader()
-    reader.SetFileName( path )
-    reader.SetAttributeName( "attribute" )
-    reader.Update()
-    assert ( reader.GetOutputDataObject( 0 ).GetClassName() == "vtkPartitionedDataSetCollection" )
-    assert reader.GetOutputDataObject( 0 ).GetNumberOfPartitionedDataSets() == 5
+    vtk_collection = create_vtk_deck( path, "attribute" )
+    assert ( vtk_collection.GetClassName() == "vtkPartitionedDataSetCollection" )
+    assert vtk_collection.GetNumberOfPartitionedDataSets() == 5

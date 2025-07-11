@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Lionel Untereiner
-from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
+from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy  # type: ignore[import-untyped]
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
@@ -22,7 +22,7 @@ paraview_plugin_version = "0.1.0"
 )
 class PVGeosDeckReader( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self ) -> Self:
+    def __init__( self: Self ) -> None:
         """Constructor of the reader."""
         VTKPythonAlgorithmBase.__init__(
             self,
@@ -30,10 +30,11 @@ class PVGeosDeckReader( VTKPythonAlgorithmBase ):
             nOutputPorts=1,
             outputType="vtkPartitionedDataSetCollection",
         )  # type: ignore
-        self.__filename: str
-        from geos.xml_tools.viewer.filters.geosDeckReader import GeosDeckReader
+        self.__filename: str = ""
+        self.__attributeName: str = "Region"
+        from geos.xml_tools.vtk_builder import create_vtk_deck
 
-        self.__realAlgorithm = GeosDeckReader()
+        self.__create_vtk_deck = create_vtk_deck
 
     @smproperty.stringvector( name="FileName" )  # type: ignore
     @smdomain.filelist()  # type: ignore
@@ -46,8 +47,6 @@ class PVGeosDeckReader( VTKPythonAlgorithmBase ):
         """
         if self.__filename != name:
             self.__filename = name
-            self.__realAlgorithm.SetFileName( self.__filename )
-            self.__realAlgorithm.Update()
             self.Modified()
 
     def RequestData(
@@ -69,9 +68,10 @@ class PVGeosDeckReader( VTKPythonAlgorithmBase ):
         Returns:
             int: Returns 1 if the pipeline is successful
         """
-        if self.__filename is None:
+        if not self.__filename:
             raise RuntimeError( "No filename specified" )
 
-        output = vtkPartitionedDataSetCollection.GetData( inInfoVec, 0 )
-        output.ShallowCopy( self.__realAlgorithm.GetOutputDataObject( 0 ) )
+        output = vtkPartitionedDataSetCollection.GetData( outInfoVec, 0 )
+        vtk_collection = self.__create_vtk_deck( self.__filename, self.__attributeName )
+        output.ShallowCopy( vtk_collection )
         return 1
