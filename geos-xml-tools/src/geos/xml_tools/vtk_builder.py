@@ -113,7 +113,7 @@ def read( xmlFilepath: str ) -> SimulationDeck:
 
 def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.vtkPartitionedDataSetCollection:
     """
-    Processes a GEOSX XML deck and converts it into a VTK partitioned dataset collection.
+    Processes a GEOS XML deck and converts it into a VTK partitioned dataset collection.
 
     This function serves as the primary entry point. It uses the standard `xml_processor`
     to handle file inclusions and other preprocessing, then builds the VTK model.
@@ -283,11 +283,14 @@ def _read_wells( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollect
                 pp = vtk.vtkPartitionedDataSet()
                 name = perfo.attrib[ "name" ]
                 z = literal_eval( perfo.attrib[ "distanceFromHead" ].translate( tr ) )
-                perfo_point = np.array( [ tip[ 0 ], tip[ 1 ], tip[ 2 ] - z ], dtype=np.float64 )
+                # Handle case where z might be a list (e.g., from "{5.0}" -> [5.0])
+                if isinstance(z, list):
+                    z = z[0]
+                perfo_point = np.array( [ float(tip[ 0 ]), float(tip[ 1 ]), float(tip[ 2 ]) - z ], dtype=np.float64 )
 
                 ppoints = vtk.vtkPoints()
                 ppoints.SetNumberOfPoints( 1 )
-                ppoints.SetPoint( 0, perfo_point )
+                ppoints.SetPoint( 0, perfo_point.tolist() )
 
                 pperfo_poly = vtk.vtkPolyData()
                 pperfo_poly.SetPoints( ppoints )
