@@ -149,23 +149,23 @@ class TestXMLProcessor( unittest.TestCase ):
     def setUpClass( cls ) -> None:
         """Set test up by creating a dedicated folder for test files."""
         # Get the absolute path of the directory containing this script.
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        
+        script_dir = os.path.dirname( os.path.abspath( __file__ ) )
+
         # Define the path for the folder that will store generated test files.
-        cls.test_files_dir = os.path.join(script_dir, 'generated_test_files')
-        
+        cls.test_files_dir = os.path.join( script_dir, 'generated_test_files' )
+
         # Create the folder. 'exist_ok=True' prevents an error if it already exists.
-        os.makedirs(cls.test_files_dir, exist_ok=True)
-        
+        os.makedirs( cls.test_files_dir, exist_ok=True )
+
         # Generate the required XML files inside our new folder.
-        generate_test_xml.generate_test_xml_files(cls.test_files_dir)
+        generate_test_xml.generate_test_xml_files( cls.test_files_dir )
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDownClass( cls ) -> None:
         """Clean up and remove the generated test files and folder."""
         # Check if the directory exists and then remove it completely.
-        if os.path.exists(cls.test_files_dir):
-            shutil.rmtree(cls.test_files_dir)
+        if os.path.exists( cls.test_files_dir ):
+            shutil.rmtree( cls.test_files_dir )
 
     @parameterized.expand( [ [ 'no_advanced_features_input.xml', 'no_advanced_features_target.xml' ],
                              [ 'parameters_input.xml', 'parameters_target.xml' ],
@@ -174,10 +174,10 @@ class TestXMLProcessor( unittest.TestCase ):
     def test_xml_processor( self: Self, input_file: str, target_file: str, expect_fail: bool = False ) -> None:
         """Test of xml processor using files from the dedicated test folder."""
         # Construct the full paths for the input, target, and processed output files.
-        input_path = os.path.join(self.test_files_dir, input_file)
-        target_path = os.path.join(self.test_files_dir, target_file)
+        input_path = os.path.join( self.test_files_dir, input_file )
+        target_path = os.path.join( self.test_files_dir, target_file )
         output_path = input_path + '.processed'
-        
+
         try:
             # Process the input file, saving the output to our test folder.
             tmp = xml_processor.process( input_path,

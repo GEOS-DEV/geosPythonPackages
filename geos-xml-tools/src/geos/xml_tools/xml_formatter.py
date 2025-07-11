@@ -83,8 +83,8 @@ def format_xml_level( output: TextIO,
             if level == 0 and include_namespace:
                 # Note: This will overwrite any existing namespace attributes with these default values.
                 # If you want to merge instead, you could use a dictionary update.
-                attribute_dict['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance'
-                attribute_dict['xsi:noNamespaceSchemaLocation'] = '/usr/gapps/GEOS/schema/schema.xsd'
+                attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
+                attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
             elif level > 0:
                 attribute_dict = node.attrib
 

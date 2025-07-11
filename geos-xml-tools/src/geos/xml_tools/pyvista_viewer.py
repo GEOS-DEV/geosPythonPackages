@@ -182,14 +182,14 @@ def find_surfaces( xmlFile: str ) -> list[ str ]:
     """Find all surfaces in xml file using lxml instead of xsdata."""
     # Process the XML file using the existing geos-xml-tools processor
     processed_xml_path = process( inputFiles=[ xmlFile ], keep_parameters=True, keep_includes=True )
-    
+
     # Parse the processed XML with lxml
     parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
     tree = ElementTree.parse( processed_xml_path, parser=parser )
     root = tree.getroot()
-    
+
     used: list[ str ] = []
-    
+
     # Find all FieldSpecifications
     for field_spec in root.findall( ".//FieldSpecifications/FieldSpecification" ):
         set_names_attr = field_spec.get( "setNames" )
@@ -202,7 +202,7 @@ def find_surfaces( xmlFile: str ) -> list[ str ]:
                 elements.remove( "all" )
             if elements:
                 used.extend( elements )
-    
+
     return used
 
 

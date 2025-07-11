@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Iterable, Dict
 from geos.xml_tools import command_line_parsers
 
-
 __doc__ = """
 Tool designed to analyze how well a project's XML files cover the possibilities defined in an XML Schema Definition (.xsd) file.
 It checks which attributes are used in a codebase and generates a report.

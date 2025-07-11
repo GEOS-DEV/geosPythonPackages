@@ -281,14 +281,14 @@ def process(
     }
 
     # Iterate over a static copy of the children to safely modify the tree
-    for node in list(root):
+    for node in list( root ):
         # Check if the node's tag is one we need to process
         if node.tag in nodes_to_cleanup:
             # If the cleanup flag is True, create and append a comment
-            if nodes_to_cleanup[node.tag]:
-                root.insert( -1, ElementTree.Comment(ElementTree.tostring(node) ) )
+            if nodes_to_cleanup[ node.tag ]:
+                root.insert( -1, ElementTree.Comment( ElementTree.tostring( node ) ) )
             # We remove the original node
-            root.remove(node)
+            root.remove( node )
 
     # Generate a random output name if not specified
     if not outputFile:
