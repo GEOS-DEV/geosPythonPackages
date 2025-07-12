@@ -16,7 +16,7 @@ def build_preprocessor_input_parser() -> argparse.ArgumentParser:
                          type=str,
                          help='Compiled xml file name (otherwise, it is randomly genrated)',
                          default='' )
-    parser.add_argument( '-s', '--schema', type=str, help='GEOSX schema to use for validation', default='' )
+    parser.add_argument( '-s', '--schema', type=str, help='GEOS schema to use for validation', default='' )
     parser.add_argument( '-v', '--verbose', type=int, help='Verbosity of outputs', default=0 )
     parser.add_argument( '-p',
                          '--parameters',
@@ -69,7 +69,7 @@ def build_attribute_coverage_input_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: parser instance
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
+    parser.add_argument( '-r', '--root', type=str, help='GEOS root', default='' )
     parser.add_argument( '-o', '--output', type=str, help='Output file name', default='attribute_test.xml' )
     return parser
 
@@ -81,5 +81,5 @@ def build_xml_redundancy_input_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: parser instance
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
+    parser.add_argument( '-r', '--root', type=str, help='GEOS root', default='' )
     return parser

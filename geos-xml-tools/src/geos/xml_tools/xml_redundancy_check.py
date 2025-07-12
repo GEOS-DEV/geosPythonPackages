@@ -66,7 +66,7 @@ def process_xml_files( geosx_root: str ) -> None:
     """Test for xml redundancy.
 
     Args:
-        geosx_root (str): GEOSX root directory
+        geosx_root (str): GEOS root directory
     """
     # Parse the schema
     geosx_root = os.path.expanduser( geosx_root )
@@ -86,7 +86,7 @@ def main() -> None:
     """Entry point for the xml attribute usage test script.
 
     Args:
-        -r/--root (str): GEOSX root directory
+        -r/--root (str): GEOS root directory
     """
     # Parse the user arguments
     parser = command_line_parsers.build_xml_redundancy_input_parser()

@@ -12,10 +12,10 @@ from vtkmodules.util.numpy_support import numpy_to_vtk as numpy_to_vtk_
 from geos.xml_tools import xml_processor
 
 __doc__ = """
-Converts a processed GEOSX XML element tree into a VTK data structure.
+Converts a processed GEOS XML element tree into a VTK data structure.
 
 This module is designed to work on an lxml ElementTree that has already
-been processed by geosx_xml_tools.xml_processor. It extracts geometric
+been processed by geos_xml_tools.xml_processor. It extracts geometric
 information (meshes, wells, boxes) and builds a vtk.vtkPartitionedDataSetCollection
 for visualization or further analysis.
 """
@@ -67,7 +67,7 @@ def numpy_to_vtk( a: npt.DTypeLike ) -> vtk.vtkDataArray:
 
 def read( xmlFilepath: str ) -> SimulationDeck:
     """
-    Reads a GEOSX xml file and processes it using the geosx_xml_tools processor.
+    Reads a GEOS xml file and processes it using the geos_xml_tools processor.
     This handles recursive includes, parameter substitution, unit conversion,
     and symbolic math.
 
@@ -125,7 +125,7 @@ def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.
     Returns:
         vtk.vtkPartitionedDataSetCollection: The fully constructed VTK data object.
     """
-    print( "Step 1: Processing XML deck with geosx_xml_tools processor..." )
+    print( "Step 1: Processing XML deck with geos_xml_tools processor..." )
     # Use the base processor to handle includes, parameters, units, etc.
     # This returns the path to a temporary, fully resolved XML file.
     processed_xml_path = xml_processor.process( inputFiles=[ xml_filepath ] )
@@ -284,9 +284,11 @@ def _read_wells( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollect
                 name = perfo.attrib[ "name" ]
                 z = literal_eval( perfo.attrib[ "distanceFromHead" ].translate( tr ) )
                 # Handle case where z might be a list (e.g., from "{5.0}" -> [5.0])
-                if isinstance(z, list):
-                    z = z[0]
-                perfo_point = np.array( [ float(tip[ 0 ]), float(tip[ 1 ]), float(tip[ 2 ]) - z ], dtype=np.float64 )
+                if isinstance( z, list ):
+                    z = z[ 0 ]
+                perfo_point = np.array( [ float(
+                    tip[ 0 ] ), float( tip[ 1 ] ), float( tip[ 2 ] ) - z ],
+                                        dtype=np.float64 )
 
                 ppoints = vtk.vtkPoints()
                 ppoints.SetNumberOfPoints( 1 )

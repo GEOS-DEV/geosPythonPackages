@@ -2,7 +2,7 @@ import re
 from geos.xml_tools import regex_tools
 from typing import List, Any, Dict
 
-__doc__ = """Tools for managing units in GEOSX."""
+__doc__ = """Tools for managing units in GEOS."""
 
 
 class UnitManager():
