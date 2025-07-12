@@ -1,10 +1,14 @@
 import sys
 import os
 import time
-from geos.xml_tools import xml_processor, command_line_parsers
-from typing import Callable, Any, Union, Iterable
+import argparse
+from typing import Callable, Any, Union, Iterable, Dict, Tuple
 
-__doc__ = """Command line tools for geosx_xml_tools."""
+from geos.xml_tools import xml_processor, command_line_parsers
+from geos.xml_tools import xml_formatter, attribute_coverage, xml_redundancy_check
+from geos.xml_tools import vtk_builder, pyvista_viewer
+
+__doc__ = """Unified command line tools for geos-xml-tools package."""
 
 
 def check_mpi_rank() -> int:
@@ -84,40 +88,305 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
     return wait_for_file_write_rank_0_inner
 
 
-def preprocess_serial() -> None:
-    """Entry point for the geosx_xml_tools console script."""
+# Command registry for unified handling
+COMMAND_REGISTRY: Dict[ str, Tuple[ str, str, Callable, Callable, str ] ] = {}
+
+
+def register_command( name: str,
+                      description: str,
+                      handler: Callable,
+                      parser_builder: Callable,
+                      examples: str = "" ) -> None:
+    """Register a command with its metadata and handlers.
+    
+    Args:
+        name: Command name
+        description: Command description
+        handler: Function to handle the command
+        parser_builder: Function to build the command's argument parser
+        examples: Example usage for the command
+    """
+    COMMAND_REGISTRY[ name ] = ( description, name, handler, parser_builder, examples )
+
+
+def build_main_parser() -> argparse.ArgumentParser:
+    """Build the main argument parser for geos-xml-tools.
+
+    Returns:
+        argparse.ArgumentParser: The main parser
+    """
+    parser = argparse.ArgumentParser( description="Unified command line tools for geos-xml-tools package",
+                                      formatter_class=argparse.RawDescriptionHelpFormatter,
+                                      epilog="""
+Available Commands and Options:
+
+PREPROCESS - XML preprocessing and variable substitution
+  geos-xml-tools preprocess [OPTIONS]
+  
+  Options:
+    -i, --input FILE          Input XML file(s) (multiple allowed)
+    -c, --compiled-name FILE  Output compiled XML file name
+    -s, --schema FILE         GEOS schema file for validation
+    -v, --verbose LEVEL       Verbosity level (0-3, default: 0)
+    -p, --parameters NAME VALUE  Parameter overrides (multiple allowed)
+  
+  Examples:
+    geos-xml-tools preprocess -i input.xml -c output.xml
+    geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000
+
+FORMAT - XML formatting and structure cleanup
+  geos-xml-tools format FILE [OPTIONS]
+  
+  Options:
+    -i, --indent SIZE         Indent size (default: 2)
+    -s, --style STYLE         Indent style (0=fixed, 1=hanging, default: 0)
+    -d, --depth DEPTH         Block separation depth (default: 2)
+    -a, --alphebitize LEVEL   Alphabetize attributes (0=no, 1=yes, default: 0)
+    -c, --close STYLE         Close tag style (0=same line, 1=new line, default: 0)
+    -n, --namespace LEVEL     Include namespace (0=no, 1=yes, default: 0)
+  
+  Examples:
+    geos-xml-tools format input.xml -i 4
+    geos-xml-tools format input.xml -i 2 -a 1 -c 1
+
+COVERAGE - XML attribute coverage analysis
+  geos-xml-tools coverage [OPTIONS]
+  
+  Options:
+    -r, --root PATH           GEOS root directory
+    -o, --output FILE         Output file name (default: attribute_test.xml)
+  
+  Examples:
+    geos-xml-tools coverage -r /path/to/geos/root
+    geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml
+
+REDUNDANCY - XML redundancy checking
+  geos-xml-tools redundancy [OPTIONS]
+  
+  Options:
+    -r, --root PATH           GEOS root directory
+  
+  Examples:
+    geos-xml-tools redundancy -r /path/to/geos/root
+
+VTK-BUILD - Build VTK deck from XML configuration
+  geos-xml-tools vtk-build FILE [OPTIONS]
+  
+  Options:
+    -a, --attribute NAME      Cell attribute name for region marker (default: Region)
+    -o, --output FILE         Output VTK file (optional)
+  
+  Examples:
+    geos-xml-tools vtk-build input.xml -a Region
+    geos-xml-tools vtk-build input.xml -a Region -o output.vtm
+
+VIEWER - 3D visualization viewer for GEOS data
+  geos-xml-tools viewer [OPTIONS]
+  
+  Options:
+    -xp, --xmlFilepath FILE   Path to XML file (required)
+    -vtpc, --vtpcFilepath FILE Path to .vtpc file (optional)
+    --showmesh BOOL           Show mesh (default: True)
+    --showsurfaces BOOL       Show surfaces (default: True)
+    --showboxes BOOL          Show boxes (default: True)
+    --showwells BOOL          Show wells (default: True)
+    --showperforations BOOL   Show well perforations (default: True)
+    --clipToBoxes BOOL        Show only mesh elements inside boxes (default: True)
+    --Zamplification FACTOR   Z amplification factor (default: 1.0)
+    --attributeName NAME      Attribute name (default: attribute)
+  
+  Examples:
+    geos-xml-tools viewer -xp input.xml --showmesh --showwells
+    geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region
+
+For detailed help on any command, use:
+  geos-xml-tools <command> --help
+        """ )
+
+    parser.add_argument( 'command', choices=list( COMMAND_REGISTRY.keys() ), help='Command to execute' )
+
+    return parser
+
+
+def handle_preprocess( args: argparse.Namespace ) -> None:
+    """Handle XML preprocessing command."""
     # Process the xml file
-    args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
+    preprocess_args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
 
     # Attempt to only process the file on rank 0
     # Note: The rank here is determined by inspecting the system environment variables
     #       While this is not the preferred way of doing so, it avoids mpi environment errors
     #       If the rank detection fails, then it will preprocess the file on all ranks, which
     #       sometimes cause a (seemingly harmless) file write conflict.
-    # processor = xml_processor.process
     processor = wait_for_file_write_rank_0( target_file_argument='outputFile',
                                             max_wait_time=100 )( xml_processor.process )
 
-    compiled_name = processor( args.input,
-                               outputFile=args.compiled_name,
-                               schema=args.schema,
-                               verbose=args.verbose,
-                               parameter_override=args.parameters )
+    compiled_name = processor( preprocess_args.input,
+                               outputFile=preprocess_args.compiled_name,
+                               schema=preprocess_args.schema,
+                               verbose=preprocess_args.verbose,
+                               parameter_override=preprocess_args.parameters )
     if not compiled_name:
-        if args.compiled_name:
-            compiled_name = args.compiled_name
+        if preprocess_args.compiled_name:
+            compiled_name = preprocess_args.compiled_name
         else:
-            raise Exception(
-                'When applying the preprocessor in parallel (outside of pygeosx), the --compiled_name argument is required'
-            )
+            raise Exception( 'When applying the preprocessor in parallel (outside of pygeos), '
+                             'the --compiled_name argument is required' )
 
-    # Note: the return value may be passed to sys.exit, and cause bash to report an error
-    # return format_geosx_arguments(compiled_name, unknown_args)
-    print( compiled_name )
+    print( f"XML preprocessing completed successfully!" )
+    print( f"Output file: {compiled_name}" )
+
+
+def handle_format( args: argparse.Namespace ) -> None:
+    """Handle XML formatting command."""
+    # Parse remaining arguments for formatting
+    format_parser = command_line_parsers.build_xml_formatter_input_parser()
+    format_args, _ = format_parser.parse_known_args()
+
+    xml_formatter.format_file( format_args.input,
+                               indent_size=format_args.indent,
+                               indent_style=format_args.style,
+                               block_separation_max_depth=format_args.depth,
+                               alphebitize_attributes=format_args.alphebitize,
+                               close_style=format_args.close,
+                               namespace=format_args.namespace )
+
+    print( f"XML formatting completed successfully!" )
+    print( f"Formatted file: {format_args.input}" )
+
+
+def handle_coverage( args: argparse.Namespace ) -> None:
+    """Handle XML attribute coverage command."""
+    # Parse remaining arguments for coverage checking
+    coverage_parser = command_line_parsers.build_attribute_coverage_input_parser()
+    coverage_args, _ = coverage_parser.parse_known_args()
+
+    attribute_coverage.process_xml_files( coverage_args.root, coverage_args.output )
+
+    print( f"XML attribute coverage analysis completed successfully!" )
+    print( f"Output file: {coverage_args.output}" )
+
+
+def handle_redundancy( args: argparse.Namespace ) -> None:
+    """Handle XML redundancy checking command."""
+    # Parse remaining arguments for redundancy checking
+    redundancy_parser = command_line_parsers.build_xml_redundancy_input_parser()
+    redundancy_args, _ = redundancy_parser.parse_known_args()
+
+    xml_redundancy_check.process_xml_files( redundancy_args.root )
+
+    print( f"XML redundancy analysis completed successfully!" )
+    print( f"Analysis performed on: {redundancy_args.root}" )
+
+
+def handle_vtk_build( args: argparse.Namespace ) -> None:
+    """Handle VTK deck building command."""
+    # Build a simple parser for VTK building arguments
+    vtk_parser = argparse.ArgumentParser()
+    vtk_parser.add_argument( 'input', type=str, help='Input XML file' )
+    vtk_parser.add_argument( '-a',
+                             '--attribute',
+                             type=str,
+                             default='Region',
+                             help='Cell attribute name to use as region marker' )
+    vtk_parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
+
+    vtk_args, _ = vtk_parser.parse_known_args()
+
+    # Build the VTK deck
+    collection = vtk_builder.create_vtk_deck( vtk_args.input, cell_attribute=vtk_args.attribute )
+
+    if vtk_args.output:
+        # Save to file if output specified
+        import vtk
+        writer = vtk.vtkXMLPartitionedDataSetCollectionWriter()
+        writer.SetFileName( vtk_args.output )
+        writer.SetInputData( collection )
+        writer.Write()
+        print( f"VTK deck building completed successfully!" )
+        print( f"Output file: {vtk_args.output}" )
+        print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
+    else:
+        print( f"VTK deck building completed successfully!" )
+        print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
+
+
+def handle_viewer( args: argparse.Namespace ) -> None:
+    """Handle 3D viewer command."""
+    # Use the existing pyvista_viewer argument parser
+    viewer_parser = pyvista_viewer.parsing()
+    viewer_args, _ = viewer_parser.parse_known_args()
+
+    print( f"Launching 3D visualization viewer..." )
+    pyvista_viewer.main( viewer_args )
+
+
+def build_vtk_parser() -> argparse.ArgumentParser:
+    """Build VTK parser for help display."""
+    parser = argparse.ArgumentParser( description="Build VTK deck from XML configuration" )
+    parser.add_argument( 'input', type=str, help='Input XML file' )
+    parser.add_argument( '-a',
+                         '--attribute',
+                         type=str,
+                         default='Region',
+                         help='Cell attribute name to use as region marker' )
+    parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
+    return parser
+
+
+# Register all commands
+register_command(
+    'preprocess', 'XML preprocessing and variable substitution', handle_preprocess,
+    command_line_parsers.build_preprocessor_input_parser, "geos-xml-tools preprocess -i input.xml -c output.xml\n"
+    "geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000" )
+register_command( 'format', 'XML formatting and structure cleanup', handle_format,
+                  command_line_parsers.build_xml_formatter_input_parser,
+                  "geos-xml-tools format input.xml -i 4\ngeos-xml-tools format input.xml -i 2 -a 1 -c 1" )
+register_command(
+    'coverage', 'XML attribute coverage analysis', handle_coverage,
+    command_line_parsers.build_attribute_coverage_input_parser, "geos-xml-tools coverage -r /path/to/geos/root\n"
+    "geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml" )
+register_command( 'redundancy', 'XML redundancy checking', handle_redundancy,
+                  command_line_parsers.build_xml_redundancy_input_parser,
+                  "geos-xml-tools redundancy -r /path/to/geos/root" )
+register_command(
+    'vtk-build', 'Build VTK deck from XML configuration', handle_vtk_build, build_vtk_parser,
+    "geos-xml-tools vtk-build input.xml -a Region\n"
+    "geos-xml-tools vtk-build input.xml -a Region -o output.vtm" )
+register_command(
+    'viewer', '3D visualization viewer for GEOS data', handle_viewer, pyvista_viewer.parsing,
+    "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
+    "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
+
+
+def show_command_help( command: str ) -> None:
+    """Show help for a specific command.
+    
+    Args:
+        command: Command name to show help for
+    """
+    if command not in COMMAND_REGISTRY:
+        print( f"Unknown command: {command}" )
+        return
+
+    description, name, _, parser_builder, examples = COMMAND_REGISTRY[ command ]
+
+    # Print header
+    print( f"{name.upper()} - {description}" )
+    print( "=" * ( len( name ) + len( description ) + 3 ) )
+    print()
+
+    # Show command-specific help
+    parser = parser_builder()
+    parser.print_help()
+    if examples:
+        print( "\nExamples:" )
+        print( "-" * 9 )
+        print( examples )
 
 
 def preprocess_parallel() -> Iterable[ str ]:
-    """MPI aware xml preprocesing."""
+    """MPI aware xml preprocessing."""
     # Process the xml file
     from mpi4py import MPI  # type: ignore[import]
     comm = MPI.COMM_WORLD
@@ -132,27 +401,54 @@ def preprocess_parallel() -> Iterable[ str ]:
                                                verbose=args.verbose,
                                                parameter_override=args.parameters )
     compiled_name = comm.bcast( compiled_name, root=0 )
-    return format_geosx_arguments( compiled_name, unknown_args )
+    return format_geos_arguments( compiled_name, unknown_args )
 
 
-def format_geosx_arguments( compiled_name: str, unknown_args: Iterable[ str ] ) -> Iterable[ str ]:
-    """Format GEOSX arguments.
+def format_geos_arguments( compiled_name: str, unknown_args: Iterable[ str ] ) -> Iterable[ str ]:
+    """Format GEOS arguments.
 
     Args:
         compiled_name (str): Name of the compiled xml file
         unknown_args (list): List of unprocessed arguments
 
     Returns:
-        list: List of arguments to pass to GEOSX
+        list: List of arguments to pass to GEOS
     """
-    geosx_args = [ sys.argv[ 0 ], '-i', compiled_name ]
+    geos_args = [ sys.argv[ 0 ], '-i', compiled_name ]
     if unknown_args:
-        geosx_args.extend( unknown_args )
+        geos_args.extend( unknown_args )
 
     # Print the output name for use in bash scripts
     print( compiled_name )
-    return geosx_args
+    return geos_args
+
+
+def main() -> None:
+    """Main entry point for geos-xml-tools."""
+    # Check if this is a help request for a specific command
+    if len( sys.argv ) > 2 and sys.argv[ 2 ] in [ '--help', '-h' ]:
+        command = sys.argv[ 1 ]
+        show_command_help( command )
+        return
+
+    # Normal command processing
+    parser = build_main_parser()
+    args, remaining = parser.parse_known_args()
+
+    # Update sys.argv to pass remaining arguments to sub-commands
+    sys.argv = [ sys.argv[ 0 ] ] + remaining
+
+    try:
+        if args.command in COMMAND_REGISTRY:
+            _, _, handler, _, _ = COMMAND_REGISTRY[ args.command ]
+            handler( args )
+        else:
+            print( f"Unknown command: {args.command}" )
+            sys.exit( 1 )
+    except Exception as e:
+        print( f"Error executing {args.command}: {e}" )
+        sys.exit( 1 )
 
 
 if __name__ == "__main__":
-    preprocess_serial()
+    main()
