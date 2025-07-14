@@ -109,25 +109,23 @@ class WellViewer:
         self.update( value )
 
     def add_mesh( self, mesh: pv.PolyData ) -> None:
-        self.input.append( mesh )  # type: ignore
+        self.input.append( mesh )
         radius = self.size * ( self.STARTING_VALUE / 100 )
         self.tubes.append(
-            mesh.tube( radius=radius, n_sides=50 )  # .scale([1.0, 1.0, self.amplification], inplace=True)
-        )  # type: ignore
+            mesh.tube( radius=radius, n_sides=50 )
+        )
 
     def update( self, value: float ) -> None:
         radius = self.size * ( value / 100 )
         for idx, m in enumerate( self.input ):
-            self.tubes[ idx ].copy_from(
-                m.tube( radius=radius, n_sides=50 )  # .scale([1.0, 1.0, self.amplification], inplace=True)
-            )
+            self.tubes[ idx ] = m.tube( radius=radius, n_sides=50 )
 
 
 class PerforationViewer:
 
     def __init__( self, size: float ) -> None:
         self.input: list[ pv.PointSet ] = []
-        self.spheres: list[ pv.Sphere ] = []
+        self.spheres: list[ pv.PolyData ] = []
         self.size: float = size
         self.STARTING_VALUE: float = 5.0
 
@@ -135,14 +133,15 @@ class PerforationViewer:
         self.update( value )
 
     def add_mesh( self, mesh: pv.PointSet ) -> None:
-        self.input.append( mesh )  # type: ignore
+        self.input.append( mesh )
         radius: float = self.size * ( self.STARTING_VALUE / 100 )
-        self.spheres.append( pv.Sphere( center=mesh.center, radius=radius ) )
+        sphere = pv.Sphere( center=mesh.center, radius=radius )
+        self.spheres.append( sphere )
 
     def update( self, value: float ) -> None:
         radius: float = self.size * ( value / 100 )
         for idx, m in enumerate( self.input ):
-            self.spheres[ idx ].copy_from( pv.Sphere( center=m.center, radius=radius ) )
+            self.spheres[ idx ] = pv.Sphere( center=m.center, radius=radius )
 
 
 class RegionViewer:
@@ -239,7 +238,7 @@ def main( args: argparse.Namespace ) -> None:
 
     print( "surfaces used as boundary conditionsp", surfaces_used )
 
-    global_bounds = [ 0, 0, 0, 0, 0, 0 ]
+    global_bounds: list[float] = [ 0, 0, 0, 0, 0, 0 ]
 
     plotter = pv.Plotter( shape=( 2, 2 ), border=True )
     ## 1. Region subview
@@ -256,12 +255,12 @@ def main( args: argparse.Namespace ) -> None:
                 dataset = pdsc.GetPartitionedDataSet( d )
                 grid = pv.wrap( dataset.GetPartition( 0 ) )
                 # grid.scale([1.0, 1.0, args.Zamplification], inplace=True)
-                region_engine.add_mesh( grid )
+                region_engine.add_mesh( grid.cast_to_unstructured_grid() )
 
         plotter.add_mesh_clip_plane(
             region_engine.mesh,
             origin=region_engine.mesh.center,
-            normal=[ -1, 0, 0 ],
+            normal=tuple([-1.0, 0.0, 0.0]),  # type: ignore[arg-type]
             crinkle=True,
             show_edges=True,
             cmap="glasbey_bw",
@@ -272,7 +271,7 @@ def main( args: argparse.Namespace ) -> None:
             # n_colors=n,
         )
         stop = time.monotonic()
-        global_bounds = region_engine.mesh.bounds
+        global_bounds = list(region_engine.mesh.bounds)
         plotter.add_text( "Mesh", font_size=24 )
         plotter.background_color = "white"
         plotter.show_bounds(
@@ -285,7 +284,7 @@ def main( args: argparse.Namespace ) -> None:
             ztitle="Elevation",
             use_3d_text=True,
             minor_ticks=True,
-        )
+        )  # type: ignore[call-arg]
         print( "region subplot preparation time: ", timedelta( seconds=stop - start ) )
 
     # 2. Surfaces subview
@@ -355,7 +354,7 @@ def main( args: argparse.Namespace ) -> None:
             n_zlabels=2,
             ztitle="Elevation",
             minor_ticks=True,
-        )
+        )  # type: ignore[call-arg]
 
         stop = time.monotonic()
 
@@ -386,7 +385,7 @@ def main( args: argparse.Namespace ) -> None:
                             dataset = pdsc.GetPartitionedDataSet( d )
                             if dataset.GetPartition( 0 ) is not None:
                                 well_engine.add_mesh( pv.wrap( dataset.GetPartition(
-                                    0 ) ) )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
+                                    0 ) ).cast_to_polydata() )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
                     elif assembly.GetNodeName( sub_node ) == "Perforations":
                         for i, perfos in enumerate( assembly.GetChildNodes( sub_node, False ) ):
                             datasets = assembly.GetDataSetIndices( perfos, False )
@@ -395,7 +394,7 @@ def main( args: argparse.Namespace ) -> None:
                                 if dataset.GetPartition( 0 ) is not None:
                                     pointset = pv.wrap(
                                         dataset.GetPartition( 0 )
-                                    )  # .cast_to_pointset().scale([1.0, 1.0, args.Zamplification], inplace=True) #
+                                    ).cast_to_pointset()  # .scale([1.0, 1.0, args.Zamplification], inplace=True) #
                                     perfo_engine.add_mesh( pointset )
 
             plotter.add_slider_widget( callback=well_engine.update, rng=[ 0.1, 10 ], title="Wells Radius" )
@@ -423,12 +422,12 @@ def main( args: argparse.Namespace ) -> None:
 
             if len( perfo_engine.spheres ) > 0:
                 Startpos = 12
-                callback: SetVisibilitiesCallback = SetVisibilitiesCallback()
+                perfo_vis_callback: SetVisibilitiesCallback = SetVisibilitiesCallback()
                 for m in perfo_engine.spheres:
                     actor = plotter.add_mesh( m, color=True, show_edges=False )
-                    callback.add_actor( actor )
+                    perfo_vis_callback.add_actor( actor )
                     # render cell containing perforation
-                    cell_id = my_cell_locator.FindCell( m.center )
+                    cell_id = my_cell_locator.FindCell( list(m.center) )
                     if cell_id != -1:
                         id_list = vtkIdList()
                         id_list.InsertNextId( cell_id )
@@ -448,7 +447,7 @@ def main( args: argparse.Namespace ) -> None:
                         )
 
                 plotter.add_checkbox_button_widget(
-                    callback=callback.update_visibility,
+                    callback=perfo_vis_callback.update_visibility,
                     value=True,
                     position=( Startpos, 10.0 ),
                     size=size,
@@ -457,7 +456,6 @@ def main( args: argparse.Namespace ) -> None:
 
                 plotter.add_slider_widget(
                     callback=perfo_engine.update,
-                    starting_value=perfo_engine.STARTING_VALUE,
                     rng=[ 0.1, 10 ],
                     title=" Perforations\n Radius",
                     pointb=( 0.08, 0.9 ),
@@ -476,7 +474,7 @@ def main( args: argparse.Namespace ) -> None:
             n_zlabels=2,
             ztitle="Elevation",
             minor_ticks=True,
-        )
+        )  # type: ignore[call-arg]
         stop = time.monotonic()
         print( "wells subplot preparation time: ", timedelta( seconds=stop - start ) )
 
@@ -509,7 +507,7 @@ def main( args: argparse.Namespace ) -> None:
             n_zlabels=2,
             ztitle="Elevation",
             minor_ticks=True,
-        )
+        )  # type: ignore[call-arg]
 
         stop = time.monotonic()
         print( "boxes subplot preparation time: ", timedelta( seconds=stop - start ) )
