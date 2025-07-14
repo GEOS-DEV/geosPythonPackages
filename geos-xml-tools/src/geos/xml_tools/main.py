@@ -1,9 +1,8 @@
-import sys
-import os
-import time
 import argparse
-from typing import Callable, Any, Union, Iterable, Dict, Tuple
-
+import os
+import sys
+import time
+from typing import Callable, Any, Union, Iterable
 from geos.xml_tools import xml_processor, command_line_parsers
 from geos.xml_tools import xml_formatter, attribute_coverage, xml_redundancy_check
 from geos.xml_tools import vtk_builder, pyvista_viewer
@@ -41,14 +40,12 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
     Returns:
         Wrapped function
     """
-
     def wait_for_file_write_rank_0_inner( writer: TFunc ) -> TFunc:
         """Intermediate constructor for the function decorator.
 
         Args:
             writer (typing.Callable): A function that writes to a file
         """
-
         def wait_for_file_write_rank_0_decorator( *args, **kwargs ) -> Any:  # noqa: ANN002, ANN003
             """Apply the writer on rank 0, and wait for completion on other ranks."""
             # Check the target file status
@@ -89,7 +86,7 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
 
 
 # Command registry for unified handling
-COMMAND_REGISTRY: Dict[ str, Tuple[ str, str, Callable, Callable, str ] ] = {}
+COMMAND_REGISTRY: dict[ str, tuple[ str, str, Callable, Callable, str ] ] = {}
 
 
 def register_command( name: str,
@@ -208,7 +205,7 @@ For detailed help on any command, use:
     return parser
 
 
-def handle_preprocess( args: argparse.Namespace ) -> None:
+def handle_preprocess() -> None:
     """Handle XML preprocessing command."""
     # Process the xml file
     preprocess_args, unknown_args = command_line_parsers.parse_xml_preprocessor_arguments()
@@ -237,7 +234,7 @@ def handle_preprocess( args: argparse.Namespace ) -> None:
     print( f"Output file: {compiled_name}" )
 
 
-def handle_format( args: argparse.Namespace ) -> None:
+def handle_format() -> None:
     """Handle XML formatting command."""
     # Parse remaining arguments for formatting
     format_parser = command_line_parsers.build_xml_formatter_input_parser()
@@ -255,7 +252,7 @@ def handle_format( args: argparse.Namespace ) -> None:
     print( f"Formatted file: {format_args.input}" )
 
 
-def handle_coverage( args: argparse.Namespace ) -> None:
+def handle_coverage() -> None:
     """Handle XML attribute coverage command."""
     # Parse remaining arguments for coverage checking
     coverage_parser = command_line_parsers.build_attribute_coverage_input_parser()
@@ -267,7 +264,7 @@ def handle_coverage( args: argparse.Namespace ) -> None:
     print( f"Output file: {coverage_args.output}" )
 
 
-def handle_redundancy( args: argparse.Namespace ) -> None:
+def handle_redundancy() -> None:
     """Handle XML redundancy checking command."""
     # Parse remaining arguments for redundancy checking
     redundancy_parser = command_line_parsers.build_xml_redundancy_input_parser()
@@ -279,7 +276,7 @@ def handle_redundancy( args: argparse.Namespace ) -> None:
     print( f"Analysis performed on: {redundancy_args.root}" )
 
 
-def handle_vtk_build( args: argparse.Namespace ) -> None:
+def handle_vtk_build() -> None:
     """Handle VTK deck building command."""
     # Build a simple parser for VTK building arguments
     vtk_parser = argparse.ArgumentParser()
@@ -311,7 +308,7 @@ def handle_vtk_build( args: argparse.Namespace ) -> None:
         print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
 
 
-def handle_viewer( args: argparse.Namespace ) -> None:
+def handle_viewer() -> None:
     """Handle 3D viewer command."""
     # Use the existing pyvista_viewer argument parser
     viewer_parser = pyvista_viewer.parsing()
@@ -321,42 +318,25 @@ def handle_viewer( args: argparse.Namespace ) -> None:
     pyvista_viewer.main( viewer_args )
 
 
-def build_vtk_parser() -> argparse.ArgumentParser:
-    """Build VTK parser for help display."""
-    parser = argparse.ArgumentParser( description="Build VTK deck from XML configuration" )
-    parser.add_argument( 'input', type=str, help='Input XML file' )
-    parser.add_argument( '-a',
-                         '--attribute',
-                         type=str,
-                         default='Region',
-                         help='Cell attribute name to use as region marker' )
-    parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
-    return parser
-
-
 # Register all commands
-register_command(
-    'preprocess', 'XML preprocessing and variable substitution', handle_preprocess,
-    command_line_parsers.build_preprocessor_input_parser, "geos-xml-tools preprocess -i input.xml -c output.xml\n"
-    "geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000" )
-register_command( 'format', 'XML formatting and structure cleanup', handle_format,
+register_command( "preprocess", "XML preprocessing and variable substitution", handle_preprocess,
+                  command_line_parsers.build_preprocessor_input_parser,
+                  "geos-xml-tools preprocess -i input.xml -c output.xml\n"
+                  "geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000" )
+register_command( "format", "XML formatting and structure cleanup", handle_format,
                   command_line_parsers.build_xml_formatter_input_parser,
                   "geos-xml-tools format input.xml -i 4\ngeos-xml-tools format input.xml -i 2 -a 1 -c 1" )
-register_command(
-    'coverage', 'XML attribute coverage analysis', handle_coverage,
-    command_line_parsers.build_attribute_coverage_input_parser, "geos-xml-tools coverage -r /path/to/geos/root\n"
-    "geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml" )
-register_command( 'redundancy', 'XML redundancy checking', handle_redundancy,
+register_command( "coverage", "XML attribute coverage analysis", handle_coverage,
+                  command_line_parsers.build_attribute_coverage_input_parser,
+                  "geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml" )
+register_command( "redundancy", "XML redundancy checking", handle_redundancy,
                   command_line_parsers.build_xml_redundancy_input_parser,
                   "geos-xml-tools redundancy -r /path/to/geos/root" )
-register_command(
-    'vtk-build', 'Build VTK deck from XML configuration', handle_vtk_build, build_vtk_parser,
-    "geos-xml-tools vtk-build input.xml -a Region\n"
-    "geos-xml-tools vtk-build input.xml -a Region -o output.vtm" )
-register_command(
-    'viewer', '3D visualization viewer for GEOS data', handle_viewer, pyvista_viewer.parsing,
-    "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
-    "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
+register_command( "vtk-build", "Build VTK deck from XML configuration", handle_vtk_build,
+                  command_line_parsers.build_vtk_parser, "geos-xml-tools vtk-build input.xml -a Region -o file.vtm" )
+register_command( "viewer", "3D visualization viewer for GEOS data", handle_viewer, pyvista_viewer.parsing,
+                  "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
+                  "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
 
 
 def show_command_help( command: str ) -> None:
@@ -373,8 +353,7 @@ def show_command_help( command: str ) -> None:
 
     # Print header
     print( f"{name.upper()} - {description}" )
-    print( "=" * ( len( name ) + len( description ) + 3 ) )
-    print()
+    print( "=" * ( len( name ) + len( description ) + 3 ) + "\n" )
 
     # Show command-specific help
     parser = parser_builder()
@@ -440,8 +419,8 @@ def main() -> None:
 
     try:
         if args.command in COMMAND_REGISTRY:
-            _, _, handler, _, _ = COMMAND_REGISTRY[ args.command ]
-            handler( args )
+            handler = COMMAND_REGISTRY[ args.command ][ 2 ]
+            handler()
         else:
             print( f"Unknown command: {args.command}" )
             sys.exit( 1 )

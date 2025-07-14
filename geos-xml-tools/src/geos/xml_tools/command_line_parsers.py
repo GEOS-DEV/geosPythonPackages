@@ -45,6 +45,19 @@ def parse_xml_preprocessor_arguments() -> Tuple[ argparse.Namespace, Iterable[ s
     return parser.parse_known_args()
 
 
+def build_vtk_parser() -> argparse.ArgumentParser:
+    """Build VTK parser for help display."""
+    parser = argparse.ArgumentParser( description="Build VTK deck from XML configuration" )
+    parser.add_argument( 'input', type=str, help='Input XML file' )
+    parser.add_argument( '-a',
+                         '--attribute',
+                         type=str,
+                         default='Region',
+                         help='Cell attribute name to use as region marker' )
+    parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
+    return parser
+
+
 def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
     """Build the argument parser.
 
