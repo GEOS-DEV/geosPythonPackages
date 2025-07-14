@@ -1,7 +1,19 @@
-import os
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
+import os
 import re
-from typing import List, Any, TextIO
+from typing import Any, TextIO
 from geos.xml_tools import command_line_parsers
 
 
@@ -28,7 +40,7 @@ def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> 
 
     # Identify and split multi-line attributes
     if re.match( r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value ):
-        split_positions: List[ Any ] = [ match.end() for match in re.finditer( r"}\s*,", attribute_value ) ]
+        split_positions: list[ Any ] = [ match.end() for match in re.finditer( r"}\s*,", attribute_value ) ]
         newline_indent = '\n%s' % ( ' ' * ( len( attribute_indent ) + len( ka ) + 4 ) )
         new_values = []
         for a, b in zip( [ None ] + split_positions, split_positions + [ None ], strict=False ):

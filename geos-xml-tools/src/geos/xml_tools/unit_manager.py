@@ -1,6 +1,18 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import re
+from typing import Any
 from geos.xml_tools import regex_tools
-from typing import List, Any, Dict
 
 __doc__ = """Tools for managing units in GEOS."""
 
@@ -10,11 +22,11 @@ class UnitManager():
 
     def __init__( self ) -> None:
         """Initialize the class by creating an instance of the dict regex handler, building units."""
-        self.units: Dict[ str, str ] = {}
+        self.units: dict[ str, str ] = {}
         self.unitMatcher = regex_tools.DictRegexHandler()
         self.buildUnits()
 
-    def __call__( self, unitStruct: List[ Any ] ) -> str:
+    def __call__( self, unitStruct: list[ Any ] ) -> str:
         """Evaluate the symbolic expression for matched strings.
 
         Args:
@@ -54,7 +66,7 @@ class UnitManager():
         """Build the unit definitions."""
         # yapf: disable
         # Long, short names for SI prefixes
-        unit_dict_type = Dict[str, Dict[str, Any]]
+        unit_dict_type = dict[str, dict[str, Any]]
 
         prefixes: unit_dict_type = {
                     'giga':  {'value': 1e9,  'alt': 'G'},

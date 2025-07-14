@@ -1,5 +1,16 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import re
-from typing import Dict
 
 __doc__ = """
 Tools for managing regular expressions in geosx_xml_tools.
@@ -18,7 +29,7 @@ strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strin
 
 """
 
-patterns: Dict[ str, str ] = {
+patterns: dict[ str, str ] = {
     'parameters': r"\$:?([a-zA-Z_0-9]*)\$?",
     'units': r"([0-9]*?\.?[0-9]+(?:[eE][-+]?[0-9]*?)?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]",
     'units_b': r"([a-zA-Z]*)",
@@ -61,7 +72,7 @@ class DictRegexHandler():
         The key/value pairs of self.target indicate which values
         to look for and the values they will replace with.
         """
-        self.target: Dict[ str, str ] = {}
+        self.target: dict[ str, str ] = {}
 
     def __call__( self, match: re.Match ) -> str:
         """Replace the matching strings with their target.

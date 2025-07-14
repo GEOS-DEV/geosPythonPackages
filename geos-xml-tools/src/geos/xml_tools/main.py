@@ -1,11 +1,22 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import argparse
 import os
 import sys
 import time
 from typing import Callable, Any, Union, Iterable
-from geos.xml_tools import xml_processor, command_line_parsers
-from geos.xml_tools import xml_formatter, attribute_coverage, xml_redundancy_check
-from geos.xml_tools import vtk_builder, pyvista_viewer
+from geos.xml_tools import ( attribute_coverage, command_line_parsers, pyvista_viewer, vtk_builder, xml_formatter,
+                             xml_processor, xml_redundancy_check ) 
 
 __doc__ = """Unified command line tools for geos-xml-tools package."""
 

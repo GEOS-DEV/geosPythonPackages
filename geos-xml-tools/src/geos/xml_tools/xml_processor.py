@@ -1,10 +1,22 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
 from lxml.etree import XMLSyntaxError  # type: ignore[import]
-import re
 import os
-from geos.xml_tools import regex_tools, unit_manager
-from geos.xml_tools import xml_formatter
-from typing import Iterable, Tuple, List
+import re
+from typing import Iterable
+from geos.xml_tools import regex_tools, unit_manager, xml_formatter
+
 
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
@@ -178,7 +190,7 @@ def process(
         outputFile: str = '',
         schema: str = '',
         verbose: int = 0,
-        parameter_override: List[ Tuple[ str, str ] ] = [],  # noqa: B006
+        parameter_override: list[ tuple[ str, str ] ] = [],  # noqa: B006
         keep_parameters: bool = True,
         keep_includes: bool = True ) -> str:
     """Process an xml file by:

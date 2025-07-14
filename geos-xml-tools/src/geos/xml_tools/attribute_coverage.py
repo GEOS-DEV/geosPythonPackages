@@ -1,7 +1,19 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
 import os
 from pathlib import Path
-from typing import Any, Iterable, Dict
+from typing import Any, Iterable
 from geos.xml_tools import command_line_parsers
 
 __doc__ = """
@@ -13,7 +25,7 @@ The script works in three main stages:
 * Generate a Report: It creates a new XML file that summarizes the findings, showing which attributes were used, what values they were given, and their default values from the schema.
 """
 
-record_type = Dict[ str, Dict[ str, Any ] ]
+record_type = dict[ str, dict[ str, Any ] ]
 
 
 def parse_schema_element( root: ElementTree.Element,

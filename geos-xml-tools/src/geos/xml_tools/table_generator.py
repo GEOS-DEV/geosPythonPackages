@@ -1,5 +1,17 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import numpy as np
-from typing import Tuple, Iterable, Dict
+from typing import Iterable
 
 __doc__ = """
 Tools to save and load multi-dimensional data tables to and from a .geos file extension.
@@ -7,14 +19,14 @@ Tools to save and load multi-dimensional data tables to and from a .geos file ex
 
 
 def write_GEOS_table( axes_values: Iterable[ np.ndarray ],
-                      properties: Dict[ str, np.ndarray ],
+                      properties: dict[ str, np.ndarray ],
                       axes_names: Iterable[ str ] = [ 'x', 'y', 'z', 't' ],
                       string_format: str = '%1.5e' ) -> None:
     """Write a GEOS-compatible ascii table.
 
     Args:
         axes_values (list): List of arrays containing the coordinates for each axis of the table.
-        properties (dict): Dict of arrays with dimensionality/size defined by the axes_values
+        properties (dict): dict of arrays with dimensionality/size defined by the axes_values
         axes_names (list): Names for each axis (default = ['x', 'y', 'z', 't'])
         string_format (str): Format for output values (default = %1.5e)
     """
@@ -35,7 +47,7 @@ def write_GEOS_table( axes_values: Iterable[ np.ndarray ],
 
 
 def read_GEOS_table( axes_files: Iterable[ str ],
-                     property_files: Iterable[ str ] ) -> Tuple[ Iterable[ np.ndarray ], Dict[ str, np.ndarray ] ]:
+                     property_files: Iterable[ str ] ) -> tuple[ Iterable[ np.ndarray ], dict[ str, np.ndarray ] ]:
     """Read an GEOS-compatible ascii table.
 
     Args:
