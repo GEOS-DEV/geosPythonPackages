@@ -17,7 +17,6 @@ import re
 from typing import Iterable
 from geos.xml_tools import regex_tools, unit_manager, xml_formatter
 
-
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
@@ -35,7 +34,8 @@ It achieves this by performing several key actions in sequence:
 
 
 def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int ) -> None:
-    """Merges two XML nodes. When it encounters a child node in the targetNode that has the same name
+    """Merges two XML nodes. When it encounters a child node in the targetNode that has the same name.
+
     as one in the existingNode, it merges them recursively instead of just adding a duplicate.
     Otherwise, it appends new children.
 
@@ -83,7 +83,8 @@ def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.
 
 
 def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCount: int, maxInclude: int = 100 ) -> None:
-    """Opens an XML file specified in an <Included> tag, recursively calls itself for any includes within that file,
+    """Opens an XML file specified in an <Included> tag, recursively calls itself for any includes within that file.
+
     and then uses merge_xml_nodes to merge the contents into the main XML tree.
     It includes a safety check to prevent infinite include loops.
 
@@ -130,6 +131,7 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
 
 def apply_regex_to_node( node: ElementTree.Element ) -> None:
     """Recursively going through every element in the XML tree and inspects its attributes.
+
     For each attribute value, it sequentially applies regular expressions to:
     * Replace parameter variables ($variable) with their values.
     * Convert physical units (value[unit]) into base SI values.
@@ -193,7 +195,8 @@ def process(
         parameter_override: list[ tuple[ str, str ] ] = [],  # noqa: B006
         keep_parameters: bool = True,
         keep_includes: bool = True ) -> str:
-    """Process an xml file by:
+    """Process an xml file following these steps.
+
     1) Merging multiple input files specified via <Included> tags into a single one.
     2) Building a map of variables from <Parameters> blocks.
     3) Applying regex substitutions for parameters ($variable), units (10[m/s]), symbolic math expressions (`1+2*3`).
@@ -210,7 +213,7 @@ def process(
         keep_includes (bool): If True, then keep includes in the compiled file (default = True)
 
     Returns:
-        str: Output file name
+        str: Output file name.
     """
     if verbose:
         print( '\nReading input xml parameters and parsing symbolic math...' )

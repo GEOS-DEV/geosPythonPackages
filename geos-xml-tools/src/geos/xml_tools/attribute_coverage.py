@@ -34,6 +34,7 @@ def parse_schema_element( root: ElementTree.Element,
                           recursive_types: Iterable[ str ] = [ 'PeriodicEvent', 'SoloEvent', 'HaltEvent' ],
                           folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> record_type:
     """Parse the xml schema at the current level.
+
     Recursively builds a nested dictionary that mirrors the schema's structure.
     For each element, it records the names of its valid attributes and children.
     If an attribute has a default value defined in the schema, it stores that as well.
@@ -88,6 +89,7 @@ def parse_schema( fname: str ) -> record_type:
 
 def collect_xml_attributes_level( local_types: record_type, node: ElementTree.Element, folder: str ) -> None:
     """Collect xml attribute usage at the current level by going through the XML file's elements.
+
     When it finds an attribute, it appends its value to the appropriate list
     in the data structure created by parse_schema.
 
@@ -123,6 +125,7 @@ def write_attribute_usage_xml_level( local_types: record_type,
                                      node: ElementTree.Element,
                                      folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> None:
     """Recursively builds a report called attribute usage file.
+
     For each element and attribute from the schema, it creates a new XML element.
     It sets attributes on this new element to show the collected values from the src and examples folders,
     the default value, and a count of unique values found.

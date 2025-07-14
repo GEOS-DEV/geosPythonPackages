@@ -16,7 +16,7 @@ import sys
 import time
 from typing import Callable, Any, Union, Iterable
 from geos.xml_tools import ( attribute_coverage, command_line_parsers, pyvista_viewer, vtk_builder, xml_formatter,
-                             xml_processor, xml_redundancy_check ) 
+                             xml_processor, xml_redundancy_check )
 
 __doc__ = """Unified command line tools for geos-xml-tools package."""
 
@@ -51,12 +51,14 @@ def wait_for_file_write_rank_0( target_file_argument: Union[ int, str ] = 0,
     Returns:
         Wrapped function
     """
+
     def wait_for_file_write_rank_0_inner( writer: TFunc ) -> TFunc:
         """Intermediate constructor for the function decorator.
 
         Args:
             writer (typing.Callable): A function that writes to a file
         """
+
         def wait_for_file_write_rank_0_decorator( *args, **kwargs ) -> Any:  # noqa: ANN002, ANN003
             """Apply the writer on rank 0, and wait for completion on other ranks."""
             # Check the target file status
@@ -102,17 +104,17 @@ COMMAND_REGISTRY: dict[ str, tuple[ str, str, Callable, Callable, str ] ] = {}
 
 def register_command( name: str,
                       description: str,
-                      handler: Callable,
-                      parser_builder: Callable,
+                      parser_builder: Callable[ [], argparse.ArgumentParser ],
+                      handler: Callable[ [], None ],
                       examples: str = "" ) -> None:
     """Register a command with its metadata and handlers.
-    
+
     Args:
         name: Command name
         description: Command description
-        handler: Function to handle the command
-        parser_builder: Function to build the command's argument parser
-        examples: Example usage for the command
+        parser_builder: Function that builds the argument parser
+        handler: Function that handles the command
+        examples: Example usage text
     """
     COMMAND_REGISTRY[ name ] = ( description, name, handler, parser_builder, examples )
 
@@ -130,82 +132,79 @@ Available Commands and Options:
 
 PREPROCESS - XML preprocessing and variable substitution
   geos-xml-tools preprocess [OPTIONS]
-  
+
   Options:
     -i, --input FILE          Input XML file(s) (multiple allowed)
-    -c, --compiled-name FILE  Output compiled XML file name
-    -s, --schema FILE         GEOS schema file for validation
+    -c, --compiled-name FILE  Output compiled XML file
+    -s, --schema FILE         Schema file for validation
     -v, --verbose LEVEL       Verbosity level (0-3, default: 0)
     -p, --parameters NAME VALUE  Parameter overrides (multiple allowed)
-  
+
   Examples:
     geos-xml-tools preprocess -i input.xml -c output.xml
-    geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000
+    geos-xml-tools preprocess -i input1.xml -i input2.xml -p param1 value1
 
 FORMAT - XML formatting and structure cleanup
   geos-xml-tools format FILE [OPTIONS]
-  
+
   Options:
     -i, --indent SIZE         Indent size (default: 2)
-    -s, --style STYLE         Indent style (0=fixed, 1=hanging, default: 0)
+    -s, --style STYLE         Indent style (0=space, 1=tab, default: 0)
     -d, --depth DEPTH         Block separation depth (default: 2)
-    -a, --alphebitize LEVEL   Alphabetize attributes (0=no, 1=yes, default: 0)
+    -a, --alphebitize MODE    Alphabetize attributes (0=no, 1=yes, default: 0)
     -c, --close STYLE         Close tag style (0=same line, 1=new line, default: 0)
     -n, --namespace LEVEL     Include namespace (0=no, 1=yes, default: 0)
-  
+
   Examples:
     geos-xml-tools format input.xml -i 4
-    geos-xml-tools format input.xml -i 2 -a 1 -c 1
+    geos-xml-tools format input.xml -s 1 -a 1
 
 COVERAGE - XML attribute coverage analysis
   geos-xml-tools coverage [OPTIONS]
-  
+
   Options:
     -r, --root PATH           GEOS root directory
     -o, --output FILE         Output file name (default: attribute_test.xml)
-  
+
   Examples:
     geos-xml-tools coverage -r /path/to/geos/root
-    geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml
+    geos-xml-tools coverage -r /path/to/geos/root -o my_coverage.xml
 
 REDUNDANCY - XML redundancy checking
   geos-xml-tools redundancy [OPTIONS]
-  
+
   Options:
     -r, --root PATH           GEOS root directory
-  
+
   Examples:
     geos-xml-tools redundancy -r /path/to/geos/root
 
 VTK-BUILD - Build VTK deck from XML configuration
   geos-xml-tools vtk-build FILE [OPTIONS]
-  
+
   Options:
     -a, --attribute NAME      Cell attribute name for region marker (default: Region)
     -o, --output FILE         Output VTK file (optional)
-  
+
   Examples:
     geos-xml-tools vtk-build input.xml -a Region
-    geos-xml-tools vtk-build input.xml -a Region -o output.vtm
+    geos-xml-tools vtk-build input.xml -o output.vtk
 
 VIEWER - 3D visualization viewer for GEOS data
   geos-xml-tools viewer [OPTIONS]
-  
+
   Options:
     -xp, --xmlFilepath FILE   Path to XML file (required)
-    -vtpc, --vtpcFilepath FILE Path to .vtpc file (optional)
-    --showmesh BOOL           Show mesh (default: True)
-    --showsurfaces BOOL       Show surfaces (default: True)
-    --showboxes BOOL          Show boxes (default: True)
-    --showwells BOOL          Show wells (default: True)
-    --showperforations BOOL   Show well perforations (default: True)
-    --clipToBoxes BOOL        Show only mesh elements inside boxes (default: True)
+    --showmesh                Show mesh visualization
+    --showwells               Show wells visualization
+    --showperforations        Show perforations visualization
+    --showbounds              Show bounds visualization
     --Zamplification FACTOR   Z amplification factor (default: 1.0)
     --attributeName NAME      Attribute name (default: attribute)
-  
+
   Examples:
     geos-xml-tools viewer -xp input.xml --showmesh --showwells
-    geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region
+    geos-xml-tools viewer -xp input.xml --showmesh --Zamplification 2.0
 
 For detailed help on any command, use:
   geos-xml-tools <command> --help
@@ -241,7 +240,7 @@ def handle_preprocess() -> None:
             raise Exception( 'When applying the preprocessor in parallel (outside of pygeos), '
                              'the --compiled_name argument is required' )
 
-    print( f"XML preprocessing completed successfully!" )
+    print( "XML preprocessing completed successfully!" )
     print( f"Output file: {compiled_name}" )
 
 
@@ -259,7 +258,7 @@ def handle_format() -> None:
                                close_style=format_args.close,
                                namespace=format_args.namespace )
 
-    print( f"XML formatting completed successfully!" )
+    print( "XML formatting completed successfully!" )
     print( f"Formatted file: {format_args.input}" )
 
 
@@ -271,7 +270,7 @@ def handle_coverage() -> None:
 
     attribute_coverage.process_xml_files( coverage_args.root, coverage_args.output )
 
-    print( f"XML attribute coverage analysis completed successfully!" )
+    print( "XML attribute coverage analysis completed successfully!" )
     print( f"Output file: {coverage_args.output}" )
 
 
@@ -283,7 +282,7 @@ def handle_redundancy() -> None:
 
     xml_redundancy_check.process_xml_files( redundancy_args.root )
 
-    print( f"XML redundancy analysis completed successfully!" )
+    print( "XML redundancy analysis completed successfully!" )
     print( f"Analysis performed on: {redundancy_args.root}" )
 
 
@@ -311,11 +310,11 @@ def handle_vtk_build() -> None:
         writer.SetFileName( vtk_args.output )
         writer.SetInputData( collection )
         writer.Write()
-        print( f"VTK deck building completed successfully!" )
+        print( "VTK deck building completed successfully!" )
         print( f"Output file: {vtk_args.output}" )
         print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
     else:
-        print( f"VTK deck building completed successfully!" )
+        print( "VTK deck building completed successfully!" )
         print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
 
 
@@ -325,34 +324,34 @@ def handle_viewer() -> None:
     viewer_parser = pyvista_viewer.parsing()
     viewer_args, _ = viewer_parser.parse_known_args()
 
-    print( f"Launching 3D visualization viewer..." )
+    print( "Launching 3D visualization viewer..." )
     pyvista_viewer.main( viewer_args )
 
 
 # Register all commands
-register_command( "preprocess", "XML preprocessing and variable substitution", handle_preprocess,
-                  command_line_parsers.build_preprocessor_input_parser,
-                  "geos-xml-tools preprocess -i input.xml -c output.xml\n"
-                  "geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000" )
-register_command( "format", "XML formatting and structure cleanup", handle_format,
-                  command_line_parsers.build_xml_formatter_input_parser,
+register_command(
+    "preprocess", "XML preprocessing and variable substitution", command_line_parsers.build_preprocessor_input_parser,
+    handle_preprocess, "geos-xml-tools preprocess -i input.xml -c output.xml\n"
+    "geos-xml-tools preprocess -i input.xml -c output.xml -v 2 -p pressure 1000" )
+register_command( "format", "XML formatting and structure cleanup",
+                  command_line_parsers.build_xml_formatter_input_parser, handle_format,
                   "geos-xml-tools format input.xml -i 4\ngeos-xml-tools format input.xml -i 2 -a 1 -c 1" )
-register_command( "coverage", "XML attribute coverage analysis", handle_coverage,
-                  command_line_parsers.build_attribute_coverage_input_parser,
+register_command( "coverage", "XML attribute coverage analysis",
+                  command_line_parsers.build_attribute_coverage_input_parser, handle_coverage,
                   "geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml" )
-register_command( "redundancy", "XML redundancy checking", handle_redundancy,
-                  command_line_parsers.build_xml_redundancy_input_parser,
-                  "geos-xml-tools redundancy -r /path/to/geos/root" )
-register_command( "vtk-build", "Build VTK deck from XML configuration", handle_vtk_build,
-                  command_line_parsers.build_vtk_parser, "geos-xml-tools vtk-build input.xml -a Region -o file.vtm" )
-register_command( "viewer", "3D visualization viewer for GEOS data", handle_viewer, pyvista_viewer.parsing,
-                  "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
-                  "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
+register_command( "redundancy", "XML redundancy checking", command_line_parsers.build_xml_redundancy_input_parser,
+                  handle_redundancy, "geos-xml-tools redundancy -r /path/to/geos/root" )
+register_command( "vtk-build", "Build VTK deck from XML configuration", command_line_parsers.build_vtk_parser,
+                  handle_vtk_build, "geos-xml-tools vtk-build input.xml -a Region -o file.vtm" )
+register_command(
+    "viewer", "3D visualization viewer for GEOS data", pyvista_viewer.parsing, handle_viewer,
+    "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
+    "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
 
 
 def show_command_help( command: str ) -> None:
     """Show help for a specific command.
-    
+
     Args:
         command: Command name to show help for
     """

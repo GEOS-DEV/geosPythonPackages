@@ -26,6 +26,11 @@ from geos.xml_tools.xml_processor import process
 
 
 def parsing() -> argparse.ArgumentParser:
+    """Build argument parser for the viewer command.
+
+    Returns:
+        argparse.ArgumentParser: The parser instance
+    """
     parser = argparse.ArgumentParser( description="Extract Internal wells into VTK files" )
 
     parser.add_argument(
@@ -99,6 +104,12 @@ def parsing() -> argparse.ArgumentParser:
 class WellViewer:
 
     def __init__( self, size: float, amplification: float ) -> None:
+        """Initialize WellViewer with size and amplification parameters.
+
+        Args:
+            size: Base size for well visualization
+            amplification: Amplification factor for visualization
+        """
         self.input: list[ pv.PolyData ] = []
         self.tubes: list[ pv.PolyData ] = []
         self.size: float = size
@@ -106,58 +117,110 @@ class WellViewer:
         self.STARTING_VALUE: float = 5.0
 
     def __call__( self, value: float ) -> None:
+        """Call the viewer with a new value to update visualization.
+
+        Args:
+            value: New value for visualization update
+        """
         self.update( value )
 
     def add_mesh( self, mesh: pv.PolyData ) -> None:
+        """Add a mesh to the well viewer.
+
+        Args:
+            mesh: PolyData mesh to add
+        """
         self.input.append( mesh )
         radius = self.size * ( self.STARTING_VALUE / 100 )
-        self.tubes.append(
-            mesh.tube( radius=radius, n_sides=50 )
-        )
+        tube = mesh.tube( radius=radius, capping=True )
+        self.tubes.append( tube )
 
     def update( self, value: float ) -> None:
+        """Update the visualization with a new value.
+
+        Args:
+            value: New value for radius calculation
+        """
         radius = self.size * ( value / 100 )
         for idx, m in enumerate( self.input ):
-            self.tubes[ idx ] = m.tube( radius=radius, n_sides=50 )
+            self.tubes[ idx ] = m.tube( radius=radius, capping=True )
 
 
 class PerforationViewer:
 
     def __init__( self, size: float ) -> None:
+        """Initialize PerforationViewer with size parameter.
+
+        Args:
+            size: Base size for perforation visualization
+        """
         self.input: list[ pv.PointSet ] = []
         self.spheres: list[ pv.PolyData ] = []
         self.size: float = size
         self.STARTING_VALUE: float = 5.0
 
     def __call__( self, value: float ) -> None:
+        """Call the viewer with a new value to update visualization.
+
+        Args:
+            value: New value for visualization update
+        """
         self.update( value )
 
     def add_mesh( self, mesh: pv.PointSet ) -> None:
+        """Add a mesh to the perforation viewer.
+
+        Args:
+            mesh: PointSet mesh to add
+        """
         self.input.append( mesh )
         radius: float = self.size * ( self.STARTING_VALUE / 100 )
-        sphere = pv.Sphere( center=mesh.center, radius=radius )
+        sphere = pv.Sphere( radius=radius, center=mesh.points[ 0 ] )
         self.spheres.append( sphere )
 
     def update( self, value: float ) -> None:
+        """Update the visualization with a new value.
+
+        Args:
+            value: New value for radius calculation
+        """
         radius: float = self.size * ( value / 100 )
         for idx, m in enumerate( self.input ):
-            self.spheres[ idx ] = pv.Sphere( center=m.center, radius=radius )
+            self.spheres[ idx ] = pv.Sphere( radius=radius, center=m.points[ 0 ] )
 
 
 class RegionViewer:
 
     def __init__( self ) -> None:
+        """Initialize RegionViewer."""
         self.input: pv.UnstructuredGrid = pv.UnstructuredGrid()
         self.mesh: pv.UnstructuredGrid
 
     def __call__( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
+        """Call the viewer with normal and origin for clipping.
+
+        Args:
+            normal: Normal vector for clipping plane
+            origin: Origin point for clipping plane
+        """
         self.update_clip( normal, origin )
 
     def add_mesh( self, mesh: pv.UnstructuredGrid ) -> None:
+        """Add a mesh to the region viewer.
+
+        Args:
+            mesh: UnstructuredGrid mesh to add
+        """
         self.input.merge( mesh, inplace=True )  # type: ignore
         self.mesh = self.input.copy()  # type: ignore
 
     def update_clip( self, normal: tuple[ float ], origin: tuple[ float ] ) -> None:
+        """Update the clip plane with new normal and origin.
+
+        Args:
+            normal: Normal vector for clipping plane
+            origin: Origin point for clipping plane
+        """
         self.mesh.copy_from( self.input.clip( normal=normal, origin=origin, crinkle=True ) )  # type: ignore
 
 
@@ -165,9 +228,19 @@ class SetVisibilityCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
     def __init__( self, actor: vtkActor ) -> None:
+        """Initialize callback with actor reference.
+
+        Args:
+            actor: VTK actor to control visibility
+        """
         self.actor = actor
 
     def __call__( self, state: bool ) -> None:
+        """Set visibility state of the actor.
+
+        Args:
+            state: Visibility state (True/False)
+        """
         self.actor.SetVisibility( state )
 
 
@@ -175,16 +248,32 @@ class SetVisibilitiesCallback:
     """Helper callback to keep a reference to the actor being modified."""
 
     def __init__( self ) -> None:
+        """Initialize callback with empty actor list."""
         self.actors: list[ vtkActor ] = []
 
     def add_actor( self, actor: vtkActor ) -> None:
+        """Add an actor to the callback list.
+
+        Args:
+            actor: VTK actor to add
+        """
         self.actors.append( actor )
 
     def update_visibility( self, state: bool ) -> None:
+        """Update visibility of all actors.
+
+        Args:
+            state: Visibility state (True/False)
+        """
         for actor in self.actors:
             actor.SetVisibility( state )
 
     def __call__( self, state: bool ) -> None:
+        """Set visibility state of all actors.
+
+        Args:
+            state: Visibility state (True/False)
+        """
         for actor in self.actors:
             actor.SetVisibility( state )
 
@@ -218,6 +307,11 @@ def find_surfaces( xmlFile: str ) -> list[ str ]:
 
 
 def main( args: argparse.Namespace ) -> None:
+    """Main function for the 3D visualization viewer.
+
+    Args:
+        args: Parsed command line arguments
+    """
     start_time = time.monotonic()
     pdsc: vtkPartitionedDataSetCollection
 
@@ -238,7 +332,7 @@ def main( args: argparse.Namespace ) -> None:
 
     print( "surfaces used as boundary conditionsp", surfaces_used )
 
-    global_bounds: list[float] = [ 0, 0, 0, 0, 0, 0 ]
+    global_bounds: list[ float ] = [ 0, 0, 0, 0, 0, 0 ]
 
     plotter = pv.Plotter( shape=( 2, 2 ), border=True )
     ## 1. Region subview
@@ -260,7 +354,7 @@ def main( args: argparse.Namespace ) -> None:
         plotter.add_mesh_clip_plane(
             region_engine.mesh,
             origin=region_engine.mesh.center,
-            normal=tuple([-1.0, 0.0, 0.0]),  # type: ignore[arg-type]
+            normal=( -1.0, 0.0, 0.0 ),  # type: ignore[arg-type]
             crinkle=True,
             show_edges=True,
             cmap="glasbey_bw",
@@ -271,7 +365,7 @@ def main( args: argparse.Namespace ) -> None:
             # n_colors=n,
         )
         stop = time.monotonic()
-        global_bounds = list(region_engine.mesh.bounds)
+        global_bounds = list( region_engine.mesh.bounds )
         plotter.add_text( "Mesh", font_size=24 )
         plotter.background_color = "white"
         plotter.show_bounds(
@@ -384,17 +478,16 @@ def main( args: argparse.Namespace ) -> None:
                         for d in datasets:
                             dataset = pdsc.GetPartitionedDataSet( d )
                             if dataset.GetPartition( 0 ) is not None:
-                                well_engine.add_mesh( pv.wrap( dataset.GetPartition(
-                                    0 ) ).cast_to_polydata() )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
+                                well_engine.add_mesh( pv.wrap( dataset.GetPartition( 0 ) ).cast_to_polydata()
+                                                     )  # .scale([1.0, 1.0, args.Zamplification], inplace=True)) #
                     elif assembly.GetNodeName( sub_node ) == "Perforations":
-                        for i, perfos in enumerate( assembly.GetChildNodes( sub_node, False ) ):
+                        for _i, perfos in enumerate( assembly.GetChildNodes( sub_node, False ) ):
                             datasets = assembly.GetDataSetIndices( perfos, False )
                             for d in datasets:
                                 dataset = pdsc.GetPartitionedDataSet( d )
                                 if dataset.GetPartition( 0 ) is not None:
-                                    pointset = pv.wrap(
-                                        dataset.GetPartition( 0 )
-                                    ).cast_to_pointset()  # .scale([1.0, 1.0, args.Zamplification], inplace=True) #
+                                    pointset = pv.wrap( dataset.GetPartition( 0 ) ).cast_to_pointset(
+                                    )  # .scale([1.0, 1.0, args.Zamplification], inplace=True) #
                                     perfo_engine.add_mesh( pointset )
 
             plotter.add_slider_widget( callback=well_engine.update, rng=[ 0.1, 10 ], title="Wells Radius" )
@@ -427,7 +520,7 @@ def main( args: argparse.Namespace ) -> None:
                     actor = plotter.add_mesh( m, color=True, show_edges=False )
                     perfo_vis_callback.add_actor( actor )
                     # render cell containing perforation
-                    cell_id = my_cell_locator.FindCell( list(m.center) )
+                    cell_id = my_cell_locator.FindCell( list( m.center ) )
                     if cell_id != -1:
                         id_list = vtkIdList()
                         id_list.InsertNextId( cell_id )
@@ -486,7 +579,7 @@ def main( args: argparse.Namespace ) -> None:
         boxes = assembly.GetFirstNodeByPath( "//" + root_name + "/Boxes" )
 
         if boxes > 0:
-            for i, sub_node in enumerate( assembly.GetChildNodes( boxes, False ) ):
+            for _i, sub_node in enumerate( assembly.GetChildNodes( boxes, False ) ):
                 datasets = assembly.GetDataSetIndices( sub_node, False )
                 for d in datasets:
                     dataset = pdsc.GetPartitionedDataSet( d )
@@ -520,6 +613,7 @@ def main( args: argparse.Namespace ) -> None:
 
 
 def run() -> None:
+    """Run the viewer application with command line arguments."""
     parser = parsing()
     args, unknown_args = parser.parse_known_args()
     main( args )

@@ -78,8 +78,8 @@ def numpy_to_vtk( a: npt.DTypeLike ) -> vtk.vtkDataArray:
 
 
 def read( xmlFilepath: str ) -> SimulationDeck:
-    """
-    Reads a GEOS xml file and processes it using the geos_xml_tools processor.
+    """Reads a GEOS xml file and processes it using the geos_xml_tools processor.
+
     This handles recursive includes, parameter substitution, unit conversion,
     and symbolic math.
 
@@ -114,7 +114,7 @@ def read( xmlFilepath: str ) -> SimulationDeck:
         processed_root = tree.getroot()
     except XMLSyntaxError as err:
         print( f"\nCould not parse the processed file at: {processed_xml_path}" )
-        print( f"This may indicate an error in the structure of the source XML files." )
+        print( "This may indicate an error in the structure of the source XML files." )
         print( f"Original error: {err.msg}" )
         raise Exception( "\nAn error occurred after processing the XML deck." ) from err
 
@@ -124,8 +124,7 @@ def read( xmlFilepath: str ) -> SimulationDeck:
 
 
 def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.vtkPartitionedDataSetCollection:
-    """
-    Processes a GEOS XML deck and converts it into a VTK partitioned dataset collection.
+    """Processes a GEOS XML deck and converts it into a VTK partitioned dataset collection.
 
     This function serves as the primary entry point. It uses the standard `xml_processor`
     to handle file inclusions and other preprocessing, then builds the VTK model.
@@ -172,9 +171,7 @@ def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.
 
 
 def build_model( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
-    """
-    Populates a VTK data collection from a processed SimulationDeck.
-    """
+    """Populates a VTK data collection from a processed SimulationDeck."""
     assembly = vtk.vtkDataAssembly()
     # Use the original file's name for the root node, not the temporary processed file
     root_name = Path( d.xml_root.get( "name", "Deck" ) ).stem
@@ -326,7 +323,8 @@ def _read_mesh( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollecti
     Args:
         d (SimulationDeck): A container for the path and parsed XML root of a simulation deck.
         collection (vtk.vtkPartitionedDataSetCollection): Current collection to update
-    
+        attr (str): Cell attribute name to use as region marker
+
     Returns:
         vtk.vtkPartitionedDataSet: the mesh as a partition of the data from the deck
     """
@@ -336,9 +334,8 @@ def _read_mesh( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollecti
 
     # Check for VTKMesh (external file)
     vtk_mesh_node = meshes.find( "VTKMesh" )
-    if vtk_mesh_node is not None:
-        if _read_vtk_data_repository( d.file_path, vtk_mesh_node, collection, attr ) < 1:
-            return 0
+    if vtk_mesh_node is not None and _read_vtk_data_repository( d.file_path, vtk_mesh_node, collection, attr ) < 1:
+        return 0
 
     # Check for InternalMesh (generated grid)
     internal_mesh_node = meshes.find( "InternalMesh" )
@@ -350,7 +347,7 @@ def _read_mesh( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollecti
 
 def _read_vtk_data_repository( file_path: str, mesh: ElementTree.Element,
                                collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
-    """Reads the mesh added in the simulation deck and builds adds it as a partition
+    """Reads the mesh added in the simulation deck and builds adds it as a partition.
 
     Args:
         file_path (str): Path where the mesh is

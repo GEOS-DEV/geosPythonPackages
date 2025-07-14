@@ -52,7 +52,7 @@ def parse_xml_preprocessor_arguments() -> tuple[ argparse.Namespace, Iterable[ s
 
 def build_vtk_parser() -> argparse.ArgumentParser:
     """Build VTK parser for help display.
-    
+
     Returns:
         argparse.ArgumentParser: the parser instance
     """
