@@ -58,12 +58,12 @@ def fillPartialAttributes(
     """Fill input partial attribute of multiBlockDataSet with the same value for all the components.
 
     Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlockDataSet where to fill the attribute.
-        attributeName (str): attribute name.
+        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill the attribute.
+        attributeName (str): Attribute name.
         onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
-        value (any, optional): value to fill in the partial atribute.
-            Defaults to nan. For int vtk array, default value is automatically set to -1.
+        value (any, optional): Filling value.
+            Defaults to -1 for int VTK arrays, nan otherwise.
 
     Returns:
         bool: True if calculation successfully ended.
@@ -107,12 +107,12 @@ def fillAllPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
     value: Any = np.nan,
 ) -> bool:
-    """Fill all the partial attributes of multiBlockDataSet with same value for all attributes and they components.
+    """Fill all the partial attributes of a multiBlockDataSet with a same value. All components of each attribute are filled with the same value.
 
     Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): multiBlockDataSet where to fill the attribute.
-        value (any, optional): value to fill in the partial atribute.
-            Defaults to nan. For int vtk array, default value is automatically set to -1.
+        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill the attribute.
+        value (any, optional): Filling value.
+                    Defaults to -1 for int VTK arrays, nan otherwise.
 
     Returns:
         bool: True if calculation successfully ended.
@@ -136,8 +136,8 @@ def createEmptyAttribute(
 
     Args:
         attributeName (str): name of the attribute
-        componentNames (tuple[str,...]): name of the components for vectorial attributes.
-        vtkDataType (int): data type.
+        componentNames (tuple[str,...]): Name of the components for vectorial attributes.
+        vtkDataType (int): Data type.
 
     Returns:
         bool: True if the attribute was correctly created.
@@ -169,22 +169,22 @@ def createConstantAttribute(
     """Create an attribute with a constant value everywhere if absent.
 
     Args:
-        object (vtkDataObject): object (vtkMultiBlockDataSet, vtkDataSet) where to create the attribute.
-        values ( list[float]): list of values of the attribute for each components.
-        attributeName (str): name of the attribute.
-        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+        object (vtkDataObject): Object (vtkMultiBlockDataSet, vtkDataSet) where to create the attribute.
+        values (list[float]): List of values of the attribute for each components.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
         onPoints (bool): True if attributes are on points, False if they are on cells.
             Defaults to False.
-        vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the array value.
-            Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
 
     Returns:
-        bool: True if the attribute was correctly created False if the attribute was already present.
+        bool: True if the attribute was correctly created, False otherwise.
     """
     if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return createConstantAttributeMultiBlock( object, values, attributeName, componentNames, onPoints, vtkDataType )
@@ -211,15 +211,15 @@ def createConstantAttributeMultiBlock(
 
     Args:
         multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): vtkMultiBlockDataSet where to create the attribute.
-        values (list[any]): list of values of the attribute for each components.
-        attributeName (str): name of the attribute.
-        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+        values (list[any]): List of values of the attribute for each components.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
         onPoints (bool): True if attributes are on points, False if they are on cells.
             Defaults to False.
-        vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
-            Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -261,16 +261,16 @@ def createConstantAttributeDataSet(
     """Create an attribute with a constant value everywhere.
 
     Args:
-        dataSet (vtkDataSet): vtkDataSet where to create the attribute.
-        values ( list[any]): list of values of the attribute for each components.
-        attributeName (str): name of the attribute.
-        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+        dataSet (vtkDataSet): VtkDataSet where to create the attribute.
+        values ( list[any]): List of values of the attribute for each components.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
         onPoints (bool): True if attributes are on points, False if they are on cells.
             Defaults to False.
-        vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
-            Waring with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -301,16 +301,16 @@ def createAttribute(
     """Create an attribute and its VTK array from the given array.
 
     Args:
-        dataSet (vtkDataSet): dataSet where to create the attribute.
-        array (npt.NDArray[any]): array that contains the values.
-        attributeName (str): name of the attribute.
-        componentNames (tuple[str,...], optional): name of the components for vectorial attributes. If one component, give an empty tuple.
+        dataSet (vtkDataSet): DataSet where to create the attribute.
+        array (npt.NDArray[any]): Array that contains the values.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
         onPoints (bool): True if attributes are on points, False if they are on cells.
             Defaults to False.
-        vtkDataType (Union(any, int), optional): vtk data type of the attribute to create.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value in the array.
-            Waring with int8, uint8 and int64 type of value, several vtk array type use it. By default:
+            Warning with int8, uint8 and int64 type of value, several vtk array type use it. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -329,9 +329,9 @@ def createAttribute(
 
         if nbNames < nbComponents:
             componentNames = tuple( [ "Component" + str( i ) for i in range( nbComponents ) ] )
-            print( "Not enough component name enter, component names are seted to : Component0, Component1 ..." )
+            print( "Insufficient number of input component names. Component names will be set to : Component0, Component1 ..." )
         elif nbNames > nbComponents:
-            print( "To many component names enter, the lastest will not be taken into account." )
+            print( f"Excessive number of input component names, only the {len(nbComponents)} first ones will be used." )
 
         for i in range( nbComponents ):
             createdAttribute.SetComponentName( i, componentNames[ i ] )
@@ -402,8 +402,8 @@ def copyAttributeDataSet(
     Args:
         objectFrom (vtkDataSet): object from which to copy the attribute.
         objectTo (vtkDataSet): object where to copy the attribute.
-        attributeNameFrom (str): attribute name in objectFrom.
-        attributeNameTo (str): attribute name in objectTo.
+        attributeNameFrom (str): Attribute name in objectFrom.
+        attributeNameTo (str): Attribute name in objectTo.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
 
@@ -433,9 +433,9 @@ def renameAttribute(
     """Rename an attribute.
 
     Args:
-        object (vtkMultiBlockDataSet): object where the attribute is.
-        attributeName (str): name of the attribute.
-        newAttributeName (str): new name of the attribute.
+        object (vtkMultiBlockDataSet): Object where the attribute is.
+        attributeName (str): Name of the attribute.
+        newAttributeName (str): New name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:

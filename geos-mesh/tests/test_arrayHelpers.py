@@ -114,7 +114,7 @@ def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attribu
 
     vtkDataTypeTest: int = arrayHelpers.getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
 
-    assert ( vtkDataType == vtkDataTypeTest )
+    assert (  vtkDataTypeTest == vtkDataType )
 
 
 @pytest.mark.parametrize( "attributeName, onPoints", [

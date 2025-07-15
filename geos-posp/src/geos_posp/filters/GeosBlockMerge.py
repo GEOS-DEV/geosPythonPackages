@@ -367,7 +367,7 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         """
         # fill partial attributes in all children blocks
         if not fillAllPartialAttributes( compositeBlock ):
-            self.m_logger.warning( "Some partial attributes may not have been " + "propagated to the whole mesh." )
+            self.m_logger.warning( "Some partial attributes may not have been propagated to the whole mesh." )
 
         # merge blocks
         return mergeBlocks( compositeBlock )

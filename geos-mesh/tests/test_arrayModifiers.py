@@ -80,10 +80,10 @@ def test_fillPartialAttributes(
     valueTypeRef: str,
 ) -> None:
     """Test filling a partial attribute from a multiblock with values."""
-    MultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    arrayModifiers.fillPartialAttributes( MultiBlockDataSetTest, attributeName, onPoints, value )
+    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints, value )
 
-    blockTest: vtkDataSet = cast( vtkDataSet, MultiBlockDataSetTest.GetBlock( idBlockToFill ) )
+    blockTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlockToFill ) )
     dataTest: Union[ vtkPointData, vtkCellData ]
     nbElements: int
     if onPoints:
@@ -95,7 +95,7 @@ def test_fillPartialAttributes(
 
     attributeFillTest: vtkDataArray = dataTest.GetArray( attributeName )
     nbComponentsTest: int = attributeFillTest.GetNumberOfComponents()
-    assert nbComponentsRef == nbComponentsTest
+    assert nbComponentsTest == nbComponentsRef
 
     npArrayFillRef: npt.NDArray[ Any ]
     if nbComponentsRef > 1:

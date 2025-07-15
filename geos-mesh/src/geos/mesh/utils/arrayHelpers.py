@@ -361,15 +361,15 @@ def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -
 
 
 def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
-    """Return the type of the vtk array corrsponding to input attribute name in table.
+    """Return VTK type of requested array from dataset input.
 
     Args:
-        object (PointSet or UnstructuredGrid): input object.
-        attributeName (str): name of the attribute.
+        object (PointSet or UnstructuredGrid): Input object.
+        attributeName (str): Name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: the type of the vtk array corrsponding to input attribute name.
+        int: the type of the vtk array corresponding to input attribute name.
     """
     array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
     vtkArrayType: int = array.GetDataType()
@@ -378,15 +378,15 @@ def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: b
 
 
 def getVtkArrayTypeInMultiBlock( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> int:
-    """Return the type of the vtk array corrsponding to input attribute name in the multiblock data set if it exist.
+    """Return VTK type of requested array from multiblock dataset input, if existing.
 
     Args:
         multiBlockDataSet (PointSet or UnstructuredGrid): input object.
-        attributeName (str): name of the attribute.
+        attributeName (str): Name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: type of the vtk array corrsponding to input attribute name, -1 if the multiblock has no attribute with given name.
+        int: Type of the requested vtk array if existing in input multiblock dataset, otherwise -1.
     """
     nbBlocks = multiBlockDataSet.GetNumberOfBlocks()
     for idBlock in range( nbBlocks ):
