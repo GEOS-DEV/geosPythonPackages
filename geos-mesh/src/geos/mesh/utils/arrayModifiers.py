@@ -356,10 +356,10 @@ def copyAttribute(
     """Copy an attribute from objectFrom to objectTo.
 
     Args:
-        objectFrom (vtkMultiBlockDataSet): object from which to copy the attribute.
-        objectTo (vtkMultiBlockDataSet): object where to copy the attribute.
-        attributeNameFrom (str): attribute name in objectFrom.
-        attributeNameTo (str): attribute name in objectTo.
+        objectFrom (vtkMultiBlockDataSet): Object from which to copy the attribute.
+        objectTo (vtkMultiBlockDataSet): Object where to copy the attribute.
+        attributeNameFrom (str): Attribute name in objectFrom.
+        attributeNameTo (str): Attribute name in objectTo.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
 
@@ -370,16 +370,14 @@ def copyAttribute(
     elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( objectFrom )
 
     assert elementaryBlockIndexesTo == elementaryBlockIndexesFrom, (
-        "ObjectFrom " + "and objectTo do not have the same block indexes." )
+        "ObjectFrom and objectTo do not have the same block indexes." )
 
     for index in elementaryBlockIndexesTo:
-        # get block from initial time step object
         blockFrom: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectFrom, index ) )
-        assert blockFrom is not None, "Block at initial time step is null."
+        assert blockFrom is not None, f"Block { str( index ) } of objectFrom is null."
 
-        # get block from current time step object
         blockTo: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
-        assert blockTo is not None, "Block at current time step is null."
+        assert blockTo is not None, f"Block { str( index ) } of objectTo is null."
 
         try:
             copyAttributeDataSet( blockFrom, blockTo, attributeNameFrom, attributeNameTo, onPoints )
