@@ -6,7 +6,7 @@ import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
 from typing import Union, Any
 from vtk import (  # type: ignore[import-untyped]
-    VTK_DOUBLE, VTK_FLOAT,
+    VTK_DOUBLE, VTK_FLOAT, VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
@@ -63,13 +63,12 @@ def fillPartialAttributes(
         onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
         value (any, optional): Filling value.
-            Defaults to -1 for int VTK arrays, nan otherwise.
+            Defaults to -1 for int VTK arrays, 0 for uint VTK arrays and nan otherwise.
 
     Returns:
         bool: True if calculation successfully ended.
     """
     vtkArrayType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
-    assert vtkArrayType != -1
 
     infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
     nbComponents: int = infoAttributes[ attributeName ]
@@ -78,22 +77,22 @@ def fillPartialAttributes(
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, onPoints )
 
-    valueType: Any = type( value )
     typeMapping: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-    valueTypeExpected: Any = typeMapping[ vtkArrayType ]
-    if valueTypeExpected != valueType:
-        if np.isnan( value ):
-            if vtkArrayType in ( VTK_DOUBLE, VTK_FLOAT ):
-                value = valueTypeExpected( value )
-            else:
-                print( attributeName + " vtk array type is " + str( valueTypeExpected ) +
-                       ", default value is automatically set to -1." )
-                value = valueTypeExpected( -1 )
-
+    valueType: Any = typeMapping[ vtkArrayType ]
+    if np.isnan( value ):
+        if vtkArrayType in ( VTK_DOUBLE, VTK_FLOAT ):
+            value = valueType( value )
+        elif vtkArrayType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG ):
+            print( attributeName + " vtk array type is " + str( valueType ) +
+                   ", default value is automatically set to 0." )
+            value = valueType( 0 )
         else:
-            print( "The value has the wrong type, it is update to " + str( valueTypeExpected ) + ", the type of the " +
-                   attributeName + " array to fill." )
-            value = valueTypeExpected( value )
+            print( attributeName + " vtk array type is " + str( valueType ) +
+                   ", default value is automatically set to -1." )
+            value = valueType( -1 )
+
+    else:
+        value = valueType( value )
 
     values: list[ Any ] = [ value for _ in range( nbComponents ) ]
 
@@ -112,7 +111,7 @@ def fillAllPartialAttributes(
     Args:
         multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill the attribute.
         value (any, optional): Filling value.
-                    Defaults to -1 for int VTK arrays, nan otherwise.
+            Defaults to -1 for int VTK arrays, 0 for uint VTK arrays and nan otherwise.
 
     Returns:
         bool: True if calculation successfully ended.
@@ -135,7 +134,7 @@ def createEmptyAttribute(
     """Create an empty attribute.
 
     Args:
-        attributeName (str): name of the attribute
+        attributeName (str): Name of the attribute
         componentNames (tuple[str,...]): Name of the components for vectorial attributes.
         vtkDataType (int): Data type.
 
@@ -178,7 +177,7 @@ def createConstantAttribute(
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the array value.
-            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -219,7 +218,7 @@ def createConstantAttributeMultiBlock(
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
-            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -270,7 +269,7 @@ def createConstantAttributeDataSet(
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value.
-            Warning with int8, uint8 and int64 type of value, several vtk array type use it by default:
+            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -310,7 +309,7 @@ def createAttribute(
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
             Defaults to None, the type is given by the type of the given value in the array.
-            Warning with int8, uint8 and int64 type of value, several vtk array type use it. By default:
+            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -331,7 +330,7 @@ def createAttribute(
             componentNames = tuple( [ "Component" + str( i ) for i in range( nbComponents ) ] )
             print( "Insufficient number of input component names. Component names will be set to : Component0, Component1 ..." )
         elif nbNames > nbComponents:
-            print( f"Excessive number of input component names, only the {len(nbComponents)} first ones will be used." )
+            print( f"Excessive number of input component names, only the { len( nbComponents ) } first ones will be used." )
 
         for i in range( nbComponents ):
             createdAttribute.SetComponentName( i, componentNames[ i ] )
@@ -398,8 +397,8 @@ def copyAttributeDataSet(
     """Copy an attribute from objectFrom to objectTo.
 
     Args:
-        objectFrom (vtkDataSet): object from which to copy the attribute.
-        objectTo (vtkDataSet): object where to copy the attribute.
+        objectFrom (vtkDataSet): Object from which to copy the attribute.
+        objectTo (vtkDataSet): Object where to copy the attribute.
         attributeNameFrom (str): Attribute name in objectFrom.
         attributeNameTo (str): Attribute name in objectTo.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
@@ -408,14 +407,12 @@ def copyAttributeDataSet(
     Returns:
         bool: True if copy successfully ended, False otherwise.
     """
-    # get attribut from initial time step block
     npArray: npt.NDArray[ Any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoints )
     assert npArray is not None
 
     componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributeNameFrom, onPoints )
     vtkDataType: int = getVtkArrayTypeInObject( objectFrom, attributeNameFrom, onPoints )
 
-    # copy attribut to current time step block
     createAttribute( objectTo, npArray, attributeNameTo, componentNames, onPoints, vtkDataType )
     objectTo.Modified()
 
@@ -487,7 +484,7 @@ def doCreateCellCenterAttribute( block: vtkDataSet, cellCenterAttributeName: str
     """Create elementCenter attribute in a vtkDataSet if it does not exist.
 
     Args:
-        block (vtkDataSet): input mesh that must be a vtkDataSet
+        block (vtkDataSet): Input mesh that must be a vtkDataSet
         cellCenterAttributeName (str): Name of the attribute
 
     Returns:
@@ -500,7 +497,7 @@ def doCreateCellCenterAttribute( block: vtkDataSet, cellCenterAttributeName: str
         filter.Update()
         output: vtkPointSet = filter.GetOutputDataObject( 0 )
         assert output is not None, "vtkCellCenters output is null."
-        # transfer output to ouput arrays
+        # transfer output to output arrays
         centers: vtkPoints = output.GetPoints()
         assert centers is not None, "Center are undefined."
         centerCoords: vtkDataArray = centers.GetData()
