@@ -14,7 +14,17 @@ import numpy as np
 from typing import Iterable
 
 __doc__ = """
-Tools to save and load multi-dimensional data tables to and from a .geos file extension.
+Multi-dimensional Table I/O for GEOS.
+
+This module provides tools to save and load multi-dimensional data tables to and from .geos file extensions.
+Features:
+* Write GEOS-compatible ASCII tables for axes and properties.
+* Read tables back into numpy arrays for analysis or simulation.
+
+Typical usage:
+    from geos.xml_tools.table_generator import write_GEOS_table, read_GEOS_table
+
+Intended for use in workflows that require tabular data exchange with GEOS.
 """
 
 

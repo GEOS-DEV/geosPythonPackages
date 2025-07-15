@@ -13,9 +13,13 @@
 import re
 
 __doc__ = """
-Tools for managing regular expressions in geosx_xml_tools.
+Regular Expression Utilities for geos-xml-tools.
 
-Define regex patterns used throughout the module:
+This module defines and manages regex patterns used throughout the package for:
+* Parameter substitution
+* Unit recognition and conversion
+* Symbolic math evaluation
+* String sanitization and formatting
 
 Pattern         |  Example targets             | Notes
 ------------------------------------------------------------------------------------
@@ -27,6 +31,7 @@ sanitize        |                              | Removes any residual characters
 strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
 strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
 
+Intended for internal use by XML processing and unit management tools.
 """
 
 patterns: dict[ str, str ] = {

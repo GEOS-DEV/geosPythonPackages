@@ -18,6 +18,21 @@ from geos.xml_tools import command_line_parsers
 from geos.xml_tools.attribute_coverage import parse_schema
 from geos.xml_tools.xml_formatter import format_file
 
+__doc__ = """
+XML Redundancy Checker for GEOS.
+
+This module analyzes XML files for redundant attributes and elements by comparing them to a schema.
+Features:
+* Removes attributes that match schema defaults.
+* Prunes unused or redundant XML elements.
+* Provides command-line and programmatic interfaces for batch processing.
+
+Typical usage:
+    from geos.xml_tools.xml_redundancy_check import check_xml_redundancy
+
+Intended for cleaning and optimizing GEOS XML input files.
+"""
+
 
 def check_redundancy_level( local_schema: dict[ str, Any ],
                             node: ElementTree.Element,

@@ -14,7 +14,22 @@ import re
 from typing import Any
 from geos.xml_tools import regex_tools
 
-__doc__ = """Tools for managing units in GEOS."""
+__doc__ = """
+Unit Management Tools for GEOS XML.
+
+This module provides utilities for parsing, converting, and evaluating physical units in XML attributes.
+Features:
+* Handles SI, imperial, and other commonly used units.
+* Expands prefixes and alternate names.
+* Evaluates unit expressions and converts to base SI.
+
+Typical usage:
+    from geos.xml_tools.unit_manager import UnitManager
+    um = UnitManager()
+    result = um(["1.0", "psi"])
+
+Used internally by the XML processor for unit conversion.
+"""
 
 
 class UnitManager():

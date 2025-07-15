@@ -24,12 +24,19 @@ from vtkmodules.util.numpy_support import numpy_to_vtk as numpy_to_vtk_
 from geos.xml_tools import xml_processor
 
 __doc__ = """
-Converts a processed GEOS XML element tree into a VTK data structure.
+VTK Deck Builder for GEOS XML.
 
-This module is designed to work on an lxml ElementTree that has already
-been processed by geos_xml_tools.xml_processor. It extracts geometric
-information (meshes, wells, boxes) and builds a vtk.vtkPartitionedDataSetCollection
-for visualization or further analysis.
+This module converts a processed GEOS XML element tree into a VTK data structure for visualization or analysis.
+Features:
+* Reads and processes XML decks using geos_xml_tools.xml_processor.
+* Extracts geometric information (meshes, wells, boxes) and builds a vtkPartitionedDataSetCollection.
+* Provides utilities for working with VTK and GEOS simulation data.
+
+Typical usage:
+    from geos.xml_tools.vtk_builder import create_vtk_deck
+    vtk_collection = create_vtk_deck("input.xml")
+
+Intended for use in visualization pipelines and as a backend for 3D viewers.
 """
 
 tr = str.maketrans( "{}", "[]" )

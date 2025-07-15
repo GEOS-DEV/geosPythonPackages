@@ -16,6 +16,22 @@ import re
 from typing import Any, TextIO
 from geos.xml_tools import command_line_parsers
 
+__doc__ = """
+XML Formatter for GEOS Input Files.
+
+This module provides utilities for pretty-printing, re-indenting, and alphabetizing attributes in XML files.
+Features:
+* Customizable indentation, block separation, and attribute sorting.
+* Namespace and close-tag style options.
+* Command-line interface for batch formatting.
+
+Typical usage:
+    from geos.xml_tools.xml_formatter import format_file
+    format_file("input.xml", indent_size=4)
+
+Intended for improving readability and consistency of GEOS XML files.
+"""
+
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
     """Format xml attribute strings.

@@ -24,6 +24,21 @@ from vtkmodules.vtkRenderingCore import vtkActor
 from geos.xml_tools.vtk_builder import create_vtk_deck
 from geos.xml_tools.xml_processor import process
 
+__doc__ = """
+3D Visualization Viewer for GEOS Data.
+
+This module provides interactive visualization tools for GEOS XML-based simulation data using PyVista.
+It supports:
+* Loading and visualizing meshes, wells, boxes, and perforations from processed XML files.
+* Interactive controls for toggling visibility, clipping, and attribute-based coloring.
+* Command-line interface for launching the viewer with various options.
+
+Typical usage:
+    python -m geos.xml_tools.pyvista_viewer --xmlFilepath input.xml
+
+Intended for both standalone use and as a library for custom visualization workflows.
+"""
+
 
 def parsing() -> argparse.ArgumentParser:
     """Build argument parser for the viewer command.

@@ -18,7 +18,9 @@ from geos.xml_tools import command_line_parsers
 
 __doc__ = """
 Tool designed to analyze how well a project's XML files cover the possibilities defined in an XML Schema Definition (.xsd) file.
+
 It checks which attributes are used in a codebase and generates a report.
+
 The script works in three main stages:
 * Parse the Schema: It reads the master .xsd file to understand all possible elements, attributes, and their default values.
 * Collect Usage Data: It scans through all .xml files in specified folders (like src and examples) and records every attribute value it finds.

@@ -17,20 +17,26 @@ import re
 from typing import Iterable
 from geos.xml_tools import regex_tools, unit_manager, xml_formatter
 
+__doc__ = """
+Pre-processor for XML files in GEOS.
+
+This module provides robust XML preprocessing for GEOS input files, including:
+* Merging multiple XML files via <Included> tags into a single tree.
+* Substituting parameter variables (e.g., $pressure) with their values.
+* Handling and converting physical units (e.g., 100[psi]) to SI.
+* Evaluating symbolic math expressions within XML attributes.
+* Optionally validating the final XML against a schema.
+
+Typical usage:
+    from geos.xml_tools import xml_processor
+    xml_processor.process([...])
+
+This is the core utility for preparing XML input for downstream GEOS tools.
+"""
+
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
-
-__doc__ = """
-Pre-processor for XML files in GEOS.
-The main goal of this script is to process and simplify complex XML configurations.
-It achieves this by performing several key actions in sequence:
-* Merging Files: Combines multiple XML files into one.
-* Substituting Variables: Replaces placeholders (like $pressure) with actual values.
-* Handling Units: Converts values with units (like 100[psi]) into a standard base unit.
-* Evaluating Math: Calculates mathematical expressions directly within the XML.
-* Validation: Optionally checks if the final XML conforms to a master schema.
-"""
 
 
 def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int ) -> None:

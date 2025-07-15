@@ -18,7 +18,21 @@ from typing import Callable, Any, Union, Iterable
 from geos.xml_tools import ( attribute_coverage, command_line_parsers, pyvista_viewer, vtk_builder, xml_formatter,
                              xml_processor, xml_redundancy_check )
 
-__doc__ = """Unified command line tools for geos-xml-tools package."""
+__doc__ = """
+Unified Command Line Interface for geos-xml-tools.
+
+This script provides a single entry point for all major XML tools in the package, including:
+* XML preprocessing and variable substitution
+* XML formatting and structure cleanup
+* Attribute coverage analysis
+* Redundancy checking
+* VTK deck building
+* 3D visualization
+
+Run `geos-xml-tools --help` for a list of available commands and options.
+
+Intended for end-users and developers to access all XML utilities from one place.
+"""
 
 
 def check_mpi_rank() -> int:

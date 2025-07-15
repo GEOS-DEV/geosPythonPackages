@@ -13,6 +13,18 @@
 import argparse
 from typing import Iterable
 
+__doc__ = """
+Command Line Argument Parsers for geos-xml-tools.
+
+This module provides reusable argument parsers for all command-line tools in the package, including:
+* XML preprocessing
+* VTK deck building
+* XML formatting
+* Attribute coverage and redundancy analysis
+
+Import and use these parsers to ensure consistent CLI behavior across all tools.
+"""
+
 
 def build_preprocessor_input_parser() -> argparse.ArgumentParser:
     """Build the argument parser.
