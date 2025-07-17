@@ -39,6 +39,7 @@ setup_ats_environment = "geos.ats.environment_setup:main"
 geos_ats_log_check = "geos.ats.helpers.log_check:main"
 geos_ats_restart_check = "geos.ats.helpers.restart_check:main"
 geos_ats_curve_check = "geos.ats.helpers.curve_check:main"
+geos_ats_process_tests_fails="geos.ats.helpers.process_tests_failures:main"
 
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
