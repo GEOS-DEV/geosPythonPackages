@@ -25,7 +25,7 @@ classifiers = [
 requires-python = ">=3.10"
 
 dependencies = [
-    "vtk >= 9.4",
+    "vtk >= 9.3",
     "networkx >= 2.4",
     "tqdm >= 4.67",
     "numpy >= 2.2",
