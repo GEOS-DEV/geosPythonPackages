@@ -100,39 +100,42 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
         includeCount (int): The current recursion depth.
         maxInclude (int): The maximum number of xml files to include (default = 100)
     """
-    # Expand the input path
     pwd = os.getcwd()
-    includePath, fname = os.path.split( os.path.abspath( os.path.expanduser( fname ) ) )
-    os.chdir( includePath )
-
-    # Check to see if the code has fallen into a loop
-    includeCount += 1
-    if ( includeCount > maxInclude ):
-        raise Exception( 'Reached maximum recursive includes...  Is there an include loop?' )
-
-    # Check to make sure the file exists
-    if ( not os.path.isfile( fname ) ):
-        print( 'Included file does not exist: %s' % ( fname ) )
-        raise Exception( 'Check included file path!' )
-
-    # Load target xml
     try:
-        parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
-        includeTree = ElementTree.parse( fname, parser )
-        includeRoot = includeTree.getroot()
-    except XMLSyntaxError as err:
-        print( '\nCould not load included file: %s' % ( fname ) )
-        print( err.msg )
-        raise Exception( '\nCheck included file!' ) from err
+        # Expand the input path
+        includePath, fname = os.path.split( os.path.abspath( os.path.expanduser( fname ) ) )
+        os.chdir( includePath )
 
-    # Recursively add the includes:
-    for includeNode in includeRoot.findall( 'Included' ):
-        for f in includeNode.findall( 'File' ):
-            merge_included_xml_files( root, f.get( 'name' ), includeCount )
+        # Check to see if the code has fallen into a loop
+        includeCount += 1
+        if ( includeCount > maxInclude ):
+            raise Exception( 'Reached maximum recursive includes...  Is there an include loop?' )
 
-    # Merge the results into the xml tree
-    merge_xml_nodes( root, includeRoot, 0 )
-    os.chdir( pwd )
+        # Check to make sure the file exists
+        if ( not os.path.isfile( fname ) ):
+            print( 'Included file does not exist: %s' % ( fname ) )
+            raise Exception( 'Check included file path!' )
+
+        # Load target xml
+        try:
+            parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+            includeTree = ElementTree.parse( fname, parser )
+            includeRoot = includeTree.getroot()
+        except XMLSyntaxError as err:
+            print( '\nCould not load included file: %s' % ( fname ) )
+            print( err.msg )
+            raise Exception( '\nCheck included file!' ) from err
+
+        # Recursively add the includes:
+        for includeNode in includeRoot.findall( 'Included' ):
+            for f in includeNode.findall( 'File' ):
+                merge_included_xml_files( root, f.get( 'name' ), includeCount )
+
+        # Merge the results into the xml tree
+        merge_xml_nodes( root, includeRoot, 0 )
+    finally:
+        # This guarantees the original working directory is always restored
+        os.chdir( pwd )
 
 
 def apply_regex_to_node( node: ElementTree.Element ) -> None:
@@ -228,45 +231,49 @@ def process(
     if isinstance( inputFiles, str ):
         inputFiles = [ inputFiles ]
 
-    # Expand the input path
     pwd = os.getcwd()
-    expanded_files = [ os.path.abspath( os.path.expanduser( f ) ) for f in inputFiles ]
-    single_path, single_input = os.path.split( expanded_files[ 0 ] )
-    os.chdir( single_path )
+    try:
+        # Expand the input path
+        expanded_files = [ os.path.abspath( os.path.expanduser( f ) ) for f in inputFiles ]
+        single_path, single_input = os.path.split( expanded_files[ 0 ] )
+        os.chdir( single_path )
 
-    # Handle single vs. multiple command line inputs
-    root = ElementTree.Element( "Problem" )
-    tree = ElementTree.ElementTree()
-    if ( len( expanded_files ) == 1 ):
-        # Load single files directly
-        try:
-            parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
-            tree = ElementTree.parse( single_input, parser=parser )
-            root = tree.getroot()
-        except XMLSyntaxError as err:
-            print( '\nCould not load input file: %s' % ( single_input ) )
-            print( err.msg )
-            raise Exception( '\nCheck input file!' ) from err
+        # Handle single vs. multiple command line inputs
+        root = ElementTree.Element( "Problem" )
+        tree = ElementTree.ElementTree()
+        if ( len( expanded_files ) == 1 ):
+            # Load single files directly
+            try:
+                parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+                tree = ElementTree.parse( single_input, parser=parser )
+                root = tree.getroot()
+            except XMLSyntaxError as err:
+                print( '\nCould not load input file: %s' % ( single_input ) )
+                print( err.msg )
+                raise Exception( '\nCheck input file!' ) from err
 
-    else:
-        # For multiple inputs, create a simple xml structure to hold
-        # the included files.  These will be saved as comments in the compiled file
-        root = ElementTree.Element( 'Problem' )
-        tree = ElementTree.ElementTree( root )
-        included_node = ElementTree.Element( "Included" )
-        root.append( included_node )
-        for f in expanded_files:
-            included_file = ElementTree.Element( "File" )
-            included_file.set( 'name', f )
-            included_node.append( included_file )
+        else:
+            # For multiple inputs, create a simple xml structure to hold
+            # the included files.  These will be saved as comments in the compiled file
+            root = ElementTree.Element( 'Problem' )
+            tree = ElementTree.ElementTree( root )
+            included_node = ElementTree.Element( "Included" )
+            root.append( included_node )
+            for f in expanded_files:
+                included_file = ElementTree.Element( "File" )
+                included_file.set( 'name', f )
+                included_node.append( included_file )
 
-    # Add the included files to the xml structure
-    # Note: doing this first assumes that parameters aren't used in Included block
-    includeCount = 0
-    for includeNode in root.findall( 'Included' ):
-        for f in includeNode.findall( 'File' ):
-            merge_included_xml_files( root, f.get( 'name' ), includeCount )  # type: ignore[attr-defined]
-    os.chdir( pwd )
+        # Add the included files to the xml structure
+        # Note: doing this first assumes that parameters aren't used in Included block
+        includeCount = 0
+        for includeNode in root.findall( 'Included' ):
+            for f in includeNode.findall( 'File' ):
+                merge_included_xml_files( root, f.get( 'name' ), includeCount )  # type: ignore[attr-defined]
+
+    finally:
+        # This block ensures that the original working directory is always restored
+        os.chdir( pwd )
 
     # Build the parameter map
     Pmap = {}
