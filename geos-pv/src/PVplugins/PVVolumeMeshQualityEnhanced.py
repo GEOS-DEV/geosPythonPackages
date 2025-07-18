@@ -258,9 +258,9 @@ class PVVolumeMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         pyrMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellQualityMetric ).union(
             self._getQualityMetricsToUse( self._PyrQualityMetric ) )
         wedgeMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellQualityMetric ).union(
-            self._getQualityMetricsToUse( self._PyrQualityMetric ) )
+            self._getQualityMetricsToUse( self._WedgeQualityMetric ) )
         hexaMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellQualityMetric ).union(
-            self._getQualityMetricsToUse( self._PyrQualityMetric ) )
+            self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
         filter: MeshQualityEnhanced = MeshQualityEnhanced()
         filter.SetInputDataObject( inputMesh )
