@@ -38,7 +38,6 @@ The following packages define hands-on executables that can be used through the 
 
 * `mesh-doctor`: GEOS pre-processing application
 * `time-history`: load and plot hdf5 files
-* `geos-xml-viewer`: load GEOS xml file and display geometrical objects (mesh, boxes, wells)
 * `geos-trame`: web interface to check, display objects, and edit GEOS xml file (see [Trame documentation](https://kitware.github.io/trame/guide/tutorial/))
 
 
@@ -60,6 +59,7 @@ GEOS Python packages dependency tree (inter-dependency and main external depende
 │
 ├── geos-xml-tools
 │   ├── lxml
+│   ├── pyvista
 │
 ├── geos-mesh
 │   ├── geos-utils
@@ -85,11 +85,6 @@ GEOS Python packages dependency tree (inter-dependency and main external depende
 │   ├── geos-mesh
 │   ├── pyvista
 │   ├── trame
-│
-├── geos-xml-viewer
-│   ├── geos-xml-tools
-│   ├── geos-mesh
-│   ├── pyvista
 │
 ├── geos-pv
     ├── geos-prep
