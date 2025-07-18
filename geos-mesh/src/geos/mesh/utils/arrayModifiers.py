@@ -77,17 +77,15 @@ def fillPartialAttributes(
     Returns:
         bool: True if the attribute was correctly created and filled, False if not.
     """
-    #assert isinstance( multiBlockDataSet, vtkMultiBlockDataSet ), "Input mesh has to be inherited from vtkMultiBlockDataSet."
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
         logger.error( f"Input mesh has to be inherited from vtkMultiBlockDataSet." )
         return False
     
-    #assert not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ), f"The attribute { attributeName } is already global."
     if isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
         logger.error( f"The attribute { attributeName } is already global." )
         return False
 
-    vtkArrayType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
+    vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
     infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
     nbComponents: int = infoAttributes[ attributeName ]
 
@@ -96,11 +94,11 @@ def fillPartialAttributes(
         componentNames = getComponentNames( multiBlockDataSet, attributeName, onPoints )
 
     typeMapping: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-    valueType: Any = typeMapping[ vtkArrayType ]
+    valueType: Any = typeMapping[ vtkDataType ]
     if np.isnan( value ):
-        if vtkArrayType in ( VTK_DOUBLE, VTK_FLOAT ):
+        if vtkDataType in ( VTK_DOUBLE, VTK_FLOAT ):
             value = valueType( value )
-        elif vtkArrayType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG ):
+        elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG ):
             logger.warning( f"{ attributeName } vtk array type is { valueType }, default value is automatically set to 0." )
             value = valueType( 0 )
         else:
@@ -120,7 +118,7 @@ def fillPartialAttributes(
     while iter.GetCurrentDataObject() is not None:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
-            created: bool = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkArrayType, logger )
+            created: bool = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType, logger )
             if not created:
                 return False
                     
@@ -146,13 +144,12 @@ def fillAllPartialAttributes(
     Returns:
         bool: True if attributes were correctly created and filled, False if not.
     """    
-    # Parse all attributes, onPoints and onCells
+    # Parse all partial attributes, onPoints and onCells to fill them.
     for onPoints in [ True, False ]:
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
         for attributeName in infoAttributes:
             if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
-                filled: bool = fillPartialAttributes( multiBlockDataSet, attributeName, onPoints, value, logger )
-                if not filled:
+                if not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints, value, logger ):
                     return False
 
     return True
@@ -173,8 +170,9 @@ def createEmptyAttribute(
     Returns:
         bool: True if the attribute was correctly created.
     """
-    vtkDataTypeOk: dict = vnp.get_vtk_to_numpy_typemap()
-    assert vtkDataType in vtkDataTypeOk, f"Attribute type { vtkDataType } is unknown. The empty attribute { attributeName } has not been created into the mesh."
+    # Check if the vtk data type is correct.
+    vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+    assert vtkDataType in vtkNumpyTypeMap, f"Attribute type { vtkDataType } is unknown. The empty attribute { attributeName } has not been created into the mesh."
 
     nbComponents: int = len( componentNames )
 
@@ -190,7 +188,7 @@ def createEmptyAttribute(
 
 def createConstantAttribute(
     object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    values: list[ float ],
+    listValues: list[ Any ],
     attributeName: str,
     componentNames: tuple[ str, ...] = (),  # noqa: C408
     onPoints: bool = False,
@@ -201,123 +199,17 @@ def createConstantAttribute(
 
     Args:
         object (vtkDataObject): Object (vtkMultiBlockDataSet, vtkDataSet) where to create the attribute.
-        values (list[float]): List of values of the attribute for each components.
+        listValues (list[any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
-            Defaults to None, the type is given by the type of the array value.
-            Warning with int8, uint8 and int64 type of value, the vtk array type corresponding are multiple. By default:
-            - int8 -> VTK_SIGNED_CHAR
-            - uint8 -> VTK_UNSIGNED_CHAR
-            - int64 -> VTK_LONG_LONG
-        logger (Logger, optional): A logger to manage the output messages.
-            Defaults to an internal logger.
-
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
-    """
-    # assert not isAttributeInObject( object, attributeName, onPoints ), f"The attribute { attributeName } is already present in the mesh"
-    if isAttributeInObject( object, attributeName, onPoints ):
-        logger.error( f"The attribute { attributeName } is already present in the mesh." )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
-    
-    if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        return createConstantAttributeMultiBlock( object, values, attributeName, componentNames, onPoints, vtkDataType, logger )
-
-    elif isinstance( object, vtkDataSet ):
-        return createConstantAttributeDataSet( object, values, attributeName, componentNames, onPoints, vtkDataType, logger )
-    
-    else:
-        logger.error( f"The mesh has to be inherited from a vtkMultiBlockDataSet or a vtkDataSet" )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
-
-
-def createConstantAttributeMultiBlock(
-    multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-    values: list[ Any ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),  # noqa: C408
-    onPoints: bool = False,
-    vtkDataType: Union[ int, Any ] = None,
-    logger: Logger = getLogger( "createConstantAttributeMultiBlock", True ),
-) -> bool:
-    """Create a new attribute with a constant value on every blocks of the multiBlockDataSet.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): MultiBlockDataSet where to create the attribute.
-        values (list[any]): List of values of the attribute for each components.
-        attributeName (str): Name of the attribute.
-        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
-            Defaults to an empty tuple.
-        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
-            Defaults to False.
-        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
-            Defaults to None, the type is given by the type of the given value.
-            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
-            - int8 -> VTK_SIGNED_CHAR
-            - uint8 -> VTK_UNSIGNED_CHAR
-            - int64 -> VTK_LONG_LONG
-        logger (Logger, optional): A logger to manage the output messages.
-            Defaults to an internal logger.
-
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
-    """
-    #assert isinstance( multiBlockDataSet, vtkMultiBlockDataSet ), "Input mesh has to be inherited from vtkMultiBlockDataSet."
-    if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
-        logger.error( f"Input mesh has to be inherited from vtkMultiBlockDataSet." )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
-    
-    #assert not isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ), f"The attribute { attributeName } is already present in the multiBlockDataSet."
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ):
-        logger.error( f"The attribute { attributeName } is already present in the multiBlockDataSet." )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
-
-    # Initialize data object tree iterator
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( multiBlockDataSet )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
-        created: bool = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType, logger )
-        if not created:
-            return False
-        
-        iter.GoToNextItem()
-
-    return True
-
-
-def createConstantAttributeDataSet(
-    dataSet: vtkDataSet,
-    values: list[ Any ],
-    attributeName: str,
-    componentNames: tuple[ str, ...] = (),  # noqa: C408
-    onPoints: bool = False,
-    vtkDataType: Union[ int, Any ] = None,
-    logger: Logger = getLogger( "createConstantAttributeDataSet", True ),
-) -> bool:
-    """Create an attribute with a constant value in the dataSet.
-
-    Args:
-        dataSet (vtkDataSet): DataSet where to create the attribute.
-        values ( list[any]): List of values of the attribute for each components.
-        attributeName (str): Name of the attribute.
-        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
-            Defaults to an empty tuple.
-        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
-            Defaults to False.
-        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
-            Defaults to None, the type is given by the type of the given value.
-            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
+            If None the vtk data type is given by the type of the values.
+            Else, the values are converted to the corresponding numpy type.
+            Defaults to None.
+            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -327,13 +219,162 @@ def createConstantAttributeDataSet(
     Returns:
         bool: True if the attribute was correctly created, False if it was not created.
     """    
+    if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
+        return createConstantAttributeMultiBlock( object, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+
+    elif isinstance( object, vtkDataSet ):
+        return createConstantAttributeDataSet( object, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+    
+    else:
+        logger.error( f"The mesh has to be inherited from a vtkMultiBlockDataSet or a vtkDataSet" )
+        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+        return False
+
+
+def createConstantAttributeMultiBlock(
+    multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+    listValues: list[ Any ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
+    logger: Logger = getLogger( "createConstantAttributeMultiBlock", True ),
+) -> bool:
+    """Create a new attribute with a constant value per component on every blocks of the multiBlockDataSet.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): MultiBlockDataSet where to create the attribute.
+        listValues (list[any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
+            Defaults to an empty tuple.
+        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
+            If None the vtk data type is given by the type of the values.
+            Else, values type have to correspond to the type of the vtk data, check https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py for more information.
+            Defaults to None.
+            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
+        logger (Logger, optional): A logger to manage the output messages.
+            Defaults to an internal logger.
+
+    Returns:
+        bool: True if the attribute was correctly created, False if it was not created.
+    """
+    # Check if the input mesh is inherited from vtkMultiBlockDataSet.
+    if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
+        logger.error( f"Input mesh has to be inherited from vtkMultiBlockDataSet." )
+        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+        return False
+    
+    # Check if the attribute already exist in the input mesh.
+    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ):
+        logger.error( f"The attribute { attributeName } is already present in the multiBlockDataSet." )
+        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+        return False
+
+    # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
+    oppositePiece: bool = not onPoints
+    oppositePieceName: str = "points" if oppositePiece else "cells"
+    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, oppositePiece ):
+        oppositePieceState: str = "global" if isAttributeGlobal( multiBlockDataSet, attributeName, oppositePiece ) else "partial"
+        logger.warning( f"A { oppositePieceState } attribute with the same name ({ attributeName }) is already present in the multiBlockDataSet but on { oppositePieceName }." )
+    
+    # Parse the multiBlockDataSet to create the constant attribute on each blocks.
+    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iter.SetDataSet( multiBlockDataSet )
+    iter.VisitOnlyLeavesOn()
+    iter.GoToFirstItem()
+    while iter.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+        if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger ):
+            return False
+        
+        iter.GoToNextItem()
+
+    return True
+
+
+def createConstantAttributeDataSet(
+    dataSet: vtkDataSet,
+    listValues: list[ Any ],
+    attributeName: str,
+    componentNames: tuple[ str, ...] = (),  # noqa: C408
+    onPoints: bool = False,
+    vtkDataType: Union[ int, Any ] = None,
+    logger: Logger = getLogger( "createConstantAttributeDataSet", True ),
+) -> bool:
+    """Create an attribute with a constant value per component in the dataSet.
+
+    Args:
+        dataSet (vtkDataSet): DataSet where to create the attribute.
+        listValues (list[any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
+        attributeName (str): Name of the attribute.
+        componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
+            Defaults to an empty tuple.
+        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
+        vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
+            If None the vtk data type is given by the type of the values of listValues.
+            Else, values type have to correspond to the type of the vtk data, check https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py for more information.
+            Defaults to None.
+            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
+            - int8 -> VTK_SIGNED_CHAR
+            - uint8 -> VTK_UNSIGNED_CHAR
+            - int64 -> VTK_LONG_LONG
+        logger (Logger, optional): A logger to manage the output messages.
+            Defaults to an internal logger.
+
+    Returns:
+        bool: True if the attribute was correctly created, False if it was not created.
+    """
+    # Check if listValues have at least one value.
+    if len( listValues ) == 0:
+        logger.error( f"To create a constant attribute, you have to give at least one value in the listValues." )
+        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+        return False
+    
+    # Check if all the values of listValues have the same type.
+    valueType: type = type( listValues[ 0 ] )
+    for value in listValues:
+        valueTypeTest: type = type( value )
+        if valueType != valueTypeTest:
+            logger.error( f"All values in the list of values have not the same type." )
+            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+            return False
+    
+    # Convert int and float type into numpy scalar type.
+    if valueType in ( int, float ):
+        npType: type = type( np.array( listValues )[ 0 ] )
+        logger.warning( f"During the creation of the constant attribute { attributeName }, values will be converted from { valueType } to { npType }." )
+        logger.warning( f"To avoid any issue with the conversion use directly numpy scalar type for the values" )
+        valueType = npType
+    
+    # Check the coherency between the given value type and the vtk array type if it exist.
+    valueType = valueType().dtype
+    if vtkDataType is not None:
+        vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+        if vtkDataType not in vtkNumpyTypeMap:
+            logger.error( f"The vtk data type { vtkDataType } is unknown." )
+            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+            return False
+        npArrayTypeFromVtk: type = vtkNumpyTypeMap[ vtkDataType ]().dtype
+        if npArrayTypeFromVtk != valueType:
+            logger.error( f"Values type { valueType } is not coherent with the type of array created ({ npArrayTypeFromVtk }) from the given vtkDataType." )
+            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
+            return False
+
+    # Create the numpy array constant per component.
+    nbComponents: int = len( listValues )
     nbElements: int = ( dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells() )
-    nbComponents: int = len( values )
     npArray: npt.NDArray[ Any ]
     if nbComponents > 1:
-        npArray = np.array( [ values for _ in range( nbElements ) ] )
+        npArray = np.array( [ listValues for _ in range( nbElements ) ], valueType )
     else:
-        npArray = np.array( [ values[ 0 ] for _ in range( nbElements ) ] )
+        npArray = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ], valueType )
 
     return createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType, logger )
 
@@ -347,7 +388,7 @@ def createAttribute(
     vtkDataType: Union[ int, Any ] = None,
     logger: Logger = getLogger( "createAttribute", True ),
 ) -> bool:
-    """Create an attribute and its VTK array from the given array.
+    """Create an attribute from the given numpy array.
 
     Args:
         dataSet (vtkDataSet): DataSet where to create the attribute.
@@ -358,8 +399,10 @@ def createAttribute(
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
         vtkDataType (Union(any, int), optional): Vtk data type of the attribute to create.
-            Defaults to None, the type is given by the type of the given value in the array.
-            Warning with int8, uint8 and int64 type of value, the vtk array type associated are multiple. By default:
+            If None the vtk data type is given by the type of the numpy array.
+            Else, numpy array type have to correspond to the type of the vtk data, check https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py for more information.
+            Defaults to None.
+            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -369,40 +412,63 @@ def createAttribute(
     Returns:
         bool: True if the attribute was correctly created, False if it was not created.
     """
-    #assert isinstance( dataSet, vtkDataSet ), "Input mesh has to be inherited from vtkDataSet."
+    # Check if the input mesh is inherited from vtkDataSet.
     if not isinstance( dataSet, vtkDataSet ):
         logger.error( f"Input mesh has to be inherited from vtkDataSet." )
         logger.error( f"The attribute { attributeName } has not been created into the mesh." )
         return False
     
-    #assert not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ), f"The attribute { attributeName } is already present in the dataSet."
+    # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
         logger.error( f"The attribute { attributeName } is already present in the dataSet." )
         logger.error( f"The attribute { attributeName } has not been created into the mesh." )
         return False
     
+    # Check the coherency between the given array type and the vtk array type if it exist.
+    if vtkDataType is not None:
+        vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+        if vtkDataType not in vtkNumpyTypeMap:
+            logger.error( f"The vtk data type { vtkDataType } is unknown." )
+            logger.error( f"The attribute { attributeName } has not been created into the mesh." )
+            return False
+        npArrayTypeFromVtk: type = vtkNumpyTypeMap[ vtkDataType ]().dtype        
+        npArrayTypeFromInput: type = npArray.dtype
+        if npArrayTypeFromVtk != npArrayTypeFromInput:
+            logger.error( f"The numpy array type { npArrayTypeFromInput } is not coherent with the type of array created ({ npArrayTypeFromVtk }) from the given vtkDataType." )
+            logger.error( f"The attribute { attributeName } has not been created into the mesh." )
+            return False
+
     data: Union[ vtkPointData, vtkCellData]
     nbElements: int
+    oppositePieceName: str
     if onPoints:
         data = dataSet.GetPointData()
         nbElements = dataSet.GetNumberOfPoints()
+        oppositePieceName = "cells"
     else:
         data = dataSet.GetCellData()
         nbElements = dataSet.GetNumberOfCells()
+        oppositePieceName = "points"
     
-    #assert len( array ) == nbElements, f"The array has to have { nbElements } elements, but have only { len( array ) } elements"
+    # Check if the input array has the good size.
     if len( npArray ) != nbElements:
         logger.error( f"The array has to have { nbElements } elements, but have only { len( npArray ) } elements" )
         logger.error( f"The attribute { attributeName } has not been created into the mesh." )
         return False
     
+    # Check if an attribute with the same name exist on the opposite piece (points or cells).
+    oppositePiece: bool = not onPoints
+    if isAttributeInObjectDataSet( dataSet, attributeName, oppositePiece ):
+        logger.warning( f"An attribute with the same name ({ attributeName }) is already present in the dataSet but on { oppositePieceName }." )
+    
+    # Convert the numpy array int a vtkDataArray.
     createdAttribute: vtkDataArray = vnp.numpy_to_vtk( npArray, deep=True, array_type=vtkDataType )
     createdAttribute.SetName( attributeName )
 
     nbComponents: int = createdAttribute.GetNumberOfComponents()
     nbNames: int = len( componentNames )
     if nbComponents == 1 and nbNames > 0:
-        logger.warning( f"The array has one component, its name is the name of the attribute: { attributeName }, the components names you have enter will not be taking into account." )
+        logger.warning( f"The array has one component and no name, the components names you have enter will not be taking into account." )
     
     if nbComponents > 1:
         if nbNames < nbComponents:
@@ -527,9 +593,9 @@ def copyAttributeDataSet(
     
     npArray: npt.NDArray[ Any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoints )
     componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributeNameFrom, onPoints )
-    vtkDataType: int = getVtkArrayTypeInObject( objectFrom, attributeNameFrom, onPoints )
+    vtkArrayType: int = getVtkArrayTypeInObject( objectFrom, attributeNameFrom, onPoints )
 
-    return createAttribute( objectTo, npArray, attributeNameTo, componentNames, onPoints, vtkDataType, logger )
+    return createAttribute( objectTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
 
 
 def renameAttribute(

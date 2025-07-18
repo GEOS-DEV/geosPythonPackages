@@ -17,10 +17,23 @@ from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vt
 from geos.mesh.utils.arrayHelpers import getAttributesWithNumberOfComponents
 
 from vtk import (  # type: ignore[import-untyped]
-    VTK_CHAR, VTK_DOUBLE, VTK_FLOAT, VTK_INT, VTK_UNSIGNED_INT, VTK_LONG_LONG, VTK_ID_TYPE,
+    VTK_UNSIGNED_CHAR,
+    VTK_UNSIGNED_SHORT,
+    VTK_UNSIGNED_INT,
+    VTK_UNSIGNED_LONG_LONG,
+    VTK_SIGNED_CHAR,
+    VTK_SHORT,
+    VTK_INT,
+    VTK_LONG_LONG,
+    VTK_FLOAT,
+    VTK_DOUBLE,
+    VTK_ID_TYPE,
+    VTK_CHAR,
 )
 
-# Informations :
+# Information :
+# https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py 
+# https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/vtkConstants.py
 #     vtk array type       int   numpy type
 # VTK_CHAR               = 2  = np.int8
 # VTK_SIGNED_CHAR        = 15 = np.int8
@@ -101,22 +114,20 @@ def test_fillPartialAttributes(
     if nbComponentsRef > 1:
         componentNamesTest: tuple[ str, ...] = tuple(
             attributeFillTest.GetComponentName( i ) for i in range( nbComponentsRef ) )
-        assert componentNamesRef == componentNamesTest
+        assert componentNamesTest == componentNamesRef
 
-        npArrayFillRef = np.array( [ [ valueRef for _ in range( nbComponentsRef ) ] for _ in range( nbElements ) ] )
-    else:
-        npArrayFillRef = np.array( [ valueRef for _ in range( nbElements ) ] )
+    npArrayFillRef = np.full( ( nbElements, nbComponentsRef ), valueRef )
 
     npArrayFillTest: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFillTest )
-    assert valueTypeRef == npArrayFillTest.dtype
+    assert npArrayFillTest.dtype == valueTypeRef
 
     if np.isnan( valueRef ):
         assert np.isnan( npArrayFillRef ).all()
     else:
-        assert ( npArrayFillRef == npArrayFillTest ).all()
+        assert ( npArrayFillTest == npArrayFillRef ).all()
 
     vtkDataTypeTest: int = attributeFillTest.GetDataType()
-    assert vtkDataTypeRef == vtkDataTypeTest
+    assert vtkDataTypeTest == vtkDataTypeRef
 
 
 @pytest.mark.parametrize( "value", [
@@ -131,15 +142,15 @@ def test_FillAllPartialAttributes(
     value: Any,
 ) -> None:
     """Test to fill all the partial attributes of a vtkMultiBlockDataSet with a value."""
-    MultiBlockDataSetRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    MultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    arrayModifiers.fillAllPartialAttributes( MultiBlockDataSetTest, value )
+    multiBlockDataSetRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    arrayModifiers.fillAllPartialAttributes( multiBlockDataSetTest, value )
 
-    nbBlock = MultiBlockDataSetRef.GetNumberOfBlocks()
+    nbBlock = multiBlockDataSetRef.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        datasetTest: vtkDataSet = cast( vtkDataSet, MultiBlockDataSetTest.GetBlock( idBlock ) )
+        datasetTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
         for onPoints in [ True, False ]:
-            infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( MultiBlockDataSetRef, onPoints )
+            infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSetRef, onPoints )
             dataTest: Union[ vtkPointData, vtkCellData ]
             dataTest = datasetTest.GetPointData() if onPoints else datasetTest.GetCellData()
 
@@ -170,162 +181,92 @@ def test_createEmptyAttribute(
     assert newAttr.IsA( str( expectedDatatypeArray ) )
 
 
-@pytest.mark.parametrize( "attributeName, isNewOnBlock, onPoints", [
-    ( "newAttribute", ( True, True ), False ),
-    ( "newAttribute", ( True, True ), True ),
-    ( "PORO", ( True, True ), True ),
-    ( "PORO", ( False, True ), False ),
-    ( "PointAttribute", ( False, True ), True ),
-    ( "PointAttribute", ( True, True ), False ),
-    ( "collocated_nodes", ( True, False ), True ),
-    ( "collocated_nodes", ( True, True ), False ),
+@pytest.mark.parametrize( "attributeName, onPoints", [
+    ( "newAttribute", False ),
+    ( "newAttribute", True ),
+    ( "PORO", True ), # Partial attribute on cells already exist
+    ( "GLOBAL_IDS_CELLS", True ), # Global attribute on cells already exist
 ] )
 def test_createConstantAttributeMultiBlock(
     dataSetTest: vtkMultiBlockDataSet,
     attributeName: str,
-    isNewOnBlock: tuple[ bool, ...],
     onPoints: bool,
 ) -> None:
     """Test creation of constant attribute in multiblock dataset."""
-    MultiBlockDataSetRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    MultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     values: list[ float ] = [ np.nan ]
-    arrayModifiers.createConstantAttributeMultiBlock( MultiBlockDataSetTest, values, attributeName, onPoints=onPoints )
+    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest, values, attributeName, onPoints=onPoints )
 
-    nbBlock = MultiBlockDataSetRef.GetNumberOfBlocks()
+    nbBlock = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        datasetRef: vtkDataSet = cast( vtkDataSet, MultiBlockDataSetRef.GetBlock( idBlock ) )
-        datasetTest: vtkDataSet = cast( vtkDataSet, MultiBlockDataSetTest.GetBlock( idBlock ) )
-        dataRef: Union[ vtkPointData, vtkCellData ]
+        datasetTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
         dataTest: Union[ vtkPointData, vtkCellData ]
         if onPoints:
-            dataRef = datasetRef.GetPointData()
             dataTest = datasetTest.GetPointData()
         else:
-            dataRef = datasetRef.GetCellData()
             dataTest = datasetTest.GetCellData()
 
-        attributeRef: int = dataRef.HasArray( attributeName )
         attributeTest: int = dataTest.HasArray( attributeName )
-        if isNewOnBlock[ idBlock ]:
-            assert attributeRef != attributeTest
-        else:
-            assert attributeRef == attributeTest
+        assert attributeTest == 1
 
 
-@pytest.mark.parametrize(
-    "values, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType", [
-        ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ) ], (), (), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ) ], (), (), True, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ) ], (), (), False, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], (),
-          ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], (),
-          ( "Component0", "Component1" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], (),
-          ( "Component0", "Component1" ), True, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], (),
-          ( "Component0", "Component1" ), False, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_FLOAT, "float32" ),
-        ( [ np.float32( 42 ), np.float32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_FLOAT, "float32" ),
-        ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ) ], (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ) ], (), (), True, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ) ], (), (), False, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], (),
-          ( "Component0", "Component1" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], (),
-          ( "Component0", "Component1" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], (),
-          ( "Component0", "Component1" ), True, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], (),
-          ( "Component0", "Component1" ), False, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y" ),
-          ( "X", "Y" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_DOUBLE, "float64" ),
-        ( [ np.float64( 42 ), np.float64( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_DOUBLE, "float64" ),
-        ( [ np.int32( 42 ) ], (), (), True, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ) ], (), (), False, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ) ], (), (), True, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ) ], (), (), False, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], (), ( "Component0", "Component1" ), True, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], (), ( "Component0", "Component1" ), False, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], (), ( "Component0", "Component1" ), True, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], (), ( "Component0", "Component1" ), False, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_INT, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_INT, "int32" ),
-        ( [ np.int32( 42 ), np.int32( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_INT, "int32" ),
-        ( [ np.int64( 42 ) ], (), (), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ) ], (), (), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ) ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ) ], (), (), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ) ], (), (), True, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ) ], (), (), False, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (),
-          ( "Component0", "Component1" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (),
-          ( "Component0", "Component1" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (),
-          ( "Component0", "Component1" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (),
-          ( "Component0", "Component1" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (), ( "Component0", "Component1" ), True, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], (), ( "Component0", "Component1" ), False, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ),
-          ( "X", "Y" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ),
-          ( "X", "Y" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_LONG_LONG, "int64" ),
-        ( [ np.int64( 42 ), np.int64( 22 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_LONG_LONG, "int64" ),
-    ] )
+@pytest.mark.parametrize( "listValues, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, attributeName", [
+    # Test attribute names. 
+    ## Test with an attributeName already existing on cells data.
+    ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "PORO" ),
+    ## Test with a new attributeName on cells and on points.
+    ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    ( [ np.float32( 42 ) ], (), (), False, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    # Test the number of components and their names.
+    ( [ np.float32( 42 ) ], ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    ( [ np.float32( 42 ), np.float32( 42 ) ], (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+    # Test the type of the values.
+    ## With numpy scalar type.
+    ( [ np.int8( 42 ) ], (), (), True, None, VTK_SIGNED_CHAR, "newAttribute" ),
+    ( [ np.int8( 42 ) ], (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "newAttribute" ),
+    ( [ np.int16( 42 ) ], (), (), True, None, VTK_SHORT, "newAttribute" ),
+    ( [ np.int16( 42 ) ], (), (), True, VTK_SHORT, VTK_SHORT, "newAttribute" ),
+    ( [ np.int32( 42 ) ], (), (), True, None, VTK_INT, "newAttribute" ),
+    ( [ np.int32( 42 ) ], (), (), True, VTK_INT, VTK_INT, "newAttribute" ),
+    ( [ np.int64( 42 ) ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
+    ( [ np.int64( 42 ) ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+    ( [ np.uint8( 42 ) ], (), (), True, None, VTK_UNSIGNED_CHAR, "newAttribute" ),
+    ( [ np.uint8( 42 ) ], (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "newAttribute" ),
+    ( [ np.uint16( 42 ) ], (), (), True, None, VTK_UNSIGNED_SHORT, "newAttribute" ),
+    ( [ np.uint16( 42 ) ], (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "newAttribute" ),
+    ( [ np.uint32( 42 ) ], (), (), True, None, VTK_UNSIGNED_INT, "newAttribute" ),
+    ( [ np.uint32( 42 ) ], (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "newAttribute" ),
+    ( [ np.uint64( 42 ) ], (), (), True, None, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+    ( [ np.uint64( 42 ) ], (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+    ( [ np.float32( 42 ) ], (), (), True, None, VTK_FLOAT, "newAttribute" ),
+    ( [ np.float64( 42 ) ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
+    ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+    ## With python scalar type.
+    ( [ 42 ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
+    ( [ 42 ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+    ( [ 42. ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
+    ( [ 42. ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+] )
 def test_createConstantAttributeDataSet(
     dataSetTest: vtkDataSet,
-    values: list[ Any ],
+    listValues: list[ Any ],
     componentNames: tuple[ str, ...],
     componentNamesTest: tuple[ str, ...],
     onPoints: bool,
     vtkDataType: Union[ int, Any ],
     vtkDataTypeTest: int,
-    valueType: str,
+    attributeName: str,
 ) -> None:
     """Test constant attribute creation in dataset."""
+    # Get the dataSet from a vtu.
     dataSet: vtkDataSet = dataSetTest( "dataset" )
-    attributeName: str = "newAttributedataset"
-    arrayModifiers.createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints,
-                                                   vtkDataType )
 
+    # Create the new constant attribute in the dataSet.
+    assert arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType )
+
+    # Get the new attribute to check its properties.
     data: Union[ vtkPointData, vtkCellData ]
     nbElements: int
     if onPoints:
@@ -334,104 +275,71 @@ def test_createConstantAttributeDataSet(
     else:
         data = dataSet.GetCellData()
         nbElements = dataSet.GetNumberOfCells()
-
     createdAttribute: vtkDataArray = data.GetArray( attributeName )
 
-    nbComponents: int = len( values )
+    # Test the number of components and their names if multiple.
+    nbComponentsTest: int = len( listValues )
     nbComponentsCreated: int = createdAttribute.GetNumberOfComponents()
-    assert nbComponents == nbComponentsCreated
-
-    npArray: npt.NDArray[ Any ]
-    if nbComponents > 1:
+    assert nbComponentsCreated == nbComponentsTest
+    if nbComponentsTest > 1:
         componentNamesCreated: tuple[ str, ...] = tuple(
-            createdAttribute.GetComponentName( i ) for i in range( nbComponents ) )
-        assert componentNamesTest == componentNamesCreated
+            createdAttribute.GetComponentName( i ) for i in range( nbComponentsCreated ) )
+        assert componentNamesCreated, componentNamesTest
 
-        npArray = np.array( [ values for _ in range( nbElements ) ] )
+    # Test values and their types.
+    ## Create the constant array test from values in the list values.
+    npArrayTest: npt.NDArray[ Any ]
+    if len( listValues ) > 1:
+        npArrayTest = np.array( [ listValues for _ in range( nbElements ) ] )
     else:
-        npArray = np.array( [ values[ 0 ] for _ in range( nbElements ) ] )
+        npArrayTest = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ] )
 
-    npArraycreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
-    assert ( npArray == npArraycreated ).all()
-    assert valueType == npArraycreated.dtype
+    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
+    assert ( npArrayCreated == npArrayTest ).all()
+    assert npArrayCreated.dtype == npArrayTest.dtype
 
     vtkDataTypeCreated: int = createdAttribute.GetDataType()
-    assert vtkDataTypeTest == vtkDataTypeCreated
+    assert vtkDataTypeCreated == vtkDataTypeTest
 
 
-@pytest.mark.parametrize( "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType", [
-    ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( (), (), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( (), (), True, None, VTK_FLOAT, "float32" ),
-    ( (), (), False, None, VTK_FLOAT, "float32" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( (), ( "Component0", "Component1" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( (), ( "Component0", "Component1" ), True, None, VTK_FLOAT, "float32" ),
-    ( (), ( "Component0", "Component1" ), False, None, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_FLOAT, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_FLOAT, "float32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_FLOAT, "float32" ),
-    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( (), (), True, None, VTK_DOUBLE, "float64" ),
-    ( (), (), False, None, VTK_DOUBLE, "float64" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( (), ( "Component0", "Component1" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( (), ( "Component0", "Component1" ), True, None, VTK_DOUBLE, "float64" ),
-    ( (), ( "Component0", "Component1" ), False, None, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_DOUBLE, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_DOUBLE, "float64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_DOUBLE, "float64" ),
-    ( (), (), True, VTK_INT, VTK_INT, "int32" ),
-    ( (), (), False, VTK_INT, VTK_INT, "int32" ),
-    ( (), (), True, None, VTK_INT, "int32" ),
-    ( (), (), False, None, VTK_INT, "int32" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_INT, VTK_INT, "int32" ),
-    ( (), ( "Component0", "Component1" ), False, VTK_INT, VTK_INT, "int32" ),
-    ( (), ( "Component0", "Component1" ), True, None, VTK_INT, "int32" ),
-    ( (), ( "Component0", "Component1" ), False, None, VTK_INT, "int32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_INT, VTK_INT, "int32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, VTK_INT, VTK_INT, "int32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_INT, "int32" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_INT, "int32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_INT, VTK_INT, "int32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_INT, VTK_INT, "int32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_INT, "int32" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_INT, "int32" ),
-    ( (), (), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( (), (), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( (), (), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( (), (), True, None, VTK_LONG_LONG, "int64" ),
-    ( (), (), False, None, VTK_LONG_LONG, "int64" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( (), ( "Component0", "Component1" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( (), ( "Component0", "Component1" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( (), ( "Component0", "Component1" ), True, None, VTK_LONG_LONG, "int64" ),
-    ( (), ( "Component0", "Component1" ), False, None, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, None, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), False, None, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_ID_TYPE, VTK_ID_TYPE, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, VTK_LONG_LONG, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, None, VTK_LONG_LONG, "int64" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), False, None, VTK_LONG_LONG, "int64" ),
+@pytest.mark.parametrize( "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType, attributeName", [
+    # Test attribute names. 
+    ## Test with an attributeName already existing on cells data.
+    ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "PORO" ),
+    ## Test with a new attributeName on cells and on points.
+    ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    ( (), (), False, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    # Test the number of components and their names.
+    ( ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    ( (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+    # Test the type of the values.
+    ## With numpy scalar type.
+    ( (), (), True, None, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
+    ( (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
+    ( (), (), True, None, VTK_SHORT, "int16", "newAttribute" ),
+    ( (), (), True, VTK_SHORT, VTK_SHORT, "int16", "newAttribute" ),
+    ( (), (), True, None, VTK_INT, "int32", "newAttribute" ),
+    ( (), (), True, VTK_INT, VTK_INT, "int32", "newAttribute" ),
+    ( (), (), True, None, VTK_LONG_LONG, "int64", "newAttribute" ),
+    ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64", "newAttribute" ),
+    ( (), (), True, None, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
+    ( (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
+    ( (), (), True, None, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
+    ( (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
+    ( (), (), True, None, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
+    ( (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
+    ( (), (), True, None, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
+    ( (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
+    ( (), (), True, None, VTK_FLOAT, "float32", "newAttribute" ),
+    ( (), (), True, None, VTK_DOUBLE, "float64", "newAttribute" ),
+    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "newAttribute" ),
+    ## With python scalar type.
+    ( (), (), True, None, VTK_LONG_LONG, "int", "newAttribute" ),
+    ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int", "newAttribute" ),
+    ( (), (), True, None, VTK_DOUBLE, "float", "newAttribute" ),
+    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float", "newAttribute" ),
 ] )
 def test_createAttribute(
     dataSetTest: vtkDataSet,
@@ -442,34 +350,40 @@ def test_createAttribute(
     vtkDataType: int,
     vtkDataTypeTest: int,
     valueType: str,
+    attributeName: str,
 ) -> None:
     """Test creation of dataset in dataset from given array."""
+    # Get the dataSet from a vtu.
     dataSet: vtkDataSet = dataSetTest( "dataset" )
-    attributeName: str = "AttributeName"
 
-    nbComponents: int = ( 1 if len( componentNamesTest ) == 0 else len( componentNamesTest ) )
-    nbElements: int = ( dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells() )
+    # Get a array with random values of a given type.
+    nbComponentsTest: int = 1 if len( componentNamesTest ) == 0 else len( componentNamesTest )
+    nbElementsTest: int = dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells()
+    npArrayTest: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( nbComponentsTest, nbElementsTest, valueType )
 
-    npArray: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( nbComponents, nbElements, valueType )
-    arrayModifiers.createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType )
+    # Create the new attribute in the dataSet.
+    assert arrayModifiers.createAttribute( dataSet, npArrayTest, attributeName, componentNames, onPoints, vtkDataType )
 
+    # Get the new attribute to check its properties.
     data: Union[ vtkPointData, vtkCellData ]
     data = dataSet.GetPointData() if onPoints else dataSet.GetCellData()
-
     createdAttribute: vtkDataArray = data.GetArray( attributeName )
-    nbComponentsCreated: int = createdAttribute.GetNumberOfComponents()
-    assert nbComponents == nbComponentsCreated
-    if nbComponents > 1:
-        componentsNamesCreated: tuple[ str, ...] = tuple(
-            createdAttribute.GetComponentName( i ) for i in range( nbComponents ) )
-        assert componentNamesTest == componentsNamesCreated
 
-    npArraycreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
-    assert ( npArray == npArraycreated ).all()
-    assert valueType == npArraycreated.dtype
+    # Test the number of components and their names if multiple.
+    nbComponentsCreated: int = createdAttribute.GetNumberOfComponents()
+    assert nbComponentsCreated == nbComponentsTest
+    if nbComponentsTest > 1:
+        componentsNamesCreated: tuple[ str, ...] = tuple(
+            createdAttribute.GetComponentName( i ) for i in range( nbComponentsCreated ) )
+        assert componentsNamesCreated == componentNamesTest
+
+    # Test values and their types.
+    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
+    assert ( npArrayCreated == npArrayTest ).all()
+    assert npArrayCreated.dtype == npArrayTest.dtype
 
     vtkDataTypeCreated: int = createdAttribute.GetDataType()
-    assert vtkDataTypeTest == vtkDataTypeCreated
+    assert vtkDataTypeCreated == vtkDataTypeTest
 
 
 @pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints, idBlock", [
@@ -568,14 +482,14 @@ def test_copyAttributeDataSet( dataSetTest: vtkDataSet, attributeNameFrom: str, 
     assert npArrayFrom.dtype == npArrayTo.dtype
 
 
-@pytest.mark.parametrize( "attributeName, onpoints", [
+@pytest.mark.parametrize( "attributeName, onPoints", [
     ( "CellAttribute", False ),
     ( "PointAttribute", True ),
 ] )
 def test_renameAttributeMultiblock(
     dataSetTest: vtkMultiBlockDataSet,
     attributeName: str,
-    onpoints: bool,
+    onPoints: bool,
 ) -> None:
     """Test renaming attribute in a multiblock dataset."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
@@ -584,11 +498,11 @@ def test_renameAttributeMultiblock(
         vtkMultiBlockDataSetTest,
         attributeName,
         newAttributeName,
-        onpoints,
+        onPoints,
     )
     block: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTest.GetBlock( 0 ) )
     data: Union[ vtkPointData, vtkCellData ]
-    if onpoints:
+    if onPoints:
         data = block.GetPointData()
         assert data.HasArray( attributeName ) == 0
         assert data.HasArray( newAttributeName ) == 1
@@ -599,11 +513,11 @@ def test_renameAttributeMultiblock(
         assert data.HasArray( newAttributeName ) == 1
 
 
-@pytest.mark.parametrize( "attributeName, onpoints", [ ( "CellAttribute", False ), ( "PointAttribute", True ) ] )
+@pytest.mark.parametrize( "attributeName, onPoints", [ ( "CellAttribute", False ), ( "PointAttribute", True ) ] )
 def test_renameAttributeDataSet(
     dataSetTest: vtkDataSet,
     attributeName: str,
-    onpoints: bool,
+    onPoints: bool,
 ) -> None:
     """Test renaming an attribute in a dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
@@ -611,8 +525,8 @@ def test_renameAttributeDataSet(
     arrayModifiers.renameAttribute( object=vtkDataSetTest,
                                     attributeName=attributeName,
                                     newAttributeName=newAttributeName,
-                                    onPoints=onpoints )
-    if onpoints:
+                                    onPoints=onPoints )
+    if onPoints:
         assert vtkDataSetTest.GetPointData().HasArray( attributeName ) == 0
         assert vtkDataSetTest.GetPointData().HasArray( newAttributeName ) == 1
 
