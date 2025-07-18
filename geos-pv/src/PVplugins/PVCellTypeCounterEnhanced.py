@@ -41,7 +41,7 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter" )
+@smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
