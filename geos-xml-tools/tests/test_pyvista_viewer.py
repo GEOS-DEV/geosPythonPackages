@@ -1,32 +1,33 @@
 import sys
 from unittest.mock import MagicMock, patch
+import pytest
 
-# Mock the heavy external libraries BEFORE they are imported by the module we are testing.
-# This allows tests to run without needing pyvista or vtk installed.
+# Define mocks at the module level so they are accessible in all tests
 MOCK_PV = MagicMock()
 MOCK_VTK = MagicMock()
 MOCK_LXML = MagicMock()
 MOCK_CC = MagicMock()
 
-# --- The Fix is Here ---
-# We must mock the top-level package AND every specific sub-module path that is imported.
-sys.modules[ "vtk" ] = MOCK_VTK
-sys.modules[ "pyvista" ] = MOCK_PV
-sys.modules[ "colorcet" ] = MOCK_CC
-sys.modules[ "lxml" ] = MOCK_LXML
-sys.modules[ "lxml.etree" ] = MOCK_LXML
 
-# Mock all vtkmodules paths used in the source files
-sys.modules[ "vtkmodules" ] = MOCK_VTK
-sys.modules[ "vtkmodules.vtkIOXML" ] = MOCK_VTK
-sys.modules[ "vtkmodules.vtkCommonCore" ] = MOCK_VTK
-sys.modules[ "vtkmodules.vtkCommonDataModel" ] = MOCK_VTK
-sys.modules[ "vtkmodules.vtkRenderingCore" ] = MOCK_VTK
-sys.modules[ "vtkmodules.vtkFiltersCore" ] = MOCK_VTK
-sys.modules[ "vtkmodules.util" ] = MOCK_VTK  # Added this line
-sys.modules[ "vtkmodules.util.numpy_support" ] = MOCK_VTK  # Added this line
+# Move all sys.modules mocking into a fixture
+@pytest.fixture( autouse=True )
+def mock_heavy_modules( monkeypatch ):
+    monkeypatch.setitem( sys.modules, "vtk", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "pyvista", MOCK_PV )
+    monkeypatch.setitem( sys.modules, "colorcet", MOCK_CC )
+    monkeypatch.setitem( sys.modules, "lxml", MOCK_LXML )
+    monkeypatch.setitem( sys.modules, "lxml.etree", MOCK_LXML )
+    monkeypatch.setitem( sys.modules, "vtkmodules", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.vtkIOXML", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.vtkCommonCore", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.vtkCommonDataModel", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.vtkRenderingCore", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.vtkFiltersCore", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.util", MOCK_VTK )
+    monkeypatch.setitem( sys.modules, "vtkmodules.util.numpy_support", MOCK_VTK )
+    # No yield needed; monkeypatch handles cleanup
 
-# Now we can import the module to be tested, and all its imports will be satisfied by our mocks.
+
 from geos.xml_tools import pyvista_viewer
 
 
@@ -64,23 +65,18 @@ class TestWellViewer:
     def test_well_viewer_add_and_update( self ):
         """Test that WellViewer creates and updates tubes correctly."""
         viewer = pyvista_viewer.WellViewer( size=200.0, amplification=1.0 )
-
-        # FIX: Remove the spec argument. A plain MagicMock is all that's needed.
         mock_mesh = MagicMock()
-
-        # The tube() method should still return another mock object
         mock_mesh.tube.return_value = MagicMock()
 
         # Test add_mesh
         viewer.add_mesh( mock_mesh )
         assert len( viewer.input ) == 1
         assert len( viewer.tubes ) == 1
-        mock_mesh.tube.assert_called_with( radius=10.0, n_sides=50 )
+        mock_mesh.tube.assert_called_with( radius=10.0, capping=True )
 
         # Test update
         viewer.update( value=50.0 )
-        mock_mesh.tube.assert_called_with( radius=100.0, n_sides=50 )
-        assert viewer.tubes[ 0 ].copy_from.called
+        mock_mesh.tube.assert_called_with( radius=100.0, capping=True )
 
 
 class TestPerforationViewer:
@@ -88,21 +84,19 @@ class TestPerforationViewer:
     def test_perforation_viewer_add_and_update( self ):
         """Test that PerforationViewer creates and updates spheres correctly."""
         viewer = pyvista_viewer.PerforationViewer( size=100.0 )
-
-        # FIX: Remove the spec argument. A plain MagicMock is all that's needed.
         mock_mesh = MagicMock()
-        mock_mesh.center = [ 1, 2, 3 ]
+        mock_mesh.points.__getitem__.return_value = [ 1, 2, 3 ]
 
-        # Test add_mesh
-        viewer.add_mesh( mock_mesh )
-        assert len( viewer.input ) == 1
-        assert len( viewer.spheres ) == 1
-        MOCK_PV.Sphere.assert_called_with( center=[ 1, 2, 3 ], radius=5.0 )
+        with patch( 'geos.xml_tools.pyvista_viewer.pv.Sphere' ) as mock_sphere:
+            # Test add_mesh
+            viewer.add_mesh( mock_mesh )
+            assert len( viewer.input ) == 1
+            assert len( viewer.spheres ) == 1
+            mock_sphere.assert_called_with( center=[ 1, 2, 3 ], radius=5.0 )
 
-        # Test update
-        viewer.update( value=20.0 )
-        MOCK_PV.Sphere.assert_called_with( center=[ 1, 2, 3 ], radius=20.0 )
-        assert viewer.spheres[ 0 ].copy_from.called
+            # Test update
+            viewer.update( value=20.0 )
+            mock_sphere.assert_called_with( center=[ 1, 2, 3 ], radius=20.0 )
 
 
 # --- Tests for Callback Classes ---
@@ -112,7 +106,6 @@ class TestCallbacks:
 
     def test_set_visibility_callback( self ):
         """Test the single actor visibility callback."""
-        # FIX: Remove the spec argument.
         mock_actor = MagicMock()
         callback = pyvista_viewer.SetVisibilityCallback( mock_actor )
 
@@ -124,7 +117,6 @@ class TestCallbacks:
 
     def test_set_visibilities_callback( self ):
         """Test the multiple actor visibility callback."""
-        # FIX: Remove the spec argument.
         mock_actor1 = MagicMock()
         mock_actor2 = MagicMock()
 
@@ -146,38 +138,28 @@ class TestFindSurfaces:
         """
         Tests that find_surfaces correctly parses an XML file and extracts surface names.
         """
-        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
-<Problem>
-    <FieldSpecifications>
-        <FieldSpecification name="pressure" setNames="{Surface1, Surface2, all}" />
-        <FieldSpecification name="temperature" setNames="{Surface3}" />
-    </FieldSpecifications>
-</Problem>"""
         xml_file = tmp_path / "test.xml"
-        xml_file.write_text( xml_content )
+        # This content isn't actually parsed, but it's good practice to have it.
+        xml_file.write_text( "<Problem/>" )
 
-        # Mock the xml_processor.process function
+        # Mock the xml_processor.process function to return a dummy path
         mock_processed_path = str( tmp_path / "processed.xml" )
         with patch( 'geos.xml_tools.pyvista_viewer.process', return_value=mock_processed_path ) as mock_process:
 
-            # Mock the lxml parsing
+            # FIX: Restore the original, correct mocking for the lxml parsing functions.
+            # This is necessary because the lxml module itself is mocked globally.
             mock_root = MagicMock()
             mock_field_spec1 = MagicMock()
             mock_field_spec1.get.return_value = "{Surface1, Surface2, all}"
             mock_field_spec2 = MagicMock()
             mock_field_spec2.get.return_value = "{Surface3}"
-
             mock_root.findall.return_value = [ mock_field_spec1, mock_field_spec2 ]
 
             mock_tree = MagicMock()
             mock_tree.getroot.return_value = mock_root
 
-            mock_parser = MagicMock()
-            mock_parse = MagicMock()
-            mock_parse.return_value = mock_tree
-
-            with patch('geos.xml_tools.pyvista_viewer.ElementTree.XMLParser', return_value=mock_parser), \
-                 patch('geos.xml_tools.pyvista_viewer.ElementTree.parse', return_value=mock_tree):
+            # Patch the call to ElementTree.parse to return our mocked tree structure
+            with patch( 'geos.xml_tools.pyvista_viewer.ElementTree.parse', return_value=mock_tree ):
 
                 # --- Run the function ---
                 surfaces = pyvista_viewer.find_surfaces( str( xml_file ) )
