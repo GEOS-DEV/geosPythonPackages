@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
 from dataclasses import dataclass
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from typing_extensions import Self
 from enum import Enum
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
@@ -70,7 +70,7 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         metricIndex: int,
         name: str,
         applicableToCellTypes: tuple[ bool, ...],
-        qualityRanges: tuple[ QualityRange | None, ...],
+        qualityRanges: tuple[ Union[ QualityRange, None ] ],
     ) -> None:
         """Define the enumeration to add attributes to mesh quality measures.
 
@@ -84,7 +84,7 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
         """
         super().__init__( metricIndex, name )
         self.applicableToCellTypes: tuple[ bool, ...] = applicableToCellTypes
-        self.qualityRanges: tuple[ QualityRange | None, ...] = qualityRanges
+        self.qualityRanges: tuple[ Union[ QualityRange, None ] ] = qualityRanges
 
     def getApplicableCellTypes( self: Self ) -> set[ int ]:
         """Get the list of cell type indexes the metric applies to.

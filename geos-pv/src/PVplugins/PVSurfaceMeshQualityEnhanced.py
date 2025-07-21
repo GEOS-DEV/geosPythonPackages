@@ -103,7 +103,7 @@ class PVSurfaceMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         otherMetrics: set[ int ] = getQualityMetricsOther()
         for measure in otherMetrics:
             self._commonMeshQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
-        
+
     @smproperty.dataarrayselection( name="CommonCellQualityMetric" )
     def a01SetCommonMetrics( self: Self ) -> vtkDataArraySelection:
         """Set polygon quality metrics selection."""

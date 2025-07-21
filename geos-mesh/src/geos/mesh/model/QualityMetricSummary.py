@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 from typing_extensions import Self, Iterable
 from packaging.version import Version
 import matplotlib as mpl
@@ -33,18 +33,18 @@ To use QualityMetricSummary:
     from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
 
     qualityMetricSummary: QualityMetricSummary = QualityMetricSummary()
-    # set data
+    # Set data
     qualityMetricSummary.setCellTypeCounts(counts)
     qualityMetricSummary.setCellStatValueFromStatMetricAndCellType(cellMetricIndex, cellType, statType, value))
     qualityMetricSummary.setOtherStatValueFromMetric(metricIndex, statType, value)
 
-    # get stats
+    # Get stats
     count: int = qualityMetricSummary.getCellTypeCountsOfCellType(cellType)
     value: float = qualityMetricSummary.getCellStatValueFromStatMetricAndCellType(cellMetricIndex, cellType, statType)
     subSetStats: pd.DataFrame = stats.getStatsFromMetric(cellMetricIndex)
     stats: pd.DataFrame = stats.getAllCellStats()
 
-    # output figure
+    # Output figure
     fig: Figure = stats.plotSummaryFigure()
 """
 
@@ -80,7 +80,7 @@ class StatTypes( Enum ):
         """
         return self.value[ 2 ]
 
-    def compute( self: Self, array: Iterable[ float ] ) -> int | float:
+    def compute( self: Self, array: Iterable[ float ] ) -> Union [ int, float ]:
         """Compute statistics using function.
 
         Args:
@@ -234,7 +234,6 @@ class QualityMetricSummary():
         Returns:
             pd.DataFrame: Stats
         """
-        print( self._meshOtherStats.head() )
         return self._meshOtherStats.dropna( axis=1 )
 
     def getCellStatValueFromStatMetricAndCellType(
@@ -288,7 +287,7 @@ class QualityMetricSummary():
         else:
             return self._meshOtherStats[ metricIndex ]
 
-    def setOtherStatValueFromMetric( self: Self, metricIndex: int, statType: StatTypes, value: int | float ) -> None:
+    def setOtherStatValueFromMetric( self: Self, metricIndex: int, statType: StatTypes, value: Union[ int, float ] ) -> None:
         """Set other stat value for the given metric.
 
         Args:
@@ -315,7 +314,7 @@ class QualityMetricSummary():
         return self._cellStats.xs( cellType, level=self._LEVELS[ 1 ], axis=1 )
 
     def setCellStatValueFromStatMetricAndCellType( self: Self, metricIndex: int, cellType: int, statType: StatTypes,
-                                                   value: int | float ) -> None:
+                                                   value: Union[ int, float ] ) -> None:
         """Set cell stats for the given metric and cell types.
 
         Args:
