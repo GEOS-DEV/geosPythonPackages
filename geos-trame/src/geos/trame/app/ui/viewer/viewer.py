@@ -36,6 +36,7 @@ class DeckViewer( vuetify.VCard ):
          - Vtkwell,
          - Perforation,
          - InternalWell
+         - Box
 
         Everything is handle in the method 'update_viewer()' which is trigger when the
         'state.object_state' changed (see DeckTree).
@@ -124,7 +125,7 @@ class DeckViewer( vuetify.VCard ):
     def update_viewer( self, active_block: BaseModel, path: str, show_obj: bool ) -> None:
         """Add from path the dataset given by the user.
 
-        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation.
+        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation, Box.
 
         object_state  : array used to store path to the data and if we want to show it or not.
         """
@@ -141,24 +142,10 @@ class DeckViewer( vuetify.VCard ):
             self._update_perforation( active_block, show_obj, path )
 
         if isinstance( active_block, Box ):
-            if self.region_engine.input.number_of_cells == 0 and show_obj:
-                self.ctrl.on_add_warning(
-                    "Can't display " + active_block.name,
-                    "Please display the mesh before creating a well",
-                )
-                return
+            self._update_box( active_block, show_obj )
 
-            if self.box_engine is not None:
-                self.box_engine.reset( self.plotter )
-
-            if not show_obj:
-                return
-
-            box: Box = active_block
-            self.box_engine = BoxViewer( self.region_engine.input, box )
-            self.box_engine.append_to_plotter( self.plotter )
-
-        # make sure that added data in the plot will be rendered with the correct scalar array/lut
+        # when data is added in the pv.Plotter, we need to refresh the scene to update
+        # the actor to avoid LUT issue.
         self.plotter.update()
 
     def _on_clip_visibility_change( self, **kwargs: Any ) -> None:
@@ -353,6 +340,36 @@ class DeckViewer( vuetify.VCard ):
         cell_id = self.region_engine.input.find_closest_cell( point_offsetted )
         cell = self.region_engine.input.extract_cells( [ cell_id ] )
         cell_actor = self.plotter.add_mesh( cell )
-        saved_perforation.add_extracted_cell( cell_actor )
+        saved_perforation.add_extracted_cells( cell_actor )
 
         self._perforations[ path ] = saved_perforation
+
+    def _update_box( self, active_block: Box, show_obj: bool ) -> None:
+        """Generate and display a Box and inner cell(s) from the mesh."""
+        if self.region_engine.input.number_of_cells == 0 and show_obj:
+            self.ctrl.on_add_warning(
+                "Can't display " + active_block.name,
+                "Please display the mesh before creating a well",
+            )
+            return
+
+        if self.box_engine is not None:
+            box_polydata_actor: pv.Actor = self.box_engine.get_box_polydata_actor()
+            extracted_cell_actor: pv.Actor = self.box_engine.get_extracted_cells_actor()
+            self.plotter.remove_actor( box_polydata_actor )
+            self.plotter.remove_actor( extracted_cell_actor )
+
+        if not show_obj:
+            return
+
+        box: Box = active_block
+        self.box_engine = BoxViewer( self.region_engine.input, box )
+
+        box_polydata: pv.PolyData = self.box_engine.get_box_polydata()
+        extracted_cell: pv.UnstructuredGrid = self.box_engine.get_extracted_cells()
+
+        if box_polydata is not None and extracted_cell is not None:
+            _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
+            _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
+            self.box_engine.set_box_polydata_actor( _box_polydata_actor )
+            self.box_engine.set_extracted_cells_actor( _extracted_cells_actor )
