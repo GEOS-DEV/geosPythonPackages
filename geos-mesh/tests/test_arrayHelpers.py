@@ -90,7 +90,7 @@ def test_isAttributeGlobal(
     expected: bool,
 ) -> None:
     """Test if the attribute is global or partial."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiBlock" )
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     obtained: bool = arrayHelpers.isAttributeGlobal( multiBlockDataset, attributeName, onpoints )
     assert obtained == expected
 
