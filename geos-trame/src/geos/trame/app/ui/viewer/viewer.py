@@ -158,6 +158,9 @@ class DeckViewer( vuetify.VCard ):
             self.box_engine = BoxViewer( self.region_engine.input, box )
             self.box_engine.append_to_plotter( self.plotter )
 
+        # make sure that added data in the plot will be rendered with the correct scalar array/lut
+        self.plotter.update()
+
     def _on_clip_visibility_change( self, **kwargs: Any ) -> None:
         """Toggle cut plane visibility for all actors.
 
