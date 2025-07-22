@@ -53,7 +53,22 @@ def getArrayWithSpeTypeValue() -> Any:
         Returns:
             npt.NDArray[Any]: random array of input type.
         """
-        if valueType == "int32":
+        np.random.seed( 28 )
+        if valueType == "int8":
+            if nb_component == 1:
+                return np.array( [ np.int8( 10 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.int8( 10 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "int16":
+            if nb_component == 1:
+                return np.array( [ np.int16( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.int16( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "int32":
             if nb_component == 1:
                 return np.array( [ np.int32( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
             else:
@@ -67,6 +82,48 @@ def getArrayWithSpeTypeValue() -> Any:
                 return np.array( [ [ np.int64( 1000 * np.random.random() ) for _ in range( nb_component ) ]
                                    for _ in range( nb_elements ) ] )
 
+        if valueType == "uint8":
+            if nb_component == 1:
+                return np.array( [ np.uint8( 10 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.uint8( 10 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "uint16":
+            if nb_component == 1:
+                return np.array( [ np.uint16( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.uint16( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "uint32":
+            if nb_component == 1:
+                return np.array( [ np.uint32( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.uint32( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "uint64":
+            if nb_component == 1:
+                return np.array( [ np.uint64( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ np.uint64( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "int":
+            if nb_component == 1:
+                return np.array( [ int( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ int( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
+        elif valueType == "float":
+            if nb_component == 1:
+                return np.array( [ float( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
+            else:
+                return np.array( [ [ float( 1000 * np.random.random() ) for _ in range( nb_component ) ]
+                                   for _ in range( nb_elements ) ] )
+
         elif valueType == "float32":
             if nb_component == 1:
                 return np.array( [ np.float32( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
@@ -74,7 +131,7 @@ def getArrayWithSpeTypeValue() -> Any:
                 return np.array( [ [ np.float32( 1000 * np.random.random() ) for _ in range( nb_component ) ]
                                    for _ in range( nb_elements ) ] )
 
-        else:
+        elif valueType == "float64":
             if nb_component == 1:
                 return np.array( [ np.float64( 1000 * np.random.random() ) for _ in range( nb_elements ) ] )
             else:
