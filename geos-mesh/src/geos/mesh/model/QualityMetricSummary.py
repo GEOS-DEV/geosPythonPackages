@@ -9,7 +9,6 @@ from typing import Any, Union
 from typing_extensions import Self, Iterable
 from packaging.version import Version
 import matplotlib as mpl
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
@@ -434,7 +433,7 @@ class QualityMetricSummary():
         xticks: npt.NDArray[ np.int64 ] = np.arange( means.index.size, dtype=int )
         xtickslabels = [ getQualityMeasureNameFromIndex( metricIndex ) for metricIndex in computedMetrics ]
         # define colors
-        cmap: mpl.colors.Colormap = cm.get_cmap( 'plasma' )
+        cmap: mpl.colors.Colormap = plt.get_cmap( 'plasma' )
         colors = cmap( np.linspace( 0, 1, len( computedMetrics ) ) )
 
         # min max rectangle width
