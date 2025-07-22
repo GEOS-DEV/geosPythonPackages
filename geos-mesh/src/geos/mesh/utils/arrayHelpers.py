@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay, Paloma Martinez
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez, Romain Baville
 from copy import deepcopy
 import logging
 import numpy as np
@@ -57,7 +57,7 @@ def getFieldType( data: vtkFieldData ) -> str:
     - vtkPointData (inheritance of vtkFieldData)
 
     Args:
-        data (vtkFieldData): vtk field data
+        data (vtkFieldData): Vtk field data.
 
     Returns:
         str: "vtkFieldData", "vtkCellData" or "vtkPointData"
@@ -76,10 +76,10 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
 
     Args:
-        data (vtkFieldData): vtk field data
+        data (vtkFieldData): Vtk field data.
 
     Returns:
-        list[ str ]: The array names in the order that they are stored in the field data.
+        list[str]: The array names in the order that they are stored in the field data.
     """
     if not data.IsA( "vtkFieldData" ):
         raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
@@ -90,9 +90,8 @@ def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
     """Get the vtkDataArray corresponding to the given name.
 
     Args:
-        data (vtkFieldData): vtk field data
-        name (str): array name
-
+        data (vtkFieldData): Vtk field data.
+        name (str): Array name.
 
     Returns:
         Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
@@ -107,9 +106,8 @@ def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArra
     """Get the copy of a vtkDataArray corresponding to the given name.
 
     Args:
-        data (vtkFieldData): vtk field data
-        name (str): array name
-
+        data (vtkFieldData): Vtk field data.
+        name (str): Array name.
 
     Returns:
         Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
@@ -125,7 +123,6 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
 
     Args:
         data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
-
 
     Returns:
         Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
@@ -144,12 +141,12 @@ def getNumpyArrayByName( data: vtkCellData | vtkPointData, name: str, sorted: bo
     no reordering will be perform.
 
     Args:
-        data (vtkCellData | vtkPointData): vtk field data.
-        name (str): Array name to sort
+        data (vtkCellData | vtkPointData): Vtk field data.
+        name (str): Array name to sort.
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
     Returns:
-        Optional[ npt.NDArray ]: Sorted array
+        Optional[ npt.NDArray ]: Sorted array.
     """
     dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
     if dataArray is not None:
@@ -164,12 +161,11 @@ def getAttributeSet( object: Union[ vtkMultiBlockDataSet, vtkDataSet ], onPoints
     """Get the set of all attributes from an object on points or on cells.
 
     Args:
-        object (Any): object where to find the attributes.
-        onPoints (bool): True if attributes are on points, False if they are on
-            cells.
+        object (Any): Object where to find the attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        set[str]: set of attribute names present in input object.
+        set[str]: Set of attribute names present in input object.
     """
     attributes: dict[ str, int ]
     if isinstance( object, vtkMultiBlockDataSet ):
@@ -191,14 +187,11 @@ def getAttributesWithNumberOfComponents(
     """Get the dictionnary of all attributes from object on points or cells.
 
     Args:
-        object (Any): object where to find the attributes.
-        onPoints (bool): True if attributes are on points, False if they are on
-            cells.
+        object (Any): Object where to find the attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        dict[str, int]: dictionnary where keys are the names of the attributes
-            and values the number of components.
-
+        dict[str, int]: Dictionnary where keys are the names of the attributes and values the number of components.
     """
     attributes: dict[ str, int ]
     if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
@@ -215,15 +208,11 @@ def getAttributesFromMultiBlockDataSet( object: Union[ vtkMultiBlockDataSet, vtk
     """Get the dictionnary of all attributes of object on points or on cells.
 
     Args:
-        object (vtkMultiBlockDataSet | vtkCompositeDataSet): object where to find
-            the attributes.
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (vtkMultiBlockDataSet | vtkCompositeDataSet): Object where to find the attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        dict[str, int]: Dictionnary of the names of the attributes as keys, and
-            number of components as values.
-
+        dict[str, int]: Dictionnary of the names of the attributes as keys, and number of components as values.
     """
     attributes: dict[ str, int ] = {}
     # initialize data object tree iterator
@@ -246,12 +235,11 @@ def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str,
     """Get the dictionnary of all attributes of a vtkDataSet on points or cells.
 
     Args:
-        object (vtkDataSet): object where to find the attributes.
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (vtkDataSet): Object where to find the attributes.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        dict[str, int]: list of the names of the attributes.
+        dict[str, int]: List of the names of the attributes.
     """
     attributes: dict[ str, int ] = {}
     data: Union[ vtkPointData, vtkCellData ]
@@ -279,13 +267,12 @@ def isAttributeInObject( object: Union[ vtkMultiBlockDataSet, vtkDataSet ], attr
     """Check if an attribute is in the input object.
 
     Args:
-        object (vtkMultiBlockDataSet | vtkDataSet): input object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (vtkMultiBlockDataSet | vtkDataSet): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        bool: True if the attribute is in the table, False otherwise
+        bool: True if the attribute is in the table, False otherwise.
     """
     if isinstance( object, vtkMultiBlockDataSet ):
         return isAttributeInObjectMultiBlockDataSet( object, attributeName, onPoints )
@@ -299,13 +286,12 @@ def isAttributeInObjectMultiBlockDataSet( object: vtkMultiBlockDataSet, attribut
     """Check if an attribute is in the input object.
 
     Args:
-        object (vtkMultiBlockDataSet): input multiblock object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (vtkMultiBlockDataSet): Input multiBlockDataSet.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        bool: True if the attribute is in the table, False otherwise
+        bool: True if the attribute is in the table, False otherwise.
     """
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( object )
@@ -323,13 +309,12 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     """Check if an attribute is in the input object.
 
     Args:
-        object (vtkDataSet): input object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (vtkDataSet): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        bool: True if the attribute is in the table, False otherwise
+        bool: True if the attribute is in the table, False otherwise.
     """
     data: Union[ vtkPointData, vtkCellData ]
     sup: str = ""
@@ -343,21 +328,42 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     return bool( data.HasArray( attributeName ) )
 
 
+def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> bool:
+    """Check if an attribute is global in the input multiBlockDataSet.
+
+    Args:
+        object (vtkMultiBlockDataSet): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+
+    Returns:
+        bool: True if the attribute is global, False if not.
+    """
+    isOnBlock: bool
+    nbBlock: int = object.GetNumberOfBlocks()
+    for idBlock in range( nbBlock ):
+        block: vtkDataSet = object.GetBlock( idBlock )
+        isOnBlock = isAttributeInObjectDataSet( block, attributeName, onPoints )
+        if not isOnBlock:
+            return False
+        
+    return True
+
+
 def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> npt.NDArray[ Any ]:
     """Return the numpy array corresponding to input attribute name in table.
 
     Args:
-        object (PointSet or UnstructuredGrid): input object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (PointSet or UnstructuredGrid): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        ArrayLike[float]: the array corresponding to input attribute name.
+        ArrayLike[Any]: The numpy array corresponding to input attribute name.
     """
-    array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
-    nparray: npt.NDArray[ Any ] = vnp.vtk_to_numpy( array )  # type: ignore[no-untyped-call]
-    return nparray
+    vtkArray: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
+    npArray: npt.NDArray[ Any ] = vnp.vtk_to_numpy( vtkArray )  # type: ignore[no-untyped-call]
+    return npArray
 
 
 def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
@@ -369,7 +375,7 @@ def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: b
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: the type of the vtk array corresponding to input attribute name.
+        int: The type of the vtk array corresponding to input attribute name.
     """
     array: vtkDataArray = getVtkArrayInObject( object, attributeName, onPoints )
     vtkArrayType: int = array.GetDataType()
@@ -402,13 +408,12 @@ def getVtkArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool 
     """Return the array corresponding to input attribute name in table.
 
     Args:
-        object (PointSet or UnstructuredGrid): input object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        object (PointSet or UnstructuredGrid): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        vtkDataArray: the vtk array corresponding to input attribute name.
+        vtkDataArray: The vtk array corresponding to input attribute name.
     """
     assert isAttributeInObject( object, attributeName, onPoints ), f"{attributeName} is not in input object."
     return object.GetPointData().GetArray( attributeName ) if onPoints else object.GetCellData().GetArray(
@@ -423,14 +428,12 @@ def getNumberOfComponents(
     """Get the number of components of attribute attributeName in dataSet.
 
     Args:
-        dataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataSet):
-            dataSet where the attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataSet): DataSet where the attribute is.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: number of components.
+        int: Number of components.
     """
     if isinstance( dataSet, vtkDataSet ):
         return getNumberOfComponentsDataSet( dataSet, attributeName, onPoints )
@@ -444,13 +447,12 @@ def getNumberOfComponentsDataSet( dataSet: vtkDataSet, attributeName: str, onPoi
     """Get the number of components of attribute attributeName in dataSet.
 
     Args:
-        dataSet (vtkDataSet): dataSet where the attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkDataSet): DataSet where the attribute is.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: number of components.
+        int: Number of components.
     """
     array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
     return array.GetNumberOfComponents()
@@ -465,12 +467,11 @@ def getNumberOfComponentsMultiBlock(
 
     Args:
         dataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): multi block data Set where the attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        int: number of components.
+        int: Number of components.
     """
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
     for blockIndex in elementaryBlockIndexes:
@@ -489,15 +490,12 @@ def getComponentNames(
     """Get the name of the components of attribute attributeName in dataSet.
 
     Args:
-        dataSet (vtkDataSet | vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): dataSet
-            where the attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkDataSet | vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): DataSet where the attribute is.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        tuple[str,...]: names of the components.
-
+        tuple[str,...]: Names of the components.
     """
     if isinstance( dataSet, vtkDataSet ):
         return getComponentNamesDataSet( dataSet, attributeName, onPoints )
@@ -511,14 +509,12 @@ def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints:
     """Get the name of the components of attribute attributeName in dataSet.
 
     Args:
-        dataSet (vtkDataSet): dataSet where the attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkDataSet): DataSet where the attribute is.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        tuple[str,...]: names of the components.
-
+        tuple[str,...]: Names of the components.
     """
     array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, onPoints )
     componentNames: list[ str ] = []
@@ -536,14 +532,12 @@ def getComponentNamesMultiBlock(
     """Get the name of the components of attribute in MultiBlockDataSet.
 
     Args:
-        dataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): dataSet where the
-            attribute is.
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
+        dataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): DataSet where the attribute is.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        tuple[str,...]: names of the components.
+        tuple[str,...]: Names of the components.
     """
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
     for blockIndex in elementaryBlockIndexes:
@@ -557,8 +551,8 @@ def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ..
     """Get attribute values from input surface.
 
     Args:
-        surface (vtkPolyData): mesh where to get attribute values
-        attributeNames (tuple[str,...]): tuple of attribute names to get the values.
+        surface (vtkPolyData): Mesh where to get attribute values.
+        attributeNames (tuple[str,...]): Tuple of attribute names to get the values.
 
     Returns:
         pd.DataFrame: DataFrame containing property names as columns.
@@ -585,8 +579,8 @@ def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFra
     """Get attribute values from input surface.
 
     Args:
-        surface (vtkPolyData): mesh where to get attribute values
-        attributeNames (tuple[str,...]): tuple of attribute names to get the values.
+        surface (vtkPolyData): Mesh where to get attribute values.
+        attributeNames (tuple[str,...]): Tuple of attribute names to get the values.
 
     Returns:
         pd.DataFrame: DataFrame containing property names as columns.
@@ -615,11 +609,11 @@ def getBounds(
     """Get bounds of either single of composite data set.
 
     Args:
-        input (Union[vtkUnstructuredGrid, vtkMultiBlockDataSet]): input mesh
+        input (Union[vtkUnstructuredGrid, vtkMultiBlockDataSet]): Input mesh.
 
     Returns:
-        tuple[float, float, float, float, float, float]: tuple containing
-            bounds (xmin, xmax, ymin, ymax, zmin, zmax)
+        tuple[float, float, float, float, float, float]: Tuple containing
+            bounds (xmin, xmax, ymin, ymax, zmin, zmax).
 
     """
     if isinstance( input, vtkMultiBlockDataSet ):
@@ -632,11 +626,11 @@ def getMonoBlockBounds( input: vtkUnstructuredGrid, ) -> tuple[ float, float, fl
     """Get boundary box extrema coordinates for a vtkUnstructuredGrid.
 
     Args:
-        input (vtkMultiBlockDataSet): input single block mesh
+        input (vtkMultiBlockDataSet): Input single block mesh.
 
     Returns:
-        tuple[float, float, float, float, float, float]: tuple containing
-            bounds (xmin, xmax, ymin, ymax, zmin, zmax)
+        tuple[float, float, float, float, float, float]: Tuple containing
+            bounds (xmin, xmax, ymin, ymax, zmin, zmax).
 
     """
     return input.GetBounds()
@@ -646,10 +640,10 @@ def getMultiBlockBounds( input: vtkMultiBlockDataSet, ) -> tuple[ float, float, 
     """Get boundary box extrema coordinates for a vtkMultiBlockDataSet.
 
     Args:
-        input (vtkMultiBlockDataSet): input multiblock mesh
+        input (vtkMultiBlockDataSet): Input multiblock mesh.
 
     Returns:
-        tuple[float, float, float, float, float, float]: bounds.
+        tuple[float, float, float, float, float, float]: Bounds.
 
     """
     xmin, ymin, zmin = 3 * [ np.inf ]
@@ -673,10 +667,10 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     """Get the coordinates of Cell center.
 
     Args:
-        mesh (vtkDataSet): input surface
+        mesh (vtkDataSet): Input surface.
 
     Returns:
-        vtkPoints: cell center coordinates
+        vtkPoints: Cell center coordinates.
     """
     assert mesh is not None, "Surface is undefined."
     filter: vtkCellCenters = vtkCellCenters()
@@ -693,8 +687,8 @@ def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDA
     """Sort an array following global Ids.
 
     Args:
-        data (vtkFieldData): Global Ids array
-        arr (npt.NDArray[ np.float64 ]): Array to sort
+        data (vtkFieldData): Global Ids array.
+        arr (npt.NDArray[ np.float64 ]): Array to sort.
     """
     globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
     if globalids is not None:

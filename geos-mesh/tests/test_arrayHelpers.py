@@ -80,6 +80,20 @@ def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str
     obtained: bool = arrayHelpers.isAttributeInObjectDataSet( vtkDataset, attributeName, onpoints )
     assert obtained == expected
 
+@pytest.mark.parametrize( "attributeName, onpoints, expected", [
+    ( "PORO", False, False ),
+    ( "GLOBAL_IDS_POINTS", True, True ),
+] )
+def test_isAttributeGlobal(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeName: str, onpoints: bool,
+    expected: bool,
+) -> None:
+    """Test if the attribute is global or partial."""
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiBlock" )
+    obtained: bool = arrayHelpers.isAttributeGlobal( multiBlockDataset, attributeName, onpoints )
+    assert obtained == expected
+
 
 @pytest.mark.parametrize( "arrayExpected, onpoints", [
     ( "PORO", False ),
@@ -104,8 +118,6 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     ( "CellAttribute", 11, False ),
     ( "PointAttribute", 11, True ),
     ( "collocated_nodes", 12, True ),
-    ( "collocated_nodes", -1, False ),
-    ( "newAttribute", -1, False ),
 ] )
 def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attributeName: str, vtkDataType: int,
                                       onPoints: bool ) -> None:
