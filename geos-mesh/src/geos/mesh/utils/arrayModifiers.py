@@ -8,7 +8,9 @@ from typing import Union, Any
 from geos.utils.Logger import getLogger, Logger
 
 from vtk import (  # type: ignore[import-untyped]
-    VTK_DOUBLE, VTK_FLOAT, VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG,
+    VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
+    VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE,
+    VTK_FLOAT, VTK_DOUBLE,
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
@@ -31,6 +33,7 @@ from vtkmodules.vtkCommonCore import (
 )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
+    getComponentNamesDataSet,
     getAttributesWithNumberOfComponents,
     getArrayInObject,
     isAttributeInObject,
@@ -69,48 +72,55 @@ def fillPartialAttributes(
         attributeName (str): Attribute name.
         onPoints (bool, optional): Attribute is on Points (True) or on Cells (False).
             Defaults to False.
-        value (any, optional): Filling value.
-            Defaults to -1 for int VTK arrays, 0 for uint VTK arrays and nan otherwise.
+        value (any, optional): Filling value. It is better to use numpy scalar type for the values.
+            Defaults to -1 for int VTK arrays, 0 for uint VTK arrays and nan for float VTK arrays.
         logger (Logger, optional): A logger to manage the output messages.
             Defaults to an internal logger.
 
     Returns:
         bool: True if the attribute was correctly created and filled, False if not.
     """
+    # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
         logger.error( f"Input mesh has to be inherited from vtkMultiBlockDataSet." )
         return False
     
+    # Check if the attribute is partial.
     if isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
         logger.error( f"The attribute { attributeName } is already global." )
         return False
 
+    # Get information of the attribute to fill.
     vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
     infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
     nbComponents: int = infoAttributes[ attributeName ]
-
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, onPoints )
 
-    typeMapping: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-    valueType: Any = typeMapping[ vtkDataType ]
+    # Set the default value depending of the type of the attribute to fill
     if np.isnan( value ):
-        if vtkDataType in ( VTK_DOUBLE, VTK_FLOAT ):
+        typeMapping: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
+        valueType: type = typeMapping[ vtkDataType ]
+        # Default value for float types is nan.
+        if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
             value = valueType( value )
-        elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG ):
-            logger.warning( f"{ attributeName } vtk array type is { valueType }, default value is automatically set to 0." )
-            value = valueType( 0 )
-        else:
-            logger.warning( f"{ attributeName } vtk array type is { valueType }, default value is automatically set to -1." )
+            logger.warning( f"{ attributeName } vtk data type is { vtkDataType } cooresponding to { value.dtype } numpy type, default value is automatically set to nan." )
+        # Default value for int types is -1.
+        elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ) :
             value = valueType( -1 )
-
-    else:
-        value = valueType( value )
+            logger.warning( f"{ attributeName } vtk data type is { vtkDataType } cooresponding to { value.dtype } numpy type, default value is automatically set to -1." )
+        # Default value for uint types is 0.
+        elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG ):
+            value = valueType( 0 )
+            logger.warning( f"{ attributeName } vtk data type is { vtkDataType } cooresponding to { value.dtype } numpy type, default value is automatically set to 0." )
+        else:
+            logger.error( f"The type of the attribute { attributeName } is not compatible with the function.")
+            return False
 
     values: list[ Any ] = [ value for _ in range( nbComponents ) ]
 
-    # Parse the multiBlockDataSet to create and fill the attribute on blocks where the attribute is not.
+    # Parse the multiBlockDataSet to create and fill the attribute on blocks where it is not.
     iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
     iter.SetDataSet( multiBlockDataSet )
     iter.VisitOnlyLeavesOn()
@@ -118,8 +128,7 @@ def fillPartialAttributes(
     while iter.GetCurrentDataObject() is not None:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
-            created: bool = createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType, logger )
-            if not created:
+            if not createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType, logger ):
                 return False
                     
         iter.GoToNextItem()
@@ -129,15 +138,17 @@ def fillPartialAttributes(
 
 def fillAllPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
-    value: Any = np.nan,
     logger: Logger = getLogger( "fillAllPartialAttributes", True ),
 ) -> bool:
-    """Fill all the partial attributes of a multiBlockDataSet with a same value. All components of each attribute are filled with the same value.
+    """Fill all partial attributes of a multiBlockDataSet with the default value.
+    All components of each attributes are filled with the same value.
+    Depending of the type of the attribute, the default value is different:
+        - 0 for uint types (VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG).
+        - -1 for int types (VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE).
+        - nan for float types (VTK_FLOAT, VTK_DOUBLE).
 
     Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill the attribute.
-        value (any, optional): Filling value.
-            Defaults to -1 for int VTK arrays, 0 for uint VTK arrays and nan otherwise.
+        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill attributes.
         logger (Logger, optional): A logger to manage the output messages.
             Defaults to an internal logger.
 
@@ -149,7 +160,7 @@ def fillAllPartialAttributes(
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
         for attributeName in infoAttributes:
             if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
-                if not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints, value, logger ):
+                if not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints, logger=logger ):
                     return False
 
     return True
@@ -331,12 +342,6 @@ def createConstantAttributeDataSet(
     Returns:
         bool: True if the attribute was correctly created, False if it was not created.
     """
-    # Check if listValues have at least one value.
-    if len( listValues ) == 0:
-        logger.error( f"To create a constant attribute, you have to give at least one value in the listValues." )
-        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-        return False
-    
     # Check if all the values of listValues have the same type.
     valueType: type = type( listValues[ 0 ] )
     for value in listValues:
@@ -487,20 +492,20 @@ def createAttribute(
 
 
 def copyAttribute(
-    objectFrom: vtkMultiBlockDataSet,
-    objectTo: vtkMultiBlockDataSet,
+    multiBlockDataSetFrom: vtkMultiBlockDataSet,
+    multiBlockDataSetTo: vtkMultiBlockDataSet,
     attributeNameFrom: str,
     attributeNameTo: str,
     onPoints: bool = False,
     logger: Logger = getLogger( "copyAttribute", True ),
 ) -> bool:
-    """Copy an attribute from a multiBlockDataSet to another.
+    """Copy an attribute from a multiBlockDataSet to a similare one on the same piece. 
 
     Args:
-        objectFrom (vtkMultiBlockDataSet): MultiBlockDataSet from which to copy the attribute.
-        objectTo (vtkMultiBlockDataSet): MultiBlockDataSet where to copy the attribute.
-        attributeNameFrom (str): Attribute name in objectFrom.
-        attributeNameTo (str): Attribute name in objectTo.
+        multiBlockDataSetFrom (vtkMultiBlockDataSet): MultiBlockDataSet from which to copy the attribute.
+        multiBlockDataSetTo (vtkMultiBlockDataSet): MultiBlockDataSet where to copy the attribute.
+        attributeNameFrom (str): Attribute name in multiBlockDataSetFrom.
+        attributeNameTo (str): Attribute name in multiBlockDataSetTo. It will be a new attribute of multiBlockDataSetTo.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
         logger (Logger, optional): A logger to manage the output messages.
@@ -509,65 +514,74 @@ def copyAttribute(
     Returns:
         bool: True if copy successfully ended, False otherwise.
     """
-    if not isinstance( objectFrom, vtkMultiBlockDataSet ):
-        logger.error( f"ObjectFrom has to be inherited from vtkMultiBlockDataSet." )
+    # Check if the multiBlockDataSetFrom is inherited from vtkMultiBlockDataSet.
+    if not isinstance( multiBlockDataSetFrom, vtkMultiBlockDataSet ):
+        logger.error( f"multiBlockDataSetFrom has to be inherited from vtkMultiBlockDataSet." )
         logger.error( f"The attribute { attributeNameFrom } has not been copied." )
         return False
-    
-    if not isinstance( objectTo, vtkMultiBlockDataSet ):
-        logger.error( f"ObjectTo has to be inherited from vtkMultiBlockDataSet." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
-    
-    if not isAttributeInObjectMultiBlockDataSet( objectFrom, attributeNameFrom, onPoints ):
-        logger.error( f"The attribute { attributeNameFrom } is not in the objectFrom." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
-    
-    elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( objectTo )
-    elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( objectFrom )
 
+    # Check if the multiBlockDataSetTo is inherited from vtkMultiBlockDataSet.
+    if not isinstance( multiBlockDataSetTo, vtkMultiBlockDataSet ):
+        logger.error( f"multiBlockDataSetTo has to be inherited from vtkMultiBlockDataSet." )
+        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
+        return False
+    
+    # Check if the attribute exist in the multiBlockDataSetFrom.
+    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSetFrom, attributeNameFrom, onPoints ):
+        logger.error( f"The attribute { attributeNameFrom } is not in the multiBlockDataSetFrom." )
+        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
+        return False
+    
+    # Check if the attribute already exist in the multiBlockDataSetTo.
+    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSetTo, attributeNameTo, onPoints ):
+        logger.error( f"The attribute { attributeNameTo } is already in the multiBlockDataSetTo." )
+        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
+        return False
+    
+    # Check if the two multiBlockDataSets are similare.
+    elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
+    elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
     if elementaryBlockIndexesTo != elementaryBlockIndexesFrom:
-        logger.error( f"ObjectFrom and objectTo do not have the same block indexes." )
+        logger.error( f"multiBlockDataSetFrom and multiBlockDataSetTo do not have the same block indexes." )
         logger.error( f"The attribute { attributeNameFrom } has not been copied." )
         return False
     
-    for index in elementaryBlockIndexesTo:
-        blockFrom: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectFrom, index ) )
-        if blockFrom is None:
-            logger.error( f"Block { str( index ) } of objectFrom is null." )
+    # Parse blocks of the two mesh to copy the attribute.
+    for idBlock in elementaryBlockIndexesTo:
+        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( multiBlockDataSetFrom, idBlock ) )
+        if dataSetFrom is None:
+            logger.error( f"Block { blockId } of multiBlockDataSetFrom is null." )
             logger.error( f"The attribute { attributeNameFrom } has not been copied." )
             return False
 
-        blockTo: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( objectTo, index ) )
-        if blockTo is None:
-            logger.error( f"Block { str( index ) } of objectTo is null." )
+        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( multiBlockDataSetTo, idBlock ) )
+        if dataSetTo is None:
+            logger.error( f"Block { blockId } of multiBlockDataSetTo is null." )
             logger.error( f"The attribute { attributeNameFrom } has not been copied." )
             return False
 
-        if isAttributeInObjectDataSet( blockFrom, attributeNameFrom, onPoints ):
-            copied: bool = copyAttributeDataSet( blockFrom, blockTo, attributeNameFrom, attributeNameTo, onPoints, logger )
-            if not copied:
+        if isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, onPoints ):
+            if not copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints, logger ):
                 return False
 
     return True
 
 
 def copyAttributeDataSet(
-    objectFrom: vtkDataSet,
-    objectTo: vtkDataSet,
+    dataSetFrom: vtkDataSet,
+    dataSetTo: vtkDataSet,
     attributeNameFrom: str,
     attributeNameTo: str,
     onPoints: bool = False,
     logger: Logger = getLogger( "copyAttributeDataSet", True ),
 ) -> bool:
-    """Copy an attribute from a dataSet to another.
+    """Copy an attribute from a dataSet to a similare one on the same piece. 
 
     Args:
-        objectFrom (vtkDataSet): DataSet from which to copy the attribute.
-        objectTo (vtkDataSet): DataSet where to copy the attribute.
-        attributeNameFrom (str): Attribute name in objectFrom.
-        attributeNameTo (str): Attribute name in objectTo.
+        dataSetFrom (vtkDataSet): DataSet from which to copy the attribute.
+        dataSetTo (vtkDataSet): DataSet where to copy the attribute.
+        attributeNameFrom (str): Attribute name in dataSetFrom.
+        attributeNameTo (str): Attribute name in dataSetTo. It will be a new attribute of dataSetTo.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
         logger (Logger, optional): A logger to manage the output messages.
@@ -576,26 +590,36 @@ def copyAttributeDataSet(
     Returns:
         bool: True if copy successfully ended, False otherwise.
     """
-    if not isinstance( objectFrom, vtkDataSet ):
-        logger.error( f"ObjectFrom has to be inherited from vtkDataSet." )
+    # Check if the dataSetFrom is inherited from vtkDataSet.
+    if not isinstance( dataSetFrom, vtkDataSet ):
+        logger.error( f"dataSetFrom has to be inherited from vtkDataSet." )
         logger.error( f"The attribute { attributeNameFrom } has not been copied." )
         return False
     
-    if not isinstance( objectTo, vtkDataSet ):
-        logger.error( f"ObjectTo has to be inherited from vtkDataSet." )
+    # Check if the dataSetTo is inherited from vtkDataSet.
+    if not isinstance( dataSetTo, vtkDataSet ):
+        logger.error( f"dataSetTo has to be inherited from vtkDataSet." )
         logger.error( f"The attribute { attributeNameFrom } has not been copied." )
         return False
     
-    if not isAttributeInObjectDataSet( objectFrom, attributeNameFrom, onPoints ):
-        logger.error( f"The attribute { attributeNameFrom } is not in the objectFrom." )
+    # Check if the attribute exist in the dataSetFrom.
+    if not isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, onPoints ):
+        logger.error( f"The attribute { attributeNameFrom } is not in the dataSetFrom." )
         logger.error( f"The attribute { attributeNameFrom } has not been copied." )
         return False
     
-    npArray: npt.NDArray[ Any ] = getArrayInObject( objectFrom, attributeNameFrom, onPoints )
-    componentNames: tuple[ str, ...] = getComponentNames( objectFrom, attributeNameFrom, onPoints )
-    vtkArrayType: int = getVtkArrayTypeInObject( objectFrom, attributeNameFrom, onPoints )
+    # Check if the attribute already exist in the dataSetTo.
+    if isAttributeInObjectDataSet( dataSetTo, attributeNameTo, onPoints ):
+        logger.error( f"The attribute { attributeNameTo } is already in the dataSetTo." )
+        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
+        return False
+    
+    # Get the properties of the attribute to copied.
+    npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, onPoints )
+    componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, onPoints )
+    vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, onPoints )
 
-    return createAttribute( objectTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
+    return createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
 
 
 def renameAttribute(

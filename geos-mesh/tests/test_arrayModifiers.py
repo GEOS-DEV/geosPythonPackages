@@ -14,21 +14,10 @@ import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
 
-from geos.mesh.utils.arrayHelpers import getAttributesWithNumberOfComponents
-
 from vtk import (  # type: ignore[import-untyped]
-    VTK_UNSIGNED_CHAR,
-    VTK_UNSIGNED_SHORT,
-    VTK_UNSIGNED_INT,
-    VTK_UNSIGNED_LONG_LONG,
-    VTK_SIGNED_CHAR,
-    VTK_SHORT,
-    VTK_INT,
-    VTK_LONG_LONG,
-    VTK_FLOAT,
-    VTK_DOUBLE,
-    VTK_ID_TYPE,
-    VTK_CHAR,
+    VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
+    VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE,
+    VTK_FLOAT, VTK_DOUBLE,
 )
 
 # Information :
@@ -56,108 +45,100 @@ from vtk import (  # type: ignore[import-untyped]
 from geos.mesh.utils import arrayModifiers
 
 
-@pytest.mark.parametrize(
-    "idBlockToFill, attributeName, nbComponentsRef, componentNamesRef, onPoints, value, valueRef, vtkDataTypeRef, valueTypeRef",
-    [
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE, "float64" ),
-        ( 1, "CellAttribute", 3,
-          ( "AX1", "AX2", "AX3" ), False, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE, "float64" ),
-        ( 1, "CellAttribute", 3,
-          ( "AX1", "AX2", "AX3" ), False, np.int32( 4 ), np.float64( 4 ), VTK_DOUBLE, "float64" ),
-        ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE, "float64" ),
-        ( 1, "PointAttribute", 3,
-          ( "AX1", "AX2", "AX3" ), True, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE, "float64" ),
-        ( 1, "PointAttribute", 3,
-          ( "AX1", "AX2", "AX3" ), True, np.int32( 4 ), np.float64( 4 ), VTK_DOUBLE, "float64" ),
-        ( 1, "PORO", 1, (), False, np.nan, np.nan, VTK_FLOAT, "float32" ),
-        ( 1, "PORO", 1, (), False, np.float32( 4 ), np.float32( 4 ), VTK_FLOAT, "float32" ),
-        ( 1, "PORO", 1, (), False, np.int32( 4 ), np.float32( 4 ), VTK_FLOAT, "float32" ),
-        ( 1, "FAULT", 1, (), False, np.nan, np.int32( -1 ), VTK_INT, "int32" ),
-        ( 1, "FAULT", 1, (), False, np.int32( 4 ), np.int32( 4 ), VTK_INT, "int32" ),
-        ( 1, "FAULT", 1, (), False, np.float32( 4 ), np.int32( 4 ), VTK_INT, "int32" ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.nan, np.int64( -1 ), VTK_ID_TYPE, "int64" ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.int64( 4 ), np.int64( 4 ), VTK_ID_TYPE, "int64" ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.int32( 4 ), np.int64( 4 ), VTK_ID_TYPE, "int64" ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.float32( 4 ), np.int64( 4 ), VTK_ID_TYPE, "int64" ),
-    ] )
+@pytest.mark.parametrize( "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, value, valueTest, vtkDataTypeTest", [
+    # Test fill an attribute on point and on cell.
+    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE ),
+    ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE ),
+    # Test fill attributes with different number of componnent.
+    ( 1, "PORO", 1, (), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
+    ( 1, "PERM", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),        
+    # Test fill an attribute with default value.
+    ( 1, "FAULT", 1, (), False, np.nan, np.int32( -1 ), VTK_INT ),
+    ( 0, "collocated_nodes", 2, ( None, None ), True, np.nan, np.int64( -1 ), VTK_ID_TYPE ),
+    # Test fill an attribute with specified value.
+    ( 1, "PORO", 1, (), False, np.float32( 4 ), np.float32( 4 ), VTK_FLOAT ),
+    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, 4. , np.float64( 4 ), VTK_DOUBLE ),
+    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE ),
+    ( 1, "FAULT", 1, (), False, np.int32( 4 ), np.int32( 4 ), VTK_INT ),
+    ( 0, "collocated_nodes", 2, ( None, None ), True, 4 , np.int64( 4 ), VTK_ID_TYPE ),
+    ( 0, "collocated_nodes", 2, ( None, None ), True, np.int64( 4 ), np.int64( 4 ), VTK_ID_TYPE ),
+] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
-    idBlockToFill: int,
+    idBlock: int,
     attributeName: str,
-    nbComponentsRef: int,
-    componentNamesRef: tuple[ str, ...],
+    nbComponentsTest: int,
+    componentNamesTest: tuple[ str, ...],
     onPoints: bool,
     value: Any,
-    valueRef: Any,
-    vtkDataTypeRef: int,
-    valueTypeRef: str,
+    valueTest: Any,
+    vtkDataTypeTest: int,
 ) -> None:
     """Test filling a partial attribute from a multiblock with values."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints, value )
+    
+    # Fill the attribute in the multiBlockDataSet.
+    assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints, value )
 
-    blockTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlockToFill ) )
-    dataTest: Union[ vtkPointData, vtkCellData ]
+    # Get the dataSet where the attribute has been filled.
+    dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+
+    # Get the filled attribute.
+    data: Union[ vtkPointData, vtkCellData ]
     nbElements: int
     if onPoints:
-        nbElements = blockTest.GetNumberOfPoints()
-        dataTest = blockTest.GetPointData()
+        nbElements = dataSet.GetNumberOfPoints()
+        data = dataSet.GetPointData()
     else:
-        nbElements = blockTest.GetNumberOfCells()
-        dataTest = blockTest.GetCellData()
+        nbElements = dataSet.GetNumberOfCells()
+        data = dataSet.GetCellData()
+    attributeFilled: vtkDataArray = data.GetArray( attributeName )
 
-    attributeFillTest: vtkDataArray = dataTest.GetArray( attributeName )
-    nbComponentsTest: int = attributeFillTest.GetNumberOfComponents()
-    assert nbComponentsTest == nbComponentsRef
+    # Test the number of components and their names if multiple.
+    nbComponentsFilled: int = attributeFilled.GetNumberOfComponents()
+    assert nbComponentsFilled == nbComponentsTest
+    if nbComponentsTest > 1:
+        componentNamesFilled: tuple[ str, ...] = tuple(
+            attributeFilled.GetComponentName( i ) for i in range( nbComponentsFilled ) )
+        assert componentNamesFilled == componentNamesTest
 
-    npArrayFillRef: npt.NDArray[ Any ]
-    if nbComponentsRef > 1:
-        componentNamesTest: tuple[ str, ...] = tuple(
-            attributeFillTest.GetComponentName( i ) for i in range( nbComponentsRef ) )
-        assert componentNamesTest == componentNamesRef
-
-    npArrayFillRef = np.full( ( nbElements, nbComponentsRef ), valueRef )
-
-    npArrayFillTest: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFillTest )
-    assert npArrayFillTest.dtype == valueTypeRef
-
-    if np.isnan( valueRef ):
-        assert np.isnan( npArrayFillRef ).all()
+    # Test values and their types.
+    ## Create the constant array test from the value.
+    npArrayTest: npt.NDArray[ Any ]
+    if nbComponentsTest > 1:
+        npArrayTest = np.array( [ [ valueTest for _ in range( nbComponentsTest ) ] for _ in range( nbElements ) ] )
     else:
-        assert ( npArrayFillTest == npArrayFillRef ).all()
+        npArrayTest = np.array( [ valueTest for _ in range( nbElements ) ] )
 
-    vtkDataTypeTest: int = attributeFillTest.GetDataType()
-    assert vtkDataTypeTest == vtkDataTypeRef
+    npArrayFilled: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFilled )
+    assert npArrayFilled.dtype == npArrayTest.dtype
+    if np.isnan( value ) and vtkDataTypeTest in ( VTK_FLOAT, VTK_DOUBLE ):
+        assert np.isnan( npArrayFilled ).all()
+    else:
+        assert ( npArrayFilled == npArrayTest ).all()
+
+    vtkDataTypeFilled: int = attributeFilled.GetDataType()
+    assert vtkDataTypeTest == vtkDataTypeFilled
 
 
-@pytest.mark.parametrize( "value", [
-    ( np.nan ),
-    ( np.int32( 42 ) ),
-    ( np.int64( 42 ) ),
-    ( np.float32( 42 ) ),
-    ( np.float64( 42 ) ),
-] )
+@pytest.mark.parametrize( "multiBlockDataSetName", [ "multiblock" ] )
 def test_FillAllPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
-    value: Any,
+    multiBlockDataSetName: str,
 ) -> None:
     """Test to fill all the partial attributes of a vtkMultiBlockDataSet with a value."""
-    multiBlockDataSetRef: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    arrayModifiers.fillAllPartialAttributes( multiBlockDataSetTest, value )
+    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( multiBlockDataSetName )
+    assert arrayModifiers.fillAllPartialAttributes( multiBlockDataSetTest )
 
-    nbBlock = multiBlockDataSetRef.GetNumberOfBlocks()
+    nbBlock: int = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        datasetTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
-        for onPoints in [ True, False ]:
-            infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSetRef, onPoints )
-            dataTest: Union[ vtkPointData, vtkCellData ]
-            dataTest = datasetTest.GetPointData() if onPoints else datasetTest.GetCellData()
-
-            for attributeName in infoAttributes:
-                attributeTest: int = dataTest.HasArray( attributeName )
-                assert attributeTest == 1
-
+        dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+        for attributeNameOnPoint in [ "PointAttribute", "collocated_nodes" ]:
+            attributeExist: int = dataSet.GetPointData().HasArray( attributeNameOnPoint )
+            assert attributeExist == 1
+        for attributeNameOnCell in [ "CELL_MARKERS", "CellAttribute", "FAULT", "PERM", "PORO" ]:
+            attributeExist: int = dataSet.GetCellData().HasArray( attributeNameOnCell )
+            assert attributeExist == 1
 
 @pytest.mark.parametrize( "attributeName, dataType, expectedDatatypeArray", [
     ( "test_double", VTK_DOUBLE, "vtkDoubleArray" ),
@@ -182,10 +163,12 @@ def test_createEmptyAttribute(
 
 
 @pytest.mark.parametrize( "attributeName, onPoints", [
+    # Test to create a new attribute on points and on cells.
     ( "newAttribute", False ),
     ( "newAttribute", True ),
-    ( "PORO", True ), # Partial attribute on cells already exist
-    ( "GLOBAL_IDS_CELLS", True ), # Global attribute on cells already exist
+    # Test to create a new attribute  whenn an attribute with the same name already exist on the opposit piece.
+    ( "PORO", True ), # Partial attribute on cells already exist.
+    ( "GLOBAL_IDS_CELLS", True ), # Global attribute on cells already exist.
 ] )
 def test_createConstantAttributeMultiBlock(
     dataSetTest: vtkMultiBlockDataSet,
@@ -199,21 +182,19 @@ def test_createConstantAttributeMultiBlock(
 
     nbBlock = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        datasetTest: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
-        dataTest: Union[ vtkPointData, vtkCellData ]
-        if onPoints:
-            dataTest = datasetTest.GetPointData()
-        else:
-            dataTest = datasetTest.GetCellData()
+        dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+        data: Union[ vtkPointData, vtkCellData ]
+        data = dataSet.GetPointData() if onPoints else dataSet.GetCellData()
 
-        attributeTest: int = dataTest.HasArray( attributeName )
-        assert attributeTest == 1
+        attributeWellCreated: int = data.HasArray( attributeName )
+        assert attributeWellCreated == 1
 
 
 @pytest.mark.parametrize( "listValues, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, attributeName", [
-    # Test attribute names. 
-    ## Test with an attributeName already existing on cells data.
-    ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "PORO" ),
+    # Test attribute names.
+    ## Test with an attributeName already existing on opposit piece.
+    ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "CellAttribute" ),
+    ( [ np.float64( 42 ) ], (), (), False, VTK_DOUBLE, VTK_DOUBLE, "PointAttribute" ),
     ## Test with a new attributeName on cells and on points.
     ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
     ( [ np.float32( 42 ) ], (), (), False, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
@@ -260,13 +241,12 @@ def test_createConstantAttributeDataSet(
     attributeName: str,
 ) -> None:
     """Test constant attribute creation in dataset."""
-    # Get the dataSet from a vtu.
     dataSet: vtkDataSet = dataSetTest( "dataset" )
 
     # Create the new constant attribute in the dataSet.
     assert arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType )
 
-    # Get the new attribute to check its properties.
+    # Get the created attribute.
     data: Union[ vtkPointData, vtkCellData ]
     nbElements: int
     if onPoints:
@@ -275,15 +255,15 @@ def test_createConstantAttributeDataSet(
     else:
         data = dataSet.GetCellData()
         nbElements = dataSet.GetNumberOfCells()
-    createdAttribute: vtkDataArray = data.GetArray( attributeName )
+    attributeCreated: vtkDataArray = data.GetArray( attributeName )
 
     # Test the number of components and their names if multiple.
     nbComponentsTest: int = len( listValues )
-    nbComponentsCreated: int = createdAttribute.GetNumberOfComponents()
+    nbComponentsCreated: int = attributeCreated.GetNumberOfComponents()
     assert nbComponentsCreated == nbComponentsTest
     if nbComponentsTest > 1:
         componentNamesCreated: tuple[ str, ...] = tuple(
-            createdAttribute.GetComponentName( i ) for i in range( nbComponentsCreated ) )
+            attributeCreated.GetComponentName( i ) for i in range( nbComponentsCreated ) )
         assert componentNamesCreated, componentNamesTest
 
     # Test values and their types.
@@ -294,18 +274,19 @@ def test_createConstantAttributeDataSet(
     else:
         npArrayTest = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ] )
 
-    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
-    assert ( npArrayCreated == npArrayTest ).all()
+    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCreated )
     assert npArrayCreated.dtype == npArrayTest.dtype
+    assert ( npArrayCreated == npArrayTest ).all()
 
-    vtkDataTypeCreated: int = createdAttribute.GetDataType()
+    vtkDataTypeCreated: int = attributeCreated.GetDataType()
     assert vtkDataTypeCreated == vtkDataTypeTest
 
 
 @pytest.mark.parametrize( "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType, attributeName", [
-    # Test attribute names. 
-    ## Test with an attributeName already existing on cells data.
-    ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "PORO" ),
+    # Test attribute names.
+    ## Test with an attributeName already existing on opposit piece.
+    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "CellAttribute" ),
+    ( (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64", "PointAttribute" ),
     ## Test with a new attributeName on cells and on points.
     ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
     ( (), (), False, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
@@ -353,133 +334,126 @@ def test_createAttribute(
     attributeName: str,
 ) -> None:
     """Test creation of dataset in dataset from given array."""
-    # Get the dataSet from a vtu.
     dataSet: vtkDataSet = dataSetTest( "dataset" )
 
     # Get a array with random values of a given type.
+    nbElements: int = dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells()
     nbComponentsTest: int = 1 if len( componentNamesTest ) == 0 else len( componentNamesTest )
-    nbElementsTest: int = dataSet.GetNumberOfPoints() if onPoints else dataSet.GetNumberOfCells()
-    npArrayTest: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( nbComponentsTest, nbElementsTest, valueType )
+    npArrayTest: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( nbComponentsTest, nbElements, valueType )
 
     # Create the new attribute in the dataSet.
     assert arrayModifiers.createAttribute( dataSet, npArrayTest, attributeName, componentNames, onPoints, vtkDataType )
 
-    # Get the new attribute to check its properties.
+    # Get the created attribute.
     data: Union[ vtkPointData, vtkCellData ]
     data = dataSet.GetPointData() if onPoints else dataSet.GetCellData()
-    createdAttribute: vtkDataArray = data.GetArray( attributeName )
+    attributeCreated: vtkDataArray = data.GetArray( attributeName )
 
     # Test the number of components and their names if multiple.
-    nbComponentsCreated: int = createdAttribute.GetNumberOfComponents()
+    nbComponentsCreated: int = attributeCreated.GetNumberOfComponents()
     assert nbComponentsCreated == nbComponentsTest
     if nbComponentsTest > 1:
         componentsNamesCreated: tuple[ str, ...] = tuple(
-            createdAttribute.GetComponentName( i ) for i in range( nbComponentsCreated ) )
+            attributeCreated.GetComponentName( i ) for i in range( nbComponentsCreated ) )
         assert componentsNamesCreated == componentNamesTest
 
     # Test values and their types.
-    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( createdAttribute )
-    assert ( npArrayCreated == npArrayTest ).all()
+    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCreated )
     assert npArrayCreated.dtype == npArrayTest.dtype
+    assert ( npArrayCreated == npArrayTest ).all()
 
-    vtkDataTypeCreated: int = createdAttribute.GetDataType()
+    vtkDataTypeCreated: int = attributeCreated.GetDataType()
     assert vtkDataTypeCreated == vtkDataTypeTest
 
 
-@pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints, idBlock", [
-    ( "PORO", "POROTo", False, 0 ),
-    ( "CellAttribute", "CellAttributeTo", False, 0 ),
-    ( "FAULT", "FAULTTo", False, 0 ),
-    ( "PointAttribute", "PointAttributeTo", True, 0 ),
-    ( "collocated_nodes", "collocated_nodesTo", True, 1 ),
+@pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints", [
+    # Test with global attibutes.
+    ( "GLOBAL_IDS_POINTS", "GLOBAL_IDS_POINTS_To", True ),
+    ( "GLOBAL_IDS_CELLS", 'GLOBAL_IDS_CELLS_To', False ),
+    # Test with partial attribute.
+    ( "CellAttribute", "CellAttributeTo", False ),
+    ( "PointAttribute", "PointAttributeTo", True ),
 ] )
-def test_copyAttribute( dataSetTest: vtkMultiBlockDataSet, attributeNameFrom: str, attributeNameTo: str, onPoints: bool,
-                        idBlock: int ) -> None:
+def test_copyAttribute(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeNameFrom: str,
+    attributeNameTo: str,
+    onPoints: bool,
+) -> None:
     """Test copy of cell attribute from one multiblock to another."""
-    objectFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    objectTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
+    multiBlockDataSetFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
 
-    arrayModifiers.copyAttribute( objectFrom, objectTo, attributeNameFrom, attributeNameTo, onPoints )
+    # Copy the attribute from the multiBlockDataSetFrom to the multiBlockDataSetTo.
+    assert arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo, onPoints )
 
-    blockFrom: vtkDataSet = cast( vtkDataSet, objectFrom.GetBlock( idBlock ) )
-    blockTo: vtkDataSet = cast( vtkDataSet, objectTo.GetBlock( idBlock ) )
+    # Parse the two multiBlockDataSet and test if the attribute has been copied.
+    nbBlocks: int = multiBlockDataSetFrom.GetNumberOfBlocks()
+    for idBlock in range( nbBlocks ):
+        dataSetFrom: vtkDataSet = cast( vtkDataSet, multiBlockDataSetFrom.GetBlock( idBlock ) )
+        dataSetTo: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTo.GetBlock( idBlock ) )
+        dataFrom: Union[ vtkPointData, vtkCellData ]
+        dataTo: Union[ vtkPointData, vtkCellData ]
+        if onPoints:
+            dataFrom = dataSetFrom.GetPointData()
+            dataTo = dataSetTo.GetPointData()
+        else:
+            dataFrom = dataSetFrom.GetCellData()
+            dataTo = dataSetTo.GetCellData()
 
-    dataFrom: Union[ vtkPointData, vtkCellData ]
-    dataTo: Union[ vtkPointData, vtkCellData ]
-    if onPoints:
-        dataFrom = blockFrom.GetPointData()
-        dataTo = blockTo.GetPointData()
-    else:
-        dataFrom = blockFrom.GetCellData()
-        dataTo = blockTo.GetCellData()
-
-    attributeFrom: vtkDataArray = dataFrom.GetArray( attributeNameFrom )
-    attributeTo: vtkDataArray = dataTo.GetArray( attributeNameTo )
-
-    nbComponentsFrom: int = attributeFrom.GetNumberOfComponents()
-    nbComponentsTo: int = attributeTo.GetNumberOfComponents()
-    assert nbComponentsFrom == nbComponentsTo
-
-    if nbComponentsFrom > 1:
-        componentsNamesFrom: tuple[ str, ...] = tuple(
-            attributeFrom.GetComponentName( i ) for i in range( nbComponentsFrom ) )
-        componentsNamesTo: tuple[ str,
-                                  ...] = tuple( attributeTo.GetComponentName( i ) for i in range( nbComponentsTo ) )
-        assert componentsNamesFrom == componentsNamesTo
-
-    npArrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFrom )
-    npArrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeTo )
-    assert ( npArrayFrom == npArrayTo ).all()
-    assert npArrayFrom.dtype == npArrayTo.dtype
-
-    vtkDataTypeFrom: int = attributeFrom.GetDataType()
-    vtkDataTypeTo: int = attributeTo.GetDataType()
-    assert vtkDataTypeFrom == vtkDataTypeTo
-
+        attributeExistTest: int = dataFrom.HasArray( attributeNameFrom )
+        attributeExistCopied: int = dataTo.HasArray( attributeNameTo )
+        assert attributeExistCopied == attributeExistTest
 
 @pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints", [
     ( "CellAttribute", "CellAttributeTo", False ),
     ( "PointAttribute", "PointAttributeTo", True ),
 ] )
-def test_copyAttributeDataSet( dataSetTest: vtkDataSet, attributeNameFrom: str, attributeNameTo: str,
-                               onPoints: bool ) -> None:
+def test_copyAttributeDataSet(
+    dataSetTest: vtkDataSet,
+    attributeNameFrom: str,
+    attributeNameTo: str,
+    onPoints: bool,
+) -> None:
     """Test copy of an attribute from one dataset to another."""
-    objectFrom: vtkDataSet = dataSetTest( "dataset" )
-    objectTo: vtkDataSet = dataSetTest( "emptydataset" )
+    dataSetFrom: vtkMultiBlockDataSet = dataSetTest( "dataset" )
+    dataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptydataset" )
 
-    arrayModifiers.copyAttributeDataSet( objectFrom, objectTo, attributeNameFrom, attributeNameTo, onPoints )
+    # Copy the attribute from the dataSetFrom to the dataSetTo.
+    assert arrayModifiers.copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints )
 
+    # Get the tested attribute and its copy.
     dataFrom: Union[ vtkPointData, vtkCellData ]
     dataTo: Union[ vtkPointData, vtkCellData ]
     if onPoints:
-        dataFrom = objectFrom.GetPointData()
-        dataTo = objectTo.GetPointData()
+        dataFrom = dataSetFrom.GetPointData()
+        dataTo = dataSetTo.GetPointData()
     else:
-        dataFrom = objectFrom.GetCellData()
-        dataTo = objectTo.GetCellData()
+        dataFrom = dataSetFrom.GetCellData()
+        dataTo = dataSetTo.GetCellData()
+    attributeTest: vtkDataArray = dataFrom.GetArray( attributeNameFrom )
+    attributeCopied: vtkDataArray = dataTo.GetArray( attributeNameTo )
 
-    attributeFrom: vtkDataArray = dataFrom.GetArray( attributeNameFrom )
-    attributeTo: vtkDataArray = dataTo.GetArray( attributeNameTo )
+    # Test the number of components and their names if multiple.
+    nbComponentsTest: int = attributeTest.GetNumberOfComponents()
+    nbComponentsCopied: int = attributeCopied.GetNumberOfComponents()
+    assert nbComponentsCopied == nbComponentsTest
+    if nbComponentsTest > 1:
+        componentsNamesTest: tuple[ str, ... ] = tuple(
+            attributeTest.GetComponentName( i ) for i in range( nbComponentsTest ) )
+        componentsNamesCopied: tuple[ str, ... ] = tuple(
+            attributeCopied.GetComponentName( i ) for i in range( nbComponentsCopied ) )
+        assert componentsNamesCopied == componentsNamesTest
 
-    nbComponentsFrom: int = attributeFrom.GetNumberOfComponents()
-    nbComponentsTo: int = attributeTo.GetNumberOfComponents()
-    assert nbComponentsFrom == nbComponentsTo
+    # Test values and their types.
+    npArrayTest: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeTest )
+    npArrayCopied: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCopied )
+    assert npArrayCopied.dtype == npArrayTest.dtype
+    assert ( npArrayCopied == npArrayTest ).all()
 
-    if nbComponentsFrom > 1:
-        componentsNamesFrom: tuple[ str, ...] = tuple(
-            attributeFrom.GetComponentName( i ) for i in range( nbComponentsFrom ) )
-        componentsNamesTo: tuple[ str,
-                                  ...] = tuple( attributeTo.GetComponentName( i ) for i in range( nbComponentsTo ) )
-        assert componentsNamesFrom == componentsNamesTo
-
-    vtkDataTypeFrom: int = attributeFrom.GetDataType()
-    vtkDataTypeTo: int = attributeTo.GetDataType()
-    assert vtkDataTypeFrom == vtkDataTypeTo
-
-    npArrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFrom )
-    npArrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeTo )
-    assert ( npArrayFrom == npArrayTo ).all()
-    assert npArrayFrom.dtype == npArrayTo.dtype
+    vtkDataTypeTest: int = attributeTest.GetDataType()
+    vtkDataTypeCopied: int = attributeCopied.GetDataType()
+    assert vtkDataTypeCopied == vtkDataTypeTest
 
 
 @pytest.mark.parametrize( "attributeName, onPoints", [
