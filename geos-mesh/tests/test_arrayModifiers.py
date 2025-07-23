@@ -15,13 +15,12 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
 
 from vtk import (  # type: ignore[import-untyped]
-    VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
-    VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE,
-    VTK_FLOAT, VTK_DOUBLE,
+    VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG, VTK_CHAR, VTK_SIGNED_CHAR,
+    VTK_SHORT, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE,
 )
 
 # Information :
-# https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py 
+# https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/numpy_support.py
 # https://github.com/Kitware/VTK/blob/master/Wrapping/Python/vtkmodules/util/vtkConstants.py
 #     vtk array type       int   numpy type
 # VTK_CHAR               = 2  = np.int8
@@ -45,24 +44,26 @@ from vtk import (  # type: ignore[import-untyped]
 from geos.mesh.utils import arrayModifiers
 
 
-@pytest.mark.parametrize( "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, value, valueTest, vtkDataTypeTest", [
-    # Test fill an attribute on point and on cell.
-    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE ),
-    ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE ),
-    # Test fill attributes with different number of componnent.
-    ( 1, "PORO", 1, (), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
-    ( 1, "PERM", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),        
-    # Test fill an attribute with default value.
-    ( 1, "FAULT", 1, (), False, np.nan, np.int32( -1 ), VTK_INT ),
-    ( 0, "collocated_nodes", 2, ( None, None ), True, np.nan, np.int64( -1 ), VTK_ID_TYPE ),
-    # Test fill an attribute with specified value.
-    ( 1, "PORO", 1, (), False, np.float32( 4 ), np.float32( 4 ), VTK_FLOAT ),
-    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, 4. , np.float64( 4 ), VTK_DOUBLE ),
-    ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE ),
-    ( 1, "FAULT", 1, (), False, np.int32( 4 ), np.int32( 4 ), VTK_INT ),
-    ( 0, "collocated_nodes", 2, ( None, None ), True, 4 , np.int64( 4 ), VTK_ID_TYPE ),
-    ( 0, "collocated_nodes", 2, ( None, None ), True, np.int64( 4 ), np.int64( 4 ), VTK_ID_TYPE ),
-] )
+@pytest.mark.parametrize(
+    "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, value, valueTest, vtkDataTypeTest",
+    [
+        # Test fill an attribute on point and on cell.
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE ),
+        ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE ),
+        # Test fill attributes with different number of componnent.
+        ( 1, "PORO", 1, (), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
+        ( 1, "PERM", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
+        # Test fill an attribute with default value.
+        ( 1, "FAULT", 1, (), False, np.nan, np.int32( -1 ), VTK_INT ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, np.nan, np.int64( -1 ), VTK_ID_TYPE ),
+        # Test fill an attribute with specified value.
+        ( 1, "PORO", 1, (), False, np.float32( 4 ), np.float32( 4 ), VTK_FLOAT ),
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, 4., np.float64( 4 ), VTK_DOUBLE ),
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE ),
+        ( 1, "FAULT", 1, (), False, np.int32( 4 ), np.int32( 4 ), VTK_INT ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, 4, np.int64( 4 ), VTK_ID_TYPE ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, np.int64( 4 ), np.int64( 4 ), VTK_ID_TYPE ),
+    ] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
     idBlock: int,
@@ -76,7 +77,7 @@ def test_fillPartialAttributes(
 ) -> None:
     """Test filling a partial attribute from a multiblock with values."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    
+
     # Fill the attribute in the multiBlockDataSet.
     assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints, value )
 
@@ -133,12 +134,14 @@ def test_FillAllPartialAttributes(
     nbBlock: int = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
         dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+        attributeExist: int
         for attributeNameOnPoint in [ "PointAttribute", "collocated_nodes" ]:
-            attributeExist: int = dataSet.GetPointData().HasArray( attributeNameOnPoint )
+            attributeExist = dataSet.GetPointData().HasArray( attributeNameOnPoint )
             assert attributeExist == 1
         for attributeNameOnCell in [ "CELL_MARKERS", "CellAttribute", "FAULT", "PERM", "PORO" ]:
-            attributeExist: int = dataSet.GetCellData().HasArray( attributeNameOnCell )
+            attributeExist = dataSet.GetCellData().HasArray( attributeNameOnCell )
             assert attributeExist == 1
+
 
 @pytest.mark.parametrize( "attributeName, dataType, expectedDatatypeArray", [
     ( "test_double", VTK_DOUBLE, "vtkDoubleArray" ),
@@ -162,14 +165,16 @@ def test_createEmptyAttribute(
     assert newAttr.IsA( str( expectedDatatypeArray ) )
 
 
-@pytest.mark.parametrize( "attributeName, onPoints", [
-    # Test to create a new attribute on points and on cells.
-    ( "newAttribute", False ),
-    ( "newAttribute", True ),
-    # Test to create a new attribute  whenn an attribute with the same name already exist on the opposit piece.
-    ( "PORO", True ), # Partial attribute on cells already exist.
-    ( "GLOBAL_IDS_CELLS", True ), # Global attribute on cells already exist.
-] )
+@pytest.mark.parametrize(
+    "attributeName, onPoints",
+    [
+        # Test to create a new attribute on points and on cells.
+        ( "newAttribute", False ),
+        ( "newAttribute", True ),
+        # Test to create a new attribute  whenn an attribute with the same name already exist on the opposit piece.
+        ( "PORO", True ),  # Partial attribute on cells already exist.
+        ( "GLOBAL_IDS_CELLS", True ),  # Global attribute on cells already exist.
+    ] )
 def test_createConstantAttributeMultiBlock(
     dataSetTest: vtkMultiBlockDataSet,
     attributeName: str,
@@ -178,7 +183,10 @@ def test_createConstantAttributeMultiBlock(
     """Test creation of constant attribute in multiblock dataset."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     values: list[ float ] = [ np.nan ]
-    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest, values, attributeName, onPoints=onPoints )
+    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest,
+                                                             values,
+                                                             attributeName,
+                                                             onPoints=onPoints )
 
     nbBlock = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
@@ -190,46 +198,51 @@ def test_createConstantAttributeMultiBlock(
         assert attributeWellCreated == 1
 
 
-@pytest.mark.parametrize( "listValues, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, attributeName", [
-    # Test attribute names.
-    ## Test with an attributeName already existing on opposit piece.
-    ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "CellAttribute" ),
-    ( [ np.float64( 42 ) ], (), (), False, VTK_DOUBLE, VTK_DOUBLE, "PointAttribute" ),
-    ## Test with a new attributeName on cells and on points.
-    ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    ( [ np.float32( 42 ) ], (), (), False, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    # Test the number of components and their names.
-    ( [ np.float32( 42 ) ], ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    ( [ np.float32( 42 ), np.float32( 42 ) ], (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-    # Test the type of the values.
-    ## With numpy scalar type.
-    ( [ np.int8( 42 ) ], (), (), True, None, VTK_SIGNED_CHAR, "newAttribute" ),
-    ( [ np.int8( 42 ) ], (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "newAttribute" ),
-    ( [ np.int16( 42 ) ], (), (), True, None, VTK_SHORT, "newAttribute" ),
-    ( [ np.int16( 42 ) ], (), (), True, VTK_SHORT, VTK_SHORT, "newAttribute" ),
-    ( [ np.int32( 42 ) ], (), (), True, None, VTK_INT, "newAttribute" ),
-    ( [ np.int32( 42 ) ], (), (), True, VTK_INT, VTK_INT, "newAttribute" ),
-    ( [ np.int64( 42 ) ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
-    ( [ np.int64( 42 ) ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
-    ( [ np.uint8( 42 ) ], (), (), True, None, VTK_UNSIGNED_CHAR, "newAttribute" ),
-    ( [ np.uint8( 42 ) ], (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "newAttribute" ),
-    ( [ np.uint16( 42 ) ], (), (), True, None, VTK_UNSIGNED_SHORT, "newAttribute" ),
-    ( [ np.uint16( 42 ) ], (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "newAttribute" ),
-    ( [ np.uint32( 42 ) ], (), (), True, None, VTK_UNSIGNED_INT, "newAttribute" ),
-    ( [ np.uint32( 42 ) ], (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "newAttribute" ),
-    ( [ np.uint64( 42 ) ], (), (), True, None, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
-    ( [ np.uint64( 42 ) ], (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
-    ( [ np.float32( 42 ) ], (), (), True, None, VTK_FLOAT, "newAttribute" ),
-    ( [ np.float64( 42 ) ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
-    ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
-    ## With python scalar type.
-    ( [ 42 ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
-    ( [ 42 ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
-    ( [ 42. ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
-    ( [ 42. ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
-] )
+@pytest.mark.parametrize(
+    "listValues, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, attributeName",
+    [
+        # Test attribute names.
+        ## Test with an attributeName already existing on opposit piece.
+        ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "CellAttribute" ),
+        ( [ np.float64( 42 ) ], (), (), False, VTK_DOUBLE, VTK_DOUBLE, "PointAttribute" ),
+        ## Test with a new attributeName on cells and on points.
+        ( [ np.float32( 42 ) ], (), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( [ np.float32( 42 ) ], (), (), False, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        # Test the number of components and their names.
+        ( [ np.float32( 42 ) ], ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y" ),
+          ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y", "Z" ),
+          ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( [ np.float32( 42 ), np.float32( 42 ) ], (),
+          ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        # Test the type of the values.
+        ## With numpy scalar type.
+        ( [ np.int8( 42 ) ], (), (), True, None, VTK_SIGNED_CHAR, "newAttribute" ),
+        ( [ np.int8( 42 ) ], (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "newAttribute" ),
+        ( [ np.int16( 42 ) ], (), (), True, None, VTK_SHORT, "newAttribute" ),
+        ( [ np.int16( 42 ) ], (), (), True, VTK_SHORT, VTK_SHORT, "newAttribute" ),
+        ( [ np.int32( 42 ) ], (), (), True, None, VTK_INT, "newAttribute" ),
+        ( [ np.int32( 42 ) ], (), (), True, VTK_INT, VTK_INT, "newAttribute" ),
+        ( [ np.int64( 42 ) ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
+        ( [ np.int64( 42 ) ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+        ( [ np.uint8( 42 ) ], (), (), True, None, VTK_UNSIGNED_CHAR, "newAttribute" ),
+        ( [ np.uint8( 42 ) ], (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "newAttribute" ),
+        ( [ np.uint16( 42 ) ], (), (), True, None, VTK_UNSIGNED_SHORT, "newAttribute" ),
+        ( [ np.uint16( 42 ) ], (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "newAttribute" ),
+        ( [ np.uint32( 42 ) ], (), (), True, None, VTK_UNSIGNED_INT, "newAttribute" ),
+        ( [ np.uint32( 42 ) ], (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "newAttribute" ),
+        ( [ np.uint64( 42 ) ], (), (), True, None, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+        ( [ np.uint64( 42 ) ], (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+        ( [ np.float32( 42 ) ], (), (), True, None, VTK_FLOAT, "newAttribute" ),
+        ( [ np.float64( 42 ) ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
+        ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+        ## With python scalar type.
+        ( [ 42 ], (), (), True, None, VTK_LONG_LONG, "newAttribute" ),
+        ( [ 42 ], (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+        ( [ 42. ], (), (), True, None, VTK_DOUBLE, "newAttribute" ),
+        ( [ 42. ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+    ] )
 def test_createConstantAttributeDataSet(
     dataSetTest: vtkDataSet,
     listValues: list[ Any ],
@@ -244,7 +257,8 @@ def test_createConstantAttributeDataSet(
     dataSet: vtkDataSet = dataSetTest( "dataset" )
 
     # Create the new constant attribute in the dataSet.
-    assert arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType )
+    assert arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints,
+                                                          vtkDataType )
 
     # Get the created attribute.
     data: Union[ vtkPointData, vtkCellData ]
@@ -282,46 +296,48 @@ def test_createConstantAttributeDataSet(
     assert vtkDataTypeCreated == vtkDataTypeTest
 
 
-@pytest.mark.parametrize( "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType, attributeName", [
-    # Test attribute names.
-    ## Test with an attributeName already existing on opposit piece.
-    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "CellAttribute" ),
-    ( (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64", "PointAttribute" ),
-    ## Test with a new attributeName on cells and on points.
-    ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    ( (), (), False, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    # Test the number of components and their names.
-    ( ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    ( (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
-    # Test the type of the values.
-    ## With numpy scalar type.
-    ( (), (), True, None, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
-    ( (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
-    ( (), (), True, None, VTK_SHORT, "int16", "newAttribute" ),
-    ( (), (), True, VTK_SHORT, VTK_SHORT, "int16", "newAttribute" ),
-    ( (), (), True, None, VTK_INT, "int32", "newAttribute" ),
-    ( (), (), True, VTK_INT, VTK_INT, "int32", "newAttribute" ),
-    ( (), (), True, None, VTK_LONG_LONG, "int64", "newAttribute" ),
-    ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64", "newAttribute" ),
-    ( (), (), True, None, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
-    ( (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
-    ( (), (), True, None, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
-    ( (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
-    ( (), (), True, None, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
-    ( (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
-    ( (), (), True, None, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
-    ( (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
-    ( (), (), True, None, VTK_FLOAT, "float32", "newAttribute" ),
-    ( (), (), True, None, VTK_DOUBLE, "float64", "newAttribute" ),
-    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "newAttribute" ),
-    ## With python scalar type.
-    ( (), (), True, None, VTK_LONG_LONG, "int", "newAttribute" ),
-    ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int", "newAttribute" ),
-    ( (), (), True, None, VTK_DOUBLE, "float", "newAttribute" ),
-    ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float", "newAttribute" ),
-] )
+@pytest.mark.parametrize(
+    "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType, attributeName",
+    [
+        # Test attribute names.
+        ## Test with an attributeName already existing on opposit piece.
+        ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "CellAttribute" ),
+        ( (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64", "PointAttribute" ),
+        ## Test with a new attributeName on cells and on points.
+        ( (), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        ( (), (), False, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        # Test the number of components and their names.
+        ( ( "X" ), (), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        ( ( "X", "Y" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        ( ( "X", "Y", "Z" ), ( "X", "Y" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        ( (), ( "Component0", "Component1" ), True, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        # Test the type of the values.
+        ## With numpy scalar type.
+        ( (), (), True, None, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
+        ( (), (), True, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "int8", "newAttribute" ),
+        ( (), (), True, None, VTK_SHORT, "int16", "newAttribute" ),
+        ( (), (), True, VTK_SHORT, VTK_SHORT, "int16", "newAttribute" ),
+        ( (), (), True, None, VTK_INT, "int32", "newAttribute" ),
+        ( (), (), True, VTK_INT, VTK_INT, "int32", "newAttribute" ),
+        ( (), (), True, None, VTK_LONG_LONG, "int64", "newAttribute" ),
+        ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int64", "newAttribute" ),
+        ( (), (), True, None, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
+        ( (), (), True, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "uint8", "newAttribute" ),
+        ( (), (), True, None, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
+        ( (), (), True, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "uint16", "newAttribute" ),
+        ( (), (), True, None, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
+        ( (), (), True, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "uint32", "newAttribute" ),
+        ( (), (), True, None, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
+        ( (), (), True, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "uint64", "newAttribute" ),
+        ( (), (), True, None, VTK_FLOAT, "float32", "newAttribute" ),
+        ( (), (), True, None, VTK_DOUBLE, "float64", "newAttribute" ),
+        ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "newAttribute" ),
+        ## With python scalar type.
+        ( (), (), True, None, VTK_LONG_LONG, "int", "newAttribute" ),
+        ( (), (), True, VTK_LONG_LONG, VTK_LONG_LONG, "int", "newAttribute" ),
+        ( (), (), True, None, VTK_DOUBLE, "float", "newAttribute" ),
+        ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float", "newAttribute" ),
+    ] )
 def test_createAttribute(
     dataSetTest: vtkDataSet,
     getArrayWithSpeTypeValue: npt.NDArray[ Any ],
@@ -366,14 +382,16 @@ def test_createAttribute(
     assert vtkDataTypeCreated == vtkDataTypeTest
 
 
-@pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints", [
-    # Test with global attibutes.
-    ( "GLOBAL_IDS_POINTS", "GLOBAL_IDS_POINTS_To", True ),
-    ( "GLOBAL_IDS_CELLS", 'GLOBAL_IDS_CELLS_To', False ),
-    # Test with partial attribute.
-    ( "CellAttribute", "CellAttributeTo", False ),
-    ( "PointAttribute", "PointAttributeTo", True ),
-] )
+@pytest.mark.parametrize(
+    "attributeNameFrom, attributeNameTo, onPoints",
+    [
+        # Test with global attibutes.
+        ( "GLOBAL_IDS_POINTS", "GLOBAL_IDS_POINTS_To", True ),
+        ( "GLOBAL_IDS_CELLS", 'GLOBAL_IDS_CELLS_To', False ),
+        # Test with partial attribute.
+        ( "CellAttribute", "CellAttributeTo", False ),
+        ( "PointAttribute", "PointAttributeTo", True ),
+    ] )
 def test_copyAttribute(
     dataSetTest: vtkMultiBlockDataSet,
     attributeNameFrom: str,
@@ -385,7 +403,8 @@ def test_copyAttribute(
     multiBlockDataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
 
     # Copy the attribute from the multiBlockDataSetFrom to the multiBlockDataSetTo.
-    assert arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo, onPoints )
+    assert arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo,
+                                         onPoints )
 
     # Parse the two multiBlockDataSet and test if the attribute has been copied.
     nbBlocks: int = multiBlockDataSetFrom.GetNumberOfBlocks()
@@ -405,6 +424,7 @@ def test_copyAttribute(
         attributeExistCopied: int = dataTo.HasArray( attributeNameTo )
         assert attributeExistCopied == attributeExistTest
 
+
 @pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints", [
     ( "CellAttribute", "CellAttributeTo", False ),
     ( "PointAttribute", "PointAttributeTo", True ),
@@ -416,8 +436,8 @@ def test_copyAttributeDataSet(
     onPoints: bool,
 ) -> None:
     """Test copy of an attribute from one dataset to another."""
-    dataSetFrom: vtkMultiBlockDataSet = dataSetTest( "dataset" )
-    dataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptydataset" )
+    dataSetFrom: vtkDataSet = dataSetTest( "dataset" )
+    dataSetTo: vtkDataSet = dataSetTest( "emptydataset" )
 
     # Copy the attribute from the dataSetFrom to the dataSetTo.
     assert arrayModifiers.copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints )
@@ -439,9 +459,9 @@ def test_copyAttributeDataSet(
     nbComponentsCopied: int = attributeCopied.GetNumberOfComponents()
     assert nbComponentsCopied == nbComponentsTest
     if nbComponentsTest > 1:
-        componentsNamesTest: tuple[ str, ... ] = tuple(
+        componentsNamesTest: tuple[ str, ...] = tuple(
             attributeTest.GetComponentName( i ) for i in range( nbComponentsTest ) )
-        componentsNamesCopied: tuple[ str, ... ] = tuple(
+        componentsNamesCopied: tuple[ str, ...] = tuple(
             attributeCopied.GetComponentName( i ) for i in range( nbComponentsCopied ) )
         assert componentsNamesCopied == componentsNamesTest
 
