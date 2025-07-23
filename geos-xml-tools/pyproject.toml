@@ -23,7 +23,6 @@ classifiers = [
 requires-python = ">=3.10"
 
 dependencies = [
-    "pyvista>=0.42",
     "lxml>=4.9",
     "colorcet>=3.0.1",
     "parameterized",
@@ -57,7 +56,6 @@ preprocess_xml = "geos.xml_tools.main:main"
 format_xml = "geos.xml_tools.xml_formatter:main"
 check_xml_attribute_coverage = "geos.xml_tools.attribute_coverage:main"
 check_xml_redundancy = "geos.xml_tools.xml_redundancy_check:main"
-geos-viewer = "geos.xml_tools.pyvista_viewer:run"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -73,6 +71,3 @@ filterwarnings = []
 [tool.coverage.run]
 branch = true
 source = ["geos"]
-omit = [
-    "*/PVplugins/*",
-]

@@ -1,7 +1,7 @@
 Command Line Interface
 ======================
 
-The **geos-xml-tools** package provides a unified command-line interface for XML preprocessing, formatting, analysis, and visualization. All commands are accessed through the main `geos-xml-tools` executable.
+The **geos-xml-tools** package provides a unified command-line interface for XML preprocessing, formatting, analysis. All commands are accessed through the main `geos-xml-tools` executable.
 
 Basic Usage
 -----------
@@ -167,39 +167,6 @@ Build VTK deck from XML configuration.
     geos-xml-tools vtk-build input.xml -o output.vtk
 
 
-Viewer
-~~~~~~
-
-3D visualization viewer for GEOS data.
-
-**Usage:**
-
-.. code-block:: bash
-
-    geos-xml-tools viewer [OPTIONS]
-
-
-**Options:**
-    -xp, --xmlFilepath FILE   Path to XML file (required)
-    --showmesh                Show mesh visualization
-    --showwells               Show wells visualization
-    --showperforations        Show perforations visualization
-    --showbounds              Show bounds visualization
-    --Zamplification FACTOR   Z amplification factor (default: 1.0)
-    --attributeName NAME      Attribute name used to define regions when using VTKMesh (default: attribute)
-
-
-**Examples:**
-
-.. code-block:: bash
-
-    # Basic viewer with mesh and wells
-    geos-xml-tools viewer -xp input.xml --showmesh --showwells
-    
-    # Viewer with custom Z amplification
-    geos-xml-tools viewer -xp input.xml --showmesh --Zamplification 2.0
-
-
 Legacy Commands
 ---------------
 
@@ -209,7 +176,6 @@ For backward compatibility, the following legacy command names are also availabl
 - ``format_xml`` - Alias for ``geos-xml-tools format``
 - ``check_xml_attribute_coverage`` - Alias for ``geos-xml-tools coverage``
 - ``check_xml_redundancy`` - Alias for ``geos-xml-tools redundancy``
-- ``geos-viewer`` - Alias for ``geos-xml-tools viewer``
 
 Error Handling
 --------------

@@ -15,8 +15,8 @@ import os
 import sys
 import time
 from typing import Callable, Any, Union, Iterable
-from geos.xml_tools import ( attribute_coverage, command_line_parsers, pyvista_viewer, vtk_builder, xml_formatter,
-                             xml_processor, xml_redundancy_check )
+from geos.xml_tools import ( attribute_coverage, command_line_parsers, vtk_builder, xml_formatter, xml_processor,
+                             xml_redundancy_check )
 
 __doc__ = """
 Unified Command Line Interface for geos-xml-tools.
@@ -204,22 +204,6 @@ VTK-BUILD - Build VTK deck from XML configuration
     geos-xml-tools vtk-build input.xml -a Region
     geos-xml-tools vtk-build input.xml -o output.vtk
 
-VIEWER - 3D visualization viewer for GEOS data
-  geos-xml-tools viewer [OPTIONS]
-
-  Options:
-    -xp, --xmlFilepath FILE   Path to XML file (required)
-    --showmesh                Show mesh visualization
-    --showwells               Show wells visualization
-    --showperforations        Show perforations visualization
-    --showbounds              Show bounds visualization
-    --Zamplification FACTOR   Z amplification factor (default: 1.0)
-    --attributeName NAME      Attribute name (default: attribute)
-
-  Examples:
-    geos-xml-tools viewer -xp input.xml --showmesh --showwells
-    geos-xml-tools viewer -xp input.xml --showmesh --Zamplification 2.0
-
 For detailed help on any command, use:
   geos-xml-tools <command> --help
         """ )
@@ -332,16 +316,6 @@ def handle_vtk_build() -> None:
         print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
 
 
-def handle_viewer() -> None:
-    """Handle 3D viewer command."""
-    # Use the existing pyvista_viewer argument parser
-    viewer_parser = pyvista_viewer.parsing()
-    viewer_args, _ = viewer_parser.parse_known_args()
-
-    print( "Launching 3D visualization viewer..." )
-    pyvista_viewer.main( viewer_args )
-
-
 # Register all commands
 register_command(
     "preprocess", "XML preprocessing and variable substitution", command_line_parsers.build_preprocessor_input_parser,
@@ -357,10 +331,6 @@ register_command( "redundancy", "XML redundancy checking", command_line_parsers.
                   handle_redundancy, "geos-xml-tools redundancy -r /path/to/geos/root" )
 register_command( "vtk-build", "Build VTK deck from XML configuration", command_line_parsers.build_vtk_parser,
                   handle_vtk_build, "geos-xml-tools vtk-build input.xml -a Region -o file.vtm" )
-register_command(
-    "viewer", "3D visualization viewer for GEOS data", pyvista_viewer.parsing, handle_viewer,
-    "geos-xml-tools viewer -xp input.xml --showmesh --showwells\n"
-    "geos-xml-tools viewer -xp input.xml --Zamplification 2.0 --attributeName Region" )
 
 
 def show_command_help( command: str ) -> None:
