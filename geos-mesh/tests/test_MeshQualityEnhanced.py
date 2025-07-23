@@ -23,7 +23,6 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellData, vt
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 
-
 # input data
 meshName_all: tuple[ str, ...] = (
     "polydata",
@@ -57,9 +56,7 @@ cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = ( (
     8,
 ) )
 metricsSummary_all = (
-    ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67,
-                                                                                  26324.0 ) ),
-                                                                                
+    ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67, 26324.0 ) ),
     ( ( -0.28, 0.09, -0.49, -0.22, 8.0 ), ( 0.7, 0.1, 0.47, 0.79, 8.0 ), ( 0.8, 0.12, 0.58, 0.95, 8.0 ) ),
 )
 
@@ -75,6 +72,7 @@ class TestCase:
     cellTypeCounts: tuple[ int ]
     metricsSummary: tuple[ float ]
 
+
 def __get_tetra_dataset() -> vtkUnstructuredGrid:
     """Extract tetrahedra dataset from csv and add some deformations."""
     # Get tetra mesh
@@ -82,23 +80,21 @@ def __get_tetra_dataset() -> vtkUnstructuredGrid:
     filename: str = "tetra_mesh.csv"
     nbPtsCell: int = 4
 
-    ptsCoord: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ),
-                                                          dtype=float,
-                                                          delimiter=',' )
-    
+    ptsCoord: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ), dtype=float, delimiter=',' )
+
     # Intentional deformation of the mesh
-    ptsCoord[:,0][ptsCoord[:,0] == 0.5 ] = 0.2
-    ptsCoord[:,2][ptsCoord[:,2] == 0.5 ] = 0.7
+    ptsCoord[ :, 0 ][ ptsCoord[ :, 0 ] == 0.5 ] = 0.2
+    ptsCoord[ :, 2 ][ ptsCoord[ :, 2 ] == 0.5 ] = 0.7
 
     cellPtsCoords: list[ npt.NDArray[ np.float64 ] ] = [
-            ptsCoord[ i:i + nbPtsCell ] for i in range( 0, ptsCoord.shape[ 0 ], nbPtsCell )
-        ]
+        ptsCoord[ i:i + nbPtsCell ] for i in range( 0, ptsCoord.shape[ 0 ], nbPtsCell )
+    ]
     nbCells: int = int( ptsCoord.shape[ 0 ] / nbPtsCell )
     cellTypes = nbCells * [ VTK_TETRA ]
-    mesh: vtkUnstructuredGrid = createMultiCellMesh( cellTypes,
-                                                    cellPtsCoords )
-    
+    mesh: vtkUnstructuredGrid = createMultiCellMesh( cellTypes, cellPtsCoords )
+
     return mesh
+
 
 def __get_dataset( meshName ) -> vtkUnstructuredGrid:
     # Get the dataset from external vtk file
@@ -118,7 +114,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
 
     Yields:
         Iterator[ TestCase ]: Iterator on test cases
-    """    
+    """
     for meshName, cellType, qualityMetrics, cellTypeCounts, metricsSummary in zip( meshName_all,
                                                                                    cellTypes_all,
                                                                                    qualityMetrics_all,
@@ -135,7 +131,6 @@ def __generate_test_data() -> Iterator[ TestCase ]:
 
 
 ids: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in meshName_all ]
-    
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
