@@ -37,17 +37,14 @@ def dataSetTest() -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
 
     def _get_dataset( datasetType: str ):
         if datasetType == "multiblock":
-            reader = reader = vtkXMLMultiBlockDataReader()
-            vtkFilename = "data/displacedFault.vtm"
+            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
+            vtkFilename: str = "data/displacedFault.vtm"
         elif datasetType == "dataset":
             reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "polydata":
             reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/triangulatedSurface.vtu"
-        elif datasetType == "tetraVolume":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-            vtkFilename = "data/tetraVolume.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()
