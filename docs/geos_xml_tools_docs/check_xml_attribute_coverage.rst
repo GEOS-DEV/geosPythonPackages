@@ -1,4 +1,4 @@
-check_xml_attribute_coverage
+Check for attribute coverage
 ----------------------------
 
 Analyzes how well a project's XML files cover the possibilities defined in an XML Schema Definition (.xsd) file.

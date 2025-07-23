@@ -1,4 +1,4 @@
-Command Line Reference
+Command Line Interface
 ======================
 
 The **geos-xml-tools** package provides a unified command-line interface for XML preprocessing, formatting, analysis, and visualization. All commands are accessed through the main `geos-xml-tools` executable.

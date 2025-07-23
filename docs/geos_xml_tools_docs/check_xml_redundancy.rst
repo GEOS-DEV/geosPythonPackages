@@ -1,5 +1,5 @@
-check_xml_redundancy
---------------------
+Cehck redundancy
+----------------
 
 Checks for redundant attribute definitions in XML files, such as those that duplicate default values or are otherwise unnecessary.
 

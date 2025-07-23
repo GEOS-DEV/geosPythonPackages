@@ -1,5 +1,5 @@
-Paraview Plugin
-===============
+PVGeosDeckReader
+================
 
 The geos-xml-tools package provides a Paraview plugin for loading and visualizing GEOS XML input files directly in Paraview.
 

@@ -1,4 +1,4 @@
-preprocess
+Preprocess
 ----------
 
 Preprocesses GEOS XML files, performing variable substitution, merging included files, and applying symbolic math and unit conversions.

@@ -1,4 +1,4 @@
-format_xml
+Format XML
 ----------
 
 Formats a GEOS XML file for improved readability and consistency.
