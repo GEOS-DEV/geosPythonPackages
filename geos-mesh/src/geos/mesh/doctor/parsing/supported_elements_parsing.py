@@ -1,21 +1,20 @@
-import logging
 import multiprocessing
+from geos.mesh.doctor.actions.supported_elements import Options, Result
+from geos.mesh.doctor.parsing import SUPPORTED_ELEMENTS
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
-from geos.mesh.doctor.checks.supported_elements import Options, Result
-
-from . import SUPPORTED_ELEMENTS
-
-__CHUNK_SIZE = "chunck_size"
+__CHUNK_SIZE = "chunk_size"
 __NUM_PROC = "nproc"
-
-__ALL_KEYWORDS = { __CHUNK_SIZE, __NUM_PROC }
 
 __CHUNK_SIZE_DEFAULT = 1
 __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
 
+__SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC: __NUM_PROC_DEFAULT }
+
 
 def convert( parsed_options ) -> Options:
-    return Options( chunk_size=parsed_options[ __CHUNK_SIZE ], num_proc=parsed_options[ __NUM_PROC ] )
+    return Options( chunk_size=parsed_options[ __CHUNK_SIZE ], nproc=parsed_options[ __NUM_PROC ] )
 
 
 def fill_subparser( subparsers ) -> None:
@@ -38,17 +37,18 @@ def fill_subparser( subparsers ) -> None:
 
 
 def display_results( options: Options, result: Result ):
+    setup_logger.results( get_options_used_message( options ) )
     if result.unsupported_polyhedron_elements:
-        logging.error(
+        setup_logger.results(
             f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
         )
-        logging.error(
+        setup_logger.results(
             f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}." )
     else:
-        logging.info( "All the polyhedra (if any) can be converted to supported elements." )
+        setup_logger.results( "All the polyhedra (if any) can be converted to supported elements." )
     if result.unsupported_std_elements_types:
-        logging.error(
+        setup_logger.results(
             f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}."
         )
     else:
-        logging.info( "All the standard vtk element types (if any) are supported." )
+        setup_logger.results( "All the standard vtk element types (if any) are supported." )

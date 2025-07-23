@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-import logging
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
+from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 
 
@@ -25,7 +25,7 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
     # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
     # First for points...
     if mesh.GetPointData().GetGlobalIds():
-        logging.error( "Mesh already has globals ids for points; nothing done." )
+        setup_logger.error( "Mesh already has globals ids for points; nothing done." )
     elif generate_points_global_ids:
         point_global_ids = vtkIdTypeArray()
         point_global_ids.SetName( "GLOBAL_IDS_POINTS" )
@@ -35,7 +35,7 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
         mesh.GetPointData().SetGlobalIds( point_global_ids )
     # ... then for cells.
     if mesh.GetCellData().GetGlobalIds():
-        logging.error( "Mesh already has globals ids for cells; nothing done." )
+        setup_logger.error( "Mesh already has globals ids for cells; nothing done." )
     elif generate_cells_global_ids:
         cells_global_ids = vtkIdTypeArray()
         cells_global_ids.SetName( "GLOBAL_IDS_CELLS" )
@@ -45,16 +45,16 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
         mesh.GetCellData().SetGlobalIds( cells_global_ids )
 
 
-def __check( mesh, options: Options ) -> Result:
+def __action( mesh, options: Options ) -> Result:
     __build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
     write_mesh( mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
 
 
-def check( vtk_input_file: str, options: Options ) -> Result:
+def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         mesh = read_mesh( vtk_input_file )
-        return __check( mesh, options )
+        return __action( mesh, options )
     except BaseException as e:
-        logging.error( e )
+        setup_logger.error( e )
         return Result( info="Something went wrong." )
