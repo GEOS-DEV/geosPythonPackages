@@ -39,19 +39,19 @@ def getArrayWithSpeTypeValue() -> Any:
     """Get a random array of input type with the function _getarray().
 
     Returns:
-        npt.NDArray[Any]: random array of input type.
+        npt.NDArray[Any]: Random array of input type.
     """
 
     def _getarray( nb_component: int, nb_elements: int, valueType: str ) -> Any:
         """Get a random array of input type.
 
         Args:
-            nb_component (int): nb of components.
-            nb_elements (int): nb of elements.
-            valueType (str): the type of the value.
+            nb_component (int): Nb of components.
+            nb_elements (int): Nb of elements.
+            valueType (str): The type of the value.
 
         Returns:
-            npt.NDArray[Any]: random array of input type.
+            npt.NDArray[Any]: Random array of input type.
         """
         np.random.seed( 28 )
         if valueType == "int8":
@@ -146,17 +146,17 @@ def dataSetTest() -> Any:
     """Get a vtkObject from a file with the function _get_dataset().
 
     Returns:
-        (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): the vtk object.
+        (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
     """
 
     def _get_dataset( datasetType: str ) -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
         """Get a vtkObject from a file.
 
         Args:
-            datasetType (str): the type of vtk object wanted.
+            datasetType (str): The type of vtk object wanted.
 
         Returns:
-            (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): the vtk object.
+            (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: Union[ vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridReader ]
         if datasetType == "multiblock":
