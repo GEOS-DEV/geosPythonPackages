@@ -9,6 +9,8 @@ See :ref:`PythonToolsSetup` for setup instructions, and `Advanced XML Features <
     :maxdepth: 1
     :caption: Contents:
 
+    ./geos_xml_tools_docs/command_line_reference
+
     ./geos_xml_tools_docs/preprocess
 
     ./geos_xml_tools_docs/format_xml
