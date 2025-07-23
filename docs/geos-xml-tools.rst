@@ -21,8 +21,6 @@ See :ref:`PythonToolsSetup` for setup instructions, and `Advanced XML Features <
 
     ./geos_xml_tools_docs/vtk_builder
 
-    ./geos_xml_tools_docs/pyvista_viewer
-
     ./geos_xml_tools_docs/pvplugin
 
     ./geos_xml_tools_docs/api
