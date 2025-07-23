@@ -45,14 +45,13 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.napoleon', 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput', 
+    'sphinx.ext.napoleon', 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
     'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.todo', 'sphinx.ext.viewcode'
 ]
 
 autoclass_content = 'both'
 autodoc_mock_imports = [ "ats", "colorcet", "h5py", "lxml", "matplotlib", "meshio", "mpi4py", "numba", "pandas",
-                         "paraview", "pygeosx", "pyevtk", "pylvarray", "scipy", "segyio", "vtk", "xmlschema",
-                         "xmltodict", "xsdata" ]
+                         "paraview", "pygeosx", "pyevtk", "pylvarray", "scipy", "segyio", "vtk", "xmltodict", "xsdata" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
 suppress_warnings = [ "autodoc.mocked_object" ]
