@@ -184,14 +184,14 @@ def getAttributesWithNumberOfComponents(
     object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataSet, vtkDataObject ],
     onPoints: bool,
 ) -> dict[ str, int ]:
-    """Get the dictionnary of all attributes from object on points or cells.
+    """Get the dictionary of all attributes from object on points or cells.
 
     Args:
         object (Any): Object where to find the attributes.
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        dict[str, int]: Dictionnary where keys are the names of the attributes and values the number of components.
+        dict[str, int]: Dictionary where keys are the names of the attributes and values the number of components.
     """
     attributes: dict[ str, int ]
     if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
@@ -205,14 +205,14 @@ def getAttributesWithNumberOfComponents(
 
 def getAttributesFromMultiBlockDataSet( object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
                                         onPoints: bool ) -> dict[ str, int ]:
-    """Get the dictionnary of all attributes of object on points or on cells.
+    """Get the dictionary of all attributes of object on points or on cells.
 
     Args:
         object (vtkMultiBlockDataSet | vtkCompositeDataSet): Object where to find the attributes.
         onPoints (bool): True if attributes are on points, False if they are on cells.
 
     Returns:
-        dict[str, int]: Dictionnary of the names of the attributes as keys, and number of components as values.
+        dict[str, int]: Dictionary of the names of the attributes as keys, and number of components as values.
     """
     attributes: dict[ str, int ] = {}
     # initialize data object tree iterator
@@ -232,7 +232,7 @@ def getAttributesFromMultiBlockDataSet( object: Union[ vtkMultiBlockDataSet, vtk
 
 
 def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str, int ]:
-    """Get the dictionnary of all attributes of a vtkDataSet on points or cells.
+    """Get the dictionary of all attributes of a vtkDataSet on points or cells.
 
     Args:
         object (vtkDataSet): Object where to find the attributes.
@@ -256,7 +256,7 @@ def getAttributesFromDataSet( object: vtkDataSet, onPoints: bool ) -> dict[ str,
     for i in range( nbAttributes ):
         attributeName: str = data.GetArrayName( i )
         attribute: vtkDataArray = data.GetArray( attributeName )
-        assert attribute is not None, f"Attribut {attributeName} is null"
+        assert attribute is not None, f"Attribute {attributeName} is null"
         nbComponents: int = attribute.GetNumberOfComponents()
         attributes[ attributeName ] = nbComponents
     return attributes
@@ -342,11 +342,11 @@ def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoint
     isOnBlock: bool
     nbBlock: int = object.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        block: vtkDataSet = object.GetBlock( idBlock )
+        block: vtkDataSet = cast( vtkDataSet, object.GetBlock( idBlock ) )
         isOnBlock = isAttributeInObjectDataSet( block, attributeName, onPoints )
         if not isOnBlock:
             return False
-        
+
     return True
 
 
