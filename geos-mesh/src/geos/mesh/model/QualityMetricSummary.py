@@ -79,7 +79,7 @@ class StatTypes( Enum ):
         """
         return self.value[ 2 ]
 
-    def compute( self: Self, array: Iterable[ float ] ) -> Union [ int, float ]:
+    def compute( self: Self, array: Iterable[ float ] ) -> Union[ int, float ]:
         """Compute statistics using function.
 
         Args:
@@ -286,7 +286,8 @@ class QualityMetricSummary():
         else:
             return self._meshOtherStats[ metricIndex ]
 
-    def setOtherStatValueFromMetric( self: Self, metricIndex: int, statType: StatTypes, value: Union[ int, float ] ) -> None:
+    def setOtherStatValueFromMetric( self: Self, metricIndex: int, statType: StatTypes, value: Union[ int,
+                                                                                                      float ] ) -> None:
         """Set other stat value for the given metric.
 
         Args:

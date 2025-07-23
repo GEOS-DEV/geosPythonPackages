@@ -137,7 +137,9 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData], name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
+def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
+                         name: str,
+                         sorted: bool = False ) -> Optional[ npt.NDArray ]:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
