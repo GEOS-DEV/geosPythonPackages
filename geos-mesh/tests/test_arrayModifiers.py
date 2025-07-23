@@ -50,7 +50,7 @@ from geos.mesh.utils import arrayModifiers
         # Test fill an attribute on point and on cell.
         ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE ),
         ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE ),
-        # Test fill attributes with different number of componnent.
+        # Test fill attributes with different number of component.
         ( 1, "PORO", 1, (), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
         ( 1, "PERM", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
         # Test fill an attribute with default value.
@@ -171,7 +171,7 @@ def test_createEmptyAttribute(
         # Test to create a new attribute on points and on cells.
         ( "newAttribute", False ),
         ( "newAttribute", True ),
-        # Test to create a new attribute  whenn an attribute with the same name already exist on the opposit piece.
+        # Test to create a new attribute  when an attribute with the same name already exist on the opposite piece.
         ( "PORO", True ),  # Partial attribute on cells already exist.
         ( "GLOBAL_IDS_CELLS", True ),  # Global attribute on cells already exist.
     ] )
@@ -202,7 +202,7 @@ def test_createConstantAttributeMultiBlock(
     "listValues, componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, attributeName",
     [
         # Test attribute names.
-        ## Test with an attributeName already existing on opposit piece.
+        ## Test with an attributeName already existing on opposite piece.
         ( [ np.float64( 42 ) ], (), (), True, VTK_DOUBLE, VTK_DOUBLE, "CellAttribute" ),
         ( [ np.float64( 42 ) ], (), (), False, VTK_DOUBLE, VTK_DOUBLE, "PointAttribute" ),
         ## Test with a new attributeName on cells and on points.
@@ -300,7 +300,7 @@ def test_createConstantAttributeDataSet(
     "componentNames, componentNamesTest, onPoints, vtkDataType, vtkDataTypeTest, valueType, attributeName",
     [
         # Test attribute names.
-        ## Test with an attributeName already existing on opposit piece.
+        ## Test with an attributeName already existing on opposite piece.
         ( (), (), True, VTK_DOUBLE, VTK_DOUBLE, "float64", "CellAttribute" ),
         ( (), (), False, VTK_DOUBLE, VTK_DOUBLE, "float64", "PointAttribute" ),
         ## Test with a new attributeName on cells and on points.
@@ -385,10 +385,10 @@ def test_createAttribute(
 @pytest.mark.parametrize(
     "attributeNameFrom, attributeNameTo, onPoints",
     [
-        # Test with global attibutes.
+        # Test with global attributes.
         ( "GLOBAL_IDS_POINTS", "GLOBAL_IDS_POINTS_To", True ),
         ( "GLOBAL_IDS_CELLS", 'GLOBAL_IDS_CELLS_To', False ),
-        # Test with partial attribute.
+        # Test with partial attributes.
         ( "CellAttribute", "CellAttributeTo", False ),
         ( "PointAttribute", "PointAttributeTo", True ),
     ] )
