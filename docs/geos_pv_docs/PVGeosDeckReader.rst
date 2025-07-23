@@ -1,12 +1,10 @@
 PVGeosDeckReader
 ================
 
-The geos-xml-tools package provides a Paraview plugin for loading and visualizing GEOS XML input files directly in Paraview.
-
 Overview
 --------
-- The main plugin, `PVGeosDeckReader`, is a Python-based Paraview reader that allows users to open GEOS XML files and create mesh objects for visualization and analysis.
-- The plugin is implemented in `deckReader.py` and registered as `PythonGeosDeckReader` in Paraview.
+- `PVGeosDeckReader` is a Python-based Paraview reader that allows users to open GEOS XML files and create mesh objects for visualization and analysis.
+- The plugin is implemented in `PVGeosDeckReader.py` and registered as `PythonGeosDeckReader` in Paraview.
 - It outputs a `vtkPartitionedDataSetCollection` representing the mesh and associated regions as defined in the XML file.
 
 Key Features
@@ -17,8 +15,8 @@ Key Features
 
 How to Use
 ----------
-1. Install the geos-xml-tools package and ensure Paraview is set up to use Python plugins.
-2. In Paraview, load the plugin (typically via the Python Plugin Manager or by specifying the path to `deckReader.py`).
+1. Install the geos-pv package and ensure Paraview is set up to use Python plugins.
+2. In Paraview, load the plugin (typically via the Python Plugin Manager or by specifying the path to `PVGeosDeckReader.py`).
 3. Use the "Open" dialog in Paraview to select a GEOS XML file. Choose the `PythonGeosDeckReader` when prompted.
 4. The mesh and regions defined in the XML will be loaded as a multi-block dataset for visualization and further processing.
 
@@ -31,7 +29,7 @@ Example
 -------
 .. code-block:: console
 
-    paraview --python-script=path/to/deckReader.py
+    paraview --python-script=path/to/PVGeosDeckReader.py
     # Or load via the Paraview GUI
 
     # In Paraview:
