@@ -17,3 +17,4 @@ h5py >= 3.12
 lxml >= 4.5.0
 parameterized >= 0.9
 pyvista >= 0.44
+xmlschema
