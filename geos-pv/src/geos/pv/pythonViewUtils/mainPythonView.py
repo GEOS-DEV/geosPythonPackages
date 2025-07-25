@@ -6,7 +6,7 @@
 from logging import Logger, getLogger, INFO
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 logger: Logger = getLogger( "Python View Configurator" )
 logger.setLevel( INFO )
@@ -42,4 +42,4 @@ try:
         return imageToReturn
 
 except Exception as e:
-     logger.critical( e, exc_info=True )
+    logger.critical( e, exc_info=True )
