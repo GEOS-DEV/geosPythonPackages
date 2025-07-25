@@ -16,12 +16,12 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-import geos_posp.visu.PVUtils.paraviewTreatments as pvt
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
+import geos.pv.utils.paraviewTreatments as pvt
+from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
-from geos_posp.visu.PVUtils.DisplayOrganizationParaview import (
+from geos.pv.utils.DisplayOrganizationParaview import (
     DisplayOrganizationParaview, )
-from geos_posp.visu.PVUtils.matplotlibOptions import (
+from geos.pv.pyplotUtils.matplotlibOptions import (
     FontStyleEnum,
     FontWeightEnum,
     LegendLocationEnum,
