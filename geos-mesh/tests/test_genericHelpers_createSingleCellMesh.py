@@ -69,12 +69,10 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     assert pointsOut is not None, "Points from output mesh are undefined."
     assert pointsOut.GetNumberOfPoints() == nbPtsExp, f"Number of points is expected to be {nbPtsExp}."
     pointCoords: npt.NDArray[ np.float64 ] = vtk_to_numpy( pointsOut.GetData() )
-    print( "Points coords: ", cellTypeName, pointCoords.tolist() )
     assert np.array_equal( pointCoords.ravel(), test_case.cellPoints.ravel() ), "Points coordinates are wrong."
 
     cellsOut: vtkCellArray = output.GetCells()
     typesArray0: npt.NDArray[ np.int64 ] = vtk_to_numpy( output.GetDistinctCellTypesArray() )
-    print( "typesArray0", cellTypeName, typesArray0 )
 
     assert cellsOut is not None, "Cells from output mesh are undefined."
     assert cellsOut.GetNumberOfCells() == 1, "Number of cells is expected to be 1."
@@ -84,15 +82,12 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
 
-    print( "typesArray", cellTypeName, typesArray )
     assert ( typesArray.size == 1 ) and ( typesArray[ 0 ] == test_case.cellType ), f"Cell must be {cellTypeName}"
 
     ptIds = vtkIdList()
     cellsOut.GetCellAtId( 0, ptIds )
     cellsOutObs: list[ int ] = [ ptIds.GetId( j ) for j in range( ptIds.GetNumberOfIds() ) ]
 
-    print( "cell type", cellTypeName, vtkCellTypes.GetClassNameFromTypeId( types.GetCellType( 0 ) ) )
-    print( "cellsOutObs: ", cellTypeName, cellsOutObs )
     assert ptIds is not None, "Point ids must be defined"
     assert ptIds.GetNumberOfIds() == nbPtsExp, f"Cells must be defined by {nbPtsExp} points."
     assert cellsOutObs == list( range( nbPtsExp ) ), "Cell point ids are wrong."

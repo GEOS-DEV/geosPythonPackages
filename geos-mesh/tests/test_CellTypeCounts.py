@@ -102,11 +102,7 @@ def test_CellTypeCounts_init() -> None:
 
 @pytest.mark.parametrize( "test_case", __generate_test_data() )
 def test_CellTypeCounts_addType( test_case: TestCase ) -> None:
-    """Test of CellTypeCounts .
-
-    Args:
-        test_case (TestCase): test case
-    """
+    """Test of CellTypeCounts init method."""
     counts: CellTypeCounts = CellTypeCounts()
     for _ in range( test_case.nbVertex ):
         counts.addType( VTK_VERTEX )

@@ -205,15 +205,15 @@ def createMultiCellMesh( cellTypes: list[ int ],
                          sharePoints: bool = True ) -> vtkUnstructuredGrid:
     """Create a mesh that consists of multiple cells.
 
-    .. WARNING:: the mesh is not check for conformity.
+    .. WARNING:: The mesh is not checked for conformity.
 
     Args:
-        cellTypes (list[int]): cell type
-        cellPtsCoord (list[1DArray[np.float64]]): list of cell point coordinates
-        sharePoints (bool): if True, cells share points, else a new point is created for each cell vertex
+        cellTypes (list[int]): Cell type
+        cellPtsCoord (list[1DArray[np.float64]]): List of cell point coordinates
+        sharePoints (bool): If True, cells share points, else a new point is created for each cell vertex
 
     Returns:
-        vtkUnstructuredGrid: output mesh
+        vtkUnstructuredGrid: Output mesh
     """
     assert len( cellPtsCoord ) == len( cellTypes ), "The lists of cell types of point coordinates must be of same size."
     nbCells: int = len( cellPtsCoord )

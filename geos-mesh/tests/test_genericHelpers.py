@@ -118,9 +118,7 @@ def test_createVertices( test_case: TestCase ) -> None:
     nbPtsExp: int = test_case.pointsExp.shape[ 0 ]
     assert pointsOut.GetNumberOfPoints() == nbPtsExp, f"Number of points is expected to be {nbPtsExp}."
     pointCoords: npt.NDArray[ np.float64 ] = vtk_to_numpy( pointsOut.GetData() )
-    print( "Points coords Obs: ", pointCoords.tolist() )
     assert np.array_equal( pointCoords, test_case.pointsExp ), "Points coordinates are wrong."
-    print( "Cell points coords: ", cellPtsIds )
     assert cellPtsIds == test_case.cellPtsIdsExp, f"Cell point Ids are expected to be {test_case.cellPtsIdsExp}"
 
 
@@ -145,7 +143,6 @@ def test_createMultiCellMesh( test_case: TestCase ) -> None:
     nbPtsExp: int = test_case.pointsExp.shape[ 0 ]
     assert pointsOut.GetNumberOfPoints() == nbPtsExp, f"Number of points is expected to be {nbPtsExp}."
     pointCoords: npt.NDArray[ np.float64 ] = vtk_to_numpy( pointsOut.GetData() )
-    print( "Points coords Obs: ", pointCoords.tolist() )
     assert np.array_equal( pointCoords, test_case.pointsExp ), "Points coordinates are wrong."
 
     # tests on cells
@@ -159,14 +156,12 @@ def test_createMultiCellMesh( test_case: TestCase ) -> None:
     output.GetCellTypes( types )
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
-    print( "typesArray.size ", typesArray.size )
     assert ( typesArray.size == 1 ) and ( typesArray[ 0 ] == test_case.cellTypes[ 0 ] ), "Cell types are wrong"
 
     for cellId in range( output.GetNumberOfCells() ):
         ptIds = vtkIdList()
         cellsOut.GetCellAtId( cellId, ptIds )
         cellsOutObs: tuple[ int ] = tuple( [ ptIds.GetId( j ) for j in range( ptIds.GetNumberOfIds() ) ] )
-        print( "cellsOutObs: ", cellsOutObs )
         nbCellPts: int = len( test_case.cellPtsIdsExp[ cellId ] )
         assert ptIds is not None, "Point ids must be defined"
         assert ptIds.GetNumberOfIds() == nbCellPts, f"Cells must be defined by {nbCellPts} points."
