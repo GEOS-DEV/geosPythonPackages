@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
-
+from logging import Logger
 from typing import Any
 
 import pandas as pd  # type: ignore[import-untyped]
-from geos.utils.Logger import Logger, getLogger
 from matplotlib import axes, figure, lines  # type: ignore[import-untyped]
 from matplotlib.font_manager import (  # type: ignore[import-untyped]
     FontProperties,  # type: ignore[import-untyped]
@@ -17,7 +16,7 @@ import geos.pv.pythonViewUtils.functionsFigure2DGenerator as fcts
 
 class Figure2DGenerator:
 
-    def __init__( self: Self, dataframe: pd.DataFrame, userChoices: dict[ str, list[ str ] ] ) -> None:
+    def __init__( self: Self, dataframe: pd.DataFrame, userChoices: dict[ str, list[ str ] ], logger: Logger ) -> None:
         """Utility to create cross plots using Python View.
 
         We want to plot f(X) = Y where in this class,
@@ -26,6 +25,7 @@ class Figure2DGenerator:
         Args:
             dataframe (pd.DataFrame): data to plot
             userChoices (dict[str, list[str]]): user choices.
+            logger (Logger): Logger to use.
         """
         self.m_dataframe: pd.DataFrame = dataframe
         self.m_userChoices: dict[ str, Any ] = userChoices
@@ -33,7 +33,7 @@ class Figure2DGenerator:
         self.m_axes: list[ axes._axes.Axes ] = []
         self.m_lines: list[ lines.Line2D ] = []
         self.m_labels: list[ str ] = []
-        self.m_logger: Logger = getLogger( "Python View Configurator" )
+        self.m_logger: Logger = logger
 
         try:
             # apply minus 1 multiplication on certain columns

@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any, Union, cast
 
 import pandas as pd  # type: ignore[import-untyped]
