@@ -8,7 +8,7 @@ try:
     from paraview import python_view
 
     import geos_posp.visu.PVUtils.paraviewTreatments as pvt
-    from geos_posp.visu.pythonViewUtils.Figure2DGenerator import (
+    from geos.pv.pythonViewUtils.Figure2DGenerator import (
         Figure2DGenerator, )
 
     plt.close()
