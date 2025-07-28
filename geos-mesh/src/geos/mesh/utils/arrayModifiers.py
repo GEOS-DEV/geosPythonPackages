@@ -71,7 +71,7 @@ def fillPartialAttributes(
         attributeName (str): Attribute name.
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
-        value (Any, optional): Filling value. It is better to use numpy scalar type for the values.
+        value (Any, optional): Filling value. It is recommended to use numpy scalar type for the values.
             Defaults to:
             -1 for int VTK arrays.
             0 for uint VTK arrays.
@@ -222,7 +222,7 @@ def createConstantAttribute(
 
     Args:
         object (vtkDataObject): Object (vtkMultiBlockDataSet, vtkDataSet) where to create the attribute.
-        listValues (list[Any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
+        listValues (list[Any]): List of values of the attribute for each components. It is recommended to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
@@ -231,7 +231,7 @@ def createConstantAttribute(
         vtkDataType (Union[int, None], optional): Vtk data type of the attribute to create.
             Defaults to None, the vtk data type is given by the type of the values.
 
-            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
+            Warning with int8, uint8 and int64 type of value, the corresponding vtk data type are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -270,11 +270,11 @@ def createConstantAttributeMultiBlock(
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
 ) -> bool:
-    """Create a new attribute with a constant value per component on every blocks of the multiBlockDataSet.
+    """Create a new attribute with a constant value per component on every block of the multiBlockDataSet.
 
     Args:
         multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): MultiBlockDataSet where to create the attribute.
-        listValues (list[Any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
+        listValues (list[Any]): List of values of the attribute for each components. It is recommended to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
@@ -283,7 +283,7 @@ def createConstantAttributeMultiBlock(
         vtkDataType (Union[int, None], optional): Vtk data type of the attribute to create.
             Defaults to None, the vtk data type is given by the type of the values.
 
-            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
+            Warning with int8, uint8 and int64 type of value, the corresponding vtk data type are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -348,7 +348,7 @@ def createConstantAttributeDataSet(
 
     Args:
         dataSet (vtkDataSet): DataSet where to create the attribute.
-        listValues (list[Any]): List of values of the attribute for each components. It is better to use numpy scalar type for the values.
+        listValues (list[Any]): List of values of the attribute for each components. It is recommended to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
             Defaults to an empty tuple.
@@ -357,7 +357,7 @@ def createConstantAttributeDataSet(
         vtkDataType (Union[int, None], optional): Vtk data type of the attribute to create.
             Defaults to None, the vtk data type is given by the type of the values.
 
-            Warning with int8, uint8 and int64 type of value, the vtk data type corresponding are multiples. By default:
+            Warning with int8, uint8 and int64 type of value, the corresponding vtk data type are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG
@@ -376,7 +376,7 @@ def createConstantAttributeDataSet(
     for value in listValues:
         valueTypeTest: type = type( value )
         if valueType != valueTypeTest:
-            logger.error( "All values in the list of values have not the same type." )
+            logger.error( "All values in the list of values don't have the same type." )
             logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
             return False
 
@@ -386,10 +386,10 @@ def createConstantAttributeDataSet(
         logger.warning(
             f"During the creation of the constant attribute { attributeName }, values will be converted from { valueType } to { npType }."
         )
-        logger.warning( "To avoid any issue with the conversion use directly numpy scalar type for the values" )
+        logger.warning( "To avoid any issue with the conversion, please use directly numpy scalar type for the values" )
         valueType = npType
 
-    # Check the coherency between the given value type and the vtk array type if it exist.
+    # Check the consistency between the given value type and the vtk array type if it exists.
     valueType = valueType().dtype
     if vtkDataType is not None:
         vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
@@ -439,7 +439,7 @@ def createAttribute(
         vtkDataType (Union[int, None], optional): Vtk data type of the attribute to create.
             Defaults to None, the vtk data type is given by the type of the array.
 
-            Warning with int8, uint8 and int64 type, the vtk data type corresponding are multiples. By default:
+            Warning with int8, uint8 and int64 type, the corresponding vtk data type are multiples. By default:
             - int8 -> VTK_SIGNED_CHAR
             - uint8 -> VTK_UNSIGNED_CHAR
             - int64 -> VTK_LONG_LONG

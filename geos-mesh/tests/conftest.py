@@ -46,8 +46,8 @@ def getArrayWithSpeTypeValue() -> Any:
         """Get a random array of input type.
 
         Args:
-            nb_component (int): Nb of components.
-            nb_elements (int): Nb of elements.
+            nb_component (int): Number of components.
+            nb_elements (int): Number of elements.
             valueType (str): The type of the value.
 
         Returns:
