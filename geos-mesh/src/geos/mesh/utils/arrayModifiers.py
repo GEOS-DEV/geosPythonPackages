@@ -319,6 +319,7 @@ def createAttribute(
         bool: True if the attribute was correctly created.
     """
     assert isinstance( dataSet, vtkDataSet ), "Attribute can only be created in vtkDataSet object."
+    assert not isAttributeInObject( dataSet, attributeName, onPoints ), f"The attribute { attributeName } already exist in the mesh"
 
     createdAttribute: vtkDataArray = vnp.numpy_to_vtk( array, deep=True, array_type=vtkDataType )
     createdAttribute.SetName( attributeName )
@@ -329,7 +330,7 @@ def createAttribute(
 
         if nbNames < nbComponents:
             componentNames = tuple( [ "Component" + str( i ) for i in range( nbComponents ) ] )
-            print( "Not enough component name enter, component names are seted to : Component0, Component1 ..." )
+            print( "Not enough component name enter, component names are set to : Component0, Component1 ..." )
         elif nbNames > nbComponents:
             print( "To many component names enter, the lastest will not be taken into account." )
 
