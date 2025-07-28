@@ -1,6 +1,7 @@
 name: "Pull Request Docs Check"
-on: 
-- pull_request
+
+on:
+  pull_request
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
@@ -8,11 +9,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  docs:
-    runs-on: ubuntu-latest
+  docs-build:
+    # Use the same OS as Read the Docs
+    runs-on: ubuntu-22.04
+
     steps:
-    - uses: actions/checkout@v1
-    - uses: ammaraskar/sphinx-action@dev
-      with:
-        docs-folder: "docs/"
-        build-command: "sphinx-build -b html . _build -W"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Use the same Python version as Read the Docs
+          python-version: "3.10"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Use the same Node.js version as Read the Docs
+          node-version: "16"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends plantuml texlive npm
+
+      - name: Install Node.js packages
+        run: |
+          npm install -g npm@9.8.1
+          npm install -g @mermaid-js/mermaid-cli@10.3.1
+
+      - name: Install Python dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build documentation with Sphinx
+        run: sphinx-build -b html docs/ docs/_build -W
