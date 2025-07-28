@@ -78,7 +78,7 @@ class CustomLoggerFormatter( logging.Formatter ):
     #: format for each logger output type with colors
     FORMATS_COLOR: dict[ int, str ] = {
         DEBUG: grey + format2 + reset,
-        INFO: grey + format1 + reset,
+        INFO: green + format1 + reset,
         WARNING: yellow + format1 + reset,
         ERROR: red + format1 + reset,
         CRITICAL: bold_red + format2 + reset,
