@@ -10,7 +10,7 @@ from typing import (
     Iterator, )
 
 from geos.mesh.utils.genericHelpers import createSingleCellMesh, createMultiCellMesh
-from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from vtkmodules.vtkCommonDataModel import (
@@ -51,7 +51,7 @@ def __generate_test_data_single_cell() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for cellType, filename in zip( cellType_all, filename_all, strict=True ):
         ptsCoord: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ),
@@ -65,16 +65,16 @@ ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellTyp
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data_single_cell(), ids=ids )
-def test_CellTypeCounter_single( test_case: TestCase ) -> None:
-    """Test of CellTypeCounter filter.
+def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
+    """Test of CellTypeCounterEnhanced filter.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
-    filter: CellTypeCounter = CellTypeCounter()
+    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCounts()
+    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
@@ -104,7 +104,7 @@ def __generate_test_data_multi_cell() -> Iterator[ TestCase ]:
     """Generate test cases.
 
     Yields:
-        Iterator[ TestCase ]: iterator on test cases
+        Iterator[ TestCase ]: Iterator on test cases
     """
     for cellType, filename, nbPtsCell in zip( cellType_all2, filename_all2, nbPtsCell_all2, strict=True ):
         ptsCoords: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ),
@@ -124,16 +124,16 @@ ids2: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in filename_all2 ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data_multi_cell(), ids=ids2 )
-def test_CellTypeCounter_multi( test_case: TestCase ) -> None:
-    """Test of CellTypeCounter filter.
+def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
+    """Test of CellTypeCounterEnhanced filter.
 
     Args:
-        test_case (TestCase): test case
+        test_case (TestCase): Test case
     """
-    filter: CellTypeCounter = CellTypeCounter()
+    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
     filter.SetInputDataObject( test_case.mesh )
     filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCounts()
+    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
