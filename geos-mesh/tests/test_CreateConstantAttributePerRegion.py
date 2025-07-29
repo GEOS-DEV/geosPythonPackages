@@ -5,56 +5,36 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator"
 import pytest
-import os
-from typing import Union, Tuple, cast, Any
-
-import numpy as np
-import numpy.typing as npt
-from geos.utils.Logger import *
-
-import vtkmodules.util.numpy_support as vnp
+from typing import Union, Any
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLMultiBlockDataReader
 
 from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
-datasetType: str = "dataset"
+@pytest.mark.parametrize( "mesh, regionName, newAttributeName, dictRegion, valueType", [
+    ( "dataset", "FAULT", "newAttribute", { 0: 0, 100: 1 }, 10 )
+] )
+def test_CreateConstantAttributePerRegion(
+    dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
+    mesh: str,
+    regionName: str,
+    newAttributeName: str,
+    dictRegion: dict[ Any, Any ],
+    valueType: int,
+) -> None:
+    input_mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( mesh )
+    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( regionName,
+                                                                                 newAttributeName,
+                                                                                 dictRegion,
+                                                                                 valueType,
+                                                                                 )
+    filter.SetInputDataObject( input_mesh )
+    filter.Update()
 
-reader: Union[ vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridReader ]
-if datasetType == "multiblock":
-    reader = vtkXMLMultiBlockDataReader()
-    vtkFilename = "data/displacedFault.vtm"
-elif datasetType == "dataset":
-    reader = vtkXMLUnstructuredGridReader()
-    vtkFilename = "data/domain_res5_id.vtu"
-elif datasetType == "polydata":
-    reader = vtkXMLUnstructuredGridReader()
-    vtkFilename = "data/surface.vtu"
+    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = filter.GetOutputDataObject( 0 )
 
-datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
-reader.SetFileName( datapath )
-reader.Update()
+    if isinstance( mesh, vtkMultiBlockDataSet ):
+        assert 1 == 1
+    
+    else:
+        assert mesh.GetCellData().HasArray( newAttributeName ) == 1
 
-input_mesh: Union[vtkMultiBlockDataSet, vtkDataSet] = reader.GetOutput()
-regionName: str = "PORO"
-newAttributeName: str = "Test"
-dictRegion: dict[Any, Any] = {}
-valueType: int = 11
-use_color = True
-
-    # instantiate the filter
-filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( regionName,
-                                                                             newAttributeName,
-                                                                             dictRegion,
-                                                                             valueType,
-                                                                             use_color, )
-ch = logging.StreamHandler()
-ch.setFormatter( CustomLoggerFormatter( use_color ) )
-filter.setLoggerHandler( ch )
-    # Set the mesh
-filter.SetInputDataObject( input_mesh )
-    # Do calculations
-filter.Update()
-
-    # get output object
-output: Union[vtkMultiBlockDataSet, vtkDataSet] = filter.GetOutputDataObject( 0 )
