@@ -3,10 +3,9 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
-import numpy
 from pathlib import Path
-from typing import Union, Any
 
+from typing import Union, Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -16,7 +15,6 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 ) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -41,8 +39,8 @@ __doc__ = """
 PVCreateConstantAttributePerRegion is a paraview Plugin that allows to create an attribute
 with constant values for each chosen indexes of a reference/region attribute.
 The region attribute has to have one component and the created attribute has one component.
-Regions indexes, values and values types are choose by the user, for the other region index
-values are set to nan or -1 if int type.
+Region indexes, values and values types are choose by the user, if other region indexes exist
+values are set to nan for float type, -1 for int type or 0 for uint type.
 
 Input and output meshes are either vtkMultiBlockDataSet or vtkDataSet.
 
@@ -100,7 +98,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """
         if self.newAttributeName != value:
             self.newAttributeName = value
-            self.Modified()
+        self.Modified()
 
     @smproperty.intvector(
         name="ValueType",
@@ -135,7 +133,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """
         if value != self.valueType:
             self.valueType = value
-            self.Modified()
+        self.Modified()
     
     @smproperty.xml( """
         <PropertyGroup 
@@ -176,7 +174,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Set region attribute name."""
         if self.regionName != name:
             self.regionName = name
-            self.Modified()
+        self.Modified()
 
     @smproperty.xml("""
         <StringVectorProperty
@@ -261,9 +259,9 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -285,7 +283,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         
         filter.Update()
         outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
-
 
         self.clearDictRegion = True
 

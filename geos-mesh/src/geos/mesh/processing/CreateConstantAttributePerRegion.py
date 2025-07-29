@@ -26,7 +26,7 @@ __doc__ = """
 CreateConstantAttributePerRegion is a vtk filter that allows to create an attribute
 with constant values for each chosen indexes of a reference/region attribute.
 The region attribute has to have one component and the created attribute has one component.
-Regions indexes, values and values types are choose by the user, for the other region index
+Region indexes, values and values types are choose by the user, if other region indexes exist
 values are set to nan for float type, -1 for int type or 0 for uint type.
 
 Input and output meshes are either vtkMultiBlockDataSet or vtkDataSet.
@@ -119,9 +119,9 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -143,9 +143,9 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
