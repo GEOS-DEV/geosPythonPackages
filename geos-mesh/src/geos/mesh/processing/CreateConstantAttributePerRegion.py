@@ -82,6 +82,12 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             speHandler: bool = False,
         ) -> None:
         """Create an attribute with constant value per region.
+
+        If a region is not given, the attribute will be set with a default value:
+            0 for uint data.
+            -1 for int  data.
+            np.nan for float data.
+
         An intern logger is used in this filter. If you want to personalize it, you can user a handler of yours that will
         be add at the place of the intern handler. The level by fault of the logger is INFO. 
         
@@ -94,8 +100,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             speHandler (bool, optional): True if you want to use a specific handler of yours, False otherwise.
                 Defaults to False.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1,
-                          inputType="vtkDataObject", outputType="vtkDataObject" )
+        super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkDataObject", outputType="vtkDataObject" )
 
         self.regionName: str = regionName
         self.newAttributeName: str = newAttributeName
@@ -151,8 +156,6 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.m_logger.info( f"Apply filter { self.m_logger.name }." )
         mess: str
         try:
-            assert ( len( self.regionName ) > 0 ), "Region attribute is undefined, please select an attribute."
-        
             inputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
             outData: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetOutputData( outInfoVec, 0 )
             assert inputMesh is not None, "Input mesh is null."
@@ -160,17 +163,19 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
             outData.ShallowCopy( inputMesh )
 
-            # Fields data ?
             onPoints: bool
-            isOnMesh: bool = False
+            piece: str = ""
             if isAttributeInObject( inputMesh, self.regionName, False ):
                 onPoints = False
-                isOnMesh = True
-            elif isAttributeInObject( inputMesh, self.regionName, True ):
-                onPoints = True
-                isOnMesh = True
+                piece = "cells"
+            if isAttributeInObject( inputMesh, self.regionName, True ):
+                if piece == "cells":
+                    self.m_logger.warning( f"The attribute { self.regionName } is on both cells and points, by default the new attribute { self.newAttributeName } will be created on points.")
 
-            assert isOnMesh, f"{ self.regionName } is not in the mesh."
+                onPoints = True
+                piece = "points"
+
+            assert piece in ( "points", "cells" ), f"{ self.regionName } is not in the mesh."
             
             nbComponents: int = getNumberOfComponents( inputMesh, self.regionName, onPoints )
             assert nbComponents == 1, "The region attribute has to have only one component"
@@ -186,19 +191,19 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                     regionNpArray = getArrayInObject( dataSetInput0, self.regionName, onPoints )
 
                     npArray = self.createNpArray( regionNpArray )
-                    createAttribute( dataSetOutput, npArray, self.newAttributeName, onPoints=onPoints )
+                    assert createAttribute( dataSetOutput, npArray, self.newAttributeName, onPoints=onPoints, logger=self.m_logger ), "The function createAttribute failed."
     
             else:
                 regionNpArray = getArrayInObject( inputMesh, self.regionName, onPoints )
 
                 npArray = self.createNpArray( regionNpArray )
-                createAttribute( outData, npArray, self.newAttributeName, onPoints=onPoints )
+                assert createAttribute( outData, npArray, self.newAttributeName, onPoints=onPoints, logger=self.m_logger ), "The function createAttribute failed."
             
             regionIndexes: list[ Any ] = self.dictRegion.keys()
             indexValuesMess: str = ""
             for index in regionIndexes:
                 value: Any = self.dictRegion[ index ]
-                indexValuesMess = "index " + indexValuesMess + str( index ) + ": " + str( value ) + " "
+                indexValuesMess =  indexValuesMess + "index " + str( index ) + ": " + str( value ) + ", "
             
             if indexValuesMess == "":
                 indexValuesMess = f"No index or no value enter, the new attribute is constant with the value {self.defaultValue}."
@@ -207,19 +212,19 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             else:            
                 indexValuesMess = indexValuesMess + "other indexes: " + str( self.defaultValue ) + "."
     
-            mess = f"The attribute { self.regionName } allows to create the new attribute { self.newAttributeName } with the following constant values per region indexes: { indexValuesMess }"
+            mess = f"The attribute { self.regionName } allows to create on { piece } the new attribute { self.newAttributeName } with the following constant values per region indexes: { indexValuesMess }"
             self.Modified()
             self.m_logger.info( mess )
         except AssertionError as e:
             mess = f"The filter { self.m_logger.name } failed due to:"
             self.m_logger.error( mess )
             self.m_logger.error( e, exc_info=True)
-            return 0
+            return 1
         except Exception as e:
             mess = f"The filter { self.m_logger.name } failed due to:"
             self.m_logger.critical( mess )
             self.m_logger.critical( e, exc_info=True)
-            return 0
+            return 1
 
         return 1
 
@@ -241,12 +246,6 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.dictRegion: dict[ Any, Any ] = dictRegion
         for idRegion in self.dictRegion.keys():
             self.dictRegion[ idRegion ] = self.valueType( self.dictRegion[ idRegion ] )
-
-        # Set the default value depending of the type.
-        if valueType not in [ 10, 11 ]:
-            self.defaultValue = self.valueType( -1 )
-        else:
-            self.defaultValue = self.valueType( np.nan )
     
         
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
@@ -273,6 +272,18 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         Returns:
             npt.NDArray[np.float64]: Numpy array of the new attribute.
         """
+        # Set the default value depending of the type.
+        self.defaultValue: Any
+        ## Default value for float types is nan.
+        if self.valueType().dtype in ( "float32", "float64" ):
+            self.defaultValue = self.valueType( np.nan )
+        ## Default value for int types is -1.
+        elif self.valueType().dtype in ( "int8", "int16", "int32", "int64" ):
+            self.defaultValue = self.valueType( -1 )
+        ## Default value for uint types is 0.
+        elif self.valueType().dtype in ( "uint8", "uint16", "uint32", "uint64" ):
+            self.defaultValue = self.valueType( 0 )
+        
         nbElements: int = len( regionNpArray )
         npArray: npt.NDArray[ Any ] = np.ones( nbElements, self.valueType )
         for elem in range( nbElements ):
