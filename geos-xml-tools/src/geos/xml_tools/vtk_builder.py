@@ -396,17 +396,17 @@ def _read_vtk_data_repository( file_path: str, mesh: ElementTree.Element,
         ugrid: vtk.vtkUnstructuredGrid = reader.GetOutputDataObject( 0 )
         attr_array = ugrid.GetCellData().GetArray( attr )
         if not attr_array:
-            print(f"Attribute '{attr}' not found. Treating the entire mesh as a single region named 'domain'.")
+            print( f"Attribute '{attr}' not found. Treating the entire mesh as a single region named 'domain'." )
             # Add the entire unstructured grid as a single region
             p = vtk.vtkPartitionedDataSet()
-            p.SetNumberOfPartitions(1)
-            p.SetPartition(0, ugrid)
-            collection.SetPartitionedDataSet(count, p)
-            collection.GetMetaData(count).Set(vtk.vtkCompositeDataSet.NAME(), "domain")
+            p.SetNumberOfPartitions( 1 )
+            p.SetPartition( 0, ugrid )
+            collection.SetPartitionedDataSet( count, p )
+            collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), "domain" )
             # Add a corresponding "Region" node to the assembly
-            node = assembly.AddNode("Region", id_mesh)
-            assembly.SetAttribute(node, "label", "domain")
-            assembly.AddDataSetIndex(node, count)
+            node = assembly.AddNode( "Region", id_mesh )
+            assembly.SetAttribute( node, "label", "domain" )
+            assembly.AddDataSetIndex( node, count )
             count += 1
             return 1
 
@@ -531,21 +531,21 @@ def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDat
         assembly = collection.GetDataAssembly()
 
         # 2. Add a parent node for this mesh, using its name from the XML
-        mesh_name = mesh.get("name", "InternalMesh")
-        id_mesh = assembly.AddNode("Mesh")
-        assembly.SetAttribute(id_mesh, "label", mesh_name)
-        assembly.SetAttribute(id_mesh, "type", TreeViewNodeType.REPRESENTATION)
+        mesh_name = mesh.get( "name", "InternalMesh" )
+        id_mesh = assembly.AddNode( "Mesh" )
+        assembly.SetAttribute( id_mesh, "label", mesh_name )
+        assembly.SetAttribute( id_mesh, "type", TreeViewNodeType.REPRESENTATION )
 
         # 3. Add a "Region" node under the "Mesh" node for the generated grid
         region_name = f"{mesh_name}_Region"
-        node = assembly.AddNode("Region", id_mesh)
-        assembly.SetAttribute(node, "label", region_name)
+        node = assembly.AddNode( "Region", id_mesh )
+        assembly.SetAttribute( node, "label", region_name )
 
         # 4. Associate the new assembly node with the actual dataset index
-        assembly.AddDataSetIndex(node, count)
+        assembly.AddDataSetIndex( node, count )
 
         # 5. Set the dataset's name metadata for consistency
-        collection.GetMetaData(count).Set(vtk.vtkCompositeDataSet.NAME(), region_name)
+        collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), region_name )
 
         # --- End of Added Assembly Logic ---
         return 1
