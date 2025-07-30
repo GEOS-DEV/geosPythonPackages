@@ -71,24 +71,24 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         Input is a vtkDataObject.
         """
         super().__init__( nInputPorts=1, nOutputPorts=1 )
-        # python view layout and object
+        # Python view layout and object.
         self.m_layoutName: str = ""
         self.m_pythonView: Any
         self.m_organizationDisplay = DisplayOrganizationParaview()
         self.buildNewLayoutWithPythonView()
 
-        # input source and curve names
+        # Input source and curve names.
         inputSource = GetActiveSource()
         dataset = servermanager.Fetch( inputSource )
         dataframe: pd.DataFrame = pvt.vtkToDataframe( dataset )
         self.m_pathPythonViewScript: Path = geos_pv_path / "src/geos/pv/pythonViewUtils/mainPythonView.py"
 
-        # checkboxes
+        # Checkboxes.
         self.m_modifyInputs: int = 1
         self.m_modifyCurves: int = 1
         self.m_multiplyCurves: int = 0
 
-        # checkboxes curves available from the data of pipeline
+        # Checkboxes curves available from the data of pipeline.
         self.m_validSources = vtkDataArraySelection()
         self.m_curvesToPlot = vtkDataArraySelection()
         self.m_curvesMinus1 = vtkDataArraySelection()
@@ -102,8 +102,8 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         for name in list( dataframe.columns ):
             for axis in [ "X", "Y", "Z" ]:
                 if "Points" + axis in name and "Points" + axis + "__" in name:
-                    positionDoublon: int = validColumnsDataframe.index( "Points" + axis )
-                    validColumnsDataframe.pop( positionDoublon )
+                    doublePosition: int = validColumnsDataframe.index( "Points" + axis )
+                    validColumnsDataframe.pop( doublePosition )
                     break
         self.m_validColumnsDataframe: list[ str ] = sorted( validColumnsDataframe, key=lambda x: x.lower() )
         for curveName in validColumnsDataframe:
@@ -113,7 +113,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         self.m_curvesToPlot.DisableAllArrays()
         self.m_curvesMinus1.DisableAllArrays()
         self.m_curveToUse: str = ""
-        # to change the aspects of curves
+        # To change the aspects of curves.
         self.m_curvesToModify: set[ str ] = pvt.integrateSourceNames( validSourceNames, set( validColumnsDataframe ) )
         self.m_color: tuple[ float, float, float ] = ( 0.0, 0.0, 0.0 )
         self.m_lineStyle: str = LineStyleEnum.SOLID.optionValue
@@ -121,7 +121,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         self.m_markerStyle: str = MarkerStyleEnum.NONE.optionValue
         self.m_markerSize: float = 1.0
 
-        # user choices
+        # User choices.
         self.m_userChoices: dict[ str, Any ] = {
             "variableName": "",
             "curveNames": [],
@@ -149,7 +149,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Access the m_userChoices attribute.
 
         Returns:
-            dict[str] : the user choices for the figure.
+            dict[str] : The user choices for the figure.
         """
         return self.m_userChoices
 
@@ -157,10 +157,10 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get source names from user selection.
 
         Returns:
-            set[str] : source names from ParaView pipeline.
+            set[str] : Source names from ParaView pipeline.
         """
-        inputAvailables = self.a01GetInputSources()
-        inputNames: set[ str ] = set( pvt.getArrayChoices( inputAvailables ) )
+        inputAvailable = self.a01GetInputSources()
+        inputNames: set[ str ] = set( pvt.getArrayChoices( inputAvailable ) )
         return inputNames
 
     def defineInputNames( self: Self ) -> None:
@@ -209,13 +209,13 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
     def buildNewLayoutWithPythonView( self: Self ) -> None:
         """Create a new Python View layout."""
-        # we first built the new layout
+        # We first built the new layout.
         layout_names: list[ str ] = self.m_organizationDisplay.getLayoutsNames()
         nb_layouts: int = len( layout_names )
-        # imagine two layouts already exists, the new one will be named "Layout #3"
+        # Imagine two layouts already exists, the new one will be named "Layout #3".
         layoutName: str = "Layout #" + str( nb_layouts + 1 )
-        # check that we that the layoutName is new and does not belong to the list of layout_names,
-        # if not we modify the layoutName until it is a new one
+        # Check that we that the layoutName is new and does not belong to the list of layout_names,
+        # if not we modify the layoutName until it is a new one.
         if layoutName in layout_names:
             cpt: int = 2
             while layoutName in layout_names:
@@ -224,23 +224,23 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         self.m_organizationDisplay.addLayout( layoutName )
         self.m_layoutName = layoutName
 
-        # we then build the new python view
+        # We then build the new python view.
         self.m_organizationDisplay.addViewToLayout( "PythonView", layoutName, 0 )
         self.m_pythonView = self.m_organizationDisplay.getLayoutViews()[ layoutName ][ 0 ]
         Show( GetActiveSource(), self.m_pythonView, "PythonRepresentation" )
 
-    # widgets definition
+    # Widgets definition
     """The names of the @smproperty methods command names below have a letter in lower case in
     front because PARAVIEW displays properties in the alphabetical order.
     See https://gitlab.kitware.com/paraview/paraview/-/issues/21493 for possible improvements on
-    this issue"""
+    this issue."""
 
     @smproperty.dataarrayselection( name="InputSources" )
     def a01GetInputSources( self: Self ) -> vtkDataArraySelection:
         """Get all valid sources for the filter.
 
         Returns:
-            vtkDataArraySelection: valid data sources.
+            vtkDataArraySelection: Valid data sources.
         """
         return self.m_validSources
 
@@ -256,7 +256,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get the available curves.
 
         Returns:
-            list[str]: list of curves.
+            list[str]: List of curves.
         """
         return self.m_validColumnsDataframe
 
@@ -269,7 +269,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set the name of X axis variable.
 
         Args:
-            name: name of the variable.
+            name (str): Name of the variable.
         """
         self.m_userChoices[ "variableName" ] = name
         self.Modified()
@@ -279,7 +279,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get the curves to plot.
 
         Returns:
-            vtkDataArraySelection: data to plot.
+            vtkDataArraySelection: Data to plot.
         """
         return self.m_curvesToPlot
 
@@ -289,7 +289,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set plot per region option.
 
         Args:
-            boolean: user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "plotRegions" ] = boolean
         self.Modified()
@@ -313,7 +313,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Select Curves To Change Convention.
 
         Args:
-            boolean: user choice.
+            boolean (bool): User choice.
         """
         self.m_multiplyCurves = boolean
 
@@ -329,7 +329,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get the curves to change convention.
 
         Returns:
-            vtkDataArraySelection: selected curves to change convention.
+            vtkDataArraySelection: Selected curves to change convention.
         """
         return self.m_curvesMinus1
 
@@ -349,7 +349,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to edit axis properties.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.Modified()
 
@@ -366,7 +366,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to reverse X and Y axes.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "reverseXY" ] = boolean
         self.Modified()
@@ -377,7 +377,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to log scale for X axis.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "logScaleX" ] = boolean
         self.Modified()
@@ -399,7 +399,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to display minor ticks.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "minorticks" ] = boolean
         self.Modified()
@@ -410,7 +410,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to define axis limits.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "customAxisLim" ] = boolean
         self.Modified()
@@ -500,7 +500,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to display title.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "displayTitle" ] = boolean
         self.Modified()
@@ -517,7 +517,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set title.
 
         Args:
-            title (str): title.
+            title (str): Title.
         """
         self.m_userChoices[ "title" ] = title
         self.Modified()
@@ -528,7 +528,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set title font style.
 
         Args:
-            value (int): title font style index in FontStyleEnum.
+            value (int): Title font style index in FontStyleEnum.
         """
         choice = list( FontStyleEnum )[ value ]
         self.m_userChoices[ "titleStyle" ] = choice.optionValue
@@ -540,7 +540,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set title font weight.
 
         Args:
-            value (int): title font weight index in FontWeightEnum.
+            value (int): Title font weight index in FontWeightEnum.
         """
         choice = list( FontWeightEnum )[ value ]
         self.m_userChoices[ "titleWeight" ] = choice.optionValue
@@ -552,7 +552,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set title font size.
 
         Args:
-            size (float): title font size between 1 and 50.
+            size (float): Title font size between 1 and 50.
         """
         self.m_userChoices[ "titleSize" ] = size
         self.Modified()
@@ -576,7 +576,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to display legend.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "displayLegend" ] = boolean
         self.Modified()
@@ -594,7 +594,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set legend position.
 
         Args:
-            value (int): legend position index in LegendLocationEnum.
+            value (int): Legend position index in LegendLocationEnum.
         """
         choice = list( LegendLocationEnum )[ value ]
         self.m_userChoices[ "legendPosition" ] = choice.optionValue
@@ -606,7 +606,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set legend font size.
 
         Args:
-            size (float): legend font size between 1 and 50.
+            size (float): Legend font size between 1 and 50.
         """
         self.m_userChoices[ "legendSize" ] = size
         self.Modified()
@@ -617,7 +617,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to remove job names from legend.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "removeJobName" ] = boolean
         self.Modified()
@@ -632,7 +632,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to remove region names from legend.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_userChoices[ "removeRegions" ] = boolean
         self.Modified()
@@ -655,7 +655,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set option to change curve aspects.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): User choice.
         """
         self.m_modifyCurvesAspect = boolean
 
@@ -671,11 +671,10 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get curves to modify aspects.
 
         Returns:
-            set[str]: curves to modify aspects.
+            set[str]: Curves to modify aspects.
         """
         return list( self.m_curvesToModify )
 
-    # TODO: still usefull?
     @smproperty.stringvector( name="CurveToModify", number_of_elements="1" )
     @smdomain.xml( """<StringListDomain name="list">
         <RequiredProperties><Property name="CurvesInfo"
@@ -685,7 +684,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set m_curveToUse.
 
         Args:
-           value (float): value of m_curveToUse
+           value (float): Value of m_curveToUse.
         """
         self.m_curveToUse = value
         self.Modified()
@@ -700,7 +699,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set line style.
 
         Args:
-           value (int): line style index in LineStyleEnum
+           value (int): Line style index in LineStyleEnum.
         """
         choice = list( LineStyleEnum )[ value ]
         self.m_lineStyle = choice.optionValue
@@ -712,7 +711,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set line width.
 
         Args:
-           value (float): line width between 1 and 10.
+           value (float): Line width between 1 and 10.
         """
         self.m_lineWidth = value
         self.Modified()
@@ -723,7 +722,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set marker style.
 
         Args:
-           value (int): Marker style index in MarkerStyleEnum
+           value (int): Marker style index in MarkerStyleEnum.
         """
         choice = list( MarkerStyleEnum )[ value ]
         self.m_markerStyle = choice.optionValue
@@ -735,7 +734,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Set marker size.
 
         Args:
-           value (float): size of markers between 1 and 30.
+           value (float): Size of markers between 1 and 30.
         """
         self.m_markerSize = value
         self.Modified()
@@ -783,7 +782,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Get curve aspect properties according to user choices.
 
         Returns:
-            tuple: (color, linestyle, linewidth, marker, markersize)
+            tuple: (color, lineStyle, linewidth, marker, markerSize)
         """
         return (
             self.m_color,
@@ -797,8 +796,8 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            port (int): input port
-            info (vtkInformationVector): info
+            port (int): Input port.
+            info (vtkInformationVector): Info.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -818,9 +817,9 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -842,9 +841,9 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.

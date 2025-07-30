@@ -23,7 +23,7 @@ try:
 
     plt.close()
     if len( sourceNames ) == 0:  # noqa: F821
-        raise ValueError( "No source name was found. Please check at least" + " one source in <<Input Sources>>" )
+        raise ValueError( "No source name was found. Please check at least one source in <<Input Sources>>." )
 
     dataframes = pvt.getDataframesFromMultipleVTKSources(
         sourceNames,

@@ -23,8 +23,8 @@ class Figure2DGenerator:
         "X" will be called "variable", "Y" will be called "curves".
 
         Args:
-            dataframe (pd.DataFrame): data to plot
-            userChoices (dict[str, list[str]]): user choices.
+            dataframe (pd.DataFrame): Data to plot.
+            userChoices (dict[str, list[str]]): User choices.
             logger (Logger): Logger to use.
         """
         self.m_dataframe: pd.DataFrame = dataframe
@@ -36,11 +36,11 @@ class Figure2DGenerator:
         self.m_logger: Logger = logger
 
         try:
-            # apply minus 1 multiplication on certain columns
+            # Apply minus 1 multiplication on certain columns.
             self.initMinus1Multiplication()
-            # defines m_fig, m_axes, m_lines and m_lables
+            # Defines m_fig, m_axes, m_lines and m_labels.
             self.plotInitialFigure()
-            # then to edit and customize the figure
+            # Then to edit and customize the figure.
             self.enhanceFigure()
             self.m_logger.info( "Data were successfully plotted." )
 
@@ -129,7 +129,7 @@ class Figure2DGenerator:
                 ax.set_ylim( ymin, ymax )
 
     def getFigure( self: Self ) -> figure.Figure:
-        """Acces the m_fig attribute.
+        """access the m_fig attribute.
 
         Returns:
             figure.Figure: Figure containing all the plots.
