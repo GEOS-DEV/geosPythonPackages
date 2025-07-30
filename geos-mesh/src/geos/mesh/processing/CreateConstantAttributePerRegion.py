@@ -101,6 +101,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
         self.regionName: str = regionName
         self.newAttributeName: str = newAttributeName
+        self.useDefaultValue: bool = False
         self.setInfoRegion( dictRegion, valueType )
 
         # Logger
@@ -198,14 +199,14 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         
         # Check if their is region indexes.
         regionIndexes: list[ Any ] = self.dictRegion.keys()
-        nbFalseIndexes: int = 0
+        trueIndexes: list[ Any ] = []
+        falseIndexes: list[ Any ] = []
         if len( regionIndexes ) == 0:
             self.logger.warning( "No region indexes entered." )
             if not createConstantAttribute( outData, [ self.defaultValue ], self.newAttributeName, onPoints=onPoints, logger=self.logger ):
                 self.logger.error( f"The new attribute { self.newAttributeName } has not been created." )
                 self.logger.error( f"The filter { self.logger.name } failed.")
                 return 1
-
         else:
             regionNpArray: npt.NDArray[ Any ]
             npArray: npt.NDArray[ Any ]
@@ -215,33 +216,43 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                     self.logger.error( f"The new attribute { self.newAttributeName } has not been add." )
                     self.logger.error( f"The filter { self.logger.name } failed.")
                     return 1
-            
-                # Parse the mesh to add the attribute on each block.
-                nbBlock: int = outData.GetNumberOfBlocks()
-                for idBlock in range( nbBlock ):
-                    dataSetInput: vtkDataSet = inputMesh.GetBlock( idBlock )
-                    dataSetOutput: vtkDataSet = outData.GetBlock( idBlock )
-
-                    regionNpArray = getArrayInObject( dataSetInput, self.regionName, onPoints )
-                    npArray = self.createNpArray( regionNpArray )
-                    if not createAttribute( dataSetOutput, npArray, self.newAttributeName, onPoints=onPoints, logger=self.logger ):
+                
+                trueIndexes, falseIndexes = self.getTrueIndexesInMultiBlock( inputMesh, onPoints )
+                if len( trueIndexes ) == 0:
+                    self.logger.warning( f"The region indexes entered are not in the region attribute { self.regionName }." )
+                    if not createConstantAttributeMultiBlock( outData, [ self.defaultValue ], self.newAttributeName, onPoints=onPoints, logger=self.logger ):
+                        self.logger.error( f"The new attribute { self.newAttributeName } has not been created." )
                         self.logger.error( f"The filter { self.logger.name } failed.")
                         return 1
+
+                else:
+                    if len( falseIndexes ) > 0:
+                        self.logger.warning( f"The region indexes { falseIndexes } are not in the region attribute { self.regionName }." )
+
+                    # Parse the mesh to add the attribute on each block.
+                    nbBlock: int = outData.GetNumberOfBlocks()
+                    for idBlock in range( nbBlock ):
+                        dataSetInput: vtkDataSet = inputMesh.GetBlock( idBlock )
+                        dataSetOutput: vtkDataSet = outData.GetBlock( idBlock )
+
+                        regionNpArray = getArrayInObject( dataSetInput, self.regionName, onPoints )
+                        npArray = self.createNpArray( regionNpArray )
+                        if not createAttribute( dataSetOutput, npArray, self.newAttributeName, onPoints=onPoints, logger=self.logger ):
+                            self.logger.error( f"The filter { self.logger.name } failed.")
+                            return 1
     
             else:
-                regionNpArray = getArrayInObject( inputMesh, self.regionName, onPoints )
-
-                # Check if all the region indexes given are in the region attribute.
-                for index in regionIndexes:
-                    if index not in regionNpArray:
-                        nbFalseIndexes += 1
-                if nbFalseIndexes == len( regionIndexes ):
-                    self.logger.warning( f"The region indexes entered { regionIndexes } are not in the region attribute { self.regionName }." )
+                trueIndexes, falseIndexes = self.getTrueIndexesInDataSet( inputMesh, onPoints )
+                if len( trueIndexes ) == 0:
+                    self.logger.warning( f"The region indexes entered are not in the region attribute { self.regionName }." )
                     if not createConstantAttributeDataSet( outData, [ self.defaultValue ], self.newAttributeName, onPoints=onPoints, logger=self.logger ):
                         self.logger.error( f"The filter { self.logger.name } failed.")
                         return 1
-                    
                 else:
+                    if len( falseIndexes ) > 0:
+                        self.logger.warning( f"The region indexes { falseIndexes } are not in the region attribute { self.regionName }." )
+
+                    regionNpArray = getArrayInObject( inputMesh, self.regionName, onPoints )
                     npArray = self.createNpArray( regionNpArray )
                     if not createAttribute( outData, npArray, self.newAttributeName, onPoints=onPoints, logger=self.logger ):
                         self.logger.error( f"The filter { self.logger.name } failed.")
@@ -251,7 +262,7 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.logger.info( f"The new attribute { self.newAttributeName } was successfully created on { piece }." )
 
         mess: str = f"The new attribute { self.newAttributeName } is constant"
-        if len( regionIndexes ) == 0 or len( regionIndexes ) == nbFalseIndexes:
+        if len( regionIndexes ) == 0 or len( trueIndexes ) == 0:
             mess = f"{ mess } with the value { self.defaultValue }."
 
         else:
@@ -259,7 +270,10 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             for index in regionIndexes:
                 mess =  f"{ mess } { self.dictRegion[ index ] } for index { index },"
             
-            mess = f"{ mess } and { self.defaultValue } for the other indexes."
+            if self.useDefaultValue:
+                mess = f"{ mess } and { self.defaultValue } for the other indexes."
+            else:
+                mess = f"{ mess[:-1] }."
     
         self.logger.info( mess )
         
@@ -330,5 +344,37 @@ class CreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
                 npArray[ elem ] = self.dictRegion[ idRegion ]
             else:
                 npArray[ elem ] = self.defaultValue
+                self.useDefaultValue = True
 
         return npArray
+
+
+    def getTrueIndexesInDataSet( self: Self, inputMesh: vtkDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ]]:
+        regionIndexes: list[ Any ] = self.dictRegion.keys()
+        regionNpArray = getArrayInObject( inputMesh, self.regionName, onPoints )
+        trueIndexes: list[ Any ] = []
+        falseIndexes: list[ Any ] = []
+        for index in regionIndexes:
+            if index in regionNpArray:
+                trueIndexes.append( index )
+            else:
+                falseIndexes.append( index )
+
+        return ( trueIndexes, falseIndexes )
+    
+    def getTrueIndexesInMultiBlock( self: Self, inputMesh: vtkMultiBlockDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ]]:
+        trueIndexes: list[ Any ] = []
+        falseIndexes: list[ Any ] = []
+        nbBlock: int = inputMesh.GetNumberOfBlocks()
+        for idBlock in range( nbBlock ):
+            dataSetInput: vtkDataSet = inputMesh.GetBlock( idBlock )
+            trueIndexes.extend( self.getTrueIndexesInDataSet( dataSetInput, onPoints )[ 0 ] ) 
+            falseIndexes.extend( self.getTrueIndexesInDataSet( dataSetInput, onPoints )[ 1 ] )
+            
+        return ( list( set( trueIndexes ) ), list( set( falseIndexes ) ) )
+    
+    def getTrueIndexes( self:Self, inputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], onPoints: bool ) -> tuple[ list[ Any ], list[ Any ]]:
+        if isinstance( inputMesh, vtkMultiBlockDataSet ):
+            return self.getTrueIndexesInMultiBlock( inputMesh, onPoints )
+        else:
+            return self.getTrueIndexesInDataSet( inputMesh, onPoints )
