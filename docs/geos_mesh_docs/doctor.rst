@@ -5,6 +5,17 @@ Mesh Doctor
 ``mesh-doctor`` is organized as a collection of modules with their dedicated sets of options.
 The current page will introduce those modules, but the details and all the arguments can be retrieved by using the ``--help`` option for each module.
 
+Prerequisites
+^^^^^^^^^^^^^
+
+To use mesh-doctor, you first need to have installed the ``geos-mesh`` package using the following command:
+
+.. code-block:: bash
+
+    python -m pip install --upgrade ./geos-mesh
+
+Once done, you can call ``mesh-doctor`` in your command line as presented in the rest of this documentation.
+
 Modules
 ^^^^^^^
 
@@ -12,13 +23,11 @@ To list all the modules available through ``mesh-doctor``, you can simply use th
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py --help
+      $ mesh-doctor --help
       usage: mesh_doctor.py [-h] [-v] [-q] -i VTK_MESH_FILE
                       {collocated_nodes,element_volumes,fix_elements_orderings,generate_cube,generate_fractures,generate_global_ids,non_conformal,self_intersecting_elements,supported_elements}
                       ...
-
       Inspects meshes for GEOSX.
-
       positional arguments:
       {collocated_nodes,element_volumes,fix_elements_orderings,generate_cube,generate_fractures,generate_global_ids,non_conformal,self_intersecting_elements,supported_elements}
             Modules
@@ -40,14 +49,12 @@ To list all the modules available through ``mesh-doctor``, you can simply use th
             Checks if the faces of the elements are self intersecting.
          supported_elements
             Check that all the elements of the mesh are supported by GEOSX.
-
       options:
       -h, --help
             show this help message and exit
       -v    Use -v 'INFO', -vv for 'DEBUG'. Defaults to 'WARNING'.
       -q    Use -q to reduce the verbosity of the output.
       -i VTK_MESH_FILE, --vtk-input-file VTK_MESH_FILE
-
       Note that checks are dynamically loaded.
       An option may be missing because of an unloaded module.
       Increase verbosity (-v, -vv) to get full information.
@@ -57,9 +64,8 @@ For example
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py collocated_nodes --help
+      $ mesh-doctor collocated_nodes --help
       usage: mesh_doctor.py collocated_nodes [-h] --tolerance TOLERANCE
-
       options:
       -h, --help              show this help message and exit
       --tolerance TOLERANCE   [float]: The absolute distance between two nodes for them to be considered collocated.
@@ -78,6 +84,42 @@ You can solve this issue by installing the dependencies of ``mesh-doctor`` defin
 
 Here is a list and brief description of all the modules available.
 
+``all_checks`` and ``main_checks``
+""""""""""""""""""""""""""""""""""
+
+``mesh-doctor`` modules are called ``actions`` and they can be split into 2 different categories:
+``check actions`` that will give you a feedback on a .vtu mesh that you would like to use in GEOS.
+``operate actions`` that will either create a new mesh or modify an existing mesh.
+
+``all_checks`` aims at applying every single ``check`` action in one single command. The available list is of check is:
+``collocated_nodes``, ``element_volumes``, ``non_conformal``, ``self_intersecting_elements``, ``supported_elements``.
+
+``main_checks`` does only the fastest checks ``collocated_nodes``, ``element_volumes`` and ``self_intersecting_elements``
+that can quickly highlight some issues to deal with before investigating the other checks.
+
+Both ``all_checks`` and ``main_checks`` have the same keywords and can be operated in the same way. The example below shows
+the case of ``all_checks``, but it can be swapped for ``main_checks``.
+
+.. code-block::
+
+      $ mesh-doctor all_checks --help                                                                                
+      usage: mesh-doctor all_checks [-h] [--checks_to_perform CHECKS_TO_PERFORM] [--set_parameters SET_PARAMETERS]
+
+      options:
+      -h, --help            show this help message and exit
+      --checks_to_perform CHECKS_TO_PERFORM
+                              Comma-separated list of mesh-doctor checks to perform.
+                              If no input was given, all of the following checks will be executed by default: ['collocated_nodes', 'element_volumes', 'self_intersecting_elements'].
+                              The available choices for checks are ['collocated_nodes', 'element_volumes', 'non_conformal', 'self_intersecting_elements', 'supported_elements'].
+                              If you want to choose only certain of them, you can name them individually.
+                              Example: --checks_to_perform collocated_nodes,element_volumes (default: )
+      --set_parameters SET_PARAMETERS
+                              Comma-separated list of parameters to set for the checks (e.g., 'param_name:value'). These parameters override the defaults.
+                              Default parameters are: For collocated_nodes: tolerance:0.0. For element_volumes: min_volume:0.0.
+                              For non_conformal: angle_tolerance:10.0, point_tolerance:0.0, face_tolerance:0.0.
+                              For self_intersecting_elements: min_distance:2.220446049250313e-16. For supported_elements: chunk_size:1, nproc:8.
+                              Example: --set_parameters parameter_name:10.5,other_param:25 (default: )
+
 ``collocated_nodes``
 """"""""""""""""""""
 
@@ -86,9 +128,8 @@ It is not uncommon to define multiple nodes for the exact same position, which w
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py collocated_nodes --help
+      $ mesh-doctor collocated_nodes --help
       usage: mesh_doctor.py collocated_nodes [-h] --tolerance TOLERANCE
-
       options:
       -h, --help              show this help message and exit
       --tolerance TOLERANCE   [float]: The absolute distance between two nodes for them to be considered collocated.
@@ -101,9 +142,8 @@ Cells with negative volumes will typically be an issue for ``geos`` and should b
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py element_volumes --help
+      $ mesh-doctor element_volumes --help
       usage: mesh_doctor.py element_volumes [-h] --min 0.0
-
       options:
       -h, --help              show this help message and exit
       --min 0.0               [float]: The minimum acceptable volume. Defaults to 0.0.
@@ -117,12 +157,11 @@ This can be convenient if you cannot regenerate the mesh.
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py fix_elements_orderings --help
+      $ mesh-doctor fix_elements_orderings --help
       usage: mesh_doctor.py fix_elements_orderings [-h] [--Hexahedron 1,6,5,4,7,0,2,3] [--Prism5 8,2,0,7,6,9,5,1,4,3]
                                                    [--Prism6 11,2,8,10,5,0,9,7,6,1,4,3] [--Pyramid 3,4,0,2,1]
                                                    [--Tetrahedron 2,0,3,1] [--Voxel 1,6,5,4,7,0,2,3]
                                                    [--Wedge 3,5,4,0,2,1] --output OUTPUT [--data-mode binary, ascii]
-
       options:
       -h, --help              show this help message and exit
       --Hexahedron 1,6,5,4,7,0,2,3
@@ -148,11 +187,10 @@ This tool can also be useful to generate a trial mesh that will later be refined
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py generate_cube --help
+      $ mesh-doctor generate_cube --help
       usage: mesh_doctor.py generate_cube [-h] [--x 0:1.5:3] [--y 0:5:10] [--z 0:1] [--nx 2:2] [--ny 1:1] [--nz 4]
                                           [--fields name:support:dim [name:support:dim ...]] [--cells] [--no-cells]      
                                           [--points] [--no-points] --output OUTPUT [--data-mode binary, ascii]
-
       options:
       -h, --help              show this help message and exit
       --x 0:1.5:3             [list of floats]: X coordinates of the points.
@@ -179,10 +217,9 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py generate_fractures --help
+      $ mesh-doctor generate_fractures --help
       usage: mesh_doctor.py generate_fractures [-h] --policy field, internal_surfaces [--name NAME] [--values VALUES] --output OUTPUT
                                                [--data-mode binary, ascii] [--fractures_output_dir FRACTURES_OUTPUT_DIR]
-
       options:
       -h, --help              show this help message and exit
       --policy field, internal_surfaces
@@ -210,10 +247,9 @@ The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` m
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py generate_global_ids --help
+      $ mesh-doctor generate_global_ids --help
       usage: mesh_doctor.py generate_global_ids [-h] [--cells] [--no-cells] [--points] [--no-points] --output OUTPUT
                                                 [--data-mode binary, ascii]
-
       options:
       -h, --help              show this help message and exit
       --cells                 [bool]: Generate global ids for cells. Defaults to true.
@@ -234,10 +270,9 @@ This module can be a bit time consuming.
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py non_conformal --help
+      $ mesh-doctor non_conformal --help
       usage: mesh_doctor.py non_conformal [-h] [--angle_tolerance 10.0] [--point_tolerance POINT_TOLERANCE]
                                           [--face_tolerance FACE_TOLERANCE]
-
       options:
       -h, --help              show this help message and exit
       --angle_tolerance 10.0  [float]: angle tolerance in degrees. Defaults to 10.0
@@ -254,9 +289,8 @@ This module will display the elements that have faces intersecting.
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py self_intersecting_elements --help
+      $ mesh-doctor self_intersecting_elements --help
       usage: mesh_doctor.py self_intersecting_elements [-h] [--min 2.220446049250313e-16]
-
       options:
       -h, --help              show this help message and exit
       --min 2.220446049250313e-16
@@ -275,9 +309,8 @@ It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get conver
 
 .. code-block::
 
-      $ python src/geos/mesh/doctor/mesh_doctor.py supported_elements --help
+      $ mesh-doctor supported_elements --help
       usage: mesh_doctor.py supported_elements [-h] [--chunck_size 1] [--nproc 8]
-
       options:
       -h, --help              show this help message and exit
       --chunck_size 1         [int]: Defaults chunk size for parallel processing to 1

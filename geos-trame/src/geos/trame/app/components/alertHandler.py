@@ -26,8 +26,8 @@ class AlertHandler( vuetify3.VContainer ):
 
         self.state.alerts = []
 
-        self.server.controller.on_add_error.add_task( self.add_error )
-        self.server.controller.on_add_warning.add_task( self.add_warning )
+        self.ctrl.on_add_error.add_task( self.add_error )
+        self.ctrl.on_add_warning.add_task( self.add_warning )
 
         self.generate_alert_ui()
 
