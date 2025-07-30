@@ -81,6 +81,22 @@ def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str
     assert obtained == expected
 
 
+@pytest.mark.parametrize( "attributeName, onpoints, expected", [
+    ( "PORO", False, False ),
+    ( "GLOBAL_IDS_POINTS", True, True ),
+] )
+def test_isAttributeGlobal(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeName: str,
+    onpoints: bool,
+    expected: bool,
+) -> None:
+    """Test if the attribute is global or partial."""
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    obtained: bool = arrayHelpers.isAttributeGlobal( multiBlockDataset, attributeName, onpoints )
+    assert obtained == expected
+
+
 @pytest.mark.parametrize( "arrayExpected, onpoints", [
     ( "PORO", False ),
     ( "PERM", False ),
@@ -98,6 +114,35 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     expected: npt.NDArray[ np.float64 ] = arrayExpected
 
     assert ( obtained == expected ).all()
+
+
+@pytest.mark.parametrize( "attributeName, vtkDataType, onPoints", [
+    ( "CellAttribute", 11, False ),
+    ( "PointAttribute", 11, True ),
+    ( "collocated_nodes", 12, True ),
+] )
+def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attributeName: str, vtkDataType: int,
+                                      onPoints: bool ) -> None:
+    """Test getting the type of the vtk array of an attribute from multiBlockDataSet."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+
+    vtkDataTypeTest: int = arrayHelpers.getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
+
+    assert ( vtkDataTypeTest == vtkDataType )
+
+
+@pytest.mark.parametrize( "attributeName, onPoints", [
+    ( "CellAttribute", False ),
+    ( "PointAttribute", True ),
+] )
+def test_getVtkArrayTypeInObject( dataSetTest: vtkDataSet, attributeName: str, onPoints: bool ) -> None:
+    """Test getting the type of the vtk array of an attribute from dataset."""
+    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
+
+    obtained: int = arrayHelpers.getVtkArrayTypeInObject( vtkDataSetTest, attributeName, onPoints )
+    expected: int = 11
+
+    assert ( obtained == expected )
 
 
 @pytest.mark.parametrize( "arrayExpected, onpoints", [
