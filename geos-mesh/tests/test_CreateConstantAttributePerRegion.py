@@ -22,19 +22,19 @@ def test_CreateConstantAttributePerRegion(
     valueType: int,
 ) -> None:
     input_mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( mesh )
-    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( regionName,
+    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( input_mesh,
+                                                                                 regionName,
                                                                                  newAttributeName,
                                                                                  dictRegion,
                                                                                  valueType,
                                                                                  )
-    filter.SetInputDataObject( input_mesh )
-    filter.Update()
+    filter.applyFilter()
 
-    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = filter.GetOutputDataObject( 0 )
+    #meshFiltered: Union[ vtkMultiBlockDataSet, vtkDataSet ] = filter.mesh
 
-    if isinstance( mesh, vtkMultiBlockDataSet ):
+    if isinstance( input_mesh, vtkMultiBlockDataSet ):
         assert 1 == 1
     
     else:
-        assert mesh.GetCellData().HasArray( newAttributeName ) == 1
+        assert input_mesh.GetCellData().HasArray( newAttributeName ) == 1
 

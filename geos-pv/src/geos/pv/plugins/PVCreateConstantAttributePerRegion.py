@@ -77,6 +77,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.regionName: str = "Region"
         self.newAttributeName: str = "newAttribute"
         self.valueType: int = 10
+        self.speHandler: bool = True
     
     @smproperty.xml( """
         <StringVectorProperty
@@ -271,20 +272,23 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
         assert inputMesh is not None, "Input Surface is null."
         assert outputMesh is not None, "Output pipeline is null."
-            
-        filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( self.regionName,
+
+        outputMesh.ShallowCopy( inputMesh )
+
+        filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( outputMesh,
+                                                                                     self.regionName,
                                                                                      self.newAttributeName,
                                                                                      self.dictRegion,
                                                                                      self.valueType,
-                                                                                     True, )
-        vtkHandler: VTKHandler = VTKHandler()
-        filter.setLoggerHandler( vtkHandler )
-        filter.SetInputDataObject( inputMesh )
-        
-        filter.Update()
-        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+                                                                                     self.speHandler, )
+        if self.speHandler and not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+               
+        filter.applyFilter()
+        outputMesh.ShallowCopy( filter.mesh )
 
         self.clearDictRegion = True
+        self.speHandler = False
 
         return 1
 
