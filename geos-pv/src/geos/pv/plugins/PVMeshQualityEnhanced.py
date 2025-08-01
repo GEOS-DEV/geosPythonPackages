@@ -313,7 +313,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             print( "Error while exporting the file due to:" )
             print( str( e ) )
 
-
     def __initVolumeQualityMetricSelection( self: Self ) -> None:
         """Initialize the volumic metrics selection."""
         self._commonCellVolumeQualityMetric.RemoveAllArrays()
@@ -376,5 +375,5 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
         otherMetrics: set[ int ] = getQualityMetricsOther()
         for measure in otherMetrics:
-            self._commonMeshQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ) )
-
+            # TODO: fix issue with incident vertex count metrics
+            self._commonMeshQualityMetric.AddArray( getQualityMeasureNameFromIndex( measure ), False )
