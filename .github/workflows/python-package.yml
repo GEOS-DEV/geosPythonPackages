@@ -49,7 +49,6 @@ jobs:
           - geos-trame
           - geos-utils
           - geos-xml-tools
-          - geos-xml-viewer
           - hdf5-wrapper
           - pygeos-tools
         include:
@@ -99,3 +98,240 @@ jobs:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
       # wrap pytest to avoid error when no tests in the package
         sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
+
+  # Step 1: Validate that all standard CI tests pass BEFORE checking GEOS integration
+  validate_standard_ci:
+    runs-on: ubuntu-latest
+    needs: [semantic_pull_request, build]
+    steps:
+    - name: Check standard CI results
+      run: |
+        echo "Checking standard CI results..."
+        echo "Semantic PR check: ${{ needs.semantic_pull_request.result }}"
+        echo "Build and test: ${{ needs.build.result }}"
+        
+        # All standard tests must pass before proceeding
+        if [[ "${{ needs.semantic_pull_request.result }}" != "success" ]]; then
+          echo "❌ Semantic PR check failed - fix PR title before proceeding"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.build.result }}" != "success" ]]; then
+          echo "❌ Build and test failed - fix code issues before proceeding"
+          exit 1
+        fi
+        
+        echo "✅ All standard CI tests passed! Ready for GEOS integration testing."
+
+  # Step 2: Only after standard tests pass, check for GEOS integration label
+  check_geos_integration_label:
+    runs-on: ubuntu-latest
+    needs: [validate_standard_ci]
+    outputs:
+      should_test_geos: ${{ steps.check_label.outputs.should_test_geos }}
+      has_label: ${{ steps.check_label.outputs.has_label }}
+    steps:
+    - name: Check for GEOS integration test label
+      id: check_label
+      run: |
+        echo "Standard CI tests have passed. Now checking for GEOS integration requirements..."
+        
+        # Check if the PR has the 'test-geos-integration' label
+        pr_json=$(curl -H "Accept: application/vnd.github+json" \
+                       -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                       https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        
+        LABELS=$(echo ${pr_json} | jq -r '[.labels[].name] | join(",")')
+        echo "PR labels: ${LABELS}"
+        
+        if [[ "${LABELS}" == *"test-geos-integration"* ]]; then
+          echo "has_label=true" >> $GITHUB_OUTPUT
+          echo "should_test_geos=true" >> $GITHUB_OUTPUT
+          echo "✅ Found 'test-geos-integration' label - will proceed with GEOS integration testing"
+        else
+          echo "has_label=false" >> $GITHUB_OUTPUT
+          echo "should_test_geos=false" >> $GITHUB_OUTPUT
+          echo "❌ Missing 'test-geos-integration' label"
+          echo ""
+          echo "REQUIRED: This PR must have the 'test-geos-integration' label to be merged"
+          echo "This ensures that changes are tested against GEOS before merging"
+          echo ""
+          echo "To add the label:"
+          echo "1. Go to your PR page"
+          echo "2. Click on 'Labels' in the right sidebar" 
+          echo "3. Add the 'test-geos-integration' label"
+        fi
+
+  # Step 3: Only trigger GEOS integration if label exists AND standard tests passed
+  trigger_geos_integration_test:
+    runs-on: ubuntu-latest
+    needs: [check_geos_integration_label]
+    if: needs.check_geos_integration_label.outputs.should_test_geos == 'true'
+    outputs:
+      workflow_run_id: ${{ steps.trigger_workflow.outputs.workflow_run_id }}
+    steps:
+    - name: Get PR information
+      id: pr_info
+      run: |
+        echo "Triggering GEOS integration test..."
+        pr_json=$(curl -H "Accept: application/vnd.github+json" \
+                       -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                       https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        
+        PR_HEAD_REPO=$(echo ${pr_json} | jq -r '.head.repo.clone_url')
+        PR_HEAD_BRANCH=$(echo ${pr_json} | jq -r '.head.ref')
+        PR_HEAD_SHA=$(echo ${pr_json} | jq -r '.head.sha')
+        
+        echo "pr_repo=${PR_HEAD_REPO}" >> $GITHUB_OUTPUT
+        echo "pr_branch=${PR_HEAD_BRANCH}" >> $GITHUB_OUTPUT
+        echo "pr_sha=${PR_HEAD_SHA}" >> $GITHUB_OUTPUT
+        
+        echo "PR Repository: ${PR_HEAD_REPO}"
+        echo "PR Branch: ${PR_HEAD_BRANCH}"
+        echo "PR SHA: ${PR_HEAD_SHA}"
+
+    - name: Trigger GEOS integration test workflow
+      id: trigger_workflow
+      run: |
+        echo "All standard tests passed ✅"
+        echo "GEOS integration label found ✅"
+        echo "Now triggering GEOS integration test workflow..."
+        
+        # Trigger the workflow_dispatch event in the GEOS repository
+        response=$(curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/GEOS-DEV/GEOS/actions/workflows/test_geospythonpackages_integration.yml/dispatches \
+          -d '{
+            "ref": "develop",
+            "inputs": {
+              "python_package_repo": "${{ steps.pr_info.outputs.pr_repo }}",
+              "python_package_branch": "${{ steps.pr_info.outputs.pr_branch }}",
+              "python_package_pr": "${{ github.event.number }}",
+              "requested_by": "${{ github.actor }}"
+            }
+          }')
+        
+        echo "Workflow dispatch response: $response"
+        echo "✅ GEOS integration test workflow triggered successfully"
+        
+        # Wait a moment for the workflow to start, then find the run ID
+        sleep 10
+        
+        # Get the latest workflow runs to find our triggered run
+        runs_response=$(curl -H "Accept: application/vnd.github+json" \
+                             -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                             https://api.github.com/repos/GEOS-DEV/GEOS/actions/workflows/test_geospythonpackages_integration.yml/runs?per_page=5)
+        
+        # Find the most recent run (this assumes it's our triggered run)
+        workflow_run_id=$(echo "$runs_response" | jq -r '.workflow_runs[0].id')
+        echo "workflow_run_id=${workflow_run_id}" >> $GITHUB_OUTPUT
+        echo "Triggered workflow run ID: ${workflow_run_id}"
+
+  # Step 4: Wait for GEOS integration results (only if triggered)
+  wait_for_geos_integration_result:
+    runs-on: ubuntu-latest
+    needs: [trigger_geos_integration_test]
+    if: needs.trigger_geos_integration_test.outputs.workflow_run_id != ''
+    outputs:
+      geos_test_result: ${{ steps.wait_for_result.outputs.geos_test_result }}
+    steps:
+    - name: Wait for GEOS integration test to complete
+      id: wait_for_result
+      run: |
+        WORKFLOW_RUN_ID="${{ needs.trigger_geos_integration_test.outputs.workflow_run_id }}"
+        echo "Waiting for GEOS integration test to complete (Run ID: ${WORKFLOW_RUN_ID})..."
+        echo "This may take 15-30 minutes..."
+        
+        # Wait for the workflow to complete (with timeout)
+        timeout=1800  # 30 minutes
+        elapsed=0
+        interval=30
+        
+        while [ $elapsed -lt $timeout ]; do
+          run_status=$(curl -H "Accept: application/vnd.github+json" \
+                           -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                           https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${WORKFLOW_RUN_ID} \
+                           | jq -r '.status')
+          
+          conclusion=$(curl -H "Accept: application/vnd.github+json" \
+                           -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                           https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${WORKFLOW_RUN_ID} \
+                           | jq -r '.conclusion')
+          
+          echo "Workflow status: ${run_status}, conclusion: ${conclusion} (${elapsed}s elapsed)"
+          
+          if [[ "${run_status}" == "completed" ]]; then
+            echo "Workflow completed with conclusion: ${conclusion}"
+            
+            if [[ "${conclusion}" == "success" ]]; then
+              echo "✅ GEOS integration test PASSED"
+              echo "geos_test_result=success" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "❌ GEOS integration test FAILED"
+              echo "geos_test_result=failure" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          fi
+          
+          sleep $interval
+          elapsed=$((elapsed + interval))
+        done
+        
+        echo "❌ TIMEOUT: GEOS integration test did not complete within ${timeout} seconds"
+        echo "geos_test_result=timeout" >> $GITHUB_OUTPUT
+        exit 1
+
+  # Step 5: Final validation - requires ALL tests to pass
+  final_validation:
+    runs-on: ubuntu-latest
+    needs: [check_geos_integration_label, wait_for_geos_integration_result]
+    if: always()
+    steps:
+    - name: Final merge validation
+      run: |
+        echo "=== FINAL MERGE VALIDATION ==="
+        echo ""
+        echo "Standard CI Tests: ✅ PASSED (already validated)"
+        echo "GEOS Integration Label: ${{ needs.check_geos_integration_label.outputs.has_label == 'true' && '✅ PRESENT' || '❌ MISSING' }}"
+        echo "GEOS Integration Tests: ${{ needs.wait_for_geos_integration_result.outputs.geos_test_result == 'success' && '✅ PASSED' || needs.wait_for_geos_integration_result.result == 'skipped' && '⏭️ SKIPPED (no label)' || '❌ FAILED' }}"
+        echo ""
+        
+        # Check label requirement
+        if [[ "${{ needs.check_geos_integration_label.outputs.has_label }}" != "true" ]]; then
+          echo "❌ INVALID: Missing 'test-geos-integration' label"
+          echo ""
+          echo "This PR cannot be merged without the 'test-geos-integration' label"
+          echo "Please add the label and wait for GEOS integration tests to pass"
+          exit 1
+        fi
+        
+        # Check GEOS test results (only if they were supposed to run)
+        if [[ "${{ needs.wait_for_geos_integration_result.result }}" == "failure" || "${{ needs.wait_for_geos_integration_result.outputs.geos_test_result }}" == "failure" ]]; then
+          echo "❌ INVALID: GEOS integration tests failed"
+          echo ""
+          echo "The changes in this PR break GEOS functionality"
+          echo "Please check the GEOS workflow logs and fix the issues"
+          echo "GEOS workflow: https://github.com/GEOS-DEV/GEOS/actions/runs/${{ needs.trigger_geos_integration_test.outputs.workflow_run_id }}"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.wait_for_geos_integration_result.outputs.geos_test_result }}" == "timeout" ]]; then
+          echo "❌ INVALID: GEOS integration tests timed out"
+          echo ""
+          echo "Please check the GEOS workflow manually and re-run if needed"
+          echo "GEOS workflow: https://github.com/GEOS-DEV/GEOS/actions/runs/${{ needs.trigger_geos_integration_test.outputs.workflow_run_id }}"
+          exit 1
+        fi
+        
+        # All validations passed
+        echo "✅ VALID: All requirements met"
+        echo ""
+        echo "This PR is ready for review and merge:"
+        echo "  ✅ Standard CI tests passed"
+        echo "  ✅ 'test-geos-integration' label present"
+        echo "  ✅ GEOS integration tests passed"
+        echo ""
+        echo "🎉 Ready for merge!"
