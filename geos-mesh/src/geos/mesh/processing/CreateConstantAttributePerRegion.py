@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from geos.utils.Logger import getLogger, Logger, logging
 from geos.mesh.utils.arrayHelpers import isAttributeInObject, getNumberOfComponents, getArrayInObject, isAttributeGlobal
-from geos.mesh.utils.arrayModifiers import createAttribute, createConstantAttribute, createConstantAttributeDataSet, createConstantAttributeMultiBlock
+from geos.mesh.utils.arrayModifiers import createAttribute, createConstantAttributeDataSet, createConstantAttributeMultiBlock
 
 __doc__ = """
 CreateConstantAttributePerRegion is a vtk filter that allows to create an attribute
@@ -94,7 +94,7 @@ class CreateConstantAttributePerRegion:
         self.regionName: str = regionName
         self.newAttributeName: str = newAttributeName
         self.useDefaultValue: bool = False # Check if the new component have default values (information for the output message) 
-        self.setInfoRegion( dictRegion, valueType )
+        self._setInfoRegion( dictRegion, valueType )
 
         # Logger
         if not speHandler:
@@ -102,6 +102,20 @@ class CreateConstantAttributePerRegion:
         else:
             self.logger: Logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+    
+        
+    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
+        
+        Args:
+            handler (logging.Handler): The handler to add.        
+        """
+        if not self.logger.hasHandlers():
+            self.logger.addHandler( handler )
+        else:
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization." )
 
 
     def applyFilter( self: Self ) -> bool:
@@ -152,7 +166,7 @@ class CreateConstantAttributePerRegion:
                 self.logger.error( f"The filter { self.logger.name } failed.")
                 return False
                 
-            trueIndexes, falseIndexes = self.getTrueIndexesInMultiBlock( self.mesh, onPoints )
+            trueIndexes, falseIndexes = self._getTrueIndexesInMultiBlock( self.mesh, onPoints )
             if len( trueIndexes ) == 0:
                 if len( self.dictRegion.keys() ) == 0:
                     self.logger.warning( "No region indexes entered." )
@@ -172,13 +186,13 @@ class CreateConstantAttributePerRegion:
                     dataSetInput: vtkDataSet = self.mesh.GetBlock( idBlock )
 
                     regionNpArray = getArrayInObject( dataSetInput, self.regionName, onPoints )
-                    npArray = self.createNpArray( regionNpArray )
+                    npArray = self._createNpArray( regionNpArray )
                     if not createAttribute( dataSetInput, npArray, self.newAttributeName, onPoints=onPoints, logger=self.logger ):
                         self.logger.error( f"The filter { self.logger.name } failed.")
                         return False
     
         else:
-            trueIndexes, falseIndexes = self.getTrueIndexesInDataSet( self.mesh, onPoints )
+            trueIndexes, falseIndexes = self._getTrueIndexesInDataSet( self.mesh, onPoints )
             if len( trueIndexes ) == 0:
                 if len( self.dictRegion.keys() ) == 0:
                     self.logger.warning( "No region indexes entered." )
@@ -194,63 +208,31 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning( f"The region indexes { falseIndexes } are not in the region attribute { self.regionName }." )
 
                 regionNpArray = getArrayInObject( self.mesh, self.regionName, onPoints )
-                npArray = self.createNpArray( regionNpArray )
+                npArray = self._createNpArray( regionNpArray )
                 if not createAttribute( self.mesh, npArray, self.newAttributeName, onPoints=onPoints, logger=self.logger ):
                     self.logger.error( f"The filter { self.logger.name } failed.")
                     return False
         
-        # Set the output message.
-        self.logger.info( f"The filter { self.logger.name } succeed." )
-        self.logger.info( f"The new attribute { self.newAttributeName } is created on { piece }." )
-
-        mess: str = self.setOutputMessage( trueIndexes )
-        self.logger.info( mess )
+        # Log the output message.
+        self._logOutputMessage( trueIndexes, piece )
         
         return True
-    
-
-    def setOutputMessage( self: Self, trueIndexes: list[ Any ] ) -> str:
-        """Create the result message of the filter.
-
-        Args:
-            trueIndexes (list[Any]): The list of the region indexes use to create the attribute.
         
-        Returns:
-            message (str): The result message of the filter with the value per region.
-        
-        """
-        mess: str = f"The new attribute { self.newAttributeName } is constant"
-        regionIndexes: list[ Any ] = self.dictRegion.keys()
-        if len( regionIndexes ) == 0 or len( trueIndexes ) == 0:
-            mess = f"{ mess } with the value { self.defaultValue }."
 
-        else:
-            mess = f"{ mess } per region indexes with:"
-            for index in regionIndexes:
-                mess =  f"{ mess } { self.dictRegion[ index ] } for index { index },"
-            
-            if self.useDefaultValue:
-                mess = f"{ mess } and { self.defaultValue } for the other indexes."
-            else:
-                mess = f"{ mess[:-1] }."
-        
-        return mess
-
-
-    def setInfoRegion( self: Self, dictRegion: dict[ Any, Any ], valueType: int ) -> None:
+    def _setInfoRegion( self: Self, dictRegion: dict[ Any, Any ], valueType: int ) -> None:
         """Set attributes self.valueType, self.dictRegion and self.defaultValue.
-        The type of the constant values and the default value are set with value type read with numpy.
+        The type of values and the default value are set with the numpy type given by valueType.
         The default value is set to nan for float data, -1 for int data and 0 for uint data.
 
         Args:
-            dictRegion (dict[Any, Any]): The dictionary with the indexes and its constant value.
+            dictRegion (dict[Any, Any]): The dictionary with the region indexes and its corresponding value.
             valueType (int): The type of the constant value with the VTK typecode.
         """
         # Get the numpy type from the vtk typecode.
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
         self.valueType: type = dictType[ valueType ]
 
-        # Set the correct type of the items to ensure the coherency.
+        # Set the correct type of the values for each region index to ensure the coherency.
         self.dictRegion: dict[ Any, Any ] = dictRegion
         for idRegion in self.dictRegion.keys():
             self.dictRegion[ idRegion ] = self.valueType( self.dictRegion[ idRegion ] )
@@ -267,22 +249,63 @@ class CreateConstantAttributePerRegion:
         elif self.valueType().dtype in ( "uint8", "uint16", "uint32", "uint64" ):
             self.defaultValue = self.valueType( 0 )
     
-        
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the logger of the filter.
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-        
+
+    def _getTrueIndexesInMultiBlock( self: Self, multiBlockDataSet: vtkMultiBlockDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ] ]:
+        """Check for each region index if it is a true index -ie the index is value of the attribute of at least one block, or a false index.
+
         Args:
-            handler (logging.Handler): The handler to add.        
+            dataSet (vtkDataSet): The mesh with the attribute to check.
+            onPoints (bool): True if the attribute is on point, False if it is on cell.
+        
+        Returns:
+            tuple(list[Any], list[Any]): The tuple with the list of the true indexes and the list of the false indexes.
         """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization." )
+        trueIndexes: list[ Any ] = []
+        falseIndexes: list[ Any ] = []
+        nbBlock: int = multiBlockDataSet.GetNumberOfBlocks()
+        # Parse all blocks to get the true indexes of each block.
+        for idBlock in range( nbBlock ):
+            block: vtkDataSet = multiBlockDataSet.GetBlock( idBlock )
+            # Get the true and false indexes of the block.
+            trueIndexesBlock: list[ Any ] = self._getTrueIndexesInDataSet( block, onPoints )[ 0 ]
+            
+            # Keep the new true indexes.
+            for index in trueIndexesBlock:
+                if index not in trueIndexes:
+                    trueIndexes.append( index )
+        
+        # Get the false indexes.
+        for index in self.dictRegion.keys():
+            if index not in trueIndexes:
+                falseIndexes.append( index ) 
+
+        return ( trueIndexes, falseIndexes )
 
 
-    def createNpArray( self: Self, regionNpArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
+    def _getTrueIndexesInDataSet( self: Self, dataSet: vtkDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ] ]:
+        """Check for each region index if it is a true index -ie the index is value of the attribute, or a false index.
+
+        Args:
+            dataSet (vtkDataSet): The mesh with the attribute to check.
+            onPoints (bool): True if the attribute is on point, False if it is on cell.
+        
+        Returns:
+            tuple(list[Any], list[Any]): The tuple with the list of the true indexes and the list of the false indexes.
+        """
+        regionIndexes: list[ Any ] = self.dictRegion.keys()
+        regionNpArray = getArrayInObject( dataSet, self.regionName, onPoints )
+        trueIndexes: list[ Any ] = []
+        falseIndexes: list[ Any ] = []
+        for index in regionIndexes:
+            if index in regionNpArray:
+                trueIndexes.append( index )
+            else:
+                falseIndexes.append( index )
+
+        return ( trueIndexes, falseIndexes )
+
+
+    def _createNpArray( self: Self, regionNpArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
         """Create an array from the input one.
         If the value of the input array is a key of self.dictRegion, the corresponding value of the created array is its item.
         If their is other value, the value self.defaultValue is set and the self.useDefaultValue is set to True.
@@ -304,30 +327,34 @@ class CreateConstantAttributePerRegion:
                 self.useDefaultValue = True
 
         return npArray
-
-
-    def getTrueIndexesInDataSet( self: Self, dataSet: vtkDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ]]:
-        regionIndexes: list[ Any ] = self.dictRegion.keys()
-        regionNpArray = getArrayInObject( dataSet, self.regionName, onPoints )
-        trueIndexes: list[ Any ] = []
-        falseIndexes: list[ Any ] = []
-        for index in regionIndexes:
-            if index in regionNpArray:
-                trueIndexes.append( index )
-            else:
-                falseIndexes.append( index )
-
-        return ( trueIndexes, falseIndexes )
     
 
-    def getTrueIndexesInMultiBlock( self: Self, multiBlockDataSet: vtkMultiBlockDataSet, onPoints: bool ) -> tuple[ list[ Any ], list[ Any ]]:
-        trueIndexes: list[ Any ] = []
-        falseIndexes: list[ Any ] = []
-        nbBlock: int = multiBlockDataSet.GetNumberOfBlocks()
-        for idBlock in range( nbBlock ):
-            dataSetInput: vtkDataSet = multiBlockDataSet.GetBlock( idBlock )
-            trueIndexes.extend( self.getTrueIndexesInDataSet( dataSetInput, onPoints )[ 0 ] ) 
-            falseIndexes.extend( self.getTrueIndexesInDataSet( dataSetInput, onPoints )[ 1 ] )
+    def _logOutputMessage( self: Self, trueIndexes: list[ Any ], piece: str ) -> None:
+        """Create the result message of the filter and output it.
+
+        Args:
+            trueIndexes (list[Any]): The list of the region indexes use to create the attribute.
+            piece (str): The piece where the data is (cell or point).        
+        """
+        # The Filter succeed.
+        self.logger.info( f"The filter { self.logger.name } succeed." )
+
+        # Info about the created attribute.
+        ## The piece where the attribute is created.
+        self.logger.info( f"The new attribute { self.newAttributeName } is created on { piece }." )
+
+        ## The values of the attribute. 
+        mess: str = f"The new attribute { self.newAttributeName } is constant"
+        if len( trueIndexes ) == 0:
+            self.logger.warning( f"{ mess } with the value { self.defaultValue }." )
+
+        else:
+            mess = f"{ mess } per region indexes with:"
+            for index in trueIndexes:
+                mess =  f"{ mess } { self.dictRegion[ index ] } for index { index },"
             
-        return ( list( set( trueIndexes ) ), list( set( falseIndexes ) ) )
+            if self.useDefaultValue:
+                self.logger.warning( f"{ mess } and { self.defaultValue } for the other indexes." )
+            else:
+                self.logger.info( f"{ mess[:-1] }." )
     
