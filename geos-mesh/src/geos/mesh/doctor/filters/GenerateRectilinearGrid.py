@@ -1,13 +1,11 @@
 import numpy.typing as npt
 from typing import Iterable, Sequence
 from typing_extensions import Self
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
 from geos.mesh.doctor.actions.generate_cube import FieldInfo, add_fields, build_coordinates, build_rectilinear_grid
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
-from geos.mesh.io.vtkIO import VtkOutput, write_mesh
+from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorGeneratorFilter
 
 __doc__ = """
 GenerateRectilinearGrid module is a vtk filter that allows to create a simple vtkUnstructuredGrid rectilinear grid.
@@ -56,7 +54,7 @@ To use the filter:
 """
 
 
-class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
+class GenerateRectilinearGrid( BaseMeshDoctorGeneratorFilter ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to generate a simple rectilinear grid.
@@ -73,7 +71,6 @@ class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
         self.m_numberElementsY: Sequence[ int ] = None
         self.m_numberElementsZ: Sequence[ int ] = None
         self.m_fields: Iterable[ FieldInfo ] = list()
-        self.m_logger = setup_logger
 
     def RequestData( self: Self, request: vtkInformation, inInfo: vtkInformationVector,
                      outInfo: vtkInformationVector ) -> int:
@@ -86,27 +83,6 @@ class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
         build_global_ids( output, self.m_generateCellsGlobalIds, self.m_generatePointsGlobalIds )
         opt.ShallowCopy( output )
         return 1
-
-    def SetLogger( self: Self, logger ) -> None:
-        """Set the logger.
-
-        Args:
-            logger
-        """
-        self.m_logger = logger
-        self.Modified()
-
-    def getRectilinearGrid( self: Self ) -> vtkUnstructuredGrid:
-        """Returns a rectilinear grid as a vtkUnstructuredGrid.
-
-        Args:
-            self (Self)
-
-        Returns:
-            vtkUnstructuredGrid
-        """
-        self.Update()  # triggers RequestData
-        return self.GetOutputDataObject( 0 )
 
     def setCoordinates( self: Self, coordsX: Sequence[ float ], coordsY: Sequence[ float ],
                         coordsZ: Sequence[ float ] ) -> None:
@@ -168,18 +144,3 @@ class GenerateRectilinearGrid( VTKPythonAlgorithmBase ):
         self.m_numberElementsY = numberElementsY
         self.m_numberElementsZ = numberElementsZ
         self.Modified()
-
-    def writeGrid( self: Self, filepath: str, is_data_mode_binary: bool = True, canOverwrite: bool = False ) -> None:
-        """Writes a .vtu file of your rectilinear grid at the specified filepath.
-
-        Args:
-            filepath (str): /path/to/your/file.vtu
-            is_data_mode_binary (bool, optional): Writes the file in binary format or ascii. Defaults to True.
-            canOverwrite (bool, optional): Allows or not to overwrite if the filepath already leads to an existing file.
-                                           Defaults to False.
-        """
-        mesh: vtkUnstructuredGrid = self.getRectilinearGrid()
-        if mesh:
-            write_mesh( filepath, VtkOutput( filepath, is_data_mode_binary ), canOverwrite )
-        else:
-            self.m_logger.error( f"No rectilinear grid was built. Cannot output vtkUnstructuredGrid at {filepath}." )

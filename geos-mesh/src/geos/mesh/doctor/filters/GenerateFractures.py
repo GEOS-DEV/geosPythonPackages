@@ -1,13 +1,12 @@
 from typing_extensions import Self
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_fractures import Options, split_mesh_on_fractures
+from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, convert_to_fracture_policy
 from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES,
                                                                   __FRACTURES_DATA_MODE, __FRACTURES_OUTPUT_DIR,
                                                                   __FRACTURES_DATA_MODE_VALUES, __POLICIES, __POLICY )
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 from geos.mesh.utils.arrayHelpers import has_array
 
@@ -36,7 +35,7 @@ POLICIES = __POLICIES
 POLICY = __POLICY
 
 
-class GenerateFractures( VTKPythonAlgorithmBase ):
+class GenerateFractures( BaseMeshDoctorFilter ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to generate a simple rectilinear grid.
@@ -52,41 +51,6 @@ class GenerateFractures( VTKPythonAlgorithmBase ):
         self.m_output_modes_binary: str = { "mesh": DATA_MODE[ 0 ], "fractures": DATA_MODE[ 1 ] }
         self.m_mesh_VtkOutput: VtkOutput = None
         self.m_all_fractures_VtkOutput: list[ VtkOutput ] = None
-        self.m_logger = setup_logger
-
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
-        return 1
-
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
-        return 1
 
     def RequestData(
         self: Self,
@@ -120,15 +84,6 @@ class GenerateFractures( VTKPythonAlgorithmBase ):
             opt_fault.ShallowCopy( fracture_meshes[ i ] )
 
         return 1
-
-    def SetLogger( self: Self, logger ) -> None:
-        """Set the logger.
-
-        Args:
-            logger
-        """
-        self.m_logger = logger
-        self.Modified()
 
     def getAllGrids( self: Self ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
         """Returns the vtkUnstructuredGrid with volumes.
