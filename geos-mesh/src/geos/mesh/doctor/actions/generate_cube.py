@@ -171,7 +171,7 @@ def __build( options: Options ):
     return cube
 
 
-def __action( options: Options ) -> Result:
+def mesh_action( options: Options ) -> Result:
     output_mesh = __build( options )
     write_mesh( output_mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
@@ -179,7 +179,7 @@ def __action( options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     try:
-        return __action( options )
+        return mesh_action( options )
     except BaseException as e:
         setup_logger.error( e )
         return Result( info="Something went wrong." )

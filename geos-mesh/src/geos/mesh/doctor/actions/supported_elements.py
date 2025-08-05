@@ -132,7 +132,7 @@ def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Op
     return [ i for i in result if i > -1 ]
 
 
-def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     unsupported_std_elements_types: set[ int ] = find_unsupported_std_elements_types( mesh )
     unsupported_polyhedron_elements: list[ int ] = find_unsupported_polyhedron_elements( mesh, options )
     return Result( unsupported_std_elements_types=frozenset( unsupported_std_elements_types ),
@@ -141,4 +141,4 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     mesh: vtkUnstructuredGrid = read_mesh( vtk_input_file )
-    return __action( mesh, options )
+    return mesh_action( mesh, options )

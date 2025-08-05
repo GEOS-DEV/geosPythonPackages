@@ -546,7 +546,7 @@ def split_mesh_on_fractures( mesh: vtkUnstructuredGrid,
     return ( output_mesh, fracture_meshes )
 
 
-def __action( mesh, options: Options ) -> Result:
+def mesh_action( mesh, options: Options ) -> Result:
     output_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     write_mesh( output_mesh, options.mesh_VtkOutput )
     for i, fracture_mesh in enumerate( fracture_meshes ):
@@ -564,7 +564,7 @@ def action( vtk_input_file: str, options: Options ) -> Result:
                              " is to split the mesh and then generate global ids for new split meshes." )
             setup_logger.error( err_msg )
             raise ValueError( err_msg )
-        return __action( mesh, options )
+        return mesh_action( mesh, options )
     except BaseException as e:
         setup_logger.error( e )
         return Result( info="Something went wrong" )

@@ -88,7 +88,7 @@ def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str,
     return invalid_cell_ids
 
 
-def __action( mesh, options: Options ) -> Result:
+def mesh_action( mesh, options: Options ) -> Result:
     invalid_cell_ids = get_invalid_cell_ids( mesh, options.min_distance )
     return Result( wrong_number_of_points_elements=invalid_cell_ids[ "wrong_number_of_points_elements" ],
                    intersecting_edges_elements=invalid_cell_ids[ "intersecting_edges_elements" ],
@@ -100,4 +100,4 @@ def __action( mesh, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __action( mesh, options )
+    return mesh_action( mesh, options )

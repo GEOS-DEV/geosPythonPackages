@@ -448,7 +448,7 @@ def find_non_conformal_cells( mesh: vtkUnstructuredGrid, options: Options ) -> l
     return non_conformal_cells
 
 
-def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     """Checks if the mesh is "conformal"
     (i.e. if some of its boundary faces may not be too close to each other without matching nodes).
 
@@ -465,4 +465,4 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     mesh = read_mesh( vtk_input_file )
-    return __action( mesh, options )
+    return mesh_action( mesh, options )

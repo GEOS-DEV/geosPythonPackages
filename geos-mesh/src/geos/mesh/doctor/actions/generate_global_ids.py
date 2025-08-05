@@ -45,7 +45,7 @@ def build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_glo
         mesh.GetCellData().SetGlobalIds( cells_global_ids )
 
 
-def __action( mesh, options: Options ) -> Result:
+def mesh_action( mesh, options: Options ) -> Result:
     build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
     write_mesh( mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
@@ -54,7 +54,7 @@ def __action( mesh, options: Options ) -> Result:
 def action( vtk_input_file: str, options: Options ) -> Result:
     try:
         mesh = read_mesh( vtk_input_file )
-        return __action( mesh, options )
+        return mesh_action( mesh, options )
     except BaseException as e:
         setup_logger.error( e )
         return Result( info="Something went wrong." )

@@ -63,7 +63,7 @@ def find_wrong_support_elements( mesh: vtkPointSet ) -> list[ int ]:
     return wrong_support_elements
 
 
-def __action( mesh: vtkPointSet, options: Options ) -> Result:
+def mesh_action( mesh: vtkPointSet, options: Options ) -> Result:
     collocated_nodes_buckets = find_collocated_nodes_buckets( mesh, options.tolerance )
     wrong_support_elements = find_wrong_support_elements( mesh )
     return Result( nodes_buckets=collocated_nodes_buckets, wrong_support_elements=wrong_support_elements )
@@ -71,4 +71,4 @@ def __action( mesh: vtkPointSet, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     mesh: vtkPointSet = read_mesh( vtk_input_file )
-    return __action( mesh, options )
+    return mesh_action( mesh, options )
