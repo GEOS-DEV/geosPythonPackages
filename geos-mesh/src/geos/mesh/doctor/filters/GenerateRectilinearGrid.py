@@ -61,7 +61,7 @@ class GenerateRectilinearGrid( BaseMeshDoctorGeneratorFilter ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=0, nOutputPorts=1, outputType='vtkUnstructuredGrid' )
+        super().__init__()
         self.m_generateCellsGlobalIds: bool = False
         self.m_generatePointsGlobalIds: bool = False
         self.m_coordsX: Sequence[ float ] = None
