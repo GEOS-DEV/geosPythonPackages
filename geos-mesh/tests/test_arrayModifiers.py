@@ -45,24 +45,21 @@ from geos.mesh.utils import arrayModifiers
 
 
 @pytest.mark.parametrize(
-    "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, value, valueTest, vtkDataTypeTest",
+    "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, listValues, listValuesTest, vtkDataTypeTest",
     [
         # Test fill an attribute on point and on cell.
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.nan, VTK_DOUBLE ),
-        ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, np.nan, np.nan, VTK_DOUBLE ),
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [], [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
+        ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, [], [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
         # Test fill attributes with different number of component.
-        ( 1, "PORO", 1, (), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
-        ( 1, "PERM", 3, ( "AX1", "AX2", "AX3" ), False, np.nan, np.float32( np.nan ), VTK_FLOAT ),
-        # Test fill an attribute with default value.
-        ( 1, "FAULT", 1, (), False, np.nan, np.int32( -1 ), VTK_INT ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.nan, np.int64( -1 ), VTK_ID_TYPE ),
+        ( 1, "PORO", 1, (), False, [], [ np.float32( np.nan ) ], VTK_FLOAT ),
+        # Test fill an attribute with different type of value with default value.
+        ( 1, "FAULT", 1, (), False, [], [ np.int32( -1 ) ], VTK_INT ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, [], [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
         # Test fill an attribute with specified value.
-        ( 1, "PORO", 1, (), False, np.float32( 4 ), np.float32( 4 ), VTK_FLOAT ),
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, 4., np.float64( 4 ), VTK_DOUBLE ),
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, np.float64( 4 ), np.float64( 4 ), VTK_DOUBLE ),
-        ( 1, "FAULT", 1, (), False, np.int32( 4 ), np.int32( 4 ), VTK_INT ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, 4, np.int64( 4 ), VTK_ID_TYPE ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, np.int64( 4 ), np.int64( 4 ), VTK_ID_TYPE ),
+        ( 1, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ], [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
+        ( 1, "FAULT", 1, (), False, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
     ] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
@@ -71,18 +68,18 @@ def test_fillPartialAttributes(
     nbComponentsTest: int,
     componentNamesTest: tuple[ str, ...],
     onPoints: bool,
-    value: Any,
-    valueTest: Any,
+    listValues: list[ Any ],
+    listValuesTest: list[ Any ],
     vtkDataTypeTest: int,
 ) -> None:
     """Test filling a partial attribute from a multiblock with values."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-
+    nbValues: int = len( listValues )
     # Fill the attribute in the multiBlockDataSet.
-    assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints, value )
+    assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints=onPoints, listValues=listValues )
 
     # Get the dataSet where the attribute has been filled.
-    dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+    dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
 
     # Get the filled attribute.
     data: Union[ vtkPointData, vtkCellData ]
@@ -107,13 +104,13 @@ def test_fillPartialAttributes(
     ## Create the constant array test from the value.
     npArrayTest: npt.NDArray[ Any ]
     if nbComponentsTest > 1:
-        npArrayTest = np.array( [ [ valueTest for _ in range( nbComponentsTest ) ] for _ in range( nbElements ) ] )
+        npArrayTest = np.array( [ listValuesTest for _ in range( nbElements ) ] )
     else:
-        npArrayTest = np.array( [ valueTest for _ in range( nbElements ) ] )
+        npArrayTest = np.array( [ listValuesTest[ 0 ] for _ in range( nbElements ) ] )
 
     npArrayFilled: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFilled )
     assert npArrayFilled.dtype == npArrayTest.dtype
-    if np.isnan( value ) and vtkDataTypeTest in ( VTK_FLOAT, VTK_DOUBLE ):
+    if nbValues == 0 and vtkDataTypeTest in ( VTK_FLOAT, VTK_DOUBLE ):
         assert np.isnan( npArrayFilled ).all()
     else:
         assert ( npArrayFilled == npArrayTest ).all()
@@ -133,7 +130,7 @@ def test_FillAllPartialAttributes(
 
     nbBlock: int = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
         attributeExist: int
         for attributeNameOnPoint in [ "PointAttribute", "collocated_nodes" ]:
             attributeExist = dataSet.GetPointData().HasArray( attributeNameOnPoint )
@@ -190,7 +187,7 @@ def test_createConstantAttributeMultiBlock(
 
     nbBlock = multiBlockDataSetTest.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        dataSet: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTest.GetBlock( idBlock ) )
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
         data: Union[ vtkPointData, vtkCellData ]
         data = dataSet.GetPointData() if onPoints else dataSet.GetCellData()
 
@@ -409,8 +406,8 @@ def test_copyAttribute(
     # Parse the two multiBlockDataSet and test if the attribute has been copied.
     nbBlocks: int = multiBlockDataSetFrom.GetNumberOfBlocks()
     for idBlock in range( nbBlocks ):
-        dataSetFrom: vtkDataSet = cast( vtkDataSet, multiBlockDataSetFrom.GetBlock( idBlock ) )
-        dataSetTo: vtkDataSet = cast( vtkDataSet, multiBlockDataSetTo.GetBlock( idBlock ) )
+        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetBlock( idBlock ) )
+        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetBlock( idBlock ) )
         dataFrom: Union[ vtkPointData, vtkCellData ]
         dataTo: Union[ vtkPointData, vtkCellData ]
         if onPoints:
@@ -494,7 +491,7 @@ def test_renameAttributeMultiblock(
         newAttributeName,
         onPoints,
     )
-    block: vtkDataSet = cast( vtkDataSet, vtkMultiBlockDataSetTest.GetBlock( 0 ) )
+    block: vtkDataSet = vtkDataSet.SafeDownCast( vtkMultiBlockDataSetTest.GetBlock( 0 ) )
     data: Union[ vtkPointData, vtkCellData ]
     if onPoints:
         data = block.GetPointData()
