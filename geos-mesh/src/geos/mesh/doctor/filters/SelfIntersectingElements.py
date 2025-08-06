@@ -5,7 +5,7 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.self_intersecting_elements import get_invalid_cell_ids
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 
 __doc__ = """
@@ -25,7 +25,7 @@ To use the filter:
 """
 
 
-class SelfIntersectingElements( BaseMeshDoctorFilter ):
+class SelfIntersectingElements( MeshDoctorBase ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to find invalid elements of a vtkUnstructuredGrid.

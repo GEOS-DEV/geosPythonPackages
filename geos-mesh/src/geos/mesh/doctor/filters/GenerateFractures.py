@@ -2,7 +2,7 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_fractures import Options, split_mesh_on_fractures
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, convert_to_fracture_policy
 from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES,
                                                                   __FRACTURES_DATA_MODE, __FRACTURES_OUTPUT_DIR,
@@ -35,7 +35,7 @@ POLICIES = __POLICIES
 POLICY = __POLICY
 
 
-class GenerateFractures( BaseMeshDoctorFilter ):
+class GenerateFractures( MeshDoctorBase ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to generate a simple rectilinear grid.

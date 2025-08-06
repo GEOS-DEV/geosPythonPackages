@@ -5,7 +5,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
 ElementVolumes module is a vtk filter that allows to calculate the volumes of every elements in a vtkUnstructuredGrid.
@@ -24,7 +24,7 @@ To use the filter:
 """
 
 
-class ElementVolumes( BaseMeshDoctorFilter ):
+class ElementVolumes( MeshDoctorBase ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to calculate the volume of every element of a vtkUnstructuredGrid.

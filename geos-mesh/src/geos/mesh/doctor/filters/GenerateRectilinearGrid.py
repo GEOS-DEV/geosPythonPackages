@@ -5,7 +5,7 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
 from geos.mesh.doctor.actions.generate_cube import FieldInfo, add_fields, build_coordinates, build_rectilinear_grid
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorGeneratorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorGenerator
 
 __doc__ = """
 GenerateRectilinearGrid module is a vtk filter that allows to create a simple vtkUnstructuredGrid rectilinear grid.
@@ -54,7 +54,7 @@ To use the filter:
 """
 
 
-class GenerateRectilinearGrid( BaseMeshDoctorGeneratorFilter ):
+class GenerateRectilinearGrid( MeshDoctorGenerator ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to generate a simple rectilinear grid.

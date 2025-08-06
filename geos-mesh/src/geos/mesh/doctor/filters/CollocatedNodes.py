@@ -5,7 +5,7 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.collocated_nodes import find_collocated_nodes_buckets, find_wrong_support_elements
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
 CollocatedNodes module is a vtk filter that allows to find the duplicated nodes of a vtkUnstructuredGrid.
@@ -24,7 +24,7 @@ To use the filter:
 """
 
 
-class CollocatedNodes( BaseMeshDoctorFilter ):
+class CollocatedNodes( MeshDoctorBase ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to find the duplicated nodes of a vtkUnstructuredGrid.

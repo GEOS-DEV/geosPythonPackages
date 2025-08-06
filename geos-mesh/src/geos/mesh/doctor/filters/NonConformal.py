@@ -5,7 +5,7 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.non_conformal import Options, find_non_conformal_cells
-from geos.mesh.doctor.filters.BaseMeshDoctorFilter import BaseMeshDoctorFilter
+from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
 NonConformal module is a vtk filter that ... of a vtkUnstructuredGrid.
@@ -24,7 +24,7 @@ To use the filter:
 """
 
 
-class NonConformal( BaseMeshDoctorFilter ):
+class NonConformal( MeshDoctorBase ):
 
     def __init__( self: Self ) -> None:
         """Vtk filter to ... of a vtkUnstructuredGrid.
