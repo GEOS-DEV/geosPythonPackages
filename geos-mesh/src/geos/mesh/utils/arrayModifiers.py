@@ -134,17 +134,17 @@ def fillPartialAttributes(
     values: list[ Any ] = [ value for _ in range( nbComponents ) ]
 
     # Parse the multiBlockDataSet to create and fill the attribute on blocks where it is not.
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( multiBlockDataSet )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( multiBlockDataSet )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ) and \
            not createConstantAttributeDataSet( dataSet, values, attributeName, componentNames, onPoints, vtkDataType, logger ):
             return False
 
-        iter.GoToNextItem()
+        iterator.GoToNextItem()
 
     return True
 
@@ -320,17 +320,17 @@ def createConstantAttributeMultiBlock(
         )
 
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( multiBlockDataSet )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( multiBlockDataSet )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
         if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints,
                                                vtkDataType, logger ):
             return False
 
-        iter.GoToNextItem()
+        iterator.GoToNextItem()
 
     return True
 
@@ -722,14 +722,14 @@ def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], 
     ret: int = 1
     if isinstance( mesh, vtkMultiBlockDataSet ):
         # initialize data object tree iterator
-        iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-        iter.SetDataSet( mesh )
-        iter.VisitOnlyLeavesOn()
-        iter.GoToFirstItem()
-        while iter.GetCurrentDataObject() is not None:
-            block: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+        iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+        iterator.SetDataSet( mesh )
+        iterator.VisitOnlyLeavesOn()
+        iterator.GoToFirstItem()
+        while iterator.GetCurrentDataObject() is not None:
+            block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
             ret *= int( doCreateCellCenterAttribute( block, cellCenterAttributeName ) )
-            iter.GoToNextItem()
+            iterator.GoToNextItem()
     elif isinstance( mesh, vtkDataSet ):
         ret = int( doCreateCellCenterAttribute( mesh, cellCenterAttributeName ) )
     else:
