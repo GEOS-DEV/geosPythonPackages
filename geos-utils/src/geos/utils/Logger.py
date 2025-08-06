@@ -11,6 +11,14 @@ Logger module manages logging tools.
 Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
 """
 
+class CountWarningHandler( logging.Handler ):
+    def __init__( self: Self ):
+        super().__init__()
+        self.warningCount = 0
+    
+    def emit( self: Self, record: logging.LogRecord ):
+        if record.levelno == logging.WARNING:
+            self.warningCount += 1
 
 # Add the convenience method for the logger
 def results( self: logging.Logger, message: str, *args: Any, **kws: Any ) -> None:
@@ -49,7 +57,7 @@ Logger = logging.Logger  # logger type
 class CustomLoggerFormatter( logging.Formatter ):
     """Custom formatter for the logger.
 
-    .. WARNING:: Colors do not work in the ouput message window of Paraview.
+    .. WARNING:: Colors do not work in the output message window of Paraview.
 
     To use it:
 
@@ -151,7 +159,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
         # module import
         import Logger
 
-        # logger instanciation
+        # logger instantiation
         logger :Logger.Logger = Logger.getLogger("My application")
 
         # logger use
