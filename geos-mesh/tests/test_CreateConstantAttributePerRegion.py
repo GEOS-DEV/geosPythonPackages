@@ -6,35 +6,77 @@
 # mypy: disable-error-code="operator"
 import pytest
 from typing import Union, Any
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
 
-from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, getArrayInObject, vnp, np
 
-@pytest.mark.parametrize( "mesh, regionName, newAttributeName, dictRegion, valueType", [
-    ( "dataset", "FAULT", "newAttribute", { 0: 0, 100: 1 }, 10 )
+@pytest.mark.parametrize( "mesh, newAttributeName, regionName, dictRegion, componentNames, componentNamesTest, valueNpType, succeed", [
+    # Test the name of the new attribute (new on the mesh, one present on the other piece).
+    ## For vtkDataSet.
+    ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+    ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+    ## For vtkMultiBlockDataSet.
+    ( "multiblock", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+    ( "multiblock", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+    ( "multiblock", "GLOBAL_IDS_CELLS", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+    # Test if the region attribute is on cells or on points.
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float32, True ),
+    # Test the component name.
+    ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), (), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), ( "Component0", "Component1" ), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), ( "Component0", "Component1" ), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, ( "X" , "Y" ), ( "X" , "Y" ), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, ( "X" , "Y", "Z" ), ( "X" , "Y" ), np.float32, True ),
+    # Test the type of value.
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int8, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int16, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int64, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint8, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint16, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint32, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint64, True ),
+    ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float64, True ),
+    # Test index/value.
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0 ], 100: [ 1 ] }, (), (), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0 ], 100: [ 1 ], 101: [ 2 ] }, (), (), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0 ], 100: [ 1 ], 101: [ 2 ], 2: [ 3 ] }, (), (), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0, 0 ], 100: [ 1, 1 ] }, (), ( "Component0", "Component1" ), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0, 0 ], 100: [ 1, 1 ], 101: [ 2, 2 ] }, (), ( "Component0", "Component1" ), np.float32, True ),
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0, 0 ], 100: [ 1, 1 ], 101: [ 2, 2 ], 2: [ 3, 3 ] }, (), ( "Component0", "Component1" ), np.float32, True ),
+    # Test common error.
+    ## Number of components.
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0 ], 100: [ 1, 1 ] }, (), (), np.float32, False ), # Number of value inconsistent.
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0, 0 ], 100: [ 1, 1 ] }, (), (), np.float32, False ), # More values than components.
+    ( "dataset", "newAttribute", "FAULT", { 0: [ 0 ], 100: [ 1 ] }, ( "X" , "Y" ), ( "X" , "Y" ), np.float32, False ), # More components than value.
+    ## Attribute name.
+    ( "dataset", "PERM", "FAULT", {}, (), (), np.float32, False ), # The attribute name already exist.
+    ## Region attribute.
+    ( "dataset", "newAttribute", "PERM", {}, (), (), np.float32, False ), # Region attribute has too many components.
+    ( "multiblock", "newAttribute", "FAULT", {}, (), (), np.float32, False ), # Region attribute is partial.
 ] )
 def test_CreateConstantAttributePerRegion(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     mesh: str,
-    regionName: str,
     newAttributeName: str,
+    regionName: str,
     dictRegion: dict[ Any, Any ],
-    valueType: int,
+    componentNames: tuple[ str, ... ],
+    componentNamesTest: tuple[ str, ... ],
+    valueNpType: int,
+    succeed: bool,
 ) -> None:
     input_mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( mesh )
+    nbComponents: int = len( componentNamesTest )
+    if nbComponents == 0:
+        nbComponents += 1
     filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( input_mesh,
                                                                                  regionName,
-                                                                                 newAttributeName,
                                                                                  dictRegion,
-                                                                                 valueType,
+                                                                                 newAttributeName,
+                                                                                 nbComponents=nbComponents,
+                                                                                 componentNames=componentNames,
+                                                                                 valueNpType=valueNpType,
                                                                                  )
-    filter.applyFilter()
 
-    #meshFiltered: Union[ vtkMultiBlockDataSet, vtkDataSet ] = filter.mesh
-
-    if isinstance( input_mesh, vtkMultiBlockDataSet ):
-        assert 1 == 1
-    
-    else:
-        assert input_mesh.GetCellData().HasArray( newAttributeName ) == 1
-
+    assert filter.applyFilter() == succeed
