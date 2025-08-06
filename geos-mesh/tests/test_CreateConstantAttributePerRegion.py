@@ -8,9 +8,9 @@ import pytest
 from typing import Union, Any
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
 
-from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, getArrayInObject, vnp, np
+from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, np
 
-@pytest.mark.parametrize( "mesh, newAttributeName, regionName, dictRegion, componentNames, componentNamesTest, valueNpType, succeed", [
+@pytest.mark.parametrize( "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType, succeed", [
     # Test the name of the new attribute (new on the mesh, one present on the other piece).
     ## For vtkDataSet.
     ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
@@ -57,26 +57,27 @@ from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstant
 ] )
 def test_CreateConstantAttributePerRegion(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
-    mesh: str,
+    meshType: str,
     newAttributeName: str,
     regionName: str,
-    dictRegion: dict[ Any, Any ],
+    dictRegionValues: dict[ Any, Any ],
     componentNames: tuple[ str, ... ],
     componentNamesTest: tuple[ str, ... ],
     valueNpType: int,
     succeed: bool,
 ) -> None:
-    input_mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( mesh )
+    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
     nbComponents: int = len( componentNamesTest )
-    if nbComponents == 0:
+    if nbComponents == 0: # If one component their is no name.
         nbComponents += 1
-    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( input_mesh,
+    
+    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( mesh,
                                                                                  regionName,
-                                                                                 dictRegion,
+                                                                                 dictRegionValues,
                                                                                  newAttributeName,
+                                                                                 valueNpType=valueNpType,
                                                                                  nbComponents=nbComponents,
                                                                                  componentNames=componentNames,
-                                                                                 valueNpType=valueNpType,
                                                                                  )
 
     assert filter.applyFilter() == succeed

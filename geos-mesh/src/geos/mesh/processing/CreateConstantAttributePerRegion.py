@@ -256,7 +256,7 @@ class CreateConstantAttributePerRegion:
         
 
     def _setInfoRegion( self: Self ) -> None:
-        """Update self.dictRegion and set self.defaultValue.
+        """Update self.dictRegionValues and set self.defaultValue.
         Values and default value type are set with the numpy type given by self.valueNpType.
         Default value is set to nan for float data, -1 for int data and 0 for uint data.
         """
@@ -308,7 +308,7 @@ class CreateConstantAttributePerRegion:
                     trueIndexes.append( index )
         
         # Get the false indexes.
-        for index in self.dictRegion:
+        for index in self.dictRegionValues:
             if index not in trueIndexes:
                 falseIndexes.append( index ) 
 
