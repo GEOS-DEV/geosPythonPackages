@@ -163,6 +163,7 @@ jobs:
           echo "1. Go to your PR page"
           echo "2. Click on 'Labels' in the right sidebar" 
           echo "3. Add the 'test-geos-integration' label"
+          exit 1
         fi
 
   # Step 3: Only trigger GEOS integration if label exists AND standard tests passed
