@@ -4,7 +4,7 @@ Processing filters
 The `processing` module of `geos-mesh` package contains filters to process meshes.
 
 geos.mesh.processing.CreateConstantAttributePerRegion filter
---------------------------------------
+-------------------------------------------------------------
 
 .. automodule:: geos.mesh.processing.CreateConstantAttributePerRegion
     :members:
