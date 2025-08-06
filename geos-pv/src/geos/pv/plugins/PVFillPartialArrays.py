@@ -21,7 +21,7 @@ from vtkmodules.vtkCommonCore import (
 )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -61,11 +61,11 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                           inputType="vtkMultiBlockDataSet",
                           outputType="vtkMultiBlockDataSet" )
 
-        # Initialisation of an empty list of the attribute's name
+        # initialization of an empty list of the attribute's name
         self._clearSelectedAttributeMulti: bool = True
         self._attributesNameList: list[ str ] = []
 
-        # Initialisation of the value (nan) to fill in the partial attributes
+        # initialization of the value (nan) to fill in the partial attributes
         self._valueToFill: float = np.nan
 
     @smproperty.stringvector(
