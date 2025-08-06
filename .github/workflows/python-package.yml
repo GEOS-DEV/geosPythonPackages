@@ -127,6 +127,8 @@ jobs:
   check_geos_integration_label:
     runs-on: ubuntu-latest
     needs: [validate_standard_ci]
+    permissions:
+      pull-requests: read
     outputs:
       should_test_geos: ${{ steps.check_label.outputs.should_test_geos }}
       has_label: ${{ steps.check_label.outputs.has_label }}
@@ -167,17 +169,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check_geos_integration_label]
     if: needs.check_geos_integration_label.outputs.should_test_geos == 'true'
+    permissions:
+      pull-requests: read
     outputs:
       workflow_run_id: ${{ steps.trigger_workflow.outputs.workflow_run_id }}
     steps:
     - name: Get PR information
       id: pr_info
       run: |
+        set -e # Exit immediately if a command exits with a non-zero status.
         echo "Triggering GEOS integration test..."
-        pr_json=$(curl -H "Accept: application/vnd.github+json" \
+        pr_json=$(curl -fsSL -H "Accept: application/vnd.github+json" \
                        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                       https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+                       "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}")
         
+        LABELS=$(echo "${pr_json}" | jq -r '[.labels[].name] | join(",")')
         PR_HEAD_REPO=$(echo ${pr_json} | jq -r '.head.repo.clone_url')
         PR_HEAD_BRANCH=$(echo ${pr_json} | jq -r '.head.ref')
         PR_HEAD_SHA=$(echo ${pr_json} | jq -r '.head.sha')
