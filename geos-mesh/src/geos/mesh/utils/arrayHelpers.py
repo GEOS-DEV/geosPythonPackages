@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 import vtkmodules.util.numpy_support as vnp
-from typing import Optional, Union, Any, cast
+from typing import Optional, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
@@ -568,35 +568,7 @@ def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ..
 
         if len( array.shape ) > 1:
             for i in range( array.shape[ 1 ] ):
-                data[ attributeName + f"_{i}" ] = array[ :, i ]
-            data.drop( columns=[ attributeName ], inplace=True )
-        else:
-            data[ attributeName ] = array
-    return data
-
-
-def AsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFrame:
-    """Get attribute values from input surface.
-
-    Args:
-        surface (vtkPolyData): Mesh where to get attribute values.
-        attributeNames (tuple[str,...]): Tuple of attribute names to get the values.
-
-    Returns:
-        pd.DataFrame: DataFrame containing property names as columns.
-
-    """
-    nbRows: int = surface.GetNumberOfCells()
-    data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
-    for attributeName in attributeNames:
-        if not isAttributeInObject( surface, attributeName, False ):
-            logging.warning( f"Attribute {attributeName} is not in the mesh." )
-            continue
-        array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
-
-        if len( array.shape ) > 1:
-            for i in range( array.shape[ 1 ] ):
-                data[ attributeName + f"_{i}" ] = array[ :, i ]
+                data[ attributeName + f"_{ i }" ] = array[ :, i ]
             data.drop( columns=[ attributeName ], inplace=True )
         else:
             data[ attributeName ] = array
