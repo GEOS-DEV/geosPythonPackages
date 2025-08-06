@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 from typing_extensions import Self
 
-import numpy as np
-
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 ) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
@@ -64,7 +62,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                           inputType="vtkMultiBlockDataSet",
                           outputType="vtkMultiBlockDataSet" )
 
-        self._clearDictAttributesValues: bool = True
+        self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, str ] = {}
 
 
@@ -165,6 +163,6 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         
         filter.applyFilter()
 
-        self._clearDictAttributesValues = True
+        self.clearDictAttributesValues = True
 
         return 1

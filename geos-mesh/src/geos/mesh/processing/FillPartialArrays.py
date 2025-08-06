@@ -5,7 +5,8 @@
 from typing_extensions import Self
 from typing import Union, Any
 
-from geos.utils.Logger import logging, Logger, getLogger, CountWarningHandler
+from geos.utils.Logger import logging, Logger, getLogger
+#, CountWarningHandler
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import (
     getNumberOfComponents,
@@ -76,9 +77,9 @@ class FillPartialArrays:
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Any ] = dictAttributesValues
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
+        # # Warnings counter.
+        # self.counter: CountWarningHandler = CountWarningHandler()
+        # self.counter.setLevel( logging.INFO )
 
         # Logger.
         if not speHandler:
@@ -112,7 +113,7 @@ class FillPartialArrays:
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
+        #self.logger.addHandler( self.counter )
 
         for attributeName in self.dictAttributesValues:
             # cell and point arrays
@@ -129,8 +130,7 @@ class FillPartialArrays:
                 self.logger.error( f"The filter { self.logger.name } failed.")
                 return False
         
-            nbComponents: int = getNumberOfComponents( self.multiBlockDataSet, attributeName, self.onPoints )
-            if not fillPartialAttributes( self.multiBlockDataSet, attributeName, nbComponents, self.onPoints, self.dictAttributesValues[ attributeName ] ):
+            if not fillPartialAttributes( self.multiBlockDataSet, attributeName, onPoints=self.onPoints, listValues=self.dictAttributesValues[ attributeName ], logger=self.logger ):
                 self.logger.error( f"The filter { self.logger.name } failed.")
                 return False
             
