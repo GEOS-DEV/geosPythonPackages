@@ -10,7 +10,10 @@ import numpy as np
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
+) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
@@ -55,86 +58,54 @@ To use it:
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
-        """Map the properties of a server mesh to a client mesh."""
+        """Fill a partial attribute with constant value per component."""
         super().__init__( nInputPorts=1,
                           nOutputPorts=1,
                           inputType="vtkMultiBlockDataSet",
                           outputType="vtkMultiBlockDataSet" )
 
-        # initialization of an empty list of the attribute's name
-        self._clearSelectedAttributeMulti: bool = True
-        self._attributesNameList: list[ str ] = []
+        self._clearDictAttributesValues: bool = True
+        self.dictAttributesValues: dict[ str, str ] = {}
 
-        # initialization of the value (nan) to fill in the partial attributes
-        self._valueToFill: float = np.nan
 
-    @smproperty.stringvector(
-        name="SelectMultipleAttribute",
-        label="Select Attributes to fill",
-        repeat_command=1,
-        number_of_elements_per_command="1",
-        element_types="2",
-        default_values="N/A",
-        panel_visibility="default",
-    )
-    @smdomain.xml( """
-                <ArrayListDomain
-                    name="array_list"
-                    attribute_type="Vectors"
-                    input_domain_name="cells_vector_array">
-                    <RequiredProperties>
-                        <Property name="Input" function="Input"/>
-                    </RequiredProperties>
-                </ArrayListDomain>
-                <Documentation>
-                    Select all the attributes to fill. If several attributes
-                    are selected, they will be filled with the same value.
-                </Documentation>
-                <Hints>
-                    <NoDefault />
-                </Hints>
-                  """ )
-    def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
-        """Set the list of the names of the selected attributes to fill.
+    @smproperty.xml("""
+        <StringVectorProperty
+            name="AttributeTable"
+            number_of_elements="2"
+            command="_setDictAttributesValues"
+            repeat_command="1"
+            number_of_elements_per_command="2">
+            <Documentation>
+                Set the filling values for each partial attribute, use a coma between the value of each components:\n
+                    attributeName | fillingValueComponent1 fillingValueComponent2 ...\n
+                To fill the attribute with the default value, live a blanc. The default value is:\n
+                    0 for uint type, -1 for int type and nan for float type.
+            </Documentation>     
+            <Hints>
+                <AllowRestoreDefaults />
+                <ShowComponentLabels>
+                    <ComponentLabel component="0" label="Attribute name"/>
+                    <ComponentLabel component="1" label="Filling values"/>
+                </ShowComponentLabels>
+            </Hints>
+        </StringVectorProperty>
+    """ )
+    def _setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
+        """Set the the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
-            name (str): Input value
+            attributeName (str): Name of the attribute to consider.
+            values (str): List of the filing values. If multiple components use a coma between the value of each component.
         """
-        if self._clearSelectedAttributeMulti:
-            self._attributesNameList.clear()
-            self._clearSelectedAttributeMulti = False
-
-        if name != "N/A":
-            self._attributesNameList.append( name )
-            self.Modified()
-
-    @smproperty.stringvector(
-        name="StringSingle",
-        label="Value to fill",
-        number_of_elements="1",
-        default_values="nan",
-        panel_visibility="default",
-    )
-    @smdomain.xml( """
-                <Documentation>
-                    Enter the value to fill in the partial attributes. The
-                    default value is nan
-                </Documentation>
-                  """ )
-    def a01StringSingle( self: Self, value: str ) -> None:
-        """Set the value to fill in the attributes.
-
-        Args:
-            value (str): Input
-        """
-        assert value is not None, "Enter a number or nan"
-        assert "," not in value, "Use '.' not ',' for decimal numbers"
-
-        value_float: float
-        value_float = np.nan if value.lower() == "nan" else float( value )
-
-        if value_float != self._valueToFill:
-            self._valueToFill = value_float
+        if self.clearDictAttributesValues:
+            self.dictAttributesValues = {}
+            self.clearDictAttributesValues = False
+        
+        if attributeName is not None and values is not None :
+            self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
+        elif attributeName is not None and values is None:
+            self.dictAttributesValues[ attributeName ] = []
+ 
         self.Modified()
 
     def RequestDataObject(
@@ -182,12 +153,18 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        filter: FillPartialArrays = FillPartialArrays()
-        filter._SetAttributesNameList( self._attributesNameList )
-        filter._SetValueToFill( self._valueToFill )
-        filter.SetInputDataObject( inputMesh )
-        filter.Update()
-        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        outputMesh.ShallowCopy( inputMesh )
 
-        self._clearSelectedAttributeMulti = True
+        filter: FillPartialArrays = FillPartialArrays( outputMesh,
+                                                       self.dictAttributesValues, 
+                                                       True,
+        )
+        
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+        
+        filter.applyFilter()
+
+        self._clearDictAttributesValues = True
+
         return 1
