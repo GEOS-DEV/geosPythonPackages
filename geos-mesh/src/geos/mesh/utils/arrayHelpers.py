@@ -37,7 +37,7 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
         bool: True if at least one array is found, else False.
     """
     # Check the cell data fields
-    data: vtkFieldData | None
+    data: Union[ vtkFieldData, None ]
     for data in ( mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData() ):
         if data is None:
             continue  # type: ignore[unreachable]
@@ -63,7 +63,7 @@ def getFieldType( data: vtkFieldData ) -> str:
         str: "vtkFieldData", "vtkCellData" or "vtkPointData"
     """
     if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
+        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
     if data.IsA( "vtkCellData" ):
         return "vtkCellData"
     elif data.IsA( "vtkPointData" ):
@@ -82,7 +82,7 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
         list[str]: The array names in the order that they are stored in the field data.
     """
     if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{data}' entered is not a vtkFieldData object." )
+        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 
@@ -98,7 +98,7 @@ def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
     """
     if data.HasArray( name ):
         return data.GetArray( name )
-    logging.warning( f"No array named '{name}' was found in '{data}'." )
+    logging.warning( f"No array named '{ name }' was found in '{ data }'." )
     return None
 
 
@@ -134,14 +134,14 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: vtkCellData | vtkPointData, name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
+def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ], name: str, sorted: bool = False ) -> Optional[ npt.NDArray ]:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
     no reordering will be perform.
 
     Args:
-        data (vtkCellData | vtkPointData): Vtk field data.
+        data (Union[vtkCellData, vtkPointData]): Vtk field data.
         name (str): Array name to sort.
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
@@ -216,18 +216,18 @@ def getAttributesFromMultiBlockDataSet( object: Union[ vtkMultiBlockDataSet, vtk
     """
     attributes: dict[ str, int ] = {}
     # initialize data object tree iterator
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( object )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( object )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
         blockAttributes: dict[ str, int ] = getAttributesFromDataSet( dataSet, onPoints )
         for attributeName, nbComponents in blockAttributes.items():
             if attributeName not in attributes:
                 attributes[ attributeName ] = nbComponents
 
-        iter.GoToNextItem()
+        iterator.GoToNextItem()
     return attributes
 
 
@@ -293,15 +293,15 @@ def isAttributeInObjectMultiBlockDataSet( object: vtkMultiBlockDataSet, attribut
     Returns:
         bool: True if the attribute is in the table, False otherwise.
     """
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( object )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( object )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
         if isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return True
-        iter.GoToNextItem()
+        iterator.GoToNextItem()
     return False
 
 
@@ -324,7 +324,7 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     else:
         data = object.GetCellData()
         sup = "Cell"
-    assert data is not None, f"{sup} data was not recovered."
+    assert data is not None, f"{ sup } data was not recovered."
     return bool( data.HasArray( attributeName ) )
 
 
@@ -342,7 +342,7 @@ def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoint
     isOnBlock: bool
     nbBlock: int = object.GetNumberOfBlocks()
     for idBlock in range( nbBlock ):
-        block: vtkDataSet = cast( vtkDataSet, object.GetBlock( idBlock ) )
+        block: vtkDataSet = vtkDataSet.SafeDownCast( object.GetBlock( idBlock ) )
         isOnBlock = isAttributeInObjectDataSet( block, attributeName, onPoints )
         if not isOnBlock:
             return False
@@ -396,7 +396,7 @@ def getVtkArrayTypeInMultiBlock( multiBlockDataSet: vtkMultiBlockDataSet, attrib
     """
     nbBlocks = multiBlockDataSet.GetNumberOfBlocks()
     for idBlock in range( nbBlocks ):
-        object: vtkDataSet = cast( vtkDataSet, multiBlockDataSet.GetBlock( idBlock ) )
+        object: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetBlock( idBlock ) )
         listAttributes: set[ str ] = getAttributeSet( object, onPoints )
         if attributeName in listAttributes:
             return getVtkArrayTypeInObject( object, attributeName, onPoints )
@@ -475,7 +475,7 @@ def getNumberOfComponentsMultiBlock(
     """
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
     for blockIndex in elementaryBlockIndexes:
-        block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )
+        block: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( dataSet, blockIndex ) )
         if isAttributeInObject( block, attributeName, onPoints ):
             array: vtkDataArray = getVtkArrayInObject( block, attributeName, onPoints )
             return array.GetNumberOfComponents()
@@ -541,7 +541,7 @@ def getComponentNamesMultiBlock(
     """
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( dataSet )
     for blockIndex in elementaryBlockIndexes:
-        block: vtkDataSet = cast( vtkDataSet, getBlockFromFlatIndex( dataSet, blockIndex ) )
+        block: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( dataSet, blockIndex ) )
         if isAttributeInObject( block, attributeName, onPoints ):
             return getComponentNamesDataSet( block, attributeName, onPoints )
     return ()
