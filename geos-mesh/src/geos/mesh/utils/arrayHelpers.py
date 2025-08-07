@@ -368,7 +368,8 @@ def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -
     return npArray
 
 
-def getVtkDataTypeInObject( object: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str, onPoints: bool ) -> int:
+def getVtkDataTypeInObject( object: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
+                            onPoints: bool ) -> int:
     """Return VTK type of requested array from input mesh.
 
     Args:

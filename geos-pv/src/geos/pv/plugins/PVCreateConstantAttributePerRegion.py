@@ -10,10 +10,10 @@ from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     smdomain, smhint, smproperty, smproxy,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -24,7 +24,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkDataSet,
 )
-
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -53,6 +52,7 @@ To use it:
 
 """
 
+
 @smproxy.filter(
     name="PVCreateConstantAttributePerRegion",
     label="Create Constant Attribute Per Region",
@@ -67,11 +67,8 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Create an attribute with constant value per region."""
-        super().__init__( nInputPorts=1,
-                          nOutputPorts=1,
-                          inputType="vtkDataObject",
-                          outputType="vtkDataObject" )
-        
+        super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkDataObject", outputType="vtkDataObject" )
+
         self.clearDictRegionValues: bool = True
 
         # Region attribute settings.
@@ -82,12 +79,11 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.newAttributeName: str = "newAttribute"
         self.valueNpType: type = np.float32
         self.nbComponents: int = 1
-        self.componentNames: tuple[ str, ... ] = ()
+        self.componentNames: tuple[ str, ...] = ()
 
         # Use the handler of paraview for the log.
         self.speHandler: bool = True
 
-    
     # Settings of the attribute with the region indexes:
     @smproperty.stringvector(
         name="ChooseRegionAttribute",
@@ -96,7 +92,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         number_of_elements="1",
         element_types="2",
     )
-    @smdomain.xml("""
+    @smdomain.xml( """
         <ArrayListDomain
             name="array_list"
             attribute_type="Scalars"
@@ -114,27 +110,26 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
     """ )
     def _setRegionAttributeName( self: Self, regionName: str ) -> None:
         """Set region attribute name.
-        
+
         Args:
             regionName (str): The name of the attribute to consider as the region attribute.
         """
         self.regionName = regionName
         self.Modified()
 
-
-    @smproperty.xml("""
+    @smproperty.xml( """
         <StringVectorProperty
-            name="AttributeTable"
+            name="SetDictRegionValues"
             number_of_elements="2"
             command="_setDictRegionValues"
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
-                Set the value of the new attribute for each region indexes, use a space between the value of each components:\n
-                    valueRegionIndex | valueComponent1 valueComponent2 ...\n
+                Set the value of the new attribute for each region indexes, use a coma between the value of each components:\n
+                    valueRegionIndex : valueComponent1, valueComponent2 ...\n
                 If the region attribute has other indexes than those given, a default value is use:\n
                     0 for uint type, -1 for int type and nan for float type.
-            </Documentation>     
+            </Documentation>
             <Hints>
                 <AllowRestoreDefaults />
                 <ShowComponentLabels>
@@ -154,24 +149,23 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         if self.clearDictRegionValues:
             self.dictRegionValues = {}
             self.clearDictRegionValues = False
-        
-        if regionIndex != None and value != None :
+
+        if regionIndex is not None and value is not None:
             self.dictRegionValues[ regionIndex ] = list( value.split( "," ) )
- 
+
         self.Modified()
 
-
     @smproperty.xml( """
-        <PropertyGroup 
+        <PropertyGroup
             label="Settings of the attribute with the region indexes"
             panel_visibility="default">
             <Property name="ChooseRegionAttribute"/>
-            <Property name="AttributeTable"/>
-        </PropertyGroup>""" )
+            <Property name="SetDictRegionValues"/>
+        </PropertyGroup>
+    """ )
     def _groupeRegionAttributeSettingsWidgets( self: Self ) -> None:
         """Group the widgets to set the settings of the region attribute."""
         self.Modified()
-
 
     # Settings of the new attribute:
     @smproperty.xml( """
@@ -194,7 +188,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """
         self.newAttributeName = newAttributeName
         self.Modified()
-
 
     @smproperty.intvector(
         name="ValueType",
@@ -227,9 +220,8 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             valueType (int): The type for the value encoding with the vtk typecode.
         """
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        self.valueNpType: type = dictType[ valueType ]
+        self.valueNpType = dictType[ valueType ]
         self.Modified()
-
 
     @smproperty.intvector(
         name="NumberOfComponents",
@@ -252,7 +244,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.nbComponents = nbComponents
         self.Modified()
 
-
     @smproperty.stringvector(
         name="ComponentNames",
         label="Names of components:",
@@ -263,26 +254,25 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
     @smdomain.xml( """
         <Documentation>
             Names of components if multiple for the new attribute to create.
-            Use the coma and a space between each component name:\n
-                Names of components: X Y Z
+            Use the coma and a coma between each component name:\n
+                Names of components: X, Y, Z
         </Documentation>
         """ )
     def _setComponentNames( self: Self, componentNames: str ) -> None:
         """Set the names of the components of the attribute to create.
 
         Args:
-            componentNamesStr (str): Names of component for the new attribute. Use a coma between each component names.
+            componentNames (str): Names of component for the new attribute. Use a coma between each component names.
         """
         if componentNames == "" or componentNames == "Change if multiple components" or self.nbComponents == 1:
             self.componentNames = ()
         else:
             self.componentNames = tuple( componentNames.split( "," ) )
-        
+
         self.Modified()
 
-
     @smproperty.xml( """
-        <PropertyGroup 
+        <PropertyGroup
             label="Settings of the new attribute"
             panel_visibility="default">
             <Property name="AttributeName"/>
@@ -293,7 +283,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
     def _groupNewAttributeSettingsWidgets( self: Self ) -> None:
         """Group the widgets to set the settings of the new attribute."""
         self.Modified()
-
 
     def RequestDataObject(
         self: Self,
@@ -319,7 +308,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
-
     def RequestData(
             self: Self,
             request: vtkInformation,  # noqa: F841
@@ -343,19 +331,20 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         assert outputMesh is not None, "Output pipeline is null."
 
         outputMesh.ShallowCopy( inputMesh )
-        filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( outputMesh,
-                                                                                     self.regionName,
-                                                                                     self.dictRegionValues,
-                                                                                     self.newAttributeName,
-                                                                                     self.valueNpType,
-                                                                                     self.nbComponents,
-                                                                                     self.componentNames,
-                                                                                     self.speHandler,
+        filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+            outputMesh,
+            self.regionName,
+            self.dictRegionValues,
+            self.newAttributeName,
+            self.valueNpType,
+            self.nbComponents,
+            self.componentNames,
+            self.speHandler,
         )
 
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
-        
+
         filter.applyFilter()
 
         self.clearDictRegion = True

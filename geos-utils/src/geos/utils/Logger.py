@@ -11,14 +11,24 @@ Logger module manages logging tools.
 Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
 """
 
+
 class CountWarningHandler( logging.Handler ):
-    def __init__( self: Self ):
+    """Create an handler to count the warnings logged."""
+
+    def __init__( self: Self ) -> None:
+        """Init the handler."""
         super().__init__()
         self.warningCount = 0
-    
-    def emit( self: Self, record: logging.LogRecord ):
+
+    def emit( self: Self, record: logging.LogRecord ) -> None:
+        """Count all the warnings logged.
+
+        Args:
+            record (logging.LogRecord): Record.
+        """
         if record.levelno == logging.WARNING:
             self.warningCount += 1
+
 
 # Add the convenience method for the logger
 def results( self: logging.Logger, message: str, *args: Any, **kws: Any ) -> None:
