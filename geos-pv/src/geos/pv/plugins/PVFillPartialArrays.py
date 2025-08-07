@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
+from typing import Union, Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -63,7 +64,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                           outputType="vtkMultiBlockDataSet" )
 
         self.clearDictAttributesValues: bool = True
-        self.dictAttributesValues: dict[ str, str ] = {}
+        self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
 
 
     @smproperty.xml("""
@@ -102,7 +103,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         if attributeName is not None and values is not None :
             self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
         elif attributeName is not None and values is None:
-            self.dictAttributesValues[ attributeName ] = []
+            self.dictAttributesValues[ attributeName ] = None
  
         self.Modified()
 

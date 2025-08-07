@@ -6,7 +6,6 @@ from typing_extensions import Self
 from typing import Union, Any
 
 from geos.utils.Logger import logging, Logger, getLogger
-#, CountWarningHandler
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import isAttributeInObject
 
@@ -17,11 +16,11 @@ Fill partial attributes of the input mesh with constant values per component.
 
 Input mesh is vtkMultiBlockDataSet and attributes to fill must be partial.
 
-By defaults, attributes are filled with the same constant value for each component;
-0 for uint data, -1 for int data and nan for float data.
-
 The list of filling values per attribute is given by a dictionary.
 Its keys are the attribute names and its items are the list of filling values for each component.
+
+If the list of filling value is None, attributes are filled with the same constant value for each component;
+0 for uint data, -1 for int data and nan for float data.
 
 To use a handler of yours for the logger, set the variable 'speHandler' to True and add it to the filter
 with the member function addLoggerHandler.
@@ -34,7 +33,7 @@ To use it:
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
-    dictAttributesValues: dict[ str, Any ]
+    dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ]
     # Optional inputs.
     speHandler: bool
 
@@ -57,12 +56,12 @@ class FillPartialArrays:
     def __init__(
         self: Self,
         multiBlockDataSet: vtkMultiBlockDataSet,
-        dictAttributesValues: dict[ str, Any ],
+        dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ],
         speHandler: bool = False,
     ) -> None:
         """Fill partial attributes with constant value per component.
 
-        If the list of filling values for an attribute is empty, it will filled with the default value for each component:
+        If the list of filling values for an attribute is None, it will filled with the default value for each component:
             0 for uint data.
             -1 for int data.
             nan for float data.
@@ -74,11 +73,7 @@ class FillPartialArrays:
                 Defaults to False.
         """
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
-        self.dictAttributesValues: dict[ str, Any ] = dictAttributesValues
-
-        # # Warnings counter.
-        # self.counter: CountWarningHandler = CountWarningHandler()
-        # self.counter.setLevel( logging.INFO )
+        self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
 
         # Logger.
         self.logger: Logger
@@ -99,7 +94,6 @@ class FillPartialArrays:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            # This warning does not count for the number of warning created during the application of the filter.
             self.logger.warning(
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
@@ -112,11 +106,7 @@ class FillPartialArrays:
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        # Add the handler to count warnings messages.
-        #self.logger.addHandler( self.counter )
-
         for attributeName in self.dictAttributesValues:
-            # cell and point arrays
             self._setPieceRegionAttribute( attributeName )
             if self.onPoints is None:
                 self.logger.error( f"{ attributeName } is not in the mesh." )
@@ -132,15 +122,15 @@ class FillPartialArrays:
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
 
-            listValues: Union[ list[ Any ], None ] = self.dictAttributesValues[
-                attributeName ] if self.dictAttributesValues[ attributeName ] != [] else None
             if not fillPartialAttributes( self.multiBlockDataSet,
                                           attributeName,
                                           onPoints=self.onPoints,
-                                          listValues=listValues,
+                                          listValues=self.dictAttributesValues[ attributeName ],
                                           logger=self.logger ):
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
+
+        self.logger.info( f"The filter { self.logger.name } succeed." )
 
         return True
 
