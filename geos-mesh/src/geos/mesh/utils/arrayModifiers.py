@@ -62,10 +62,10 @@ def fillPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
     attributeName: str,
     onPoints: bool = False,
-    listValues: list[ Any ] = [],
+    listValues: Union[ list[ Any ], None ] = None,
     logger: Union[ Logger, None ] = None,
 ) -> bool:
-    """Fill input partial attribute of multiBlockDataSet with the same value for all the components.
+    """Fill input partial attribute of multiBlockDataSet with a constant value per component.
 
     Args:
         multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): MultiBlockDataSet where to fill the attribute.
@@ -73,7 +73,7 @@ def fillPartialAttributes(
         onPoints (bool, optional): True if attributes are on points, False if they are on cells.
             Defaults to False.
         listValues (list[Any], optional): List of filling value for each component.
-            Defaults to [], the filling value is:
+            Defaults to None, the filling value is for all components:
             -1 for int VTK arrays.
             0 for uint VTK arrays.
             nan for float VTK arrays.
@@ -107,38 +107,45 @@ def fillPartialAttributes(
     typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
     valueType: type = typeMapping[ vtkDataType ]
     # Set the default value depending of the type of the attribute to fill
-    if len( listValues ) == 0:
+    if listValues is None:
+        defaultValue: Any
+        logger.warning( f"The attribute { attributeName } is filled with the default value for each component." )
         # Default value for float types is nan.
         if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
-            listValues.append( valueType( np.nan ) )
-            logger.info(
-                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { valueType().dtype } numpy type, default value is automatically set to nan."
+            defaultValue = valueType( np.nan )
+            logger.warning(
+                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { defaultValue.dtype } numpy type, default value is automatically set to nan."
             )
         # Default value for int types is -1.
         elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ):
-            listValues.append( valueType( -1 ) )
-            logger.info(
-                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { valueType().dtype } numpy type, default value is automatically set to -1."
+            defaultValue = valueType( -1 )
+            logger.warning(
+                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { defaultValue.dtype } numpy type, default value is automatically set to -1."
             )
         # Default value for uint types is 0.
         elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
                               VTK_UNSIGNED_LONG_LONG ):
-            listValues.append( valueType( 0 ) )
-            logger.info(
-                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { valueType().dtype } numpy type, default value is automatically set to 0."
+            defaultValue = valueType( 0 )
+            logger.warning(
+                f"{ attributeName } vtk data type is { vtkDataType } corresponding to { defaultValue.dtype } numpy type, default value is automatically set to 0."
             )
         else:
             logger.error( f"The type of the attribute { attributeName } is not compatible with the function." )
             return False
-        
-        listValues = listValues * nbComponents
-    
+
+        listValues = [ defaultValue ] * nbComponents
+
     else:
         if len( listValues ) != nbComponents:
             return False
-        
+
         for idValue in range( nbComponents ):
-            listValues[ idValue ] = valueType( listValues[ idValue ] )
+            value: Any = listValues[ idValue ]
+            if type( value ) is not valueType:
+                listValues[ idValue ] = valueType( listValues[ idValue ] )
+                logger.warning(
+                    f"The filling value { value } for the attribute { attributeName } has not the correct type, it is convert to the numpy scalar type { valueType().dtype }."
+                )
 
     # Parse the multiBlockDataSet to create and fill the attribute on blocks where it is not.
     iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
@@ -179,7 +186,7 @@ def fillAllPartialAttributes(
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
         for attributeName in infoAttributes:
             if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ) and \
-               not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints=onPoints, listValues=[], logger=logger ):
+               not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints=onPoints, logger=logger ):
                 return False
 
     return True

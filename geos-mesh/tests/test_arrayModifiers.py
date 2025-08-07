@@ -5,7 +5,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator"
 import pytest
-from typing import Union, Any, cast
+from typing import Union, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -48,18 +48,22 @@ from geos.mesh.utils import arrayModifiers
     "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, listValues, listValuesTest, vtkDataTypeTest",
     [
         # Test fill an attribute on point and on cell.
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [], [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
-        ( 1, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), True, [], [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
-        # Test fill attributes with different number of component.
-        ( 1, "PORO", 1, (), False, [], [ np.float32( np.nan ) ], VTK_FLOAT ),
-        # Test fill an attribute with different type of value with default value.
-        ( 1, "FAULT", 1, (), False, [], [ np.int32( -1 ) ], VTK_INT ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, [], [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
-        # Test fill an attribute with specified value.
-        ( 1, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ], [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
+        ( 1, "PointAttribute", 3,
+          ( "AX1", "AX2", "AX3" ), True, None, [ np.float64(
+              np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
+        ( 1, "CellAttribute", 3,
+          ( "AX1", "AX2", "AX3" ), False, None, [ np.float64(
+              np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
+        # Test fill attributes with different number of component with or without component names.
+        ( 1, "PORO", 1, (), False, None, [ np.float32( np.nan ) ], VTK_FLOAT ),
+        ( 0, "collocated_nodes", 2, ( None, None ), True, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
+        # Test fill an attribute with different type of value.
+        ( 1, "FAULT", 1, (), False, None, [ np.int32( -1 ) ], VTK_INT ),
         ( 1, "FAULT", 1, (), False, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
+        ( 1, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
         ( 0, "collocated_nodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
+        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ],
+          [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
     ] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
@@ -68,15 +72,17 @@ def test_fillPartialAttributes(
     nbComponentsTest: int,
     componentNamesTest: tuple[ str, ...],
     onPoints: bool,
-    listValues: list[ Any ],
+    listValues: Union[ list[ Any ], None ],
     listValuesTest: list[ Any ],
     vtkDataTypeTest: int,
 ) -> None:
     """Test filling a partial attribute from a multiblock with values."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    nbValues: int = len( listValues )
     # Fill the attribute in the multiBlockDataSet.
-    assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, onPoints=onPoints, listValues=listValues )
+    assert arrayModifiers.fillPartialAttributes( multiBlockDataSetTest,
+                                                 attributeName,
+                                                 onPoints=onPoints,
+                                                 listValues=listValues )
 
     # Get the dataSet where the attribute has been filled.
     dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
@@ -110,7 +116,7 @@ def test_fillPartialAttributes(
 
     npArrayFilled: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeFilled )
     assert npArrayFilled.dtype == npArrayTest.dtype
-    if nbValues == 0 and vtkDataTypeTest in ( VTK_FLOAT, VTK_DOUBLE ):
+    if listValues is None and vtkDataTypeTest in ( VTK_FLOAT, VTK_DOUBLE ):
         assert np.isnan( npArrayFilled ).all()
     else:
         assert ( npArrayFilled == npArrayTest ).all()
