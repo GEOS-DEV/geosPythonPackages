@@ -50,7 +50,6 @@ Date: January 29, 2025
   - [6.3. Merge blocks keeping partial attributes](#63-merge-blocks-keeping-partial-attributes)
 - [7. Other tools around GEOS](#7-other-tools-around-geos)
   - [7.1. GEOS Python tools](#71-geos-python-tools)
-  - [7.2. geos-xml-viewer](#72-geos-xml-viewer)
 
 <div style="page-break-after: always;"></div>
 
@@ -118,7 +117,7 @@ Filters are organized as following in the `Filters` menu:
 
 # 2. Pre-processing GEOS inputs
 
-GEOS input data needs to be processed from the geomedeller to make it valid for GEOS. Most of these operations are currently made by [`mesh-doctor`](#71-geos-python-tools) and [`geos-xml-viewer`](#72-geos-xml-viewer), and Paraview plugins are not available yet for these tools. 
+GEOS input data needs to be processed from the geomedeller to make it valid for GEOS. Most of these operations are currently made by [`mesh-doctor`](#71-geos-python-tools), and Paraview plugins are not available yet for these tools. 
 
 The pre-processing `Create Constant attribute Per Region` filter was however developed in Paraview to ease the creation of properties constant per regions, such region being defined using another index property. 
 Input mesh can be of any type and composite. The user needs to select the region property, to define the name of output property, and to defined the values of the output property for each region index. If no value is defined for some region indexes, the output property will yield no data value in these regions.
@@ -617,12 +616,6 @@ Other tools allow GEOS users to prepare GEOS input data. Except geos2est for whi
 
 Among these tools, [`mesh-doctor`](https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/geos-mesh.html?_sm_au_=iMVrtR60VT6jHPNtQ0WpHK6H8sjL6) processes GEOS input data to make it compliant with GEOS. 
 
-## 7.2. geos-xml-viewer
-
-`geos-xml-viewer` is a Python package dedicated to visualize and process GEOS input xml file (deck). This package provides the following main functionalities:
-* create a PartitionedDataSetCollection from vtu file and objects defined in the GEOS deck
-* visualize deck objects (mesh, wells, boxes)
-* split a deck into multiple files (e.g. one per main node)
 
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <script type="text/x-mathjax-config"> MathJax.Hub.Config({ tex2jax: {inlineMath: [['$', '$']]}, messageStyle: "none" });</script>

@@ -1,5 +1,4 @@
 import argparse
-
 import pyvista as pv
 from vtkmodules.vtkCommonCore import (
     reference,
