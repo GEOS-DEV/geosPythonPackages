@@ -329,28 +329,6 @@ def isAttributeInObjectDataSet( object: vtkDataSet, attributeName: str, onPoints
     assert data is not None, f"{ sup } data was not recovered."
     return bool( data.HasArray( attributeName ) )
 
-def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> bool:
-    """Check if an attribute is global in the input vtkMultiBlockDataSet.
-
-    Args:
-        object (vtkMultiBlockDataSet): input object
-        attributeName (str): name of the attribute
-        onPoints (bool): True if attributes are on points, False if they are
-            on cells.
-
-    Returns:
-        bool: True if the attribute is global, False if not.
-    """
-    isOnBlock: list[ bool ] = []
-    nbBlock: int = object.GetNumberOfBlocks()
-    for idBlock in range( nbBlock ):
-        block: vtkDataSet = object.GetBlock( idBlock )
-        isOnBlock.append( isAttributeInObjectDataSet( block, attributeName, onPoints ) )
-    
-    if False in isOnBlock:
-        return False
-    
-    return True
 
 def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> bool:
     """Check if an attribute is global in the input multiBlockDataSet.
