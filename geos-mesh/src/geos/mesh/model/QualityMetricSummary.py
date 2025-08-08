@@ -2,6 +2,10 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
 import numpy as np
+
+import itertools
+import matplotlib.transforms as mtransforms
+
 import numpy.typing as npt
 import pandas as pd
 from enum import Enum
@@ -13,6 +17,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON, VTK_POLYHEDRON )
 from geos.mesh.processing.meshQualityMetricHelpers import ( QUALITY_METRIC_OTHER_START_INDEX, getAllCellTypesExtended,
@@ -140,8 +146,8 @@ _RANGE_COLORS: tuple[ str, str, str ] = (
 class QualityMetricSummary():
 
     _LEVELS: tuple[ str, str ] = ( "MetricIndex", "CellType" )
-    _CELL_TYPES_PLOT: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_POLYGON, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE,
-                                           VTK_HEXAHEDRON, VTK_POLYHEDRON )
+    _CELL_TYPES_PLOT: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON,
+                                           VTK_POLYGON, VTK_POLYHEDRON )
     _CELL_TYPES_NAME: list[ str ] = [
         vtkCellTypes.GetClassNameFromTypeId( cellType ).removeprefix( "vtk" ) for cellType in _CELL_TYPES_PLOT
     ]
@@ -327,15 +333,14 @@ class QualityMetricSummary():
             raise IndexError( f"Index ({metricIndex}, {cellType}) not in QualityMetricSummary stats" )
         self._cellStats.loc[ statType.getIndex(), ( metricIndex, cellType ) ] = value
 
-    def getComputedCellMetricIndexes( self: Self ) -> list[ Any ]:
+    def getComputedCellMetricIndexes( self: Self ) -> list[ int ]:
         """Get the list of index of computed cell quality metrics.
 
         Returns:
-            tuple[int]: List of metrics index
+            List[int]: List of metrics index
         """
         validCellStats: pd.DataFrame = self.getAllValidCellStats()
-        columns: list[ int ] = validCellStats.columns.get_level_values( 0 ).to_list()
-        return np.unique( columns ).tolist()
+        return validCellStats.columns.get_level_values( 0 ).unique().tolist()
 
     def getComputedOtherMetricIndexes( self: Self ) -> list[ Any ]:
         """Get the list of index of computed other quality metrics.
@@ -363,42 +368,71 @@ class QualityMetricSummary():
         """
         computedCellMetrics: list[ int ] = self.getComputedCellMetricIndexes()
         computedOtherMetrics: list[ int ] = self.getComputedOtherMetricIndexes()
-        # compute layout
-        nbAxes: int = len( computedCellMetrics ) + len( computedOtherMetrics ) + 1
+        # Compute layout
+        nbAxes: int = len( computedCellMetrics ) + len( computedOtherMetrics ) + 3
         ncols: int = 3
         nrows: int = 1
         # 3 columns for these number of axes, else 4 columns
         if nbAxes not in ( 1, 2, 3, 5, 6, 9 ):
-            ncols = 4
+            ncols = 6
         nrows = nbAxes // ncols
         if nbAxes % ncols > 0:
             nrows += 1
         figSize = ( ncols * 3, nrows * 4 )
         fig, axes = plt.subplots( nrows, ncols, figsize=figSize, tight_layout=True )
         axesFlat = axes.flatten()
-        # index of current axes
-        currentAxIndex: int = 0
+        # Index of current axes
+        currentAxIndex: int = 1
 
-        # plot cell type counts
-        self._plotCellTypeCounts( axesFlat[ 0 ] )
+        # Plot cell types counts
+        self._plotGlobalCellCount( axesFlat[ currentAxIndex ] )
         currentAxIndex += 1
 
-        # plot other mesh quality stats
+        # Plot specific cell type counts
+        self._plotCellTypeCounts( axesFlat[ currentAxIndex ] )
+        currentAxIndex += 1
+
         ax: Axes
-        if len( computedOtherMetrics ) > 0:
-            ax = axesFlat[ currentAxIndex ]
-            self._plotOtherMetricStats( ax )
-            currentAxIndex += 1
-        # plot cell quality metrics
+        # Plot cell quality metrics
         for metricIndex in computedCellMetrics:
             ax = axesFlat[ currentAxIndex ]
             self._plotCellMetricStats( ax, metricIndex )
             currentAxIndex += 1
 
-        # remove unused axes
+        # Plot other mesh quality stats
+        if len( computedOtherMetrics ) > 0:
+            ax = axesFlat[ currentAxIndex ]
+            self._plotOtherMetricStats( ax )
+            currentAxIndex += 1
+
+        # Plot legend
+        self._plotLegend( axesFlat[ 0 ] )
+
+        # Remove unused axes
         for ax in axesFlat[ currentAxIndex: ]:
             ax.remove()
+
+        print(
+            "Please refer to the Verdict Manual for metrics and range definitions.\n https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf"
+        )
         return fig
+
+    def _plotLegend( self: Self, ax: Axes ) -> None:
+        """Add a legend to the figure
+
+        Args:
+            ax (Axes): Axes object
+        """
+        ax.axis( 'off' )
+        handles = [
+            Patch( facecolor=_RANGE_COLORS[ 0 ], label="full range" ),
+            Patch( facecolor=_RANGE_COLORS[ 1 ], label="normal range" ),
+            Patch( facecolor=_RANGE_COLORS[ 2 ], label="acceptable range" ),
+            Patch( facecolor="None", edgecolor="black", label="range min-max" ),
+            Line2D( [ 0 ], [ 0 ], color="black", marker="o", lw=2, label="standard deviation" ),
+        ]
+
+        ax.legend( handles=handles, frameon=False, loc="upper left" )
 
     def _plotCellTypeCounts( self: Self, ax: Axes ) -> None:
         """Plot cell type counts.
@@ -406,16 +440,42 @@ class QualityMetricSummary():
         Args:
             ax (Axes): Axes object
         """
-        xticks: npt.NDArray[ np.int64 ] = np.arange( len( self._CELL_TYPES_PLOT ), dtype=int )
-        toplot: list[ int ] = [ self._counts.getTypeCount( cellType ) for cellType in self._CELL_TYPES_PLOT ]
-        p = ax.bar( self._CELL_TYPES_NAME, toplot )
+        xticks: npt.NDArray[ np.int64 ] = np.arange( len( self._CELL_TYPES_PLOT[ :-2 ] ), dtype=int )
+        toplot: list[ int ] = [ self._counts.getTypeCount( cellType ) for cellType in self._CELL_TYPES_PLOT[ :-2 ] ]
+        p = ax.bar( self._CELL_TYPES_NAME[ :-2 ], toplot, alpha=0.6 )
+
         # bar_label only available for matplotlib version >= 3.3
         if Version( mpl.__version__ ) >= Version( "3.3" ):
-            plt.bar_label( p, label_type='center', rotation=90, padding=5 )
+            ax.bar_label( p, label_type='center', rotation=90, padding=20 )
+        else:
+            self._bar_label( ax, p, toplot, label_type='center', rotation=90, padding=20 )
+
         ax.set_xticks( xticks )
-        ax.set_xticklabels( self._CELL_TYPES_NAME, rotation=30, ha="right" )
-        ax.set_xlabel( "Cell types" )
+        ax.set_xticklabels( self._CELL_TYPES_NAME[ :-2 ], rotation=30, ha="right" )
         ax.set_title( "Cell Type Counts" )
+
+    def _plotGlobalCellCount( self: Self, ax: Axes ) -> None:
+        """Plot polygon and polyhedra cell type counts along with the total number of cells.
+
+        Args:
+            ax (Axes): Subplot axes object
+        """
+        xticks: npt.NDArray[ np.int64 ] = np.arange( len( self._CELL_TYPES_PLOT[ -2: ] ) + 1, dtype=int )
+        toplot: list[ int ] = [ self._counts.getTypeCount( VTK_POLYGON ),
+                                self._counts.getTypeCount( VTK_POLYHEDRON ) ] + [ self._counts.getTotalCount() ]
+
+        colors = [ "tab:blue" ] * len( toplot[ :-1 ] ) + [ "mediumblue" ]
+
+        names = self._CELL_TYPES_NAME[ -2: ] + [ "Total count" ]
+        p = ax.bar( names, toplot, alpha=0.6, color=colors )
+        # bar_label only available for matplotlib version >= 3.3
+        if Version( mpl.__version__ ) >= Version( "3.3" ):
+            ax.bar_label( p, label_type='center', padding=10 )
+        else:
+            self._bar_label( ax, p, toplot, label_type='center', padding=10 )
+        ax.set_xticks( xticks )
+        ax.set_xticklabels( names, rotation=30, ha="right" )
+        ax.set_title( "Global Cell Type Counts" )
 
     def _plotOtherMetricStats( self: Self, ax0: Axes ) -> None:
         """Plot other metric stats.
@@ -471,42 +531,47 @@ class QualityMetricSummary():
             ax (Axes): Axes object
             metricIndex (int): Metric index
         """
-        # get data to plot
+        # Get data to plot
         maxs: pd.Series = self._cellStats.loc[ StatTypes.MAX.getIndex(), metricIndex ]
         mins: pd.Series = self._cellStats.loc[ StatTypes.MIN.getIndex(), metricIndex ]
         means: pd.Series = self._cellStats.loc[ StatTypes.MEAN.getIndex(), metricIndex ]
-        xticks: npt.NDArray[ np.int64 ] = np.arange( means.index.size, dtype=int )
         stdDev: pd.Series = self._cellStats.loc[ StatTypes.STD_DEV.getIndex(), metricIndex ]
 
-        # order of cell types in each axes
+        # Order of cell types in each axes
         xtickslabels: list[ str ] = []
-        # min max rectangle width
+        # Min max rectangle width
         recWidth: float = 0.5
-        # range rectangle width
+        # Range rectangle width
         rangeRecWidth: float = 1.8 * recWidth
-        ylim0: float = mins.max()
-        ylim1: float = maxs.min()
+
+        # Height
+        ylim0: float = mins.min()
+        ylim1: float = maxs.max()
         xtick: float = 0.0
         for k, cellType in enumerate( self._CELL_TYPES_PLOT ):
-            if cellType in means.index:
+            if cellType in means.index and self.getCellTypeCountsOfCellType( cellType ) > 0 and not np.isnan(
+                    means[ cellType ] ):
                 xtickslabels += [ self._CELL_TYPES_NAME[ k ] ]
-                # add quality metric range
-                ( ylim0, ylim1 ) = self._plotRangePatch( ax, metricIndex, cellType, ylim0, ylim1, xtick, rangeRecWidth )
-                # add rectangle from min to max
+                # Add quality metric range
+                self._plotRangePatch( ax, metricIndex, cellType, ylim0, ylim1, xtick, rangeRecWidth )
+
+                # Add rectangle from min to max
                 x: float = xtick - recWidth / 2.0
                 y: float = mins[ cellType ]
                 recHeight: float = maxs[ cellType ] - mins[ cellType ]
                 ax.add_patch( Rectangle( ( x, y ), recWidth, recHeight, edgecolor='black', fill=False, lw=1 ) )
-                # plot mean and error bars for std dev
+
+                # Plot mean and error bars for std dev
                 ax.errorbar( xtick, means[ cellType ], yerr=stdDev[ cellType ], fmt='-o', color='k' )
                 xtick += 1.0
 
-        # set y axis limits
-        ax.set_ylim( 0.1 * ylim0, 1.1 * ylim1 )
-        # set x tick names
-        ax.set_xticks( xticks )  #, xtickslabels, rotation=30, ha="right")
+        # Set y axis limits
+        ax.set_ylim( ylim0 - abs( ylim0 ) * 0.1, 1.1 * ylim1 )
+
+        # Set x ticks
+        xticks: npt.NDArray[ np.int64 ] = np.arange( len( xtickslabels ), dtype=int )
+        ax.set_xticks( xticks )
         ax.set_xticklabels( xtickslabels, rotation=30, ha="right" )
-        ax.set_xlabel( "Cell types" )
         ax.set_title( f"{getQualityMeasureNameFromIndex(metricIndex)}" )
 
     def _plotRangePatch( self: Self, ax: Axes, metricIndex: int, cellType: int, ylim0: float, ylim1: float,
@@ -528,13 +593,13 @@ class QualityMetricSummary():
         try:
             metric: MeshQualityMetricEnum = getQualityMetricFromIndex( metricIndex )
             assert isinstance( metric, CellQualityMetricEnum ), "Mesh quality metric is of wrong type."
-            # add quality range patches if relevant
+            # Add quality range patches if relevant
             qualityRange: QualityRange | None = metric.getQualityRange( cellType )
             if qualityRange is not None:
                 ( ylim0, ylim1 ) = self._plotQualityRange( ax, qualityRange, xtick - rangeRecWidth / 2.0,
                                                            ( ylim0, ylim1 ), rangeRecWidth )
             else:
-                # add white patch for tick alignment
+                # Add white patch for tick alignment
                 ax.add_patch(
                     Rectangle(
                         ( xtick - rangeRecWidth / 2.0, 0. ),
@@ -583,3 +648,120 @@ class QualityMetricSummary():
                 fill=True,
             ) )
         return ( ylim0, ylim1 )
+
+    if Version( mpl.__version__ ) < Version( "3.3" ):
+        # yapf: disable
+        def _bar_label( self, ax, container, datavalues, labels=None, *, fmt="%g", label_type="edge", padding=0, **kwargs):
+            """Copied and slightly adapted from bar_label function
+            Source: matplotlib/lib/matplotlib/axes/_axes.py
+            """
+            for key in ['horizontalalignment', 'ha', 'verticalalignment', 'va']:
+                if key in kwargs:
+                    raise ValueError(
+                        f"Passing {key!r} to bar_label() is not supported.")
+
+            a, b = ax.yaxis.get_view_interval()
+            y_inverted = a > b
+            c, d = ax.xaxis.get_view_interval()
+            x_inverted = c > d
+
+            # want to know whether to put label on positive or negative direction
+            # cannot use np.sign here because it will return 0 if x == 0
+            def sign(x):
+                return 1 if x >= 0 else -1
+
+            bars = container.patches
+            errorbar = container.errorbar
+            orientation = "vertical"
+
+            if errorbar:
+                # check "ErrorbarContainer" for the definition of these elements
+                lines = errorbar.lines  # attribute of "ErrorbarContainer" (tuple)
+                barlinecols = lines[2]  # 0: data_line, 1: caplines, 2: barlinecols
+                barlinecol = barlinecols[0]  # the "LineCollection" of error bars
+                errs = barlinecol.get_segments()
+            else:
+                errs = []
+
+            if labels is None:
+                labels = []
+
+            if np.iterable(padding):
+                # if padding iterable, check length
+                padding = np.asarray(padding)
+                if len(padding) != len(bars):
+                    raise ValueError(
+                        f"padding must be of length {len(bars)} when passed as a sequence")
+            else:
+                # single value, apply to all labels
+                padding = [padding] * len(bars)
+
+            for bar, err, dat, lbl, pad in itertools.zip_longest(
+                    bars, errs, datavalues, labels, padding
+            ):
+                (x0, y0), (x1, y1) = bar.get_bbox().get_points()
+                xc, yc = (x0 + x1) / 2, (y0 + y1) / 2
+
+                if orientation == "vertical":
+                    extrema = max(y0, y1) if dat >= 0 else min(y0, y1)
+                    length = abs(y0 - y1)
+                else:  # horizontal
+                    extrema = max(x0, x1) if dat >= 0 else min(x0, x1)
+                    length = abs(x0 - x1)
+
+                if err is None or np.size(err) == 0:
+                    endpt = extrema
+                elif orientation == "vertical":
+                    endpt = err[:, 1].max() if dat >= 0 else err[:, 1].min()
+                else:  # horizontal
+                    endpt = err[:, 0].max() if dat >= 0 else err[:, 0].min()
+
+                if label_type == "center":
+                    value = sign(dat) * length
+                else:  # edge
+                    value = extrema
+
+                if label_type == "center":
+                    xy = (0.5, 0.5)
+                    kwargs["xycoords"] = (
+                        lambda r, b=bar:
+                            mtransforms.Bbox.intersection(
+                                b.get_window_extent(r), b.get_clip_box()
+                            ) or mtransforms.Bbox.null()
+                    )
+                else:  # edge
+                    if orientation == "vertical":
+                        xy = xc, endpt
+                    else:  # horizontal
+                        xy = endpt, yc
+
+                if orientation == "vertical":
+                    y_direction = -1 if y_inverted else 1
+                    xytext = 0, y_direction * sign(dat) * pad
+                else:  # horizontal
+                    x_direction = -1 if x_inverted else 1
+                    xytext = x_direction * sign(dat) * pad, 0
+
+                if label_type == "center":
+                    ha, va = "center", "center"
+                else:  # edge
+                    if orientation == "vertical":
+                        ha = 'center'
+                        if y_inverted:
+                            va = 'top' if dat > 0 else 'bottom'  # also handles NaN
+                        else:
+                            va = 'top' if dat < 0 else 'bottom'  # also handles NaN
+                    else:  # horizontal
+                        if x_inverted:
+                            ha = 'right' if dat > 0 else 'left'  # also handles NaN
+                        else:
+                            ha = 'right' if dat < 0 else 'left'  # also handles NaN
+                        va = 'center'
+
+                if lbl is None:
+                    lbl = fmt % (value)
+
+                ax.annotate(lbl,
+                                        xy, xytext, textcoords="offset points",
+                                        ha=ha, va=va, **kwargs)
+        # yapf: enable
