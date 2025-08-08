@@ -66,6 +66,14 @@ class CellTypeCounts():
         """
         return self._counts
 
+    def getTotalCount( self: Self ) -> int:
+        """Get the total number of cells.
+
+        Returns:
+            int: Total number of cells
+        """
+        return self._counts[VTK_POLYHEDRON] + self._counts[VTK_POLYGON]
+
     def addType( self: Self, cellType: int ) -> None:
         """Increment the number of cell of input type.
 
@@ -125,7 +133,7 @@ class CellTypeCounts():
         card += f"| **Total Number of Vertices**      | {int(self._counts[VTK_VERTEX]):12} |\n"
         card += f"| **Total Number of Polygon**       | {int(self._counts[VTK_POLYGON]):12} |\n"
         card += f"| **Total Number of Polyhedron**    | {int(self._counts[VTK_POLYHEDRON]):12} |\n"
-        card += f"| **Total Number of Cells**         | {int(self._counts[VTK_POLYHEDRON]+self._counts[VTK_POLYGON]):12} |\n"
+        card += f"| **Total Number of Cells**         | {int(self.getTotalCount()):12} |\n"
         card += "|               -                   |       -      |\n"
         for cellType in ( VTK_TRIANGLE, VTK_QUAD ):
             card += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"

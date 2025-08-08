@@ -183,17 +183,22 @@ def computeAngleFromVectors(
     # normalization
     vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
     vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
-    dot: float = np.dot( vec1, vec2 )
-    det: float = np.linalg.det( ( vec1_norm, vec2_norm ) )
-    # truncation due to numerical approximations
-    if dot > 1.:
-        dot = 1.
-    if dot < -1.:
-        dot = -1.
-    teta: float = np.arccos( dot )
-    if det < 0:
-        teta = 2.0 * np.pi - teta
-    return teta
+
+    # Use normalized vectors for dot product
+    dot: float = np.dot( vec1_norm, vec2_norm )
+
+    # Clamp to valid range for arccos
+    dot = np.clip( dot, -1.0, 1.0 )
+
+    # Handle 2D vs 3D cases
+    if vec1.size == 2 and vec2.size == 2:
+        # For 2D, use cross product to determine orientation
+        cross: float = vec1_norm[ 0 ] * vec2_norm[ 1 ] - vec1_norm[ 1 ] * vec2_norm[ 0 ]
+        angle: float = np.arccos( dot )
+        return angle if cross >= 0 else 2.0 * np.pi - angle
+    else:
+        # For 3D, return angle in [0, π]
+        return np.arccos( dot )
 
 
 def computeCosineFromVectors(
