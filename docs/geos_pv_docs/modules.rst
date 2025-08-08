@@ -8,4 +8,6 @@ Processing
 
    pyplotUtils
 
+   pythonViewUtils
+
    utils
