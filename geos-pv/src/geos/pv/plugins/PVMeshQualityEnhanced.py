@@ -45,15 +45,25 @@ from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 
 __doc__ = """
-Compute requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
+The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
+
+The output stats are available as attributes of the filter output mesh and can be exported from spreadsheet.
+A summary figure can be exported by ticking the box and choosing a filename before applying the filter.
+
+.. WARNING::
+    Due to conflicts with python packages versions in Paraview, the *incident vertex count* metric is not activated as default.
 
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMeshQualityEnhanced.
 * Select the input mesh.
-* Select the metric to compute
+* Select the metrics to compute.
+* Choose a filename for export if needed.
 * Apply the filter.
 
+
+.. IMPORTANT::
+    Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
 
 
@@ -103,8 +113,8 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         return self._commonCellSurfaceQualityMetric
 
     @smproperty.dataarrayselection( name="CommonCellVolumeQualityMetric" )
-    def a02SetCommonVolumeMetrics( self: Self) -> vtkDataArraySelection:
-        """Set polyhedra quality metrics selection"""
+    def a02SetCommonVolumeMetrics( self: Self ) -> vtkDataArraySelection:
+        """Set polyhedra quality metrics selection."""
         return self._commonCellVolumeQualityMetric
 
     @smproperty.dataarrayselection( name="TriangleSpecificQualityMetric" )
@@ -228,7 +238,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )
 
-
     def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.
 
@@ -237,7 +246,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
-
 
     def RequestData(
         self: Self,
@@ -295,7 +303,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self.saveFile( stats )
         self._blockIndex += 1
         return 1
-
 
     def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
         """Export mesh quality metric summary file."""

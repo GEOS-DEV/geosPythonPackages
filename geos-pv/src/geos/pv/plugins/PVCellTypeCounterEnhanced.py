@@ -30,7 +30,7 @@ from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-Compute cell type counts. Counts are dumped in to Output message window and can be exporter in a file.
+The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
 
 To use it:
 
