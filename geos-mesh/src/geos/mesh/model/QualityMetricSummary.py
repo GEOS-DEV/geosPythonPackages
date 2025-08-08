@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
+# SPDX-FileContributor: Antoine Mazuyer, Martin Lemay, Paloma Martinez
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
