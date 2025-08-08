@@ -26,11 +26,11 @@ def getChangeOfBasisMatrix(
     C is then Vc = P.Vb
 
     Args:
-        basisFrom (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): origin basis
-        basisTo (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): destination basis
+        basisFrom (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): Origin basis
+        basisTo (tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]): Destination basis
 
     Returns:
-        npt.NDArray[np.floating[Any]]: change of basis matrix.
+        npt.NDArray[np.floating[Any]]: Change of basis matrix.
     """
     assert ( basisFrom[ 0 ].size == basisFrom[ 1 ].size ) and ( basisFrom[ 0 ].size == basisFrom[ 2 ].size ), (
         "Origin space vectors must have the same size." )
@@ -52,11 +52,11 @@ def computeCoordinatesInNewBasis( vec: npt.NDArray[ np.floating[ Any ] ],
     """Computes the coordinates of a matrix from a basis B in the new basis B'.
 
     Args:
-        vec (npt.NDArray[np.floating[Any]]): vector to compute the new coordinates
+        vec (npt.NDArray[np.floating[Any]]): Vector to compute the new coordinates
         changeOfBasisMatrix (npt.NDArray[np.floating[Any]]): Change of basis matrix
 
     Returns:
-        npt.NDArray[np.floating[Any]]: the new coordinates of the matrix in the basis
+        npt.NDArray[np.floating[Any]]: The new coordinates of the matrix in the basis
         B'.
     """
     assert ( vec.size == changeOfBasisMatrix.shape[ 1 ] ), """The size of the vector
@@ -80,7 +80,7 @@ def computePlaneFrom3Points(
         pt3 (npt.NDArray[np.floating[Any]]): 3rd point of the plane.
 
     Returns:
-        tuple[float, float, float, float]: tuple of the 4 coefficients.
+        tuple[float, float, float, float]: Tuple of the 4 coefficients.
     """
     # plane vectors
     v1: npt.NDArray[ np.floating[ Any ] ] = pt2 - pt1
@@ -145,3 +145,117 @@ def getPointSideAgainstPlane(
     dot: float = np.dot( planeNormal, vec )
     assert abs( dot ) > EPSILON, "The point is on the plane."
     return dot > 0
+
+
+def computeAngleFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
+                            pt3: npt.NDArray[ np.float64 ] ) -> float:
+    """Compute angle from 3 points.
+
+    Args:
+        pt1 (npt.NDArray[np.float64]): First point
+        pt2 (npt.NDArray[np.float64]): Second point
+        pt3 (npt.NDArray[np.float64]): Third point
+
+    Returns:
+        float: Angle
+    """
+    # compute vectors
+    vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
+    vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+    return computeAngleFromVectors( vec1, vec2 )
+
+
+def computeAngleFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> float:
+    """Compute angle from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): First vector
+        vec2 (npt.NDArray[np.float64]): Second vector
+
+    Returns:
+        float: angle
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
+    # normalization
+    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
+    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+
+    # Use normalized vectors for dot product
+    dot: float = np.dot( vec1_norm, vec2_norm )
+
+    # Clamp to valid range for arccos
+    dot = np.clip( dot, -1.0, 1.0 )
+
+    # Handle 2D vs 3D cases
+    if vec1.size == 2 and vec2.size == 2:
+        # For 2D, use cross product to determine orientation
+        cross: float = vec1_norm[ 0 ] * vec2_norm[ 1 ] - vec1_norm[ 1 ] * vec2_norm[ 0 ]
+        angle: float = np.arccos( dot )
+        return angle if cross >= 0 else 2.0 * np.pi - angle
+    else:
+        # For 3D, return angle in [0, π]
+        return np.arccos( dot )
+
+
+def computeCosineFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> float:
+    """Compute cosine from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): First vector
+        vec2 (npt.NDArray[np.float64]): Second vector
+
+    Returns:
+        float: Cosine
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "First vector cannot be null"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second vector cannot be null"
+    # normalization
+    vec1_norm: npt.NDArray[ np.float64 ] = vec1 / np.linalg.norm( vec1 )
+    vec2_norm: npt.NDArray[ np.float64 ] = vec2 / np.linalg.norm( vec2 )
+    return np.dot( vec1_norm, vec2_norm )
+
+
+def computeNormalFromPoints( pt1: npt.NDArray[ np.float64 ], pt2: npt.NDArray[ np.float64 ],
+                             pt3: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """Compute the normal of a plane defined from 3 points.
+
+    Args:
+        pt1 (npt.NDArray[np.float64]): First point
+        pt2 (npt.NDArray[np.float64]): Second point
+        pt3 (npt.NDArray[np.float64]): Third point
+
+    Returns:
+        npt.NDArray[np.float64]: Normal vector coordinates
+    """
+    # compute vectors
+    vec1: npt.NDArray[ np.float64 ] = pt1 - pt2
+    vec2: npt.NDArray[ np.float64 ] = pt3 - pt2
+    return computeNormalFromVectors( vec1, vec2 )
+
+
+def computeNormalFromVectors(
+    vec1: npt.NDArray[ np.float64 ],
+    vec2: npt.NDArray[ np.float64 ],
+) -> npt.NDArray[ np.float64 ]:
+    """Compute the normal of a plane defined from 2 vectors.
+
+    Args:
+        vec1 (npt.NDArray[np.float64]): First vector
+        vec2 (npt.NDArray[np.float64]): Second vector
+
+    Returns:
+        npt.NDArray[np.float64]: Normal vector coordinates
+    """
+    assert abs( np.linalg.norm( vec1 ) ) > 0., "First and second points must be different"
+    assert abs( np.linalg.norm( vec2 ) ) > 0., "Second and third points must be different"
+    # normalization
+    vec1_norm = vec1 / np.linalg.norm( vec1 )
+    vec2_norm = vec2 / np.linalg.norm( vec2 )
+    return np.cross( vec1_norm, vec2_norm )

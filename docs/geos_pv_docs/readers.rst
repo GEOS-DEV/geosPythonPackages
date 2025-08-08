@@ -1,7 +1,7 @@
-Paraview readers
-================
+Readers
+=============
 
-readers.PVGeosLogReader module
-----------------------------------
+PVGeosLogReader
+--------------------
 
-.. automodule:: readers.PVGeosLogReader
+.. automodule:: geos.pv.plugins.PVGeosLogReader

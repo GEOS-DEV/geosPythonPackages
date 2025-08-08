@@ -14,7 +14,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -60,12 +60,12 @@ from geos.pv.utils.paraviewTreatments import (
     strListToEnumerationDomainXml, )
 
 __doc__ = """
-PVGeosLogReader is a Paraview plugin that allows to read Geos output log.
+``PVGeosLogReader`` is a Paraview plugin that allows to read Geos output log.
 
 Input is a file and output is a vtkTable containing log information.
 
-..WARNING::
-    The reader is compliant with GEOS log before commit version #9365098.
+.. WARNING::
+    The reader is compliant with GEOS log before commit version **#9365098**.
     For more recent version, use the csv or hdf5 export options from GEOS.
 
 To use it:

@@ -1,5 +1,6 @@
 # Exclude a variety of commonly ignored directories.
-extend-exclude = ["tests/data"]
+extend-exclude = ["tests/data", "geos-mesh/src/geos/mesh/model/_bar_label.py"]
+
 
 line-length = 120
 indent-width = 4
@@ -21,12 +22,12 @@ select = [
     "W",    # pycodestyle warnings
     "F",    # pyflakes
 #    "UP",   # pyupgrade deactivate since python39
-    "B",    # flake8-bugbear        
-    "SIM",  # flake8-simplify        
-    "ANN",  # flake8-annotations        
-    "C4",   # flake8-comprehensions    
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "ANN",  # flake8-annotations
+    "C4",   # flake8-comprehensions
 #    "I",    # isort - manage by yapf
-    "D",    # pydocstyle    
+    "D",    # pydocstyle
 ]
 
 ignore = [

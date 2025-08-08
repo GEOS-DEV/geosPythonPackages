@@ -160,21 +160,20 @@ def dataSetTest() -> Any:
         """
         reader: Union[ vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridReader ]
         if datasetType == "multiblock":
-            reader = vtkXMLMultiBlockDataReader()
+            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFault.vtm"
         elif datasetType == "emptymultiblock":
-            reader = vtkXMLMultiBlockDataReader()
+            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFaultempty.vtm"
         elif datasetType == "dataset":
-            reader = vtkXMLUnstructuredGridReader()
+            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
-            reader = vtkXMLUnstructuredGridReader()
+            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id_empty.vtu"
         elif datasetType == "polydata":
-            reader = vtkXMLUnstructuredGridReader()
-            vtkFilename = "data/surface.vtu"
-
+            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            vtkFilename = "data/triangulatedSurface.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()

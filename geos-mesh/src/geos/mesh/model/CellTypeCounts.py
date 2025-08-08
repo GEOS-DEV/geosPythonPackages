@@ -10,6 +10,21 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD
 
 __doc__ = """
 CellTypeCounts stores the number of elements of each type.
+
+To use the filter:
+
+.. code-block:: python
+
+    from geos.mesh.model.CellTypeCounts import CellTypeCounts
+
+    counts: CellTypeCounts = CellTypeCounts()
+
+    # set data
+    counts.addType( cellType )
+    counts.setTypeCount( cellType, count )
+
+    # get data
+    count: int counts.getTypeCount( cellType )
 """
 
 
@@ -43,6 +58,22 @@ class CellTypeCounts():
         newCounts._counts = self._counts + other._counts
         return newCounts
 
+    def getCounts( self: Self ) -> npt.NDArray[ np.int64 ]:
+        """Get all counts.
+
+        Returns:
+            npt.NDArray[ np.int64 ]: counts
+        """
+        return self._counts
+
+    def getTotalCount( self: Self ) -> int:
+        """Get the total number of cells.
+
+        Returns:
+            int: Total number of cells
+        """
+        return self._counts[ VTK_POLYHEDRON ] + self._counts[ VTK_POLYGON ]
+
     def addType( self: Self, cellType: int ) -> None:
         """Increment the number of cell of input type.
 
@@ -74,6 +105,10 @@ class CellTypeCounts():
         """
         return int( self._counts[ cellType ] )
 
+    def reset( self: Self ) -> None:
+        """Reset counts."""
+        self._counts = np.zeros( VTK_NUMBER_OF_CELL_TYPES, dtype=float )
+
     def _updateGeneralCounts( self: Self, cellType: int, count: int ) -> None:
         """Update generic type counters.
 
@@ -98,7 +133,7 @@ class CellTypeCounts():
         card += f"| **Total Number of Vertices**      | {int(self._counts[VTK_VERTEX]):12} |\n"
         card += f"| **Total Number of Polygon**       | {int(self._counts[VTK_POLYGON]):12} |\n"
         card += f"| **Total Number of Polyhedron**    | {int(self._counts[VTK_POLYHEDRON]):12} |\n"
-        card += f"| **Total Number of Cells**         | {int(self._counts[VTK_POLYHEDRON]+self._counts[VTK_POLYGON]):12} |\n"
+        card += f"| **Total Number of Cells**         | {int(self.getTotalCount()):12} |\n"
         card += "|               -                   |       -      |\n"
         for cellType in ( VTK_TRIANGLE, VTK_QUAD ):
             card += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
