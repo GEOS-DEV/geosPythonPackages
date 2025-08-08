@@ -186,29 +186,11 @@ pts_all: tuple[ npt.NDArray[ np.float64 ], ...] = (
     np.array( [ -0.5, -0.5, 0.0 ] ),
     np.array( [ 0.5, -0.5, -1.0 ] ),
 )
+# yapf: disable
 angleExp_all: tuple[ float, ...] = (
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
+    0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 )
-
+# yapf: enable
 
 @dataclass( frozen=True )
 class TestCaseAngle:
