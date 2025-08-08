@@ -192,6 +192,7 @@ angleExp_all: tuple[ float, ...] = (
 )
 # yapf: enable
 
+
 @dataclass( frozen=True )
 class TestCaseAngle:
     """Test case."""
