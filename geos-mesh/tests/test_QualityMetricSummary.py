@@ -223,6 +223,6 @@ def test_QualityMetricSummary_plotSummaryFigure( test_case: TestCase ) -> None:
 
     fig: Figure = stats.plotSummaryFigure()
     assert fig is not None, "Figure is undefined"
-    # metrics + counts
-    nbAxesExp: int = len( test_case.cellMetricIndexes ) + len( test_case.otherMetricIndexes ) + 1
+    # metrics + global counts + cell count + legend
+    nbAxesExp: int = len( test_case.cellMetricIndexes ) + len( test_case.otherMetricIndexes ) + 3
     assert len( fig.get_axes() ) == nbAxesExp, f"Number of Axes is expected to be {nbAxesExp}."

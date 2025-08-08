@@ -187,4 +187,4 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
                 test_case.metricsSummary[ j ] ), f"Stats at metric index {j} are wrong."
 
     fig: Figure = stats.plotSummaryFigure()
-    assert len( fig.get_axes() ) == 4, "Number of Axes is expected to be 4."
+    assert len( fig.get_axes() ) == 6, "Number of Axes is expected to be 6."
