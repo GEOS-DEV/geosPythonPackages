@@ -72,7 +72,7 @@ class CellTypeCounts():
         Returns:
             int: Total number of cells
         """
-        return self._counts[VTK_POLYHEDRON] + self._counts[VTK_POLYGON]
+        return self._counts[ VTK_POLYHEDRON ] + self._counts[ VTK_POLYGON ]
 
     def addType( self: Self, cellType: int ) -> None:
         """Increment the number of cell of input type.
