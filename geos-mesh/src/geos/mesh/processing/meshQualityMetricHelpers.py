@@ -40,8 +40,6 @@ class MeshQualityMetricEnum( Enum ):
         Args:
             metricIndex (int): Index of QualityMeasureTypes
             name (str): Name of the metric
-            applicableToCellTypes (tuple[bool, ...]): Tuple defining for each cell type if the
-                metric is applicable.
         """
         self.metricIndex: int = int( metricIndex )
         self.metricName: str = name
@@ -115,8 +113,8 @@ class CellQualityMetricEnum( MeshQualityMetricEnum ):
             cellTypes = getPolygonCellTypes()
         if cellType == VTK_POLYHEDRON:
             cellTypes = getPolyhedronCellTypes()
-        for cellType in cellTypes:
-            cellTypeIndex: int = getAllCellTypes().index( cellType )
+        for ctype in cellTypes:
+            cellTypeIndex: int = getAllCellTypes().index( ctype )
             if not self.applicableToCellTypes[ cellTypeIndex ]:
                 return False
         return True
@@ -283,8 +281,8 @@ class VtkCellQualityMetricEnum( CellQualityMetricEnum ):
             QualityRange( ( 0.25, 0.5 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
             QualityRange( ( 0.20, 0.4 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
             QualityRange( ( 0.20, 0.4 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
-            QualityRange( ( 0.20, 0.4 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
-            QualityRange( ( 0.20, 0.4 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
+            None,
+            None,
             QualityRange( ( 0.20, 0.4 ), ( 0.0, 1.0 ), ( 0.0, 1.0 ) ),
         ),
     )
@@ -457,9 +455,9 @@ class CellQualityMetricAdditionalEnum( CellQualityMetricEnum ):
         100,
         "Maximum Aspect Ratio",
         ( False, False, False, True, True, True ),
-        ( QualityRange( ( 1.0, 1.3 ), ( 1.0, 3.0 ),
-                        ( 1.0, np.inf ) ), QualityRange( ( 1.0, 1.3 ), ( 1.0, 3.0 ), ( 1.0, np.inf ) ),
-          QualityRange( ( 1.0, 3.0 ), ( 1.0, 9.0 ), ( 1.0, np.inf ) ), None, None, None ),
+        ( None, None, None, QualityRange(
+            ( 1.0, 1.3 ), ( 1.0, 3.0 ), ( 1.0, np.inf ) ), QualityRange( ( 1.0, 1.3 ), ( 1.0, 3.0 ), ( 1.0, np.inf ) ),
+          QualityRange( ( 1.0, 3.0 ), ( 1.0, 9.0 ), ( 1.0, np.inf ) ) ),
     )
     # other metrics can be defined the same way such as RADIUS_RATIO, EDGE_RATIO, ASPECT_GAMMA, EQUIVOLUME_SKEW,
     # NORMALIZED_INRADIUS, (MAXIMUM_)ASPECT_FROBENIUS for pyramids, (MAXIMUM_)STRETCH for pyramids
@@ -622,7 +620,7 @@ def getCommonPolygonQualityMeasure() -> set[ int ]:
 
 
 def getTetQualityMeasure() -> set[ int ]:
-    """Get the indexes of mesh quality metrics defined for quads.
+    """Get the indexes of mesh quality metrics defined for tetrahedra.
 
     Returns:
         set[int]: Set of possible indexes.
@@ -631,7 +629,7 @@ def getTetQualityMeasure() -> set[ int ]:
 
 
 def getPyramidQualityMeasure() -> set[ int ]:
-    """Get the indexes of mesh quality metrics defined for quads.
+    """Get the indexes of mesh quality metrics defined for pyramids.
 
     Returns:
         set[int]: Set of possible indexes.
@@ -640,7 +638,7 @@ def getPyramidQualityMeasure() -> set[ int ]:
 
 
 def getWedgeQualityMeasure() -> set[ int ]:
-    """Get the indexes of mesh quality metrics defined for quads.
+    """Get the indexes of mesh quality metrics defined for wedges.
 
     Returns:
         set[int]: Set of possible indexes.
@@ -649,7 +647,7 @@ def getWedgeQualityMeasure() -> set[ int ]:
 
 
 def getHexQualityMeasure() -> set[ int ]:
-    """Get the indexes of mesh quality metrics defined for quads.
+    """Get the indexes of mesh quality metrics defined for hexahedra.
 
     Returns:
         set[int]: Set of possible indexes.
@@ -658,7 +656,7 @@ def getHexQualityMeasure() -> set[ int ]:
 
 
 def getCommonPolyhedraQualityMeasure() -> set[ int ]:
-    """Get the indexes of mesh quality metrics defined for both triangles and quads.
+    """Get the indexes of mesh quality metrics defined for tetrahedra, pyramids, wedges and hexahedra.
 
     Returns:
         set[int]: Set of possible indexes.
@@ -677,14 +675,3 @@ def getQualityMetricsOther() -> set[ int ]:
         set[int]: Other mesh quality metric indexes
     """
     return { metric.getMetricIndex() for metric in list( QualityMetricOtherEnum ) }
-
-
-#: dictionary of cell quality metrics set from cell type
-cellQualityMetricsFromCellType: dict[ int, set[ int ] ] = {
-    VTK_TRIANGLE: getTriangleQualityMeasure(),
-    VTK_QUAD: getQuadQualityMeasure(),
-    VTK_TETRA: getTetQualityMeasure(),
-    VTK_PYRAMID: getPyramidQualityMeasure(),
-    VTK_WEDGE: getWedgeQualityMeasure(),
-    VTK_HEXAHEDRON: getHexQualityMeasure(),
-}

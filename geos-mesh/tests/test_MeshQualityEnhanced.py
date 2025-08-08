@@ -36,29 +36,16 @@ qualityMetrics_all: tuple[ set[ int ], ...] = (
       int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
       int( vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX ) ),
 )
-cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = ( (
-    26324,
-    0,
-    0,
-    0,
-    0,
-    0,
-    26324,
-    0,
-), (
-    0,
-    0,
-    8,
-    0,
-    0,
-    0,
-    0,
-    8,
-) )
-metricsSummary_all = (
+# yapf: disable
+cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = (
+    ( 26324, 0, 0, 0, 0, 0, 26324, 0, ),
+    ( 0, 0, 8, 0, 0, 0, 0, 8,)
+)
+metricsSummary_all: tuple[ tuple[ float, ...], ...] = (
     ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67, 26324.0 ) ),
     ( ( -0.28, 0.09, -0.49, -0.22, 8.0 ), ( 0.7, 0.1, 0.47, 0.79, 8.0 ), ( 0.8, 0.12, 0.58, 0.95, 8.0 ) ),
 )
+# yapf: enable
 
 
 @dataclass( frozen=True )
