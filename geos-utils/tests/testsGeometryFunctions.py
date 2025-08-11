@@ -86,28 +86,13 @@ def test_getPointSideAgainstPlaneAssertion() -> None:
         fcts.getPointSideAgainstPlane( planePt, planePt, planeNormal )
 
 
-listPtsCoords_all = (
-    [
-        np.array( [ 0.5, 0.5, 0.5 ] ),
-        np.array( [ 0.5, 0.5, -0.5 ] ),
-    ],
-    [
-        np.array( [ 0.5, 0.5, 0.5 ] ),
-        np.array( [ -0.5, 0.5, 0.5 ] ),
-    ],
-)
-planePt_all = (
-    np.array( [ 0.0, 0.0, 0.0 ] ),
-    np.array( [ 0.0, 0.0, 0.0 ] ),
-)
-planeNormal_all = (
-    np.array( [ 0.0, 0.0, 1.0 ] ),
-    np.array( [ 1.0, 0.0, 0.0 ] ),
-)
-expected_all = (
-    ( True, False ),
-    ( True, False ),
-)
+# yapf: disable
+listPtsCoords_all = ( [ np.array( [ 0.5, 0.5, 0.5 ] ), np.array( [ 0.5, 0.5, -0.5 ] ) ],
+                      [ np.array( [ 0.5, 0.5, 0.5 ] ), np.array( [ -0.5, 0.5, 0.5 ] ) ] )
+planePt_all = ( np.array( [ 0.0, 0.0, 0.0 ] ), np.array( [ 0.0, 0.0, 0.0 ] ) )
+planeNormal_all = ( np.array( [ 0.0, 0.0, 1.0 ] ), np.array( [ 1.0, 0.0, 0.0 ] ) )
+expected_all = ( ( True, False ), ( True, False ) )
+# yapf: enable
 
 
 @dataclass( frozen=True )
@@ -188,7 +173,9 @@ pts_all: tuple[ npt.NDArray[ np.float64 ], ...] = (
 )
 # yapf: disable
 angleExp_all: tuple[ float, ...] = (
-    0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    0.78539816, 0.32175055, 0.32175055, 1.15026200, 0.78539816, 2.0e-8, 1.04719755,
+    0.78539816, 0.61547971, 1.04719755, 2.35619449, 1.57079633, 1.04719755, 1.24904577,
+    0.75204009, 0.83548187, 1.57079633, 0.95531662, 1.04719755, 1.57079633
 )
 # yapf: enable
 
@@ -209,38 +196,47 @@ def __generate_Angle_test_data() -> Iterator[ TestCaseAngle ]:
     Yields:
         Iterator[ TestCase ]: Iterator on test cases
     """
-    print( len( list( combinations( pts_all, 3 ) ) ) )
     for pts, angle in zip( list( combinations( pts_all, 3 ) ), angleExp_all, strict=True ):
         yield TestCaseAngle( pts[ 0 ], pts[ 1 ], pts[ 2 ], angle )
 
 
-@pytest.mark.skip( "Test to fix" )
 @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
 def test_computeAngleFromPoints( test_case: TestCaseAngle ) -> None:
     """Test computeAngleFromPoints method."""
     obs: float = fcts.computeAngleFromPoints( test_case.pt1, test_case.pt2, test_case.pt3 )
-    assert obs == test_case.angleExp
-    pass
+    assert np.isclose( obs, test_case.angleExp ), f"Expected angle {test_case.angleExp}, but got {obs}."
 
 
-@pytest.mark.skip( "Test to fix" )
 @pytest.mark.parametrize( "test_case", __generate_Angle_test_data() )
 def test_computeAngleFromVectors( test_case: TestCaseAngle ) -> None:
     """Test computeAngleFromVectors method."""
     vec1: npt.NDArray[ np.float64 ] = test_case.pt1 - test_case.pt2
     vec2: npt.NDArray[ np.float64 ] = test_case.pt3 - test_case.pt2
     obs: float = fcts.computeAngleFromVectors( vec1, vec2 )
-    print( f"{test_case.__str__}: {obs}" )
-    assert obs == test_case.angleExp
+    assert np.isclose( obs, test_case.angleExp ), f"Expected angle {test_case.angleExp}, but got {obs}."
 
 
-@pytest.mark.skip( "Test to fix" )
 def test_computeNormalFromPoints() -> None:
     """Test computeNormalFromPoints method."""
-    pass
+    pt1 = np.array( [ 1.0, 0.0, 0.0 ] )
+    pt2 = np.array( [ 0.0, 0.0, 0.0 ] )
+    pt3 = np.array( [ 0.0, 1.0, 0.0 ] )
+    # vec1 = pt1 - pt2 = (1, 0, 0)
+    # vec2 = pt3 - pt2 = (0, 1, 0)
+    # The function normalizes these vectors before computing the cross product.
+    # The cross product of (1,0,0) and (0,1,0) is (0,0,1).
+    obtained: npt.NDArray[ np.float64 ] = fcts.computeNormalFromPoints( pt1, pt2, pt3 )
+    expected: npt.NDArray[ np.float64 ] = np.array( [ 0.0, 0.0, 1.0 ] )
+    assert np.allclose( obtained, expected ), f"Expected normal {expected}, but got {obtained}."
 
 
-@pytest.mark.skip( "Test to fix" )
 def test_computeNormalFromVectors() -> None:
     """Test computeNormalFromVectors method."""
-    pass
+    # Use non-unit vectors to test normalization step
+    vec1 = np.array( [ 5.0, 0.0, 0.0 ] )
+    vec2 = np.array( [ 0.0, 2.0, 0.0 ] )
+    # The function should normalize vec1 to (1,0,0) and vec2 to (0,1,0)
+    # The resulting cross product should be (0,0,1)
+    obtained: npt.NDArray[ np.float64 ] = fcts.computeNormalFromVectors( vec1, vec2 )
+    expected: npt.NDArray[ np.float64 ] = np.array( [ 0.0, 0.0, 1.0 ] )
+    assert np.allclose( obtained, expected ), f"Expected normal {expected}, but got {obtained}."
