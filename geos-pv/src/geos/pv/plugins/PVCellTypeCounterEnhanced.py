@@ -20,35 +20,35 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.stats.CellTypeCounter import CellTypeCounter
+from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-Compute cell type counts. Counts are dumped in to Output message window and can be exporter in a file.
+The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounter.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounterEnhanced.
 * Select the input mesh.
 * Apply the filter.
 
 """
 
 
-@smproxy.filter( name="PVCellTypeCounter", label="Cell Type Counter" )
+@smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
 @smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-class PVCellTypeCounter( VTKPythonAlgorithmBase ):
+class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Merge collocated points."""
@@ -94,7 +94,7 @@ class PVCellTypeCounter( VTKPythonAlgorithmBase ):
         """Specify filename for the filter to write.
 
         Args:
-            fname (str): file path
+            fname (str): File path
         """
         if self._filename != fname:
             self._filename = fname
@@ -125,9 +125,9 @@ class PVCellTypeCounter( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -137,14 +137,13 @@ class PVCellTypeCounter( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        filter: CellTypeCounter = CellTypeCounter()
+        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
         filter.SetInputDataObject( inputMesh )
         filter.Update()
         outputTable.ShallowCopy( filter.GetOutputDataObject( 0 ) )
 
         # print counts in Output Messages view
-        counts: CellTypeCounts = filter.GetCellTypeCounts()
-        print( counts.print() )
+        counts: CellTypeCounts = filter.GetCellTypeCountsObject()
 
         self._countsAll += counts
         # save to file if asked
