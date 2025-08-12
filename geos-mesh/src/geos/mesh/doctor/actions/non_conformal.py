@@ -38,6 +38,7 @@ class BoundaryMesh:
     Therefore, we reorient the polyhedron cells ourselves, so we're sure that they point outwards.
     And then we compute the boundary meshes for both meshes, given that the computing options are not identical.
     """
+
     def __init__( self, mesh: vtkUnstructuredGrid ):
         """Builds a boundary mesh.
 
@@ -240,6 +241,7 @@ class Extruder:
     """Computes and stores all the extrusions of the boundary faces.
     The main reason for this class is to be lazy and cache the extrusions.
     """
+
     def __init__( self, boundary_mesh: BoundaryMesh, face_tolerance: float ):
         self.__extrusions: list[ vtkPolyData ] = [ None ] * boundary_mesh.GetNumberOfCells()
         self.__boundary_mesh: BoundaryMesh = boundary_mesh
@@ -435,7 +437,7 @@ def find_non_conformal_cells( mesh: vtkUnstructuredGrid, options: Options ) -> l
                 continue
             # Discarding pairs that are not facing each others (with a threshold).
             normal_i, normal_j = boundary_mesh.normals( i ), boundary_mesh.normals( j )
-            if np.dot( normal_i, normal_j ) > - cos_theta:  # opposite directions only (can be facing or not)
+            if np.dot( normal_i, normal_j ) > -cos_theta:  # opposite directions only (can be facing or not)
                 continue
             # At this point, back-to-back and face-to-face pairs of elements are considered.
             if not are_faces_conformal_using_extrusions( extrusions, i, j, boundary_mesh, options.point_tolerance ):
@@ -443,8 +445,8 @@ def find_non_conformal_cells( mesh: vtkUnstructuredGrid, options: Options ) -> l
     # Extracting the original 3d element index (and not the index of the boundary mesh).
     non_conformal_cells: list[ tuple[ int, int ] ] = list()
     for i, j in non_conformal_cells_boundary_id:
-        non_conformal_cells.append( ( boundary_mesh.original_cells.GetValue( i ),
-                                      boundary_mesh.original_cells.GetValue( j ) ) )
+        non_conformal_cells.append(
+            ( boundary_mesh.original_cells.GetValue( i ), boundary_mesh.original_cells.GetValue( j ) ) )
     return non_conformal_cells
 
 

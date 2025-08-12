@@ -5,10 +5,10 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.all_checks import Options, get_check_results
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 from geos.mesh.doctor.parsing._shared_checks_parsing_logic import CheckFeature, display_results
-from geos.mesh.doctor.parsing.all_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_all_checks,
-                                                          ORDERED_CHECK_NAMES as ocn_all_checks )
-from geos.mesh.doctor.parsing.main_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_main_checks,
-                                                           ORDERED_CHECK_NAMES as ocn_main_checks )
+from geos.mesh.doctor.parsing.all_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_all_checks, ORDERED_CHECK_NAMES
+                                                          as ocn_all_checks )
+from geos.mesh.doctor.parsing.main_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_main_checks, ORDERED_CHECK_NAMES
+                                                           as ocn_main_checks )
 
 __doc__ = """
 AllChecks module is a vtk filter that ...
@@ -29,12 +29,8 @@ To use the filter:
 
 class MeshDoctorChecks( MeshDoctorBase ):
 
-    def __init__(
-        self: Self,
-        checks_to_perform: list[ str ],
-        check_features_config: dict[ str, CheckFeature ],
-        ordered_check_names: list[ str ]
-    ) -> None:
+    def __init__( self: Self, checks_to_perform: list[ str ], check_features_config: dict[ str, CheckFeature ],
+                  ordered_check_names: list[ str ] ) -> None:
         super().__init__()
         self.m_checks_to_perform: list[ str ] = checks_to_perform
         self.m_check_parameters: dict[ str, dict[ str, any ] ] = dict()  # Custom parameters override
@@ -42,12 +38,8 @@ class MeshDoctorChecks( MeshDoctorBase ):
         self.m_CHECK_FEATURES_CONFIG: dict[ str, CheckFeature ] = check_features_config
         self.m_ORDERED_CHECK_NAMES: list[ str ] = ordered_check_names
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: vtkInformationVector
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: vtkInformationVector ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
@@ -81,10 +73,12 @@ class MeshDoctorChecks( MeshDoctorBase ):
         """
         # Start with default parameters for all configured checks
         default_params: dict[ str, dict[ str, any ] ] = {
-            name: feature.default_params.copy() for name, feature in self.m_CHECK_FEATURES_CONFIG.items()
+            name: feature.default_params.copy()
+            for name, feature in self.m_CHECK_FEATURES_CONFIG.items()
         }
         final_check_params: dict[ str, dict[ str, any ] ] = {
-            name: default_params[ name ] for name in self.m_checks_to_perform
+            name: default_params[ name ]
+            for name in self.m_checks_to_perform
         }
 
         # Apply any custom parameter overrides
@@ -98,7 +92,7 @@ class MeshDoctorChecks( MeshDoctorBase ):
 
         for check_name in self.m_checks_to_perform:
             if check_name not in self.m_CHECK_FEATURES_CONFIG:
-                self.m_logger.warning(f"Check '{check_name}' is not available. Skipping.")
+                self.m_logger.warning( f"Check '{check_name}' is not available. Skipping." )
                 continue
 
             params = final_check_params[ check_name ]
@@ -193,11 +187,9 @@ class AllChecks( MeshDoctorChecks ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__(
-            checks_to_perform=ocn_all_checks,
-            check_features_config=cfc_all_checks,
-            ordered_check_names=ocn_all_checks
-        )
+        super().__init__( checks_to_perform=ocn_all_checks,
+                          check_features_config=cfc_all_checks,
+                          ordered_check_names=ocn_all_checks )
 
 
 class MainChecks( MeshDoctorChecks ):
@@ -207,8 +199,6 @@ class MainChecks( MeshDoctorChecks ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__(
-            checks_to_perform=ocn_main_checks,
-            check_features_config=cfc_main_checks,
-            ordered_check_names=ocn_main_checks
-        )
+        super().__init__( checks_to_perform=ocn_main_checks,
+                          check_features_config=cfc_main_checks,
+                          ordered_check_names=ocn_main_checks )

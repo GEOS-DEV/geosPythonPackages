@@ -31,7 +31,9 @@ class NonConformal( MeshDoctorBase ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType='vtkUnstructuredGrid',
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self.m_angle_tolerance: float = 10.0
         self.m_face_tolerance: float = 0.0
@@ -39,12 +41,8 @@ class NonConformal( MeshDoctorBase ):
         self.m_non_conformal_cells: list[ tuple[ int, int ] ] = list()
         self.m_paintNonConformalCells: int = 0
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: vtkInformationVector
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: vtkInformationVector ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:

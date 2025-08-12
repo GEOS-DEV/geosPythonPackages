@@ -31,17 +31,15 @@ class ElementVolumes( MeshDoctorBase ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType='vtkUnstructuredGrid',
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self.m_returnNegativeZeroVolumes: bool = False
         self.m_volumes: npt.NDArray = None
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: vtkInformationVector
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: vtkInformationVector ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:

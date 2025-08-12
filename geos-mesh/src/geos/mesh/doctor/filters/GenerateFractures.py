@@ -4,9 +4,9 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_fractures import Options, split_mesh_on_fractures
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, convert_to_fracture_policy
-from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES,
-                                                                  __FRACTURES_DATA_MODE, __FRACTURES_OUTPUT_DIR,
-                                                                  __FRACTURES_DATA_MODE_VALUES, __POLICIES, __POLICY )
+from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES, __FRACTURES_DATA_MODE,
+                                                                  __FRACTURES_OUTPUT_DIR, __FRACTURES_DATA_MODE_VALUES,
+                                                                  __POLICIES, __POLICY )
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 from geos.mesh.utils.arrayHelpers import has_array
 
@@ -25,7 +25,6 @@ To use the filter:
 
 """
 
-
 FIELD_NAME = __FIELD_NAME
 FIELD_VALUES = __FIELD_VALUES
 FRACTURES_DATA_MODE = __FRACTURES_DATA_MODE
@@ -42,7 +41,9 @@ class GenerateFractures( MeshDoctorBase ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=2, inputType='vtkUnstructuredGrid',
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=2,
+                          inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self.m_policy: str = POLICIES[ 1 ]
         self.m_field_name: str = None
@@ -52,12 +53,8 @@ class GenerateFractures( MeshDoctorBase ):
         self.m_mesh_VtkOutput: VtkOutput = None
         self.m_all_fractures_VtkOutput: list[ VtkOutput ] = None
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: list[ vtkInformationVector ]
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: list[ vtkInformationVector ] ) -> int:
         input_mesh = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
         if has_array( input_mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             err_msg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +

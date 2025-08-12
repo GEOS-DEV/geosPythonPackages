@@ -28,7 +28,6 @@
 
 # """
 
-
 # class SupportedElements( VTKPythonAlgorithmBase ):
 
 #     def __init__( self: Self ) -> None:

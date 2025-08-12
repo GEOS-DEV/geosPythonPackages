@@ -7,7 +7,6 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.self_intersecting_elements import get_invalid_cell_ids
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
-
 __doc__ = """
 SelfIntersectingElements module is a vtk filter that allows to find invalid elements in a vtkUnstructuredGrid.
 
@@ -32,7 +31,9 @@ class SelfIntersectingElements( MeshDoctorBase ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType='vtkUnstructuredGrid',
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self.m_min_distance: float = 0.0
         self.m_wrong_number_of_points_elements: list[ int ] = list()
@@ -43,12 +44,8 @@ class SelfIntersectingElements( MeshDoctorBase ):
         self.m_faces_oriented_incorrectly_elements: list[ int ] = list()
         self.m_paintInvalidElements: int = 0
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: vtkInformationVector
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: vtkInformationVector ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:

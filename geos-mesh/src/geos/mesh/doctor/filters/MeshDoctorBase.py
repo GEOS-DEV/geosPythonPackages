@@ -15,13 +15,11 @@ class MeshDoctorBase( VTKPythonAlgorithmBase ):
     including logger management, grid access, and file writing capabilities.
     """
 
-    def __init__(
-        self: Self,
-        nInputPorts: int = 1,
-        nOutputPorts: int = 1,
-        inputType: str = 'vtkUnstructuredGrid',
-        outputType: str = 'vtkUnstructuredGrid'
-    ) -> None:
+    def __init__( self: Self,
+                  nInputPorts: int = 1,
+                  nOutputPorts: int = 1,
+                  inputType: str = 'vtkUnstructuredGrid',
+                  outputType: str = 'vtkUnstructuredGrid' ) -> None:
         """Initialize the base mesh doctor filter.
 
         Args:
@@ -30,12 +28,10 @@ class MeshDoctorBase( VTKPythonAlgorithmBase ):
             inputType (str): Input data type. Defaults to 'vtkUnstructuredGrid'.
             outputType (str): Output data type. Defaults to 'vtkUnstructuredGrid'.
         """
-        super().__init__(
-            nInputPorts=nInputPorts,
-            nOutputPorts=nOutputPorts,
-            inputType=inputType if nInputPorts > 0 else None,
-            outputType=outputType
-        )
+        super().__init__( nInputPorts=nInputPorts,
+                          nOutputPorts=nOutputPorts,
+                          inputType=inputType if nInputPorts > 0 else None,
+                          outputType=outputType )
         self.m_logger = setup_logger
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
@@ -131,23 +127,14 @@ class MeshDoctorGenerator( MeshDoctorBase ):
     from scratch without requiring input meshes.
     """
 
-    def __init__(
-        self: Self,
-        nOutputPorts: int = 1,
-        outputType: str = 'vtkUnstructuredGrid'
-    ) -> None:
+    def __init__( self: Self, nOutputPorts: int = 1, outputType: str = 'vtkUnstructuredGrid' ) -> None:
         """Initialize the base mesh doctor generator filter.
 
         Args:
             nOutputPorts (int): Number of output ports. Defaults to 1.
             outputType (str): Output data type. Defaults to 'vtkUnstructuredGrid'.
         """
-        super().__init__(
-            nInputPorts=0,
-            nOutputPorts=nOutputPorts,
-            inputType=None,
-            outputType=outputType
-        )
+        super().__init__( nInputPorts=0, nOutputPorts=nOutputPorts, inputType=None, outputType=outputType )
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Generator filters don't have input ports.

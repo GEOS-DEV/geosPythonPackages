@@ -31,19 +31,17 @@ class CollocatedNodes( MeshDoctorBase ):
 
         Output mesh is vtkUnstructuredGrid.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType='vtkUnstructuredGrid',
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self.m_collocatedNodesBuckets: list[ tuple[ int ] ] = list()
         self.m_paintWrongSupportElements: int = 0
         self.m_tolerance: float = 0.0
         self.m_wrongSupportElements: list[ int ] = list()
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfo: vtkInformationVector
-    ) -> int:
+    def RequestData( self: Self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
+                     outInfo: vtkInformationVector ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:

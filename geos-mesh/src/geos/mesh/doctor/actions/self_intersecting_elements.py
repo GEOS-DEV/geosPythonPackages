@@ -55,11 +55,11 @@ def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str,
     # Different types of cell invalidity are defined as hexadecimal values, specific to vtkCellValidator
     # Here NonPlanarFaces and DegenerateFaces can also be obtained.
     error_masks: dict[ str, int ] = {
-        "wrong_number_of_points_elements": 0x01,      # 0000 0001
-        "intersecting_edges_elements": 0x02,          # 0000 0010
-        "intersecting_faces_elements": 0x04,          # 0000 0100
-        "non_contiguous_edges_elements": 0x08,        # 0000 1000
-        "non_convex_elements": 0x10,                  # 0001 0000
+        "wrong_number_of_points_elements": 0x01,  # 0000 0001
+        "intersecting_edges_elements": 0x02,  # 0000 0010
+        "intersecting_faces_elements": 0x04,  # 0000 0100
+        "non_contiguous_edges_elements": 0x08,  # 0000 1000
+        "non_convex_elements": 0x10,  # 0001 0000
         "faces_oriented_incorrectly_elements": 0x20,  # 0010 0000
     }
 
@@ -69,8 +69,8 @@ def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str,
     invalid_cell_ids: dict[ str, list[ int ] ] = { error_name: list() for error_name in error_masks }
 
     f = vtkCellValidator()
-    f.SetTolerance(min_distance)
-    f.SetInputData(mesh)
+    f.SetTolerance( min_distance )
+    f.SetInputData( mesh )
     f.Update()  # executes the filter
     output = f.GetOutput()
 
