@@ -8,7 +8,9 @@ from geos.mesh.doctor.actions.non_conformal import Options, find_non_conformal_c
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
-NonConformal module is a vtk filter that ... of a vtkUnstructuredGrid.
+NonConformal module is a vtk filter that detects non-conformal mesh interfaces in a vtkUnstructuredGrid.
+Non-conformal interfaces occur when adjacent cells do not share nodes or faces properly, which can indicate
+mesh quality issues or intentional non-matching grid interfaces that require special handling.
 
 One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
 
@@ -18,9 +20,29 @@ To use the filter:
 
     from filters.NonConformal import NonConformal
 
-    # instanciate the filter
+    # instantiate the filter
     nonConformalFilter: NonConformal = NonConformal()
 
+    # set tolerance parameters
+    nonConformalFilter.setPointTolerance(1e-6)  # tolerance for point matching
+    nonConformalFilter.setFaceTolerance(1e-6)   # tolerance for face matching
+    nonConformalFilter.setAngleTolerance(10.0)  # angle tolerance in degrees
+
+    # optionally enable painting of non-conformal cells
+    nonConformalFilter.setPaintNonConformalCells(1)  # 1 to enable, 0 to disable
+
+    # set input mesh
+    nonConformalFilter.SetInputData(mesh)
+
+    # execute the filter
+    output_mesh: vtkUnstructuredGrid = nonConformalFilter.getGrid()
+
+    # get non-conformal cell pairs
+    non_conformal_cells = nonConformalFilter.getNonConformalCells()
+    # returns list of tuples with (cell1_id, cell2_id) for non-conformal interfaces
+
+    # write the output mesh
+    nonConformalFilter.writeGrid("output/mesh_with_nonconformal_info.vtu")
 """
 
 

@@ -5,7 +5,47 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
-__doc__ = """Base class for all mesh doctor VTK filters."""
+__doc__ = """
+MeshDoctorBase module provides base classes for all mesh doctor VTK filters.
+
+MeshDoctorBase serves as the foundation class for filters that process existing meshes,
+while MeshDoctorGenerator is for filters that generate new meshes from scratch.
+
+These base classes provide common functionality including:
+- Logger management and setup
+- Grid access and manipulation methods
+- File I/O operations for writing VTK unstructured grids
+- Standard VTK filter interface implementation
+
+All mesh doctor filters should inherit from one of these base classes to ensure
+consistent behavior and interface across the mesh doctor toolkit.
+
+Example usage patterns:
+
+.. code-block:: python
+
+    # For filters that process existing meshes
+    from filters.MeshDoctorBase import MeshDoctorBase
+
+    class MyProcessingFilter(MeshDoctorBase):
+        def __init__(self):
+            super().__init__(nInputPorts=1, nOutputPorts=1)
+
+        def RequestData(self, request, inInfoVec, outInfo):
+            # Process input mesh and create output
+            pass
+
+    # For filters that generate meshes from scratch
+    from filters.MeshDoctorBase import MeshDoctorGenerator
+
+    class MyGeneratorFilter(MeshDoctorGenerator):
+        def __init__(self):
+            super().__init__(nOutputPorts=1)
+
+        def RequestData(self, request, inInfo, outInfo):
+            # Generate new mesh
+            pass
+"""
 
 
 class MeshDoctorBase( VTKPythonAlgorithmBase ):

@@ -8,7 +8,9 @@ from geos.mesh.doctor.actions.collocated_nodes import find_collocated_nodes_buck
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
-CollocatedNodes module is a vtk filter that allows to find the duplicated nodes of a vtkUnstructuredGrid.
+CollocatedNodes module is a vtk filter that identifies and handles duplicated/collocated nodes in a vtkUnstructuredGrid.
+The filter can detect nodes that are within a specified tolerance distance and optionally identify elements
+that have support nodes appearing more than once (wrong support elements).
 
 One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
 
@@ -18,9 +20,27 @@ To use the filter:
 
     from filters.CollocatedNodes import CollocatedNodes
 
-    # instanciate the filter
+    # instantiate the filter
     collocatedNodesFilter: CollocatedNodes = CollocatedNodes()
 
+    # set the tolerance for detecting collocated nodes
+    collocatedNodesFilter.setTolerance(1e-6)
+
+    # optionally enable painting of wrong support elements
+    collocatedNodesFilter.setPaintWrongSupportElements(1)  # 1 to enable, 0 to disable
+
+    # set input mesh
+    collocatedNodesFilter.SetInputData(mesh)
+
+    # execute the filter
+    output_mesh: vtkUnstructuredGrid = collocatedNodesFilter.getGrid()
+
+    # get results
+    collocated_buckets = collocatedNodesFilter.getCollocatedNodeBuckets()  # list of tuples with collocated node indices
+    wrong_support_elements = collocatedNodesFilter.getWrongSupportElements()  # list of problematic element indices
+
+    # write the output mesh
+    collocatedNodesFilter.writeGrid("output/mesh_with_collocated_info.vtu")
 """
 
 

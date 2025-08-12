@@ -11,19 +11,46 @@ from geos.mesh.doctor.parsing.main_checks_parsing import ( CHECK_FEATURES_CONFIG
                                                            as ocn_main_checks )
 
 __doc__ = """
-AllChecks module is a vtk filter that ...
+Checks module is a vtk filter that performs comprehensive mesh validation checks on a vtkUnstructuredGrid.
+This module contains AllChecks and MainChecks filters that run various quality checks including element validation,
+node validation, topology checks, and geometric integrity verification.
 
 One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
 
-To use the filter:
+To use the AllChecks filter:
 
 .. code-block:: python
 
-    from filters.AllChecks import AllChecks
+    from filters.Checks import AllChecks
 
-    # instanciate the filter
+    # instantiate the filter for all available checks
     allChecksFilter: AllChecks = AllChecks()
 
+    # set input mesh
+    allChecksFilter.SetInputData(mesh)
+
+    # optionally customize check parameters
+    allChecksFilter.setCheckParameter("collocated_nodes", "tolerance", 1e-6)
+    allChecksFilter.setGlobalParameter("tolerance", 1e-6)  # applies to all checks with tolerance parameter
+
+    # execute the checks
+    output_mesh: vtkUnstructuredGrid = allChecksFilter.getGrid()
+
+    # get check results
+    check_results = allChecksFilter.getCheckResults()
+
+To use the MainChecks filter (subset of most important checks):
+
+.. code-block:: python
+
+    from filters.Checks import MainChecks
+
+    # instantiate the filter for main checks only
+    mainChecksFilter: MainChecks = MainChecks()
+
+    # set input mesh and run checks
+    mainChecksFilter.SetInputData(mesh)
+    output_mesh: vtkUnstructuredGrid = mainChecksFilter.getGrid()
 """
 
 

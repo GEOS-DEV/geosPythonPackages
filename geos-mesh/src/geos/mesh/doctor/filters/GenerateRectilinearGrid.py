@@ -43,11 +43,11 @@ To use the filter:
     # then, to obtain the constructed mesh out of all these operations, 2 solutions are available
 
     # solution1
+    mesh: vtkUnstructuredGrid = generateRectilinearGridFilter.getGrid()
+
+    # solution2, which calls the same method as above
     generateRectilinearGridFilter.Update()
     mesh: vtkUnstructuredGrid = generateRectilinearGridFilter.GetOutputDataObject( 0 )
-
-    # solution2, which is a method calling the 2 instructions above
-    mesh: vtkUnstructuredGrid = generateRectilinearGridFilter.getRectilinearGrid()
 
     # finally, you can write the mesh at a specific destination with:
     generateRectilinearGridFilter.writeGrid( "output/filepath/of/your/grid.vtu" )

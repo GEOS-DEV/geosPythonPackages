@@ -8,7 +8,9 @@ from geos.mesh.doctor.actions.self_intersecting_elements import get_invalid_cell
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
-SelfIntersectingElements module is a vtk filter that allows to find invalid elements in a vtkUnstructuredGrid.
+SelfIntersectingElements module is a vtk filter that identifies various types of invalid or problematic elements
+in a vtkUnstructuredGrid. It detects elements with intersecting edges, intersecting faces, non-contiguous edges,
+non-convex shapes, incorrectly oriented faces, and wrong number of points.
 
 One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
 
@@ -18,9 +20,31 @@ To use the filter:
 
     from filters.SelfIntersectingElements import SelfIntersectingElements
 
-    # instanciate the filter
+    # instantiate the filter
     selfIntersectingElementsFilter: SelfIntersectingElements = SelfIntersectingElements()
 
+    # set minimum distance parameter for intersection detection
+    selfIntersectingElementsFilter.setMinDistance(1e-6)
+
+    # optionally enable painting of invalid elements
+    selfIntersectingElementsFilter.setPaintInvalidElements(1)  # 1 to enable, 0 to disable
+
+    # set input mesh
+    selfIntersectingElementsFilter.SetInputData(mesh)
+
+    # execute the filter
+    output_mesh: vtkUnstructuredGrid = selfIntersectingElementsFilter.getGrid()
+
+    # get different types of problematic elements
+    wrong_points_elements = selfIntersectingElementsFilter.getWrongNumberOfPointsElements()
+    intersecting_edges_elements = selfIntersectingElementsFilter.getIntersectingEdgesElements()
+    intersecting_faces_elements = selfIntersectingElementsFilter.getIntersectingFacesElements()
+    non_contiguous_edges_elements = selfIntersectingElementsFilter.getNonContiguousEdgesElements()
+    non_convex_elements = selfIntersectingElementsFilter.getNonConvexElements()
+    wrong_oriented_faces_elements = selfIntersectingElementsFilter.getFacesOrientedIncorrectlyElements()
+
+    # write the output mesh
+    selfIntersectingElementsFilter.writeGrid("output/mesh_with_invalid_elements.vtu")
 """
 
 

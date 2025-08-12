@@ -8,9 +8,11 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorBase
 
 __doc__ = """
-ElementVolumes module is a vtk filter that allows to calculate the volumes of every elements in a vtkUnstructuredGrid.
+ElementVolumes module is a vtk filter that calculates the volumes of all elements in a vtkUnstructuredGrid.
+The filter can identify elements with negative or zero volumes, which typically indicate mesh quality issues
+such as inverted elements or degenerate cells.
 
-One filter input is vtkUnstructuredGrid one filter output which is vtkUnstructuredGrid.
+One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
 
 To use the filter:
 
@@ -18,9 +20,25 @@ To use the filter:
 
     from filters.ElementVolumes import ElementVolumes
 
-    # instanciate the filter
+    # instantiate the filter
     elementVolumesFilter: ElementVolumes = ElementVolumes()
 
+    # optionally enable detection of negative/zero volume elements
+    elementVolumesFilter.setReturnNegativeZeroVolumes(True)
+
+    # set input mesh
+    elementVolumesFilter.SetInputData(mesh)
+
+    # execute the filter
+    output_mesh: vtkUnstructuredGrid = elementVolumesFilter.getGrid()
+
+    # get problematic elements (if enabled)
+    if elementVolumesFilter.m_returnNegativeZeroVolumes:
+        negative_zero_volumes = elementVolumesFilter.getNegativeZeroVolumes()
+        # returns numpy array with shape (n, 2) where first column is element index, second is volume
+
+    # write the output mesh with volume information
+    elementVolumesFilter.writeGrid("output/mesh_with_volumes.vtu")
 """
 
 

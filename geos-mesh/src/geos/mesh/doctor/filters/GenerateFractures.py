@@ -11,18 +11,48 @@ from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 from geos.mesh.utils.arrayHelpers import has_array
 
 __doc__ = """
-GenerateFractures module is a vtk filter that takes as input a vtkUnstructuredGrid that needs to be splited along
-non embedded fractures. When saying "splited", it implies that if a fracture plane is defined between 2 cells,
-the nodes of the face shared between both cells will be duplicated simple vtkUnstructuredGrid rectilinear grid.
-GlobalIds for points and cells can be added.
-You can create CellArray and PointArray of constant value = 1 and any dimension >= 1.
+GenerateFractures module is a vtk filter that splits a vtkUnstructuredGrid along non-embedded fractures.
+When a fracture plane is defined between two cells, the nodes of the shared face will be duplicated
+to create a discontinuity. The filter generates both the split main mesh and separate fracture meshes.
 
-No filter input and one output type which is vtkUnstructuredGrid.
+One filter input is vtkUnstructuredGrid, two filter outputs which are vtkUnstructuredGrid.
 
 To use the filter:
 
 .. code-block:: python
 
+    from filters.GenerateFractures import GenerateFractures
+
+    # instantiate the filter
+    generateFracturesFilter: GenerateFractures = GenerateFractures()
+
+    # set the field name that defines fracture regions
+    generateFracturesFilter.setFieldName("fracture_field")
+
+    # set the field values that identify fracture boundaries
+    generateFracturesFilter.setFieldValues("1,2")  # comma-separated values
+
+    # set fracture policy (0 for internal fractures, 1 for boundary fractures)
+    generateFracturesFilter.setPolicy(1)
+
+    # set output directory for fracture meshes
+    generateFracturesFilter.setFracturesOutputDirectory("./fractures/")
+
+    # optionally set data mode (0 for ASCII, 1 for binary)
+    generateFracturesFilter.setOutputDataMode(1)
+    generateFracturesFilter.setFracturesDataMode(1)
+
+    # set input mesh
+    generateFracturesFilter.SetInputData(mesh)
+
+    # execute the filter
+    generateFracturesFilter.Update()
+
+    # get the split mesh and fracture meshes
+    split_mesh, fracture_meshes = generateFracturesFilter.getAllGrids()
+
+    # write all meshes
+    generateFracturesFilter.writeMeshes("output/split_mesh.vtu", is_data_mode_binary=True)
 """
 
 FIELD_NAME = __FIELD_NAME

@@ -13,19 +13,37 @@
 # from geos.utils.Logger import Logger, getLogger
 
 # __doc__ = """
-# SupportedElements module is a vtk filter that allows ... a vtkUnstructuredGrid.
-
+# SupportedElements module is a vtk filter that identifies unsupported element types and problematic polyhedron
+# elements in a vtkUnstructuredGrid. It checks for element types that are not supported by GEOS and validates
+# polyhedron elements for geometric correctness.
+#
 # One filter input is vtkUnstructuredGrid, one filter output which is vtkUnstructuredGrid.
-
+#
 # To use the filter:
-
+#
 # .. code-block:: python
-
+#
 #     from filters.SupportedElements import SupportedElements
-
-#     # instanciate the filter
+#
+#     # instantiate the filter
 #     supportedElementsFilter: SupportedElements = SupportedElements()
-
+#
+#     # optionally enable painting of unsupported element types
+#     supportedElementsFilter.setPaintUnsupportedElementTypes(1)  # 1 to enable, 0 to disable
+#
+#     # set input mesh
+#     supportedElementsFilter.SetInputData(mesh)
+#
+#     # execute the filter
+#     output_mesh: vtkUnstructuredGrid = supportedElementsFilter.getGrid()
+#
+#     # get unsupported elements
+#     unsupported_elements = supportedElementsFilter.getUnsupportedElements()
+#
+#     # write the output mesh
+#     supportedElementsFilter.writeGrid("output/mesh_with_support_info.vtu")
+#
+# Note: This filter is currently disabled due to multiprocessing requirements.
 # """
 
 # class SupportedElements( VTKPythonAlgorithmBase ):
