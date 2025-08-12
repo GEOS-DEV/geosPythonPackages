@@ -7,6 +7,10 @@ GEOS Paraview plugins
 
    ./geos_pv_docs/home.rst
 
-   ./geos_pv_docs/modules.rst
+   ./geos_pv_docs/utilities.rst
 
    ./geos_pv_docs/readers.rst
+
+   ./geos_pv_docs/meshQuality.rst
+
+   ./geos_pv_docs/processing.rst
