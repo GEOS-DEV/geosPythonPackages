@@ -122,7 +122,7 @@ def test_fillPartialAttributes(
         assert ( npArrayFilled == npArrayTest ).all()
 
     vtkDataTypeFilled: int = attributeFilled.GetDataType()
-    assert vtkDataTypeTest == vtkDataTypeFilled
+    assert vtkDataTypeFilled == vtkDataTypeTest
 
 
 @pytest.mark.parametrize( "multiBlockDataSetName", [ "multiblock" ] )
