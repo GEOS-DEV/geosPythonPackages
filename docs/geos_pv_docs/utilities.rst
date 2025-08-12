@@ -8,4 +8,6 @@ Utilities
 
    pyplotUtils
 
+   pythonViewUtils
+
    utils
