@@ -760,9 +760,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
         Args:
            value0 (float): Red color between 0 and 1.
-
            value1 (float): Green color between 0 and 1.
-
            value2 (float): Blue color between 0 and 1.
         """
         self.m_color = ( value0, value1, value2 )
