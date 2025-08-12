@@ -3,7 +3,7 @@ Post-/Pre-processing
 
 PVFillPartialArrays
 --------------------
-.. automodule:: geos.pv.plugins.FillPartialArrays
+.. automodule:: geos.pv.plugins.PVFillPartialArrays
 
 
 PVSplitMesh
