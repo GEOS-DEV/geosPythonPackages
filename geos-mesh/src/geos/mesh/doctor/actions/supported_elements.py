@@ -29,7 +29,16 @@ class Result:
 
 
 # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+# Global variable to be set in each worker process
 MESH: Optional[ vtkUnstructuredGrid ] = None
+
+
+def init_worker( mesh_to_init: vtkUnstructuredGrid ) -> None:
+    """Initializer for each worker process to set the global mesh."""
+    global MESH
+    MESH = mesh_to_init
+
+
 supported_cell_types: set[ int ] = {
     VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
     VTK_WEDGE
@@ -38,9 +47,7 @@ supported_cell_types: set[ int ] = {
 
 class IsPolyhedronConvertible:
 
-    def __init__( self, mesh: vtkUnstructuredGrid ):
-        global MESH  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
-        MESH = mesh
+    def __init__( self ):
 
         def build_prism_graph( n: int, name: str ) -> networkx.Graph:
             """
@@ -123,12 +130,15 @@ def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Op
     # Dealing with polyhedron elements.
     num_cells: int = mesh.GetNumberOfCells()
     result = ones( num_cells, dtype=int ) * -1
-    with multiprocessing.Pool( processes=options.num_proc ) as pool:
-        generator = pool.imap_unordered( IsPolyhedronConvertible( mesh ),
-                                         range( num_cells ),
-                                         chunksize=options.chunk_size )
+    # Use the initializer to set up each worker process
+    # Pass the mesh to the initializer
+    with multiprocessing.Pool( processes=options.nproc, initializer=init_worker, initargs=( mesh, ) ) as pool:
+        # Pass a mesh-free instance of the class to the workers.
+        # The MESH global will already be set in each worker.
+        generator = pool.imap_unordered( IsPolyhedronConvertible(), range( num_cells ), chunksize=options.chunk_size )
         for i, val in enumerate( tqdm( generator, total=num_cells, desc="Testing support for elements" ) ):
             result[ i ] = val
+
     return [ i for i in result if i > -1 ]
 
 
