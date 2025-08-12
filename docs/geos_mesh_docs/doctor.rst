@@ -310,8 +310,8 @@ It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get conver
 .. code-block::
 
       $ mesh-doctor supported_elements --help
-      usage: mesh_doctor.py supported_elements [-h] [--chunck_size 1] [--nproc 8]
+      usage: mesh_doctor.py supported_elements [-h] [--chunk_size 1] [--nproc 8]
       options:
       -h, --help              show this help message and exit
-      --chunck_size 1         [int]: Defaults chunk size for parallel processing to 1
+      --chunk_size 1         [int]: Defaults chunk size for parallel processing to 1
       --nproc 8               [int]: Number of threads used for parallel processing. Defaults to your CPU count 8.
