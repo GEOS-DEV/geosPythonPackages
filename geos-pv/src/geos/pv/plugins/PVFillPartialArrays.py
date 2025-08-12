@@ -90,20 +90,21 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         </StringVectorProperty>
     """ )
     def _setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
-        """Set the the dictionary with the region indexes and its corresponding list of value for each components.
+        """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
             attributeName (str): Name of the attribute to consider.
-            values (str): List of the filing values. If multiple components use a coma between the value of each component.
+            values (str): List of the filing values. If multiple components use a comma between the value of each component.
         """
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}
             self.clearDictAttributesValues = False
         
-        if attributeName is not None and values is not None :
-            self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
-        elif attributeName is not None and values is None:
-            self.dictAttributesValues[ attributeName ] = None
+        if attributeName is not None:
+            if values is not None :
+                self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
+            else:
+                self.dictAttributesValues[ attributeName ] = None
  
         self.Modified()
 
