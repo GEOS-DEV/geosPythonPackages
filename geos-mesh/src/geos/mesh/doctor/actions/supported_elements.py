@@ -3,7 +3,7 @@ import multiprocessing
 import networkx
 from numpy import ones
 from tqdm import tqdm
-from typing import FrozenSet, Iterable, Mapping, Optional
+from typing import Iterable, Mapping, Optional
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
 from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import read_mesh
-from geos.mesh.utils.genericHelpers import vtk_iter
+from geos.mesh.utils.genericHelpers import get_vtk_constant_str, vtk_iter
 
 
 @dataclass( frozen=True )
@@ -23,8 +23,8 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    unsupported_std_elements_types: FrozenSet[ int ]  # list of unsupported types
-    unsupported_polyhedron_elements: FrozenSet[
+    unsupported_std_elements_types: list[ str ]  # list of unsupported types
+    unsupported_polyhedron_elements: frozenset[
         int ]  # list of polyhedron elements that could not be converted to supported std elements
 
 
@@ -116,14 +116,16 @@ class IsPolyhedronConvertible:
             return ic
 
 
-def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> set[ int ]:
+def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> list[ str ]:
     if hasattr( mesh, "GetDistinctCellTypesArray" ):  # For more recent versions of vtk.
         unique_cell_types = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
     else:
         vtk_cell_types = vtkCellTypes()
         mesh.GetCellTypes( vtk_cell_types )
         unique_cell_types = set( vtk_iter( vtk_cell_types ) )
-    return unique_cell_types - supported_cell_types
+    result_values: set[ int ] = unique_cell_types - supported_cell_types
+    results = [ f"{get_vtk_constant_str( i )}" for i in frozenset( result_values ) ]
+    return results
 
 
 def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Options ) -> list[ int ]:
@@ -143,9 +145,9 @@ def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Op
 
 
 def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
-    unsupported_std_elements_types: set[ int ] = find_unsupported_std_elements_types( mesh )
+    unsupported_std_elements_types: list[ str ] = find_unsupported_std_elements_types( mesh )
     unsupported_polyhedron_elements: list[ int ] = find_unsupported_polyhedron_elements( mesh, options )
-    return Result( unsupported_std_elements_types=frozenset( unsupported_std_elements_types ),
+    return Result( unsupported_std_elements_types=unsupported_std_elements_types,
                    unsupported_polyhedron_elements=frozenset( unsupported_polyhedron_elements ) )
 
 

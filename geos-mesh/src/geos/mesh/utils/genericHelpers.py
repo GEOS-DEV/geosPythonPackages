@@ -6,6 +6,7 @@ import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference
+import vtkmodules.vtkCommonDataModel as vtk_dm
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet, vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -18,6 +19,25 @@ These methods include:
     - conversion from a list to vtkIdList
     - conversion of vtk container into iterable
 """
+
+
+def get_vtk_constant_str( vtk_int_value: int ) -> str:
+    """
+    Finds the string name of a VTK constant from its integer value.
+
+    Args:
+        vtk_int_value: The integer value of the constant (e.g., 12).
+
+    Returns:
+        A string like "12: VTK_HEXAHEDRON" or "12: <UNKNOWN_VTK_CONSTANT>".
+    """
+    # Search through the vtkCommonDataModel module
+    for name in dir( vtk_dm ):
+        # We only want variables that start with "VTK_"
+        if name.startswith( "VTK_" ):
+            if getattr( vtk_dm, name ) == vtk_int_value:
+                return f"{vtk_int_value}: {name}"
+    return f"{vtk_int_value}: <UNKNOWN_VTK_CONSTANT>"
 
 
 def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
