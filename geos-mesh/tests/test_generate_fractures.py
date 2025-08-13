@@ -11,7 +11,6 @@ from geos.mesh.doctor.actions.generate_fractures import ( split_mesh_on_fracture
 from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
-
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
 

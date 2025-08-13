@@ -125,14 +125,16 @@ def create_simple_tetra_grid():
     """Create a simple tetrahedral grid for testing"""
     # Create an unstructured grid
     points_tetras: vtkPoints = vtkPoints()
-    points_tetras_coords: list[ tuple[ float ] ] = [ ( 1.0, 0.5, 0.0 ),  # point0
-                                                     ( 1.0, 0.0, 1.0 ),
-                                                     ( 1.0, 1.0, 1.0 ),
-                                                     ( 0.0, 0.5, 0.5 ),
-                                                     ( 2.0, 0.5, 0.5 ),
-                                                     ( 1.0, 0.5, 2.0 ),  # point5
-                                                     ( 0.0, 0.5, 1.5 ),
-                                                     ( 2.0, 0.5, 1.5 ) ]
+    points_tetras_coords: list[ tuple[ float ] ] = [
+        ( 1.0, 0.5, 0.0 ),  # point0
+        ( 1.0, 0.0, 1.0 ),
+        ( 1.0, 1.0, 1.0 ),
+        ( 0.0, 0.5, 0.5 ),
+        ( 2.0, 0.5, 0.5 ),
+        ( 1.0, 0.5, 2.0 ),  # point5
+        ( 0.0, 0.5, 1.5 ),
+        ( 2.0, 0.5, 1.5 )
+    ]
     for point_tetra in points_tetras_coords:
         points_tetras.InsertNextPoint( point_tetra )
 
@@ -176,24 +178,26 @@ def create_mixed_grid():
     """Create a grid with supported and unsupported cell types, 4 Hexahedrons with 2 quad fracs vertical"""
     # Create an unstructured grid
     four_hexs_points: vtkPoints = vtkPoints()
-    four_hexs_points_coords: list[ tuple[ float ] ] = [ ( 0.0, 0.0, 0.0 ),  # point0
-                                                        ( 1.0, 0.0, 0.0 ),  # point1
-                                                        ( 2.0, 0.0, 0.0 ),  # point2
-                                                        ( 0.0, 1.0, 0.0 ),  # point3
-                                                        ( 1.0, 1.0, 0.0 ),  # point4
-                                                        ( 2.0, 1.0, 0.0 ),  # point5
-                                                        ( 0.0, 0.0, 1.0 ),  # point6
-                                                        ( 1.0, 0.0, 1.0 ),  # point7
-                                                        ( 2.0, 0.0, 1.0 ),  # point8
-                                                        ( 0.0, 1.0, 1.0 ),  # point9
-                                                        ( 1.0, 1.0, 1.0 ),  # point10
-                                                        ( 2.0, 1.0, 1.0 ),  # point11
-                                                        ( 0.0, 0.0, 2.0 ),  # point12
-                                                        ( 1.0, 0.0, 2.0 ),  # point13
-                                                        ( 2.0, 0.0, 2.0 ),  # point14
-                                                        ( 0.0, 1.0, 2.0 ),  # point15
-                                                        ( 1.0, 1.0, 2.0 ),  # point16
-                                                        ( 2.0, 1.0, 2.0 ) ]
+    four_hexs_points_coords: list[ tuple[ float ] ] = [
+        ( 0.0, 0.0, 0.0 ),  # point0
+        ( 1.0, 0.0, 0.0 ),  # point1
+        ( 2.0, 0.0, 0.0 ),  # point2
+        ( 0.0, 1.0, 0.0 ),  # point3
+        ( 1.0, 1.0, 0.0 ),  # point4
+        ( 2.0, 1.0, 0.0 ),  # point5
+        ( 0.0, 0.0, 1.0 ),  # point6
+        ( 1.0, 0.0, 1.0 ),  # point7
+        ( 2.0, 0.0, 1.0 ),  # point8
+        ( 0.0, 1.0, 1.0 ),  # point9
+        ( 1.0, 1.0, 1.0 ),  # point10
+        ( 2.0, 1.0, 1.0 ),  # point11
+        ( 0.0, 0.0, 2.0 ),  # point12
+        ( 1.0, 0.0, 2.0 ),  # point13
+        ( 2.0, 0.0, 2.0 ),  # point14
+        ( 0.0, 1.0, 2.0 ),  # point15
+        ( 1.0, 1.0, 2.0 ),  # point16
+        ( 2.0, 1.0, 2.0 )
+    ]
     for four_hexs_point in four_hexs_points_coords:
         four_hexs_points.InsertNextPoint( four_hexs_point )
 
@@ -335,57 +339,57 @@ def create_unsupported_polyhedron_grid():
 #         for j in range( 4, 6 ):
 #             assert unsupported_array.GetValue( j ) == 1  # Quad should not be supported
 
-    # TODO Needs parallelism to work
-    # def test_unsupported_polyhedron( self ):
-    #     """Test a grid with unsupported polyhedron"""
-    #     # Create grid with unsupported polyhedron
-    #     grid = create_unsupported_polyhedron_grid()
-    #     # Apply the filter with painting enabled
-    #     filter = SupportedElements()
-    #     filter.m_logger.critical( "test_unsupported_polyhedron" )
-    #     filter.SetInputDataObject( grid )
-    #     filter.setPaintUnsupportedPolyhedrons( 1 )
-    #     filter.Update()
-    #     result = filter.getGrid()
-    #     assert result is not None
-    #     # Verify the array was added
-    #     polyhedron_array = result.GetCellData().GetArray( "IsUnsupportedPolyhedron" )
-    #     assert polyhedron_array is None
-    #     # Since we created an unsupported polyhedron, it should be marked
-    #     assert polyhedron_array.GetValue( 0 ) == 1
+# TODO Needs parallelism to work
+# def test_unsupported_polyhedron( self ):
+#     """Test a grid with unsupported polyhedron"""
+#     # Create grid with unsupported polyhedron
+#     grid = create_unsupported_polyhedron_grid()
+#     # Apply the filter with painting enabled
+#     filter = SupportedElements()
+#     filter.m_logger.critical( "test_unsupported_polyhedron" )
+#     filter.SetInputDataObject( grid )
+#     filter.setPaintUnsupportedPolyhedrons( 1 )
+#     filter.Update()
+#     result = filter.getGrid()
+#     assert result is not None
+#     # Verify the array was added
+#     polyhedron_array = result.GetCellData().GetArray( "IsUnsupportedPolyhedron" )
+#     assert polyhedron_array is None
+#     # Since we created an unsupported polyhedron, it should be marked
+#     assert polyhedron_array.GetValue( 0 ) == 1
 
-    # def test_paint_flags( self ):
-    #     """Test setting invalid paint flags"""
-    #     filter = SupportedElements()
-    #     # Should log an error but not raise an exception
-    #     filter.setPaintUnsupportedElementTypes( 2 )  # Invalid value
-    #     filter.setPaintUnsupportedPolyhedrons( 2 )  # Invalid value
-    #     # Values should remain unchanged
-    #     assert filter.m_paintUnsupportedElementTypes == 0
-    #     assert filter.m_paintUnsupportedPolyhedrons == 0
+# def test_paint_flags( self ):
+#     """Test setting invalid paint flags"""
+#     filter = SupportedElements()
+#     # Should log an error but not raise an exception
+#     filter.setPaintUnsupportedElementTypes( 2 )  # Invalid value
+#     filter.setPaintUnsupportedPolyhedrons( 2 )  # Invalid value
+#     # Values should remain unchanged
+#     assert filter.m_paintUnsupportedElementTypes == 0
+#     assert filter.m_paintUnsupportedPolyhedrons == 0
 
-    # def test_set_chunk_size( self ):
-    #     """Test that setChunkSize properly updates the chunk size"""
-    #     # Create filter instance
-    #     filter = SupportedElements()
-    #     # Note the initial value
-    #     initial_chunk_size = filter.m_chunk_size
-    #     # Set a new chunk size
-    #     new_chunk_size = 100
-    #     filter.setChunkSize( new_chunk_size )
-    #     # Verify the chunk size was updated
-    #     assert filter.m_chunk_size == new_chunk_size
-    #     assert filter.m_chunk_size != initial_chunk_size
+# def test_set_chunk_size( self ):
+#     """Test that setChunkSize properly updates the chunk size"""
+#     # Create filter instance
+#     filter = SupportedElements()
+#     # Note the initial value
+#     initial_chunk_size = filter.m_chunk_size
+#     # Set a new chunk size
+#     new_chunk_size = 100
+#     filter.setChunkSize( new_chunk_size )
+#     # Verify the chunk size was updated
+#     assert filter.m_chunk_size == new_chunk_size
+#     assert filter.m_chunk_size != initial_chunk_size
 
-    # def test_set_num_proc( self ):
-    #     """Test that setNumProc properly updates the number of processors"""
-    #     # Create filter instance
-    #     filter = SupportedElements()
-    #     # Note the initial value
-    #     initial_num_proc = filter.m_num_proc
-    #     # Set a new number of processors
-    #     new_num_proc = 4
-    #     filter.setNumProc( new_num_proc )
-    #     # Verify the number of processors was updated
-    #     assert filter.m_num_proc == new_num_proc
-    #     assert filter.m_num_proc != initial_num_proc
+# def test_set_num_proc( self ):
+#     """Test that setNumProc properly updates the number of processors"""
+#     # Create filter instance
+#     filter = SupportedElements()
+#     # Note the initial value
+#     initial_num_proc = filter.m_num_proc
+#     # Set a new number of processors
+#     new_num_proc = 4
+#     filter.setNumProc( new_num_proc )
+#     # Verify the number of processors was updated
+#     assert filter.m_num_proc == new_num_proc
+#     assert filter.m_num_proc != initial_num_proc
