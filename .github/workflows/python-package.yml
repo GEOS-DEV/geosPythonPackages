@@ -204,110 +204,70 @@ jobs:
         set -e
         echo "All standard tests passed ✅"
         echo "GEOS integration label found ✅"
-        echo "Now triggering GEOS integration test via repository dispatch..."
+        echo "Now triggering GEOS integration test workflow..."
         
-        # Use repository dispatch to trigger the integration test
-        # This will create a repository_dispatch event that can be handled by any branch
+        # Trigger the workflow_dispatch event in the GEOS repository
         response=$(curl -fsS -X POST \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/GEOS-DEV/GEOS/dispatches \
+          https://api.github.com/repos/GEOS-DEV/GEOS/actions/workflows/test_geospythonpackages_integration.yml/dispatches \
           -d '{
-            "event_type": "python-package-integration-test",
-            "client_payload": {
-              "target_branch": "ci/benedicto/testGeosPythonPackagesIntegration",
+            "ref": "develop",
+            "inputs": {
               "python_package_repo": "${{ steps.pr_info.outputs.pr_repo }}",
               "python_package_branch": "${{ steps.pr_info.outputs.pr_branch }}",
               "python_package_pr": "${{ github.event.number }}",
-              "requested_by": "${{ github.actor }}",
-              "pr_sha": "${{ steps.pr_info.outputs.pr_sha }}"
+              "requested_by": "${{ github.actor }}"
             }
           }')
         
-        echo "Repository dispatch response: $response"
-        echo "✅ GEOS integration test triggered successfully via repository dispatch"
-        echo "Target branch: ci/benedicto/testGeosPythonPackagesIntegration"
-        echo "Python package repo: ${{ steps.pr_info.outputs.pr_repo }}"
-        echo "Python package branch: ${{ steps.pr_info.outputs.pr_branch }}"
+        echo "Workflow dispatch response: $response"
+        echo "✅ GEOS integration test workflow triggered successfully"
         
-        # For repository dispatch, we can't immediately get a run ID
-        # We'll need to wait and search for runs with our payload data
-        echo "workflow_run_id=dispatch_triggered" >> $GITHUB_OUTPUT
+        # Wait a moment for the workflow to start, then find the run ID
+        sleep 10
+        
+        # Get the latest workflow runs to find our triggered run
+        runs_response=$(curl -fsS -H "Accept: application/vnd.github+json" \
+                             -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                             https://api.github.com/repos/GEOS-DEV/GEOS/actions/workflows/test_geospythonpackages_integration.yml/runs?per_page=5)
+        
+        # Find the most recent run (this assumes it's our triggered run)
+        workflow_run_id=$(echo "$runs_response" | jq -r '.workflow_runs[0].id')
+        echo "workflow_run_id=${workflow_run_id}" >> $GITHUB_OUTPUT
+        echo "Triggered workflow run ID: ${workflow_run_id}"
 
   # Step 4: Wait for GEOS integration results (only if triggered)
   wait_for_geos_integration_result:
     runs-on: ubuntu-latest
     needs: [trigger_geos_integration_test]
-    if: needs.trigger_geos_integration_test.outputs.workflow_run_id == 'dispatch_triggered'
+    if: needs.trigger_geos_integration_test.outputs.workflow_run_id != ''
     outputs:
       geos_test_result: ${{ steps.wait_for_result.outputs.geos_test_result }}
     steps:
     - name: Wait for GEOS integration test to complete
       id: wait_for_result
       run: |
-        echo "Waiting for GEOS integration test to complete via repository dispatch..."
+        WORKFLOW_RUN_ID="${{ needs.trigger_geos_integration_test.outputs.workflow_run_id }}"
+        echo "Waiting for GEOS integration test to complete (Run ID: ${WORKFLOW_RUN_ID})..."
         echo "This may take 15-30 minutes..."
         
-        # Wait for the workflow to start and complete (with timeout)
+        # Wait for the workflow to complete (with timeout)
         timeout=1800  # 30 minutes
         elapsed=0
-        interval=60   # Check every minute for repository dispatch
-        found_run=false
-        workflow_run_id=""
+        interval=60
         
-        # First, wait for the workflow to appear (up to 5 minutes)
-        echo "Looking for triggered workflow run..."
-        search_timeout=300  # 5 minutes to find the workflow
-        search_elapsed=0
-        
-        while [ $search_elapsed -lt $search_timeout ] && [ "$found_run" == "false" ]; do
-          echo "Searching for workflow run... (${search_elapsed}s elapsed)"
-          
-          # Look for recent workflow runs of our dispatch workflow
-          runs_response=$(curl -fsS -H "Accept: application/vnd.github+json" \
-                               -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
-                               "https://api.github.com/repos/GEOS-DEV/GEOS/actions/workflows/python_package_integration_dispatch.yml/runs?per_page=10&created=>$(date -d '10 minutes ago' -Iseconds)")
-          
-          # Look for a run that was triggered recently and is for our PR
-          for run_id in $(echo "$runs_response" | jq -r '.workflow_runs[].id'); do
-            run_details=$(curl -fsS -H "Accept: application/vnd.github+json" \
-                               -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
-                               "https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${run_id}")
-            
-            # Check if this run is for our PR (by checking timing and trigger)
-            trigger_event=$(echo "$run_details" | jq -r '.event')
-            if [[ "$trigger_event" == "repository_dispatch" ]]; then
-              echo "Found repository dispatch workflow run: ${run_id}"
-              workflow_run_id="$run_id"
-              found_run=true
-              break
-            fi
-          done
-          
-          if [ "$found_run" == "false" ]; then
-            sleep 30
-            search_elapsed=$((search_elapsed + 30))
-          fi
-        done
-        
-        if [ "$found_run" == "false" ]; then
-          echo "❌ Could not find triggered workflow run within ${search_timeout} seconds"
-          echo "geos_test_result=not_found" >> $GITHUB_OUTPUT
-          exit 1
-        fi
-        
-        echo "✅ Found workflow run: ${workflow_run_id}"
-        echo "Now waiting for completion..."
-        
-        # Now wait for completion
         while [ $elapsed -lt $timeout ]; do
-          run_details=$(curl -fsS -H "Accept: application/vnd.github+json" \
-                             -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
-                             "https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${workflow_run_id}")
+          run_status=$(curl -H "Accept: application/vnd.github+json" \
+                           -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                           https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${WORKFLOW_RUN_ID} \
+                           | jq -r '.status')
           
-          run_status=$(echo "$run_details" | jq -r '.status')
-          conclusion=$(echo "$run_details" | jq -r '.conclusion')
+          conclusion=$(curl -H "Accept: application/vnd.github+json" \
+                           -H "Authorization: Bearer ${{ secrets.GEOS_INTEGRATION_TOKEN }}" \
+                           https://api.github.com/repos/GEOS-DEV/GEOS/actions/runs/${WORKFLOW_RUN_ID} \
+                           | jq -r '.conclusion')
           
           echo "Workflow status: ${run_status}, conclusion: ${conclusion} (${elapsed}s elapsed)"
           
