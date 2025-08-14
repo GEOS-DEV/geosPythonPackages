@@ -9,6 +9,8 @@ GEOS Mesh tools
 
       ./geos_mesh_docs/doctor
 
+      ./geos_mesh_docs/doctor_filters
+
       ./geos_mesh_docs/converter
 
       ./geos_mesh_docs/io
