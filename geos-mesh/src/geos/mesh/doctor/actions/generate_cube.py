@@ -9,6 +9,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRect
 from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
+from geos.mesh.utils.arrayModifiers import createConstantAttributeDataSet
 
 
 @dataclass( frozen=True )
@@ -146,17 +147,21 @@ def build_rectilinear_blocks_mesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGri
 
 
 def add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
+    """
+    Add constant fields to the mesh using arrayModifiers utilities.
+    Each field is filled with ones (1.0) for all components.
+    """
     for field_info in fields:
-        if field_info.support == "CELLS":
-            data = mesh.GetCellData()
-            n = mesh.GetNumberOfCells()
-        elif field_info.support == "POINTS":
-            data = mesh.GetPointData()
-            n = mesh.GetNumberOfPoints()
-        array = np.ones( ( n, field_info.dimension ), dtype=float )
-        vtk_array = numpy_to_vtk( array )
-        vtk_array.SetName( field_info.name )
-        data.AddArray( vtk_array )
+        onPoints = field_info.support == "POINTS"
+        # Create list of values (all 1.0) for each component
+        listValues = [ 1.0 ] * field_info.dimension
+        # Use the robust createConstantAttributeDataSet function
+        success = createConstantAttributeDataSet( dataSet=mesh,
+                                                  listValues=listValues,
+                                                  attributeName=field_info.name,
+                                                  onPoints=onPoints )
+        if not success:
+            setup_logger.warning( f"Failed to create field {field_info.name}" )
     return mesh
 
 

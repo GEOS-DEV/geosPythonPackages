@@ -59,7 +59,7 @@ class BoundaryMesh:
             self.__is_underlying_cell_type_a_polyhedron[ ic ] = mesh.GetCell(
                 self.__original_cells.GetValue( ic ) ).GetCellType() == VTK_POLYHEDRON
         # Precomputing the normals
-        self.__normals: np.ndarray = np.empty( ( num_cells, 3 ), dtype=np.double,
+        self.__normals: np.ndarray = np.empty( ( num_cells, 3 ), dtype=np.float64,
                                                order='C' )  # Do not modify the storage layout
         for ic in range( num_cells ):
             if self.__is_underlying_cell_type_a_polyhedron[ ic ]:
@@ -381,7 +381,7 @@ def are_faces_conformal_using_distances( i: int, j: int, boundary_mesh: vtkUnstr
 def compute_bounding_box( boundary_mesh: BoundaryMesh, face_tolerance: float ) -> npt.NDArray[ np.float64 ]:
     # Precomputing the bounding boxes.
     # The options are important to directly interact with memory in C++.
-    bounding_boxes = np.empty( ( boundary_mesh.GetNumberOfCells(), 6 ), dtype=np.double, order="C" )
+    bounding_boxes = np.empty( ( boundary_mesh.GetNumberOfCells(), 6 ), dtype=np.float64, order="C" )
     for i in range( boundary_mesh.GetNumberOfCells() ):
         bb = vtkBoundingBox( boundary_mesh.bounds( i ) )
         bb.Inflate( 2 * face_tolerance )

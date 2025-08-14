@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
 from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import read_unstructured_grid
-from geos.mesh.utils.genericHelpers import get_vtk_constant_str, vtk_iter
+from geos.mesh.utils.genericHelpers import vtk_iter
 
 
 @dataclass( frozen=True )
@@ -124,7 +124,7 @@ def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> list[ st
         mesh.GetCellTypes( vtk_cell_types )
         unique_cell_types = set( vtk_iter( vtk_cell_types ) )
     result_values: set[ int ] = unique_cell_types - supported_cell_types
-    results = [ f"{get_vtk_constant_str( i )}" for i in frozenset( result_values ) ]
+    results = [ f"Type {i}: {vtkCellTypes.GetClassNameFromTypeId( i )}" for i in frozenset( result_values ) ]
     return results
 
 

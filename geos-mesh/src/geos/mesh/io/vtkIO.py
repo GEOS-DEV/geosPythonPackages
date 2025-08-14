@@ -160,21 +160,19 @@ def read_unstructured_grid( filepath: str ) -> vtkUnstructuredGrid:
     Returns:
         vtkUnstructuredGrid: The resulting unstructured grid data.
     """
-    io_logger.info(f"Reading file '{filepath}' and expecting vtkUnstructuredGrid.")
+    io_logger.info( f"Reading file '{filepath}' and expecting vtkUnstructuredGrid." )
 
     # Reuse the generic mesh reader
-    mesh = read_mesh(filepath)
+    mesh = read_mesh( filepath )
 
     # Check the type of the resulting mesh
-    if not isinstance(mesh, vtkUnstructuredGrid):
-        error_msg = (
-            f"File '{filepath}' was read successfully, but it is of type "
-            f"'{type(mesh).__name__}', not the expected vtkUnstructuredGrid."
-        )
-        io_logger.error(error_msg)
-        raise TypeError(error_msg)
+    if not isinstance( mesh, vtkUnstructuredGrid ):
+        error_msg = ( f"File '{filepath}' was read successfully, but it is of type "
+                      f"'{type(mesh).__name__}', not the expected vtkUnstructuredGrid." )
+        io_logger.error( error_msg )
+        raise TypeError( error_msg )
 
-    io_logger.info("Validation successful. Mesh is a vtkUnstructuredGrid.")
+    io_logger.info( "Validation successful. Mesh is a vtkUnstructuredGrid." )
     return mesh
 
 
