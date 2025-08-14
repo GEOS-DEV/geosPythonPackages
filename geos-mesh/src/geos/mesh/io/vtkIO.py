@@ -52,8 +52,8 @@ WRITER_MAP: dict[ VtkFormat, vtkWriter | vtkXMLWriter ] = {
 @dataclass( frozen=True )
 class VtkOutput:
     """Configuration for writing a VTK file."""
-    output_path: str
-    is_binary: bool = True
+    output: str
+    is_data_mode_binary: bool = True
 
 
 def _read_data( filepath: str, reader_class: vtkDataReader | vtkXMLDataReader ) -> Optional[ vtkPointSet ]:
@@ -180,7 +180,7 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, can_overwrite: bool = 
     """
     Writes a vtkPointSet to a file.
 
-    The format is determined by the file extension in `VtkOutput.output_path`.
+    The format is determined by the file extension in `VtkOutput.output`.
 
     Args:
         mesh (vtkPointSet): The grid data to write.
@@ -196,11 +196,11 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, can_overwrite: bool = 
     Returns:
         int: Returns 1 on success, consistent with the VTK writer's return code.
     """
-    if os.path.exists( vtk_output.output_path ) and not can_overwrite:
+    if os.path.exists( vtk_output.output ) and not can_overwrite:
         raise FileExistsError(
-            f"File '{vtk_output.output_path}' already exists. Set can_overwrite=True to replace it." )
+            f"File '{vtk_output.output}' already exists. Set can_overwrite=True to replace it." )
 
-    _, extension = os.path.splitext( vtk_output.output_path )
+    _, extension = os.path.splitext( vtk_output.output )
 
     try:
         file_format = VtkFormat( extension )
@@ -208,12 +208,12 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, can_overwrite: bool = 
             raise ValueError( f"Writing to extension '{extension}' is not supported." )
 
         writer_class = WRITER_MAP[ file_format ]
-        success_code = _write_data( mesh, writer_class, vtk_output.output_path, vtk_output.is_binary )
+        success_code = _write_data( mesh, writer_class, vtk_output.output, vtk_output.is_data_mode_binary )
 
         if not success_code:
-            raise RuntimeError( f"VTK writer failed to write file '{vtk_output.output_path}'." )
+            raise RuntimeError( f"VTK writer failed to write file '{vtk_output.output}'." )
 
-        io_logger.info( f"Successfully wrote mesh to '{vtk_output.output_path}'." )
+        io_logger.info( f"Successfully wrote mesh to '{vtk_output.output}'." )
         return success_code  # VTK writers return 1 for success
 
     except ValueError as e:
