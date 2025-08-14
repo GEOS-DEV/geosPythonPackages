@@ -197,8 +197,7 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, can_overwrite: bool = 
         int: Returns 1 on success, consistent with the VTK writer's return code.
     """
     if os.path.exists( vtk_output.output ) and not can_overwrite:
-        raise FileExistsError(
-            f"File '{vtk_output.output}' already exists. Set can_overwrite=True to replace it." )
+        raise FileExistsError( f"File '{vtk_output.output}' already exists. Set can_overwrite=True to replace it." )
 
     _, extension = os.path.splitext( vtk_output.output )
 
