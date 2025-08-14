@@ -3,8 +3,8 @@ from typing import Collection
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersGeneral import vtkCellValidator
 from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
-from vtkmodules.vtkCommonDataModel import vtkPointSet
-from geos.mesh.io.vtkIO import read_mesh
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from geos.mesh.io.vtkIO import read_unstructured_grid
 
 
 @dataclass( frozen=True )
@@ -22,7 +22,7 @@ class Result:
     faces_oriented_incorrectly_elements: Collection[ int ]
 
 
-def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str, list[ int ] ]:
+def get_invalid_cell_ids( mesh: vtkUnstructuredGrid, min_distance: float ) -> dict[ str, list[ int ] ]:
     """For every cell element in a vtk mesh, check if the cell is invalid regarding 6 specific criteria:
     "wrong_number_of_points", "intersecting_edges", "intersecting_faces",
     "non_contiguous_edges","non_convex" and "faces_oriented_incorrectly".
@@ -31,7 +31,7 @@ def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str,
     The dict with the complete list of cell indices by criteria is returned.
 
     Args:
-        mesh (vtkPointSet): A vtk grid.
+        mesh (vtkUnstructuredGrid): A vtk grid.
         min_distance (float): Minimum distance in the computation.
 
     Returns:
@@ -88,8 +88,8 @@ def get_invalid_cell_ids( mesh: vtkPointSet, min_distance: float ) -> dict[ str,
     return invalid_cell_ids
 
 
-def mesh_action( mesh, options: Options ) -> Result:
-    invalid_cell_ids = get_invalid_cell_ids( mesh, options.min_distance )
+def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    invalid_cell_ids: dict[ str, list[ int ] ] = get_invalid_cell_ids( mesh, options.min_distance )
     return Result( wrong_number_of_points_elements=invalid_cell_ids[ "wrong_number_of_points_elements" ],
                    intersecting_edges_elements=invalid_cell_ids[ "intersecting_edges_elements" ],
                    intersecting_faces_elements=invalid_cell_ids[ "intersecting_faces_elements" ],
@@ -99,5 +99,5 @@ def mesh_action( mesh, options: Options ) -> Result:
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh = read_mesh( vtk_input_file )
+    mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
     return mesh_action( mesh, options )

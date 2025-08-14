@@ -117,7 +117,7 @@ def __check_neighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGri
                                   f" {found}) for collocated nodes {cns}." )
 
 
-def mesh_action( vtk_input_file: str, options: Options ) -> Result:
+def __action( vtk_input_file: str, options: Options ) -> Result:
     matrix, fracture = __read_multiblock( vtk_input_file, options.matrix_name, options.fracture_name )
     matrix_points: vtkPoints = matrix.GetPoints()
     fracture_points: vtkPoints = fracture.GetPoints()
@@ -150,7 +150,7 @@ def mesh_action( vtk_input_file: str, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     try:
-        return mesh_action( vtk_input_file, options )
+        return __action( vtk_input_file, options )
     except BaseException as e:
         setup_logger.error( e )
         return Result( errors=() )

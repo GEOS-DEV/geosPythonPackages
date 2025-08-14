@@ -11,7 +11,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
                                             VTK_WEDGE )
 from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import read_unstructured_grid
 from geos.mesh.utils.genericHelpers import get_vtk_constant_str, vtk_iter
 
 
@@ -152,5 +152,5 @@ def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh: vtkUnstructuredGrid = read_mesh( vtk_input_file )
+    mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
     return mesh_action( mesh, options )

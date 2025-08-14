@@ -2,9 +2,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 import numpy
 from vtkmodules.vtkCommonCore import reference, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator, vtkPointSet, vtkCell
+from vtkmodules.vtkCommonDataModel import vtkCell, vtkIncrementalOctreePointLocator, vtkUnstructuredGrid
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import read_unstructured_grid
 
 
 @dataclass( frozen=True )
@@ -18,7 +18,7 @@ class Result:
     wrong_support_elements: list[ int ]  # Element indices with support node indices appearing more than once.
 
 
-def find_collocated_nodes_buckets( mesh: vtkPointSet, tolerance: float ) -> list[ tuple[ int ] ]:
+def find_collocated_nodes_buckets( mesh: vtkUnstructuredGrid, tolerance: float ) -> list[ tuple[ int ] ]:
     points: vtkPoints = mesh.GetPoints()
     locator = vtkIncrementalOctreePointLocator()
     locator.SetTolerance( tolerance )
@@ -52,7 +52,7 @@ def find_collocated_nodes_buckets( mesh: vtkPointSet, tolerance: float ) -> list
     return collocated_nodes_buckets
 
 
-def find_wrong_support_elements( mesh: vtkPointSet ) -> list[ int ]:
+def find_wrong_support_elements( mesh: vtkUnstructuredGrid ) -> list[ int ]:
     # Checking that the support node indices appear only once per element.
     wrong_support_elements: list[ int ] = list()
     for c in range( mesh.GetNumberOfCells() ):
@@ -63,12 +63,12 @@ def find_wrong_support_elements( mesh: vtkPointSet ) -> list[ int ]:
     return wrong_support_elements
 
 
-def mesh_action( mesh: vtkPointSet, options: Options ) -> Result:
+def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     collocated_nodes_buckets = find_collocated_nodes_buckets( mesh, options.tolerance )
     wrong_support_elements = find_wrong_support_elements( mesh )
     return Result( nodes_buckets=collocated_nodes_buckets, wrong_support_elements=wrong_support_elements )
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh: vtkPointSet = read_mesh( vtk_input_file )
+    mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
     return mesh_action( mesh, options )

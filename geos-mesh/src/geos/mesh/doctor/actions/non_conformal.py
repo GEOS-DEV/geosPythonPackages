@@ -15,7 +15,7 @@ from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter, vtkLinearExtrusionFilter
 from geos.mesh.doctor.actions import reorient_mesh, triangle_distance
 from geos.mesh.utils.genericHelpers import vtk_iter
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import read_unstructured_grid
 
 
 @dataclass( frozen=True )
@@ -466,5 +466,5 @@ def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh = read_mesh( vtk_input_file )
+    mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
     return mesh_action( mesh, options )

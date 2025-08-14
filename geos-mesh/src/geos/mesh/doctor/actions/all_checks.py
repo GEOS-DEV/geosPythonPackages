@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from vtkmodules.vtkCommonDataModel import vtkPointSet
+from typing import Any
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.register import __load_module_action
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 
@@ -7,20 +8,20 @@ from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 @dataclass( frozen=True )
 class Options:
     checks_to_perform: list[ str ]
-    checks_options: dict[ str, any ]
-    check_displays: dict[ str, any ]
+    checks_options: dict[ str, Any ]
+    check_displays: dict[ str, Any ]
 
 
 @dataclass( frozen=True )
 class Result:
-    check_results: dict[ str, any ]
+    check_results: dict[ str, Any ]
 
 
-def get_check_results( vtk_input: str | vtkPointSet, options: Options ) -> dict[ str, any ]:
+def get_check_results( vtk_input: str | vtkUnstructuredGrid, options: Options ) -> dict[ str, Any ]:
     isFilepath: bool = isinstance( vtk_input, str )
-    isVtkUnstructuredGrid: bool = isinstance( vtk_input, vtkPointSet )
+    isVtkUnstructuredGrid: bool = isinstance( vtk_input, vtkUnstructuredGrid )
     assert isFilepath | isVtkUnstructuredGrid, "Invalid input type, should either be a filepath to .vtu file" \
-        " or a vtkPointSet object"
+        " or a vtkUnstructuredGrid object"
     check_results: dict[ str, any ] = dict()
     for check_name in options.checks_to_perform:
         if isVtkUnstructuredGrid:  # we need to call the mesh_action function that takes a vtkPointSet as input
@@ -35,5 +36,5 @@ def get_check_results( vtk_input: str | vtkPointSet, options: Options ) -> dict[
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
-    check_results: dict[ str, any ] = get_check_results( vtk_input_file, options )
+    check_results: dict[ str, Any ] = get_check_results( vtk_input_file, options )
     return Result( check_results=check_results )

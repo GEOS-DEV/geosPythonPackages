@@ -15,7 +15,7 @@ from geos.mesh.doctor.actions.vtk_polyhedron import FaceStream
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.utils.arrayHelpers import has_array
 from geos.mesh.utils.genericHelpers import to_vtk_id_list, vtk_iter
-from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, read_unstructured_grid, write_mesh
 """
 TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
 https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
@@ -557,7 +557,7 @@ def mesh_action( mesh, options: Options ) -> Result:
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     try:
-        mesh = read_mesh( vtk_input_file )
+        mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
         # Mesh cannot contain global ids before splitting.
         if has_array( mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             err_msg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +
