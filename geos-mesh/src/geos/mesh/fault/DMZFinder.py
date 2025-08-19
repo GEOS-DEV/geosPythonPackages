@@ -102,6 +102,11 @@ class DMZFinder( VTKPythonAlgorithmBase ):
             self._fault_region_id = value
             self.Modified()
 
+    def SetRegionArrayName( self, name: str ) -> None:
+        if self._region_array_name != name:
+            self._region_array_name = name
+            self.Modified()
+
     def SetDmzLength( self, value: float ) -> None:
         if self._dmz_len != value:
             self._dmz_len = value
