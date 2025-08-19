@@ -13,7 +13,7 @@ class DMZFinder( VTKPythonAlgorithmBase ):
                           inputType='vtkUnstructuredGrid',
                           outputType='vtkUnstructuredGrid' )
         self._region_array_name: str = "attribute"  # Default name for region in GEOS
-        self._fault_region_id: int = 0  # Default id for fault region attribute in GEOS
+        self._active_region_id: int = 0  # Default id for active region attribute in GEOS
         self._output_array_name: str = "isDMZ"  # New CellArray to create with value 0 if cell not in DMZ, 1 if in DMZ
         self._dmz_len: float = 50.0
         self._plane_point: list[ float ] = [ 0.0, 0.0, 0.0 ]
@@ -43,7 +43,7 @@ class DMZFinder( VTKPythonAlgorithmBase ):
 
         # Identify which cells are in the DMZ
         dmz_mask = self._find_dmz_cells_vectorized( all_centroids )
-        active_region_mask = ( region_array == self._fault_region_id )
+        active_region_mask = ( region_array == self._active_region_id )
         final_mask = np.logical_and( dmz_mask, active_region_mask )
 
         # Create the new CellData array
@@ -75,8 +75,8 @@ class DMZFinder( VTKPythonAlgorithmBase ):
             print( f"Error: Region array '{self._region_array_name}' is not found in input mesh." )
             return False
         else:
-            if self._fault_region_id not in region_array:
-                print( f"Error: Fault region ID '{self._fault_region_id}' is not found in region array." )
+            if self._active_region_id not in region_array:
+                print( f"Error: Active region ID '{self._active_region_id}' is not found in region array." )
                 return False
 
         bounds = dsa_mesh.GetBounds()
@@ -97,9 +97,9 @@ class DMZFinder( VTKPythonAlgorithmBase ):
         distances = np.abs( np.dot( vectors_to_centers, self._plane_normal ) )
         return distances < self._dmz_len
 
-    def SetFaultRegionID( self, value: int ) -> None:
-        if self._fault_region_id != value:
-            self._fault_region_id = value
+    def SetActiveRegionID( self, value: int ) -> None:
+        if self._active_region_id != value:
+            self._active_region_id = value
             self.Modified()
 
     def SetRegionArrayName( self, name: str ) -> None:

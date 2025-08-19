@@ -36,9 +36,9 @@ class PVDMZFinder( DMZFinder ):
         super().__init__()
 
     @smproperty.intvector( name="Region ID", default_values=0, number_of_elements=1 )
-    def SetFaultRegionID( self, value: int ) -> None:
-        if self._fault_region_id != value:
-            self._fault_region_id = value
+    def SetActiveRegionID( self, value: int ) -> None:
+        if self._active_region_id != value:
+            self._active_region_id = value
             self.Modified()
 
     @smproperty.stringvector( name="Region Array Name", default_values="attribute", number_of_elements=1 )
