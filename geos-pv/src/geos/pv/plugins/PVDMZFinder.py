@@ -41,7 +41,7 @@ class PVDMZFinder( DMZFinder ):
             self._fault_region_id = value
             self.Modified()
 
-    @smproperty.string( name="Region Array Name", default_values="attribute", number_of_elements=1 )
+    @smproperty.stringvector( name="Region Array Name", default_values="attribute", number_of_elements=1 )
     def SetRegionArrayName( self, name: str ) -> None:
         if self._region_array_name != name:
             self._region_array_name = name
@@ -53,7 +53,7 @@ class PVDMZFinder( DMZFinder ):
             self._dmz_len = value
             self.Modified()
 
-    @smproperty.string( name="Output Array Name", default_values="DMZ", number_of_elements=1 )
+    @smproperty.stringvector( name="Output Array Name", default_values="DMZ", number_of_elements=1 )
     def SetOutputArrayName( self, name: str ) -> None:
         if self._output_array_name != name:
             self._output_array_name = name
