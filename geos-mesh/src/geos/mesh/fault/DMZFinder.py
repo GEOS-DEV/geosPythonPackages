@@ -8,7 +8,10 @@ from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 class DMZFinder( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType='vtkUnstructuredGrid' )
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType='vtkUnstructuredGrid',
+                          outputType='vtkUnstructuredGrid' )
         self._region_array_name: str = "attribute"  # Default name for region in GEOS
         self._fault_region_id: int = 0  # Default id for fault region attribute in GEOS
         self._output_array_name: str = "isDMZ"  # New CellArray to create with value 0 if cell not in DMZ, 1 if in DMZ
