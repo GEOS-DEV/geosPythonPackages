@@ -1,8 +1,8 @@
 import numpy as np
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkUnstructuredGrid
-from vtkmodules.vtkFiltersCore import vtkCellCenters
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
+from geos.mesh.utils.genericHelpers import find_2D_cell_ids, find_cells_near_faces
 
 
 class DMZFinder( VTKPythonAlgorithmBase ):
@@ -30,20 +30,20 @@ class DMZFinder( VTKPythonAlgorithmBase ):
         # Get the array that defines the geological regions
         region_array = input_grid.CellData[ self._region_array_name ]
 
-        # Use vtkCellCenters to get centroids
-        cell_centers_filter = vtkCellCenters()
-        cell_centers_filter.SetInputData( input_vtk_grid )
-        # We don't want it to generate cell data, just the points
-        # The output is a vtkPolyData where each point is a centroid.
-        # We can grab these points as a NumPy array.
-        cell_centers_filter.VertexCellsOn()
-        cell_centers_filter.Update()
-        centers_polydata = dsa.WrapDataObject( cell_centers_filter.GetOutput() )
-        all_centroids = centers_polydata.Points
+        all_mesh_face_ids: set[ int ] = find_2D_cell_ids( input_grid )
+        if not all_mesh_face_ids:
+            print( "No 2D face cells found." )
+            return 0
 
-        # Identify which cells are in the DMZ
-        dmz_mask = self._find_dmz_cells_vectorized( all_centroids )
+        number_cells: int = input_vtk_grid.GetNumberOfCells()
+        # identify which faces are in the active region
+        all_faces_mask = np.zeros( number_cells, dtype=bool )[ all_mesh_face_ids ]
         active_region_mask = ( region_array == self._active_region_id )
+        active_region_faces_mask = np.logical_and( all_faces_mask, active_region_mask )
+        active_region_faces: set[ int ] = set( np.where( active_region_faces_mask )[ 0 ] )
+        cells_near_faces: set[ int ] = find_cells_near_faces( input_vtk_grid, active_region_faces, self._dmz_len )
+        # Identify which cells are in the DMZ
+        dmz_mask = np.zeros( number_cells.GetNumberOfCells(), dtype=bool )[ cells_near_faces ]
         final_mask = np.logical_and( dmz_mask, active_region_mask )
 
         # Create the new CellData array
@@ -88,14 +88,6 @@ class DMZFinder( VTKPythonAlgorithmBase ):
             return False
 
         return True
-
-    def _find_dmz_cells_vectorized( self, cell_centers: np.ndarray ) -> np.ndarray:
-        """
-        Determines which cells are within the DMZ using vectorized operations.
-        """
-        vectors_to_centers = cell_centers - self._plane_point
-        distances = np.abs( np.dot( vectors_to_centers, self._plane_normal ) )
-        return distances < self._dmz_len
 
     def SetActiveRegionID( self, value: int ) -> None:
         if self._active_region_id != value:

@@ -4,10 +4,12 @@
 import numpy as np
 import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union
-from vtkmodules.util.numpy_support import numpy_to_vtk
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet, vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator
-from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
+                                            vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
+                                            vtkKdTreePointLocator, VTK_QUAD, VTK_TRIANGLE )
+from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter, vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 __doc__ = """
@@ -51,6 +53,71 @@ def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
     elif isinstance( vtkContainer, vtkCellTypes ):
         for i in range( vtkContainer.GetNumberOfTypes() ):
             yield vtkContainer.GetCellType( i )
+
+
+def find_2D_cell_ids( mesh: vtkUnstructuredGrid ) -> set[ int ]:
+    """
+    Find 2D cell IDs in a 3D unstructured grid.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input 3D mesh.
+
+    Returns:
+        set[int]: A set of 2D cell IDs.
+    """
+    cell_types_vtk_array = mesh.GetCellTypesArray()
+    if not cell_types_vtk_array:
+        return set()
+
+    cell_types_numpy_array = vtk_to_numpy( cell_types_vtk_array )
+    triangle_ids = np.where( cell_types_numpy_array == VTK_TRIANGLE )[ 0 ]
+    quad_ids = np.where( cell_types_numpy_array == VTK_QUAD )[ 0 ]
+    return set( np.concatenate( ( triangle_ids, quad_ids ) ) )
+
+
+def find_cells_near_faces( mesh: vtkUnstructuredGrid, face_ids: set[ int ], distance: float ) -> set[ int ]:
+    """
+    Given a vtkUnstructuredGrid, a list of face cell IDs, and a distance, find unique cell IDs
+    whose centroids are within the distance to at least one face centroid.
+
+    Args:
+        mesh (vtkUnstructuredGrid)
+        face_ids (set[int]): cell IDs of the faces
+        distance (float): search radius
+
+    Returns:
+        set(int): unique cell IDs
+    """
+    # Compute cell centers for all cells
+    cell_centers_filter = vtkCellCenters()
+    cell_centers_filter.SetInputData( mesh )
+    cell_centers_filter.Update()
+    centers_polydata: vtkPolyData = cell_centers_filter.GetOutput()
+
+    # Build kd-tree point locator on the cell centers
+    locator = vtkKdTreePointLocator()
+    locator.SetDataSet( centers_polydata )
+    locator.BuildLocator()
+
+    # Use a set to collect unique cell IDs
+    nearby_cells = set()
+
+    # For each face, get its centroid and find nearby points (cell IDs)
+    points: vtkPoints = centers_polydata.GetPoints()
+    for face_id in face_ids:
+        # Get face centroid
+        face_centroid = points.GetPoint( face_id )
+
+        # Find points within radius
+        result = vtkIdList()
+        locator.FindPointsWithinRadius( distance, face_centroid, result )
+
+        # Add to set
+        for j in range( result.GetNumberOfIds() ):
+            cell_id = result.GetId( j )
+            nearby_cells.add( cell_id )
+
+    return nearby_cells
 
 
 def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -> vtkPolyData:
