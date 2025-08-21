@@ -37,13 +37,15 @@ class DMZFinder( VTKPythonAlgorithmBase ):
 
         number_cells: int = input_vtk_grid.GetNumberOfCells()
         # identify which faces are in the active region
-        all_faces_mask = np.zeros( number_cells, dtype=bool )[ all_mesh_face_ids ]
+        all_faces_mask = np.zeros( number_cells, dtype=bool )
+        all_faces_mask[ all_mesh_face_ids ] = True
         active_region_mask = ( region_array == self._active_region_id )
         active_region_faces_mask = np.logical_and( all_faces_mask, active_region_mask )
         active_region_faces: set[ int ] = set( np.where( active_region_faces_mask )[ 0 ] )
         cells_near_faces: set[ int ] = find_cells_near_faces( input_vtk_grid, active_region_faces, self._dmz_len )
         # Identify which cells are in the DMZ
-        dmz_mask = np.zeros( number_cells.GetNumberOfCells(), dtype=bool )[ cells_near_faces ]
+        dmz_mask = np.zeros( number_cells.GetNumberOfCells(), dtype=bool )
+        dmz_mask[ cells_near_faces ] = True
         final_mask = np.logical_and( dmz_mask, active_region_mask )
 
         # Create the new CellData array
