@@ -1,30 +1,27 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Raphaël Vinour, Martin Lemay
+# SPDX-FileContributor: Raphaël Vinour, Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 from typing import Union
 
 from typing_extensions import Self
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
-
-import PVplugins  # noqa: F401
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
+update_paths()
 
 from geos.utils.Logger import Logger, getLogger
-from geos_posp.filters.AttributeMappingFromCellCoords import (
-    AttributeMappingFromCellCoords, )
+from geos.mesh.processing.AttributeMappingFromCellCoords import AttributeMappingFromCellCoords
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
-from geos.mesh.utils.arrayHelpers import (
-    getAttributeSet, )
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos_posp.visu.PVUtils.paraviewTreatments import getArrayChoices
+from geos.mesh.utils.arrayHelpers import getAttributeSet
+
+from geos.pv.utils.checkboxFunction import createModifiedCallback
+from geos.pv.utils.paraviewTreatments import getArrayChoices
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
