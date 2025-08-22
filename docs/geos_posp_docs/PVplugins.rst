@@ -16,12 +16,6 @@ PVAttributeMapping plugin
 .. automodule:: PVplugins.PVAttributeMapping
 
 
-PVCreateConstantAttributePerRegion plugin
----------------------------------------------------
-
-.. automodule:: PVplugins.PVCreateConstantAttributePerRegion
-
-
 PVExtractMergeBlocksVolume plugin
 -------------------------------------------
 
