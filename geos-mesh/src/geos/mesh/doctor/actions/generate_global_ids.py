@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
-from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, read_unstructured_grid, write_mesh
 
 
 @dataclass( frozen=True )
@@ -16,7 +17,7 @@ class Result:
     info: str
 
 
-def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_global_ids: bool ) -> None:
+def build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_global_ids: bool ) -> None:
     """
     Adds the global ids for cells and points in place into the mesh instance.
     :param mesh:
@@ -45,16 +46,16 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
         mesh.GetCellData().SetGlobalIds( cells_global_ids )
 
 
-def __action( mesh, options: Options ) -> Result:
-    __build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
+def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
     write_mesh( mesh, options.vtk_output )
     return Result( info=f"Mesh was written to {options.vtk_output.output}" )
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:
     try:
-        mesh = read_mesh( vtk_input_file )
-        return __action( mesh, options )
+        mesh: vtkUnstructuredGrid = read_unstructured_grid( vtk_input_file )
+        return mesh_action( mesh, options )
     except BaseException as e:
         setup_logger.error( e )
         return Result( info="Something went wrong." )

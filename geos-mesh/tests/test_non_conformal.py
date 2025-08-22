@@ -1,6 +1,6 @@
 import numpy
 from geos.mesh.doctor.actions.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from geos.mesh.doctor.actions.non_conformal import Options, __action
+from geos.mesh.doctor.actions.non_conformal import Options, mesh_action
 
 
 def test_two_close_hexs():
@@ -12,13 +12,13 @@ def test_two_close_hexs():
 
     # Close enough, but points tolerance is too strict to consider the faces matching.
     options = Options( angle_tolerance=1., point_tolerance=delta / 2, face_tolerance=delta * 2 )
-    results = __action( mesh, options )
+    results = mesh_action( mesh, options )
     assert len( results.non_conformal_cells ) == 1
     assert set( results.non_conformal_cells[ 0 ] ) == { 0, 1 }
 
     # Close enough, and points tolerance is loose enough to consider the faces matching.
     options = Options( angle_tolerance=1., point_tolerance=delta * 2, face_tolerance=delta * 2 )
-    results = __action( mesh, options )
+    results = mesh_action( mesh, options )
     assert len( results.non_conformal_cells ) == 0
 
 
@@ -31,7 +31,7 @@ def test_two_distant_hexs():
 
     options = Options( angle_tolerance=1., point_tolerance=delta / 2., face_tolerance=delta / 2. )
 
-    results = __action( mesh, options )
+    results = mesh_action( mesh, options )
     assert len( results.non_conformal_cells ) == 0
 
 
@@ -44,7 +44,7 @@ def test_two_close_shifted_hexs():
 
     options = Options( angle_tolerance=1., point_tolerance=delta_x * 2, face_tolerance=delta_x * 2 )
 
-    results = __action( mesh, options )
+    results = mesh_action( mesh, options )
     assert len( results.non_conformal_cells ) == 1
     assert set( results.non_conformal_cells[ 0 ] ) == { 0, 1 }
 
@@ -58,6 +58,6 @@ def test_big_elem_next_to_small_elem():
 
     options = Options( angle_tolerance=1., point_tolerance=delta * 2, face_tolerance=delta * 2 )
 
-    results = __action( mesh, options )
+    results = mesh_action( mesh, options )
     assert len( results.non_conformal_cells ) == 1
     assert set( results.non_conformal_cells[ 0 ] ) == { 0, 1 }
