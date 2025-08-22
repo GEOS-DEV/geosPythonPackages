@@ -218,8 +218,7 @@ class AttributeMappingFromCellCoords( VTKPythonAlgorithmBase ):
             if nbComponents > 1:
                 for i in range( nbComponents ):
                     componentNames.append( array.GetComponentName( i ) )
-            newArray: vtkDataArray = createEmptyAttribute( self.m_clientMesh, attributeName, tuple( componentNames ),
-                                                           dataType )
+            newArray: vtkDataArray = createEmptyAttribute( attributeName, tuple( componentNames ), dataType )
             nanValues: list[ float ] = [ np.nan for _ in range( nbComponents ) ]
             for indexClient in range( self.m_clientMesh.GetNumberOfCells() ):
                 indexServer: int = self.m_cellMap[ indexClient ]

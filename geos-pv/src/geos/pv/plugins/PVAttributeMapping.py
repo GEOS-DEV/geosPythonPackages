@@ -63,8 +63,8 @@ To use it:
 )
 @smproperty.input( name="Server", port_index=0, label="Server mesh" )
 @smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid" ],
-    composite_data_supported=False,
+    dataTypes=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ],
+    composite_data_supported=True,
 )
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
@@ -186,13 +186,13 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
             outData.ShallowCopy( clientMesh )
             attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
-            for attributeName in attributeNames:
-                fillPartialAttributes( serverMesh, attributeName, False )
 
             mergedServerMesh: vtkUnstructuredGrid
             if isinstance( serverMesh, vtkUnstructuredGrid ):
                 mergedServerMesh = serverMesh
             elif isinstance( serverMesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
+                for attributeName in attributeNames:
+                    fillPartialAttributes( serverMesh, attributeName, False )
                 mergedServerMesh = mergeBlocks( serverMesh )
             else:
                 raise ValueError( "Server mesh data type is not supported. " +
