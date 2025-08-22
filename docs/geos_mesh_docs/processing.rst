@@ -11,6 +11,15 @@ geos.mesh.processing.CreateConstantAttributePerRegion filter
     :undoc-members:
     :show-inheritance:
 
+geos.mesh.processing.FillPartialArrays filter
+----------------------------------------------
+
+.. automodule:: geos.mesh.processing.FillPartialArrays
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 geos.mesh.processing.meshQualityMetricHelpers module
 -----------------------------------------------------
 
@@ -18,6 +27,7 @@ geos.mesh.processing.meshQualityMetricHelpers module
     :members:
     :undoc-members:
     :show-inheritance:
+
 
 geos.mesh.processing.SplitMesh filter
 --------------------------------------
