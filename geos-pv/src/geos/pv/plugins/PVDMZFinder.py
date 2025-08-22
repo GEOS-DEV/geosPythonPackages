@@ -1,4 +1,3 @@
-import numpy as np
 import sys
 from pathlib import Path
 from paraview.util.vtkAlgorithm import smproxy, smproperty, smdomain
@@ -35,16 +34,16 @@ class PVDMZFinder( DMZFinder ):
     def __init__( self ) -> None:
         super().__init__()
 
+    @smproperty.intvector( name="Fault ID", default_values=0, number_of_elements=1 )
+    def SetActiveFaultID( self, value: int ) -> None:
+        if self._active_fault_id != value:
+            self._active_fault_id = value
+            self.Modified()
+
     @smproperty.intvector( name="Region ID", default_values=0, number_of_elements=1 )
     def SetActiveRegionID( self, value: int ) -> None:
         if self._active_region_id != value:
             self._active_region_id = value
-            self.Modified()
-
-    @smproperty.stringvector( name="Region Array Name", default_values="attribute", number_of_elements=1 )
-    def SetRegionArrayName( self, name: str ) -> None:
-        if self._region_array_name != name:
-            self._region_array_name = name
             self.Modified()
 
     @smproperty.doublevector( name="DZ Length", default_values=100.0, number_of_elements=1 )
@@ -59,22 +58,8 @@ class PVDMZFinder( DMZFinder ):
             self._output_array_name = name
             self.Modified()
 
-    @smproperty.doublevector( name="PlanePoint", default_values=[ 0.0, 0.0, 0.0 ], number_of_elements=3 )
-    def SetPlanePoint( self, x: float, y: float, z: float ) -> None:
-        new_point = np.array( [ x, y, z ] )
-        if not np.array_equal( self._plane_point, new_point ):
-            self._plane_point = new_point
-            self.Modified()
-
-    @smproperty.doublevector( name="PlaneNormal", default_values=[ 0.0, 0.0, 1.0 ], number_of_elements=3 )
-    def SetPlaneNormal( self, x: float, y: float, z: float ) -> None:
-        norm = np.linalg.norm( [ x, y, z ] )
-        if norm == 0:
-            print( "Warning: Plane normal cannot be a zero vector. Using [0,0,1]." )
-            new_normal = np.array( [ 0.0, 0.0, 1.0 ] )
-        else:
-            new_normal = np.array( [ x, y, z ] ) / norm
-
-        if not np.array_equal( self._plane_normal, new_normal ):
-            self._plane_normal = new_normal
+    @smproperty.stringvector( name="Region Array Name", default_values="attribute", number_of_elements=1 )
+    def SetRegionArrayName( self, name: str ) -> None:
+        if self._region_array_name != name:
+            self._region_array_name = name
             self.Modified()

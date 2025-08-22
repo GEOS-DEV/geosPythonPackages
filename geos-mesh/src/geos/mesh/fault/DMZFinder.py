@@ -14,10 +14,9 @@ class DMZFinder( VTKPythonAlgorithmBase ):
                           outputType='vtkUnstructuredGrid' )
         self._region_array_name: str = "attribute"  # Default name for region in GEOS
         self._active_region_id: int = 0  # Default id for active region attribute in GEOS
+        self._active_fault_id: int = 0  # Default id for active fault attribute in GEOS
         self._output_array_name: str = "isDMZ"  # New CellArray to create with value 0 if cell not in DMZ, 1 if in DMZ
-        self._dmz_len: float = 50.0
-        self._plane_point: list[ float ] = [ 0.0, 0.0, 0.0 ]
-        self._plane_normal: list[ float ] = [ 0.0, 0.0, 1.0 ]
+        self._dmz_len: float = 100.0
 
     def RequestData( self, request, inInfo, outInfo ) -> None:
         input_vtk_grid = vtkUnstructuredGrid.GetData( inInfo[ 0 ] )
@@ -30,7 +29,7 @@ class DMZFinder( VTKPythonAlgorithmBase ):
         # Get the array that defines the geological regions
         region_array = input_grid.CellData[ self._region_array_name ]
 
-        all_mesh_face_ids: set[ int ] = find_2D_cell_ids( input_grid )
+        all_mesh_face_ids: set[ int ] = find_2D_cell_ids( input_vtk_grid )
         if not all_mesh_face_ids:
             print( "No 2D face cells found." )
             return 0
@@ -40,9 +39,11 @@ class DMZFinder( VTKPythonAlgorithmBase ):
         all_faces_mask = np.zeros( number_cells, dtype=bool )
         all_faces_mask[ list( all_mesh_face_ids ) ] = True
         active_region_mask = ( region_array == self._active_region_id )
-        active_region_faces_mask = np.logical_and( all_faces_mask, active_region_mask )
-        active_region_faces: set[ int ] = set( np.where( active_region_faces_mask )[ 0 ] )
-        cells_near_faces: set[ int ] = find_cells_near_faces( input_vtk_grid, active_region_faces, self._dmz_len )
+        active_fault_mask = ( region_array == self._active_fault_id )
+        active_fault_faces_mask = np.logical_and( all_faces_mask, active_fault_mask )
+        active_fault_faces: set[ int ] = set( np.where( active_fault_faces_mask )[ 0 ] )
+        cells_near_faces: set[ int ] = find_cells_near_faces( input_vtk_grid, active_fault_faces, self._dmz_len )
+
         # Identify which cells are in the DMZ
         dmz_mask = np.zeros( number_cells, dtype=bool )
         dmz_mask[ list( cells_near_faces ) ] = True
@@ -81,24 +82,16 @@ class DMZFinder( VTKPythonAlgorithmBase ):
                 print( f"Error: Active region ID '{self._active_region_id}' is not found in region array." )
                 return False
 
-        bounds = dsa_mesh.GetBounds()
-        isInBounds = ( bounds[ 0 ] <= self._plane_point[ 0 ] <= bounds[ 1 ]
-                       and bounds[ 2 ] <= self._plane_point[ 1 ] <= bounds[ 3 ]
-                       and bounds[ 4 ] <= self._plane_point[ 2 ] <= bounds[ 5 ] )
-        if not isInBounds:
-            print( f"Error: Plane point {self._plane_point} is out of bounds of the mesh {bounds}." )
-            return False
-
         return True
+
+    def SetActiveFaultID( self, value: int ) -> None:
+        if self._active_fault_id != value:
+            self._active_fault_id = value
+            self.Modified()
 
     def SetActiveRegionID( self, value: int ) -> None:
         if self._active_region_id != value:
             self._active_region_id = value
-            self.Modified()
-
-    def SetRegionArrayName( self, name: str ) -> None:
-        if self._region_array_name != name:
-            self._region_array_name = name
             self.Modified()
 
     def SetDmzLength( self, value: float ) -> None:
@@ -111,20 +104,7 @@ class DMZFinder( VTKPythonAlgorithmBase ):
             self._output_array_name = name
             self.Modified()
 
-    def SetPlanePoint( self, x: float, y: float, z: float ) -> None:
-        new_point = np.array( [ x, y, z ] )
-        if not np.array_equal( self._plane_point, new_point ):
-            self._plane_point = new_point
-            self.Modified()
-
-    def SetPlaneNormal( self, x: float, y: float, z: float ) -> None:
-        norm = np.linalg.norm( [ x, y, z ] )
-        if norm == 0:
-            print( "Warning: Plane normal cannot be a zero vector. Using [0,0,1]." )
-            new_normal = np.array( [ 0.0, 0.0, 1.0 ] )
-        else:
-            new_normal = np.array( [ x, y, z ] ) / norm
-
-        if not np.array_equal( self._plane_normal, new_normal ):
-            self._plane_normal = new_normal
+    def SetRegionArrayName( self, name: str ) -> None:
+        if self._region_array_name != name:
+            self._region_array_name = name
             self.Modified()
