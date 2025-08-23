@@ -18,3 +18,5 @@ from geos.pygeos_tools.solvers.ElasticSolver import ElasticSolver
 from geos.pygeos_tools.solvers.ReservoirSolver import ReservoirSolver
 from geos.pygeos_tools.solvers.Solver import Solver
 from geos.pygeos_tools.solvers.WaveSolver import WaveSolver
+from geos.pygeos_tools.solvers.GravitySolver import GravitySolver
+from geos.pygeos_tools.solvers.GravityLinearOpSolver import GravityLinearOpSolver
