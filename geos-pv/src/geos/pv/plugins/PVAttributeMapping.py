@@ -14,10 +14,7 @@ sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 update_paths()
 
-from geos.utils.Logger import Logger, getLogger
 from geos.mesh.processing.AttributeMappingFromCellCoords import AttributeMappingFromCellCoords
-from geos.mesh.utils.arrayModifiers import fillPartialAttributes
-from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 
 from geos.pv.utils.checkboxFunction import createModifiedCallback
@@ -25,6 +22,10 @@ from geos.pv.utils.paraviewTreatments import getArrayChoices
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
 from vtkmodules.vtkCommonCore import (
     vtkDataArraySelection,
     vtkInformation,
@@ -32,45 +33,44 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkCompositeDataSet,
-    vtkDataObjectTreeIterator,
     vtkDataSet,
     vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
 )
 
 __doc__ = """
-Map the attributes from a source mesh to a client mesh.
+Map the attributes from a source mesh to a working mesh.
 
 Input and output are vtkUnstructuredGrid.
 
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
-* Select the server mesh.
+* Select the working mesh.
 * Search and Select Attribute Mapping Filter.
-* Select the client mesh.
-* Select the attributes to transfer and Apply.
+* Select the source mesh.
+* Select the attributes to transfer from the source mesh to the working mesh.
+* Apply.
 
 """
 
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
-@smproperty.input( name="Client", port_index=1, label="Client mesh" )
+@smproperty.input( name="Source", port_index=1, label="Source mesh" )
 @smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ],
+    dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],
     composite_data_supported=True,
 )
-@smproperty.input( name="Server", port_index=0, label="Server mesh" )
+@smproperty.input( name="Working", port_index=0, label="Working mesh" )
 @smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ],
+    dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],
     composite_data_supported=True,
 )
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Map the properties of a server mesh to a client mesh."""
-        super().__init__( nInputPorts=2, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
+        """Map the properties of the source mesh to the working mesh."""
+        super().__init__( nInputPorts=2, nOutputPorts=1, inputType="vtkObject", outputType="vtkObject" )
 
         # boolean to check if first use of the filter for attribute list initialization
         self.m_firstUse = True
@@ -78,18 +78,6 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         # list of attribute names to transfer
         self.m_attributes: vtkDataArraySelection = vtkDataArraySelection()
         self.m_attributes.AddObserver( 0, createModifiedCallback( self ) )
-
-        # logger
-        self.m_logger: Logger = getLogger( "Attribute Mapping" )
-
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set filter logger.
-
-        Args:
-            logger (Logger): logger
-        """
-        self.m_logger = logger
-        self.Modified()
 
     @smproperty.dataarrayselection( name="AttributesToTransfer" )
     def a02GetAttributeToTransfer( self: Self ) -> vtkDataArraySelection:
@@ -119,14 +107,14 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         # only at initialization step, no change later
         if self.m_firstUse:
             # get cell ids
-            inData = self.GetInputData( inInfoVec, 0, 0 )
-            assert isinstance( inData, ( vtkDataSet, vtkMultiBlockDataSet ) ), "Input object type is not supported."
+            inData = self.GetInputData( inInfoVec, 1, 0 )
+            assert isinstance( inData, ( vtkDataSet, vtkMultiBlockDataSet ) ), "Working mesh type is not supported."
 
             # update vtkDAS
             attributeNames: set[ str ] = getAttributeSet( inData, False )
             for attributeName in attributeNames:
                 if not self.m_attributes.ArrayExists( attributeName ):
-                    self.m_attributes.AddArray( attributeName )
+                    self.m_attributes.AddArray( attributeName, False )
 
             self.m_firstUse = False
         return 1
@@ -147,7 +135,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData( inInfoVec, 1, 0 )
+        inData = self.GetInputData( inInfoVec, 0, 0 )
         outData = self.GetOutputData( outInfoVec, 0 )
         assert inData is not None
         if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
@@ -171,106 +159,28 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.m_logger.info( f"Apply filter {__name__}" )
-        try:
-            serverMesh: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet,
-                               vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
-            clientMesh: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet,
-                               vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
-            outData: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet,
-                            vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
+        workingMesh: Union[ vtkDataSet, vtkMultiBlockDataSet,
+                            vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
+        sourceMesh: Union[ vtkDataSet, vtkMultiBlockDataSet,
+                            vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
+        outData: Union[ vtkDataSet, vtkMultiBlockDataSet,
+                        vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
 
-            assert serverMesh is not None, "Input server mesh is null."
-            assert clientMesh is not None, "Input client mesh is null."
-            assert outData is not None, "Output pipeline is null."
+        assert workingMesh is not None, "Input working mesh is null."
+        assert sourceMesh is not None, "Input source mesh is null."
+        assert outData is not None, "Output pipeline is null."
 
-            outData.ShallowCopy( clientMesh )
-            attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
+        outData.ShallowCopy( workingMesh )
 
-            mergedServerMesh: vtkUnstructuredGrid
-            if isinstance( serverMesh, vtkUnstructuredGrid ):
-                mergedServerMesh = serverMesh
-            elif isinstance( serverMesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-                for attributeName in attributeNames:
-                    fillPartialAttributes( serverMesh, attributeName, False )
-                mergedServerMesh = mergeBlocks( serverMesh )
-            else:
-                raise ValueError( "Server mesh data type is not supported. " +
-                                  "Use either vtkUnstructuredGrid or vtkMultiBlockDataSet" )
+        attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
 
-            if isinstance( outData, vtkUnstructuredGrid ):
-                self.doTransferAttributes( mergedServerMesh, outData, attributeNames )
-            elif isinstance( outData, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-                self.transferAttributesMultiBlockDataSet( mergedServerMesh, outData, attributeNames )
-            else:
-                raise ValueError( "Client mesh data type is not supported. " +
-                                  "Use either vtkUnstructuredGrid or vtkMultiBlockDataSet" )
+        filter: AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh, outData, True )
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+        filter.SetTransferAttributeNames( attributeNames )
 
-            outData.Modified()
+        filter.applyFilter()
+        self.m_firstUse = True
 
-            mess: str = "Attributes were successfully transferred ."
-            self.m_logger.info( mess )
-        except AssertionError as e:
-            mess1: str = "Attribute transfer failed due to:"
-            self.m_logger.error( mess1 )
-            self.m_logger.error( e, exc_info=True )
-            return 0
-        except Exception as e:
-            mess0: str = "Attribute transfer failed due to:"
-            self.m_logger.critical( mess0 )
-            self.m_logger.critical( e, exc_info=True )
-            return 0
         return 1
 
-    def doTransferAttributes(
-        self: Self,
-        serverMesh: vtkUnstructuredGrid,
-        clientMesh: vtkUnstructuredGrid,
-        attributeNames: set[ str ],
-    ) -> bool:
-        """Transfer attributes between two vtkUnstructuredGrids.
-
-        Args:
-            serverMesh (vtkUnstructuredGrid): server mesh
-            clientMesh (vtkUnstructuredGrid): client mesh
-            attributeNames (set[str]): set of attribut names to transfer
-
-        Returns:
-            bool: True if attributes were successfully transferred.
-
-        """
-        filter: AttributeMappingFromCellCoords = AttributeMappingFromCellCoords()
-        filter.AddInputDataObject( 0, serverMesh )
-        filter.AddInputDataObject( 1, clientMesh )
-        filter.SetTransferAttributeNames( attributeNames )
-        filter.Update()
-        clientMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
-        return True
-
-    def transferAttributesMultiBlockDataSet(
-        self: Self,
-        serverBlock: vtkUnstructuredGrid,
-        clientMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-        attributeNames: set[ str ],
-    ) -> bool:
-        """Transfer attributes from a vtkUnstructuredGrid to a multiblock.
-
-        Args:
-            serverBlock (vtkUnstructuredGrid): server mesh
-            clientMesh (vtkMultiBlockDataSet | vtkCompositeDataSet): client mesh
-            attributeNames (set[str]): set of attribut names to transfer
-
-        Returns:
-            bool: True if attributes were successfully transferred.
-
-        """
-        iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-        iter.SetDataSet( clientMesh )
-        iter.VisitOnlyLeavesOn()
-        iter.GoToFirstItem()
-        while iter.GetCurrentDataObject() is not None:
-            clientBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
-            self.doTransferAttributes( serverBlock, clientBlock, attributeNames )
-            clientBlock.Modified()
-            iter.GoToNextItem()
-        return True
