@@ -1,11 +1,10 @@
 import numpy.typing as npt
 from typing import Iterable, Sequence
 from typing_extensions import Self
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.generate_global_ids import build_global_ids
 from geos.mesh.doctor.actions.generate_cube import FieldInfo, add_fields, build_coordinates, build_rectilinear_grid
-from geos.mesh.doctor.filters.MeshDoctorBase import MeshDoctorGenerator
+from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorGeneratorBase
 
 __doc__ = """
 GenerateRectilinearGrid module is a vtk filter that allows to create a simple vtkUnstructuredGrid rectilinear grid.
@@ -50,97 +49,185 @@ To use the filter:
     mesh: vtkUnstructuredGrid = generateRectilinearGridFilter.GetOutputDataObject( 0 )
 
     # finally, you can write the mesh at a specific destination with:
-    generateRectilinearGridFilter.writeGrid( "output/filepath/of/your/grid.vtu" )
+    generateRectilinearGridFilter.writeGrid("output/filepath/of/your/grid.vtu")
 """
 
+loggerTitle: str = "Generate Rectilinear Grid"
 
-class GenerateRectilinearGrid( MeshDoctorGenerator ):
 
-    def __init__( self: Self ) -> None:
-        """Vtk filter to generate a simple rectilinear grid.
+class GenerateRectilinearGrid( MeshDoctorGeneratorBase ):
 
-        Output mesh is vtkUnstructuredGrid.
-        """
-        super().__init__()
-        self.m_generateCellsGlobalIds: bool = False
-        self.m_generatePointsGlobalIds: bool = False
-        self.m_coordsX: Sequence[ float ] = None
-        self.m_coordsY: Sequence[ float ] = None
-        self.m_coordsZ: Sequence[ float ] = None
-        self.m_numberElementsX: Sequence[ int ] = None
-        self.m_numberElementsY: Sequence[ int ] = None
-        self.m_numberElementsZ: Sequence[ int ] = None
-        self.m_fields: Iterable[ FieldInfo ] = list()
-
-    def RequestData( self: Self, request: vtkInformation, inInfo: vtkInformationVector,
-                     outInfo: vtkInformationVector ) -> int:
-        opt = vtkUnstructuredGrid.GetData( outInfo )
-        x: npt.NDArray = build_coordinates( self.m_coordsX, self.m_numberElementsX )
-        y: npt.NDArray = build_coordinates( self.m_coordsY, self.m_numberElementsY )
-        z: npt.NDArray = build_coordinates( self.m_coordsZ, self.m_numberElementsZ )
-        output: vtkUnstructuredGrid = build_rectilinear_grid( x, y, z )
-        output = add_fields( output, self.m_fields )
-        build_global_ids( output, self.m_generateCellsGlobalIds, self.m_generatePointsGlobalIds )
-        opt.ShallowCopy( output )
-        return 1
-
-    def setCoordinates( self: Self, coordsX: Sequence[ float ], coordsY: Sequence[ float ],
-                        coordsZ: Sequence[ float ] ) -> None:
-        """Set the coordinates of the block you want to have in your grid by specifying the beginning and ending
-        coordinates along the X, Y and Z axis.
+    def __init__(
+        self: Self,
+        generate_cells_global_ids: bool = False,
+        generate_points_global_ids: bool = False,
+        use_external_logger: bool = False,
+    ) -> None:
+        """Initialize the rectilinear grid generator.
 
         Args:
-            self (Self)
-            coordsX (Sequence[ float ])
-            coordsY (Sequence[ float ])
-            coordsZ (Sequence[ float ])
+            generate_cells_global_ids (bool): Whether to generate global cell IDs. Defaults to False.
+            generate_points_global_ids (bool): Whether to generate global point IDs. Defaults to False.
+            use_external_logger (bool): Whether to use external logger. Defaults to False.
         """
-        self.m_coordsX = coordsX
-        self.m_coordsY = coordsY
-        self.m_coordsZ = coordsZ
-        self.Modified()
+        super().__init__( loggerTitle, use_external_logger )
+        self.generate_cells_global_ids: bool = generate_cells_global_ids
+        self.generate_points_global_ids: bool = generate_points_global_ids
+        self.coords_x: Sequence[ float ] = None
+        self.coords_y: Sequence[ float ] = None
+        self.coords_z: Sequence[ float ] = None
+        self.number_elements_x: Sequence[ int ] = None
+        self.number_elements_y: Sequence[ int ] = None
+        self.number_elements_z: Sequence[ int ] = None
+        self.fields: Iterable[ FieldInfo ] = list()
+
+    def setCoordinates(
+        self: Self,
+        coords_x: Sequence[ float ],
+        coords_y: Sequence[ float ],
+        coords_z: Sequence[ float ],
+    ) -> None:
+        """Set the coordinates of the block boundaries for the grid along X, Y and Z axis.
+
+        Args:
+            coords_x (Sequence[float]): Block boundary coordinates along X axis
+            coords_y (Sequence[float]): Block boundary coordinates along Y axis
+            coords_z (Sequence[float]): Block boundary coordinates along Z axis
+        """
+        self.coords_x = coords_x
+        self.coords_y = coords_y
+        self.coords_z = coords_z
+
+    def setNumberElements(
+        self: Self,
+        number_elements_x: Sequence[ int ],
+        number_elements_y: Sequence[ int ],
+        number_elements_z: Sequence[ int ],
+    ) -> None:
+        """Set the number of elements for each block along X, Y and Z axis.
+
+        Args:
+            number_elements_x (Sequence[int]): Number of elements per block along X axis
+            number_elements_y (Sequence[int]): Number of elements per block along Y axis
+            number_elements_z (Sequence[int]): Number of elements per block along Z axis
+        """
+        self.number_elements_x = number_elements_x
+        self.number_elements_y = number_elements_y
+        self.number_elements_z = number_elements_z
 
     def setGenerateCellsGlobalIds( self: Self, generate: bool ) -> None:
-        """Set the generation of global cells ids to be True or False.
+        """Set whether to generate global cell IDs.
 
         Args:
-            self (Self)
-            generate (bool)
+            generate (bool): True to generate global cell IDs, False otherwise
         """
-        self.m_generateCellsGlobalIds = generate
-        self.Modified()
+        self.generate_cells_global_ids = generate
 
     def setGeneratePointsGlobalIds( self: Self, generate: bool ) -> None:
-        """Set the generation of global points ids to be True or False.
+        """Set whether to generate global point IDs.
 
         Args:
-            self (Self)
-            generate (bool)
+            generate (bool): True to generate global point IDs, False otherwise
         """
-        self.m_generatePointsGlobalIds = generate
-        self.Modified()
+        self.generate_points_global_ids = generate
 
     def setFields( self: Self, fields: Iterable[ FieldInfo ] ) -> None:
-        """Specify the cells or points array to be added to the grid.
+        """Set the fields (arrays) to be added to the grid.
 
         Args:
-            self (Self)
-            fields (Iterable[ FieldInfo ])
+            fields (Iterable[FieldInfo]): Field information for arrays to create
         """
-        self.m_fields = fields
-        self.Modified()
+        self.fields = fields
 
-    def setNumberElements( self: Self, numberElementsX: Sequence[ int ], numberElementsY: Sequence[ int ],
-                           numberElementsZ: Sequence[ int ] ) -> None:
-        """For each block that was defined in setCoordinates, specify the number of cells that they should contain.
+    def applyFilter( self: Self ) -> bool:
+        """Generate the rectilinear grid.
 
-        Args:
-            self (Self)
-            numberElementsX (Sequence[ int ])
-            numberElementsY (Sequence[ int ])
-            numberElementsZ (Sequence[ int ])
+        Returns:
+            bool: True if grid generated successfully, False otherwise.
         """
-        self.m_numberElementsX = numberElementsX
-        self.m_numberElementsY = numberElementsY
-        self.m_numberElementsZ = numberElementsZ
-        self.Modified()
+        self.logger.info( f"Apply filter {self.logger.name}" )
+
+        try:
+            # Validate inputs
+            required_fields = [
+                self.coords_x, self.coords_y, self.coords_z, self.number_elements_x, self.number_elements_y,
+                self.number_elements_z
+            ]
+            if any( field is None for field in required_fields ):
+                self.logger.error( "Coordinates and number of elements must be set before generating grid" )
+                return False
+
+            # Build coordinates
+            x: npt.NDArray = build_coordinates( self.coords_x, self.number_elements_x )
+            y: npt.NDArray = build_coordinates( self.coords_y, self.number_elements_y )
+            z: npt.NDArray = build_coordinates( self.coords_z, self.number_elements_z )
+
+            # Build the rectilinear grid
+            self.mesh = build_rectilinear_grid( x, y, z )
+
+            # Add fields if specified
+            if self.fields:
+                self.mesh = add_fields( self.mesh, self.fields )
+
+            # Add global IDs if requested
+            build_global_ids( self.mesh, self.generate_cells_global_ids, self.generate_points_global_ids )
+
+            self.logger.info( f"Generated rectilinear grid with {self.mesh.GetNumberOfPoints()} points "
+                              f"and {self.mesh.GetNumberOfCells()} cells" )
+            self.logger.info( f"The filter {self.logger.name} succeeded" )
+            return True
+
+        except Exception as e:
+            self.logger.error( f"Error in rectilinear grid generation: {e}" )
+            self.logger.error( f"The filter {self.logger.name} failed" )
+            return False
+
+
+# Main function for backward compatibility and standalone use
+def generate_rectilinear_grid(
+    coords_x: Sequence[ float ],
+    coords_y: Sequence[ float ],
+    coords_z: Sequence[ float ],
+    number_elements_x: Sequence[ int ],
+    number_elements_y: Sequence[ int ],
+    number_elements_z: Sequence[ int ],
+    fields: Iterable[ FieldInfo ] = None,
+    generate_cells_global_ids: bool = False,
+    generate_points_global_ids: bool = False,
+    write_output: bool = False,
+    output_path: str = "output/rectilinear_grid.vtu",
+) -> vtkUnstructuredGrid:
+    """Generate a rectilinear grid mesh.
+
+    Args:
+        coords_x (Sequence[float]): Block boundary coordinates along X axis
+        coords_y (Sequence[float]): Block boundary coordinates along Y axis
+        coords_z (Sequence[float]): Block boundary coordinates along Z axis
+        number_elements_x (Sequence[int]): Number of elements per block along X axis
+        number_elements_y (Sequence[int]): Number of elements per block along Y axis
+        number_elements_z (Sequence[int]): Number of elements per block along Z axis
+        fields (Iterable[FieldInfo]): Field information for arrays to create. Defaults to None.
+        generate_cells_global_ids (bool): Whether to generate global cell IDs. Defaults to False.
+        generate_points_global_ids (bool): Whether to generate global point IDs. Defaults to False.
+        write_output (bool): Whether to write output mesh to file. Defaults to False.
+        output_path (str): Output file path if write_output is True.
+
+    Returns:
+        vtkUnstructuredGrid: The generated mesh
+    """
+    filter_instance = GenerateRectilinearGrid( generate_cells_global_ids, generate_points_global_ids )
+    filter_instance.setCoordinates( coords_x, coords_y, coords_z )
+    filter_instance.setNumberElements( number_elements_x, number_elements_y, number_elements_z )
+
+    if fields:
+        filter_instance.setFields( fields )
+
+    success = filter_instance.applyFilter()
+
+    if not success:
+        raise RuntimeError( "Rectilinear grid generation failed" )
+
+    if write_output:
+        filter_instance.writeGrid( output_path )
+
+    return filter_instance.getMesh()
