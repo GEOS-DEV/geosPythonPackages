@@ -15,7 +15,8 @@ name = "geos-geomechanics"
 version = "0.1.0"
 description = "Geomechanics models and processing tools"
 authors = [{name = "GEOS contributors" }]
-maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 4 - Beta",
