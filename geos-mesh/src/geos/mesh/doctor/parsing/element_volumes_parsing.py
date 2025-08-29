@@ -31,11 +31,23 @@ def convert( parsed_options ) -> Options:
 
 def display_results( options: Options, result: Result ):
     setup_logger.results( get_options_used_message( options ) )
-    setup_logger.results(
-        f"You have {len(result.element_volumes)} elements with volumes smaller than {options.min_volume}." )
-    if result.element_volumes:
-        setup_logger.results( "Elements index | Volumes calculated" )
-        setup_logger.results( "-----------------------------------" )
-        max_length: int = len( "Elements index " )
-        for ( ind, volume ) in result.element_volumes:
-            setup_logger.results( f"{ind:<{max_length}}" + "| " + str( volume ) )
+    logger_results( setup_logger, result.element_volumes )
+
+
+def logger_results( logger, element_volumes: list[ tuple[ int, float ] ] ) -> None:
+    """Show the results of the element volumes check.
+
+    Args:
+        logger: Logger instance for output.
+        element_volumes (list[ tuple[ int, float ] ]): List of element volumes.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    log_method = logger.info
+    if hasattr(logger, 'results'):
+        log_method = logger.results
+
+    log_method( "Elements index | Volumes calculated" )
+    log_method( "-----------------------------------" )
+    max_length: int = len( "Elements index " )
+    for ( ind, volume ) in element_volumes:
+        log_method( f"{ind:<{max_length}}" + "| " + str( volume ) )

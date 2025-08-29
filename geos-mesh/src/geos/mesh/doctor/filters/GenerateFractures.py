@@ -14,7 +14,8 @@ GenerateFractures module splits a vtkUnstructuredGrid along non-embedded fractur
 When a fracture plane is defined between two cells, the nodes of the shared face will be duplicated
 to create a discontinuity. The filter generates both the split main mesh and separate fracture meshes.
 
-To use the filter:
+To use the filter
+-----------------
 
 .. code-block:: python
 
@@ -23,9 +24,9 @@ To use the filter:
     # instantiate the filter
     generateFracturesFilter = GenerateFractures(
         mesh,
-        field_name="fracture_field",
-        field_values="1,2",
-        fractures_output_dir="./fractures/",
+        fieldName="fracture_field",
+        fieldValues="1,2",
+        fracturesOutputDir="./fractures/",
         policy=1
     )
 
@@ -33,11 +34,30 @@ To use the filter:
     success = generateFracturesFilter.applyFilter()
 
     # get the results
-    split_mesh = generateFracturesFilter.getMesh()
-    fracture_meshes = generateFracturesFilter.getFractureMeshes()
+    splitMesh = generateFracturesFilter.getMesh()
+    fractureMeshes = generateFracturesFilter.getFractureMeshes()
 
     # write all meshes
-    generateFracturesFilter.writeMeshes("output/split_mesh.vtu", is_data_mode_binary=True)
+    generateFracturesFilter.writeMeshes("output/split_mesh.vtu", isDataModeBinary=True)
+
+For standalone use without creating a filter instance
+-----------------------------------------------------
+
+.. code-block:: python
+
+    from geos.mesh.doctor.filters.GenerateFractures import generateFractures
+
+    # apply fracture generation directly
+    splitMesh, fractureMeshes = generateFractures(
+        mesh,
+        outputPath="output/split_mesh.vtu",
+        fieldName="fracture_field",
+        fieldValues="1,2",
+        fracturesOutputDir="./fractures/",
+        policy=1,
+        outputDataMode=0,
+        fracturesDataMode=1
+    )
 """
 
 FIELD_NAME = __FIELD_NAME
@@ -56,99 +76,36 @@ class GenerateFractures( MeshDoctorFilterBase ):
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
-        field_name: str = None,
-        field_values: str = None,
-        fractures_output_dir: str = None,
+        fieldName: str = None,
+        fieldValues: str = None,
+        fracturesOutputDir: str = None,
         policy: int = 1,
-        output_data_mode: int = 0,
-        fractures_data_mode: int = 1,
-        use_external_logger: bool = False,
+        outputDataMode: int = 0,
+        fracturesDataMode: int = 1,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the generate fractures filter.
 
         Args:
-            mesh (vtkUnstructuredGrid): The input mesh to split
-            field_name (str): Field name that defines fracture regions. Defaults to None.
-            field_values (str): Comma-separated field values that identify fracture boundaries. Defaults to None.
-            fractures_output_dir (str): Output directory for fracture meshes. Defaults to None.
+            mesh (vtkUnstructuredGrid): The input mesh to split.
+            fieldName (str): Field name that defines fracture regions. Defaults to None.
+            fieldValues (str): Comma-separated field values that identify fracture boundaries. Defaults to None.
+            fracturesOutputDir (str): Output directory for fracture meshes. Defaults to None.
             policy (int): Fracture policy (0 for internal, 1 for boundary). Defaults to 1.
-            output_data_mode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
-            fractures_data_mode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            outputDataMode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
+            fracturesDataMode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
-        super().__init__( mesh, loggerTitle, use_external_logger )
-        self.field_name: str = field_name
-        self.field_values: str = field_values
-        self.fractures_output_dir: str = fractures_output_dir
+        super().__init__( mesh, loggerTitle, useExternalLogger )
+        self.fieldName: str = fieldName
+        self.fieldValues: str = fieldValues
+        self.fracturesOutputDir: str = fracturesOutputDir
         self.policy: str = POLICIES[ policy ] if 0 <= policy <= 1 else POLICIES[ 1 ]
-        self.output_data_mode: str = DATA_MODE[ output_data_mode ] if output_data_mode in [ 0, 1 ] else DATA_MODE[ 0 ]
-        self.fractures_data_mode: str = ( DATA_MODE[ fractures_data_mode ]
-                                          if fractures_data_mode in [ 0, 1 ] else DATA_MODE[ 1 ] )
-
-        # Results storage
-        self.fracture_meshes: list[ vtkUnstructuredGrid ] = []
-        self.all_fractures_vtk_output: list[ VtkOutput ] = []
-
-    def setFieldName( self: Self, field_name: str ) -> None:
-        """Set the field name that defines fracture regions.
-
-        Args:
-            field_name (str): Name of the field
-        """
-        self.field_name = field_name
-
-    def setFieldValues( self: Self, field_values: str ) -> None:
-        """Set the field values that identify fracture boundaries.
-
-        Args:
-            field_values (str): Comma-separated field values
-        """
-        self.field_values = field_values
-
-    def setFracturesOutputDirectory( self: Self, directory: str ) -> None:
-        """Set the output directory for fracture meshes.
-
-        Args:
-            directory (str): Directory path
-        """
-        self.fractures_output_dir = directory
-
-    def setPolicy( self: Self, choice: int ) -> None:
-        """Set the fracture policy.
-
-        Args:
-            choice (int): 0 for internal fractures, 1 for boundary fractures
-        """
-        if choice not in [ 0, 1 ]:
-            self.logger.error(
-                f"setPolicy: Please choose either 0 for {POLICIES[0]} or 1 for {POLICIES[1]}, not '{choice}'." )
-        else:
-            self.policy = convert_to_fracture_policy( POLICIES[ choice ] )
-
-    def setOutputDataMode( self: Self, choice: int ) -> None:
-        """Set the data mode for the main mesh output.
-
-        Args:
-            choice (int): 0 for ASCII, 1 for binary
-        """
-        if choice not in [ 0, 1 ]:
-            self.logger.error(
-                f"setOutputDataMode: Please choose either 0 for {DATA_MODE[0]} or 1 for {DATA_MODE[1]}, not '{choice}'."
-            )
-        else:
-            self.output_data_mode = DATA_MODE[ choice ]
-
-    def setFracturesDataMode( self: Self, choice: int ) -> None:
-        """Set the data mode for fracture mesh outputs.
-
-        Args:
-            choice (int): 0 for ASCII, 1 for binary
-        """
-        if choice not in [ 0, 1 ]:
-            self.logger.error( f"setFracturesDataMode: Please choose either 0 for {DATA_MODE[0]} "
-                               f"or 1 for {DATA_MODE[1]}, not '{choice}'." )
-        else:
-            self.fractures_data_mode = DATA_MODE[ choice ]
+        self.outputDataMode: str = DATA_MODE[ outputDataMode ] if outputDataMode in [ 0, 1 ] else DATA_MODE[ 0 ]
+        self.fracturesDataMode: str = ( DATA_MODE[ fracturesDataMode ]
+                                        if fracturesDataMode in [ 0, 1 ] else DATA_MODE[ 1 ] )
+        self.fractureMeshes: list[ vtkUnstructuredGrid ] = []
+        self.allFracturesVtkOutput: list[ VtkOutput ] = []
 
     def applyFilter( self: Self ) -> bool:
         """Apply the fracture generation.
@@ -158,147 +115,187 @@ class GenerateFractures( MeshDoctorFilterBase ):
         """
         self.logger.info( f"Apply filter {self.logger.name}" )
 
-        try:
-            # Check for global IDs which are not allowed
-            if has_array( self.mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
-                self.logger.error(
-                    "The mesh cannot contain global ids for neither cells nor points. "
-                    "The correct procedure is to split the mesh and then generate global ids for new split meshes." )
-                return False
-
-            # Validate required parameters
-            parsed_options = self._getParsedOptions()
-            if len( parsed_options ) < 5:
-                self.logger.error( "You must set all variables before trying to create fractures." )
-                return False
-
-            self.logger.info( f"Parsed options: {parsed_options}" )
-
-            # Convert options and split mesh
-            options: Options = convert( parsed_options )
-            self.all_fractures_vtk_output = options.all_fractures_VtkOutput
-
-            # Perform the fracture generation
-            output_mesh, self.fracture_meshes = split_mesh_on_fractures( self.mesh, options )
-
-            # Update the main mesh with the split result
-            self.mesh = output_mesh
-
-            self.logger.info( f"Generated {len(self.fracture_meshes)} fracture meshes" )
-            self.logger.info( f"The filter {self.logger.name} succeeded" )
-            return True
-
-        except Exception as e:
-            self.logger.error( f"Error in fracture generation: {e}" )
-            self.logger.error( f"The filter {self.logger.name} failed" )
+        # Check for global IDs which are not allowed
+        if has_array( self.mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
+            self.logger.error(
+                "The mesh cannot contain global ids for neither cells nor points."
+                " The correct procedure is to split the mesh and then generate global ids for new split meshes." )
             return False
 
-    def _getParsedOptions( self: Self ) -> dict[ str, str ]:
-        """Get parsed options for fracture generation."""
-        parsed_options: dict[ str, str ] = { "output": "./mesh.vtu", "data_mode": DATA_MODE[ 0 ] }
-        parsed_options[ POLICY ] = self.policy
-        parsed_options[ FRACTURES_DATA_MODE ] = self.fractures_data_mode
+        # Validate required parameters
+        parsedOptions = self._buildParsedOptions()
+        if len( parsedOptions ) < 5:
+            self.logger.error( "You must set all variables before trying to create fractures." )
+            return False
 
-        if self.field_name:
-            parsed_options[ FIELD_NAME ] = self.field_name
-        else:
-            self.logger.error( "No field name provided. Please use setFieldName." )
+        self.logger.info( f"Parsed options: {parsedOptions}" )
 
-        if self.field_values:
-            parsed_options[ FIELD_VALUES ] = self.field_values
-        else:
-            self.logger.error( "No field values provided. Please use setFieldValues." )
+        # Convert options and split mesh
+        options: Options = convert( parsedOptions )
+        self.allFracturesVtkOutput = options.all_fractures_VtkOutput
 
-        if self.fractures_output_dir:
-            parsed_options[ FRACTURES_OUTPUT_DIR ] = self.fractures_output_dir
-        else:
-            self.logger.error( "No fracture output directory provided. Please use setFracturesOutputDirectory." )
+        # Perform the fracture generation
+        output_mesh, self.fractureMeshes = split_mesh_on_fractures( self.mesh, options )
 
-        return parsed_options
+        # Update the main mesh with the split result
+        self.mesh = output_mesh
 
-    def getFractureMeshes( self: Self ) -> list[ vtkUnstructuredGrid ]:
-        """Get the generated fracture meshes.
-
-        Returns:
-            list[vtkUnstructuredGrid]: List of fracture meshes
-        """
-        return self.fracture_meshes
+        self.logger.info( f"Generated {len(self.fractureMeshes)} fracture meshes." )
+        self.logger.info( f"The filter {self.logger.name} succeeded." )
+        return True
 
     def getAllGrids( self: Self ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
         """Get both the split main mesh and fracture meshes.
 
         Returns:
-            tuple[vtkUnstructuredGrid, list[vtkUnstructuredGrid]]: Split mesh and fracture meshes
+            tuple[vtkUnstructuredGrid, list[vtkUnstructuredGrid]]: Split mesh and fracture meshes.
         """
-        return ( self.mesh, self.fracture_meshes )
+        return ( self.mesh, self.fractureMeshes )
 
-    def writeMeshes( self: Self, filepath: str, is_data_mode_binary: bool = True, canOverwrite: bool = False ) -> None:
+    def getFractureMeshes( self: Self ) -> list[ vtkUnstructuredGrid ]:
+        """Get the generated fracture meshes.
+
+        Returns:
+            list[vtkUnstructuredGrid]: List of fracture meshes.
+        """
+        return self.fractureMeshes
+
+    def setFieldName( self: Self, fieldName: str ) -> None:
+        """Set the field name that defines fracture regions.
+
+        Args:
+            fieldName (str): Name of the field.
+        """
+        self.fieldName = fieldName
+
+    def setFieldValues( self: Self, fieldValues: str ) -> None:
+        """Set the field values that identify fracture boundaries.
+
+        Args:
+            fieldValues (str): Comma-separated field values.
+        """
+        self.fieldValues = fieldValues
+
+    def setFracturesDataMode( self: Self, choice: int ) -> None:
+        """Set the data mode for fracture mesh outputs.
+
+        Args:
+            choice (int): 0 for ASCII, 1 for binary.
+        """
+        if choice not in [ 0, 1 ]:
+            self.logger.error( f"setFracturesDataMode: Please choose either 0 for {DATA_MODE[0]} "
+                               f"or 1 for {DATA_MODE[1]}, not '{choice}'." )
+        else:
+            self.fracturesDataMode = DATA_MODE[ choice ]
+
+    def setFracturesOutputDirectory( self: Self, directory: str ) -> None:
+        """Set the output directory for fracture meshes.
+
+        Args:
+            directory (str): Directory path.
+        """
+        self.fracturesOutputDir = directory
+
+    def setOutputDataMode( self: Self, choice: int ) -> None:
+        """Set the data mode for the main mesh output.
+
+        Args:
+            choice (int): 0 for ASCII, 1 for binary.
+        """
+        if choice not in [ 0, 1 ]:
+            self.logger.error(
+                f"setOutputDataMode: Please choose either 0 for {DATA_MODE[0]} or 1 for {DATA_MODE[1]}, not '{choice}'."
+            )
+        else:
+            self.outputDataMode = DATA_MODE[ choice ]
+
+    def setPolicy( self: Self, choice: int ) -> None:
+        """Set the fracture policy.
+
+        Args:
+            choice (int): 0 for field, 1 for internal surfaces.
+        """
+        if choice not in [ 0, 1 ]:
+            self.logger.error(
+                f"setPolicy: Please choose either 0 for {POLICIES[0]} or 1 for {POLICIES[1]}, not '{choice}'." )
+        else:
+            self.policy = convert_to_fracture_policy( POLICIES[ choice ] )
+
+    def _buildParsedOptions( self: Self ) -> dict[ str, str ]:
+        """Build parsed options to be used for an Options object."""
+        parsedOptions: dict[ str, str ] = { "output": "./mesh.vtu", "data_mode": DATA_MODE[ 0 ] }
+        parsedOptions[ POLICY ] = self.policy
+        parsedOptions[ FRACTURES_DATA_MODE ] = self.fracturesDataMode
+
+        if self.fieldName:
+            parsedOptions[ FIELD_NAME ] = self.fieldName
+        else:
+            self.logger.error( "No field name provided. Please use setFieldName." )
+
+        if self.fieldValues:
+            parsedOptions[ FIELD_VALUES ] = self.fieldValues
+        else:
+            self.logger.error( "No field values provided. Please use setFieldValues." )
+
+        if self.fracturesOutputDir:
+            parsedOptions[ FRACTURES_OUTPUT_DIR ] = self.fracturesOutputDir
+        else:
+            self.logger.error( "No fracture output directory provided. Please use setFracturesOutputDirectory." )
+
+        return parsedOptions
+
+    def writeMeshes( self: Self, filepath: str, isDataModeBinary: bool = True, canOverwrite: bool = False ) -> None:
         """Write both the split main mesh and all fracture meshes.
 
         Args:
-            filepath (str): Path for the main split mesh
-            is_data_mode_binary (bool): Whether to use binary format for main mesh. Defaults to True.
+            filepath (str): Path for the main split mesh.
+            isDataModeBinary (bool): Whether to use binary format for main mesh. Defaults to True.
             canOverwrite (bool): Whether to allow overwriting existing files. Defaults to False.
         """
         if self.mesh:
-            write_mesh( self.mesh, VtkOutput( filepath, is_data_mode_binary ), canOverwrite )
+            write_mesh( self.mesh, VtkOutput( filepath, isDataModeBinary ), canOverwrite )
         else:
             self.logger.error( f"No output grid was built. Cannot output vtkUnstructuredGrid at {filepath}." )
 
-        for i, fracture_mesh in enumerate( self.fracture_meshes ):
-            if i < len( self.all_fractures_vtk_output ):
-                write_mesh( fracture_mesh, self.all_fractures_vtk_output[ i ] )
+        for i, fractureMesh in enumerate( self.fractureMeshes ):
+            if i < len( self.allFracturesVtkOutput ):
+                write_mesh( fractureMesh, self.allFracturesVtkOutput[ i ] )
 
 
-# Main function for backward compatibility and standalone use
-def generate_fractures(
+# Main function for standalone use
+def generateFractures(
     mesh: vtkUnstructuredGrid,
-    field_name: str,
-    field_values: str,
-    fractures_output_dir: str,
+    outputPath: str,
+    fieldName: str,
+    fieldValues: str,
+    fracturesOutputDir: str,
     policy: int = 1,
-    output_data_mode: int = 0,
-    fractures_data_mode: int = 1,
-    write_output: bool = False,
-    output_path: str = "output/split_mesh.vtu",
+    outputDataMode: int = 0,
+    fracturesDataMode: int = 1
 ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
     """Apply fracture generation to a mesh.
 
     Args:
-        mesh (vtkUnstructuredGrid): The input mesh
-        field_name (str): Field name that defines fracture regions
-        field_values (str): Comma-separated field values that identify fracture boundaries
-        fractures_output_dir (str): Output directory for fracture meshes
+        mesh (vtkUnstructuredGrid): The input mesh.
+        outputPath (str): Output file path if write_output is True.
+        fieldName (str): Field name that defines fracture regions.
+        fieldValues (str): Comma-separated field values that identify fracture boundaries.
+        fracturesOutputDir (str): Output directory for fracture meshes.
         policy (int): Fracture policy (0 for internal, 1 for boundary). Defaults to 1.
-        output_data_mode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
-        fractures_data_mode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
-        write_output (bool): Whether to write output meshes to files. Defaults to False.
-        output_path (str): Output file path if write_output is True.
+        outputDataMode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
+        fracturesDataMode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
 
     Returns:
         tuple[vtkUnstructuredGrid, list[vtkUnstructuredGrid]]:
-            Split mesh and fracture meshes
+            Split mesh and fracture meshes.
     """
-    filter_instance = GenerateFractures( mesh, field_name, field_values, fractures_output_dir, policy, output_data_mode,
-                                         fractures_data_mode )
-    success = filter_instance.applyFilter()
+    filterInstance = GenerateFractures( mesh, fieldName, fieldValues, fracturesOutputDir, policy, outputDataMode,
+                                        fracturesDataMode )
+    success = filterInstance.applyFilter()
 
     if not success:
-        raise RuntimeError( "Fracture generation failed" )
+        raise RuntimeError( "Fracture generation failed." )
 
-    if write_output:
-        filter_instance.writeMeshes( output_path )
+    filterInstance.writeMeshes( outputPath )
 
-    return filter_instance.getAllGrids()
-
-
-# Alias for backward compatibility
-def processGenerateFractures(
-    mesh: vtkUnstructuredGrid,
-    field_name: str,
-    field_values: str,
-    fractures_output_dir: str,
-    policy: int = 1,
-) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
-    """Legacy function name for backward compatibility."""
-    return generate_fractures( mesh, field_name, field_values, fractures_output_dir, policy )
+    return filterInstance.getAllGrids()

@@ -7,15 +7,16 @@ from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorFilterBase
 from geos.mesh.doctor.parsing._shared_checks_parsing_logic import CheckFeature, display_results
 from geos.mesh.doctor.parsing.all_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_all_checks, ORDERED_CHECK_NAMES
                                                           as ocn_all_checks )
-from geos.mesh.doctor.parsing.main_checks_parsing import ( CHECK_FEATURES_CONFIG as cfc_main_checks, ORDERED_CHECK_NAMES
-                                                           as ocn_main_checks )
+from geos.mesh.doctor.parsing.main_checks_parsing import ( CHECK_FEATURES_CONFIG as cfcMainChecks, ORDERED_CHECK_NAMES
+                                                           as ocnMainChecks )
 
 __doc__ = """
 Checks module performs comprehensive mesh validation checks on a vtkUnstructuredGrid.
 This module contains AllChecks and MainChecks filters that run various quality checks including element validation,
 node validation, topology checks, and geometric integrity verification.
 
-To use the AllChecks filter:
+To use the AllChecks filter
+---------------------------
 
 .. code-block:: python
 
@@ -32,12 +33,13 @@ To use the AllChecks filter:
     success = allChecksFilter.applyFilter()
 
     # get check results
-    check_results = allChecksFilter.getCheckResults()
+    checkResults = allChecksFilter.getCheckResults()
 
     # get the processed mesh
     output_mesh = allChecksFilter.getMesh()
 
-To use the MainChecks filter (subset of most important checks):
+To use the MainChecks filter (subset of most important checks)
+--------------------------------------------------------------
 
 .. code-block:: python
 
@@ -48,69 +50,58 @@ To use the MainChecks filter (subset of most important checks):
 
     # execute the checks
     success = mainChecksFilter.applyFilter()
+
+    # get check results
+    checkResults = mainChecksFilter.getCheckResults()
+
+For standalone use without creating a filter instance
+-----------------------------------------------------
+
+.. code-block:: python
+
+    from geos.mesh.doctor.filters.Checks import allChecks, mainChecks
+
+    # apply all checks directly
+    outputMesh, checkResults = allChecks(
+        mesh,
+        customParameters={"collocated_nodes": {"tolerance": 1e-6}}
+    )
+
+    # or apply main checks only
+    outputMesh, checkResults = mainChecks(
+        mesh,
+        customParameters={"element_volumes": {"minVolume": 0.0}}
+    )
 """
 
 loggerTitle: str = "Mesh Doctor Checks Filter"
 
 
-class MeshDoctorChecks( MeshDoctorFilterBase ):
+class Checks( MeshDoctorFilterBase ):
 
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
-        checks_to_perform: list[ str ],
-        check_features_config: dict[ str, CheckFeature ],
-        ordered_check_names: list[ str ],
-        use_external_logger: bool = False,
+        checksToPerform: list[ str ],
+        checkFeaturesConfig: dict[ str, CheckFeature ],
+        orderedCheckNames: list[ str ],
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the mesh doctor checks filter.
 
         Args:
             mesh (vtkUnstructuredGrid): The input mesh to check
-            checks_to_perform (list[str]): List of check names to perform
-            check_features_config (dict[str, CheckFeature]): Configuration for check features
-            ordered_check_names (list[str]): Ordered list of available check names
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            checksToPerform (list[str]): List of check names to perform
+            checkFeaturesConfig (dict[str, CheckFeature]): Configuration for check features
+            orderedCheckNames (list[str]): Ordered list of available check names
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
-        super().__init__( mesh, loggerTitle, use_external_logger )
-        self.checks_to_perform: list[ str ] = checks_to_perform
-        self.check_parameters: dict[ str, dict[ str, Any ] ] = {}  # Custom parameters override
-        self.check_results: dict[ str, Any ] = {}
-        self.check_features_config: dict[ str, CheckFeature ] = check_features_config
-        self.ordered_check_names: list[ str ] = ordered_check_names
-
-    def setChecksToPerform( self: Self, checks_to_perform: list[ str ] ) -> None:
-        """Set which checks to perform.
-
-        Args:
-            checks_to_perform (list[str]): List of check names to perform
-        """
-        self.checks_to_perform = checks_to_perform
-
-    def setCheckParameter( self: Self, check_name: str, parameter_name: str, value: Any ) -> None:
-        """Set a parameter for a specific check.
-
-        Args:
-            check_name (str): Name of the check (e.g., "collocated_nodes")
-            parameter_name (str): Name of the parameter (e.g., "tolerance")
-            value (Any): Value to set for the parameter
-        """
-        if check_name not in self.check_parameters:
-            self.check_parameters[ check_name ] = {}
-        self.check_parameters[ check_name ][ parameter_name ] = value
-
-    def setAllChecksParameter( self: Self, parameter_name: str, value: Any ) -> None:
-        """Set a parameter for all checks that support it.
-
-        Args:
-            parameter_name (str): Name of the parameter (e.g., "tolerance")
-            value (Any): Value to set for the parameter
-        """
-        for check_name in self.checks_to_perform:
-            if check_name in self.check_features_config:
-                default_params = self.check_features_config[ check_name ].default_params
-                if parameter_name in default_params:
-                    self.setCheckParameter( check_name, parameter_name, value )
+        super().__init__( mesh, loggerTitle, useExternalLogger )
+        self.checksToPerform: list[ str ] = checksToPerform
+        self.checkParameters: dict[ str, dict[ str, Any ] ] = {}  # Custom parameters override
+        self.checkResults: dict[ str, Any ] = {}
+        self.checkFeaturesConfig: dict[ str, CheckFeature ] = checkFeaturesConfig
+        self.orderedCheckNames: list[ str ] = orderedCheckNames
 
     def applyFilter( self: Self ) -> bool:
         """Apply the mesh validation checks.
@@ -120,66 +111,17 @@ class MeshDoctorChecks( MeshDoctorFilterBase ):
         """
         self.logger.info( f"Apply filter {self.logger.name}" )
 
-        try:
-            # Build the options using the parsing logic structure
-            options = self._buildOptions()
-            self.check_results = get_check_results( self.mesh, options )
+        # Build the options using the parsing logic structure
+        options = self._buildOptions()
+        self.checkResults = get_check_results( self.mesh, options )
 
-            # Display results using the standard display logic
-            results_wrapper = SimpleNamespace( check_results=self.check_results )
-            display_results( options, results_wrapper )
+        # Display results using the standard display logic
+        resultsWrapper = SimpleNamespace( checkResults=self.checkResults )
+        display_results( options, resultsWrapper )
 
-            self.logger.info( f"Performed {len(self.check_results)} checks" )
-            self.logger.info( f"The filter {self.logger.name} succeeded" )
-            return True
-
-        except Exception as e:
-            self.logger.error( f"Error in mesh checks: {e}" )
-            self.logger.error( f"The filter {self.logger.name} failed" )
-            return False
-
-    def _buildOptions( self: Self ) -> Options:
-        """Build Options object using the same logic as the parsing system.
-
-        Returns:
-            Options: Properly configured options for all checks
-        """
-        # Start with default parameters for all configured checks
-        default_params: dict[ str, dict[ str, Any ] ] = {
-            name: feature.default_params.copy()
-            for name, feature in self.check_features_config.items()
-        }
-        final_check_params: dict[ str, dict[ str, Any ] ] = {
-            name: default_params[ name ]
-            for name in self.checks_to_perform
-        }
-
-        # Apply any custom parameter overrides
-        for check_name in self.checks_to_perform:
-            if check_name in self.check_parameters:
-                final_check_params[ check_name ].update( self.check_parameters[ check_name ] )
-
-        # Instantiate Options objects for the selected checks
-        individual_check_options: dict[ str, Any ] = {}
-        individual_check_display: dict[ str, Any ] = {}
-
-        for check_name in self.checks_to_perform:
-            if check_name not in self.check_features_config:
-                self.logger.warning( f"Check '{check_name}' is not available. Skipping." )
-                continue
-
-            params = final_check_params[ check_name ]
-            feature_config = self.check_features_config[ check_name ]
-            try:
-                individual_check_options[ check_name ] = feature_config.options_cls( **params )
-                individual_check_display[ check_name ] = feature_config.display
-            except Exception as e:
-                self.logger.error( f"Failed to create options for check '{check_name}': {e}. "
-                                   f"This check will be skipped." )
-
-        return Options( checks_to_perform=list( individual_check_options.keys() ),
-                        checks_options=individual_check_options,
-                        check_displays=individual_check_display )
+        self.logger.info( f"Performed {len(self.checkResults)} checks" )
+        self.logger.info( f"The filter {self.logger.name} succeeded" )
+        return True
 
     def getAvailableChecks( self: Self ) -> list[ str ]:
         """Get the list of available check names.
@@ -187,161 +129,200 @@ class MeshDoctorChecks( MeshDoctorFilterBase ):
         Returns:
             list[str]: List of available check names
         """
-        return self.ordered_check_names
+        return self.orderedCheckNames
 
     def getCheckResults( self: Self ) -> dict[ str, Any ]:
         """Get the results of all performed checks.
 
         Returns:
-            dict[str, Any]: Dictionary mapping check names to their results
+            dict[str, Any]: Dictionary mapping check names to their results.
         """
-        return self.check_results
+        return self.checkResults
 
-    def getDefaultParameters( self: Self, check_name: str ) -> dict[ str, Any ]:
+    def getDefaultParameters( self: Self, checkName: str ) -> dict[ str, Any ]:
         """Get the default parameters for a specific check.
 
         Args:
-            check_name (str): Name of the check
+            checkName (str): Name of the check.
 
         Returns:
-            dict[str, Any]: Dictionary of default parameters
+            dict[str, Any]: Dictionary of default parameters.
         """
-        if check_name in self.check_features_config:
-            return self.check_features_config[ check_name ].default_params
+        if checkName in self.checkFeaturesConfig:
+            return self.checkFeaturesConfig[ checkName ].default_params
         return {}
 
-
-class AllChecks( MeshDoctorChecks ):
-
-    def __init__(
-        self: Self,
-        mesh: vtkUnstructuredGrid,
-        use_external_logger: bool = False,
-    ) -> None:
-        """Initialize the all checks filter.
+    def setAllChecksParameter( self: Self, parameterName: str, value: Any ) -> None:
+        """Set a parameter for all checks that support it.
 
         Args:
-            mesh (vtkUnstructuredGrid): The input mesh to check
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            parameterName (str): Name of the parameter (e.g., "tolerance")
+            value (Any): Value to set for the parameter
         """
-        super().__init__( mesh,
-                          checks_to_perform=ocn_all_checks,
-                          check_features_config=cfc_all_checks,
-                          ordered_check_names=ocn_all_checks,
-                          use_external_logger=use_external_logger )
+        for checkName in self.checksToPerform:
+            if checkName in self.checkFeaturesConfig:
+                defaultParams = self.checkFeaturesConfig[ checkName ].default_params
+                if parameterName in defaultParams:
+                    self.setCheckParameter( checkName, parameterName, value )
+
+    def setCheckParameter( self: Self, checkName: str, parameterName: str, value: Any ) -> None:
+        """Set a parameter for a specific check.
+
+        Args:
+            checkName (str): Name of the check (e.g., "collocated_nodes")
+            parameterName (str): Name of the parameter (e.g., "tolerance")
+            value (Any): Value to set for the parameter
+        """
+        if checkName not in self.checkParameters:
+            self.checkParameters[ checkName ] = {}
+        self.checkParameters[ checkName ][ parameterName ] = value
+
+    def setChecksToPerform( self: Self, checksToPerform: list[ str ] ) -> None:
+        """Set which checks to perform.
+
+        Args:
+            checksToPerform (list[str]): List of check names to perform
+        """
+        self.checksToPerform = checksToPerform
+
+    def _buildOptions( self: Self ) -> Options:
+        """Build Options object using the same logic as the parsing system.
+
+        Returns:
+            Options: Properly configured options for all checks.
+        """
+        # Start with default parameters for all configured checks
+        defaultParams: dict[ str, dict[ str, Any ] ] = {
+            name: feature.default_params.copy()
+            for name, feature in self.checkFeaturesConfig.items()
+        }
+        finalCheckParams: dict[ str, dict[ str, Any ] ] = {
+            name: defaultParams[ name ]
+            for name in self.checksToPerform
+        }
+
+        # Apply any custom parameter overrides
+        for checkName in self.checksToPerform:
+            if checkName in self.checkParameters:
+                finalCheckParams[ checkName ].update( self.checkParameters[ checkName ] )
+
+        # Instantiate Options objects for the selected checks
+        individualCheckOptions: dict[ str, Any ] = {}
+        individualCheckDisplay: dict[ str, Any ] = {}
+
+        for checkName in self.checksToPerform:
+            if checkName not in self.checkFeaturesConfig:
+                self.logger.warning( f"Check '{checkName}' is not available. Skipping." )
+                continue
+
+            params = finalCheckParams[ checkName ]
+            featureConfig = self.checkFeaturesConfig[ checkName ]
+            try:
+                individualCheckOptions[ checkName ] = featureConfig.options_cls( **params )
+                individualCheckDisplay[ checkName ] = featureConfig.display
+            except Exception as e:
+                self.logger.error( f"Failed to create options for check '{checkName}': {e}. "
+                                   f"This check will be skipped." )
+
+        return Options( checksToPerform=list( individualCheckOptions.keys() ),
+                        checks_options=individualCheckOptions,
+                        check_displays=individualCheckDisplay )
 
 
-class MainChecks( MeshDoctorChecks ):
+class AllChecks( Checks ):
 
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
-        use_external_logger: bool = False,
+        useExternalLogger: bool = False,
+    ) -> None:
+        """Initialize the all_checks filter.
+
+        Args:
+            mesh (vtkUnstructuredGrid): The input mesh to check.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
+        """
+        super().__init__( mesh,
+                          checksToPerform=ocn_all_checks,
+                          checkFeaturesConfig=cfc_all_checks,
+                          orderedCheckNames=ocn_all_checks,
+                          useExternalLogger=useExternalLogger )
+
+
+class MainChecks( Checks ):
+
+    def __init__(
+        self: Self,
+        mesh: vtkUnstructuredGrid,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the main checks filter.
 
         Args:
-            mesh (vtkUnstructuredGrid): The input mesh to check
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            mesh (vtkUnstructuredGrid): The input mesh to check.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
         super().__init__( mesh,
-                          checks_to_perform=ocn_main_checks,
-                          check_features_config=cfc_main_checks,
-                          ordered_check_names=ocn_main_checks,
-                          use_external_logger=use_external_logger )
+                          checksToPerform=ocnMainChecks,
+                          checkFeaturesConfig=cfcMainChecks,
+                          orderedCheckNames=ocnMainChecks,
+                          useExternalLogger=useExternalLogger )
 
 
 # Main functions for backward compatibility and standalone use
-def all_checks(
+def allChecks(
     mesh: vtkUnstructuredGrid,
-    custom_parameters: dict[ str, dict[ str, Any ] ] = None,
-    write_output: bool = False,
-    output_path: str = "output/mesh_all_checks.vtu",
+    customParameters: dict[ str, dict[ str, Any ] ] = None
 ) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
     """Apply all available mesh checks to a mesh.
 
     Args:
-        mesh (vtkUnstructuredGrid): The input mesh
-        custom_parameters (dict[str, dict[str, Any]]): Custom parameters for checks. Defaults to None.
-        write_output (bool): Whether to write output mesh to file. Defaults to False.
-        output_path (str): Output file path if write_output is True.
+        mesh (vtkUnstructuredGrid): The input mesh to check.
+        customParameters (dict[str, dict[str, Any]]): Custom parameters for checks. Defaults to None.
 
     Returns:
         tuple[vtkUnstructuredGrid, dict[str, Any]]:
             Processed mesh, check results
     """
-    filter_instance = AllChecks( mesh )
+    filterInstance = AllChecks( mesh )
 
-    if custom_parameters:
-        for check_name, params in custom_parameters.items():
+    if customParameters:
+        for checkName, params in customParameters.items():
             for param_name, value in params.items():
-                filter_instance.setCheckParameter( check_name, param_name, value )
+                filterInstance.setCheckParameter( checkName, param_name, value )
 
-    success = filter_instance.applyFilter()
-
-    if not success:
-        raise RuntimeError( "All checks execution failed" )
-
-    if write_output:
-        filter_instance.writeGrid( output_path )
+    filterInstance.applyFilter()
 
     return (
-        filter_instance.getMesh(),
-        filter_instance.getCheckResults(),
+        filterInstance.getMesh(),
+        filterInstance.getCheckResults(),
     )
 
 
-def main_checks(
+def mainChecks(
     mesh: vtkUnstructuredGrid,
-    custom_parameters: dict[ str, dict[ str, Any ] ] = None,
-    write_output: bool = False,
-    output_path: str = "output/mesh_main_checks.vtu",
+    customParameters: dict[ str, dict[ str, Any ] ] = None
 ) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
     """Apply main mesh checks to a mesh.
 
     Args:
-        mesh (vtkUnstructuredGrid): The input mesh
-        custom_parameters (dict[str, dict[str, Any]]): Custom parameters for checks. Defaults to None.
-        write_output (bool): Whether to write output mesh to file. Defaults to False.
-        output_path (str): Output file path if write_output is True.
+        mesh (vtkUnstructuredGrid): The input mesh to check.
+        customParameters (dict[str, dict[str, Any]]): Custom parameters for checks. Defaults to None.
 
     Returns:
         tuple[vtkUnstructuredGrid, dict[str, Any]]:
             Processed mesh, check results
     """
-    filter_instance = MainChecks( mesh )
+    filterInstance = MainChecks( mesh )
 
-    if custom_parameters:
-        for check_name, params in custom_parameters.items():
+    if customParameters:
+        for checkName, params in customParameters.items():
             for param_name, value in params.items():
-                filter_instance.setCheckParameter( check_name, param_name, value )
+                filterInstance.setCheckParameter( checkName, param_name, value )
 
-    success = filter_instance.applyFilter()
-
-    if not success:
-        raise RuntimeError( "Main checks execution failed" )
-
-    if write_output:
-        filter_instance.writeGrid( output_path )
+    filterInstance.applyFilter()
 
     return (
-        filter_instance.getMesh(),
-        filter_instance.getCheckResults(),
+        filterInstance.getMesh(),
+        filterInstance.getCheckResults(),
     )
-
-
-# Aliases for backward compatibility
-def processAllChecks(
-    mesh: vtkUnstructuredGrid,
-    custom_parameters: dict[ str, dict[ str, Any ] ] = None,
-) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
-    """Legacy function name for backward compatibility."""
-    return all_checks( mesh, custom_parameters )
-
-
-def processMainChecks(
-    mesh: vtkUnstructuredGrid,
-    custom_parameters: dict[ str, dict[ str, Any ] ] = None,
-) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
-    """Legacy function name for backward compatibility."""
-    return main_checks( mesh, custom_parameters )

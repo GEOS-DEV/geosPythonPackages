@@ -5,33 +5,50 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.actions.collocated_nodes import find_collocated_nodes_buckets, find_wrong_support_elements
 from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorFilterBase
+from geos.mesh.doctor.parsing.collocated_nodes_parsing import logger_results
 
 __doc__ = """
 CollocatedNodes module identifies and handles duplicated/collocated nodes in a vtkUnstructuredGrid.
 The filter can detect nodes that are within a specified tolerance distance and optionally identify elements
 that have support nodes appearing more than once (wrong support elements).
 
-To use the filter:
+To use the filter
+-----------------
 
 .. code-block:: python
 
     from geos.mesh.doctor.filters.CollocatedNodes import CollocatedNodes
 
     # instantiate the filter
-    collocatedNodesFilter = CollocatedNodes(mesh, tolerance=1e-6, paint_wrong_support_elements=True)
+    collocatedNodesFilter = CollocatedNodes(mesh, tolerance=1e-6, writeWrongSupportElements=True)
 
     # execute the filter
     success = collocatedNodesFilter.applyFilter()
 
     # get results
-    collocated_buckets = collocatedNodesFilter.getCollocatedNodeBuckets()
-    wrong_support_elements = collocatedNodesFilter.getWrongSupportElements()
+    collocatedBuckets = collocatedNodesFilter.getCollocatedNodeBuckets()
+    wrongSupportElements = collocatedNodesFilter.getWrongSupportElements()
 
     # get the processed mesh
-    output_mesh = collocatedNodesFilter.getMesh()
+    outputMesh = collocatedNodesFilter.getMesh()
 
     # write the output mesh
     collocatedNodesFilter.writeGrid("output/mesh_with_collocated_info.vtu")
+
+For standalone use without creating a filter instance
+-----------------------------------------------------
+
+.. code-block:: python
+
+    from geos.mesh.doctor.filters.CollocatedNodes import collocatedNodes
+
+    # apply filter directly
+    outputMesh, collocatedBuckets, wrongSupportElements = collocatedNodes(
+        mesh,
+        outputPath="output/mesh_with_collocated_info.vtu",
+        tolerance=1e-6,
+        writeWrongSupportElements=True
+    )
 """
 
 loggerTitle: str = "Collocated Nodes Filter"
@@ -43,40 +60,22 @@ class CollocatedNodes( MeshDoctorFilterBase ):
         self: Self,
         mesh: vtkUnstructuredGrid,
         tolerance: float = 0.0,
-        paint_wrong_support_elements: bool = False,
-        use_external_logger: bool = False,
+        writeWrongSupportElements: bool = False,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the collocated nodes filter.
 
         Args:
-            mesh (vtkUnstructuredGrid): The input mesh to analyze
+            mesh (vtkUnstructuredGrid): The input mesh to analyze.
             tolerance (float): Distance tolerance for detecting collocated nodes. Defaults to 0.0.
-            paint_wrong_support_elements (bool): Whether to mark wrong support elements in output. Defaults to False.
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            writeWrongSupportElements (bool): Whether to mark wrong support elements in output. Defaults to False.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
-        super().__init__( mesh, loggerTitle, use_external_logger )
+        super().__init__( mesh, loggerTitle, useExternalLogger )
         self.tolerance: float = tolerance
-        self.paint_wrong_support_elements: bool = paint_wrong_support_elements
-
-        # Results storage
-        self.collocated_node_buckets: list[ tuple[ int ] ] = []
-        self.wrong_support_elements: list[ int ] = []
-
-    def setTolerance( self: Self, tolerance: float ) -> None:
-        """Set the tolerance parameter to define if two points are collocated or not.
-
-        Args:
-            tolerance (float): Distance tolerance
-        """
-        self.tolerance = tolerance
-
-    def setPaintWrongSupportElements( self: Self, paint: bool ) -> None:
-        """Set whether to create arrays marking wrong support elements in output data.
-
-        Args:
-            paint (bool): True to enable marking, False to disable
-        """
-        self.paint_wrong_support_elements = paint
+        self.writeWrongSupportElements: bool = writeWrongSupportElements
+        self.collocatedNodeBuckets: list[ tuple[ int ] ] = []
+        self.wrongSupportElements: list[ int ] = []
 
     def applyFilter( self: Self ) -> bool:
         """Apply the collocated nodes analysis.
@@ -86,99 +85,88 @@ class CollocatedNodes( MeshDoctorFilterBase ):
         """
         self.logger.info( f"Apply filter {self.logger.name}" )
 
-        try:
-            # Find collocated nodes
-            self.collocated_node_buckets = find_collocated_nodes_buckets( self.mesh, self.tolerance )
-            self.logger.info( f"Found {len(self.collocated_node_buckets)} groups of collocated nodes" )
+        self.collocatedNodeBuckets: list[ tuple[ int ] ] = find_collocated_nodes_buckets( self.mesh, self.tolerance )
+        self.wrongSupportElements: list[ int ] = find_wrong_support_elements( self.mesh )
 
-            # Find wrong support elements
-            self.wrong_support_elements = find_wrong_support_elements( self.mesh )
-            self.logger.info( f"Found {len(self.wrong_support_elements)} elements with wrong support" )
+        # Add marking arrays if requested
+        if self.writeWrongSupportElements and self.wrongSupportElements:
+            self._addWrongSupportElementsArray()
 
-            # Add marking arrays if requested
-            if self.paint_wrong_support_elements and self.wrong_support_elements:
-                self._addWrongSupportElementsArray()
+        logger_results( self.logger, self.collocatedNodeBuckets, self.wrongSupportElements )
 
-            self.logger.info( f"The filter {self.logger.name} succeeded" )
-            return True
-
-        except Exception as e:
-            self.logger.error( f"Error in collocated nodes analysis: {e}" )
-            self.logger.error( f"The filter {self.logger.name} failed" )
-            return False
-
-    def _addWrongSupportElementsArray( self: Self ) -> None:
-        """Add array marking wrong support elements."""
-        num_cells = self.mesh.GetNumberOfCells()
-        wrong_support_array = np.zeros( num_cells, dtype=np.int32 )
-
-        for element_id in self.wrong_support_elements:
-            if 0 <= element_id < num_cells:
-                wrong_support_array[ element_id ] = 1
-
-        vtk_array: vtkDataArray = numpy_to_vtk( wrong_support_array )
-        vtk_array.SetName( "WrongSupportElements" )
-        self.mesh.GetCellData().AddArray( vtk_array )
+        self.logger.info( f"The filter {self.logger.name} succeeded." )
+        return True
 
     def getCollocatedNodeBuckets( self: Self ) -> list[ tuple[ int ] ]:
         """Returns the nodes buckets that contain the duplicated node indices.
 
         Returns:
-            list[tuple[int]]: Groups of collocated node indices
+            list[tuple[int]]: Groups of collocated node indices.
         """
-        return self.collocated_node_buckets
+        return self.collocatedNodeBuckets
 
     def getWrongSupportElements( self: Self ) -> list[ int ]:
         """Returns the element indices with support node indices appearing more than once.
 
         Returns:
-            list[int]: Element indices with problematic support nodes
+            list[int]: Element indices with problematic support nodes.
         """
-        return self.wrong_support_elements
+        return self.wrongSupportElements
+
+    def setTolerance( self: Self, tolerance: float ) -> None:
+        """Set the tolerance parameter to define if two points are collocated or not.
+
+        Args:
+            tolerance (float): Distance tolerance.
+        """
+        self.tolerance = tolerance
+
+    def setWriteWrongSupportElements( self: Self, write: bool ) -> None:
+        """Set whether to create arrays marking wrong support elements in output data.
+
+        Args:
+            write (bool): True to enable marking, False to disable.
+        """
+        self.writeWrongSupportElements = write
+
+    def _addWrongSupportElementsArray( self: Self ) -> None:
+        """Add array marking wrong support elements."""
+        numCells: int = self.mesh.GetNumberOfCells()
+        wrongSupportArray = np.zeros( numCells, dtype=np.int32 )
+        wrongSupportArray[ self.wrongSupportElements ] = 1
+
+        vtkArray: vtkDataArray = numpy_to_vtk( wrongSupportArray )
+        vtkArray.SetName( "WrongSupportElements" )
+        self.mesh.GetCellData().AddArray( vtkArray )
 
 
-# Main function for backward compatibility and standalone use
-def collocated_nodes(
+# Main function for standalone use
+def collocatedNodes(
     mesh: vtkUnstructuredGrid,
+    outputPath: str,
     tolerance: float = 0.0,
-    paint_wrong_support_elements: bool = False,
-    write_output: bool = False,
-    output_path: str = "output/mesh_with_collocated_info.vtu",
+    writeWrongSupportElements: bool = False,
 ) -> tuple[ vtkUnstructuredGrid, list[ tuple[ int ] ], list[ int ] ]:
     """Apply collocated nodes analysis to a mesh.
 
     Args:
-        mesh (vtkUnstructuredGrid): The input mesh
+        mesh (vtkUnstructuredGrid): The input mesh to analyze.
+        outputPath (str): Output file path if writeOutput is True.
         tolerance (float): Distance tolerance for detecting collocated nodes. Defaults to 0.0.
-        paint_wrong_support_elements (bool): Whether to mark wrong support elements. Defaults to False.
-        write_output (bool): Whether to write output mesh to file. Defaults to False.
-        output_path (str): Output file path if write_output is True.
+        writeWrongSupportElements (bool): Whether to mark wrong support elements. Defaults to False.
+        writeOutput (bool): Whether to write output mesh to file. Defaults to False.
 
     Returns:
         tuple[vtkUnstructuredGrid, list[tuple[int]], list[int]]:
-            Processed mesh, collocated node buckets, wrong support elements
+            Processed mesh, collocated node buckets, wrong support elements.
     """
-    filter_instance = CollocatedNodes( mesh, tolerance, paint_wrong_support_elements )
-    success = filter_instance.applyFilter()
-
-    if not success:
-        raise RuntimeError( "Collocated nodes analysis failed" )
-
-    if write_output:
-        filter_instance.writeGrid( output_path )
+    filterInstance = CollocatedNodes( mesh, tolerance, writeWrongSupportElements )
+    filterInstance.applyFilter()
+    if writeWrongSupportElements:  # If we are painting wrong support elements, we need to write the output
+        filterInstance.writeGrid( outputPath )
 
     return (
-        filter_instance.getMesh(),
-        filter_instance.getCollocatedNodeBuckets(),
-        filter_instance.getWrongSupportElements(),
+        filterInstance.getMesh(),
+        filterInstance.getCollocatedNodeBuckets(),
+        filterInstance.getWrongSupportElements(),
     )
-
-
-# Alias for backward compatibility
-def processCollocatedNodes(
-    mesh: vtkUnstructuredGrid,
-    tolerance: float = 0.0,
-    paint_wrong_support_elements: bool = False,
-) -> tuple[ vtkUnstructuredGrid, list[ tuple[ int ] ], list[ int ] ]:
-    """Legacy function name for backward compatibility."""
-    return collocated_nodes( mesh, tolerance, paint_wrong_support_elements )

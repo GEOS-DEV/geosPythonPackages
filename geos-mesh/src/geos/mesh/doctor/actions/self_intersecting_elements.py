@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Collection
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersGeneral import vtkCellValidator
 from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
@@ -14,18 +13,13 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    wrong_number_of_points_elements: Collection[ int ]
-    intersecting_edges_elements: Collection[ int ]
-    intersecting_faces_elements: Collection[ int ]
-    non_contiguous_edges_elements: Collection[ int ]
-    non_convex_elements: Collection[ int ]
-    faces_oriented_incorrectly_elements: Collection[ int ]
+    invalid_cell_ids: dict[ str, list[ int ] ]
 
 
 def get_invalid_cell_ids( mesh: vtkUnstructuredGrid, min_distance: float ) -> dict[ str, list[ int ] ]:
-    """For every cell element in a vtk mesh, check if the cell is invalid regarding 6 specific criteria:
-    "wrong_number_of_points", "intersecting_edges", "intersecting_faces",
-    "non_contiguous_edges","non_convex" and "faces_oriented_incorrectly".
+    """For every cell element in a vtk mesh, check if the cell is invalid regarding 8 specific criteria:
+    "wrong_number_of_points", "intersecting_edges", "intersecting_faces", "non_contiguous_edges","non_convex",
+    "faces_oriented_incorrectly", "non_planar_faces_elements" and "degenerate_faces_elements".
 
     If any of this criteria was met, the cell index is added to a list corresponding to this specific criteria.
     The dict with the complete list of cell indices by criteria is returned.
@@ -42,7 +36,9 @@ def get_invalid_cell_ids( mesh: vtkUnstructuredGrid, min_distance: float ) -> di
             "intersecting_faces": [ ... ],
             "non_contiguous_edges": [ ... ],
             "non_convex": [ ... ],
-            "faces_oriented_incorrectly": [ ... ]
+            "faces_oriented_incorrectly": [ ... ],
+            "non_planar_faces_elements": [ ... ],
+            "degenerate_faces_elements": [ ... ]
         }
     """
     # The goal of this first block is to silence the standard error output from VTK. The vtkCellValidator can be very
@@ -53,14 +49,16 @@ def get_invalid_cell_ids( mesh: vtkUnstructuredGrid, min_distance: float ) -> di
     vtk_std_err_out.SetInstance( err_out )
 
     # Different types of cell invalidity are defined as hexadecimal values, specific to vtkCellValidator
-    # Here NonPlanarFaces and DegenerateFaces can also be obtained.
+    # Complete set of validity checks available in vtkCellValidator
     error_masks: dict[ str, int ] = {
-        "wrong_number_of_points_elements": 0x01,  # 0000 0001
-        "intersecting_edges_elements": 0x02,  # 0000 0010
-        "intersecting_faces_elements": 0x04,  # 0000 0100
-        "non_contiguous_edges_elements": 0x08,  # 0000 1000
-        "non_convex_elements": 0x10,  # 0001 0000
-        "faces_oriented_incorrectly_elements": 0x20,  # 0010 0000
+        "wrongNumberOfPointsElements": 0x01,  # 0000 0001
+        "intersectingEdgesElements": 0x02,  # 0000 0010
+        "intersectingFacesElements": 0x04,  # 0000 0100
+        "nonContiguousEdgesElements": 0x08,  # 0000 1000
+        "nonConvexElements": 0x10,  # 0001 0000
+        "facesOrientedIncorrectlyElements": 0x20,  # 0010 0000
+        "nonPlanarFacesElements": 0x40,  # 0100 0000
+        "degenerateFacesElements": 0x80,  # 1000 0000
     }
 
     # The results can be stored in a dictionary where keys are the error names
@@ -90,12 +88,7 @@ def get_invalid_cell_ids( mesh: vtkUnstructuredGrid, min_distance: float ) -> di
 
 def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     invalid_cell_ids: dict[ str, list[ int ] ] = get_invalid_cell_ids( mesh, options.min_distance )
-    return Result( wrong_number_of_points_elements=invalid_cell_ids[ "wrong_number_of_points_elements" ],
-                   intersecting_edges_elements=invalid_cell_ids[ "intersecting_edges_elements" ],
-                   intersecting_faces_elements=invalid_cell_ids[ "intersecting_faces_elements" ],
-                   non_contiguous_edges_elements=invalid_cell_ids[ "non_contiguous_edges_elements" ],
-                   non_convex_elements=invalid_cell_ids[ "non_convex_elements" ],
-                   faces_oriented_incorrectly_elements=invalid_cell_ids[ "faces_oriented_incorrectly_elements" ] )
+    return Result( invalid_cell_ids )
 
 
 def action( vtk_input_file: str, options: Options ) -> Result:

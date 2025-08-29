@@ -19,7 +19,8 @@ These base classes provide common functionality including:
 Unlike the VTK pipeline-based MeshDoctorBase, these classes work with direct mesh manipulation
 following the FillPartialArrays pattern for simpler, more Pythonic usage.
 
-Example usage patterns:
+Example usage patterns
+----------------------
 
 .. code-block:: python
 
@@ -63,26 +64,26 @@ class MeshDoctorFilterBase:
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
-        filter_name: str,
-        use_external_logger: bool = False,
+        filterName: str,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the base mesh doctor filter.
 
         Args:
             mesh (vtkUnstructuredGrid): The input mesh to process
-            filter_name (str): Name of the filter for logging
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            filterName (str): Name of the filter for logging
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
         self.mesh: vtkUnstructuredGrid = mesh
-        self.filter_name: str = filter_name
+        self.filterName: str = filterName
 
         # Logger setup
         self.logger: Logger
-        if not use_external_logger:
-            self.logger = getLogger( filter_name, True )
+        if not useExternalLogger:
+            self.logger = getLogger( filterName, True )
         else:
             import logging
-            self.logger = logging.getLogger( filter_name )
+            self.logger = logging.getLogger( filterName )
             self.logger.setLevel( logging.INFO )
 
     def setLoggerHandler( self: Self, handler ) -> None:
@@ -94,7 +95,7 @@ class MeshDoctorFilterBase:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has a handler, to use yours set 'use_external_logger' "
+            self.logger.warning( "The logger already has a handler, to use yours set 'useExternalLogger' "
                                  "to True during initialization." )
 
     def getMesh( self: Self ) -> vtkUnstructuredGrid:
@@ -105,33 +106,33 @@ class MeshDoctorFilterBase:
         """
         return self.mesh
 
-    def writeGrid( self: Self, filepath: str, is_data_mode_binary: bool = True, canOverwrite: bool = False ) -> None:
+    def writeGrid( self: Self, filepath: str, isDataModeBinary: bool = True, canOverwrite: bool = False ) -> None:
         """Writes a .vtu file of the vtkUnstructuredGrid at the specified filepath.
 
         Args:
             filepath (str): /path/to/your/file.vtu
-            is_data_mode_binary (bool, optional): Writes the file in binary format or ascii. Defaults to True.
+            isDataModeBinary (bool, optional): Writes the file in binary format or ascii. Defaults to True.
             canOverwrite (bool, optional): Allows or not to overwrite if the filepath already leads to an existing file.
                                            Defaults to False.
         """
         if self.mesh:
-            vtk_output = VtkOutput( filepath, is_data_mode_binary )
+            vtk_output = VtkOutput( filepath, isDataModeBinary )
             write_mesh( self.mesh, vtk_output, canOverwrite )
         else:
             self.logger.error( f"No mesh available. Cannot output vtkUnstructuredGrid at {filepath}." )
 
-    def copyMesh( self: Self, source_mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    def copyMesh( self: Self, sourceMesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
         """Helper method to create a copy of a mesh with structure and attributes.
 
         Args:
-            source_mesh (vtkUnstructuredGrid): Source mesh to copy from
+            sourceMesh (vtkUnstructuredGrid): Source mesh to copy from.
 
         Returns:
-            vtkUnstructuredGrid: New mesh with copied structure and attributes
+            vtkUnstructuredGrid: New mesh with copied structure and attributes.
         """
-        output_mesh: vtkUnstructuredGrid = source_mesh.NewInstance()
-        output_mesh.CopyStructure( source_mesh )
-        output_mesh.CopyAttributes( source_mesh )
+        output_mesh: vtkUnstructuredGrid = sourceMesh.NewInstance()
+        output_mesh.CopyStructure( sourceMesh )
+        output_mesh.CopyAttributes( sourceMesh )
         return output_mesh
 
     def applyFilter( self: Self ) -> bool:
@@ -142,7 +143,7 @@ class MeshDoctorFilterBase:
         Returns:
             bool: True if filter applied successfully, False otherwise.
         """
-        raise NotImplementedError( "Subclasses must implement applyFilter method" )
+        raise NotImplementedError( "Subclasses must implement applyFilter method." )
 
 
 class MeshDoctorGeneratorBase:
@@ -154,25 +155,25 @@ class MeshDoctorGeneratorBase:
 
     def __init__(
         self: Self,
-        filter_name: str,
-        use_external_logger: bool = False,
+        filterName: str,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the base mesh doctor generator filter.
 
         Args:
-            filter_name (str): Name of the filter for logging
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            filterName (str): Name of the filter for logging.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
         self.mesh: Union[ vtkUnstructuredGrid, None ] = None
-        self.filter_name: str = filter_name
+        self.filterName: str = filterName
 
         # Logger setup
         self.logger: Logger
-        if not use_external_logger:
-            self.logger = getLogger( filter_name, True )
+        if not useExternalLogger:
+            self.logger = getLogger( filterName, True )
         else:
             import logging
-            self.logger = logging.getLogger( filter_name )
+            self.logger = logging.getLogger( filterName )
             self.logger.setLevel( logging.INFO )
 
     def setLoggerHandler( self: Self, handler ) -> None:
@@ -184,28 +185,28 @@ class MeshDoctorGeneratorBase:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has a handler, to use yours set 'use_external_logger' "
+            self.logger.warning( "The logger already has a handler, to use yours set 'useExternalLogger' "
                                  "to True during initialization." )
 
     def getMesh( self: Self ) -> Union[ vtkUnstructuredGrid, None ]:
         """Get the generated mesh.
 
         Returns:
-            Union[vtkUnstructuredGrid, None]: The generated mesh, or None if not yet generated
+            Union[vtkUnstructuredGrid, None]: The generated mesh, or None if not yet generated.
         """
         return self.mesh
 
-    def writeGrid( self: Self, filepath: str, is_data_mode_binary: bool = True, canOverwrite: bool = False ) -> None:
+    def writeGrid( self: Self, filepath: str, isDataModeBinary: bool = True, canOverwrite: bool = False ) -> None:
         """Writes a .vtu file of the vtkUnstructuredGrid at the specified filepath.
 
         Args:
             filepath (str): /path/to/your/file.vtu
-            is_data_mode_binary (bool, optional): Writes the file in binary format or ascii. Defaults to True.
+            isDataModeBinary (bool, optional): Writes the file in binary format or ascii. Defaults to True.
             canOverwrite (bool, optional): Allows or not to overwrite if the filepath already leads to an existing file.
                                            Defaults to False.
         """
         if self.mesh:
-            vtk_output = VtkOutput( filepath, is_data_mode_binary )
+            vtk_output = VtkOutput( filepath, isDataModeBinary )
             write_mesh( self.mesh, vtk_output, canOverwrite )
         else:
             self.logger.error( f"No mesh generated. Cannot output vtkUnstructuredGrid at {filepath}." )
@@ -219,4 +220,4 @@ class MeshDoctorGeneratorBase:
         Returns:
             bool: True if mesh generated successfully, False otherwise.
         """
-        raise NotImplementedError( "Subclasses must implement applyFilter method" )
+        raise NotImplementedError( "Subclasses must implement applyFilter method." )

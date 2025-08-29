@@ -47,9 +47,24 @@ def fill_subparser( subparsers ) -> None:
 
 def display_results( options: Options, result: Result ):
     setup_logger.results( get_options_used_message( options ) )
-    non_conformal_cells: list[ int ] = []
-    for i, j in result.non_conformal_cells:
-        non_conformal_cells += i, j
-    non_conformal_cells: frozenset[ int ] = frozenset( non_conformal_cells )
-    setup_logger.results( f"You have {len( non_conformal_cells )} non conformal cells." )
-    setup_logger.results( f"{', '.join( map( str, sorted( non_conformal_cells ) ) )}" )
+    logger_results( setup_logger, result.non_conformal_cells )
+
+
+def logger_results( logger, non_conformal_cells: list[ tuple[ int, int ] ] ) -> None:
+    """Log the results of the non-conformal cells check.
+
+    Args:
+        logger: Logger instance for output.
+        non_conformal_cells (list[ tuple[ int, int ] ]): List of non-conformal cells.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    log_method = logger.info
+    if hasattr(logger, 'results'):
+        log_method = logger.results
+
+    unique_cells: list[ int ] = []
+    for i, j in non_conformal_cells:
+        unique_cells += i, j
+    unique_cells: frozenset[ int ] = frozenset( unique_cells )
+    log_method( f"You have {len( unique_cells )} non conformal cells." )
+    log_method( f"{', '.join( map( str, sorted( unique_cells ) ) )}" )

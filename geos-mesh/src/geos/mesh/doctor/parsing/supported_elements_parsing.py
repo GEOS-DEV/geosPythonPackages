@@ -19,7 +19,7 @@ def convert( parsed_options ) -> Options:
 
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( SUPPORTED_ELEMENTS,
-                               help="Check that all the elements of the mesh are supported by GEOSX." )
+                               help="Check that all the elements of the mesh are supported by GEOS." )
     p.add_argument( '--' + __CHUNK_SIZE,
                     type=int,
                     required=False,
@@ -38,17 +38,33 @@ def fill_subparser( subparsers ) -> None:
 
 def display_results( options: Options, result: Result ):
     setup_logger.results( get_options_used_message( options ) )
-    if result.unsupported_polyhedron_elements:
-        setup_logger.results(
-            f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
-        )
-        setup_logger.results(
-            f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}." )
+    logger_results( setup_logger, result.unsupported_polyhedron_elements, result.unsupported_std_elements_types )
+
+
+def logger_results( logger,
+                    unsupported_polyhedron_elements: frozenset[ int ],
+                    unsupported_std_elements_types: list[ str ] ) -> None:
+    """Log the results of the supported elements check.
+
+    Args:
+        logger: Logger instance for output.
+        unsupported_polyhedron_elements (frozenset[ int ]): List of unsupported polyhedron elements.
+        unsupported_std_elements_types (list[ str ]): List of unsupported standard element types.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    log_method = logger.info
+    if hasattr(logger, 'results'):
+        log_method = logger.results
+
+    if unsupported_polyhedron_elements:
+        log_method( f"There is/are {len(unsupported_polyhedron_elements)} polyhedra that may not be converted to"
+                    " supported elements." )
+        log_method( "The list of the unsupported polyhedra is\n"
+                    f"{tuple(sorted(unsupported_polyhedron_elements))}." )
     else:
-        setup_logger.results( "All the polyhedra (if any) can be converted to supported elements." )
-    if result.unsupported_std_elements_types:
-        setup_logger.results(
-            f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}."
-        )
+        log_method( "All the polyhedra (if any) can be converted to supported elements." )
+    if unsupported_std_elements_types:
+        log_method( "There are unsupported vtk standard element types. The list of those vtk types is"
+                    f" {tuple(sorted(unsupported_std_elements_types))}.")
     else:
-        setup_logger.results( "All the standard vtk element types (if any) are supported." )
+        log_method( "All the standard vtk element types (if any) are supported." )

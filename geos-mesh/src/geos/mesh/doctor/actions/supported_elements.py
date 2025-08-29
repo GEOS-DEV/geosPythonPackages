@@ -7,8 +7,8 @@ from typing import Iterable, Mapping, Optional
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
-                                            VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
-                                            VTK_WEDGE )
+                                            VTK_LINE, VTK_PENTAGONAL_PRISM, VTK_POLYGON, VTK_POLYHEDRON, VTK_PYRAMID,
+                                            VTK_QUAD, VTK_TETRA, VTK_TRIANGLE, VTK_VERTEX, VTK_VOXEL, VTK_WEDGE )
 from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 from geos.mesh.doctor.parsing.cli_parsing import setup_logger
 from geos.mesh.io.vtkIO import read_unstructured_grid
@@ -40,8 +40,8 @@ def init_worker( mesh_to_init: vtkUnstructuredGrid ) -> None:
 
 
 supported_cell_types: set[ int ] = {
-    VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
-    VTK_WEDGE
+    VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_LINE, VTK_PENTAGONAL_PRISM, VTK_POLYGON, VTK_POLYHEDRON, VTK_PYRAMID,
+    VTK_QUAD, VTK_TETRA, VTK_TRIANGLE, VTK_VERTEX, VTK_VOXEL, VTK_WEDGE
 }
 
 
@@ -50,11 +50,14 @@ class IsPolyhedronConvertible:
     def __init__( self ):
 
         def build_prism_graph( n: int, name: str ) -> networkx.Graph:
-            """
-            Builds the face to face connectivities (through edges) for prism graphs.
-            :param n: The number of nodes of the basis (i.e. the pentagonal prims gets n = 5)
-            :param name: A human-readable name for logging purpose.
-            :return: A graph instance.
+            """Builds the face to face connectivities (through edges) for prism graphs.
+
+            Args:
+                n (int): The number of nodes of the base (e.g., pentagonal prism gets n = 5).
+                name (str): A human-readable name for logging purposes.
+
+            Returns:
+                networkx.Graph: A graph instance representing the prism.
             """
             tmp = networkx.cycle_graph( n )
             for node in range( n ):
@@ -82,11 +85,13 @@ class IsPolyhedronConvertible:
         }
 
     def __is_polyhedron_supported( self, face_stream ) -> str:
-        """
-        Checks if a polyhedron can be converted into a supported cell.
-        If so, returns the name of the type. If not, the returned name will be empty.
-        :param face_stream: The polyhedron.
-        :return: The name of the supported type or an empty string.
+        """Checks if a polyhedron can be converted into a supported cell.
+
+        Args:
+            face_stream: The polyhedron.
+
+        Returns:
+            str: The name of the supported type or an empty string.
         """
         cell_graph = build_face_to_face_connectivity_through_edges( face_stream, add_compatibility=True )
         for reference_graph in self.__reference_graphs[ cell_graph.order() ]:
@@ -95,10 +100,13 @@ class IsPolyhedronConvertible:
         return ""
 
     def __call__( self, ic: int ) -> int:
-        """
-        Checks if a vtk polyhedron cell can be converted into a supported GEOSX element.
-        :param ic: The index element.
-        :return: -1 if the polyhedron vtk element can be converted into a supported element type. The index otherwise.
+        """Check if a vtk polyhedron cell can be converted into a supported GEOS element.
+
+        Args:
+            ic (int): The index of the element.
+
+        Returns:
+            int: -1 if the polyhedron vtk element can be converted into a supported element type, the index otherwise.
         """
         global MESH
         assert MESH is not None
@@ -117,6 +125,14 @@ class IsPolyhedronConvertible:
 
 
 def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> list[ str ]:
+    """Find unsupported standard element types in the mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh to analyze.
+
+    Returns:
+        list[ str ]: List of unsupported element type descriptions.
+    """
     if hasattr( mesh, "GetDistinctCellTypesArray" ):  # For more recent versions of vtk.
         unique_cell_types = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
     else:
@@ -129,6 +145,15 @@ def find_unsupported_std_elements_types( mesh: vtkUnstructuredGrid ) -> list[ st
 
 
 def find_unsupported_polyhedron_elements( mesh: vtkUnstructuredGrid, options: Options ) -> list[ int ]:
+    """Find unsupported polyhedron elements in the mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh to analyze.
+        options (Options): The options for processing.
+
+    Returns:
+        list[ int ]: List of element indices for unsupported polyhedrons.
+    """
     # Dealing with polyhedron elements.
     num_cells: int = mesh.GetNumberOfCells()
     result = ones( num_cells, dtype=int ) * -1

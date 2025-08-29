@@ -1,38 +1,55 @@
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
-from vtkmodules.util.numpy_support import vtk_to_numpy
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
+from geos.mesh.doctor.actions.element_volumes import get_mesh_quality, get_mesh_volume, SUPPORTED_TYPES
 from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorFilterBase
+from geos.mesh.doctor.parsing.element_volumes_parsing import logger_results
 
 __doc__ = """
 ElementVolumes module calculates the volumes of all elements in a vtkUnstructuredGrid.
-The filter can identify elements with negative or zero volumes, which typically indicate mesh quality issues
-such as inverted elements or degenerate cells.
+The filter can identify elements with volume inferior to a specified threshold (usually 0.0), which typically indicate
+mesh quality issues such as inverted elements or degenerate cells.
 
-To use the filter:
+To use the filter
+-----------------
 
 .. code-block:: python
 
     from geos.mesh.doctor.filters.ElementVolumes import ElementVolumes
 
     # instantiate the filter
-    elementVolumesFilter = ElementVolumes(mesh, return_negative_zero_volumes=True)
+    elementVolumesFilter = ElementVolumes(mesh, minVolume=0.0, writeIsBelowVolume=True)
 
     # execute the filter
     success = elementVolumesFilter.applyFilter()
 
-    # get problematic elements (if enabled)
-    negative_zero_volumes = elementVolumesFilter.getNegativeZeroVolumes()
-    # returns numpy array with shape (n, 2) where first column is element index, second is volume
+    # get problematic elements
+    invalidVolumes = elementVolumesFilter.getInvalidVolumes()
+    # returns the list of tuples (element index, volume)
 
     # get the processed mesh with volume information
-    output_mesh = elementVolumesFilter.getMesh()
+    outputMesh = elementVolumesFilter.getMesh()
 
     # write the output mesh with volume information
     elementVolumesFilter.writeGrid("output/mesh_with_volumes.vtu")
+
+For standalone use without creating a filter instance
+-----------------------------------------------------
+
+.. code-block:: python
+
+    from geos.mesh.doctor.filters.ElementVolumes import elementVolumes
+
+    # apply filter directly
+    outputMesh, volumes, belowVolumes = elementVolumes(
+        mesh,
+        outputPath="output/mesh_with_volumes.vtu",
+        minVolume=0.0,
+        writeIsBelowVolume=True
+    )
 """
 
 loggerTitle: str = "Element Volumes Filter"
@@ -43,27 +60,24 @@ class ElementVolumes( MeshDoctorFilterBase ):
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
-        return_negative_zero_volumes: bool = False,
-        use_external_logger: bool = False,
+        minVolume: float = 0.0,
+        writeIsBelowVolume: bool = False,
+        useExternalLogger: bool = False,
     ) -> None:
         """Initialize the element volumes filter.
 
         Args:
-            mesh (vtkUnstructuredGrid): The input mesh to analyze
-            return_negative_zero_volumes (bool): Whether to report negative/zero volume elements. Defaults to False.
-            use_external_logger (bool): Whether to use external logger. Defaults to False.
+            mesh (vtkUnstructuredGrid): The input mesh to analyze.
+            minVolume (float): Minimum volume threshold for elements. Defaults to 0.0.
+            writeIsBelowVolume (bool): Whether to add new CellData array with values 0 or 1 if below the minimum volume.
+                                       Defaults to False.
+            useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
-        super().__init__( mesh, loggerTitle, use_external_logger )
-        self.return_negative_zero_volumes: bool = return_negative_zero_volumes
+        super().__init__( mesh, loggerTitle, useExternalLogger )
+        self.minVolume: float = minVolume
         self.volumes: vtkDataArray = None
-
-    def setReturnNegativeZeroVolumes( self: Self, return_negative_zero_volumes: bool ) -> None:
-        """Set whether to report negative and zero volume elements.
-
-        Args:
-            return_negative_zero_volumes (bool): True to enable reporting, False to disable
-        """
-        self.return_negative_zero_volumes = return_negative_zero_volumes
+        self.belowVolumes: list[ tuple[ int, float ] ] = []
+        self.writeIsBelowVolume: bool = writeIsBelowVolume
 
     def applyFilter( self: Self ) -> bool:
         """Apply the element volumes calculation.
@@ -73,102 +87,100 @@ class ElementVolumes( MeshDoctorFilterBase ):
         """
         self.logger.info( f"Apply filter {self.logger.name}" )
 
-        try:
-            # Use VTK's cell size filter to compute volumes
-            cellSize = vtkCellSizeFilter()
-            cellSize.ComputeAreaOff()
-            cellSize.ComputeLengthOff()
-            cellSize.ComputeSumOff()
-            cellSize.ComputeVertexCountOff()
-            cellSize.ComputeVolumeOn()
-
-            volume_array_name: str = "MESH_DOCTOR_VOLUME"
-            cellSize.SetVolumeArrayName( volume_array_name )
-            cellSize.SetInputData( self.mesh )
-            cellSize.Update()
-
-            # Get the computed volumes
-            self.volumes = cellSize.GetOutput().GetCellData().GetArray( volume_array_name )
-
-            # Add the volume array to our mesh
-            self.mesh.GetCellData().AddArray( self.volumes )
-
-            if self.return_negative_zero_volumes:
-                negative_zero_volumes = self.getNegativeZeroVolumes()
-                self.logger.info( f"Found {len(negative_zero_volumes)} elements with zero or negative volume" )
-                if len( negative_zero_volumes ) > 0:
-                    self.logger.info( "Element indices and volumes with zero or negative values:" )
-                    for idx, vol in negative_zero_volumes:
-                        self.logger.info( f"  Element {idx}: volume = {vol}" )
-
-            self.logger.info( f"The filter {self.logger.name} succeeded" )
-            return True
-
-        except Exception as e:
-            self.logger.error( f"Error in element volumes calculation: {e}" )
-            self.logger.error( f"The filter {self.logger.name} failed" )
+        volume: vtkDataArray = get_mesh_volume( self.mesh )
+        if not volume:
+            self.logger.error( "Volume computation failed." )
             return False
 
-    def getNegativeZeroVolumes( self: Self ) -> npt.NDArray:
-        """Returns a numpy array of all the negative and zero volumes.
+        quality: vtkDataArray = get_mesh_quality( self.mesh )
+        if not quality:
+            self.logger.error( "Quality computation failed." )
+            return False
+
+        volume = vtk_to_numpy( volume )
+        quality = vtk_to_numpy( quality )
+        self.belowVolumes = []
+        for i, pack in enumerate( zip( volume, quality ) ):
+            v, q = pack
+            vol = q if self.mesh.GetCellType( i ) in SUPPORTED_TYPES else v
+            if vol < self.minVolume:
+                self.belowVolumes.append( ( i, float( vol ) ) )
+
+        logger_results( self.logger, self.belowVolumes )
+
+        if self.writeIsBelowVolume and self.belowVolumes:
+            self._addBelowVolumeArray()
+
+        self.logger.info( f"The filter {self.logger.name} succeeded." )
+        return True
+
+    def getBelowVolumes( self: Self ) -> list[ tuple[ int, float ] ]:
+        """Get the list of volumes below the minimum threshold.
 
         Returns:
-            npt.NDArray: Array with shape (n, 2) where first column is element index, second is volume
+            list[ tuple[ int, float ] ]: List of tuples containing element index and volume.
         """
-        if self.volumes is None:
-            return np.array( [] ).reshape( 0, 2 )
-
-        volumes_np: npt.NDArray = vtk_to_numpy( self.volumes )
-        indices = np.where( volumes_np <= 0 )[ 0 ]
-        return np.column_stack( ( indices, volumes_np[ indices ] ) )
+        return self.belowVolumes
 
     def getVolumes( self: Self ) -> vtkDataArray:
         """Get the computed volume array.
 
         Returns:
-            vtkDataArray: The volume data array, or None if not computed yet
+            vtkDataArray: The volume data array, or None if not computed yet.
         """
         return self.volumes
 
+    def setWriteIsBelowVolume( self: Self, write: bool ) -> None:
+        """Set whether to write elements below the volume threshold.
 
-# Main function for backward compatibility and standalone use
-def element_volumes(
+        Args:
+            write (bool): True to enable writing, False to disable.
+        """
+        self.writeIsBelowVolume = write
+
+    def _addBelowVolumeArray( self: Self ) -> None:
+        """Add an array marking elements below the minimum volume threshold on the mesh."""
+        self.logger.info( "Adding CellData array marking elements below the minimum volume threshold." )
+        numCells = self.mesh.GetNumberOfCells()
+        belowVolumeArray = np.zeros( numCells, dtype=np.int32 )
+        belowVolumeArray[ [ i for i, _ in self.belowVolumes ] ] = 1
+
+        vtkArray: vtkDataArray = numpy_to_vtk( belowVolumeArray )
+        vtkArray.SetName( "BelowVolumeThresholdOf" + str( self.minVolume ) )
+        self.mesh.GetCellData().AddArray( vtkArray )
+
+
+# Main function for standalone use
+def elementVolumes(
     mesh: vtkUnstructuredGrid,
-    return_negative_zero_volumes: bool = False,
-    write_output: bool = False,
-    output_path: str = "output/mesh_with_volumes.vtu",
-) -> tuple[ vtkUnstructuredGrid, npt.NDArray ]:
+    outputPath: str,
+    minVolume: float = 0.0,
+    writeIsBelowVolume: bool = False,
+) -> tuple[ vtkUnstructuredGrid, npt.NDArray, list[ tuple[ int, float ] ] ]:
     """Apply element volumes calculation to a mesh.
 
     Args:
-        mesh (vtkUnstructuredGrid): The input mesh
-        return_negative_zero_volumes (bool): Whether to report negative/zero volume elements. Defaults to False.
-        write_output (bool): Whether to write output mesh to file. Defaults to False.
-        output_path (str): Output file path if write_output is True.
+        mesh (vtkUnstructuredGrid): The input mesh to analyze.
+        minVolume (float): Minimum volume threshold for elements. Defaults to 0.0.
+        writeIsBelowVolume (bool): Whether to write elements below the volume threshold. Defaults to False.
+        writeOutput (bool): Whether to write output mesh to file. Defaults to False.
+        outputPath (str): Output file path if writeOutput is True.
 
     Returns:
-        tuple[vtkUnstructuredGrid, npt.NDArray]:
-            Processed mesh, array of negative/zero volume elements
+        tuple[vtkUnstructuredGrid, npt.NDArray, list[ tuple[ int, float ] ]]:
+            Processed mesh, array of volumes, list of volumes below the threshold.
     """
-    filter_instance = ElementVolumes( mesh, return_negative_zero_volumes )
-    success = filter_instance.applyFilter()
+    filterInstance = ElementVolumes( mesh, minVolume, writeIsBelowVolume )
+    success = filterInstance.applyFilter()
 
     if not success:
-        raise RuntimeError( "Element volumes calculation failed" )
+        raise RuntimeError( "Element volumes calculation failed." )
 
-    if write_output:
-        filter_instance.writeGrid( output_path )
+    if writeIsBelowVolume:
+        filterInstance.writeGrid( outputPath )
 
     return (
-        filter_instance.getMesh(),
-        filter_instance.getNegativeZeroVolumes(),
+        filterInstance.getMesh(),
+        filterInstance.getVolumes(),
+        filterInstance.getBelowVolumes(),
     )
-
-
-# Alias for backward compatibility
-def processElementVolumes(
-    mesh: vtkUnstructuredGrid,
-    return_negative_zero_volumes: bool = False,
-) -> tuple[ vtkUnstructuredGrid, npt.NDArray ]:
-    """Legacy function name for backward compatibility."""
-    return element_volumes( mesh, return_negative_zero_volumes )

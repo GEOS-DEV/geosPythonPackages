@@ -25,24 +25,40 @@ def fill_subparser( subparsers ) -> None:
 
 def display_results( options: Options, result: Result ):
     setup_logger.results( get_options_used_message( options ) )
+    logger_results( setup_logger, result.nodes_buckets, result.wrong_support_elements )
+
+
+def logger_results( logger, nodes_buckets: list[ tuple[ int ] ], wrong_support_elements: list[ int ] ):
+    """Log the results of the collocated nodes check.
+
+    Args:
+        logger: Logger instance for output.
+        nodes_buckets (list[ tuple[ int ] ]): List of collocated nodes buckets.
+        wrong_support_elements (list[ int ]): List of elements with wrong support nodes.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    log_method = logger.info
+    if hasattr(logger, 'results'):
+        log_method = logger.results
+
     all_collocated_nodes: list[ int ] = []
-    for bucket in result.nodes_buckets:
+    for bucket in nodes_buckets:
         for node in bucket:
             all_collocated_nodes.append( node )
-    all_collocated_nodes: frozenset[ int ] = frozenset( all_collocated_nodes )  # Surely useless
+    all_collocated_nodes = list( set( all_collocated_nodes ) )
     if all_collocated_nodes:
-        setup_logger.results( f"You have {len( all_collocated_nodes )} collocated nodes." )
-        setup_logger.results( "Here are all the buckets of collocated nodes." )
+        log_method( f"You have {len( all_collocated_nodes )} collocated nodes." )
+        log_method( "Here are all the buckets of collocated nodes." )
         tmp: list[ str ] = []
-        for bucket in result.nodes_buckets:
+        for bucket in nodes_buckets:
             tmp.append( f"({', '.join(map(str, bucket))})" )
-        setup_logger.results( f"({', '.join(tmp)})" )
+        log_method( f"({', '.join(tmp)})" )
     else:
-        setup_logger.results( "You have no collocated node." )
+        log_method( "You have no collocated node." )
 
-    if result.wrong_support_elements:
-        tmp: str = ", ".join( map( str, result.wrong_support_elements ) )
-        setup_logger.results(
-            f"You have {len(result.wrong_support_elements)} elements with duplicated support nodes.\n" + tmp )
+    if wrong_support_elements:
+        tmp: str = ", ".join( map( str, wrong_support_elements ) )
+        log_method(
+            f"You have {len(wrong_support_elements)} elements with duplicated support nodes.\n" + tmp )
     else:
-        setup_logger.results( "You have no element with duplicated support nodes." )
+        log_method( "You have no element with duplicated support nodes." )
