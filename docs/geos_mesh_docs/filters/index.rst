@@ -11,8 +11,7 @@ These filters analyze existing meshes for various quality issues and geometric p
 .. toctree::
    :maxdepth: 1
 
-   AllChecks
-   MainChecks
+   Checks
    CollocatedNodes
    ElementVolumes
    SelfIntersectingElements
@@ -38,33 +37,6 @@ These filters perform specialized processing and validation tasks.
    :maxdepth: 1
 
    SupportedElements
-
-Common Usage Pattern
-====================
-
-All mesh doctor filters follow a consistent usage pattern:
-
-.. code-block:: python
-
-    from geos.mesh.doctor.filters.FilterName import FilterName
-
-    # Instantiate the filter
-    filter = FilterName()
-
-    # Configure filter parameters
-    filter.setParameter(value)
-
-    # Set input data (for processing filters, not needed for generators)
-    filter.SetInputData(mesh)
-
-    # Execute the filter and get output
-    output_mesh = filter.getGrid()
-
-    # Access specific results (filter-dependent)
-    results = filter.getSpecificResults()
-
-    # Write results to file
-    filter.writeGrid("output/result.vtu")
 
 Filter Categories Explained
 ===========================
@@ -121,11 +93,11 @@ Quick Reference
 Filter Selection Guide
 ----------------------
 
-**For routine mesh validation**:
-   Use :doc:`MainChecks <MainChecks>` for fast, essential checks
+**For mesh validation**:
+   Use :doc:`MainChecks <Checks>` for fast, essential checks
 
 **For comprehensive analysis**:
-   Use :doc:`AllChecks <AllChecks>` for detailed validation
+   Use :doc:`AllChecks <Checks>` for detailed validation
 
 **For specific problems**:
    - Duplicate nodes → :doc:`CollocatedNodes <CollocatedNodes>`
@@ -143,12 +115,7 @@ Filter Selection Guide
 Parameter Guidelines
 --------------------
 
-**Tolerance Parameters**:
-   - High precision meshes: 1e-12 to 1e-8
-   - Standard meshes: 1e-8 to 1e-6  
-   - Coarse meshes: 1e-6 to 1e-4
-
-**Painting Options**:
+**Painting New Properties**:
    - Enable (1) for visualization in ParaView
    - Disable (0) for performance in batch processing
 
@@ -167,14 +134,6 @@ Workflow Integration
 3. **Validate fixes** by re-running quality checks
 4. **Document mesh quality** for simulation reference
 
-Performance Considerations
---------------------------
-
-- Use appropriate tolerances (not unnecessarily strict)
-- Enable painting only when needed for visualization
-- Use binary output for large meshes
-- Run comprehensive checks during development, lighter checks in production
-
 Error Handling
 --------------
 
@@ -183,10 +142,19 @@ Error Handling
 - Document known issues and their acceptable thresholds
 - Use multiple validation approaches for critical applications
 
+Base Classes
+============
+
+The fundamental base classes that all mesh doctor filters inherit from.
+
+.. toctree::
+   :maxdepth: 1
+
+   MeshDoctorFilterBase
+
 See Also
 ========
 
 - **GEOS Documentation**: Supported element types and mesh requirements
-- **VTK Documentation**: VTK data formats and cell types  
+- **VTK Documentation**: VTK data formats and cell types
 - **ParaView**: Visualization of mesh quality results
-- **Mesh Generation Tools**: Creating high-quality input meshes

@@ -320,7 +320,7 @@ It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get conver
 Why only use vtkUnstructuredGrid?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The mesh doctor is designed specifically for unstructured meshes used in GEOS.
+| The mesh doctor is designed specifically for unstructured meshes used in GEOS.
 | All input files are expected to be ``.vtu`` (VTK Unstructured Grid) format.
 | What about other formats?
 
@@ -344,21 +344,21 @@ Supposedly, other grid types that are part of the following VTK hierarchy could 
 
 And when looking at specific methods used in mesh-doctor, it could suggest that other formats could be used:
 
-* Points access: mesh.GetPoints() - Available in all vtkPointSet subclasses ✓
-* Cell iteration: mesh.GetNumberOfCells(), mesh.GetCell() - Available in all vtkDataSet subclasses ✓
-* Cell types: mesh.GetCellType() - Available in all vtkDataSet subclasses ✓
-* Cell/Point data: mesh.GetCellData(), mesh.GetPointData() - Available in all vtkDataSet subclasses ✓
+* Points access: ``mesh.GetPoints()`` - Available in all vtkPointSet subclasses ✓
+* Cell iteration: ``mesh.GetNumberOfCells()``, ``mesh.GetCell()`` - Available in all vtkDataSet subclasses ✓
+* Cell types: ``mesh.GetCellType()`` - Available in all vtkDataSet subclasses ✓
+* Cell/Point data: ``mesh.GetCellData()``, ``mesh.GetPointData()`` - Available in all vtkDataSet subclasses ✓
 
 VTK Filter Compatibility
 """"""""""""""""""""""""
 
-| vtkCellSizeFilter, vtkMeshQuality, and other VTK filters used in the actions expect vtkDataSet or its subclasses
-  vtkUnstructuredGrid is compatible with all VTK filters used.
-| vtkPolyData has a different data structure, not suitable for 3D volumetric meshes.
+| ``vtkCellSizeFilter``, ``vtkMeshQuality``, and other VTK filters used in the actions expect ``vtkDataSet`` or its subclasses
+  ``vtkUnstructuredGrid`` is compatible with all VTK filters used.
+| ``vtkPolyData`` has a different data structure, not suitable for 3D volumetric meshes.
 
 Specific Operations Require vtkUnstructuredGrid
 """""""""""""""""""""""""""""""""""""""""""""""
 
-* GetCellNeighbors() - Only available in vtkUnstructuredGrid
-* GetFaceStream() - Only available in vtkUnstructuredGrid (for polyhedron support)
-* GetDistinctCellTypesArray() - Only available in vtkUnstructuredGrid
+* ``GetCellNeighbors()`` - Only available in vtkUnstructuredGrid
+* ``GetFaceStream()`` - Only available in vtkUnstructuredGrid (for polyhedron support)
+* ``GetDistinctCellTypesArray()`` - Only available in vtkUnstructuredGrid
