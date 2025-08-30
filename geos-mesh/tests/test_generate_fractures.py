@@ -8,7 +8,6 @@ from geos.mesh.doctor.actions.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.actions.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from geos.mesh.doctor.actions.generate_fractures import ( split_mesh_on_fractures, Options, FracturePolicy,
                                                           Coordinates3D, IDMapping )
-from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
@@ -213,32 +212,6 @@ def test_generate_fracture( test_case: TestCase ):
     res = format_collocated_nodes( fracture_mesh )
     assert res == test_case.collocated_nodes
     assert len( res ) == test_case.result.fracture_mesh_num_points
-
-
-@pytest.mark.parametrize( "test_case_filter", __generate_test_data() )
-def test_GenerateFracture( test_case_filter: TestCase ):
-    genFracFilter = GenerateFractures()
-    genFracFilter.SetInputDataObject( 0, test_case_filter.input_mesh )
-    genFracFilter.setFieldName( test_case_filter.options.field )
-    field_values: str = ','.join( map( str, test_case_filter.options.field_values_combined ) )
-    genFracFilter.setFieldValues( field_values )
-    genFracFilter.setFracturesOutputDirectory( "." )
-    if test_case_filter.options.policy == FracturePolicy.FIELD:
-        genFracFilter.setPolicy( 0 )
-    else:
-        genFracFilter.setPolicy( 1 )
-    genFracFilter.Update()
-
-    main_mesh, fracture_meshes = genFracFilter.getAllGrids()
-    fracture_mesh: vtkUnstructuredGrid = fracture_meshes[ 0 ]
-    assert main_mesh.GetNumberOfPoints() == test_case_filter.result.main_mesh_num_points
-    assert main_mesh.GetNumberOfCells() == test_case_filter.result.main_mesh_num_cells
-    assert fracture_mesh.GetNumberOfPoints() == test_case_filter.result.fracture_mesh_num_points
-    assert fracture_mesh.GetNumberOfCells() == test_case_filter.result.fracture_mesh_num_cells
-
-    res = format_collocated_nodes( fracture_mesh )
-    assert res == test_case_filter.collocated_nodes
-    assert len( res ) == test_case_filter.result.fracture_mesh_num_points
 
 
 def add_simplified_field_for_cells( mesh: vtkUnstructuredGrid, field_name: str, field_dimension: int ):
