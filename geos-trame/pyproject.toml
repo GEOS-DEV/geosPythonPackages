@@ -6,7 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "geos-trame"
 version = "1.0.0"
 description = "Geos Simulation Modeler"
-authors = [{name = "Lionel Untereiner", email = "lionel.untereiner@external.totalenergies.com"}]
+authors = [{name = "GEOS Contributors" }]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 4 - Beta",
