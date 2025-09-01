@@ -52,7 +52,7 @@ To use the filter:
     speHandler: bool
 
     # instantiate the filter
-    filter :AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( soucreMesh,
+    filter :AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh,
                                                                              workingMesh,
                                                                              transferredAttributeNames,
                                                                              speHandler,

@@ -38,9 +38,9 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-Map the attributes from a source mesh to a working mesh.
-
-Input and output are vtkUnstructuredGrid.
+AttributeMapping is a paraview plugin that transfer attributes from a source mesh to the working mesh for each
+cell of the two meshes with the same coordinates.
+Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
 
