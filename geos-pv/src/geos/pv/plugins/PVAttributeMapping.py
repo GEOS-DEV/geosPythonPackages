@@ -48,7 +48,7 @@ To use it:
 * Select the working mesh.
 * Search and Select Attribute Mapping Filter.
 * Select the source mesh.
-* Select the attributes to transfer from the source mesh to the working mesh.
+* Select attributes to transfer from the source mesh to the working mesh.
 * Apply.
 
 """

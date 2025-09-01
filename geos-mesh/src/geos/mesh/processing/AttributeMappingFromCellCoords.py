@@ -27,13 +27,16 @@ from vtkmodules.vtkCommonDataModel import (
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos.mesh.utils.arrayModifiers import createEmptyAttribute
-from geos.mesh.utils.arrayHelpers import ( getVtkArrayInObject, computeCellCenterCoordinates, isAttributeGlobal )
+from geos.mesh.utils.arrayHelpers import ( getAttributeSet, getVtkArrayInObject, computeCellCenterCoordinates, isAttributeGlobal )
 
 __doc__ = """
-AttributeMappingFromCellCoords module is a vtk filter that map two identical mesh (or a mesh is
-an extract from the other one) and create an attribute containing shared cell ids.
+AttributeMappingFromCellCoords is a vtk filter that transfer attributes from a source mesh to the working mesh for each
+cell of the two meshes with the same coordinates.
+The filter update the working mesh directly, no copy is created.
 
-Filter input and output types are vtkUnstructuredGrid.
+Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
+The names of the attributes to transfer are give with a set of string.
+To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
 
 To use the filter:
 
@@ -41,27 +44,26 @@ To use the filter:
 
     from filters.AttributeMappingFromCellCoords import AttributeMappingFromCellCoords
 
-    # filter inputs
-    logger :Logger
-    input :vtkUnstructuredGrid
-    TransferAttributeName : str
+    # filter inputs.
+    sourceMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ]
+    workingMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ]
+    transferredAttributeNames: set[ str ]
+    # Optional inputs.
+    speHandler: bool
 
     # instantiate the filter
-    filter :AttributeMappingFromCellCoords = AttributeMappingFromCellCoords()
-    # set the logger
-    filter.SetLogger(logger)
-    # set input data object
-    filter.SetInputDataObject(input)
-    # set Attribute to transfer
-    filter.SetTransferAttributeNames(AttributeName)
-    # set Attribute to compare
-    filter.SetIDAttributeName(AttributeName)
-    # do calculations
-    filter.Update()
-    # get output object
-    output :vtkPolyData = filter.GetOutputDataObject(0)
-    # get created attribute names
-    newAttributeNames :set[str] = filter.GetNewAttributeNames()
+    filter :AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( soucreMesh,
+                                                                             workingMesh,
+                                                                             transferredAttributeNames,
+                                                                             speHandler,
+    )
+
+    # Set the handler of yours (only if speHandler is True).
+    yourHandler: logging.Handler
+    filter.setLoggerHandler( yourHandler )
+
+    # Do calculations.
+    filter.applyFilter()
 """
 
 loggerTitle: str = "Attribute Mapping"
@@ -76,16 +78,21 @@ class AttributeMappingFromCellCoords:
             transferredAttributeNames: set[ str ],
             speHandler: bool = False,
         ) -> None:
-        """Map the properties of the source mesh to the working mesh."""
-
+        """Map the properties of the source mesh to the working mesh.
+        
+        Args:
+            sourceMesh (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh with attributes to transfer.
+            workingMesh (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh where to copy attributes.
+            transferredAttributeNames (set[str]): Names of the attributes to transfer.
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
+        """
         self.sourceMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = sourceMesh
         self.workingMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = workingMesh
+        self.transferredAttributeNames: set[ str ] = transferredAttributeNames
 
         # cell map
         self.m_cellMap: npt.NDArray[ np.int64 ] = np.empty( 0 ).astype( int )
-
-        # Transfer Attribute name
-        self.transferredAttributeNames: set[ str ] = transferredAttributeNames
 
         # Logger.
         self.logger: Logger
@@ -118,12 +125,27 @@ class AttributeMappingFromCellCoords:
 
 
     def applyFilter( self: Self ) -> bool:
-        """Map the properties from the source mesh to the working mesh for the common cells.
+        """Map attributes from the source mesh to the working mesh for the shared cells.
 
         Returns:
             boolean (bool): True if calculation successfully ended, False otherwise.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+
+        if len( self.transferredAttributeNames ) == 0:
+            self.logger.warning( "Please enter at least one attribute to transfer." )
+            self.logger.warning( f"The filter { self.logger.name } has not been used." )
+            return False            
+
+        falseAttributeNames: list[ str ] = []
+        attributeNameSource: set[ str ] = getAttributeSet( self.sourceMesh, False )
+        for attribute in self.transferredAttributeNames:
+            if attribute not in attributeNameSource:
+                falseAttributeNames.append( attribute )
+        if len( falseAttributeNames ) > 0:
+            self.logger.error( f"The attributes { falseAttributeNames } are not in the mesh." )
+            self.logger.error( f"The filter { self.logger.name } failed." )
+            return False
 
         sourceDataSet: vtkUnstructuredGrid = vtkUnstructuredGrid()
         if isinstance( self.sourceMesh, vtkDataSet ):
@@ -142,8 +164,8 @@ class AttributeMappingFromCellCoords:
         
         if isinstance( self.workingMesh, vtkDataSet ):
             if not self._transferAttributes( sourceDataSet, self.workingMesh ):
-                self.logger.warning( "Source mesh and working mesh do not have any corresponding cells." )
-                self.logger.warning( f"The filter { self.logger.name } has not been needed." )
+                self.logger.warning( "Source mesh and working mesh do not have any shared cell." )
+                self.logger.warning( f"The filter { self.logger.name } has not been used." )
                 return False
         elif isinstance( self.workingMesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
             if not self._transferAttributesMultiBlock( sourceDataSet ):
@@ -169,8 +191,8 @@ class AttributeMappingFromCellCoords:
         in the source mesh.
 
         Args:
-            sourceMesh (vtkUnstructuredGrid): The mesh with the properties to transfer.
-            workingMesh (vtkUnstructuredGrid): The mesh where to copy the properties.
+            sourceMesh (vtkUnstructuredGrid): The mesh with attributes to transfer.
+            workingMesh (vtkUnstructuredGrid): The mesh where to copy attributes.
 
         Returns:
             bool: True if the map was computed.
@@ -197,8 +219,8 @@ class AttributeMappingFromCellCoords:
         """Transfer attributes from the source mesh to the working meshes using cell mapping.
 
         Args:
-            sourceMesh (vtkUnstructuredGrid): The mesh with the properties to transfer.
-            workingMesh (vtkUnstructuredGrid): The mesh where to copy the properties.
+            sourceMesh (vtkUnstructuredGrid): The mesh with attributes to transfer.
+            workingMesh (vtkUnstructuredGrid): The mesh where to copy attributes.
 
         Returns:
             bool: True if transfer successfully ended.
@@ -250,7 +272,7 @@ class AttributeMappingFromCellCoords:
         """Transfer attributes from a source vtkUnstructuredGrid to a working multiblock.
 
         Args:
-            sourceMesh (vtkUnstructuredGrid): The source mesh with the properties to transfer.
+            sourceMesh (vtkUnstructuredGrid): The source mesh with attributes to transfer.
 
         Returns:
             boolean (bool): True if attributes were successfully transferred.
@@ -260,14 +282,14 @@ class AttributeMappingFromCellCoords:
         for idBlock in range( nbBlocks ):
             workingBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( self.workingMesh.GetBlock( idBlock ) )
             if not self._transferAttributes( sourceMesh, workingBlock ):
-                self.logger.warning( f"Source mesh and the working mesh block number { idBlock } do not have any corresponding cells." )
+                self.logger.warning( f"Source mesh and the working mesh block number { idBlock } do not have any shared cell." )
             else:
                 usedCheck = True
 
         if usedCheck:
             return True
         
-        self.logger.warning( f"The filter { self.logger.name } has not been needed." )
+        self.logger.warning( f"The filter { self.logger.name } has not been used." )
         return False
 
         
