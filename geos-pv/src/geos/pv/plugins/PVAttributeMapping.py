@@ -86,6 +86,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             vtkDataArraySelection: selected attribute names.
         """
+        self.Modified()
         return self.m_attributes
 
     def RequestInformation(
@@ -173,14 +174,12 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         outData.ShallowCopy( workingMesh )
 
         attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
-
-        filter: AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh, outData, True )
+        
+        filter: AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh, outData, attributeNames, True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
-        filter.SetTransferAttributeNames( attributeNames )
 
         filter.applyFilter()
-        self.m_firstUse = True
 
         return 1
 
