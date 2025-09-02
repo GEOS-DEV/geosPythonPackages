@@ -196,7 +196,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             if isinstance( serverMesh, vtkUnstructuredGrid ):
                 mergedServerMesh = serverMesh
             elif isinstance( serverMesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-                mergedServerMesh = mergeBlocks( serverMesh )
+                _, mergedServerMesh = mergeBlocks( serverMesh )
             else:
                 raise ValueError( "Server mesh data type is not supported. " +
                                   "Use either vtkUnstructuredGrid or vtkMultiBlockDataSet" )

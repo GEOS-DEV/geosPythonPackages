@@ -799,7 +799,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             list[MohrCircle]: list of MohrCircles for the current time step.
         """
         # get mesh and merge if needed
-        meshMerged: vtkUnstructuredGrid = mergeBlocks( mesh ) if isinstance( mesh, vtkMultiBlockDataSet ) else mesh
+        meshMerged: vtkUnstructuredGrid
+        if isinstance( mesh, vtkMultiBlockDataSet ):
+            _, meshMerged = mergeBlocks( mesh )
+        else:
+            meshMerged = mesh
         assert meshMerged is not None, "Input data is undefined"
 
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( meshMerged,
