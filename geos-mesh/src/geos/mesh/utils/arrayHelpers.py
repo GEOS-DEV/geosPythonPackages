@@ -368,6 +368,24 @@ def getArrayInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -
     return npArray
 
 
+def getVtkDataTypeInObject( object: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
+                            onPoints: bool ) -> int:
+    """Return VTK type of requested array from input mesh.
+
+    Args:
+        object (Union[vtkDataSet, vtkMultiBlockDataSet]): Input object.
+        attributeName (str): Name of the attribute.
+        onPoints (bool): True if attributes are on points, False if they are on cells.
+
+    Returns:
+        int: The type of the vtk array corresponding to input attribute name.
+    """
+    if isinstance( object, vtkDataSet ):
+        return getVtkArrayTypeInObject( object, attributeName, onPoints )
+    else:
+        return getVtkArrayTypeInMultiBlock( object, attributeName, onPoints )
+
+
 def getVtkArrayTypeInObject( object: vtkDataSet, attributeName: str, onPoints: bool ) -> int:
     """Return VTK type of requested array from dataset input.
 
