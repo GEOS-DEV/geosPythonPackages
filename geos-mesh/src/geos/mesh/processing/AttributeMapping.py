@@ -30,7 +30,7 @@ from geos.mesh.utils.arrayModifiers import createEmptyAttribute
 from geos.mesh.utils.arrayHelpers import ( getAttributeSet, getVtkArrayInObject, computeCellCenterCoordinates, isAttributeGlobal )
 
 __doc__ = """
-AttributeMappingFromCellCoords is a vtk filter that transfer attributes from a source mesh to the working mesh for each
+AttributeMapping is a vtk filter that transfer attributes from a source mesh to the working mesh for each
 cell of the two meshes with the same coordinates.
 The filter update the working mesh directly, no copy is created.
 
@@ -42,7 +42,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from filters.AttributeMappingFromCellCoords import AttributeMappingFromCellCoords
+    from filters.AttributeMapping import AttributeMapping
 
     # filter inputs.
     sourceMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ]
@@ -52,10 +52,10 @@ To use the filter:
     speHandler: bool
 
     # instantiate the filter
-    filter :AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh,
-                                                                             workingMesh,
-                                                                             transferredAttributeNames,
-                                                                             speHandler,
+    filter :AttributeMapping = AttributeMapping( sourceMesh,
+                                                 workingMesh,
+                                                 transferredAttributeNames,
+                                                 speHandler,
     )
 
     # Set the handler of yours (only if speHandler is True).
@@ -69,7 +69,7 @@ To use the filter:
 loggerTitle: str = "Attribute Mapping"
 
 
-class AttributeMappingFromCellCoords:
+class AttributeMapping:
 
     def __init__(
             self: Self, 
@@ -78,7 +78,7 @@ class AttributeMappingFromCellCoords:
             transferredAttributeNames: set[ str ],
             speHandler: bool = False,
         ) -> None:
-        """Map the properties of the source mesh to the working mesh.
+        """Map attributes of the source mesh to the working mesh.
         
         Args:
             sourceMesh (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh with attributes to transfer.

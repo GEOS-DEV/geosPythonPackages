@@ -14,7 +14,7 @@ sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 update_paths()
 
-from geos.mesh.processing.AttributeMappingFromCellCoords import AttributeMappingFromCellCoords
+from geos.mesh.processing.AttributeMapping import AttributeMapping
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 
 from geos.pv.utils.checkboxFunction import createModifiedCallback
@@ -69,7 +69,7 @@ To use it:
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Map the properties of the source mesh to the working mesh."""
+        """Map attributes of the source mesh to the working mesh."""
         super().__init__( nInputPorts=2, nOutputPorts=1, inputType="vtkObject", outputType="vtkObject" )
 
         # boolean to check if first use of the filter for attribute list initialization
@@ -175,7 +175,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
         attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
         
-        filter: AttributeMappingFromCellCoords = AttributeMappingFromCellCoords( sourceMesh, outData, attributeNames, True )
+        filter: AttributeMapping = AttributeMapping( sourceMesh, outData, attributeNames, True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
 
