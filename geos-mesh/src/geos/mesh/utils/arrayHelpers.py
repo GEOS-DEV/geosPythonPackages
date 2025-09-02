@@ -341,14 +341,15 @@ def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoint
     Returns:
         bool: True if the attribute is global, False if not.
     """
-    isOnBlock: bool
-    nbBlock: int = object.GetNumberOfBlocks()
-    for idBlock in range( nbBlock ):
-        block: vtkDataSet = vtkDataSet.SafeDownCast( object.GetBlock( idBlock ) )
-        isOnBlock = isAttributeInObjectDataSet( block, attributeName, onPoints )
-        if not isOnBlock:
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( object )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
+        if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return False
-
+        iterator.GoToNextItem()
     return True
 
 
