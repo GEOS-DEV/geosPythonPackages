@@ -16,6 +16,7 @@ from vtk import (  # type: ignore[import-untyped]
 )
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import (
+    vtkCell,
     vtkCellData,
     vtkCellLocator,
     vtkDataSet,
@@ -92,7 +93,7 @@ class AttributeMapping:
         self.transferredAttributeNames: set[ str ] = transferredAttributeNames
 
         # cell map
-        self.m_cellMap: npt.NDArray[ np.int64 ] = np.empty( 0 ).astype( int )
+        self.m_cellMap = np.full( workingMesh.GetNumberOfCells(), -1 ).astype( int )
 
         # Logger.
         self.logger: Logger
@@ -199,16 +200,18 @@ class AttributeMapping:
 
         """
         self.m_cellMap = np.full( workingMesh.GetNumberOfCells(), -1 ).astype( int )
-        cellLocator: vtkCellLocator = vtkCellLocator()
-        cellLocator.SetDataSet( sourceMesh )
-        cellLocator.BuildLocator()
-
-        cellCenters: vtkDataArray = computeCellCenterCoordinates( sourceMesh )
-        for i in range( workingMesh.GetNumberOfCells() ):
-            cellCoords: MutableSequence[ float ] = [ 0.0, 0.0, 0.0 ]
-            cellCenters.GetTuple( i, cellCoords )
-            cellIndex: int = cellLocator.FindCell( cellCoords )
-            self.m_cellMap[ i ] = cellIndex
+        for idCellWorking in range( workingMesh.GetNumberOfCells() ):
+            workingCell: vtkCell = workingMesh.GetCell( idCellWorking )
+            boundsWorkingCell: list[ float ] = workingCell.GetBounds()
+            idCellSource: int = 0
+            cellFund: bool = False
+            while idCellSource < sourceMesh.GetNumberOfCells() and not cellFund:
+                sourceCell: vtkCell = sourceMesh.GetCell( idCellSource )
+                boundsSourceCell: list[ float ] = sourceCell.GetBounds()
+                if boundsSourceCell == boundsWorkingCell:
+                    self.m_cellMap[ idCellWorking ] = idCellSource
+                    cellFund = True
+                idCellSource += 1
         return True
 
     def _transferAttributes( 
