@@ -1,7 +1,6 @@
+import pytest
 from geos.mesh.doctor.actions.generate_cube import FieldInfo, Options, __build
 from geos.mesh.doctor.filters.GenerateRectilinearGrid import GenerateRectilinearGrid, generateRectilinearGrid
-import tempfile
-import os
 
 
 def test_generate_cube():
@@ -99,36 +98,35 @@ def test_generate_rectilinear_grid_filter_missing_parameters():
     assert not success, "Filter should fail when coordinates are not set"
 
 
-def test_generate_rectilinear_grid_standalone():
+def test_generate_rectilinear_grid_standalone(tmp_path):
     """Test the standalone generateRectilinearGrid function."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        output_path = os.path.join( temp_dir, "test_grid.vtu" )
+    output_path = tmp_path / "test_grid.vtu"
 
-        # Create a simple rectilinear grid
-        output_mesh = generateRectilinearGrid( coordsX=[ 0.0, 1.0, 2.0 ],
-                                               coordsY=[ 0.0, 1.0 ],
-                                               coordsZ=[ 0.0, 1.0 ],
-                                               numberElementsX=[ 2, 3 ],
-                                               numberElementsY=[ 2 ],
-                                               numberElementsZ=[ 2 ],
-                                               outputPath=output_path,
-                                               fields=[ FieldInfo( "test_field", 2, "CELLS" ) ],
-                                               generateCellsGlobalIds=True,
-                                               generatePointsGlobalIds=False )
+    # Create a simple rectilinear grid
+    output_mesh = generateRectilinearGrid( coordsX=[ 0.0, 1.0, 2.0 ],
+                                           coordsY=[ 0.0, 1.0 ],
+                                           coordsZ=[ 0.0, 1.0 ],
+                                           numberElementsX=[ 2, 3 ],
+                                           numberElementsY=[ 2 ],
+                                           numberElementsZ=[ 2 ],
+                                           outputPath=output_path,
+                                           fields=[ FieldInfo( "test_field", 2, "CELLS" ) ],
+                                           generateCellsGlobalIds=True,
+                                           generatePointsGlobalIds=False )
 
-        # Verify mesh properties
-        assert output_mesh is not None, "Output mesh should not be None"
-        assert output_mesh.GetNumberOfCells() == 20, "Should have 20 cells (5x2x2)"
-        assert output_mesh.GetNumberOfPoints() == 54, "Should have 54 points (6x3x3)"
+    # Verify mesh properties
+    assert output_mesh is not None, "Output mesh should not be None"
+    assert output_mesh.GetNumberOfCells() == 20, "Should have 20 cells (5x2x2)"
+    assert output_mesh.GetNumberOfPoints() == 54, "Should have 54 points (6x3x3)"
 
-        # Verify field
-        assert output_mesh.GetCellData().GetArray( "test_field" ) is not None, "Should have test_field array"
-        test_field_array = output_mesh.GetCellData().GetArray( "test_field" )
-        assert test_field_array.GetNumberOfComponents() == 2, "test_field should have 2 components"
+    # Verify field
+    assert output_mesh.GetCellData().GetArray( "test_field" ) is not None, "Should have test_field array"
+    test_field_array = output_mesh.GetCellData().GetArray( "test_field" )
+    assert test_field_array.GetNumberOfComponents() == 2, "test_field should have 2 components"
 
-        # Verify global IDs
-        assert output_mesh.GetCellData().GetGlobalIds() is not None, "Should have cell global IDs"
-        assert output_mesh.GetPointData().GetGlobalIds() is None, "Should not have point global IDs"
+    # Verify global IDs
+    assert output_mesh.GetCellData().GetGlobalIds() is not None, "Should have cell global IDs"
+    assert output_mesh.GetPointData().GetGlobalIds() is None, "Should not have point global IDs"
 
-        # Verify output file was written
-        assert os.path.exists( output_path ), "Output file should exist"
+    # Verify output file was written
+    assert output_path.exists(), "Output file should exist"
