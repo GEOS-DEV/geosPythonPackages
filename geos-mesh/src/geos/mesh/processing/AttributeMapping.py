@@ -13,14 +13,13 @@ from vtk import (  # type: ignore[import-untyped]
     VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE,
 )
 from vtkmodules.vtkCommonDataModel import (
-    vtkCell,
     vtkDataSet,
     vtkMultiBlockDataSet,
     vtkCompositeDataSet,
 )
 
 from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.arrayHelpers import ( getAttributeSet, getComponentNames, getVtkDataTypeInObject, isAttributeGlobal )
+from geos.mesh.utils.arrayHelpers import ( computeCellMapping, getAttributeSet, getComponentNames, getVtkDataTypeInObject, isAttributeGlobal )
 
 __doc__ = """
 AttributeMapping is a vtk filter that transfer global attributes from a source mesh (meshFrom) to another (meshTo) for each
@@ -86,7 +85,6 @@ class AttributeMapping:
 
         # cell map
         self.dictCellMap: dict[ int, list[ int ] ] = {}
-        self.sharedCell: bool = False
 
         # Logger.
         self.logger: Logger
@@ -162,8 +160,13 @@ class AttributeMapping:
                 self.logger.error( f"All attributes to transfer must be global, { partialAttributes } are partials." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
        
-        self._cellMapping( self.meshFrom, self.meshTo )
-        if not self.sharedCell:
+        self.dictCellMap = computeCellMapping( self.meshFrom, self.meshTo )
+        sharedCell: bool = False
+        for key in self.dictCellMap.keys():
+            if np.any( self.dictCellMap[ key ] > -1 ):
+                sharedCell = True
+        
+        if not sharedCell:
             self.logger.warning( "The two meshes do not have any shared cell." )
             self.logger.warning( f"The filter { self.logger.name } has not been used." )
             return False
@@ -199,91 +202,6 @@ class AttributeMapping:
         self._logOutputMessage()
 
         return True
-    
-    def _cellMapping(
-            self: Self,
-            meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-            meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-        ) -> None:
-        if isinstance( meshTo, vtkDataSet ):
-            self.dictCellMap[ 0 ] = np.full( ( meshTo.GetNumberOfCells(), 2 ), -1, int )
-            self._cellMappingToDataSet( meshFrom, meshTo )
-        elif isinstance( meshTo, vtkMultiBlockDataSet ):
-            self._cellMappingToMultiBlockDataSet( meshFrom, meshTo )
-
-
-    def _cellMappingToMultiBlockDataSet(
-        self: Self,
-        meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-        multiBlockDataSetTo: vtkMultiBlockDataSet,
-    ) -> None:
-        nbBlocksTo: int = multiBlockDataSetTo.GetNumberOfBlocks()
-        for idBlockTo in range( nbBlocksTo ):
-            blockTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetBlock( idBlockTo ) )
-            self.dictCellMap[ idBlockTo ] = np.full( ( blockTo.GetNumberOfCells(), 2 ), -1, int )
-            self._cellMappingToDataSet( meshFrom, blockTo, idBlockTo=idBlockTo )
-
-
-    def _cellMappingToDataSet(
-            self: Self,
-            meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-            dataSetTo: vtkDataSet,
-            idBlockTo: int = 0,
-    ) -> None:
-        if isinstance( meshFrom, vtkDataSet ):
-            self._cellMappingFromDataSetToDataSet( meshFrom, dataSetTo, idBlockTo=idBlockTo )
-        elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-            self._cellMappingFromMultiBlockDataSetToDataSet( meshFrom, dataSetTo, idBlockTo=idBlockTo )
-
-
-    def _cellMappingFromMultiBlockDataSetToDataSet(
-        self: Self,
-        multiBlockDataSetFrom: vtkMultiBlockDataSet,
-        dataSetTo: vtkDataSet,
-        idBlockTo: int = 0,
-    ) -> None:
-        nbBlocksFrom: int = multiBlockDataSetFrom.GetNumberOfBlocks()
-        for idBlockFrom in range( nbBlocksFrom ):
-            blockFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetBlock( idBlockFrom ) )
-            self._cellMappingFromDataSetToDataSet( blockFrom, dataSetTo, idBlockFrom=idBlockFrom, idBlockTo=idBlockTo )
-        
-
-    def _cellMappingFromDataSetToDataSet(
-            self: Self,
-            dataSetFrom: vtkDataSet,
-            dataSetTo: vtkDataSet,
-            idBlockFrom: int = 0,
-            idBlockTo: int = 0,
-        ) -> None:
-        """Create the cell map from the source mesh to the working mesh cell indexes.
-
-        For each cell index of the working mesh, stores the index of the cell
-        in the source mesh.
-
-        Args:
-            sourceMesh (vtkUnstructuredGrid): The mesh with attributes to transfer.
-            workingMesh (vtkUnstructuredGrid): The mesh where to copy attributes.
-        """
-        idCellFromFund: list[ int ] = []
-        for idCellTo in range( dataSetTo.GetNumberOfCells() ):
-            cellTo: vtkCell = dataSetTo.GetCell( idCellTo )
-            boundsCellTo: list[ float ] = cellTo.GetBounds()
-
-            idCellFrom: int = 0
-            cellFund: bool = False
-            while idCellFrom < dataSetFrom.GetNumberOfCells() and not cellFund:
-                if idCellFrom not in idCellFromFund:                
-                    cellFrom: vtkCell = dataSetFrom.GetCell( idCellFrom )
-                    boundsCellFrom: list[ float ] = cellFrom.GetBounds()
-                    if boundsCellFrom == boundsCellTo:
-                        self.dictCellMap[ idBlockTo ][ idCellTo ] = [ idBlockFrom, idCellFrom ]
-                        cellFund = True
-                        idCellFromFund.append( idCellFrom )
-                
-                idCellFrom += 1
-        
-        if len( idCellFromFund ) > 0:
-            self.sharedCell = True
 
 
     def _transferAttribute( 
