@@ -216,8 +216,7 @@ def nonConformal(
     filterInstance = NonConformal( mesh, pointTolerance, faceTolerance, angleTolerance, writeNonConformalCells )
     filterInstance.applyFilter()
 
-    if writeNonConformalCells:
-        filterInstance.writeGrid( outputPath )
+    filterInstance.writeGrid( outputPath )
 
     return (
         filterInstance.getMesh(),

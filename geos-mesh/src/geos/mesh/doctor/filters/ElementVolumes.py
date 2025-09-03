@@ -176,8 +176,7 @@ def elementVolumes(
     if not success:
         raise RuntimeError( "Element volumes calculation failed." )
 
-    if writeIsBelowVolume:
-        filterInstance.writeGrid( outputPath )
+    filterInstance.writeGrid( outputPath )
 
     return (
         filterInstance.getMesh(),

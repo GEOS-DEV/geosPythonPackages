@@ -162,8 +162,7 @@ def collocatedNodes(
     """
     filterInstance = CollocatedNodes( mesh, tolerance, writeWrongSupportElements )
     filterInstance.applyFilter()
-    if writeWrongSupportElements:  # If we are painting wrong support elements, we need to write the output
-        filterInstance.writeGrid( outputPath )
+    filterInstance.writeGrid( outputPath )
 
     return (
         filterInstance.getMesh(),

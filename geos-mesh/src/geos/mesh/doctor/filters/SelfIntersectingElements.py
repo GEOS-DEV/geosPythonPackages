@@ -168,8 +168,7 @@ def selfIntersectingElements(
     if not success:
         raise RuntimeError( "Self-intersecting elements detection failed" )
 
-    if writeInvalidElements:
-        filter_instance.writeGrid( outputPath )
+    filter_instance.writeGrid( outputPath )
 
     return (
         filter_instance.getMesh(),

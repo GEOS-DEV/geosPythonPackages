@@ -233,8 +233,7 @@ def supportedElements(
                                         chunkSize )
     filterInstance.applyFilter()
 
-    if writeUnsupportedElementTypes or writeUnsupportedPolyhedrons:
-        filterInstance.writeGrid( outputPath )
+    filterInstance.writeGrid( outputPath )
 
     return (
         filterInstance.getMesh(),
