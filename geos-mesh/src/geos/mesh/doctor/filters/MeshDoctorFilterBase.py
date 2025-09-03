@@ -53,13 +53,7 @@ Example usage patterns
 
 
 class MeshDoctorFilterBase:
-    """Base class for all mesh doctor filters using direct mesh manipulation.
-
-    This class provides common functionality shared across all mesh doctor filters,
-    including logger management, mesh access, and file writing capabilities.
-    Unlike MeshDoctorBase, this class works with direct mesh manipulation instead
-    of VTK pipeline patterns.
-    """
+    """Base class for all mesh doctor filters using direct mesh manipulation."""
 
     def __init__(
         self: Self,
@@ -67,13 +61,23 @@ class MeshDoctorFilterBase:
         filterName: str,
         useExternalLogger: bool = False,
     ) -> None:
-        """Initialize the base mesh doctor filter.
+        """Initialize the base mesh doctor filter."""
+        # Check the 'mesh' input
+        if not isinstance(mesh, vtkUnstructuredGrid):
+            raise TypeError(f"Input 'mesh' must be a vtkUnstructuredGrid, but got {type(mesh).__name__}.")
+        if mesh.GetNumberOfCells() == 0:
+            raise ValueError("Input 'mesh' cannot be empty.")
 
-        Args:
-            mesh (vtkUnstructuredGrid): The input mesh to process
-            filterName (str): Name of the filter for logging
-            useExternalLogger (bool): Whether to use external logger. Defaults to False.
-        """
+        # Check the 'filterName' input
+        if not isinstance(filterName, str):
+            raise TypeError(f"Input 'filterName' must be a string, but got {type(filterName).__name__}.")
+        if not filterName.strip():
+            raise ValueError("Input 'filterName' cannot be an empty or whitespace-only string.")
+
+        # Check the 'useExternalLogger' input
+        if not isinstance(useExternalLogger, bool):
+            raise TypeError(f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}.")
+
         self.mesh: vtkUnstructuredGrid = mesh
         self.filterName: str = filterName
 
@@ -164,6 +168,16 @@ class MeshDoctorGeneratorBase:
             filterName (str): Name of the filter for logging.
             useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
+        # Check the 'filterName' input
+        if not isinstance(filterName, str):
+            raise TypeError(f"Input 'filterName' must be a string, but got {type(filterName).__name__}.")
+        if not filterName.strip():
+            raise ValueError("Input 'filterName' cannot be an empty or whitespace-only string.")
+
+        # Check the 'useExternalLogger' input
+        if not isinstance(useExternalLogger, bool):
+            raise TypeError(f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}.")
+
         self.mesh: Union[ vtkUnstructuredGrid, None ] = None
         self.filterName: str = filterName
 

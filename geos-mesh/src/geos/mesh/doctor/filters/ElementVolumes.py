@@ -172,7 +172,6 @@ def elementVolumes(
     """
     filterInstance = ElementVolumes( mesh, minVolume, writeIsBelowVolume )
     success = filterInstance.applyFilter()
-
     if not success:
         raise RuntimeError( "Element volumes calculation failed." )
 

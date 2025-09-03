@@ -277,7 +277,6 @@ def generateFractures(
     filterInstance = GenerateFractures( mesh, policy, fieldName, fieldValues, fracturesOutputDir, outputDataMode,
                                         fracturesDataMode )
     success = filterInstance.applyFilter()
-
     if not success:
         raise RuntimeError( "Fracture generation failed." )
 

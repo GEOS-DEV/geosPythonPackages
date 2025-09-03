@@ -164,7 +164,6 @@ def selfIntersectingElements(
     """
     filter_instance = SelfIntersectingElements( mesh, minDistance, writeInvalidElements )
     success = filter_instance.applyFilter()
-
     if not success:
         raise RuntimeError( "Self-intersecting elements detection failed" )
 

@@ -231,7 +231,9 @@ def supportedElements(
     """
     filterInstance = SupportedElements( mesh, writeUnsupportedElementTypes, writeUnsupportedPolyhedrons, numProc,
                                         chunkSize )
-    filterInstance.applyFilter()
+    success = filterInstance.applyFilter()
+    if not success:
+        raise RuntimeError( "Supported elements identification failed." )
 
     filterInstance.writeGrid( outputPath )
 

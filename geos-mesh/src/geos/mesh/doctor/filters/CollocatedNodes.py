@@ -161,7 +161,10 @@ def collocatedNodes(
             Processed mesh, collocated node buckets, wrong support elements.
     """
     filterInstance = CollocatedNodes( mesh, tolerance, writeWrongSupportElements )
-    filterInstance.applyFilter()
+    success = filterInstance.applyFilter()
+    if not success:
+        raise RuntimeError( "Element volumes calculation failed." )
+
     filterInstance.writeGrid( outputPath )
 
     return (

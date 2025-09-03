@@ -291,7 +291,9 @@ def allChecks(
             for param_name, value in params.items():
                 filterInstance.setCheckParameter( checkName, param_name, value )
 
-    filterInstance.applyFilter()
+    success = filterInstance.applyFilter()
+    if not success:
+        raise RuntimeError( "allChecks calculation failed." )
 
     return (
         filterInstance.getMesh(),
@@ -320,7 +322,9 @@ def mainChecks(
             for param_name, value in params.items():
                 filterInstance.setCheckParameter( checkName, param_name, value )
 
-    filterInstance.applyFilter()
+    success = filterInstance.applyFilter()
+    if not success:
+        raise RuntimeError( "mainChecks calculation failed." )
 
     return (
         filterInstance.getMesh(),

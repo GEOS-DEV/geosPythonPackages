@@ -214,7 +214,9 @@ def nonConformal(
             Processed mesh, non-conformal cell pairs.
     """
     filterInstance = NonConformal( mesh, pointTolerance, faceTolerance, angleTolerance, writeNonConformalCells )
-    filterInstance.applyFilter()
+    success = filterInstance.applyFilter()
+    if not success:
+        raise RuntimeError( "NonConformal detection failed." )
 
     filterInstance.writeGrid( outputPath )
 

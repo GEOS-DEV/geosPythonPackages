@@ -238,7 +238,6 @@ def generateRectilinearGrid(
         filterInstance.setFields( fields )
 
     success = filterInstance.applyFilter()
-
     if not success:
         raise RuntimeError( "Rectilinear grid generation failed." )
 
