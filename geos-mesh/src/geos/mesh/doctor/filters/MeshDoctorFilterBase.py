@@ -99,7 +99,7 @@ class MeshDoctorFilterBase:
         Args:
             handler: The logging handler to add.
         """
-        if not self.logger.hasHandlers():
+        if not self.logger.handlers:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has a handler, to use yours set 'useExternalLogger' "
@@ -199,7 +199,7 @@ class MeshDoctorGeneratorBase:
         Args:
             handler: The logging handler to add.
         """
-        if not self.logger.hasHandlers():
+        if not self.logger.handlers:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has a handler, to use yours set 'useExternalLogger' "
