@@ -26,36 +26,36 @@ These methods include:
     - bounds getter for vtu and multiblock datasets
 """
 
+
 def computeCellMapping(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-) ->  dict[ int, npt.NDArray ]:
-    """Compute the cell index mapping dictionary from the mesh meshFrom to the mesh meshTo. 
+) -> dict[ int, npt.NDArray ]:
+    """Compute the cell index mapping dictionary from the mesh meshFrom to the mesh meshTo.
 
-    If meshes are vtkDataSet, 0 is use as block index.
+    The cell mapping dictionary keep the mapping cell index where:
+        - Keys are the block index of the meshTo.
+        - Items are arrays of size (nb cell in the block, 2).
 
     For each cell (idCellTo) of each block (idBlockTo) of meshTo:
-        - if a cell (idCellFrom) of a block (idBlockFrom) of meshFrom has the same bounds coordinates,
-        dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
+        - if a cell (idCellFrom) of a block (idBlockFrom) of meshFrom has the same bounds coordinates, dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
         - else, dictCellMap[idBlockTo][idCellTo] = [-1, -1].
+
+    If meshes are vtkDataSet, 0 is use as block index.
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the cell indexes to map.
         meshTo (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the reference cell indexes.
 
     Returns:
-        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary where:
-            - Keys are the block index of the multiBlockDataSetTo.
-            - Items are arrays of size (nb cell in block, 2) filled with:
-                + [-1, -1] for cells not shared by the two mesh.
-                + [idBlockFrom, idCellFrom] for cells shared by the two meshes.
+        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
     """
     dictCellMap: dict[ int, npt.NDArray ] = {}
     if isinstance( meshTo, vtkDataSet ):
         UpdateCellMappingToDataSet( meshFrom, meshTo, dictCellMap )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         UpdateCellMappingToMultiBlockDataSet( meshFrom, meshTo, dictCellMap )
-    
+
     return dictCellMap
 
 
@@ -64,23 +64,22 @@ def UpdateCellMappingToMultiBlockDataSet(
     multiBlockDataSetTo: vtkMultiBlockDataSet,
     dictCellMap: dict[ int, npt.NDArray ],
 ) -> None:
-    """Update the cell index mapping dictionary from the mesh meshFrom to the mesh multiBlockDataSetTo. 
-
-    If meshFrom is a vtkDataSet, 0 is use as block index.
+    """Update the cell index mapping dictionary from the mesh meshFrom to the mesh multiBlockDataSetTo.
 
     Add the mapping for each block (idBlockTo) of the multiBlockDataSetTo:
         - Keys are the block index of the multiBlockDataSetTo.
-        - Items are arrays of size (nb cell in block, 2). 
+        - Items are arrays of size (nb cell in block, 2).
 
     For each cell (idCellTo) of each block (idBlockTo) of multiBlockDataSetTo:
-        - if a cell (idCellFrom) of a block (idBlockFrom) of meshFrom has the same bounds coordinates,
-        dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
+        - if a cell (idCellFrom) of a block (idBlockFrom) of meshFrom has the same bounds coordinates, dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
         - else, dictCellMap[idBlockTo][idCellTo] = [-1, -1].
+
+    If meshFrom is a vtkDataSet, 0 is use as block index.
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the cell indexes to map.
         multiBlockDataSetTo (vtkMultiBlockDataSet): The mesh with the reference cell indexes.
-        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with the mapping of all blocks of the multiBlockDataSetTo.
+        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update.
     """
     nbBlocksTo: int = multiBlockDataSetTo.GetNumberOfBlocks()
     for idBlockTo in range( nbBlocksTo ):
@@ -94,24 +93,23 @@ def UpdateCellMappingToDataSet(
     dictCellMap: dict[ int, npt.NDArray ],
     idBlockTo: int = 0,
 ) -> None:
-    """Update the cell index mapping dictionary from the mesh meshFrom to the mesh dataSetTo. 
+    """Update the cell index mapping dictionary from the mesh meshFrom to the mesh dataSetTo.
+
+    Add the mapping for the dataSetTo:
+        - The keys is the block index of the dataSetTo (idBlockTo).
+        - The item is an array of size (nb cell in dataSetTo, 2).
+
+    For each cell (idCellTo) of the mesh dataSetTo:
+        - if a cell (idCellFrom) of the meshFrom or one of its block (idBlockFrom) has the same bounds coordinates, dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
+        - else, dictCellMap[idBlockTo][idCellTo] = [-1, -1].
 
     If meshFrom is a vtkDataSet, 0 is use as block index.
     dataSetTo is considered as block of a vtkMultiblockDataSet, if not, 0 is use as block index.
 
-    Add the mapping for the dataSetTo:
-        - The keys is the block index of the dataSetTo (idBlockTo).
-        - The item is an array of size (nb cell in dataSetTo, 2). 
-
-    For each cell (idCellTo) of the mesh dataSetTo:
-        - if a cell (idCellFrom) of the meshFrom or one of its block (idBlockFrom) has the same bounds coordinates,
-        dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
-        - else, dictCellMap[idBlockTo][idCellTo] = [-1, -1].
-
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the cell indexes to map.
         dataSetTo (vtkDataSet): The mesh with the reference cell indexes.
-        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with the mapping for the dataSetTo.
+        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update.
         idBlockTo (int, Optional): The block index of the dataSetTo.
             Defaults to 0.
     """
@@ -128,29 +126,31 @@ def UpdateCellMappingFromMultiBlockDataSetToDataSet(
     dictCellMap: dict[ int, npt.NDArray ],
     idBlockTo: int = 0,
 ) -> None:
-    """Update the cell index mapping dictionary from the mesh multiBlockDataSetFrom to the mesh dataSetTo. 
-    
-    dataSetTo is considered as block of a vtkMultiblockDataSet, if not, 0 is use as block index. 
+    """Update the cell index mapping dictionary from the mesh multiBlockDataSetFrom to the mesh dataSetTo.
 
     For each cell (idCellTo) of the mesh dataSetTo not yet mapped (dictCellMap[idBlockTo][idCellTo] = [-1, -1]),
     if a cell (idCellFrom) of a block (idBlockFrom) of multiBlockDataSetFrom has the same bounds coordinates,
     the dictCellMap is update to dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
 
+    dataSetTo is considered as block of a vtkMultiblockDataSet, if not, 0 is use as block index.
+
     Args:
         multiBlockDataSetFrom (vtkMultiBlockDataSet): The mesh with the cell indexes to map.
         dataSetTo (vtkDataSet): The mesh with the reference cell indexes.
-        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with:
-            - The block index of the dataSetTo as keys.
-            - An array of size (nb cell in dataSetTo, 2) as items filled with:
-                + [-1, -1] for cell not yet mapped.
-                + [idBlockFrom, idCellFrom] for cell already mapped.
+        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with;
+            The block index of the dataSetTo as keys.
+            An array of size (nb cell in dataSetTo, 2) as item.
         idBlockTo (int, Optional): The block index of the dataSetTo.
             Defaults to 0.
     """
     nbBlocksFrom: int = multiBlockDataSetFrom.GetNumberOfBlocks()
     for idBlockFrom in range( nbBlocksFrom ):
         blockFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetBlock( idBlockFrom ) )
-        UpdateCellMappingFromDataSetToDataSet( blockFrom, dataSetTo, dictCellMap, idBlockFrom=idBlockFrom, idBlockTo=idBlockTo )
+        UpdateCellMappingFromDataSetToDataSet( blockFrom,
+                                               dataSetTo,
+                                               dictCellMap,
+                                               idBlockFrom=idBlockFrom,
+                                               idBlockTo=idBlockTo )
 
 
 def UpdateCellMappingFromDataSetToDataSet(
@@ -160,22 +160,20 @@ def UpdateCellMappingFromDataSetToDataSet(
     idBlockFrom: int = 0,
     idBlockTo: int = 0,
 ) -> None:
-    """Update the cell index mapping dictionary from the mesh dataSetFrom to the mesh dataSetTo. 
-
-    Meshes are considered as block of vtkMultiblockDataSet, if not, 0 is use as block index. 
+    """Update the cell index mapping dictionary from the mesh dataSetFrom to the mesh dataSetTo.
 
     For each cell (idCellTo) of the mesh dataSetTo not yet mapped (dictCellMap[idBlockTo][idCellTo] = [-1, -1]),
     if a cell (idCellFrom) of the mesh dataSetFrom has the same bounds coordinates,
     the dictCellMap is update to dictCellMap[idBlockTo][idCellTo] = [idBlockFrom, idCellFrom].
 
+    Meshes are considered as block of vtkMultiblockDataSet, if not, 0 is use as block index.
+
     Args:
         dataSetFrom (vtkDataSet): The mesh with the cell indexes to map.
         dataSetTo (vtkDataSet): The mesh with the reference cell indexes.
-        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with:
-            - The block index of the dataSetTo as keys.
-            - An array of size (nb cell in dataSetTo, 2) as items filled with:
-                + [-1, -1] for cell not yet mapped.
-                + [idBlockFrom, idCellFrom] for cell already mapped.
+        dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary to update with;
+            The block index of the dataSetTo as keys.
+            An array of size (nb cell in dataSetTo, 2) as item.
         idBlockFrom (int, Optional): The block index of the dataSetFrom.
             Defaults to 0.
         idBlockTo (int, Optional): The block index of the dataSetTo.
@@ -188,20 +186,20 @@ def UpdateCellMappingFromDataSetToDataSet(
         # Test if the cell is already mapped.
         if -1 in dictCellMap[ idBlockTo ][ idCellTo ]:
             cellTo: vtkCell = dataSetTo.GetCell( idCellTo )
-            boundsCellTo: list[ float ] = cellTo.GetBounds()
+            boundsCellTo: tuple[ float, ...] = cellTo.GetBounds()
 
             idCellFrom: int = 0
             cellFund: bool = False
             while idCellFrom < nbCellsFrom and not cellFund:
                 # Test if the cell is already mapped.
-                if idCellFrom not in idCellFromFund:         
+                if idCellFrom not in idCellFromFund:
                     cellFrom: vtkCell = dataSetFrom.GetCell( idCellFrom )
-                    boundsCellFrom: list[ float ] = cellFrom.GetBounds()
+                    boundsCellFrom: tuple[ float, ...] = cellFrom.GetBounds()
                     if boundsCellFrom == boundsCellTo:
                         dictCellMap[ idBlockTo ][ idCellTo ] = [ idBlockFrom, idCellFrom ]
                         cellFund = True
                         idCellFromFund.append( idCellFrom )
-                
+
                 idCellFrom += 1
 
 
