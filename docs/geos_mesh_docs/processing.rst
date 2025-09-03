@@ -3,6 +3,14 @@ Processing filters
 
 The `processing` module of `geos-mesh` package contains filters to process meshes.
 
+geos.mesh.processing.AttributeMapping module
+--------------------------------------------------------
+
+.. automodule:: geos.mesh.processing.AttributeMapping
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 geos.mesh.processing.FillPartialArrays filter
 ----------------------------------------------
