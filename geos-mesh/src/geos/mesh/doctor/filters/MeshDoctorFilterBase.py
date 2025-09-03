@@ -78,7 +78,10 @@ class MeshDoctorFilterBase:
         if not isinstance(useExternalLogger, bool):
             raise TypeError(f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}.")
 
-        self.mesh: vtkUnstructuredGrid = mesh
+        # Non-destructive behavior.
+        # The filter should contain a COPY of the mesh, not the original object.
+        self.mesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
+        self.mesh.DeepCopy( mesh )
         self.filterName: str = filterName
 
         # Logger setup
