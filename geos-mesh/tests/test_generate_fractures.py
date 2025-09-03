@@ -1,13 +1,19 @@
 from dataclasses import dataclass
+import os
 import numpy
 import pytest
 from typing import Iterable, Iterator, Sequence
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+import tempfile
 from geos.mesh.doctor.actions.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.actions.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from geos.mesh.doctor.actions.generate_fractures import ( split_mesh_on_fractures, Options, FracturePolicy,
                                                           Coordinates3D, IDMapping )
+from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures, generateFractures
+from geos.mesh.doctor.filters.GenerateFractures import ( FIELD_NAME, FIELD_VALUES, FRACTURES_DATA_MODE,
+                                                         FRACTURES_OUTPUT_DIR, OUTPUT_BINARY_MODE,
+                                                         OUTPUT_BINARY_MODE_VALUES, POLICY )
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
@@ -358,3 +364,153 @@ def test_copy_fields_when_splitting_mesh():
     with pytest.raises( ValueError ) as pytest_wrapped_e:
         main_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     assert pytest_wrapped_e.type == ValueError
+
+
+"""
+Tests for GenerateFractures.py
+"""
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fracture_filters_basic( test_case: TestCase ):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        fracturesDir = os.path.join( temp_dir, "fractures" )
+        os.makedirs( fracturesDir, exist_ok=True )  # Create the directory
+        policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+        fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+        # Create filter instance
+        filterInstance = GenerateFractures( test_case.input_mesh,
+                                            policy=policy,
+                                            fieldName=test_case.options.field,
+                                            fieldValues=fieldValues,
+                                            fracturesOutputDir=fracturesDir )
+        # Apply filter
+        success = filterInstance.applyFilter()
+        assert success, "Filter should succeed"
+        # Get results
+        splitMesh = filterInstance.getMesh()
+        fractureMeshes = filterInstance.getFractureMeshes()
+        allGrids = filterInstance.getAllGrids()
+        # Verify results
+        assert splitMesh is not None, "Split mesh should not be None"
+        assert isinstance( fractureMeshes, list ), "Fracture meshes should be a list"
+        assert allGrids[ 0 ] is splitMesh, "getAllGrids should return split mesh as first element"
+        assert allGrids[ 1 ] is fractureMeshes, "getAllGrids should return fracture meshes as second element"
+
+
+def test_generate_fractures_filter_setters():
+    """Test the setter methods of GenerateFractures filter."""
+    # Create a simple test mesh
+    x = numpy.array( [ 0, 1 ] )
+    y = numpy.array( [ 0, 1 ] )
+    z = numpy.array( [ 0, 1 ] )
+    xyz = XYZ( x, y, z )
+    mesh = build_rectilinear_blocks_mesh( [ xyz ] )
+
+    # Add fracture field
+    add_simplified_field_for_cells( mesh, "test_field", 1 )
+
+    # Create filter instance
+    filterInstance = GenerateFractures( mesh )
+
+    # Test valid setters
+    filterInstance.setFieldName( "test_field" )
+    assert filterInstance.allOptions[ FIELD_NAME ] == "test_field"
+
+    filterInstance.setFieldValues( "1,2" )
+    assert filterInstance.allOptions[ FIELD_VALUES ] == "1,2"
+
+    filterInstance.setFracturesOutputDirectory( "./output/" )
+    assert filterInstance.allOptions[ FRACTURES_OUTPUT_DIR ] == "./output/"
+
+    filterInstance.setPolicy( 1 )
+    assert filterInstance.allOptions[ POLICY ] == FracturePolicy.INTERNAL_SURFACES
+
+    filterInstance.setOutputDataMode( 1 )
+    assert filterInstance.allOptions[ OUTPUT_BINARY_MODE ] == OUTPUT_BINARY_MODE_VALUES[ 1 ]
+
+    filterInstance.setFracturesDataMode( 0 )
+    assert filterInstance.allOptions[ FRACTURES_DATA_MODE ] == OUTPUT_BINARY_MODE_VALUES[ 0 ]
+
+    # Test invalid setters
+    original_policy = filterInstance.allOptions[ POLICY ]
+    filterInstance.setPolicy( 5 )  # Invalid value
+    assert filterInstance.allOptions[ POLICY ] == original_policy
+
+    # Test invalid data modes - should not change the values
+    original_output_mode = filterInstance.allOptions[ OUTPUT_BINARY_MODE ]
+    filterInstance.setOutputDataMode( 5 )  # Invalid value
+    assert filterInstance.allOptions[ OUTPUT_BINARY_MODE ] == original_output_mode
+
+    original_fractures_mode = filterInstance.allOptions[ FRACTURES_DATA_MODE ]
+    filterInstance.setFracturesDataMode( 5 )  # Invalid value
+    assert filterInstance.allOptions[ FRACTURES_DATA_MODE ] == original_fractures_mode
+
+
+def test_generate_fractures_filter_with_global_ids():
+    """Test that filter fails when mesh contains global IDs."""
+    # Create a simple test mesh
+    x = numpy.array( [ 0, 1 ] )
+    y = numpy.array( [ 0, 1 ] )
+    z = numpy.array( [ 0, 1 ] )
+    xyz = XYZ( x, y, z )
+    mesh = build_rectilinear_blocks_mesh( [ xyz ] )
+
+    # Add global IDs (which should cause failure)
+    points_global_ids = numpy.arange( mesh.GetNumberOfPoints(), dtype=int )
+    points_array = numpy_to_vtk( points_global_ids )
+    points_array.SetName( "GLOBAL_IDS_POINTS" )
+    mesh.GetPointData().AddArray( points_array )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        fractures_dir = os.path.join( temp_dir, "fractures" )
+        os.makedirs( fractures_dir, exist_ok=True )  # Create the directory
+        # Create filter instance
+        filterInstance = GenerateFractures( mesh )
+        # Should fail due to global IDs
+        success = filterInstance.applyFilter()
+        assert not success, "Filter should fail when mesh contains global IDs"
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fractures_standalone( test_case: TestCase ):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        outputPath = os.path.join( temp_dir, "split_mesh.vtu" )
+        fractures_dir = os.path.join( temp_dir, "fractures" )
+        os.makedirs( fractures_dir, exist_ok=True )  # Create the directory
+        policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+        fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+        # Create filter instance
+        splitMesh, fractureMeshes = generateFractures( test_case.input_mesh,
+                                                       outputPath=outputPath,
+                                                       policy=policy,
+                                                       fieldName=test_case.options.field,
+                                                       fieldValues=fieldValues,
+                                                       fracturesOutputDir=fractures_dir )
+        # Verify results
+        assert splitMesh is not None, "Split mesh should not be None"
+        assert isinstance( fractureMeshes, list ), "Fracture meshes should be a list"
+        # Verify output file was written
+        assert os.path.exists( outputPath ), "Output file should exist"
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fractures_write_meshes( test_case: TestCase ):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        outputPath = os.path.join( temp_dir, "split_mesh.vtu" )
+        fracturesDir = os.path.join( temp_dir, "fractures" )
+        os.makedirs( fracturesDir, exist_ok=True )  # Create the directory
+        policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+        fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+        # Create filter instance
+        filterInstance = GenerateFractures( test_case.input_mesh,
+                                            policy=policy,
+                                            fieldName=test_case.options.field,
+                                            fieldValues=fieldValues,
+                                            fracturesOutputDir=fracturesDir )
+        # Apply filter
+        success = filterInstance.applyFilter()
+        assert success, "Filter should succeed"
+        # Test writing meshes
+        filterInstance.writeMeshes( outputPath, isDataModeBinary=False, canOverwrite=True )
+        # Verify main mesh file was written
+        assert os.path.exists( outputPath ), "Main mesh file should exist"

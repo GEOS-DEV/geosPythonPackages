@@ -4,8 +4,8 @@ from geos.mesh.doctor.actions.generate_fractures import Options, split_mesh_on_f
 from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorFilterBase
 from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, convert_to_fracture_policy
 from geos.mesh.doctor.parsing.generate_fractures_parsing import ( __FIELD_NAME, __FIELD_VALUES, __FRACTURES_DATA_MODE,
-                                                                  __FRACTURES_OUTPUT_DIR, __FRACTURES_DATA_MODE_VALUES,
-                                                                  __POLICIES, __POLICY )
+                                                                  __FRACTURES_OUTPUT_DIR, __POLICIES, __POLICY )
+from geos.mesh.doctor.parsing.vtk_output_parsing import __OUTPUT_BINARY_MODE_VALUES, __OUTPUT_FILE
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 from geos.mesh.utils.arrayHelpers import has_array
 
@@ -24,10 +24,12 @@ To use the filter
     # instantiate the filter
     generateFracturesFilter = GenerateFractures(
         mesh,
+        policy=1,
         fieldName="fracture_field",
         fieldValues="1,2",
         fracturesOutputDir="./fractures/",
-        policy=1
+        outputDataMode=0,
+        fracturesDataMode=1
     )
 
     # execute the filter
@@ -51,10 +53,10 @@ For standalone use without creating a filter instance
     splitMesh, fractureMeshes = generateFractures(
         mesh,
         outputPath="output/split_mesh.vtu",
+        policy=1,
         fieldName="fracture_field",
         fieldValues="1,2",
         fracturesOutputDir="./fractures/",
-        policy=1,
         outputDataMode=0,
         fracturesDataMode=1
     )
@@ -63,10 +65,12 @@ For standalone use without creating a filter instance
 FIELD_NAME = __FIELD_NAME
 FIELD_VALUES = __FIELD_VALUES
 FRACTURES_DATA_MODE = __FRACTURES_DATA_MODE
-DATA_MODE = __FRACTURES_DATA_MODE_VALUES
 FRACTURES_OUTPUT_DIR = __FRACTURES_OUTPUT_DIR
 POLICIES = __POLICIES
 POLICY = __POLICY
+OUTPUT_BINARY_MODE = "data_mode"
+OUTPUT_BINARY_MODE_VALUES = __OUTPUT_BINARY_MODE_VALUES
+OUTPUT_FILE = __OUTPUT_FILE
 
 loggerTitle: str = "Generate Fractures Filter"
 
@@ -76,36 +80,48 @@ class GenerateFractures( MeshDoctorFilterBase ):
     def __init__(
         self: Self,
         mesh: vtkUnstructuredGrid,
+        policy: int = 1,
         fieldName: str = None,
         fieldValues: str = None,
         fracturesOutputDir: str = None,
-        policy: int = 1,
         outputDataMode: int = 0,
-        fracturesDataMode: int = 1,
+        fracturesDataMode: int = 0,
         useExternalLogger: bool = False,
     ) -> None:
         """Initialize the generate fractures filter.
 
         Args:
             mesh (vtkUnstructuredGrid): The input mesh to split.
+            policy (int): Fracture policy (0 for field, 1 for internal_surfaces). Defaults to 1.
             fieldName (str): Field name that defines fracture regions. Defaults to None.
             fieldValues (str): Comma-separated field values that identify fracture boundaries. Defaults to None.
             fracturesOutputDir (str): Output directory for fracture meshes. Defaults to None.
-            policy (int): Fracture policy (0 for internal, 1 for boundary). Defaults to 1.
-            outputDataMode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
-            fracturesDataMode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
+            outputDataMode (int): Data mode for main mesh (0 for binary, 1 for ASCII). Defaults to 0.
+            fracturesDataMode (int): Data mode for fracture meshes (0 for binary, 1 for ASCII). Defaults to 0.
             useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
         super().__init__( mesh, loggerTitle, useExternalLogger )
-        self.fieldName: str = fieldName
-        self.fieldValues: str = fieldValues
-        self.fracturesOutputDir: str = fracturesOutputDir
-        self.policy: str = POLICIES[ policy ] if 0 <= policy <= 1 else POLICIES[ 1 ]
-        self.outputDataMode: str = DATA_MODE[ outputDataMode ] if outputDataMode in [ 0, 1 ] else DATA_MODE[ 0 ]
-        self.fracturesDataMode: str = ( DATA_MODE[ fracturesDataMode ]
-                                        if fracturesDataMode in [ 0, 1 ] else DATA_MODE[ 1 ] )
+        if outputDataMode not in [ 0, 1 ]:
+            self.logger.error( f"Invalid output data mode: {outputDataMode}. Must be 0 (binary) or 1 (ASCII)."
+                               " Set to 0 (binary)." )
+            outputDataMode = 0
+        if fracturesDataMode not in [ 0, 1 ]:
+            self.logger.error( f"Invalid fractures data mode: {fracturesDataMode}. Must be 0 (binary) or 1 (ASCII)."
+                               " Set to 0 (binary)." )
+            fracturesDataMode = 0
+
+        self.allOptions: dict[ str, str ] = {
+            POLICY: convert_to_fracture_policy( POLICIES[ policy ] ),
+            FIELD_NAME: fieldName,
+            FIELD_VALUES: fieldValues,
+            OUTPUT_FILE: "./mesh.vtu",
+            OUTPUT_BINARY_MODE: OUTPUT_BINARY_MODE_VALUES[ outputDataMode ],
+            FRACTURES_OUTPUT_DIR: fracturesOutputDir,
+            FRACTURES_DATA_MODE: OUTPUT_BINARY_MODE_VALUES[ fracturesDataMode ]
+        }
         self.fractureMeshes: list[ vtkUnstructuredGrid ] = []
-        self.allFracturesVtkOutput: list[ VtkOutput ] = []
+        self.mesh: vtkUnstructuredGrid = mesh
+        self._options: Options = None
 
     def applyFilter( self: Self ) -> bool:
         """Apply the fracture generation.
@@ -113,7 +129,7 @@ class GenerateFractures( MeshDoctorFilterBase ):
         Returns:
             bool: True if fractures generated successfully, False otherwise.
         """
-        self.logger.info( f"Apply filter {self.logger.name}" )
+        self.logger.info( f"Apply filter {self.logger.name}." )
 
         # Check for global IDs which are not allowed
         if has_array( self.mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
@@ -122,23 +138,15 @@ class GenerateFractures( MeshDoctorFilterBase ):
                 " The correct procedure is to split the mesh and then generate global ids for new split meshes." )
             return False
 
-        # Validate required parameters
-        parsedOptions = self._buildParsedOptions()
-        if len( parsedOptions ) < 5:
-            self.logger.error( "You must set all variables before trying to create fractures." )
+        try:
+            self._options = convert( self.allOptions )
+        except Exception as e:
+            self.logger.error( f"Failed to convert options: {e}.\nCannot generate fractures."
+                               "You must set all variables before trying to create fractures." )
             return False
 
-        self.logger.info( f"Parsed options: {parsedOptions}" )
-
-        # Convert options and split mesh
-        options: Options = convert( parsedOptions )
-        self.allFracturesVtkOutput = options.all_fractures_VtkOutput
-
         # Perform the fracture generation
-        output_mesh, self.fractureMeshes = split_mesh_on_fractures( self.mesh, options )
-
-        # Update the main mesh with the split result
-        self.mesh = output_mesh
+        self.mesh, self.fractureMeshes = split_mesh_on_fractures( self.mesh, self._options )
 
         self.logger.info( f"Generated {len(self.fractureMeshes)} fracture meshes." )
         self.logger.info( f"The filter {self.logger.name} succeeded." )
@@ -166,7 +174,7 @@ class GenerateFractures( MeshDoctorFilterBase ):
         Args:
             fieldName (str): Name of the field.
         """
-        self.fieldName = fieldName
+        self.allOptions[ FIELD_NAME ] = fieldName
 
     def setFieldValues( self: Self, fieldValues: str ) -> None:
         """Set the field values that identify fracture boundaries.
@@ -174,7 +182,7 @@ class GenerateFractures( MeshDoctorFilterBase ):
         Args:
             fieldValues (str): Comma-separated field values.
         """
-        self.fieldValues = fieldValues
+        self.allOptions[ FIELD_VALUES ] = fieldValues
 
     def setFracturesDataMode( self: Self, choice: int ) -> None:
         """Set the data mode for fracture mesh outputs.
@@ -183,10 +191,10 @@ class GenerateFractures( MeshDoctorFilterBase ):
             choice (int): 0 for ASCII, 1 for binary.
         """
         if choice not in [ 0, 1 ]:
-            self.logger.error( f"setFracturesDataMode: Please choose either 0 for {DATA_MODE[0]} "
-                               f"or 1 for {DATA_MODE[1]}, not '{choice}'." )
+            self.logger.error( f"setFracturesDataMode: Please choose either 0 for {OUTPUT_BINARY_MODE_VALUES[0]} "
+                               f"or 1 for {OUTPUT_BINARY_MODE_VALUES[1]}, not '{choice}'." )
         else:
-            self.fracturesDataMode = DATA_MODE[ choice ]
+            self.allOptions[ FRACTURES_DATA_MODE ] = OUTPUT_BINARY_MODE_VALUES[ choice ]
 
     def setFracturesOutputDirectory( self: Self, directory: str ) -> None:
         """Set the output directory for fracture meshes.
@@ -194,7 +202,7 @@ class GenerateFractures( MeshDoctorFilterBase ):
         Args:
             directory (str): Directory path.
         """
-        self.fracturesOutputDir = directory
+        self.allOptions[ FRACTURES_OUTPUT_DIR ] = directory
 
     def setOutputDataMode( self: Self, choice: int ) -> None:
         """Set the data mode for the main mesh output.
@@ -204,10 +212,11 @@ class GenerateFractures( MeshDoctorFilterBase ):
         """
         if choice not in [ 0, 1 ]:
             self.logger.error(
-                f"setOutputDataMode: Please choose either 0 for {DATA_MODE[0]} or 1 for {DATA_MODE[1]}, not '{choice}'."
+                f"setOutputDataMode: Please choose either 0 for {OUTPUT_BINARY_MODE_VALUES[0]} or 1 for"
+                f" {OUTPUT_BINARY_MODE_VALUES[1]}, not '{choice}'."
             )
         else:
-            self.outputDataMode = DATA_MODE[ choice ]
+            self.allOptions[ OUTPUT_BINARY_MODE ] = OUTPUT_BINARY_MODE_VALUES[ choice ]
 
     def setPolicy( self: Self, choice: int ) -> None:
         """Set the fracture policy.
@@ -220,29 +229,6 @@ class GenerateFractures( MeshDoctorFilterBase ):
                 f"setPolicy: Please choose either 0 for {POLICIES[0]} or 1 for {POLICIES[1]}, not '{choice}'." )
         else:
             self.policy = convert_to_fracture_policy( POLICIES[ choice ] )
-
-    def _buildParsedOptions( self: Self ) -> dict[ str, str ]:
-        """Build parsed options to be used for an Options object."""
-        parsedOptions: dict[ str, str ] = { "output": "./mesh.vtu", "data_mode": DATA_MODE[ 0 ] }
-        parsedOptions[ POLICY ] = self.policy
-        parsedOptions[ FRACTURES_DATA_MODE ] = self.fracturesDataMode
-
-        if self.fieldName:
-            parsedOptions[ FIELD_NAME ] = self.fieldName
-        else:
-            self.logger.error( "No field name provided. Please use setFieldName." )
-
-        if self.fieldValues:
-            parsedOptions[ FIELD_VALUES ] = self.fieldValues
-        else:
-            self.logger.error( "No field values provided. Please use setFieldValues." )
-
-        if self.fracturesOutputDir:
-            parsedOptions[ FRACTURES_OUTPUT_DIR ] = self.fracturesOutputDir
-        else:
-            self.logger.error( "No fracture output directory provided. Please use setFracturesOutputDirectory." )
-
-        return parsedOptions
 
     def writeMeshes( self: Self, filepath: str, isDataModeBinary: bool = True, canOverwrite: bool = False ) -> None:
         """Write both the split main mesh and all fracture meshes.
@@ -258,38 +244,37 @@ class GenerateFractures( MeshDoctorFilterBase ):
             self.logger.error( f"No output grid was built. Cannot output vtkUnstructuredGrid at {filepath}." )
 
         for i, fractureMesh in enumerate( self.fractureMeshes ):
-            if i < len( self.allFracturesVtkOutput ):
-                write_mesh( fractureMesh, self.allFracturesVtkOutput[ i ] )
+            write_mesh( fractureMesh, self._options.all_fractures_VtkOutput[ i ] )
 
 
 # Main function for standalone use
 def generateFractures(
     mesh: vtkUnstructuredGrid,
     outputPath: str,
-    fieldName: str,
-    fieldValues: str,
-    fracturesOutputDir: str,
     policy: int = 1,
+    fieldName: str = None,
+    fieldValues: str = None,
+    fracturesOutputDir: str = None,
     outputDataMode: int = 0,
-    fracturesDataMode: int = 1
+    fracturesDataMode: int = 0
 ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
     """Apply fracture generation to a mesh.
 
     Args:
         mesh (vtkUnstructuredGrid): The input mesh.
         outputPath (str): Output file path if write_output is True.
-        fieldName (str): Field name that defines fracture regions.
-        fieldValues (str): Comma-separated field values that identify fracture boundaries.
-        fracturesOutputDir (str): Output directory for fracture meshes.
         policy (int): Fracture policy (0 for internal, 1 for boundary). Defaults to 1.
-        outputDataMode (int): Data mode for main mesh (0 for ASCII, 1 for binary). Defaults to 0.
-        fracturesDataMode (int): Data mode for fracture meshes (0 for ASCII, 1 for binary). Defaults to 1.
+        fieldName (str): Field name that defines fracture regions. Defaults to None.
+        fieldValues (str): Comma-separated field values that identify fracture boundaries. Defaults to None.
+        fracturesOutputDir (str): Output directory for fracture meshes. Defaults to None.
+        outputDataMode (int): Data mode for main mesh (0 for binary, 1 for ASCII). Defaults to 0.
+        fracturesDataMode (int): Data mode for fracture meshes (0 for binary, 1 for ASCII). Defaults to 0.
 
     Returns:
         tuple[vtkUnstructuredGrid, list[vtkUnstructuredGrid]]:
             Split mesh and fracture meshes.
     """
-    filterInstance = GenerateFractures( mesh, fieldName, fieldValues, fracturesOutputDir, policy, outputDataMode,
+    filterInstance = GenerateFractures( mesh, policy, fieldName, fieldValues, fracturesOutputDir, outputDataMode,
                                         fracturesDataMode )
     success = filterInstance.applyFilter()
 
