@@ -98,7 +98,7 @@ def test_generate_rectilinear_grid_filter_missing_parameters():
     assert not success, "Filter should fail when coordinates are not set"
 
 
-def test_generate_rectilinear_grid_standalone(tmp_path):
+def test_generate_rectilinear_grid_standalone( tmp_path ):
     """Test the standalone generateRectilinearGrid function."""
     output_path = tmp_path / "test_grid.vtu"
 
