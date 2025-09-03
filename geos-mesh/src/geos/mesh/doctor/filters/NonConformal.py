@@ -108,7 +108,7 @@ class NonConformal( MeshDoctorFilterBase ):
 
         # Add marking arrays if requested
         if self.writeNonConformalCells and self.nonConformalCells:
-            self._addNonConformalCellsArray( self.nonConformalCells )
+            self._addNonConformalCellsArray()
 
         self.logger.info( f"The filter {self.logger.name} succeeded." )
         return True
