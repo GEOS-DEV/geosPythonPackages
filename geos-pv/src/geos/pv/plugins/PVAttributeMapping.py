@@ -5,13 +5,13 @@
 import sys
 from pathlib import Path
 from typing import Union
-
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+
 update_paths()
 
 from geos.mesh.processing.AttributeMapping import AttributeMapping
@@ -24,7 +24,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import (
     vtkDataArraySelection,
@@ -115,9 +115,10 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             attributeNames: set[ str ] = getAttributeSet( inData, False )
 
             for attributeName in attributeNames:
-                if isinstance( inData, vtkMultiBlockDataSet ) and isAttributeGlobal( inData, attributeName, False ) or isinstance( inData, vtkDataSet ):
-                    if not self.m_attributes.ArrayExists( attributeName ):
-                        self.m_attributes.AddArray( attributeName, False )
+                if isinstance( inData, vtkMultiBlockDataSet ) and isAttributeGlobal( inData, attributeName, False ) \
+                    or isinstance( inData, vtkDataSet ) \
+                    and not self.m_attributes.ArrayExists( attributeName ):
+                    self.m_attributes.AddArray( attributeName, False )
 
             self.m_firstUse = False
         return 1
@@ -162,12 +163,9 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet,
-                            vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
-        meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet,
-                            vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
-        outData: Union[ vtkDataSet, vtkMultiBlockDataSet,
-                        vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
+        meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
+        meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
+        outData: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
 
         assert meshTo is not None, "Input mesh (meshTo) to transfer attributed is null."
         assert meshFrom is not None, "Input mesh (meshFrom) with attributes to transfer is null."
@@ -176,7 +174,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         outData.ShallowCopy( meshTo )
 
         attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
-        
+
         filter: AttributeMapping = AttributeMapping( meshFrom, outData, attributeNames, True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
@@ -184,4 +182,3 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         filter.applyFilter()
 
         return 1
-
