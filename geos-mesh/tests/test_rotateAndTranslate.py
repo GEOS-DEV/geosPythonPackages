@@ -28,13 +28,13 @@ def __gen_box(Lx:int, Ly:int, Lz:int, nx:int, ny:int, nz:int)-> tuple[np.ndarray
 
 def __rotate_box(angles : np.ndarray, pts:np.ndarray) -> np.ndarray:
     a = angles[0]
-    RX = np.matrix([[1., 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+    RX = np.asarray([[1., 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
     a = angles[1]
-    RY = np.matrix([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+    RY = np.asarray([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
     a = angles[2]
-    RZ = np.matrix([[np.cos(a), -np.sin(a), 0], [np.sin(a), np.cos(a), 0], [0, 0, 1]])
+    RZ = np.asarray([[np.cos(a), -np.sin(a), 0], [np.sin(a), np.cos(a), 0], [0, 0, 1]])
 
-    return np.asarray((RZ * RY * RX * pts.transpose()).transpose())
+    return np.asarray((RZ @ RY @ RX @ pts.transpose()).transpose())
 
 def __build_test_mesh() -> Generator[ Expected, None, None ]:
     # generate random points in a box Lx, Ly, Lz

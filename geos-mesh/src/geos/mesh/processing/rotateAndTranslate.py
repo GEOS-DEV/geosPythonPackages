@@ -82,11 +82,11 @@ def recenter_and_rotate(pts : np.ndarray, logger : logging.Logger) -> tuple[np.n
     logger.info(f"Local frame u {u}, v {v}, w {w}")
 
     # find rotation R = U sig V
-    rotation = np.matrix([u / np.linalg.norm(u), v / np.linalg.norm(v), w / np.linalg.norm(w)]).transpose()
+    rotation = np.asarray([u / np.linalg.norm(u), v / np.linalg.norm(v), w / np.linalg.norm(w)],dtype=np.float64).transpose()
     logger.info(f"R {rotation}")
     logger.info(f"theta {np.acos(.5 * (np.trace(rotation) - 1)) * 180 / np.pi}")
 
-    pts = (rotation.transpose() * pts.transpose()).transpose()
+    pts = (rotation.transpose() @ pts.transpose()).transpose()
     pts[np.abs(pts)<1e-15] = 0. # clipping points too close to zero
     logger.info(f"Un-rotated pts : {pts}")
 
