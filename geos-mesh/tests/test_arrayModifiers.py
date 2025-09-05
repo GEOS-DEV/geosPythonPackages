@@ -479,6 +479,59 @@ def test_copyAttributeDataSet(
     assert vtkDataTypeCopied == vtkDataTypeTest
 
 
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeName, onPoints, defaultValueTest", [
+    ( "fracture", "emptyFracture", "collocated_nodes", True, [ -1, -1 ] ),
+    ( "multiblock", "emptyFracture", "FAULT", False, -1 ),
+    ( "multiblock", "emptymultiblock", "FAULT", False, -1 ),
+    ( "dataset", "emptymultiblock", "FAULT", False, -1 ),
+    ( "dataset", "emptydataset", "FAULT", False, -1 ),
+] )
+def test_transferAttributeWithElementMap(
+    dataSetTest: Any,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    meshFromName: str,
+    meshToName: str,
+    attributeName: str,
+    onPoints: bool,
+    defaultValueTest: Any,
+) -> None:
+    "Test to transfer attributes from the meshFrom to the dataSetTo using an elementMap."
+    meshFrom: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshFromName )
+    if isinstance( meshFrom, vtkMultiBlockDataSet ):
+        arrayModifiers.fillAllPartialAttributes( meshFrom )
+    
+    meshTo: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshToName )
+    elementMap: dict[ int, npt.NDArray[ np.int64] ] = getElementMap( meshFromName, meshToName, onPoints )
+
+    assert arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints )
+
+    for flatIdDataSetTo in elementMap:
+        dataTo: Union[ vtkPointData, vtkCellData ]
+        if isinstance( meshTo, vtkDataSet ):
+            dataTo = meshTo.GetPointData() if onPoints else meshTo.GetCellData()
+        elif isinstance( meshTo, vtkMultiBlockDataSet ):
+            dataSetTo: vtkDataSet = meshTo.GetDataSet( flatIdDataSetTo )
+            dataTo = dataSetTo.GetPointData() if onPoints else dataSetTo.GetCellData()
+
+        arrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataTo.GetArray( attributeName ) )
+        for idElementTo in range( len( arrayTo ) ):
+            idElementFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
+            if idElementFrom == -1:
+                assert arrayTo[ idElementTo ] == defaultValueTest
+
+            else:
+                dataFrom: Union[ vtkPointData, vtkCellData ]
+                if isinstance( meshFrom, vtkDataSet ):
+                    dataFrom= meshFrom.GetPointData() if onPoints else meshFrom.GetCellData()
+                elif isinstance( meshFrom, vtkMultiBlockDataSet ):
+                    flatIdDataSetFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
+                    dataSetFrom: vtkDataSet = meshFrom.GetDataSet( flatIdDataSetFrom )
+                    dataFrom = dataSetFrom.GetPointData() if onPoints else dataSetFrom.GetCellData()
+
+                arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
+                assert np.all( arrayTo[ idElementTo ] == arrayFrom[ idElementFrom ] )
+
+
 @pytest.mark.parametrize( "attributeName, onPoints", [
     ( "CellAttribute", False ),
     ( "PointAttribute", True ),
