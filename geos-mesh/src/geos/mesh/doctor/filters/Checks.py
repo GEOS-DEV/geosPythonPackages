@@ -224,7 +224,7 @@ class Checks( MeshDoctorFilterBase ):
                 self.logger.error( f"Failed to create options for check '{checkName}': {e}. "
                                    f"This check will be skipped." )
 
-        return Options( checksToPerform=list( individualCheckOptions.keys() ),
+        return Options( checks_to_perform=list( individualCheckOptions.keys() ),
                         checks_options=individualCheckOptions,
                         check_displays=individualCheckDisplay )
 
