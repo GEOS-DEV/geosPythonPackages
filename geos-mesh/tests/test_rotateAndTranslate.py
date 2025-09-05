@@ -4,6 +4,7 @@ from typing import Generator
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron, VTK_HEXAHEDRON
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter # for writing the output tmp
+import logging # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
@@ -15,7 +16,8 @@ class Expected:
     mesh: vtkUnstructuredGrid
 
 def __gen_box(Lx:int, Ly:int, Lz:int, nx:int, ny:int, nz:int)-> tuple[np.ndarray, np.ndarray]:
-    np.random.seed(1)
+    # np.random.seed(1) # for reproducibility
+    np.random.default_rng()
     off = np.random.randn(1, 3)
     pts = []
     x,y,z = np.meshgrid(np.linspace(0,Lx,nx),np.linspace(0,Ly,ny),np.linspace(0,Lz,ny))
@@ -38,21 +40,22 @@ def __rotate_box(angles : np.ndarray, pts:np.ndarray) -> np.ndarray:
 
 def __build_test_mesh() -> Generator[ Expected, None, None ]:
     # generate random points in a box Lx, Ly, Lz
-    np.random.seed(1)
+    # np.random.seed(1) # for reproducibility
+    np.random.default_rng()
     Lx, Ly, Lz = (2, 5, 8) # box size
     nx, ny, nz = (10, 10, 10) # number of points in each direction
     pts, off = __gen_box(Lx, Ly, Lz, nx, ny, nz)
 
-    print(f"Offseting of {off}")
-    print(f"Original pts : {pts}")
+    logging.warning(f"Offseting of {off}")
+    logging.warning(f"Original pts : {pts}")
     angles = -2*np.pi + np.random.randn(1, 3)*np.pi # random angles in rad
-    print(f"angles {angles[0]}")
+    logging.warning(f"angles {angles[0]}")
     pts = __rotate_box(angles[0], pts)
-    print(f"Rotated pts : {pts}")
+    logging.info(f"Rotated pts : {pts}")
     pts[:, 0] += off[0][0]
     pts[:, 1] += off[0][1]
     pts[:, 2] += off[0][2]
-    print(f"Translated pts : {pts}")
+    logging.info(f"Translated pts : {pts}")
 
     # Creating multiple meshes, each time with a different angles
     mesh = vtkUnstructuredGrid()
@@ -78,21 +81,20 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
     yield Expected( mesh=mesh ) 
 
 @pytest.mark.parametrize( "expected", __build_test_mesh() )
-def test_reorient_polyhedron( expected: Expected ) -> None:
+def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
     output_mesh = transform_mesh( expected.mesh )
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == expected.mesh.GetNumberOfCells()
-    print(f"Bounds {output_mesh.GetBounds()}")
     assert output_mesh.GetBounds()[0] == pytest.approx(0., abs=1e-10) and output_mesh.GetBounds()[2] == pytest.approx(0., abs=1e-10) and output_mesh.GetBounds()[4] == pytest.approx(0., abs=1e-10)
     #TODO more assert but need more assumptions then
     # temp
-    w = vtkXMLUnstructuredGridWriter()
-    w.SetFileName("./test_rotateAndTranslate.vtk")
-    w.SetInputData(output_mesh)
-    w.Write()
-    w.SetFileName("./test_rotateAndTranslate_input.vtk")
-    w.SetInputData(expected.mesh)
-    w.Write()
+#     w = vtkXMLUnstructuredGridWriter()
+#     w.SetFileName("./test_rotateAndTranslate.vtu")
+#     w.SetInputData(output_mesh)
+#     w.Write()
+#     w.SetFileName("./test_rotateAndTranslate_input.vtu")
+#     w.SetInputData(expected.mesh)
+#     w.Write()
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+# if __name__ == "__main__":
+#     pytest.main([__file__, '-s', '-v','--log-cli-level=WARNING'])
