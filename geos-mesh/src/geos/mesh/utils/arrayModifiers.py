@@ -694,13 +694,13 @@ def copyAttributeDataSet(
 def transferAttributeToDataSetWithElementMap(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     dataSetTo: vtkDataSet,
-    dictElementMap: dict[ int, npt.NDArray[ np.int64] ],
+    elementMap: dict[ int, npt.NDArray[ np.int64] ],
     attributeName: str,
     onPoints: bool,
     flatIdDataSetTo: int = 0,
     logger: Union[ Logger, Any ] = None,
 ) -> bool:
-    """Transfer attributes from the meshFrom to the dataSetTo using a mapping.
+    """Transfer attributes from the meshFrom to the dataSetTo using an elementMap.
 
     If meshFrom is a vtkDataSet, the flat index (flatIdDataSetFrom) is set to 0.
     dataSetTo is considered as block of vtkMultiblockDataSet, if not the flat index (flatIdDataSetTo) is set to 0.
@@ -710,17 +710,17 @@ def transferAttributeToDataSetWithElementMap(
         - The item is an array of size (nb elements in dataSetTo, 2).
     
     If an element (idElementTo) of the dataSetTo (flatIdDataSetTo) is mapped with no element of the meshFrom:
-        - dictElementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
+        - elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
         - The value of the attribute for this element depends of the type of the value of the attribute (0 for unit, -1 for int, nan for float).
 
     If an element (idElementTo) of the dataSetTo (flatIdDataSetTo) is mapped with an element (idElementFrom) of one of the meshFrom's dataset (flatIdDataSetFrom):
-        - dictElementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
+        - elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
         - The value of the attribute for this element is the value of the element (idElementFrom) of the meshFrom on on the dataSetFrom (flatIdDataSetFrom).
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the attribute to transfer.
         dataSetTo (vtkDataSet): The mesh where to transfer the attribute.
-        dictElementMap (dict[int, npt.NDArray[np.int64]]): The elementMap.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap.
         attributeName (str): The name of the attribute to transfer.
         onPoints (bool): True if the attribute is on points, False if it is on cells.
         flatIdDataSetTo (int, Optional): The flat index of the dataSetTo.
@@ -735,14 +735,14 @@ def transferAttributeToDataSetWithElementMap(
     if logger is None:
         logger = getLogger( "transferAttributeToDataSetWithElementMap", True )
 
-    if flatIdDataSetTo not in dictElementMap.keys():
+    if flatIdDataSetTo not in elementMap.keys():
         logger.error( f"The map is incomplete, there is no data for the dataSetTo (flat index { flatIdDataSetTo })." )
         return False
     
     nbElementsTo: int = dataSetTo.GetNumberOfPoints() if onPoints else dataSetTo.GetNumberOfCells()
-    if len( dictElementMap[ flatIdDataSetTo ] ) != nbElementsTo:
+    if len( elementMap[ flatIdDataSetTo ] ) != nbElementsTo:
         logger.error( f"The map is wrong, there is { nbElementsTo } elements in the the dataSetTo (flat index { flatIdDataSetTo })\
-                      but { len( dictElementMap[ flatIdDataSetTo ] ) } elements in the map." )
+                      but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map." )
         return False
 
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, onPoints )
@@ -770,17 +770,19 @@ def transferAttributeToDataSetWithElementMap(
 
     for idElementTo in range( nbElementsTo ):
         valueToTransfer: Any = defaultValue
-        idElementFrom: int = dictElementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
+        idElementFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
         if idElementFrom != -1:
-            flatIdDataSetFrom = dictElementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
             dataFrom: Union[ vtkPointData, vtkCellData ]
             if isinstance( meshFrom, vtkDataSet ):
                 dataFrom = meshFrom.GetPointData() if onPoints else  meshFrom.GetCellData()
             elif isinstance( meshFrom, vtkMultiBlockDataSet ):
+                flatIdDataSetFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
                 dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
                 dataFrom = dataSetFrom.GetPointData() if onPoints else  dataSetFrom.GetCellData()
+
             arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
             valueToTransfer = arrayFrom[ idElementFrom ]
+
         arrayTo[ idElementTo ] = valueToTransfer
 
     return createAttribute( dataSetTo,
@@ -795,12 +797,12 @@ def transferAttributeToDataSetWithElementMap(
 def transferAttributeWithElementMap(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-    dictElementMap: dict[ int, npt.NDArray[ np.int64] ],
+    elementMap: dict[ int, npt.NDArray[ np.int64] ],
     attributeName: str,
     onPoints: bool,
     logger: Union[ Logger, Any ] = None,
 ) -> bool:
-    """Transfer attributes from the meshFrom to the meshTo using a mapping.
+    """Transfer attributes from the meshFrom to the meshTo using an elementMap.
 
     If meshFrom is a vtkDataSet, the flat index (flatIdDataSetFrom) is set to 0.
     If meshTo is a vtkDataSet, the flat index (flatIdDataSetTo) is set to 0.
@@ -810,17 +812,17 @@ def transferAttributeWithElementMap(
         - Items are arrays of size (nb elements in datasets, 2).
     
     If an element (idElementTo) of one of the meshTo's dataSet (flatIdDataSetTo) is mapped with no element of the meshFrom:
-        - dictElementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
+        - elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
         - The value of the attribute for this element depends of the type of the value of the attribute (0 for unit, -1 for int, nan for float).
 
     If an element (idElementTo) of one of the meshTo's dataSet (flatIdDataSetTo) is mapped with an element (idElementFrom) of one of the meshFrom's dataset (flatIdDataSetFrom):
-        - dictElementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
+        - elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
         - The value of the attribute for this element is the value of the element (idElementFrom) of the meshFrom on on the dataSetFrom (flatIdDataSetFrom).
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the attribute to transfer.
         meshTo (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh where to transfer the attribute.
-        dictElementMap (dict[int, npt.NDArray[np.int64]]): The elementMap.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap.
         attributeName (str): The name of the attribute to transfer.
         onPoints (bool): True if the attribute is on points, False if it is on cells.
         flatIdDataSetTo (int, Optional): The flat index of the dataSetTo.
@@ -836,17 +838,15 @@ def transferAttributeWithElementMap(
         logger = getLogger( "transferAttributeWithElementMap", True )
 
     if isinstance( meshTo, vtkDataSet ):
-        return transferAttributeToDataSetWithElementMap( meshFrom, meshTo, dictElementMap, attributeName, onPoints, logger=logger )
+        return transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints, logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         listFlatIdMultiBlockDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdMultiBlockDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
-            if not transferAttributeToDataSetWithElementMap( meshFrom, dataSetTo, dictElementMap, attributeName, onPoints, flatIdDataSetTo=flatIdDataSetTo, logger=logger ):
+            if not transferAttributeToDataSetWithElementMap( meshFrom, dataSetTo, elementMap, attributeName, onPoints, flatIdDataSetTo=flatIdDataSetTo, logger=logger ):
                 logger.error( f"The attribute transfer has failed for the dataset with the flat index { flatIdDataSetTo } of the meshTo.")
                 return False
         return True
-
-    return False
 
 
 def renameAttribute(
