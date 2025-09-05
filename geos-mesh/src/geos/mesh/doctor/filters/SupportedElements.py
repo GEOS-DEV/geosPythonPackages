@@ -229,8 +229,8 @@ def supportedElements(
         tuple[vtkUnstructuredGrid, list[ str ], list[ int ]]:
             Processed mesh, list of unsupported element types, list of unsupported polyhedron indices.
     """
-    filterInstance = SupportedElements( mesh, writeUnsupportedElementTypes, writeUnsupportedPolyhedrons, numProc,
-                                        chunkSize )
+    filterInstance = SupportedElements( mesh, numProc, chunkSize, writeUnsupportedElementTypes,
+                                        writeUnsupportedPolyhedrons )
     success = filterInstance.applyFilter()
     if not success:
         raise RuntimeError( "Supported elements identification failed." )
