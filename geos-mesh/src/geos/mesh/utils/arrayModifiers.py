@@ -839,7 +839,7 @@ def transferAttributeWithElementMap(
         return transferAttributeToDataSetWithElementMap( meshFrom, meshTo, dictElementMap, attributeName, onPoints, logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         listFlatIdMultiBlockDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
-        for flatIdDataSetTo in range( listFlatIdMultiBlockDataSetTo ):
+        for flatIdDataSetTo in listFlatIdMultiBlockDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
             if not transferAttributeToDataSetWithElementMap( meshFrom, dataSetTo, dictElementMap, attributeName, onPoints, flatIdDataSetTo=flatIdDataSetTo, logger=logger ):
                 logger.error( f"The attribute transfer has failed for the dataset with the flat index { flatIdDataSetTo } of the meshTo.")
