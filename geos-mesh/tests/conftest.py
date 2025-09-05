@@ -160,19 +160,25 @@ def dataSetTest() -> Any:
         """
         reader: Union[ vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridReader ]
         if datasetType == "multiblock":
-            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
+            reader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFault.vtm"
         elif datasetType == "emptymultiblock":
-            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
+            reader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFaultempty.vtm"
+        elif datasetType == "fracture":
+            reader = vtkXMLUnstructuredGridReader()
+            vtkFilename = "data/fracture_res5_id.vtu"
+        elif datasetType == "emptyFracture":
+            reader = vtkXMLUnstructuredGridReader()
+            vtkFilename = "data/fracture_res5_id_empty.vtu"
         elif datasetType == "dataset":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            reader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            reader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id_empty.vtu"
         elif datasetType == "polydata":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
+            reader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/triangulatedSurface.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
@@ -181,3 +187,42 @@ def dataSetTest() -> Any:
         return reader.GetOutput()
 
     return _get_dataset
+
+
+@pytest.fixture
+def getElementMap() -> Any:
+    """Get the element indexes mapping dictionary using the function _get_elementMap() between two meshes.
+
+    Returns:
+        elementMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
+    """
+
+    def _get_elementMap( meshFromName: str, meshToName: str, points: bool ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
+        """Get the element indexes mapping dictionary between two meshes
+
+        Args:
+            meshFromName (str): The name of the meshFrom.
+            meshToName (str): The name of the meshTo.
+            points (bool): True if elements to map is points, False if it is cells.
+
+        Returns:
+            elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
+        """
+        elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
+        nbElements: tuple[ int, int ] = ( 4092, 212 ) if points else ( 1740, 156 )
+        if meshFromName == "multiblock" and meshToName == "emptymultiblock":
+            elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
+            elementMap[ 2 ] = np.array( [ [ 2, element ] for element in range( nbElements[ 1 ] ) ] )
+        elif meshFromName == "multiblock" and meshToName == "emptyFracture":
+            elementMap[ 0 ] = np.array( [ [ 2, element ] for element in range( nbElements[ 1 ] ) ] )
+        elif meshFromName == "dataset" and meshToName == "emptyFracture":
+            elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2), -1, np.int64 )
+        elif meshFromName == "fracture" and meshToName == "emptyFracture":
+            elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
+        elif meshFromName == "fracture" and meshToName == "emptymultiblock":
+            elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+            elementMap[ 2 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
+
+        return elementMap
+
+    return _get_elementMap
