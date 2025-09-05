@@ -2,10 +2,8 @@ import pytest
 import logging
 import numpy as np
 from unittest.mock import Mock
-from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_TETRA
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.mesh.doctor.actions.generate_cube import XYZ, build_rectilinear_blocks_mesh
 from geos.mesh.doctor.filters.MeshDoctorFilterBase import MeshDoctorFilterBase, MeshDoctorGeneratorBase
 
 __doc__ = """
@@ -15,26 +13,9 @@ Tests the functionality of base classes for mesh doctor filters and generators.
 
 
 @pytest.fixture( scope="module" )
-def simple_test_mesh():
-    """Fixture for a simple test mesh."""
-    x, y, z = np.array( [ 0, 1 ] ), np.array( [ 0, 1 ] ), np.array( [ 0, 1 ] )
-    mesh = build_rectilinear_blocks_mesh( [ XYZ( x, y, z ) ] )
-    return mesh
-
-
-@pytest.fixture( scope="module" )
-def single_cell_mesh():
+def single_tetrahedron_mesh() -> vtkUnstructuredGrid:
     """Fixture for a single tetrahedron mesh."""
     return createSingleCellMesh( VTK_TETRA, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
-
-
-@pytest.fixture( scope="module" )
-def empty_mesh():
-    """Fixture for an empty mesh."""
-    mesh = vtkUnstructuredGrid()
-    points = vtkPoints()
-    mesh.SetPoints( points )
-    return mesh
 
 
 class ConcreteFilterForTesting( MeshDoctorFilterBase ):
@@ -81,9 +62,9 @@ class ConcreteGeneratorForTesting( MeshDoctorGeneratorBase ):
 class TestMeshDoctorFilterBase:
     """Test class for MeshDoctorFilterBase functionality."""
 
-    def test_initialization_valid_inputs( self, simple_test_mesh ):
+    def test_initialization_valid_inputs( self, single_tetrahedron_mesh ):
         """Test successful initialization with valid inputs."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter", False )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", False )
 
         assert filter_instance.filterName == "TestFilter"
         assert filter_instance.mesh is not None
@@ -91,11 +72,11 @@ class TestMeshDoctorFilterBase:
         assert filter_instance.logger is not None
 
         # Verify that mesh is a copy, not the original
-        assert filter_instance.mesh is not simple_test_mesh
+        assert filter_instance.mesh is not single_tetrahedron_mesh
 
-    def test_initialization_with_external_logger( self, simple_test_mesh ):
+    def test_initialization_with_external_logger( self, single_tetrahedron_mesh ):
         """Test initialization with external logger."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter", True )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", True )
 
         assert filter_instance.filterName == "TestFilter"
         assert isinstance( filter_instance.logger, logging.Logger )
@@ -106,64 +87,64 @@ class TestMeshDoctorFilterBase:
             with pytest.raises( TypeError, match="Input 'mesh' must be a vtkUnstructuredGrid" ):
                 ConcreteFilterForTesting( error_obj, "TestFilter" )
 
-    def test_initialization_empty_mesh( self, empty_mesh ):
+    def test_initialization_empty_mesh( self ):
         """Test initialization with empty mesh."""
         with pytest.raises( ValueError, match="Input 'mesh' cannot be empty" ):
-            ConcreteFilterForTesting( empty_mesh, "TestFilter" )
+            ConcreteFilterForTesting( vtkUnstructuredGrid(), "TestFilter" )
 
-    def test_initialization_invalid_filter_name( self, simple_test_mesh ):
+    def test_initialization_invalid_filter_name( self, single_tetrahedron_mesh ):
         """Test initialization with invalid filter name."""
         for error_obj in [ 123, None ]:
             with pytest.raises( TypeError, match="Input 'filterName' must be a string" ):
-                ConcreteFilterForTesting( simple_test_mesh, error_obj )
+                ConcreteFilterForTesting( single_tetrahedron_mesh, error_obj )
 
         for error_obj in [ "", "   " ]:
             with pytest.raises( ValueError, match="Input 'filterName' cannot be an empty or whitespace-only string" ):
-                ConcreteFilterForTesting( simple_test_mesh, error_obj )
+                ConcreteFilterForTesting( single_tetrahedron_mesh, error_obj )
 
-    def test_initialization_invalid_external_logger_flag( self, simple_test_mesh ):
+    def test_initialization_invalid_external_logger_flag( self, single_tetrahedron_mesh ):
         """Test initialization with invalid useExternalLogger flag."""
         for error_obj in [ "not_bool", 1 ]:
             with pytest.raises( TypeError, match="Input 'useExternalLogger' must be a boolean" ):
-                ConcreteFilterForTesting( simple_test_mesh, "TestFilter", error_obj )
+                ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", error_obj )
 
-    def test_get_mesh( self, simple_test_mesh ):
+    def test_get_mesh( self, single_tetrahedron_mesh ):
         """Test getMesh method returns the correct mesh."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
         returned_mesh = filter_instance.getMesh()
 
         assert returned_mesh is filter_instance.mesh
-        assert returned_mesh.GetNumberOfCells() == simple_test_mesh.GetNumberOfCells()
-        assert returned_mesh.GetNumberOfPoints() == simple_test_mesh.GetNumberOfPoints()
+        assert returned_mesh.GetNumberOfCells() == single_tetrahedron_mesh.GetNumberOfCells()
+        assert returned_mesh.GetNumberOfPoints() == single_tetrahedron_mesh.GetNumberOfPoints()
 
-    def test_copy_mesh( self, simple_test_mesh ):
+    def test_copy_mesh( self, single_tetrahedron_mesh ):
         """Test copyMesh helper method."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
-        copied_mesh = filter_instance.copyMesh( simple_test_mesh )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
+        copied_mesh = filter_instance.copyMesh( single_tetrahedron_mesh )
 
-        assert copied_mesh is not simple_test_mesh
-        assert copied_mesh.GetNumberOfCells() == simple_test_mesh.GetNumberOfCells()
-        assert copied_mesh.GetNumberOfPoints() == simple_test_mesh.GetNumberOfPoints()
+        assert copied_mesh is not single_tetrahedron_mesh
+        assert copied_mesh.GetNumberOfCells() == single_tetrahedron_mesh.GetNumberOfCells()
+        assert copied_mesh.GetNumberOfPoints() == single_tetrahedron_mesh.GetNumberOfPoints()
 
-    def test_apply_filter_success( self, simple_test_mesh ):
+    def test_apply_filter_success( self, single_tetrahedron_mesh ):
         """Test successful filter application."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter", shouldSucceed=True )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", shouldSucceed=True )
         result = filter_instance.applyFilter()
 
         assert result is True
         assert filter_instance.applyFilterCalled
 
-    def test_apply_filter_failure( self, simple_test_mesh ):
+    def test_apply_filter_failure( self, single_tetrahedron_mesh ):
         """Test filter application failure."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter", shouldSucceed=False )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", shouldSucceed=False )
         result = filter_instance.applyFilter()
 
         assert result is False
         assert filter_instance.applyFilterCalled
 
-    def test_write_grid_with_mesh( self, simple_test_mesh, tmp_path ):
+    def test_write_grid_with_mesh( self, single_tetrahedron_mesh, tmp_path ):
         """Test writing mesh to file when mesh is available."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
         output_file = tmp_path / "test_output.vtu"
 
         filter_instance.writeGrid( str( output_file ) )
@@ -172,9 +153,9 @@ class TestMeshDoctorFilterBase:
         assert output_file.exists()
         assert output_file.stat().st_size > 0
 
-    def test_write_grid_with_different_options( self, simple_test_mesh, tmp_path ):
+    def test_write_grid_with_different_options( self, single_tetrahedron_mesh, tmp_path ):
         """Test writing mesh with different file options."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
 
         # Test ASCII mode
         output_file_ascii = tmp_path / "test_ascii.vtu"
@@ -189,9 +170,9 @@ class TestMeshDoctorFilterBase:
         # Write again with overwrite enabled (should not raise error)
         filter_instance.writeGrid( str( output_file_overwrite ), canOverwrite=True )
 
-    def test_write_grid_without_mesh( self, simple_test_mesh, tmp_path, caplog ):
+    def test_write_grid_without_mesh( self, single_tetrahedron_mesh, tmp_path, caplog ):
         """Test writing when no mesh is available."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
         filter_instance.mesh = None  # Remove the mesh
 
         output_file = tmp_path / "should_not_exist.vtu"
@@ -203,9 +184,9 @@ class TestMeshDoctorFilterBase:
         assert "No mesh available" in caplog.text
         assert not output_file.exists()
 
-    def test_set_logger_handler_without_existing_handlers( self, simple_test_mesh ):
+    def test_set_logger_handler_without_existing_handlers( self, single_tetrahedron_mesh ):
         """Test setting logger handler when no handlers exist."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter", useExternalLogger=True )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter", useExternalLogger=True )
 
         # Clear any existing handlers
         filter_instance.logger.handlers.clear()
@@ -217,9 +198,9 @@ class TestMeshDoctorFilterBase:
         # Verify handler was added
         assert mock_handler in filter_instance.logger.handlers
 
-    def test_set_logger_handler_with_existing_handlers( self, simple_test_mesh, caplog ):
+    def test_set_logger_handler_with_existing_handlers( self, single_tetrahedron_mesh, caplog ):
         """Test setting logger handler when handlers already exist."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter_with_handlers",
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter_with_handlers",
                                                     useExternalLogger=True )
         filter_instance.logger.addHandler( logging.NullHandler() )
 
@@ -232,9 +213,9 @@ class TestMeshDoctorFilterBase:
         # Now caplog will capture the warning correctly
         assert "already has a handler" in caplog.text
 
-    def test_logger_functionality( self, simple_test_mesh, caplog ):
+    def test_logger_functionality( self, single_tetrahedron_mesh, caplog ):
         """Test that logging works correctly."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter_functionality" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter_functionality" )
 
         with caplog.at_level( logging.INFO ):
             filter_instance.applyFilter()
@@ -242,17 +223,17 @@ class TestMeshDoctorFilterBase:
         # Should have logged the success message
         assert "Test filter applied successfully" in caplog.text
 
-    def test_mesh_deep_copy_behavior( self, simple_test_mesh ):
+    def test_mesh_deep_copy_behavior( self, single_tetrahedron_mesh ):
         """Test that the filter creates a deep copy of the input mesh."""
-        filter_instance = ConcreteFilterForTesting( simple_test_mesh, "TestFilter" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter" )
 
         # Modify the original mesh
-        original_cell_count = simple_test_mesh.GetNumberOfCells()
+        original_cell_count = single_tetrahedron_mesh.GetNumberOfCells()
 
         # The filter's mesh should be independent of the original
         filter_mesh = filter_instance.getMesh()
         assert filter_mesh.GetNumberOfCells() == original_cell_count
-        assert filter_mesh is not simple_test_mesh
+        assert filter_mesh is not single_tetrahedron_mesh
 
 
 class TestMeshDoctorGeneratorBase:
@@ -407,9 +388,9 @@ class TestMeshDoctorGeneratorBase:
 class TestMeshDoctorBaseEdgeCases:
     """Test class for edge cases and integration scenarios."""
 
-    def test_filter_base_not_implemented_error( self, simple_test_mesh ):
+    def test_filter_base_not_implemented_error( self, single_tetrahedron_mesh ):
         """Test that base class raises NotImplementedError."""
-        filter_instance = MeshDoctorFilterBase( simple_test_mesh, "BaseFilter" )
+        filter_instance = MeshDoctorFilterBase( single_tetrahedron_mesh, "BaseFilter" )
 
         with pytest.raises( NotImplementedError, match="Subclasses must implement applyFilter method" ):
             filter_instance.applyFilter()
@@ -421,26 +402,26 @@ class TestMeshDoctorBaseEdgeCases:
         with pytest.raises( NotImplementedError, match="Subclasses must implement applyFilter method" ):
             generator_instance.applyFilter()
 
-    def test_filter_with_single_cell_mesh( self, single_cell_mesh ):
+    def test_filter_with_single_cell_mesh( self, single_tetrahedron_mesh ):
         """Test filter with a single cell mesh."""
-        filter_instance = ConcreteFilterForTesting( single_cell_mesh, "SingleCellTest" )
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "SingleCellTest" )
         result = filter_instance.applyFilter()
 
         assert result is True
         assert filter_instance.getMesh().GetNumberOfCells() == 1
 
-    def test_filter_mesh_independence( self, simple_test_mesh ):
+    def test_filter_mesh_independence( self, single_tetrahedron_mesh ):
         """Test that multiple filters are independent."""
-        filter1 = ConcreteFilterForTesting( simple_test_mesh, "Filter1" )
-        filter2 = ConcreteFilterForTesting( simple_test_mesh, "Filter2" )
+        filter1 = ConcreteFilterForTesting( single_tetrahedron_mesh, "Filter1" )
+        filter2 = ConcreteFilterForTesting( single_tetrahedron_mesh, "Filter2" )
 
         mesh1 = filter1.getMesh()
         mesh2 = filter2.getMesh()
 
         # Meshes should be independent copies
         assert mesh1 is not mesh2
-        assert mesh1 is not simple_test_mesh
-        assert mesh2 is not simple_test_mesh
+        assert mesh1 is not single_tetrahedron_mesh
+        assert mesh2 is not single_tetrahedron_mesh
 
     def test_generator_multiple_instances( self ):
         """Test that multiple generator instances are independent."""
@@ -454,10 +435,10 @@ class TestMeshDoctorBaseEdgeCases:
         assert gen1.getMesh() is not None
         assert gen2.getMesh() is not None
 
-    def test_filter_logger_names( self, simple_test_mesh ):
+    def test_filter_logger_names( self, single_tetrahedron_mesh ):
         """Test that different filters get different logger names."""
-        filter1 = ConcreteFilterForTesting( simple_test_mesh, "Filter1" )
-        filter2 = ConcreteFilterForTesting( simple_test_mesh, "Filter2" )
+        filter1 = ConcreteFilterForTesting( single_tetrahedron_mesh, "Filter1" )
+        filter2 = ConcreteFilterForTesting( single_tetrahedron_mesh, "Filter2" )
 
         assert filter1.logger.name != filter2.logger.name
 
@@ -475,9 +456,9 @@ class TestMeshDoctorBaseEdgeCases:
     ( "LongFilterNameForTesting", True ),
     ( "UnicodeFilter", True ),
 ] )
-def test_parametrized_filter_behavior( simple_test_mesh, filter_name, should_succeed ):
+def test_parametrized_filter_behavior( single_tetrahedron_mesh, filter_name, should_succeed ):
     """Parametrized test for different filter configurations."""
-    filter_instance = ConcreteFilterForTesting( simple_test_mesh, filter_name, shouldSucceed=should_succeed )
+    filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, filter_name, shouldSucceed=should_succeed )
 
     result = filter_instance.applyFilter()
     assert result == should_succeed

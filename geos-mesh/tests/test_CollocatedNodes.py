@@ -1,11 +1,9 @@
 import pytest
 import numpy as np
 import os
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_TRIANGLE
-from vtkmodules.vtkCommonCore import vtkPoints
-from geos.mesh.doctor.actions.generate_cube import XYZ, build_rectilinear_blocks_mesh
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_TRIANGLE, VTK_HEXAHEDRON
 from geos.mesh.doctor.filters.CollocatedNodes import CollocatedNodes, collocatedNodes
-from geos.mesh.utils.genericHelpers import to_vtk_id_list
+from geos.mesh.utils.genericHelpers import createMultiCellMesh
 
 __doc__ = """
 Test module for CollocatedNodes filter.
@@ -16,8 +14,11 @@ Tests the functionality of detecting and handling collocated/duplicated nodes in
 @pytest.fixture( scope="module" )
 def mesh_with_collocated_nodes():
     """Fixture for a mesh with exactly duplicated and nearly collocated nodes."""
-    x, y, z = np.array( [ 0, 1, 2 ] ), np.array( [ 0, 1 ] ), np.array( [ 0, 1 ] )
-    mesh = build_rectilinear_blocks_mesh( [ XYZ( x, y, z ) ] )
+    mesh = createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
+                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
+                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
+                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
+                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
     points = mesh.GetPoints()
 
     # Add nodes to create collocated situations:
@@ -32,30 +33,21 @@ def mesh_with_collocated_nodes():
 
 
 @pytest.fixture( scope="module" )
-def mesh_with_wrong_support():
+def mesh_with_wrong_support() -> vtkUnstructuredGrid:
     """Fixture for a mesh containing a cell with repeated node indices."""
-    mesh = vtkUnstructuredGrid()
-    points = vtkPoints()
-    mesh.SetPoints( points )
-
-    points.InsertNextPoint( 0.0, 0.0, 0.0 )  # Point 0
-    points.InsertNextPoint( 1.0, 0.0, 0.0 )  # Point 1
-    points.InsertNextPoint( 0.0, 1.0, 0.0 )  # Point 2
-    points.InsertNextPoint( 1.0, 1.0, 0.0 )  # Point 3
-
-    # A degenerate triangle with a repeated node [0, 1, 1]
-    mesh.InsertNextCell( VTK_TRIANGLE, to_vtk_id_list( [ 0, 1, 1 ] ) )
-    # A normal triangle for comparison
-    mesh.InsertNextCell( VTK_TRIANGLE, to_vtk_id_list( [ 1, 2, 3 ] ) )
-
-    return mesh
+    return createMultiCellMesh( [ VTK_TRIANGLE, VTK_TRIANGLE ],
+                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 0, 0 ] ] ),
+                                  np.array( [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 1, 1, 0 ] ] ) ] )
 
 
 @pytest.fixture( scope="module" )
-def clean_mesh():
+def clean_mesh() -> vtkUnstructuredGrid:
     """Fixture for a simple, valid mesh with no issues."""
-    x, y, z = np.array( [ 0, 1, 2 ] ), np.array( [ 0, 1 ] ), np.array( [ 0, 1 ] )
-    return build_rectilinear_blocks_mesh( [ XYZ( x, y, z ) ] )
+    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
+                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
+                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
+                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
+                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
 
 
 def test_filter_on_clean_mesh( clean_mesh ):

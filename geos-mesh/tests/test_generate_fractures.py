@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import numpy
+import numpy as np
 import pytest
 from typing import Iterable, Iterator, Sequence
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
@@ -12,7 +12,8 @@ from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures, genera
 from geos.mesh.doctor.filters.GenerateFractures import ( FIELD_NAME, FIELD_VALUES, FRACTURES_DATA_MODE,
                                                          FRACTURES_OUTPUT_DIR, OUTPUT_BINARY_MODE,
                                                          OUTPUT_BINARY_MODE_VALUES, POLICY )
-from geos.mesh.utils.genericHelpers import to_vtk_id_list
+from geos.mesh.utils.arrayModifiers import createConstantAttributeDataSet
+from geos.mesh.utils.genericHelpers import to_vtk_id_list, createSingleCellMesh
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
@@ -36,7 +37,7 @@ class TestCase:
     result: TestResult
 
 
-def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
+def __build_test_case( xs: tuple[ np.ndarray, np.ndarray, np.ndarray ],
                        attribute: Iterable[ int ],
                        field_values: Iterable[ int ] = None,
                        policy: FracturePolicy = FracturePolicy.FIELD ):
@@ -44,7 +45,7 @@ def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
 
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( ( xyz, ) )
 
-    ref = numpy.array( attribute, dtype=int )
+    ref = np.array( attribute, dtype=int )
     if policy == FracturePolicy.FIELD:
         assert len( ref ) == mesh.GetNumberOfCells()
     attr = numpy_to_vtk( ref )
@@ -77,9 +78,9 @@ class Incrementor:
 
 
 def __generate_test_data() -> Iterator[ TestCase ]:
-    two_nodes = numpy.arange( 2, dtype=float )
-    three_nodes = numpy.arange( 3, dtype=float )
-    four_nodes = numpy.arange( 4, dtype=float )
+    two_nodes = np.arange( 2, dtype=float )
+    three_nodes = np.arange( 3, dtype=float )
+    four_nodes = np.arange( 4, dtype=float )
 
     # Split in 2
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), ( 0, 1, 0, 1, 0, 1, 0, 1 ) )
@@ -229,8 +230,8 @@ def add_simplified_field_for_cells( mesh: vtkUnstructuredGrid, field_name: str, 
     """
     data = mesh.GetCellData()
     n = mesh.GetNumberOfCells()
-    array = numpy.ones( ( n, field_dimension ), dtype=float )
-    array = numpy.arange( 1, n * field_dimension + 1 ).reshape( n, field_dimension )
+    array = np.ones( ( n, field_dimension ), dtype=float )
+    array = np.arange( 1, n * field_dimension + 1 ).reshape( n, field_dimension )
     vtk_array = numpy_to_vtk( array )
     vtk_array.SetName( field_name )
     data.AddArray( vtk_array )
@@ -306,9 +307,9 @@ def test_copy_fields_when_splitting_mesh():
     that will be called when using split_mesh_on_fractures method from generate_fractures.
     """
     # Generating the rectilinear grid and its quads on all borders
-    x: numpy.array = numpy.array( [ 0, 1, 2 ] )
-    y: numpy.array = numpy.array( [ 0, 1 ] )
-    z: numpy.array = numpy.array( [ 0, 1 ] )
+    x: np.array = np.array( [ 0, 1, 2 ] )
+    y: np.array = np.array( [ 0, 1 ] )
+    z: np.array = np.array( [ 0, 1 ] )
     xyzs: XYZ = XYZ( x, y, z )
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [ xyzs ] )
     assert mesh.GetCells().GetNumberOfCells() == 2
@@ -397,16 +398,9 @@ def test_generate_fracture_filters_basic( test_case: TestCase, tmp_path ):
 
 def test_generate_fractures_filter_setters():
     """Test the setter methods of GenerateFractures filter."""
-    # Create a simple test mesh
-    x = numpy.array( [ 0, 1 ] )
-    y = numpy.array( [ 0, 1 ] )
-    z = numpy.array( [ 0, 1 ] )
-    xyz = XYZ( x, y, z )
-    mesh = build_rectilinear_blocks_mesh( [ xyz ] )
-
-    # Add fracture field
-    add_simplified_field_for_cells( mesh, "test_field", 1 )
-
+    mesh = createSingleCellMesh( VTK_HEXAHEDRON, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
+                                                             [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="test_field", onPoints=False )
     # Create filter instance
     filterInstance = GenerateFractures( mesh )
 
@@ -447,17 +441,9 @@ def test_generate_fractures_filter_setters():
 def test_generate_fractures_filter_with_global_ids( tmp_path ):
     """Test that filter fails when mesh contains global IDs."""
     # Create a simple test mesh
-    x = numpy.array( [ 0, 1 ] )
-    y = numpy.array( [ 0, 1 ] )
-    z = numpy.array( [ 0, 1 ] )
-    xyz = XYZ( x, y, z )
-    mesh = build_rectilinear_blocks_mesh( [ xyz ] )
-
-    # Add global IDs (which should cause failure)
-    points_global_ids = numpy.arange( mesh.GetNumberOfPoints(), dtype=int )
-    points_array = numpy_to_vtk( points_global_ids )
-    points_array.SetName( "GLOBAL_IDS_POINTS" )
-    mesh.GetPointData().AddArray( points_array )
+    mesh = createSingleCellMesh( VTK_HEXAHEDRON, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
+                                                             [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="GLOBAL_IDS_POINTS", onPoints=False )
 
     fractures_dir = tmp_path / "fractures"
     fractures_dir.mkdir( exist_ok=True )  # Create the directory

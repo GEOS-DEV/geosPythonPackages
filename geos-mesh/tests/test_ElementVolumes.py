@@ -1,9 +1,8 @@
 import pytest
 import numpy as np
 from vtkmodules.vtkCommonCore import vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_TETRA, VTK_TRIANGLE
-from geos.mesh.utils.genericHelpers import to_vtk_id_list, createSingleCellMesh
-from geos.mesh.doctor.actions.generate_cube import XYZ, build_rectilinear_blocks_mesh
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_TETRA, VTK_TRIANGLE, VTK_HEXAHEDRON
+from geos.mesh.utils.genericHelpers import to_vtk_id_list, createSingleCellMesh, createMultiCellMesh
 from geos.mesh.doctor.filters.ElementVolumes import ElementVolumes, elementVolumes
 
 __doc__ = """
@@ -15,9 +14,11 @@ Tests the functionality of calculating element volumes and detecting problematic
 @pytest.fixture( scope="module" )
 def simple_hex_mesh():
     """Fixture for a simple hexahedron mesh with known volumes."""
-    x, y, z = np.array( [ 0, 1, 2 ] ), np.array( [ 0, 1 ] ), np.array( [ 0, 1 ] )
-    mesh = build_rectilinear_blocks_mesh( [ XYZ( x, y, z ) ] )
-    return mesh
+    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
+                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
+                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
+                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
+                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
 
 
 @pytest.fixture( scope="module" )
@@ -361,9 +362,7 @@ class TestElementVolumesEdgeCases:
 
     def test_single_cell_mesh( self ):
         """Test with a mesh containing only one cell."""
-        pts_coords = [ ( 0.0, 0.0, 0.0 ), ( 1.0, 0.0, 0.0 ), ( 0.0, 1.0, 0.0 ), ( 0.0, 0.0, 1.0 ) ]
-        mesh = createSingleCellMesh( VTK_TETRA, np.array( pts_coords ) )
-
+        mesh = createSingleCellMesh( VTK_TETRA, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
         filter_instance = ElementVolumes( mesh, minVolume=0.0 )
         success = filter_instance.applyFilter()
         assert success
