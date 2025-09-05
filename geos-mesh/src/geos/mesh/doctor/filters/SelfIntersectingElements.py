@@ -88,8 +88,8 @@ class SelfIntersectingElements( MeshDoctorFilterBase ):
         """
         self.logger.info( f"Apply filter {self.logger.name}" )
 
-        self.invalidCells = get_invalid_cell_ids( self.mesh, self.minDistance )
-        logger_results( self.logger, self.invalidCells )
+        self.invalidCellIds = get_invalid_cell_ids( self.mesh, self.minDistance )
+        logger_results( self.logger, self.invalidCellIds )
 
         # Add marking arrays if requested
         if self.writeInvalidElements:
