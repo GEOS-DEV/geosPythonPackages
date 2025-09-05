@@ -116,6 +116,3 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
 #     w.SetFileName("./test_rotateAndTranslate_input.vtu")
 #     w.SetInputData(expected.mesh)
 #     w.Write()
-
-# if __name__ == "__main__":
-#     pytest.main([__file__, '-s', '-v','--log-cli-level=WARNING'])
