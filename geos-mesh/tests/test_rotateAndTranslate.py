@@ -93,7 +93,18 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
         0., abs=1e-10 ) and output_mesh.GetBounds()[ 2 ] == pytest.approx(
             0., abs=1e-10 ) and output_mesh.GetBounds()[ 4 ] == pytest.approx( 0., abs=1e-10 )
     #TODO more assert but need more assumptions then
-    # temp
+    # test diagonal
+    assert np.linalg.norm( np.array( [ output_mesh.GetBounds()[ 1 ] - output_mesh.GetBounds()[ 0 ],
+                                      output_mesh.GetBounds()[ 3 ] - output_mesh.GetBounds()[ 2 ],
+                                      output_mesh.GetBounds()[ 5 ] - output_mesh.GetBounds()[ 4 ] ] ) ) == pytest.approx(
+                                          np.linalg.norm( np.array( [ 5, 8, 2 ] ) ), abs=1e-10 )
+    # test aligned with axis
+    v0 = np.array( output_mesh.GetPoint( 1 ) ) - np.array( output_mesh.GetPoint( 0 ) )
+    v1 = np.array( output_mesh.GetPoint( 10 ) ) - np.array( output_mesh.GetPoint( 0 ) )
+    v2 = np.array( output_mesh.GetPoint( 10 * 10 ) ) - np.array( output_mesh.GetPoint( 0 ) )
+    assert np.abs( np.dot( v0, v1 ) ) < 1e-10
+    assert np.abs( np.dot( v0, v2 ) ) < 1e-10
+    assert np.abs( np.dot( v1, v2 ) ) < 1e-10
 
 
 #     w = vtkXMLUnstructuredGridWriter()
