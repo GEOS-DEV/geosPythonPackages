@@ -44,7 +44,13 @@ def transform_mesh( input: vtkUnstructuredGrid, logger: logging.Logger | None = 
     return transformFilter.GetOutput()
 
 
-def local_frame( pts ):
+def local_frame( pts: np.ndarray ) -> tuple[ np.ndarray, np.ndarray, np.ndarray ]:
+    """Find a local frame for a set of points
+    Args:
+        pts (np.ndarray): points to find the local frame of
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray]: three orthogonal vectors defining the local frame
+    """
     # find 3 orthogonal vectors
     # we assume points are on a box
     # first vector is along x axis
