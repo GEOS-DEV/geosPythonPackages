@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Paloma Martinez
+# SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator, attr-defined"
 import pytest
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -16,6 +16,33 @@ from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 
 from geos.mesh.utils import arrayHelpers
+
+@pytest.mark.parametrize( "meshFromName, meshToName, points", [
+    ( "multiblock", "emptymultiblock", False ),
+    ( "multiblock", "emptyFracture", False ),
+    ( "dataset", "emptyFracture", False ),
+    ( "fracture", "emptyFracture", True ),
+    ( "fracture", "emptyFracture", False ),
+    ( "fracture", "emptymultiblock", False ),
+] )
+def test_computeElementMapping(
+    dataSetTest: vtkDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    meshFromName: str,
+    meshToName: str,
+    points: bool,
+) -> None:
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    elementMapComputed: dict[ int, npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping( meshFrom, meshTo, points )
+    elementMapTest: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, points )
+
+    keysComputed: list[ int ] = list( elementMapComputed.keys() )
+    keysTest: list[ int ] = list( elementMapTest.keys() )
+    assert keysComputed == keysTest
+
+    for key in keysTest:
+        assert np.all( elementMapComputed[ key ] == elementMapTest[ key ] )
 
 
 @pytest.mark.parametrize( "onpoints, expected", [ ( True, {
