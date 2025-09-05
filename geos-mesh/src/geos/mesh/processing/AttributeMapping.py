@@ -5,29 +5,24 @@
 import numpy as np
 import numpy.typing as npt
 from geos.utils.Logger import logging, Logger, getLogger
-from typing_extensions import Self, Union, Any
-import vtkmodules.util.numpy_support as vnp
+from typing_extensions import Self, Union
 
-from vtk import (  # type: ignore[import-untyped]
-    VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
-    VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE,
-)
 from vtkmodules.vtkCommonDataModel import (
     vtkDataSet,
     vtkMultiBlockDataSet,
 )
 
-from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.arrayHelpers import ( computeCellMapping, getAttributeSet, getComponentNames,
-                                           getVtkDataTypeInObject, isAttributeGlobal )
+from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
+from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 
 __doc__ = """
-AttributeMapping is a vtk filter that transfer global attributes from a source mesh (meshFrom) to another (meshTo) for each
-cell of the two meshes with the same bounds coordinates.
+AttributeMapping is a vtk filter that transfer global attributes from a meshFrom to a meshTo for each
+cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
 The filter update the mesh where attributes are transferred directly, no copy is created.
 
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 The names of the attributes to transfer are give with a set of string.
+The localization of the attributes to transfer is a bool, True for points, False for cells. All the attributes must be on the same piece.
 To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
 
 To use the filter:
@@ -36,17 +31,19 @@ To use the filter:
 
     from filters.AttributeMapping import AttributeMapping
 
-    # filter inputs.
+    # Filter inputs.
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ]
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ]
     attributeNames: set[ str ]
     # Optional inputs.
-    speHandler: bool
+    onPoints: bool  # defaults to False
+    speHandler: bool  # defaults to False
 
-    # instantiate the filter
+    # Instantiate the filter
     filter :AttributeMapping = AttributeMapping( meshFrom,
                                                  meshTo,
                                                  attributeNames,
+                                                 onPoints,
                                                  speHandler,
     )
 
@@ -68,23 +65,28 @@ class AttributeMapping:
         meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         attributeNames: set[ str ],
+        onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """Map attributes of the source mesh (meshFrom) to the other mesh (meshTo).
+        """Transfer global attributes from the meshFrom to the meshTo mapping the piece of the attributes to transfer.
 
         Args:
             meshFrom (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh with attributes to transfer.
-            meshTo (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh where to copy attributes.
+            meshTo (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh where to transfer attributes.
             attributeNames (set[str]): Names of the attributes to transfer.
+            onPoints (bool): True if attributes are on points, False if they are on cells.
+                Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshFrom
         self.meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshTo
         self.attributeNames: set[ str ] = attributeNames
+        self.onPoints: bool = onPoints
+        self.piece: str = "points" if self.onPoints else "cells"
 
         # cell map
-        self.dictCellMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
+        self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
         # Logger.
         self.logger: Logger
@@ -109,16 +111,18 @@ class AttributeMapping:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def GetCellMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
-        """Getter of cell mapping dictionary.
+    def GetElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
+        """Getter of the element mapping dictionary.
+
+        If attribute to transfer are on points it will be a pointMap, else it will be a cellMap.
 
         Returns:
-            self.dictCellMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
+            self.elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
-        return self.dictCellMap
+        return self.ElementMap
 
     def applyFilter( self: Self ) -> bool:
-        """Map attributes from the source mesh (meshFrom) to the other (meshTo) for the shared cells.
+        """Transfer attributes on element from the meshFrom to the meshTo with the elementMap.
 
         Returns:
             boolean (bool): True if calculation successfully ended, False otherwise.
@@ -126,14 +130,14 @@ class AttributeMapping:
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         if len( self.attributeNames ) == 0:
-            self.logger.warning( "Please enter at least one attribute to transfer." )
+            self.logger.warning( f"Please enter at least one { self.piece } attribute to transfer." )
             self.logger.warning( f"The filter { self.logger.name } has not been used." )
             return False
 
         wrongAttributeNames: list[ str ] = []
         attributesAlreadyInMeshTo: list = []
-        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, False )
-        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, False )
+        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
+        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
         for attributeName in self.attributeNames:
             if attributeName not in attributesInMeshFrom:
                 wrongAttributeNames.append( attributeName )
@@ -143,13 +147,13 @@ class AttributeMapping:
 
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
-                f"The attributes { wrongAttributeNames } are not in the mesh from where to transfer attributes." )
+                f"The { self.piece } attributes { wrongAttributeNames } are not in the mesh from where to transfer attributes." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
         if len( attributesAlreadyInMeshTo ) > 0:
             self.logger.error(
-                f"The attributes { attributesAlreadyInMeshTo } are already in the mesh where attributes must be transferred."
+                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already in the mesh where attributes must be transferred."
             )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
@@ -157,113 +161,32 @@ class AttributeMapping:
         if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
             partialAttributes: list[ str ] = []
             for attributeName in self.attributeNames:
-                if not isAttributeGlobal( self.meshFrom, attributeName, False ):
+                if not isAttributeGlobal( self.meshFrom, attributeName, self.onPoints ):
                     partialAttributes.append( attributeName )
 
             if len( partialAttributes ) > 0:
-                self.logger.error( f"All attributes to transfer must be global, { partialAttributes } are partials." )
+                self.logger.error( f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
 
-        self.dictCellMap = computeCellMapping( self.meshFrom, self.meshTo )
-        sharedCell: bool = False
-        for key in self.dictCellMap:
-            if np.any( self.dictCellMap[ key ] > -1 ):
-                sharedCell = True
+        self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
+        sharedElement: bool = False
+        for key in self.ElementMap:
+            if np.any( self.ElementMap[ key ] > -1 ):
+                sharedElement = True
 
-        if not sharedCell:
-            self.logger.warning( "The two meshes do not have any shared cell." )
+        if not sharedElement:
+            self.logger.warning( f"The two meshes do not have any shared { self.piece }." )
             self.logger.warning( f"The filter { self.logger.name } has not been used." )
             return False
 
         for attributeName in self.attributeNames:
-            componentNames: tuple[ str, ...] = getComponentNames( self.meshFrom, attributeName, False )
-
-            vtkDataType: int = getVtkDataTypeInObject( self.meshFrom, attributeName, False )
-            defaultValue: Any
-            if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
-                defaultValue = np.nan
-            elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ):
-                defaultValue = -1
-            elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
-                                  VTK_UNSIGNED_LONG_LONG ):
-                defaultValue = 0
-
-            if isinstance( self.meshTo, vtkDataSet ):
-                if not self._transferAttribute( self.meshFrom, self.meshTo, attributeName, componentNames, vtkDataType,
-                                                defaultValue ):
-                    return False
-            elif isinstance( self.meshTo, vtkMultiBlockDataSet ):
-                nbBlocksTo: int = self.meshTo.GetNumberOfBlocks()
-                for idBlockTo in range( nbBlocksTo ):
-                    blockTo: vtkDataSet = vtkDataSet.SafeDownCast( self.meshTo.GetBlock( idBlockTo ) )
-                    if not self._transferAttribute( self.meshFrom, blockTo, attributeName, componentNames, vtkDataType,
-                                                    defaultValue, idBlockTo ):
-                        return False
+            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.onPoints, self.logger ):
+                return False
 
         # Log the output message.
         self._logOutputMessage()
 
         return True
-
-    def _transferAttribute(
-        self: Self,
-        meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-        dataSetTo: vtkDataSet,
-        attributeName: str,
-        componentNames: tuple[ str, ...],
-        vtkDataType: int,
-        defaultValue: Any,
-        idBlockTo: int = 0,
-    ) -> bool:
-        """Transfer attributes from the source mesh to the working meshes using cell mapping.
-
-        dataSetTo is considered as block of a vtkMultiblockDataSet, if not, 0 is use as block index.
-
-        Args:
-            meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with attributes to transfer.
-            dataSetTo (vtkDataSet): The mesh where to transfer attributes.
-            attributeName (str): The name of the attribute to transfer.
-            componentNames (tuple[str, ...]): The name of the component of the attributes to transfer. If no component, set an empty tuple.
-            vtkDataType (int): The vtk type of the attribute to transfer.
-            defaultValue (Any): The value to use for the cell not mapped.
-            idBlockTo (int, Optional): The block index of the dataSetTo.
-                Defaults to 0.
-
-        Returns:
-            bool: True if transfer successfully ended.
-        """
-        nbCellTo: int = dataSetTo.GetNumberOfCells()
-        nbComponents: int = len( componentNames )
-        typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
-        valueType: type = typeMapping[ vtkDataType ]
-        arrayTo: npt.NDArray[ Any ]
-        if nbComponents > 1:
-            defaultValue = [ defaultValue ] * nbComponents
-            arrayTo = np.full( ( nbCellTo, nbComponents ), defaultValue, dtype=valueType )
-        else:
-            arrayTo = np.array( [ defaultValue for _ in range( nbCellTo ) ], dtype=valueType )
-
-        for idCellTo in range( nbCellTo ):
-            value: Any = defaultValue
-            idCellFrom: int = self.dictCellMap[ idBlockTo ][ idCellTo ][ 1 ]
-            if idCellFrom != -1:
-                idBlockFrom = self.dictCellMap[ idBlockTo ][ idCellTo ][ 0 ]
-                arrayFrom: npt.NDArray[ Any ]
-                if isinstance( meshFrom, vtkDataSet ):
-                    arrayFrom = vnp.vtk_to_numpy( meshFrom.GetCellData().GetArray( attributeName ) )
-                elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-                    blockFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetBlock( idBlockFrom ) )
-                    arrayFrom = vnp.vtk_to_numpy( blockFrom.GetCellData().GetArray( attributeName ) )
-                value = arrayFrom[ idCellFrom ]
-            arrayTo[ idCellTo ] = value
-
-        return createAttribute( dataSetTo,
-                                arrayTo,
-                                attributeName,
-                                componentNames,
-                                onPoints=False,
-                                vtkDataType=vtkDataType,
-                                logger=self.logger )
 
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
