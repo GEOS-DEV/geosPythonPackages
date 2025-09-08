@@ -38,8 +38,8 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-AttributeMapping is a paraview plugin that transfer global attributes from a source mesh to the other mesh for each
-cell of the two meshes with the same bounds coordinates.
+AttributeMapping is a paraview plugin that transfer global attributes from a meshFrom to a meshTo for each
+cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
@@ -47,8 +47,8 @@ To use it:
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
 * Select the mesh to transfer the global attributes (meshTo).
 * Search and Select Attribute Mapping Filter.
-* Select the source mesh with global attributes to transfer (meshFrom).
-* Select global attributes to transfer from the source mesh (meshFrom) to the other mesh (meshTo).
+* Select the mesh with global attributes to transfer (meshFrom).
+* Select global attributes to transfer from the meshFrom to the meshTo.
 * Apply.
 
 """
@@ -72,56 +72,73 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         """Map attributes of the source mesh (meshFrom) to the other mesh (meshTo)."""
         super().__init__( nInputPorts=2, nOutputPorts=1, inputType="vtkObject", outputType="vtkObject" )
 
-        # boolean to check if first use of the filter for attribute list initialization
-        self.m_firstUse = True
+        self.onPoints: bool = False
 
-        # list of attribute names to transfer
-        self.m_attributes: vtkDataArraySelection = vtkDataArraySelection()
-        self.m_attributes.AddObserver( 0, createModifiedCallback( self ) )
+        self._initArraySelections: bool = True
+        self.cellAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
+        self.pointAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
+        
+        self.clearAttributeNames = True
+        self.attributeNames: list[ str ] = []
 
-    @smproperty.dataarrayselection( name="AttributesToTransfer" )
-    def a02GetAttributeToTransfer( self: Self ) -> vtkDataArraySelection:
-        """Get selected attribute names to transfer.
-
-        Returns:
-            vtkDataArraySelection: selected attribute names.
-        """
-        self.Modified()
-        return self.m_attributes
-
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+    @smproperty.intvector(
+        name="AttributeType",
+        default_values=1,
+        number_of_elements=1,
+    )
+    @smdomain.xml( """
+        <FieldDataDomain enable_field_data="0" name="enum">
+            <RequiredProperties>
+                <Property function="Input" name="meshFrom" />
+            </RequiredProperties>
+        </FieldDataDomain>
+    """ )
+    def e01SetFieldAssociation( self: Self, value: int ) -> None:
+        """Set attribute type.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            value  (int): 0 if on points, 1 if on cells.
         """
-        # only at initialization step, no change later
-        if self.m_firstUse:
-            # get cell ids
-            inData = self.GetInputData( inInfoVec, 1, 0 )
-            assert isinstance( inData, ( vtkDataSet, vtkMultiBlockDataSet ) ), "Working mesh type is not supported."
+        self.onPoints = bool( value )
+        self.Modified()
+        
+    @smproperty.stringvector(
+        name="SelectAttributeToTransfer",
+        label="Select Attribute To Transfer",
+        repeat_command=1,
+        number_of_elements_per_command="1",
+        element_types="2",
+        default_values="None",
+    )
+    @smdomain.xml( """
+        <ArrayListDomain name="Attribute_List"
+                attribute_type="array"
+                input_domain_name="onPiece_Attribute_List">
+            <RequiredProperties>
+                <Property function="Input" name="meshFrom" />
+                <Property function="FieldDataSelection" name="AttributeType" />
+            </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>
+            Select attributes to transfer from the meshFrom To the meshTo.
+        </Documentation>
+        <Hints>
+            <NoDefault />
+        </Hints>
+            """ )
+    def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
+        """Set the attribute to transfer from the meshFrom to the meshTo.
 
-            # update vtkDAS
-            attributeNames: set[ str ] = getAttributeSet( inData, False )
+        Args:
+            name (str): The name of the attribute to transfer.
+        """
+        if self.clearAttributeNames:
+            self.attributeNames = []
+            self.clearAttributeNames = False
 
-            for attributeName in attributeNames:
-                if isinstance( inData, vtkMultiBlockDataSet ) and isAttributeGlobal( inData, attributeName, False ) \
-                    or isinstance( inData, vtkDataSet ) \
-                    and not self.m_attributes.ArrayExists( attributeName ):
-                    self.m_attributes.AddArray( attributeName, False )
-
-            self.m_firstUse = False
-        return 1
+        if name != "None":
+            self.attributeNames.append( name )
+        self.Modified()
 
     def RequestDataObject(
         self: Self,
@@ -139,13 +156,14 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
+        inDataTo = self.GetInputData( inInfoVec, 0, 0 )
         outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        assert inDataTo is not None
+        if outData is None or ( not outData.IsA( inDataTo.GetClassName() ) ):
+            outData = inDataTo.NewInstance()
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )  
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+
 
     def RequestData(
         self: Self,
@@ -173,12 +191,12 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
         outData.ShallowCopy( meshTo )
 
-        attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
-
-        filter: AttributeMapping = AttributeMapping( meshFrom, outData, attributeNames, True )
+        filter: AttributeMapping = AttributeMapping( meshFrom, outData, set(self.attributeNames), self.onPoints, True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
 
         filter.applyFilter()
+        self.clearAttributeNames = True
 
         return 1
+
