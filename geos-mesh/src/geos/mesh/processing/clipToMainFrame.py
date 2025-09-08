@@ -90,8 +90,6 @@ class ClipToMainFrame( vtkTransform ):
         pt0 = pts[ np.argmin( pts, axis=0 ), : ]
         pt1 = pts[ np.argmax( pts, axis=0 ), : ]
 
-        print( f"pt0 {pt0}, pt1 {pt1}" )
-
         return ( pts[ 0 ], pt0, pt1 )
 
     def __recenter_and_rotate( self, pts: np.ndarray ) -> tuple[ np.ndarray, float, np.ndarray ]:
@@ -117,7 +115,7 @@ class ClipToMainFrame( vtkTransform ):
         logging.info( f"R {rotation}" )
 
         theta = np.acos( .5 * ( np.trace( rotation ) - 1 ) ) * 180 / np.pi
-        logging.info( f"theta {theta}" )
+        logging.info( f"Theta {theta}" )
 
         axis = np.asarray( [
             rotation[ 2, 1 ] - rotation[ 1, 2 ], rotation[ 0, 2 ] - rotation[ 2, 0 ],
@@ -125,11 +123,9 @@ class ClipToMainFrame( vtkTransform ):
         ],
                            dtype=np.float64 )
         axis /= np.linalg.norm( axis )
-        logging.info( f"axis {axis}" )
 
         pts = ( rotation.transpose() @ pts.transpose() ).transpose()
         pts[ np.abs( pts ) < 1e-15 ] = 0.  # clipping points too close to zero
-        logging.info( f"Un-rotated pts : {pts}" )
 
         # return translation, rotation, pts
         return translation, theta, axis

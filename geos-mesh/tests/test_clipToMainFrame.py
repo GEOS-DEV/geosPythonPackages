@@ -51,16 +51,16 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
 
     pts, off = __gen_box( Lx, Ly, Lz, nx, ny, nz )
 
-    logging.warning( f"Offseting of {off}" )
-    logging.warning( f"Original pts : {pts}" )
+    logging.info( f"Offseting of {off}" )
+    logging.debug( f"Original pts : {pts}" )
     angles = -2 * np.pi + np.random.randn( 1, 3 ) * np.pi  # random angles in rad
-    logging.warning( f"angles {angles[0]}" )
+    logging.info( f"angles {angles[0]}" )
     pts = __rotate_box( angles[ 0 ], pts )
-    logging.info( f"Rotated pts : {pts}" )
+    logging.debug( f"Rotated pts : {pts}" )
     pts[ :, 0 ] += off[ 0 ][ 0 ]
     pts[ :, 1 ] += off[ 0 ][ 1 ]
     pts[ :, 2 ] += off[ 0 ][ 2 ]
-    logging.info( f"Translated pts : {pts}" )
+    logging.debug( f"Translated pts : {pts}" )
 
     # Creating multiple meshes, each time with a different angles
     mesh = vtkUnstructuredGrid()
