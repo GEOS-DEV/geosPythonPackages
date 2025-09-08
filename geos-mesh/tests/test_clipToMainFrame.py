@@ -8,7 +8,10 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
 
-from geos.mesh.processing.rotateAndTranslate import transform_mesh
+from geos.mesh.processing.clipToMainFrame import ClipToMainFrameFilter
+
+Lx, Ly, Lz = 5, 2, 8
+nx, ny, nz = 10, 10, 10
 
 
 @dataclass( frozen=True )
@@ -45,8 +48,7 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
     # generate random points in a box Lx, Ly, Lz
     # np.random.seed(1) # for reproducibility
     np.random.default_rng()
-    Lx, Ly, Lz = ( 2, 5, 8 )  # box size
-    nx, ny, nz = ( 10, 10, 10 )  # number of points in each direction
+
     pts, off = __gen_box( Lx, Ly, Lz, nx, ny, nz )
 
     logging.warning( f"Offseting of {off}" )
@@ -86,7 +88,9 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
 
 @pytest.mark.parametrize( "expected", __build_test_mesh() )
 def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
-    output_mesh = transform_mesh( expected.mesh )
+    ( filter := ClipToMainFrameFilter() ).SetInputData( expected.mesh )
+    filter.Update()
+    output_mesh = filter.GetOutput()
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == expected.mesh.GetNumberOfCells()
     assert output_mesh.GetBounds()[ 0 ] == pytest.approx(
@@ -99,11 +103,11 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
             output_mesh.GetBounds()[ 1 ] - output_mesh.GetBounds()[ 0 ],
             output_mesh.GetBounds()[ 3 ] - output_mesh.GetBounds()[ 2 ],
             output_mesh.GetBounds()[ 5 ] - output_mesh.GetBounds()[ 4 ]
-        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ 5, 8, 2 ] ) ), abs=1e-10 )
+        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ Lx, Ly, Lz ] ) ), abs=1e-10 )
     # test aligned with axis
     v0 = np.array( output_mesh.GetPoint( 1 ) ) - np.array( output_mesh.GetPoint( 0 ) )
-    v1 = np.array( output_mesh.GetPoint( 10 ) ) - np.array( output_mesh.GetPoint( 0 ) )
-    v2 = np.array( output_mesh.GetPoint( 10 * 10 ) ) - np.array( output_mesh.GetPoint( 0 ) )
+    v1 = np.array( output_mesh.GetPoint( nx ) ) - np.array( output_mesh.GetPoint( 0 ) )
+    v2 = np.array( output_mesh.GetPoint( nx * ny ) ) - np.array( output_mesh.GetPoint( 0 ) )
     assert np.abs( np.dot( v0, v1 ) ) < 1e-10
     assert np.abs( np.dot( v0, v2 ) ) < 1e-10
     assert np.abs( np.dot( v1, v2 ) ) < 1e-10
