@@ -1,3 +1,6 @@
+# SPDX-FileContributor: Jacques Franc 
+# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies 
+# SPDX-License-Identifier: Apache 2.0
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import vtkFloatArray, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid

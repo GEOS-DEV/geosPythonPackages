@@ -1,3 +1,7 @@
+# SPDX-FileContributor: Jacques Franc 
+# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies 
+# SPDX-License-Identifier: Apache 2.0
+# ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
 from dataclasses import dataclass
 from typing import Generator
