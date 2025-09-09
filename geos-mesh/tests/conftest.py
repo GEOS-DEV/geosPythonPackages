@@ -198,7 +198,7 @@ def getElementMap() -> Any:
     """
 
     def _get_elementMap( meshFromName: str, meshToName: str, points: bool ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
-        """Get the element indexes mapping dictionary between two meshes
+        """Get the element indexes mapping dictionary between two meshes.
 
         Args:
             meshFromName (str): The name of the meshFrom.
@@ -218,7 +218,7 @@ def getElementMap() -> Any:
         elif meshFromName == "dataset" and meshToName == "emptydataset":
             elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
         elif meshFromName == "dataset" and meshToName == "emptyFracture":
-            elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2), -1, np.int64 )
+            elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
         elif meshFromName == "fracture" and meshToName == "emptyFracture":
             elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
         elif meshFromName == "fracture" and meshToName == "emptymultiblock":

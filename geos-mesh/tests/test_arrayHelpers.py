@@ -17,6 +17,7 @@ from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkP
 
 from geos.mesh.utils import arrayHelpers
 
+
 @pytest.mark.parametrize( "meshFromName, meshToName, points", [
     ( "multiblock", "emptymultiblock", False ),
     ( "multiblock", "emptyFracture", False ),
@@ -32,9 +33,11 @@ def test_computeElementMapping(
     meshToName: str,
     points: bool,
 ) -> None:
+    """Test getting the map between two meshes element."""
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
-    elementMapComputed: dict[ int, npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping( meshFrom, meshTo, points )
+    elementMapComputed: dict[ int, npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping(
+        meshFrom, meshTo, points )
     elementMapTest: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, points )
 
     keysComputed: list[ int ] = list( elementMapComputed.keys() )

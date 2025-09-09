@@ -10,24 +10,26 @@ from geos.mesh.processing.AttributeMapping import AttributeMapping
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
+
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
-    ( "fracture", "emptyFracture", set( [ "collocated_nodes" ] ), True ),
-    ( "multiblock", "emptyFracture", set( [ "FAULT" ] ), False ),
-    ( "multiblock", "emptymultiblock", set( [ "FAULT" ] ), False ),
-    ( "dataset", "emptymultiblock", set( [ "FAULT" ] ), False ),
-    ( "dataset", "emptydataset", set( [ "FAULT" ] ), False ),
+    ( "fracture", "emptyFracture", ( [ "collocated_nodes" ] ), True ),
+    ( "multiblock", "emptyFracture", ( [ "FAULT" ] ), False ),
+    ( "multiblock", "emptymultiblock", ( [ "FAULT" ] ), False ),
+    ( "dataset", "emptymultiblock", ( [ "FAULT" ] ), False ),
+    ( "dataset", "emptydataset", ( [ "FAULT" ] ), False ),
 ] )
 def test_AttributeMapping(
-        dataSetTest: Any,
-        meshFromName: str,
-        meshToName: str,
-        attributeNames: set[ str ],
-        onPoints: bool,
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    onPoints: bool,
 ) -> None:
+    """Test mapping an attribute between two meshes."""
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
     if isinstance( meshFrom, vtkMultiBlockDataSet ):
         fillAllPartialAttributes( meshFrom )
-    
+
     filter = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
     assert filter.applyFilter()

@@ -15,10 +15,6 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.processing.AttributeMapping import AttributeMapping
-from geos.mesh.utils.arrayHelpers import ( getAttributeSet, isAttributeGlobal )
-
-from geos.pv.utils.checkboxFunction import createModifiedCallback
-from geos.pv.utils.paraviewTreatments import getArrayChoices
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -77,7 +73,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         self._initArraySelections: bool = True
         self.cellAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
         self.pointAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
-        
+
         self.clearAttributeNames = True
         self.attributeNames: list[ str ] = []
 
@@ -101,7 +97,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         """
         self.onPoints = bool( value )
         self.Modified()
-        
+
     @smproperty.stringvector(
         name="SelectAttributeToTransfer",
         label="Select Attribute To Transfer",
@@ -161,9 +157,8 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         assert inDataTo is not None
         if outData is None or ( not outData.IsA( inDataTo.GetClassName() ) ):
             outData = inDataTo.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )  
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
-
 
     def RequestData(
         self: Self,
@@ -191,7 +186,8 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
         outData.ShallowCopy( meshTo )
 
-        filter: AttributeMapping = AttributeMapping( meshFrom, outData, set(self.attributeNames), self.onPoints, True )
+        filter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ), self.onPoints,
+                                                     True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
 
@@ -199,4 +195,3 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         self.clearAttributeNames = True
 
         return 1
-

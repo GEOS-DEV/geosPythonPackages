@@ -147,7 +147,8 @@ class AttributeMapping:
 
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not in the mesh from where to transfer attributes." )
+                f"The { self.piece } attributes { wrongAttributeNames } are not in the mesh from where to transfer attributes."
+            )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
@@ -165,7 +166,8 @@ class AttributeMapping:
                     partialAttributes.append( attributeName )
 
             if len( partialAttributes ) > 0:
-                self.logger.error( f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
+                self.logger.error(
+                    f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
 
         self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
@@ -180,7 +182,8 @@ class AttributeMapping:
             return False
 
         for attributeName in self.attributeNames:
-            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.onPoints, self.logger ):
+            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
+                                                    self.onPoints, self.logger ):
                 return False
 
         # Log the output message.

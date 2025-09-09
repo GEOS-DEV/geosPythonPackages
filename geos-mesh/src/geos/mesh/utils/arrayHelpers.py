@@ -129,9 +129,17 @@ def UpdateElementMappingToDataSet(
     nbElementsTo: int = dataSetTo.GetNumberOfPoints() if points else dataSetTo.GetNumberOfCells()
     elementMap[ flatIdDataSetTo ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
     if isinstance( meshFrom, vtkDataSet ):
-        UpdateDictElementMappingFromDataSetToDataSet( meshFrom, dataSetTo, elementMap, points, flatIdDataSetTo=flatIdDataSetTo )
+        UpdateDictElementMappingFromDataSetToDataSet( meshFrom,
+                                                      dataSetTo,
+                                                      elementMap,
+                                                      points,
+                                                      flatIdDataSetTo=flatIdDataSetTo )
     elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-        UpdateElementMappingFromMultiBlockDataSetToDataSet( meshFrom, dataSetTo, elementMap, points, flatIdDataSetTo=flatIdDataSetTo )
+        UpdateElementMappingFromMultiBlockDataSetToDataSet( meshFrom,
+                                                            dataSetTo,
+                                                            elementMap,
+                                                            points,
+                                                            flatIdDataSetTo=flatIdDataSetTo )
 
 
 def UpdateElementMappingFromMultiBlockDataSetToDataSet(
@@ -146,7 +154,7 @@ def UpdateElementMappingFromMultiBlockDataSetToDataSet(
     dataSetTo is considered as block of a vtkMultiblockDataSet, if not the flat index (flatIdDataSetTo) is set to 0.
 
     For each element (idElementTo) of the dataSetTo not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
-    if the points coordinates of an element (idElementFrom) of a block (flatIdDataSetFrom) of multiBlockDataSetFrom 
+    if the points coordinates of an element (idElementFrom) of a block (flatIdDataSetFrom) of multiBlockDataSetFrom
     are the same as the points coordinates of the elementTo,
     the elementMap is update to elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
@@ -567,7 +575,7 @@ def isAttributeGlobal( object: vtkMultiBlockDataSet, attributeName: str, onPoint
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return False
-        
+
         iterator.GoToNextItem()
     return True
 

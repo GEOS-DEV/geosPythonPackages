@@ -495,13 +495,13 @@ def test_transferAttributeWithElementMap(
     onPoints: bool,
     defaultValueTest: Any,
 ) -> None:
-    "Test to transfer attributes from the meshFrom to the dataSetTo using an elementMap."
+    """Test to transfer attributes from the meshFrom to the dataSetTo using an elementMap."""
     meshFrom: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshFromName )
     if isinstance( meshFrom, vtkMultiBlockDataSet ):
         arrayModifiers.fillAllPartialAttributes( meshFrom )
-    
+
     meshTo: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshToName )
-    elementMap: dict[ int, npt.NDArray[ np.int64] ] = getElementMap( meshFromName, meshToName, onPoints )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, onPoints )
 
     assert arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints )
 
@@ -510,7 +510,7 @@ def test_transferAttributeWithElementMap(
         if isinstance( meshTo, vtkDataSet ):
             dataTo = meshTo.GetPointData() if onPoints else meshTo.GetCellData()
         elif isinstance( meshTo, vtkMultiBlockDataSet ):
-            dataSetTo: vtkDataSet = meshTo.GetDataSet( flatIdDataSetTo )
+            dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
             dataTo = dataSetTo.GetPointData() if onPoints else dataSetTo.GetCellData()
 
         arrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataTo.GetArray( attributeName ) )
@@ -522,10 +522,10 @@ def test_transferAttributeWithElementMap(
             else:
                 dataFrom: Union[ vtkPointData, vtkCellData ]
                 if isinstance( meshFrom, vtkDataSet ):
-                    dataFrom= meshFrom.GetPointData() if onPoints else meshFrom.GetCellData()
+                    dataFrom = meshFrom.GetPointData() if onPoints else meshFrom.GetCellData()
                 elif isinstance( meshFrom, vtkMultiBlockDataSet ):
                     flatIdDataSetFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
-                    dataSetFrom: vtkDataSet = meshFrom.GetDataSet( flatIdDataSetFrom )
+                    dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
                     dataFrom = dataSetFrom.GetPointData() if onPoints else dataSetFrom.GetCellData()
 
                 arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
