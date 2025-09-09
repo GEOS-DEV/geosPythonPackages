@@ -7,7 +7,7 @@ from typing import Union, Any
 
 from geos.utils.Logger import logging, Logger, getLogger
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
-from geos.mesh.utils.arrayHelpers import isAttributeInObject
+from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
@@ -23,7 +23,7 @@ If the list of filling value is None, attributes are filled with the same consta
 0 for uint data, -1 for int data and nan for float data.
 
 To use a handler of yours for the logger, set the variable 'speHandler' to True and add it to the filter
-with the member function addLoggerHandler.
+with the member function setLoggerHandler.
 
 To use it:
 
@@ -42,7 +42,7 @@ To use it:
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.addLoggerHandler( yourHandler )
+    filter.setLoggerHandler( yourHandler )
 
     # Do calculations.
     filter.applyFilter()
@@ -106,15 +106,17 @@ class FillPartialArrays:
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
+        onPoints: Union[ None, bool ]
+        onBoth: bool
         for attributeName in self.dictAttributesValues:
-            self._setPieceRegionAttribute( attributeName )
-            if self.onPoints is None:
+            onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
+            if onPoints is None:
                 self.logger.error( f"{ attributeName } is not in the mesh." )
                 self.logger.error( f"The attribute { attributeName } has not been filled." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
 
-            if self.onBoth:
+            if onBoth:
                 self.logger.error(
                     f"Their is two attribute named { attributeName }, one on points and the other on cells. The attribute must be unique."
                 )
@@ -124,7 +126,7 @@ class FillPartialArrays:
 
             if not fillPartialAttributes( self.multiBlockDataSet,
                                           attributeName,
-                                          onPoints=self.onPoints,
+                                          onPoints=onPoints,
                                           listValues=self.dictAttributesValues[ attributeName ],
                                           logger=self.logger ):
                 self.logger.error( f"The filter { self.logger.name } failed." )
@@ -134,21 +136,3 @@ class FillPartialArrays:
 
         return True
 
-    def _setPieceRegionAttribute( self: Self, attributeName: str ) -> None:
-        """Set the attribute self.onPoints and self.onBoth.
-
-        self.onPoints is True if the region attribute is on points, False if it is on cells, None otherwise.
-
-        self.onBoth is True if a region attribute is on points and on cells, False otherwise.
-
-        Args:
-           attributeName (str): The name of the attribute to verify.
-        """
-        self.onPoints: Union[ bool, None ] = None
-        self.onBoth: bool = False
-        if isAttributeInObject( self.multiBlockDataSet, attributeName, False ):
-            self.onPoints = False
-        if isAttributeInObject( self.multiBlockDataSet, attributeName, True ):
-            if self.onPoints is False:
-                self.onBoth = True
-            self.onPoints = True
