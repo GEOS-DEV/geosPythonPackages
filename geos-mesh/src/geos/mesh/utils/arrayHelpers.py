@@ -48,6 +48,72 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
     return False
 
 
+def checkValidValuesInMultiBlock(
+        multiBlockDataSet: vtkMultiBlockDataSet,
+        attributeName: str,
+        listValues: list[ Any ],
+        onPoints: bool,
+) -> tuple[ list[ Any ], list[ Any ] ]:
+    """Check if each value is valid , ie if that value is a data of the attribute in at least one dataset of the multiblock.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet): The multiblock dataset mesh to check.
+        attributeName (str): The name of the attribute with the data.
+        listValues (list[Any]): The list of values to check.
+        onPoints (bool): True if the attribute is on points, False if on cells.
+
+    Returns:
+        tuple(list[Any], list[Any]): Tuple containing the list of valid values and the list of the invalid ones.
+    """
+    validValues: list[ Any ] = []
+    invalidValues: list[ Any ] = []
+    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for flatIdDataSet in listFlatIdDataSet:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
+        # Get the valid values of the dataset.
+        validValuesDataSet: list[ Any ] = checkValidValuesInDataSet( dataSet, attributeName, listValues, onPoints )[ 0 ]
+
+        # Keep the new true values.
+        for value in validValuesDataSet:
+            if value not in validValues:
+                validValues.append( value )
+
+    # Get the false indexes.
+    for value in listValues:
+        if value not in validValues:
+            invalidValues.append( value )
+
+    return ( validValues, invalidValues )
+
+def checkValidValuesInDataSet(
+        dataSet: vtkDataSet,
+        attributeName: str,
+        listValues: list[ Any ],
+        onPoints: bool,
+) -> tuple[ list[ Any ], list[ Any ] ]:
+    """Check if each value is valid , ie if that value is a data of the attribute in the dataset.
+
+    Args:
+        dataSet (vtkDataSet): The dataset mesh to check.
+        attributeName (str): The name of the attribute with the data.
+        listValues (list[Any]): The list of values to check.
+        onPoints (bool): True if the attribute is on points, False if on cells.
+
+    Returns:
+        tuple(list[Any], list[Any]): Tuple containing the list of valid values and the list of the invalid ones.
+    """
+    attributeNpArray = getArrayInObject( dataSet, attributeName, onPoints )
+    validValues: list[ Any ] = []
+    invalidValues: list[ Any ] = []
+    for value in listValues:
+        if value in attributeNpArray:
+            validValues.append( value )
+        else:
+            invalidValues.append( value )
+
+    return ( validValues, invalidValues )
+
+
 def getFieldType( data: vtkFieldData ) -> str:
     """Returns whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
 
