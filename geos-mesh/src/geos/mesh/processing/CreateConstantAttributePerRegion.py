@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from geos.utils.Logger import ( getLogger, Logger, logging, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
-                                           getVtkDataTypeInObject, isAttributeGlobal, isAttributeInObject,
+                                           getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
                                              createConstantAttributeMultiBlock )
@@ -112,6 +112,9 @@ class CreateConstantAttributePerRegion:
         # Region attribute settings.
         self.regionName: str = regionName
         self.dictRegionValues: dict[ Any, Any ] = dictRegionValues
+        self.onPoints: Union[ None, bool ]
+        self.onBoth: bool
+        self.onPoints, self.onBoth = getAttributePieceInfo( self.mesh, self.regionName )
 
         self.useDefaultValue: bool = False  # Check if the new component have default values (information for the output message).
 
@@ -156,7 +159,6 @@ class CreateConstantAttributePerRegion:
         self.logger.addHandler( self.counter )
 
         # Check the validity of the attribute region.
-        self._setPieceRegionAttribute()
         if self.onPoints is None:
             self.logger.error( f"{ self.regionName } is not in the mesh." )
             self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
@@ -277,21 +279,6 @@ class CreateConstantAttributePerRegion:
 
         return True
 
-    def _setPieceRegionAttribute( self: Self ) -> None:
-        """Set the attribute self.onPoints and self.onBoth.
-
-        self.onPoints is True if the region attribute is on points, False if it is on cells, None otherwise.
-
-        self.onBoth is True if a region attribute is on points and on cells, False otherwise.
-        """
-        self.onPoints: Union[ bool, None ] = None
-        self.onBoth: bool = False
-        if isAttributeInObject( self.mesh, self.regionName, False ):
-            self.onPoints = False
-        if isAttributeInObject( self.mesh, self.regionName, True ):
-            if self.onPoints is False:
-                self.onBoth = True
-            self.onPoints = True
 
     def _setInfoRegion( self: Self ) -> None:
         """Update self.dictRegionValues and set self.defaultValue.

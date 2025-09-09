@@ -48,6 +48,33 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
     return False
 
 
+def getAttributePieceInfo(
+        mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ],
+        attributeName: str,
+ ) -> tuple[ Union[ None, bool ], bool ]:
+    """Get the attribute piece information:
+        - onPoints (Union[None, bool]): True if the attribute is on points or on both pieces, False if it is on cells, None otherwise.
+        - onBoth (bool): True if the attribute is on points and on cells, False otherwise.
+
+    Args:
+        mesh (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the attribute.
+        attributeName (str): The name of the attribute.
+
+    Returns:
+        tuple[Union[None, bool], bool]: The piece information of the attribute.
+    """
+    onPoints: Union[ bool, None ] = None
+    onBoth: bool = False
+    if isAttributeInObject( mesh, attributeName, False ):
+        onPoints = False
+    if isAttributeInObject( mesh, attributeName, True ):
+        if onPoints is False:
+            onBoth = True
+        onPoints = True
+    
+    return ( onPoints, onBoth )
+
+
 def checkValidValuesInMultiBlock(
         multiBlockDataSet: vtkMultiBlockDataSet,
         attributeName: str,
@@ -63,7 +90,7 @@ def checkValidValuesInMultiBlock(
         onPoints (bool): True if the attribute is on points, False if on cells.
 
     Returns:
-        tuple(list[Any], list[Any]): Tuple containing the list of valid values and the list of the invalid ones.
+        tuple[list[Any], list[Any]]: Tuple containing the list of valid values and the list of the invalid ones.
     """
     validValues: list[ Any ] = []
     invalidValues: list[ Any ] = []
@@ -100,7 +127,7 @@ def checkValidValuesInDataSet(
         onPoints (bool): True if the attribute is on points, False if on cells.
 
     Returns:
-        tuple(list[Any], list[Any]): Tuple containing the list of valid values and the list of the invalid ones.
+        tuple[list[Any], list[Any]]: Tuple containing the list of valid values and the list of the invalid ones.
     """
     attributeNpArray = getArrayInObject( dataSet, attributeName, onPoints )
     validValues: list[ Any ] = []
