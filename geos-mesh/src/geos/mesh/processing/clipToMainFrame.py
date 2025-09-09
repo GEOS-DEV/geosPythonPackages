@@ -1,32 +1,43 @@
-# SPDX-FileContributor: Jacques Franc 
-# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies 
+# SPDX-FileContributor: Jacques Franc
+# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-License-Identifier: Apache 2.0
 from vtkmodules.numpy_interface import dataset_adapter as dsa
-from vtkmodules.vtkCommonCore import vtkFloatArray, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkCommonCore import vtkPoints, vtkFloatArray
+from vtkmodules.vtkFiltersGeneral import vtkOBBTree
+from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkDataObjectTreeIterator, vtkPolyData
+from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
+
+from geos.mesh.utils.genericHelpers import getMultiBlockBounds
+
 import numpy as np
 import logging
 
 
-class ClipToMainFrame( vtkTransform ):
+class ClipToMainFrame( vtkLandmarkTransform ):
 
     userTranslation: vtkFloatArray | None = None  # user provided translation
-    pts: vtkPoints
+    sourcePts: vtkPoints
+    targetPts: vtkPoints
+    mesh: vtkUnstructuredGrid
 
-    def __init__( self, pts: vtkPoints ) -> None:
+    def __init__( self, mesh: vtkUnstructuredGrid ) -> None:
         """Clip mesh to main frame
         Args:            userTranslation (vtkFloatArray | None): if provided use this translation instead of the computed one
         
         """
         super().__init__()
-        self.pts = pts
+        self.mesh = mesh
 
     def Update( self ) -> None:
         """Update the transformation"""
-        self.__transform( self.pts, self.userTranslation )
+        self.sourcePts, self.targetPts = self.__getFramePoints( self.__getOBBTree( self.mesh ) )
+        self.SetSourceLandmarks( self.sourcePts )
+        self.SetTargetLandmarks( self.targetPts )
+        self.SetModeToRigidBody()
         super().Update()
+
 
     def SetUserTranslation( self, userTranslation: vtkFloatArray ) -> None:
         """Set the user translation
@@ -42,99 +53,127 @@ class ClipToMainFrame( vtkTransform ):
         """
         return self.userTranslation
 
-    def __transform( self, pts: vtkPoints, userTranslation: vtkFloatArray | None = None ) -> None:
-        """Apply the transformation to the points
+    def __str__(self):
+
+        return super().__str__() + f"\nUser translation: {self.userTranslation}" \
+                  + f"\nSource points: {self.sourcePts}" \
+                  + f"\nTarget points: {self.targetPts}" \
+                  + f"\nAngle-Axis: {self.__getAngleAxis()}" \
+                  + f"\nTranslation: {self._getTranslation()}"
+
+
+    def __getAngleAxis( self ) -> tuple[ float, np.ndarray ]:
+        """Get the angle and axis of the rotation
+        Returns:
+            tuple[float, np.ndarray]: angle in degrees and axis of rotation
+        """
+        matrix = self.GetMatrix()
+        angle = np.arccos( ( matrix.GetElement( 0, 0 ) + matrix.GetElement( 1, 1 ) + matrix.GetElement( 2, 2 ) - 1 ) / 2 )
+        if angle == 0:
+            return 0.0, np.array( [ 1.0, 0.0, 0.0 ] )
+        rx = matrix.GetElement( 2, 1 ) - matrix.GetElement( 1, 2 )
+        ry = matrix.GetElement( 0, 2 ) - matrix.GetElement( 2, 0 )
+        rz = matrix.GetElement( 1, 0 ) - matrix.GetElement( 0, 1 )
+        r = np.array( [ rx, ry, rz ] )
+        r /= np.linalg.norm( r )
+        return np.degrees( angle ), r
+
+    def _getTranslation( self ) -> np.ndarray:
+        """Get the translation vector
+        Returns:
+            np.ndarray: translation vector
+        """
+        matrix = self.GetMatrix()
+        return np.array( [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ) ] )
+
+    def __getOBBTree( self, mesh: vtkUnstructuredGrid ) -> vtkOBBTree:
+        """Get the OBB tree of the mesh
+        Args:
+            mesh (vtkUnstructuredGrid): mesh to get the OBB tree from
+        Returns:
+            vtkOBBTree: OBB tree of the mesh
+        """
+        OBBTree = vtkOBBTree()
+        surfFilter = vtkDataSetSurfaceFilter()
+        surfFilter.SetInputData( mesh )
+        surfFilter.Update()
+        OBBTree.SetDataSet( surfFilter.GetOutput() )
+        OBBTree.BuildLocator()
+        pdata = vtkPolyData()
+        OBBTree.GenerateRepresentation( 0, pdata)
+        # at level 0 this should return 8 corners of the bounding box
+        if pdata.GetNumberOfPoints() < 3:
+            logging.warning( "Could not get OBB points, using bounding box points instead" )
+            return self.__allpoints( mesh.GetBounds() )
+
+        return pdata.GetPoints()
+
+
+    def __allpoints( self, bounds: tuple[ float, float, float, float, float, float ] ) -> vtkPoints:
+        """Get the 8 corners of the bounding box
+        Args:
+            bounds (tuple[float, float, float, float, float, float]): bounding box
+        Returns:
+            vtkPoints: 8 corners of the bounding box
+        """
+        pts = vtkPoints()
+        pts.SetNumberOfPoints( 8 )
+        pts.SetPoint( 0, [ bounds[ 0 ], bounds[ 2 ], bounds[ 4 ] ] )
+        pts.SetPoint( 1, [ bounds[ 1 ], bounds[ 2 ], bounds[ 4 ] ] )
+        pts.SetPoint( 2, [ bounds[ 1 ], bounds[ 3 ], bounds[ 4 ] ] )
+        pts.SetPoint( 3, [ bounds[ 0 ], bounds[ 3 ], bounds[ 4 ] ] )
+        pts.SetPoint( 4, [ bounds[ 0 ], bounds[ 2 ], bounds[ 5 ] ] )
+        pts.SetPoint( 5, [ bounds[ 1 ], bounds[ 2 ], bounds[ 5 ] ] )
+        pts.SetPoint( 6, [ bounds[ 1 ], bounds[ 3 ], bounds[ 5 ] ] )
+        pts.SetPoint( 7, [ bounds[ 0 ], bounds[ 3 ], bounds[ 5 ] ] )
+        return pts
+
+    def __getFramePoints( self, vpts : vtkPoints ) -> tuple[ vtkPoints, vtkPoints ]:
+        """Get the source and target points for the transformation
         Args:
             pts (vtkPoints): points to transform
-            userTranslation (vtkFloatArray | None, optional): if provided use this translation instead of the computed one. Defaults to None.
-        """
-        translation, theta, axis = self.__recenter_and_rotate( dsa.numpy_support.vtk_to_numpy( pts.GetData() ) )
-
-        if userTranslation is not None:
-            translation = dsa.numpy_support.vtk_to_numpy( userTranslation )
-            logging.info( "Using user translation" )
-
-        self.PostMultiply()  # we want to apply rotation then translation
-        self.RotateWXYZ( -theta, axis[ 0 ], axis[ 1 ], axis[ 2 ] )
-        self.Translate( -translation[ 0 ], -translation[ 1 ], -translation[ 2 ] )
-
-        logging.info( f"Using translation {translation}" )
-        logging.info( f"Theta {theta}" )
-        logging.info( f"Axis {axis}" )
-
-    def __local_frame( self, pts: np.ndarray ) -> tuple[ np.ndarray, np.ndarray, np.ndarray ]:
-        """Find a local frame for a set of points
-        Args:
-            pts (np.ndarray): points to find the local frame of
         Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray]: three orthogonal vectors defining the local frame
+            tuple[vtkPoints, vtkPoints]: source and target points for the transformation
         """
+        pts = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
+        further_ix = np.argmax(np.linalg.norm(pts,axis=1)) # by default take the min point furthest from origin
+        org = pts[further_ix,:]
+        if self.userTranslation is not None:
+            org = dsa.numpy_support.vtk_to_numpy( self.userTranslation )
+            logging.info( "Using user translation" )
+        logging.info( f"Moving point {org} to origin for transformation" )
         # find 3 orthogonal vectors
         # we assume points are on a box
-        # first vector is along x axis
-        ori, _, _ = self.__origin_bounding_box( pts )
-        u = pts[ 1 ]
-        v = u
-        for pt in pts[ 2: ]:  # As we assume points are on a box there should be one orthogonal to u
-            if ( np.abs( np.dot( u, pt ) ) < 1e-10 ):
-                v = pt
-                break
+        dist_indexes = np.argsort( np.linalg.norm( pts - org, axis=1 ) )
+        # find u,v,w
+        v1 = pts[dist_indexes[1],:] - org
+        v1 /= np.linalg.norm( v1 )
+        v2 = pts[dist_indexes[2],:] - org
+        v2 /= np.linalg.norm( v2 )
+        # ensure orthogonality
+        v2 -= np.dot( v2, v1 ) * v1
+        v2 /= np.linalg.norm( v2 )
+        v3 = np.cross( v1, v2 )
+        v3 /= np.linalg.norm( v3 )
 
-        return ( u, v, np.cross( u, v ) )
+        sourcePts = vtkPoints()
+        sourcePts.SetNumberOfPoints( 4 )
+        sourcePts.SetPoint( 0, org )
+        sourcePts.SetPoint( 1,  v1 + org )
+        sourcePts.SetPoint( 2,  v2 + org )
+        sourcePts.SetPoint( 3,  v3 + org )
 
-        # utils
-    def __origin_bounding_box( self, pts: np.ndarray ) -> tuple[ np.ndarray, np.ndarray, np.ndarray ]:
-        """Find the bounding box of a set of points
-        Args:
-            pts (np.ndarray): points to find the bounding box of
-        Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray]: origin, min, max of the bounding box
-        """
-        pt0 = pts[ np.argmin( pts, axis=0 ), : ]
-        pt1 = pts[ np.argmax( pts, axis=0 ), : ]
+        targetPts = vtkPoints()
+        targetPts.SetNumberOfPoints( 4 )
+        targetPts.SetPoint( 0, [ 0., 0., 0. ] )
+        targetPts.SetPoint( 1, [ 1., 0., 0. ] )
+        targetPts.SetPoint( 2, [ 0., 1. , 0. ] )
+        targetPts.SetPoint( 3, [ 0., 0., 1. ])
 
-        return ( pts[ 0 ], pt0, pt1 )
-
-    def __recenter_and_rotate( self, pts: np.ndarray ) -> tuple[ np.ndarray, float, np.ndarray ]:
-        """Recenter and rotate points to align with principal axes
-        
-        Args:
-            pts (np.ndarray): points to recenter and rotate
-        """
-        # find bounding box
-        org, vmin, vmax = self.__origin_bounding_box( pts )
-        logging.info( f"Bounding box is {org}, {vmin}, {vmax}" )
-
-        # Transformation
-        translation = org
-        pts -= translation
-
-        u, v, w = self.__local_frame( pts )
-        logging.info( f"Local frame u {u}, v {v}, w {w}" )
-
-        # find rotation R = U sig V
-        rotation = np.asarray( [ u / np.linalg.norm( u ), v / np.linalg.norm( v ), w / np.linalg.norm( w ) ],
-                               dtype=np.float64 ).transpose()
-        logging.info( f"R {rotation}" )
-
-        theta = np.acos( .5 * ( np.trace( rotation ) - 1 ) ) * 180 / np.pi
-        logging.info( f"Theta {theta}" )
-
-        axis = np.asarray( [
-            rotation[ 2, 1 ] - rotation[ 1, 2 ], rotation[ 0, 2 ] - rotation[ 2, 0 ],
-            rotation[ 1, 0 ] - rotation[ 0, 1 ]
-        ],
-                           dtype=np.float64 )
-        axis /= np.linalg.norm( axis )
-
-        pts = ( rotation.transpose() @ pts.transpose() ).transpose()
-        pts[ np.abs( pts ) < 1e-15 ] = 0.  # clipping points too close to zero
-
-        # return translation, rotation, pts
-        return translation, theta, axis
-
+        return ( sourcePts, targetPts )
 
 class ClipToMainFrameFilter( vtkTransformFilter ):
+    """Filter to clip a mesh to the main frame using ClipToMainFrame class"""
 
     userTranslation: vtkFloatArray | None = None  # user provided translation
 
@@ -152,13 +191,66 @@ class ClipToMainFrameFilter( vtkTransformFilter ):
         """
         return self.userTranslation
 
-    def SetInputData( self, input: vtkUnstructuredGrid ) -> None:
-        """Set the input data and apply the transformation to it
-        Args:
-            input (vtkUnstructuredGrid): input mesh to transform
-        """
-        super().SetInputData( input )
-        clip = ClipToMainFrame( input.GetPoints() )
+    def Update( self ) -> None:
+        """Update the transformation"""
+        # dispatch to ClipToMainFrame depending on input type
+        if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
+            #locate reference point
+            idBlock = self.__locate_reference_point( self.GetInput(), self.userTranslation )
+            clip = ClipToMainFrame( self.GetInput().GetBlock( idBlock - 1 ) )
+        else:
+            clip = ClipToMainFrame( self.GetInput() )
+
         clip.SetUserTranslation( self.userTranslation )
         clip.Update()
         self.SetTransform( clip )
+        super().Update()
+
+
+
+    def __locate_reference_point( self, input: vtkMultiBlockDataSet, userTranslation: vtkFloatArray | None ) -> int:
+        """Locate the block to use as reference for the transformation
+        Args:
+            input (vtkMultiBlockDataSet): input multiblock mesh
+            userTranslation (vtkFloatArray | None): if provided use this translation instead of the computed one
+        Returns:
+            int: index of the block to use as reference
+        """
+
+        def __inside( pt: np.ndarray, bounds: tuple[ float, float, float, float, float, float ] ) -> bool:
+            """Check if a point is inside a bounding box
+            Args:
+                pt (np.ndarray): point to check
+                bounds (tuple[float, float, float, float, float, float]): bounding box
+            Returns:
+                bool: True if the point is inside the bounding box, False otherwise
+            """
+            logging.info( f"Checking if point {pt} is inside bounds {bounds}" )
+            return ( pt[ 0 ] >= bounds[ 0 ] and pt[ 0 ] <= bounds[ 1 ] and pt[ 1 ] >= bounds[ 2 ] and pt[ 1 ] <= bounds[ 3 ]
+                     and pt[ 2 ] >= bounds[ 4 ] and pt[ 2 ] <= bounds[ 5 ] )
+
+        #TODO (jacques) make a decorator for this
+        iter : vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+        iter.SetDataSet( input )
+        iter.VisitOnlyLeavesOn()
+        iter.GoToFirstItem()
+        xmin, _ , ymin, _ , zmin, _ = getMultiBlockBounds( input )
+        #TODO (jacques) : rewrite with a filter struct
+        while iter.GetCurrentDataObject() is not None:
+            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
+            if block.GetNumberOfPoints() > 0:
+                bounds = block.GetBounds()
+                if userTranslation is not None:
+                    #check if user translation is inside the block
+                    if __inside( dsa.numpy_support.vtk_to_numpy(self.userTranslation), bounds ):
+                        logging.info( f"Using block {iter.GetCurrentFlatIndex()} as reference for transformation" )
+                        return iter.GetCurrentFlatIndex()
+                else:
+                    #use the lowest bounds corner as reference point
+                    if __inside( np.asarray([xmin,ymin,zmin]) , bounds ):
+                        logging.info( f"Using block {iter.GetCurrentFlatIndex()} as reference for transformation" )
+                        return iter.GetCurrentFlatIndex()
+            iter.GoToNextItem()
+
+
+

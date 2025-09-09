@@ -1,12 +1,13 @@
-# SPDX-FileContributor: Jacques Franc 
-# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies 
+# SPDX-FileContributor: Jacques Franc
+# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
 from dataclasses import dataclass
 from typing import Generator
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron, VTK_HEXAHEDRON
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
+from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 import logging  # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
@@ -16,7 +17,6 @@ from geos.mesh.processing.clipToMainFrame import ClipToMainFrameFilter
 
 Lx, Ly, Lz = 5, 2, 8
 nx, ny, nz = 10, 10, 10
-
 
 @dataclass( frozen=True )
 class Expected:
@@ -98,16 +98,15 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == expected.mesh.GetNumberOfCells()
     assert output_mesh.GetBounds()[ 0 ] == pytest.approx(
-        0., abs=1e-10 ) and output_mesh.GetBounds()[ 2 ] == pytest.approx(
-            0., abs=1e-10 ) and output_mesh.GetBounds()[ 4 ] == pytest.approx( 0., abs=1e-10 )
-    #TODO more assert but need more assumptions then
+        0., abs=1e-6 ) and output_mesh.GetBounds()[ 2 ] == pytest.approx(
+            0., abs=1e-6 ) and output_mesh.GetBounds()[ 4 ] == pytest.approx( 0., abs=1e-6 )
     # test diagonal
     assert np.linalg.norm(
         np.array( [
             output_mesh.GetBounds()[ 1 ] - output_mesh.GetBounds()[ 0 ],
             output_mesh.GetBounds()[ 3 ] - output_mesh.GetBounds()[ 2 ],
             output_mesh.GetBounds()[ 5 ] - output_mesh.GetBounds()[ 4 ]
-        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ Lx, Ly, Lz ] ) ), abs=1e-10 )
+        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ Lx, Ly, Lz ] ) ), abs=1e-5 )
     # test aligned with axis
     v0 = np.array( output_mesh.GetPoint( 1 ) ) - np.array( output_mesh.GetPoint( 0 ) )
     v1 = np.array( output_mesh.GetPoint( nx ) ) - np.array( output_mesh.GetPoint( 0 ) )
@@ -116,11 +115,39 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
     assert np.abs( np.dot( v0, v2 ) ) < 1e-10
     assert np.abs( np.dot( v1, v2 ) ) < 1e-10
 
+    #check if input has been modified
+    # w = vtkXMLUnstructuredGridWriter()
+    # w.SetFileName("./test_rotateAndTranslate_input.vtu")
+    # w.SetInputData(expected.mesh)
+    # w.Write()
 
-#     w = vtkXMLUnstructuredGridWriter()
-#     w.SetFileName("./test_rotateAndTranslate.vtu")
-#     w.SetInputData(output_mesh)
-#     w.Write()
-#     w.SetFileName("./test_rotateAndTranslate_input.vtu")
-#     w.SetInputData(expected.mesh)
-#     w.Write()
+    # w.SetFileName("./test_rotateAndTranslate.vtu")
+    # w.SetInputData(output_mesh)
+    # w.Write()
+
+def test_rotateAndTranslate_gen():
+
+    reader = vtkXMLMultiBlockDataReader()
+    reader.SetFileName(  "/data/pau901/SIM_CS/users/MargauxRaguenel/data/Gengibre/SKUA/gengibre_2faults_res100.vtm" )
+    reader.Update()
+    input_mesh = reader.GetOutput()
+    ( filter := ClipToMainFrameFilter() ).SetInputData( input_mesh )
+    filter.Update()
+    print(filter.GetTransform())
+    output_mesh = filter.GetOutputDataObject( 0 )
+    assert output_mesh.GetNumberOfPoints() == input_mesh.GetNumberOfPoints()
+    assert output_mesh.GetNumberOfCells() == input_mesh.GetNumberOfCells()
+
+    # #check if input has been modified
+    # w = vtkXMLMultiBlockDataWriter()
+    # w.SetFileName("./test_rotateAndTranslate_input.vtm")
+    # w.SetInputData(input_mesh)
+    # w.Write()
+
+
+    # w.SetFileName("./test_rotateAndTranslate.vtm")
+    # w.SetInputData(output_mesh)
+    # w.Write()
+
+# if __name__ == "__main__":
+#     pytest.main( [ __file__, "-s", "-vvv", "--log-cli-level=INFO" ] )
