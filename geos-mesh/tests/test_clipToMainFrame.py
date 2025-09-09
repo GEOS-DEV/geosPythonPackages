@@ -128,7 +128,7 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
 def test_rotateAndTranslate_gen():
 
     reader = vtkXMLMultiBlockDataReader()
-    reader.SetFileName(  "/data/pau901/SIM_CS/users/MargauxRaguenel/data/Gengibre/SKUA/gengibre_2faults_res100.vtm" )
+    reader.SetFileName(  "./geos-mesh/tests/data/displacedFault.vtm" )
     reader.Update()
     input_mesh = reader.GetOutput()
     ( filter := ClipToMainFrameFilter() ).SetInputData( input_mesh )

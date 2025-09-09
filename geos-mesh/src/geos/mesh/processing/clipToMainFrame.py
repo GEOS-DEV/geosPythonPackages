@@ -14,6 +14,11 @@ from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 import numpy as np
 import logging
 
+__doc__ = """Module to clip a mesh to the main frame using rigid body transformation.
+Methods include:
+    - ClipToMainFrame class to compute the transformation
+    - ClipToMainFrameFilter class to apply the transformation to a mesh
+"""
 
 class ClipToMainFrame( vtkLandmarkTransform ):
 
