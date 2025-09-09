@@ -109,6 +109,8 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
             self.logger.setLevel( logging.INFO )
 
         # Input surfacic mesh
+        if surfacicMesh is None:
+            self.logger.error( "Input surface is undefined." )
         if not surfacicMesh.IsA( "vtkPolyData" ):
             self.logger.error( f" surfacicMesh parameter is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh
@@ -178,10 +180,14 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         # Conversion of vectorial attributes from Normal/Tangent basis to xyz basis
         if not self.convertLocalToXYZBasisAttributes():
             self.logger.error( "Error while converting Local to XYZ basis attributes." )
+            return False
+
         # Compute shear capacity utilization
         if not self.computeShearCapacityUtilization():
             self.logger.error( "Error while computing SCU." )
+            return False
 
+        self.logger.info( f"Filter {self.logger.name} succeeded." )
         return True
 
     def convertLocalToXYZBasisAttributes( self: Self ) -> bool:
