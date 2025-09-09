@@ -306,8 +306,17 @@ def getAttributeToConvertFromLocalToXYZ() -> set[ str ]:
     """Get the list of attribute names to convert from local to xyz basis.
 
     Returns:
-        list[str]: list of attributes to convert
+        list[str]: set of attributes to convert
     """
     return {
         GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName,
     }
+
+def getAttributeToConvertFromXYZToLocal() -> set[ str ]:
+    """Get the list of attribute names to convert from canonical (XYZ) to local basis.
+    This list is empty at the moment.
+
+    Returns:
+        set[ str ]: set of attributes to convert
+    """
+    return set()
