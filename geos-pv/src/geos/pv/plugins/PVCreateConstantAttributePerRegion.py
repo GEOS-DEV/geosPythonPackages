@@ -220,7 +220,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Set the type for the value used to create the new attribute.
 
         Args:
-            valueType (int): The type for the value encoding with the vtk typecode.
+            valueType (int): The numpy scalar type encoding with int (vtk typecode).
         """
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
         self.valueNpType = dictType[ valueType ]
@@ -327,10 +327,10 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = ( self.GetInputData( inInfoVec, 0, 0 ) )
-        outputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = ( self.GetOutputData( outInfoVec, 0 ) )
+        inputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
+        outputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetOutputData( outInfoVec, 0 )
 
-        assert inputMesh is not None, "Input Surface is null."
+        assert inputMesh is not None, "Input mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
         outputMesh.ShallowCopy( inputMesh )
