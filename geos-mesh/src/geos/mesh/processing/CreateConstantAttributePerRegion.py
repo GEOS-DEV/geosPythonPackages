@@ -229,10 +229,10 @@ class CreateConstantAttributePerRegion:
                 for flatIdDataSet in listFlatIdDataSet:
                     dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
 
-                    regionNpArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
-                    npArray = self._createNpArray( regionNpArray )
+                    regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
+                    newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
                     if not createAttribute( dataSet,
-                                            npArray,
+                                            newArray,
                                             self.newAttributeName,
                                             componentNames=self.componentNames,
                                             onPoints=self.onPoints,
@@ -263,10 +263,10 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
 
-                regionNpArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
-                npArray = self._createNpArray( regionNpArray )
+                regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
+                newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
                 if not createAttribute( self.mesh,
-                                        npArray,
+                                        newArray,
                                         self.newAttributeName,
                                         componentNames=self.componentNames,
                                         onPoints=self.onPoints,
@@ -312,41 +312,42 @@ class CreateConstantAttributePerRegion:
             self.defaultValue = [ self.valueNpType( 0 ) for _ in range( self.nbComponents ) ]
 
 
-    def _createNpArray( self: Self, regionNpArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
-        """Create an array from the input one.
+    def _createArrayFromRegionArrayWithValueMap( self: Self, regionArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
+        """Create the array from the regionArray and the valueMap (self.valueMap) giving the relation between the values of the regionArray and the new one.
 
-        If the value of the input array is a key of self.dictRegionValues, the corresponding list of value for each component of the created array is its item.
-        If their is other indexes than those given, their list of values are self.defaultValue and self.useDefaultValue is set to True.
+        For each element (idElement) of the regionArray:
+            - If the value (regionArray[idElement]) is mapped (a keys of the valueMap), valueArray[idElement] = self.valueMap[value] 
+            - If not, valueArray[idElement] = self.defaultValue.
 
         Args:
-            regionNpArray (npt.NDArray[Any]): The array with the region indexes.
+            regionArray (npt.NDArray[Any]): The array with the region indexes.
 
         Returns:
-            npt.NDArray[Any]: The array with values instead of indexes.
+            npt.NDArray[Any]: The new array with values mapped from the regionArray.
         """
-        nbElements: int = len( regionNpArray )
-        npArray: npt.NDArray[ Any ]
+        nbElements: int = len( regionArray )
+        newArray: npt.NDArray[ Any ]
         if self.nbComponents == 1:
-            npArray = np.ones( nbElements, self.valueNpType )
+            newArray = np.ones( nbElements, self.valueNpType )
         else:
-            npArray = np.ones( ( nbElements, self.nbComponents ), self.valueNpType )
+            newArray = np.ones( ( nbElements, self.nbComponents ), self.valueNpType )
 
-        for elem in range( nbElements ):
-            value: Any = regionNpArray[ elem ]
+        for idElement in range( nbElements ):
+            value: Any = regionArray[ idElement ]
             if value in self.dictRegionValues:
                 if self.nbComponents == 1:
-                    npArray[ elem ] = self.dictRegionValues[ value ][ 0 ]
+                    newArray[ idElement ] = self.dictRegionValues[ value ][ 0 ]
                 else:
-                    npArray[ elem ] = self.dictRegionValues[ value ]
+                    newArray[ idElement ] = self.dictRegionValues[ value ]
             else:
                 if self.nbComponents == 1:
-                    npArray[ elem ] = self.defaultValue[ 0 ]
+                    newArray[ idElement ] = self.defaultValue[ 0 ]
                     self.useDefaultValue = True
                 else:
-                    npArray[ elem ] = self.defaultValue
+                    newArray[ idElement ] = self.defaultValue
                     self.useDefaultValue = True
 
-        return npArray
+        return newArray
 
     def _logOutputMessage( self: Self, trueIndexes: list[ Any ] ) -> None:
         """Create and log result messages of the filter.
