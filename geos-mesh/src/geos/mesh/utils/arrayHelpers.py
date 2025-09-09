@@ -258,8 +258,7 @@ def getAttributesFromDataSet( dataSet: vtkDataSet, onPoints: bool ) -> dict[ str
     return attributes
 
 
-def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attributeName: str,
-                         onPoints: bool ) -> bool:
+def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attributeName: str, onPoints: bool ) -> bool:
     """Check if an attribute is in the input object.
 
     Args:
@@ -278,7 +277,8 @@ def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attrib
         raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
 
 
-def isAttributeInObjectMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, onPoints: bool ) -> bool:
+def isAttributeInObjectMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str,
+                                          onPoints: bool ) -> bool:
     """Check if an attribute is in the input object.
 
     Args:
@@ -294,7 +294,7 @@ def isAttributeInObjectMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSe
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return True
-    
+
     return False
 
 
@@ -493,7 +493,7 @@ def getComponentNames(
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return getComponentNamesMultiBlock( mesh, attributeName, onPoints )
     else:
-        raise AssertionError( "Object type is not managed." )
+        raise AssertionError( "Mesh type is not managed." )
 
 
 def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, onPoints: bool ) -> tuple[ str, ...]:

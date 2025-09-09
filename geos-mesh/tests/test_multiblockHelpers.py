@@ -5,9 +5,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator"
 import pytest
-from typing import Union, cast
-from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, vtkDataObjectTreeIterator,
-                                            vtkMultiBlockDataSet )
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from geos.mesh.utils import multiblockHelpers
 
@@ -59,7 +57,9 @@ def test_getBlockIndexFromName(
 
 
 @pytest.mark.parametrize( "dictCompositeBlocksTest", [
-    ( { "Fracture": 2 } ),
+    ( {
+        "Fracture": 2
+    } ),
 ] )
 def test_getElementaryCompositeBlockIndexes(
     dataSetTest: vtkMultiBlockDataSet,
@@ -72,7 +72,7 @@ def test_getElementaryCompositeBlockIndexes(
 
 
 @pytest.mark.parametrize( "blockElementFlatIndexesTest", [
-    ( [ 1 ,  3 ] ),
+    ( [ 1, 3 ] ),
 ] )
 def test_getBlockElementIndexesFlatten(
     dataSetTest: vtkMultiBlockDataSet,
@@ -95,4 +95,3 @@ def test_getBlockElementIndexes(
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     blockElementIndexes: list[ list[ int ] ] = multiblockHelpers.getBlockElementIndexes( multiBlockDataSet )
     assert blockElementIndexes == blockElementIndexesTest
-

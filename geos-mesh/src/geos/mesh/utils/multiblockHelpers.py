@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
-from typing import Union, cast
+from typing import Union
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObject, vtkDataObjectTreeIterator,
                                             vtkMultiBlockDataSet )
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
@@ -57,7 +57,8 @@ def getBlockNameFromIndex( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCo
     raise ValueError( "The block index is not an index of a block in the mesh" )
 
 
-def getBlockIndexFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ], blockName: str ) -> int:
+def getBlockIndexFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+                           blockName: str ) -> int:
     """Get flat index of a multiBlockDataSet block with its name.
 
     Args:
@@ -82,7 +83,8 @@ def getBlockIndexFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCo
     return -1
 
 
-def getElementaryCompositeBlockIndexes( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> dict[ str, int ]:
+def getElementaryCompositeBlockIndexes(
+        multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> dict[ str, int ]:
     """Get indexes of composite block of the multiBlockDataSet that contains elementary blocks.
 
     Args:
@@ -105,13 +107,15 @@ def getElementaryCompositeBlockIndexes( multiBlockDataSet: Union[ vtkMultiBlockD
         curIsComposite = iterator.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" )
         iterator.GoToNextItem()
         nextIsNotNone = iterator.GetCurrentDataObject() is not None
-        if ( curIsComposite and nextIsNotNone and ( not iterator.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" ) ) ):
+        if ( curIsComposite and nextIsNotNone
+             and ( not iterator.GetCurrentDataObject().IsA( "vtkMultiBlockDataSet" ) ) ):
             dictCompositeBlocks[ curName ] = curIndex
 
     return dictCompositeBlocks
 
 
-def getBlockElementIndexesFlatten( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ int ]:
+def getBlockElementIndexesFlatten(
+        multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ int ]:
     """Get a flatten list that contains flat indexes of elementary blocks.
 
     Args:
@@ -123,7 +127,8 @@ def getBlockElementIndexesFlatten( multiBlockDataSet: Union[ vtkMultiBlockDataSe
     return [ i for li in getBlockElementIndexes( multiBlockDataSet ) for i in li ]
 
 
-def getBlockElementIndexes( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ list[ int ] ]:
+def getBlockElementIndexes(
+        multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] ) -> list[ list[ int ] ]:
     """Get a list of list that contains flat indexes of elementary blocks.
 
     Each sublist contains the indexes of elementary blocks that belongs to a
@@ -185,7 +190,8 @@ def getBlockFromFlatIndex( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCo
     return None
 
 
-def getBlockFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ], blockName: str ) -> Union[ None, vtkDataObject ]:
+def getBlockFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
+                      blockName: str ) -> Union[ None, vtkDataObject ]:
     """Get the block named blockName from the vtkMultiBlockDataSet.
 
     Args:
