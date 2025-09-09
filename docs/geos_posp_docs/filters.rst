@@ -3,15 +3,6 @@ vtk Filters
 
 This package defines vtk filters that allows to process Geos outputs.
 
-
-geos_posp.filters.AttributeMappingFromCellId module
------------------------------------------------------------
-
-.. automodule:: geos_posp.filters.AttributeMappingFromCellId
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.filters.GeomechanicsCalculator module
 ---------------------------------------------------
 
