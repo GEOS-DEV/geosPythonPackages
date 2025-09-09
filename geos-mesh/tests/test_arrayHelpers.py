@@ -39,6 +39,7 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, o
 
     assert attributes == expected
 
+
 @pytest.mark.parametrize( "attributeName, onPointsTest, onBothTest", [
     ( "CellAttribute", False, False ),
     ( "PointAttribute", True, False ),
@@ -46,21 +47,22 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, o
     ( "NewAttribute", True, True ),
 ] )
 def test_getAttributePieceInfo(
-        dataSetTest: vtkDataSet,
-        attributeName: str,
-        onPointsTest: Union[ None, bool],
-        onBothTest: bool,
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    onPointsTest: Union[ None, bool ],
+    onBothTest: bool,
 ) -> None:
     """Test getting attribute piece information."""
     dataSet: vtkDataSet = dataSetTest( "dataset" )
-    if onBothTest == True: # Create a case with an attribute with the same name on points and on cells.
-        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=True)
-        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=False)
+    if onBothTest:  # Create a case with an attribute with the same name on points and on cells.
+        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=True )
+        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=False )
     onPoints: Union[ None, bool ]
     onBoth: bool
     onPoints, onBoth = arrayHelpers.getAttributePieceInfo( dataSet, attributeName )
     assert onPoints == onPointsTest
     assert onBoth == onBothTest
+
 
 @pytest.mark.parametrize( "attributeName, listValues, onPoints, validValuesTest, invalidValuesTest", [
     ( "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], True, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
@@ -82,6 +84,7 @@ def test_checkValidValuesInDataSet(
     validValues, invalidValues = arrayHelpers.checkValidValuesInDataSet( dataSet, attributeName, listValues, onPoints )
     assert validValues == validValuesTest
     assert invalidValues == invalidValuesTest
+
 
 @pytest.mark.parametrize( "onpoints, expected", [ ( True, {
     'GLOBAL_IDS_POINTS': 1,

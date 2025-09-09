@@ -49,10 +49,12 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
 
 
 def getAttributePieceInfo(
-        mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-        attributeName: str,
- ) -> tuple[ Union[ None, bool ], bool ]:
-    """Get the attribute piece information:
+    mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ],
+    attributeName: str,
+) -> tuple[ Union[ None, bool ], bool ]:
+    """Get the attribute piece information.
+
+    Two information are given:
         - onPoints (Union[None, bool]): True if the attribute is on points or on both pieces, False if it is on cells, None otherwise.
         - onBoth (bool): True if the attribute is on points and on cells, False otherwise.
 
@@ -71,15 +73,15 @@ def getAttributePieceInfo(
         if onPoints is False:
             onBoth = True
         onPoints = True
-    
+
     return ( onPoints, onBoth )
 
 
 def checkValidValuesInMultiBlock(
-        multiBlockDataSet: vtkMultiBlockDataSet,
-        attributeName: str,
-        listValues: list[ Any ],
-        onPoints: bool,
+    multiBlockDataSet: vtkMultiBlockDataSet,
+    attributeName: str,
+    listValues: list[ Any ],
+    onPoints: bool,
 ) -> tuple[ list[ Any ], list[ Any ] ]:
     """Check if each value is valid , ie if that value is a data of the attribute in at least one dataset of the multiblock.
 
@@ -112,11 +114,12 @@ def checkValidValuesInMultiBlock(
 
     return ( validValues, invalidValues )
 
+
 def checkValidValuesInDataSet(
-        dataSet: vtkDataSet,
-        attributeName: str,
-        listValues: list[ Any ],
-        onPoints: bool,
+    dataSet: vtkDataSet,
+    attributeName: str,
+    listValues: list[ Any ],
+    onPoints: bool,
 ) -> tuple[ list[ Any ], list[ Any ] ]:
     """Check if each value is valid , ie if that value is a data of the attribute in the dataset.
 

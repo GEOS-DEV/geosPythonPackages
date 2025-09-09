@@ -135,4 +135,3 @@ class FillPartialArrays:
         self.logger.info( f"The filter { self.logger.name } succeed." )
 
         return True
-

@@ -106,7 +106,7 @@ def test_CreateConstantAttributePerRegion(
     """Test CreateConstantAttributePerRegion."""
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
     nbComponents: int = len( componentNamesTest )
-    if nbComponents == 0:  # If one component their is no name.
+    if nbComponents == 0:  # If the attribute has one component, the component has no name.
         nbComponents += 1
 
     filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(

@@ -192,8 +192,8 @@ class CreateConstantAttributePerRegion:
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
         validIndexes: list[ Any ] = []
         invalidIndexes: list[ Any ] = []
-        regionNpArray: npt.NDArray[ Any ]
-        npArray: npt.NDArray[ Any ]
+        regionArray: npt.NDArray[ Any ]
+        newArray: npt.NDArray[ Any ]
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
             # Check if the attribute region is global.
             if not isAttributeGlobal( self.mesh, self.regionName, self.onPoints ):
@@ -202,7 +202,8 @@ class CreateConstantAttributePerRegion:
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
 
-            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes, self.onPoints )
+            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
+                                                                         self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region indexes entered." )
@@ -241,7 +242,8 @@ class CreateConstantAttributePerRegion:
                         return False
 
         else:
-            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes, self.onPoints )
+            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
+                                                                      self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region indexes entered." )
@@ -279,7 +281,6 @@ class CreateConstantAttributePerRegion:
 
         return True
 
-
     def _setInfoRegion( self: Self ) -> None:
         """Update self.dictRegionValues and set self.defaultValue.
 
@@ -311,12 +312,11 @@ class CreateConstantAttributePerRegion:
         elif self.valueNpType in ( np.uint8, np.uint16, np.uint32, np.uint64 ):
             self.defaultValue = [ self.valueNpType( 0 ) for _ in range( self.nbComponents ) ]
 
-
     def _createArrayFromRegionArrayWithValueMap( self: Self, regionArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
         """Create the array from the regionArray and the valueMap (self.valueMap) giving the relation between the values of the regionArray and the new one.
 
         For each element (idElement) of the regionArray:
-            - If the value (regionArray[idElement]) is mapped (a keys of the valueMap), valueArray[idElement] = self.valueMap[value] 
+            - If the value (regionArray[idElement]) is mapped (a keys of the valueMap), valueArray[idElement] = self.valueMap[value].
             - If not, valueArray[idElement] = self.defaultValue.
 
         Args:
