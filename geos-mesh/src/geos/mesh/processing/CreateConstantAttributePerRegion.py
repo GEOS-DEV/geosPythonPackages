@@ -90,12 +90,12 @@ class CreateConstantAttributePerRegion:
             regionName (str): The name of the attribute with the region indexes.
             dictRegionValues (dict[ Any, Any ]): The dictionary with the region indexes as keys and the list of values as items.
             newAttributeName (str): The name of the new attribute to create.
+            valueNpType (type, optional): The numpy scalar type for values.
+                Defaults to numpy.float32.
             nbComponents (int, optional): Number of components for the new attribute.
                 Defaults to 1.
             componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
                 Defaults to an empty tuple.
-            valueNpType (type, optional): The numpy scalar type for values.
-                Defaults to numpy.float32.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
@@ -157,22 +157,22 @@ class CreateConstantAttributePerRegion:
         self._setPieceRegionAttribute()
         if self.onPoints is None:
             self.logger.error( f"{ self.regionName } is not in the mesh." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been add." )
+            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
         if self.onBoth:
             self.logger.error(
-                f"Their is two attribute named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+                f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
             )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been add." )
+            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
         nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.onPoints )
         if nbComponentsRegion != 1:
             self.logger.error( f"The region attribute { self.regionName } has to many components, one is requires." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been add." )
+            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
@@ -193,7 +193,7 @@ class CreateConstantAttributePerRegion:
             # Check if the attribute region is global.
             if not isAttributeGlobal( self.mesh, self.regionName, self.onPoints ):
                 self.logger.error( f"The region attribute { self.regionName } has to be global." )
-                self.logger.error( f"The new attribute { self.newAttributeName } has not been add." )
+                self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
 
@@ -321,15 +321,15 @@ class CreateConstantAttributePerRegion:
         elif self.valueNpType in ( np.uint8, np.uint16, np.uint32, np.uint64 ):
             self.defaultValue = [ self.valueNpType( 0 ) for _ in range( self.nbComponents ) ]
 
-    def _getTrueIndexesInMultiBlock( self: Self,
+    def _checkIndexesValidityInMultiBlock( self: Self,
                                      multiBlockDataSet: vtkMultiBlockDataSet ) -> tuple[ list[ Any ], list[ Any ] ]:
-        """Check for each region index if it is a true index (the index is value of the attribute of at least one block), or a false index.
+        """Check if each region index is valid, i.e. if that index is a value existing in at least one block.
 
         Args:
-            multiBlockDataSet (vtkMultiBlockDataSet): The mesh with the attribute to check.
+            multiBlockDataSet (vtkMultiBlockDataSet): The multiblock dataset mesh to check.
 
         Returns:
-            tuple(list[Any], list[Any]): Tuple with the list of the true indexes and the list of the false indexes.
+            tuple(list[Any], list[Any]): Tuple containing a list of the valid indexes and a list of the invalid ones.
         """
         trueIndexes: list[ Any ] = []
         falseIndexes: list[ Any ] = []
@@ -415,7 +415,7 @@ class CreateConstantAttributePerRegion:
             trueIndexes (list[Any]): The list of the true region indexes use to create the attribute.
         """
         # The Filter succeed.
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
 
         # Info about the created attribute.
         ## The piece where the attribute is created.

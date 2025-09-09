@@ -37,15 +37,18 @@ from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstant
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to create an attribute
 with constant values per components for each chosen indexes of a reference/region attribute.
-If other region indexes exist values are set to nan for float type, -1 for int type or 0 for uint type.
+If other region indexes exist, values are set to nan for float type, -1 for int type or 0 for uint type.
 
 Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
 The relation index/values is given by a dictionary. Its keys are the indexes and its items are the list of values for each component.
 
+.. Warning:: 
+    The input mesh should contain an attribute corresponding to the regions.
+
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCreateConstantAttributePerRegion.
-* Select the mesh you want to create the attributes and containing a region attribute.
+* Select the mesh in which you want to create the attributes.
 * Select the filter Create Constant Attribute Per Region in filter|0- Geos Pre-processing.
 * Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names.
 * Apply.
@@ -102,7 +105,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             </RequiredProperties>
         </ArrayListDomain>
         <Documentation>
-            Select the attribute to consider as the region attribute containing the indexes of the regions.
+            Select the attribute to consider for regions indexes.
         </Documentation>
         <Hints>
             <NoDefault />
@@ -125,7 +128,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
-                Set the value of the new attribute for each region indexes, use a coma between the value of each components:\n
+                Set the value of the new attribute for each region indexes, use a comma between the value of each components:\n
                     valueRegionIndex : valueComponent1, valueComponent2 ...\n
                 If the region attribute has other indexes than those given, a default value is use:\n
                     0 for uint type, -1 for int type and nan for float type.
@@ -140,11 +143,11 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         </StringVectorProperty>
     """ )
     def _setDictRegionValues( self: Self, regionIndex: str, value: str ) -> None:
-        """Set the the dictionary with the region indexes and its corresponding list of value for each components.
+        """Set the dictionary with the region indexes and its corresponding list of values for each components.
 
         Args:
             regionIndex (str): Region index of the region attribute to consider.
-            value (str): List of value to use for the regionIndex. If multiple components use a coma between the value of each component.
+            value (str): List of value to use for the regionIndex. If multiple components use a comma between the value of each component.
         """
         if self.clearDictRegionValues:
             self.dictRegionValues = {}
@@ -163,7 +166,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             <Property name="SetDictRegionValues"/>
         </PropertyGroup>
     """ )
-    def _groupeRegionAttributeSettingsWidgets( self: Self ) -> None:
+    def _groupRegionAttributeSettingsWidgets( self: Self ) -> None:
         """Group the widgets to set the settings of the region attribute."""
         self.Modified()
 
@@ -210,7 +213,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             <Entry value="11" text="float64"/>
         </EnumerationDomain>
         <Documentation>
-            The wanted numpy scalar type for values of the new attribute.
+            The requested numpy scalar type for values of the new attribute.
         </Documentation>
     """ )
     def _setValueType( self: Self, valueType: int ) -> None:
@@ -239,7 +242,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Set the number of components of the attribute to create.
 
         Args:
-            nbComponents (int): Number of components for the new attribute.
+            nbComponents (int): Number of components of the new attribute.
         """
         self.nbComponents = nbComponents
         self.Modified()
