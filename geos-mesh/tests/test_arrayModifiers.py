@@ -14,6 +14,8 @@ import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
 
+from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
+
 from vtk import (  # type: ignore[import-untyped]
     VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG, VTK_CHAR, VTK_SIGNED_CHAR,
     VTK_SHORT, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE, VTK_FLOAT, VTK_DOUBLE,
@@ -48,21 +50,21 @@ from geos.mesh.utils import arrayModifiers
     "idBlock, attributeName, nbComponentsTest, componentNamesTest, onPoints, listValues, listValuesTest, vtkDataTypeTest",
     [
         # Test fill an attribute on point and on cell.
-        ( 1, "PointAttribute", 3,
+        ( 3, "PointAttribute", 3,
           ( "AX1", "AX2", "AX3" ), True, None, [ np.float64(
               np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
-        ( 1, "CellAttribute", 3,
+        ( 3, "CellAttribute", 3,
           ( "AX1", "AX2", "AX3" ), False, None, [ np.float64(
               np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
         # Test fill attributes with different number of component with or without component names.
-        ( 1, "PORO", 1, (), False, None, [ np.float32( np.nan ) ], VTK_FLOAT ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
+        ( 3, "PORO", 1, (), False, None, [ np.float32( np.nan ) ], VTK_FLOAT ),
+        ( 1, "collocated_nodes", 2, ( None, None ), True, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
         # Test fill an attribute with different type of value.
-        ( 1, "FAULT", 1, (), False, None, [ np.int32( -1 ) ], VTK_INT ),
-        ( 1, "FAULT", 1, (), False, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
-        ( 1, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
-        ( 0, "collocated_nodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
-        ( 1, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ],
+        ( 3, "FAULT", 1, (), False, None, [ np.int32( -1 ) ], VTK_INT ),
+        ( 3, "FAULT", 1, (), False, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
+        ( 3, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
+        ( 1, "collocated_nodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
+        ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ],
           [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
     ] )
 def test_fillPartialAttributes(
@@ -85,7 +87,7 @@ def test_fillPartialAttributes(
                                                  listValues=listValues )
 
     # Get the dataSet where the attribute has been filled.
-    dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
+    dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( idBlock ) )
 
     # Get the filled attribute.
     data: Union[ vtkPointData, vtkCellData ]
@@ -134,9 +136,9 @@ def test_FillAllPartialAttributes(
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( multiBlockDataSetName )
     assert arrayModifiers.fillAllPartialAttributes( multiBlockDataSetTest )
 
-    nbBlock: int = multiBlockDataSetTest.GetNumberOfBlocks()
-    for idBlock in range( nbBlock ):
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTest )
+    for blockIndex in elementaryBlockIndexes:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( blockIndex ) )
         attributeExist: int
         for attributeNameOnPoint in [ "PointAttribute", "collocated_nodes" ]:
             attributeExist = dataSet.GetPointData().HasArray( attributeNameOnPoint )
@@ -191,9 +193,9 @@ def test_createConstantAttributeMultiBlock(
                                                              attributeName,
                                                              onPoints=onPoints )
 
-    nbBlock = multiBlockDataSetTest.GetNumberOfBlocks()
-    for idBlock in range( nbBlock ):
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetBlock( idBlock ) )
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTest )
+    for blockIndex in elementaryBlockIndexes:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( blockIndex ) )
         data: Union[ vtkPointData, vtkCellData ]
         data = dataSet.GetPointData() if onPoints else dataSet.GetCellData()
 
@@ -410,10 +412,10 @@ def test_copyAttribute(
                                          onPoints )
 
     # Parse the two multiBlockDataSet and test if the attribute has been copied.
-    nbBlocks: int = multiBlockDataSetFrom.GetNumberOfBlocks()
-    for idBlock in range( nbBlocks ):
-        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetBlock( idBlock ) )
-        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetBlock( idBlock ) )
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
+    for blockIndex in elementaryBlockIndexes:
+        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( blockIndex ) )
+        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( blockIndex ) )
         dataFrom: Union[ vtkPointData, vtkCellData ]
         dataTo: Union[ vtkPointData, vtkCellData ]
         if onPoints:
@@ -550,7 +552,7 @@ def test_renameAttributeMultiblock(
         newAttributeName,
         onPoints,
     )
-    block: vtkDataSet = vtkDataSet.SafeDownCast( vtkMultiBlockDataSetTest.GetBlock( 0 ) )
+    block: vtkDataSet = vtkDataSet.SafeDownCast( vtkMultiBlockDataSetTest.GetDataSet( 1 ) )
     data: Union[ vtkPointData, vtkCellData ]
     if onPoints:
         data = block.GetPointData()

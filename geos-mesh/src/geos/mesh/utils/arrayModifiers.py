@@ -17,7 +17,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPointSet,
     vtkCompositeDataSet,
     vtkDataObject,
-    vtkDataObjectTreeIterator,
     vtkPointData,
     vtkCellData,
 )
@@ -44,10 +43,7 @@ from geos.mesh.utils.arrayHelpers import (
     getVtkDataTypeInObject,
     getNumberOfComponentsMultiBlock,
 )
-from geos.mesh.utils.multiblockHelpers import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
+from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 
 __doc__ = """
 ArrayModifiers contains utilities to process VTK Arrays objects.
@@ -149,17 +145,12 @@ def fillPartialAttributes(
                 )
 
     # Parse the multiBlockDataSet to create and fill the attribute on blocks where it is not.
-    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iterator.SetDataSet( multiBlockDataSet )
-    iterator.VisitOnlyLeavesOn()
-    iterator.GoToFirstItem()
-    while iterator.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for blockIndex in elementaryBlockIndexes:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ) and \
            not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger ):
             return False
-
-        iterator.GoToNextItem()
 
     return True
 
@@ -225,7 +216,7 @@ def createEmptyAttribute(
 
 
 def createConstantAttribute(
-    object: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+    mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataSet ],
     listValues: list[ Any ],
     attributeName: str,
     componentNames: tuple[ str, ...] = (),  # noqa: C408
@@ -233,10 +224,10 @@ def createConstantAttribute(
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
 ) -> bool:
-    """Create a new attribute with a constant value in the object.
+    """Create a new attribute with a constant value in the mesh.
 
     Args:
-        object (vtkDataObject): Object (vtkMultiBlockDataSet, vtkDataSet) where to create the attribute.
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): Mesh where to create the attribute.
         listValues (list[Any]): List of values of the attribute for each components. It is recommended to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
@@ -261,19 +252,14 @@ def createConstantAttribute(
         logger = getLogger( "createConstantAttribute", True )
 
     # Deals with multiBlocksDataSets.
-    if isinstance( object, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        return createConstantAttributeMultiBlock( object, listValues, attributeName, componentNames, onPoints,
+    if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
+        return createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, onPoints,
                                                   vtkDataType, logger )
 
     # Deals with dataSets.
-    elif isinstance( object, vtkDataSet ):
-        return createConstantAttributeDataSet( object, listValues, attributeName, componentNames, onPoints, vtkDataType,
+    elif isinstance( mesh, vtkDataSet ):
+        return createConstantAttributeDataSet( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType,
                                                logger )
-
-    else:
-        logger.error( "The mesh has to be inherited from a vtkMultiBlockDataSet or a vtkDataSet" )
-        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-        return False
 
 
 def createConstantAttributeMultiBlock(
@@ -288,7 +274,7 @@ def createConstantAttributeMultiBlock(
     """Create a new attribute with a constant value per component on every block of the multiBlockDataSet.
 
     Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): MultiBlockDataSet where to create the attribute.
+        multiBlockDataSet (Union[vtkMultiBlockDataSet, vtkCompositeDataSet]): MultiBlockDataSet where to create the attribute.
         listValues (list[Any]): List of values of the attribute for each components. It is recommended to use numpy scalar type for the values.
         attributeName (str): Name of the attribute.
         componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
@@ -335,17 +321,12 @@ def createConstantAttributeMultiBlock(
         )
 
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
-    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iterator.SetDataSet( multiBlockDataSet )
-    iterator.VisitOnlyLeavesOn()
-    iterator.GoToFirstItem()
-    while iterator.GetCurrentDataObject() is not None:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
+    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for blockIndex in elementaryBlockIndexes:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints,
                                                vtkDataType, logger ):
             return False
-
-        iterator.GoToNextItem()
 
     return True
 
@@ -614,13 +595,13 @@ def copyAttribute(
 
     # Parse blocks of the two mesh to copy the attribute.
     for idBlock in elementaryBlockIndexesTo:
-        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( multiBlockDataSetFrom, idBlock ) )
+        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( idBlock ) )
         if dataSetFrom is None:
             logger.error( f"Block { idBlock } of multiBlockDataSetFrom is null." )  # type: ignore[unreachable]
             logger.error( f"The attribute { attributeNameFrom } has not been copied." )
             return False
 
-        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( getBlockFromFlatIndex( multiBlockDataSetTo, idBlock ) )
+        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( idBlock ) )
         if dataSetTo is None:
             logger.error( f"Block { idBlock } of multiBlockDataSetTo is null." )  # type: ignore[unreachable]
             logger.error( f"The attribute { attributeNameFrom } has not been copied." )
@@ -908,15 +889,10 @@ def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], 
     """
     ret: int = 1
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        # initialize data object tree iterator
-        iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-        iterator.SetDataSet( mesh )
-        iterator.VisitOnlyLeavesOn()
-        iterator.GoToFirstItem()
-        while iterator.GetCurrentDataObject() is not None:
-            block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
-            ret *= int( doCreateCellCenterAttribute( block, cellCenterAttributeName ) )
-            iterator.GoToNextItem()
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
+            ret *= int( doCreateCellCenterAttribute( dataSet, cellCenterAttributeName ) )
     elif isinstance( mesh, vtkDataSet ):
         ret = int( doCreateCellCenterAttribute( mesh, cellCenterAttributeName ) )
     else:
