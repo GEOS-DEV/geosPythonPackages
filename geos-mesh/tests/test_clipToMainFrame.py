@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Generator
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader, vtkXMLMultiBlockDataWriter
 import logging  # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
@@ -17,6 +17,7 @@ from geos.mesh.processing.clipToMainFrame import ClipToMainFrameFilter
 
 Lx, Ly, Lz = 5, 2, 8
 nx, ny, nz = 10, 10, 10
+
 
 @dataclass( frozen=True )
 class Expected:
@@ -91,7 +92,8 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
 
 
 @pytest.mark.parametrize( "expected", __build_test_mesh() )
-def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
+def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
+    """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
     ( filter := ClipToMainFrameFilter() ).SetInputData( expected.mesh )
     filter.Update()
     output_mesh = filter.GetOutput()
@@ -125,29 +127,26 @@ def test_rotateAndTranslate_polyhedron( expected: Expected ) -> None:
     # w.SetInputData(output_mesh)
     # w.Write()
 
-def test_rotateAndTranslate_gen():
 
+def test_clipToMainFrame_gen() -> None:
+    """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
     reader = vtkXMLMultiBlockDataReader()
-    reader.SetFileName(  "./geos-mesh/tests/data/displacedFault.vtm" )
+    reader.SetFileName( "./geos-mesh/tests/data/displacedFault.vtm" )
     reader.Update()
     input_mesh = reader.GetOutput()
     ( filter := ClipToMainFrameFilter() ).SetInputData( input_mesh )
     filter.Update()
-    print(filter.GetTransform())
+    print( filter.GetTransform() )
     output_mesh = filter.GetOutputDataObject( 0 )
     assert output_mesh.GetNumberOfPoints() == input_mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == input_mesh.GetNumberOfCells()
 
     # #check if input has been modified
     # w = vtkXMLMultiBlockDataWriter()
-    # w.SetFileName("./test_rotateAndTranslate_input.vtm")
-    # w.SetInputData(input_mesh)
+    # w.SetFileName( "./test_rotateAndTranslate_input.vtm" )
+    # w.SetInputData( input_mesh )
     # w.Write()
 
-
-    # w.SetFileName("./test_rotateAndTranslate.vtm")
-    # w.SetInputData(output_mesh)
+    # w.SetFileName( "./test_rotateAndTranslate.vtm" )
+    # w.SetInputData( output_mesh )
     # w.Write()
-
-# if __name__ == "__main__":
-#     pytest.main( [ __file__, "-s", "-vvv", "--log-cli-level=INFO" ] )
