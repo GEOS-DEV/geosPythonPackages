@@ -112,7 +112,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         if surfacicMesh is None:
             self.logger.error( "Input surface is undefined." )
         if not surfacicMesh.IsA( "vtkPolyData" ):
-            self.logger.error( f" surfacicMesh parameter is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
+            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh
         # Output surfacic mesh
         self.outputMesh: vtkPolyData
