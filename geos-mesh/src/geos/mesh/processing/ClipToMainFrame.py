@@ -1,6 +1,7 @@
-# SPDX-FileContributor: Jacques Franc
-# SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-License-Identifier: Apache 2.0
+# SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
+# SPDX-FileContributor: Jacques Franc
+
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import vtkPoints, vtkFloatArray
 from vtkmodules.vtkFiltersGeneral import vtkOBBTree
@@ -14,10 +15,35 @@ from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 import numpy as np
 import logging
 
-__doc__ = """Module to clip a mesh to the main frame using rigid body transformation.
+__doc__ = """
+Module to clip a mesh to the main frame using rigid body transformation.
+
 Methods include:
     - ClipToMainFrame class to compute the transformation
     - ClipToMainFrameFilter class to apply the transformation to a mesh
+
+To use it:
+
+.. code-block:: python
+
+    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrameFilter
+
+    # Filter inputs.
+    multiBlockDataSet: vtkMultiBlockDataSet
+
+    # Optional inputs.
+    userTranslation: vtkFloatArray
+
+    # Instantiate the filter.
+    filter: ClipToMainFrameFilter = ClipToMainFrameFilter()
+    filter.SetInputData( multiBlockDataSet )
+
+    # Do calculations.
+    if userTranslation is not None:
+        filter.SetUserTranslation( userTranslation )
+    filter.Update()
+    output: vtkMultiBlockDataSet = filter.GetOutput()
+
 """
 
 

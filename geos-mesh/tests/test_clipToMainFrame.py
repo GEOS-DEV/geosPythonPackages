@@ -13,7 +13,7 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
 
-from geos.mesh.processing.clipToMainFrame import ClipToMainFrameFilter
+from geos.mesh.processing.ClipToMainFrame import ClipToMainFrameFilter
 
 Lx, Ly, Lz = 5, 2, 8
 nx, ny, nz = 10, 10, 10
