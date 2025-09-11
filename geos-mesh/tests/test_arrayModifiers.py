@@ -497,7 +497,7 @@ def test_transferAttributeWithElementMap(
     onPoints: bool,
     defaultValueTest: Any,
 ) -> None:
-    """Test to transfer attributes from the meshFrom to the dataSetTo using an elementMap."""
+    """Test to transfer attributes from the source mesh to the final mesh using a map of points/cells."""
     meshFrom: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshFromName )
     if isinstance( meshFrom, vtkMultiBlockDataSet ):
         arrayModifiers.fillAllPartialAttributes( meshFrom )
