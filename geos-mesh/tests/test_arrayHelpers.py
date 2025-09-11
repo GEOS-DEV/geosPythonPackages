@@ -5,7 +5,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator, attr-defined"
 import pytest
-from typing import Tuple, Union
+from typing import Tuple, Union, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -16,6 +16,7 @@ from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 
 from geos.mesh.utils import arrayHelpers
+from geos.mesh.utils.arrayModifiers import createConstantAttribute
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, points", [
@@ -67,6 +68,52 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, o
     attributes: dict[ str, int ] = arrayHelpers.getAttributesFromMultiBlockDataSet( multiBlockTest, onpoints )
 
     assert attributes == expected
+
+
+@pytest.mark.parametrize( "attributeName, onPointsTest, onBothTest", [
+    ( "CellAttribute", False, False ),
+    ( "PointAttribute", True, False ),
+    ( "NewAttribute", None, False ),
+    ( "NewAttribute", True, True ),
+] )
+def test_getAttributePieceInfo(
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    onPointsTest: Union[ None, bool ],
+    onBothTest: bool,
+) -> None:
+    """Test getting attribute piece information."""
+    dataSet: vtkDataSet = dataSetTest( "dataset" )
+    if onBothTest:  # Create a case with an attribute with the same name on points and on cells.
+        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=True )
+        createConstantAttribute( dataSet, [ 42. ], attributeName, onPoints=False )
+    onPoints: Union[ None, bool ]
+    onBoth: bool
+    onPoints, onBoth = arrayHelpers.getAttributePieceInfo( dataSet, attributeName )
+    assert onPoints == onPointsTest
+    assert onBoth == onBothTest
+
+
+@pytest.mark.parametrize( "attributeName, listValues, onPoints, validValuesTest, invalidValuesTest", [
+    ( "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], True, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
+    ( "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], False, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
+    ( "FAULT", [ 0, 100, 101, 2 ], False, [ 0, 100, 101 ], [ 2 ] ),
+] )
+def test_checkValidValuesInDataSet(
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    listValues: list[ Any ],
+    onPoints: bool,
+    validValuesTest: list[ Any ],
+    invalidValuesTest: list[ Any ],
+) -> None:
+    """Test the function checkValidValuesInDataSet."""
+    dataSet: vtkDataSet = dataSetTest( "dataset" )
+    validValues: list[ Any ]
+    invalidValues: list[ Any ]
+    validValues, invalidValues = arrayHelpers.checkValidValuesInDataSet( dataSet, attributeName, listValues, onPoints )
+    assert validValues == validValuesTest
+    assert invalidValues == invalidValuesTest
 
 
 @pytest.mark.parametrize( "onpoints, expected", [ ( True, {

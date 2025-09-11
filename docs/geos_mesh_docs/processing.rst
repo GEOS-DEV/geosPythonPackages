@@ -11,6 +11,13 @@ geos.mesh.processing.AttributeMapping filter
    :undoc-members:
    :show-inheritance:
 
+geos.mesh.processing.CreateConstantAttributePerRegion filter
+-------------------------------------------------------------
+
+.. automodule:: geos.mesh.processing.CreateConstantAttributePerRegion
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 geos.mesh.processing.FillPartialArrays filter
 ----------------------------------------------

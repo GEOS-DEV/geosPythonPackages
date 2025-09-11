@@ -11,12 +11,6 @@ The plugins include:
 * Visualization plugins to plot Mohr's circles and cross plots using Paraview Python View.
 
 
-PVCreateConstantAttributePerRegion plugin
----------------------------------------------------
-
-.. automodule:: PVplugins.PVCreateConstantAttributePerRegion
-
-
 PVExtractMergeBlocksVolume plugin
 -------------------------------------------
 

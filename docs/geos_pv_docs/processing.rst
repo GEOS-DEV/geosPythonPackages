@@ -6,9 +6,15 @@ PVAttributeMapping
 
 .. automodule:: geos.pv.plugins.PVAttributeMapping
 
+PVCreateConstantAttributePerRegion
+-----------------------------------
+
+.. automodule:: geos.pv.plugins.PVCreateConstantAttributePerRegion
+
 
 PVFillPartialArrays
 --------------------
+
 .. automodule:: geos.pv.plugins.PVFillPartialArrays
 
 
