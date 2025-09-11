@@ -137,17 +137,8 @@ class AttributeMapping:
             self.logger.warning( f"The filter { self.logger.name } has not been used." )
             return False
 
-        wrongAttributeNames: list[ str ] = []
-        attributesAlreadyInMeshTo: list = []
         attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
-        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
-        for attributeName in self.attributeNames:
-            if attributeName not in attributesInMeshFrom:
-                wrongAttributeNames.append( attributeName )
-
-            if attributeName in attributesInMeshTo:
-                attributesAlreadyInMeshTo.append( attributeName )
-
+        wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
                 f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh."
@@ -155,6 +146,8 @@ class AttributeMapping:
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
+        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
+        attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
         if len( attributesAlreadyInMeshTo ) > 0:
             self.logger.error(
                 f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
@@ -187,6 +180,8 @@ class AttributeMapping:
         for attributeName in self.attributeNames:
             if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
                                                     self.onPoints, self.logger ):
+                self.logger.error( f"The attribute { attributeName } has not been mapped." )
+                self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
 
         # Log the output message.

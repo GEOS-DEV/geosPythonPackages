@@ -210,23 +210,26 @@ def getElementMap() -> Any:
         """
         elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
         nbElements: tuple[ int, int ] = ( 4092, 212 ) if points else ( 1740, 156 )
-        if meshFromName == "multiblock" and meshToName == "emptymultiblock":
-            elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
-            elementMap[ 3 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "multiblock" and meshToName == "emptyFracture":
-            elementMap[ 0 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "dataset" and meshToName == "emptydataset":
-            elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
-        elif meshFromName == "dataset" and meshToName == "emptyFracture":
-            elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
-        elif meshFromName == "fracture" and meshToName == "emptyFracture":
-            elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "fracture" and meshToName == "emptymultiblock":
-            elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
-            elementMap[ 3 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
-        elif meshFromName == "dataset" and meshToName == "emptymultiblock":
-            elementMap[ 1 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
-            elementMap[ 3 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+        if meshFromName == "multiblock":
+            if meshToName == "emptymultiblock":
+                elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
+                elementMap[ 3 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
+            elif meshToName == "emptyFracture":
+                elementMap[ 0 ] = np.array( [ [ 3, element ] for element in range( nbElements[ 1 ] ) ] )
+        elif meshFromName == "dataset":
+            if meshToName == "emptydataset":
+                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
+            elif meshToName == "emptyFracture":
+                elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+            elif meshToName == "emptymultiblock":
+                elementMap[ 1 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
+                elementMap[ 3 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
+        elif meshFromName == "fracture":
+            if meshToName == "emptyFracture":
+                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
+            elif meshToName == "emptymultiblock":
+                elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
+                elementMap[ 3 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
 
         return elementMap
 
