@@ -12,6 +12,24 @@ Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-col
 """
 
 
+class CountWarningHandler( logging.Handler ):
+    """Create an handler to count the warnings logged."""
+
+    def __init__( self: Self ) -> None:
+        """Init the handler."""
+        super().__init__()
+        self.warningCount = 0
+
+    def emit( self: Self, record: logging.LogRecord ) -> None:
+        """Count all the warnings logged.
+
+        Args:
+            record (logging.LogRecord): Record.
+        """
+        if record.levelno == logging.WARNING:
+            self.warningCount += 1
+
+
 # Add the convenience method for the logger
 def results( self: logging.Logger, message: str, *args: Any, **kws: Any ) -> None:
     """Logs a message with the custom 'RESULTS' severity level.
@@ -49,7 +67,7 @@ Logger = logging.Logger  # logger type
 class CustomLoggerFormatter( logging.Formatter ):
     """Custom formatter for the logger.
 
-    .. WARNING:: Colors do not work in the ouput message window of Paraview.
+    .. WARNING:: Colors do not work in the output message window of Paraview.
 
     To use it:
 
@@ -78,7 +96,7 @@ class CustomLoggerFormatter( logging.Formatter ):
     #: format for each logger output type with colors
     FORMATS_COLOR: dict[ int, str ] = {
         DEBUG: grey + format2 + reset,
-        INFO: grey + format1 + reset,
+        INFO: green + format1 + reset,
         WARNING: yellow + format1 + reset,
         ERROR: red + format1 + reset,
         CRITICAL: bold_red + format2 + reset,
@@ -151,7 +169,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
         # module import
         import Logger
 
-        # logger instanciation
+        # logger instantiation
         logger :Logger.Logger = Logger.getLogger("My application")
 
         # logger use
