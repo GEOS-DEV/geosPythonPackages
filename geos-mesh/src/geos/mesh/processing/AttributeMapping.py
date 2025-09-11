@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 
 __doc__ = """
-AttributeMapping is a vtk filter that transfer global attributes from an initial mesh to another mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
+AttributeMapping is a vtk filter that transfer global attributes from a source mesh to a final mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
 
 Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
@@ -26,13 +26,13 @@ Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 .. Note::
     For cell, the coordinates of the points in the cell are compared.
 
-To use a logger handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
+To use a logger handler of yours, set the variable 'speHandler' to True and add it using the member function setLoggerHandler.
 
 To use the filter:
 
 .. code-block:: python
 
-    from filters.AttributeMapping import AttributeMapping
+    from geos.mesh.processing.AttributeMapping import AttributeMapping
 
     # Filter inputs.
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ]
@@ -43,7 +43,7 @@ To use the filter:
     speHandler: bool  # defaults to False
 
     # Instantiate the filter
-    filter :AttributeMapping = AttributeMapping( meshFrom,
+    filter: AttributeMapping = AttributeMapping( meshFrom,
                                                  meshTo,
                                                  attributeNames,
                                                  onPoints,
@@ -71,11 +71,11 @@ class AttributeMapping:
         onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """Transfer global attributes from an initial mesh to another mapping the piece of the attributes to transfer.
+        """Transfer global attributes from a source mesh to a final mesh, mapping the piece of the attributes to transfer.
 
         Args:
-            meshFrom (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh with attributes to transfer.
-            meshTo (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh where to transfer attributes.
+            meshFrom (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The source mesh with attributes to transfer.
+            meshTo (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The final mesh where to transfer attributes.
             attributeNames (set[str]): Names of the attributes to transfer.
             onPoints (bool): True if attributes are on points, False if they are on cells.
                 Defaults to False.
@@ -114,7 +114,7 @@ class AttributeMapping:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def GetElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
+    def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.
 
         If attribute to transfer are on points it will be a pointMap, else it will be a cellMap.
@@ -125,7 +125,7 @@ class AttributeMapping:
         return self.ElementMap
 
     def applyFilter( self: Self ) -> bool:
-        """Transfer attributes on element from the meshFrom to the meshTo with the elementMap.
+        """Transfer global attributes from a source mesh to a final mesh, mapping the piece of the attributes to transfer.
 
         Returns:
             boolean (bool): True if calculation successfully ended, False otherwise.
@@ -150,7 +150,7 @@ class AttributeMapping:
 
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not present in the initial mesh."
+                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh."
             )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
