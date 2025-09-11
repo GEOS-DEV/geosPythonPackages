@@ -34,16 +34,24 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-AttributeMapping is a paraview plugin that transfers global attributes from an initial mesh (meshFrom) to a another mesh (meshTo) for each cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
+AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.
+
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
+
+.. Warning::
+    For one application of the plugin, the attributes to transfer should all be located on the same piece (all on points or all on cells).
+
+.. Note::
+    For cell, the coordinates of the points in the cell are compared.
 
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
 * Select the mesh to transfer the global attributes (meshTo).
 * Select Filters > 4- Geos Utils > Attribute Mapping.
-* Select the mesh with global attributes to transfer (meshFrom).
-* Select global attributes to transfer from the meshFrom to the meshTo.
+* Select the source mesh with global attributes to transfer (meshFrom).
+* Select the on witch element (onPoints/onCells) the attributes to transfer are.
+* Select the global attributes to transfer from the source mesh to the final mesh.
 * Apply.
 
 """
@@ -64,20 +72,15 @@ To use it:
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Map attributes of the source mesh (meshFrom) to the other mesh (meshTo)."""
+        """Map attributes of the source mesh (meshFrom) to the final mesh (meshTo)."""
         super().__init__( nInputPorts=2, nOutputPorts=1, inputType="vtkObject", outputType="vtkObject" )
 
         self.onPoints: bool = False
-
-        self._initArraySelections: bool = True
-        self.cellAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
-        self.pointAttributeNames: vtkDataArraySelection = vtkDataArraySelection()
-
         self.clearAttributeNames = True
         self.attributeNames: list[ str ] = []
 
     @smproperty.intvector(
-        name="AttributeType",
+        name="AttributePiece",
         default_values=1,
         number_of_elements=1,
     )
@@ -88,13 +91,13 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             </RequiredProperties>
         </FieldDataDomain>
     """ )
-    def a01SetFieldAssociation( self: Self, value: int ) -> None:
-        """Set attribute type.
+    def setAttributePiece( self: Self, piece: int ) -> None:
+        """Set attributes piece (points or cells).
 
         Args:
-            value  (int): 0 if on points, 1 if on cells.
+            piece (int): 0 if on points, 1 if on cells.
         """
-        self.onPoints = bool( value )
+        self.onPoints = bool( piece )
         self.Modified()
 
     @smproperty.stringvector(
@@ -107,22 +110,22 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
     )
     @smdomain.xml( """
         <ArrayListDomain name="Attribute_List"
-                attribute_type="array"
-                input_domain_name="onPiece_Attribute_List">
+                         attribute_type="array"
+                         input_domain_name="onPiece_Attribute_List">
             <RequiredProperties>
                 <Property function="Input" name="meshFrom" />
                 <Property function="FieldDataSelection" name="AttributeType" />
             </RequiredProperties>
         </ArrayListDomain>
         <Documentation>
-            Select attributes to transfer from the meshFrom To the meshTo.
+            Select attributes to transfer from the source mesh to the final mesh.
         </Documentation>
         <Hints>
             <NoDefault />
         </Hints>
             """ )
-    def a02SelectMultipleAttribute( self: Self, name: str ) -> None:
-        """Set the attribute to transfer from the meshFrom to the meshTo.
+    def selectMultipleAttribute( self: Self, name: str ) -> None:
+        """Set the attribute to transfer from the source mesh to the final mesh.
 
         Args:
             name (str): The name of the attribute to transfer.
@@ -144,9 +147,9 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -168,9 +171,9 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -179,8 +182,8 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
         outData: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
 
-        assert meshTo is not None, "Input mesh (meshTo) to transfer attributes is null."
-        assert meshFrom is not None, "Input mesh (meshFrom) with attributes to transfer is null."
+        assert meshTo is not None, "The final mesh (meshTo) where to transfer attributes is null."
+        assert meshFrom is not None, "The source mesh (meshFrom) with attributes to transfer is null."
         assert outData is not None, "Output pipeline is null."
 
         outData.ShallowCopy( meshTo )

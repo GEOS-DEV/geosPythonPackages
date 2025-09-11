@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 
 __doc__ = """
-AttributeMapping is a vtk filter that transfer global attributes from a source mesh to a final mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
+AttributeMapping is a vtk filter that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
 
 Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
