@@ -31,28 +31,30 @@ def computeElementMapping(
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     points: bool,
 ) -> dict[ int, npt.NDArray ]:
-    """Compute the elementMap from the meshFrom to the meshTo.
+    """Compute the map of points/cells between the source mesh and the final mesh.
 
-    If meshFrom is a vtkDataSet, the flat index (flatIdDataSetFrom) is set to 0.
-    If meshTo is a vtkDataSet, the flat index (flatIdDataSetTo) is set to 0.
+    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
+    If the final mesh is a vtkDataSet, its flat index (flatIdDataSetTo) is set to 0.
 
     The elementMap is a dictionary where:
-        - Keys are the flat index of all the datasets of the meshTo.
-        - Items are arrays of size (nb elements in datasets, 2).
+        - Keys are the flat index of all the datasets of the final mesh.
+        - Items are arrays of size (nb elements in datasets of the final mesh, 2).
 
-    For each element (idElementTo) of each dataset (flatIdDataSetTo) of meshTo,
-    if the points coordinates of an element (idElementFrom) of one meshFrom's dataSet (flatIdDataSetFrom)
-    are the same as the points coordinates of the elementTo,
+    For each element (idElementTo) of each dataset (flatIdDataSetTo) of the final mesh,
+    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
+    are the same as the coordinates of the element of the final mesh,
     elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom]
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
+    For cells, the coordinates of the points in the cell are compared.
+
     Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the element to map.
-        meshTo (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the reference element.
+        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
+        meshTo (Union[vtkDataSet, vtkMultiBlockDataSet]): The final mesh with the reference element coordinates.
         points (bool): True if elements to map are points, False if they are cells.
 
     Returns:
-        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap with the element indexes in the two meshes.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells between the two meshes.
     """
     elementMap: dict[ int, npt.NDArray ] = {}
     if isinstance( meshTo, vtkDataSet ):
@@ -69,28 +71,30 @@ def UpdateElementMappingToMultiBlockDataSet(
     elementMap: dict[ int, npt.NDArray ],
     points: bool,
 ) -> None:
-    """Update the elementMap from the meshFrom to the multiBlockDataSetTo.
+    """Update the map of points/cells between the source mesh and the final mesh.
 
-    If meshFrom is a vtkDataSet, the flat index (flatIdDataSetFrom) is set to 0.
+    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
 
-    Add the mapping for of the multiBlockDataSetTo:
-        - Keys are the flat index of all the datasets of the multiBlockDataSetTo.
-        - Items are arrays of size (nb elements in datasets, 2).
+    Add the mapping for of the final mesh:
+        - Keys are the flat index of all the datasets of the final mesh.
+        - Items are arrays of size (nb elements in datasets of the final mesh, 2).
 
-    For each element (idElementTo) of each dataset (flatIdDataSetTo) of multiBlockDataSetTo,
-    if the points coordinates of an element (idElementFrom) of one meshFrom's dataSet (flatIdDataSetFrom)
-    are the same as the points coordinates of the elementTo,
+    For each element (idElementTo) of each dataset (flatIdDataSetTo) of final mesh,
+    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
+    are the same as the coordinates of the element of the final mesh,
     elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom]
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
+    For cells, the coordinates of the points in the cell are compared.
+
     Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the element to map.
-        multiBlockDataSetTo (vtkMultiBlockDataSet): The mesh with the reference element.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap to update.
+        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
+        multiBlockDataSetTo (vtkMultiBlockDataSet): The final mesh with the reference element coordinates.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update.
         points (bool): True if elements to map are points, False if they are cells.
     """
-    listFlatIdMultiBlockDataSetTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
-    for flatIdDataSetTo in listFlatIdMultiBlockDataSetTo:
+    listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
+    for flatIdDataSetTo in listFlatIdDataSetTo:
         dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( flatIdDataSetTo ) )
         UpdateElementMappingToDataSet( meshFrom, dataSetTo, elementMap, points, flatIdDataSetTo=flatIdDataSetTo )
 
@@ -102,28 +106,29 @@ def UpdateElementMappingToDataSet(
     points: bool,
     flatIdDataSetTo: int = 0,
 ) -> None:
-    """Update the elementMap from the meshFrom to the dataSetTo.
+    """Update the map of points/cells between the source mesh and the final mesh.
 
-    If meshFrom is a vtkDataSet, the flat index (flatIdDataSetFrom) is set to 0.
-    dataSetTo is considered as block of vtkMultiblockDataSet, if not the flat index (flatIdDataSetTo) is set to 0.
+    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
 
-    Add the mapping for the dataSetTo:
-        - The keys is the flat index of the dataSetTo (flatIdDataSetTo).
-        - The item is an array of size (nb elements in dataSetTo, 2).
+    Add the mapping for the final mesh:
+        - The key is the flat index of the final mesh.
+        - The item is an array of size (nb elements in the final mesh, 2).
 
-    For each element (idElementTo) of the mesh dataSetTo,
-    if the points coordinates of an element (idElementFrom) of one meshFrom's dataSet (flatIdDataSetFrom)
-    are the same as the points coordinates of the elementTo,
+    For each element (idElementTo) of the final mesh,
+    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
+    are the same as the coordinates of the element of the final mesh,
     elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom]
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
+    For cells, the coordinates of the points in the cell are compared.
+
     Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The mesh with the element to map.
-        dataSetTo (vtkDataSet): The dataset with the reference element.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap to update.
+        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
+        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update.
         points (bool): True if elements to map are points, False if they are cells.
-        flatIdDataSetTo (int, Optional): The flat index of the dataSetTo.
-            Defaults to 0.
+        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
+            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
     """
     nbElementsTo: int = dataSetTo.GetNumberOfPoints() if points else dataSetTo.GetNumberOfCells()
     elementMap[ flatIdDataSetTo ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
@@ -148,27 +153,27 @@ def UpdateElementMappingFromMultiBlockDataSetToDataSet(
     points: bool,
     flatIdDataSetTo: int = 0,
 ) -> None:
-    """Update the elementMap from the multiBlockDataSetFrom to the dataSetTo.
+    """Update the map of points/cells between the source mesh and the final mesh.
 
-    dataSetTo is considered as block of a vtkMultiblockDataSet, if not the flat index (flatIdDataSetTo) is set to 0.
+    For each element (idElementTo) of the final mesh not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
+    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
+    are the same as the coordinates of the element of the final mesh,
+    the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
-    For each element (idElementTo) of the dataSetTo not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
-    if the points coordinates of an element (idElementFrom) of a block (flatIdDataSetFrom) of multiBlockDataSetFrom
-    are the same as the points coordinates of the elementTo,
-    the elementMap is update to elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
+    For cells, the coordinates of the points in the cell are compared.
 
     Args:
-        multiBlockDataSetFrom (vtkMultiBlockDataSet): The mesh with the element to map.
-        dataSetTo (vtkDataSet): The dataset with the reference element.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap to update with;
-            The flat index of the dataSetTo as keys.
-            An array of size (nb elements in dataSetTo, 2) as item.
+        multiBlockDataSetFrom (vtkMultiBlockDataSet): The source mesh with the element to map.
+        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update with;
+            The key is the flat index of the final mesh.
+            The item is an array of size (nb elements in the final mesh, 2).
         points (bool): True if elements to map are points, False if they are cells.
-        flatIdDataSetTo (int, Optional): The flat index of the dataSetTo.
-            Defaults to 0.
+        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
+            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
     """
-    listFlatIdMultiBlockDataSetFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
-    for flatIdDataSetFrom in listFlatIdMultiBlockDataSetFrom:
+    listFlatIDataSetFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
+    for flatIdDataSetFrom in listFlatIDataSetFrom:
         dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( flatIdDataSetFrom ) )
         UpdateDictElementMappingFromDataSetToDataSet( dataSetFrom,
                                                       dataSetTo,
@@ -186,33 +191,32 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     flatIdDataSetFrom: int = 0,
     flatIdDataSetTo: int = 0,
 ) -> None:
-    """Update the elementMap from the dataSetFrom to the dataSetTo.
+    """Update the map of points/cells between the source mesh and the final mesh.
 
-    dataSetFrom is considered as block of vtkMultiblockDataSet, if not the flat index (flatIdDataSetFrom) is set to 0.
-    dataSetTo is considered as block of vtkMultiblockDataSet, if not the flat index (flatIdDataSetTo) is set to 0.
+    For each element (idElementTo) of the final mesh not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
+    if the coordinates of an element (idElementFrom) of the source mesh
+    are the same as the coordinates of the element of the final mesh,
+    the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
-    For each element (idElementTo) of the dataSetTo not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
-    if the points coordinates of an element (idElementFrom) of the dataSetFrom
-    are the same as the points coordinates of the elementTo,
-    the elementMap is updated to elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
+    For cells, the coordinates of the points in the cell are compared.
 
     Args:
-        dataSetFrom (vtkDataSet): The dataset with the element to map.
-        dataSetTo (vtkDataSet): The dataset with the reference element.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The elementMap to update with;
-            The flat index of the dataSetTo as keys.
-            An array of size (nb elements in dataSetTo, 2) as item.
+        dataSetFrom (vtkDataSet): The source mesh with the element to map.
+        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update with;
+            The key is the flat index of the final mesh.
+            The item is an array of size (nb elements in the final mesh, 2).
         points (bool): True if elements to map are points, False if they are cells.
-        flatIdDataSetFrom (int, Optional): The flat index of the dataSetFrom.
-            Defaults to 0.
-        flatIdDataSetTo (int, Optional): The flat index of the dataSetTo.
-            Defaults to 0.
+        flatIdDataSetFrom (int, Optional): The flat index of the source mesh considered as a dataset of a vtkMultiblockDataSet.
+            Defaults to 0 for source meshes who are not datasets of vtkMultiBlockDataSet.
+        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
+            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
     """
     idElementsFromFund: list[ int ] = []
     nbElementsTo: int = len( elementMap[ flatIdDataSetTo ] )
     nbElementsFrom: int = dataSetFrom.GetNumberOfPoints() if points else dataSetFrom.GetNumberOfCells()
     for idElementTo in range( nbElementsTo ):
-        # Test if the element of the dataSetTo is already mapped.
+        # Test if the element of the final mesh is already mapped.
         if -1 in elementMap[ flatIdDataSetTo ][ idElementTo ]:
             coordElementTo: tuple[ float, ...]
             if points:
@@ -229,7 +233,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
             idElementFrom: int = 0
             ElementFromFund: bool = False
             while idElementFrom < nbElementsFrom and not ElementFromFund:
-                # Test if the element of the dataSetFrom is already mapped.
+                # Test if the element of the source mesh is already mapped.
                 if idElementFrom not in idElementsFromFund:
                     coordElementFrom: tuple[ float, ...]
                     if points:
