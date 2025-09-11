@@ -194,7 +194,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     For each element (idElementTo) of the dataSetTo not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
     if the points coordinates of an element (idElementFrom) of the dataSetFrom
     are the same as the points coordinates of the elementTo,
-    the elementMap is update to elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
+    the elementMap is updated to elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
     Args:
         dataSetFrom (vtkDataSet): The dataset with the element to map.

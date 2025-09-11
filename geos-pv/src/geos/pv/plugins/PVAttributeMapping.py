@@ -34,15 +34,14 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-AttributeMapping is a paraview plugin that transfer global attributes from a meshFrom to a meshTo for each
-cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
+AttributeMapping is a paraview plugin that transfers global attributes from an initial mesh (meshFrom) to a another mesh (meshTo) for each cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
 * Select the mesh to transfer the global attributes (meshTo).
-* Search and Select Attribute Mapping Filter.
+* Select Filters > 4- Geos Utils > Attribute Mapping.
 * Select the mesh with global attributes to transfer (meshFrom).
 * Select global attributes to transfer from the meshFrom to the meshTo.
 * Apply.
@@ -89,7 +88,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             </RequiredProperties>
         </FieldDataDomain>
     """ )
-    def e01SetFieldAssociation( self: Self, value: int ) -> None:
+    def a01SetFieldAssociation( self: Self, value: int ) -> None:
         """Set attribute type.
 
         Args:
@@ -180,7 +179,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 1, 0 )
         outData: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetOutputData( outInfoVec, 0 )
 
-        assert meshTo is not None, "Input mesh (meshTo) to transfer attributed is null."
+        assert meshTo is not None, "Input mesh (meshTo) to transfer attributes is null."
         assert meshFrom is not None, "Input mesh (meshFrom) with attributes to transfer is null."
         assert outData is not None, "Output pipeline is null."
 

@@ -16,14 +16,17 @@ from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 
 __doc__ = """
-AttributeMapping is a vtk filter that transfer global attributes from a meshFrom to a meshTo for each
-cell or point of the two meshes with the same coordinates. For cell, the coordinates of the points in the cell are compared.
-The filter update the mesh where attributes are transferred directly, no copy is created.
+AttributeMapping is a vtk filter that transfer global attributes from an initial mesh to another mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
 
-Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
-The names of the attributes to transfer are give with a set of string.
-The localization of the attributes to transfer is a bool, True for points, False for cells. All the attributes must be on the same piece.
-To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
+Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
+
+.. Warning::
+    For one application of the filter, the attributes to transfer should all be located on the same piece (all on points or all on cells).
+
+.. Note::
+    For cell, the coordinates of the points in the cell are compared.
+
+To use a logger handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
 
 To use the filter:
 
@@ -68,7 +71,7 @@ class AttributeMapping:
         onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """Transfer global attributes from the meshFrom to the meshTo mapping the piece of the attributes to transfer.
+        """Transfer global attributes from an initial mesh to another mapping the piece of the attributes to transfer.
 
         Args:
             meshFrom (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh with attributes to transfer.
@@ -147,14 +150,14 @@ class AttributeMapping:
 
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not in the mesh from where to transfer attributes."
+                f"The { self.piece } attributes { wrongAttributeNames } are not present in the initial mesh."
             )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
         if len( attributesAlreadyInMeshTo ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already in the mesh where attributes must be transferred."
+                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
             )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
@@ -193,4 +196,4 @@ class AttributeMapping:
 
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
