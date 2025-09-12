@@ -12,11 +12,11 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
-    ( "fracture", "emptyFracture", ( [ "collocated_nodes" ] ), True ),
-    ( "multiblock", "emptyFracture", ( [ "FAULT" ] ), False ),
-    ( "multiblock", "emptymultiblock", ( [ "FAULT" ] ), False ),
-    ( "dataset", "emptymultiblock", ( [ "FAULT" ] ), False ),
-    ( "dataset", "emptydataset", ( [ "FAULT" ] ), False ),
+    ( "fracture", "emptyFracture", { "collocated_nodes"  }, True ),
+    ( "multiblock", "emptyFracture", { "FAULT" }, False ),
+    ( "multiblock", "emptymultiblock", { "FAULT" }, False ),
+    ( "dataset", "emptymultiblock", { "FAULT" }, False ),
+    ( "dataset", "emptydataset", { "FAULT" }, False ),
 ] )
 def test_AttributeMapping(
     dataSetTest: Any,
