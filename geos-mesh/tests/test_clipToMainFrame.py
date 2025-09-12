@@ -26,9 +26,6 @@ class Expected:
 
 def __gen_box( Lx: int, Ly: int, Lz: int, nx: int, ny: int, nz: int, multx: int, multy: int,
                multz: int ) -> tuple[ np.ndarray, np.ndarray ]:
-    # np.random.seed(1) # for reproducibility
-    # np.random.default_rng()
-    # off = np.random.randn( 1, 3 )
     off = np.max( [ Lx, Ly, Lz ] ) * np.asarray( [ [ multx, multy, multz ] ] )
     pts = []
     x, y, z = np.meshgrid( np.linspace( 0, Lx, nx ), np.linspace( 0, Ly, ny ), np.linspace( 0, Lz, ny ) )

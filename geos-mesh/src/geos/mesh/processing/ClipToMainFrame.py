@@ -4,6 +4,7 @@
 
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkFiltersGeneral import vtkOBBTree
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkDataObjectTreeIterator, vtkPolyData
@@ -78,14 +79,14 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         Returns:
             tuple[float, np.ndarray]: Angle in degrees and axis of rotation.
         """
-        matrix = self.GetMatrix()
-        angle = np.arccos(
+        matrix : vtkMatrix4x4 = self.GetMatrix()
+        angle : np.ndarray = np.arccos(
             ( matrix.GetElement( 0, 0 ) + matrix.GetElement( 1, 1 ) + matrix.GetElement( 2, 2 ) - 1 ) / 2 )
         if angle == 0:
             return 0.0, np.array( [ 1.0, 0.0, 0.0 ] )
-        rx = matrix.GetElement( 2, 1 ) - matrix.GetElement( 1, 2 )
-        ry = matrix.GetElement( 0, 2 ) - matrix.GetElement( 2, 0 )
-        rz = matrix.GetElement( 1, 0 ) - matrix.GetElement( 0, 1 )
+        rx : float = matrix.GetElement( 2, 1 ) - matrix.GetElement( 1, 2 )
+        ry : float = matrix.GetElement( 0, 2 ) - matrix.GetElement( 2, 0 )
+        rz : float = matrix.GetElement( 1, 0 ) - matrix.GetElement( 0, 1 )
         r = np.array( [ rx, ry, rz ] )
         r /= np.linalg.norm( r )
         return np.degrees( angle ), r
@@ -99,14 +100,14 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         matrix = self.GetMatrix()
         return np.array( [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ) ] )
 
-    def __getOBBTree( self, mesh: vtkUnstructuredGrid ) -> vtkOBBTree:
+    def __getOBBTree( self, mesh: vtkUnstructuredGrid ) -> vtkPoints:
         """Get the OBB tree of the mesh.
 
         Args:
             mesh (vtkUnstructuredGrid): Mesh to get the OBB tree from.
 
         Returns:
-            vtkOBBTree: OBB tree of the mesh.
+            vtkPoints: Points from the 0-level OBB tree of the mesh. Fallback on Axis Aligned Bounding Box
         """
         OBBTree = vtkOBBTree()
         surfFilter = vtkDataSetSurfaceFilter()
@@ -116,7 +117,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         OBBTree.BuildLocator()
         pdata = vtkPolyData()
         OBBTree.GenerateRepresentation( 0, pdata )
-        # at level 0 this should return 8 corners of the bounding box
+        # at level 0 this should return 8 corners of the bounding box or fallback on AABB
         if pdata.GetNumberOfPoints() < 3:
             logging.warning( "Could not get OBB points, using bounding box points instead" )
             return self.__allpoints( mesh.GetBounds() )
