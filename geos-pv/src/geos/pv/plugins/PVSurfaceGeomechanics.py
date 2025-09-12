@@ -14,7 +14,6 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 )
 
-
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
@@ -158,7 +157,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( output, blockIndex ) )
 
             filter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
-
+            filter.SetSurfaceName( f"blockIndex {blockIndex}" )
             if not filter.logger.hasHandlers():
                 filter.SetLoggerHandler( VTKHandler() )
 
@@ -176,8 +175,6 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             surfaceBlock.Modified()
 
         output.Modified()
-
-        # TODO : modify logger
         return 1
 
     def _getFrictionAngle( self: Self ) -> float:

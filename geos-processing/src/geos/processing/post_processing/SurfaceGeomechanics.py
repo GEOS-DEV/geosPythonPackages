@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-from enum import Enum
+from typing_extensions import Self
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 import geos.utils.geometryFunctions as geom
 import numpy as np
@@ -24,7 +24,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
 )
-from typing_extensions import Self
+
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -114,6 +114,8 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         if not surfacicMesh.IsA( "vtkPolyData" ):
             self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh
+        # Identification of the input surface (logging purpose)
+        self.name = None
         # Output surfacic mesh
         self.outputMesh: vtkPolyData
 
@@ -142,6 +144,14 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
+    def SetSurfaceName( self: Self, name: str ):
+        """Set a name for the input surface. For logging purpose only.
+
+        Args:
+            name (str): The identifier for the surface.
+        """
+        self.name = name
+
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.
 
@@ -158,6 +168,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         """
         self.frictionAngle = frictionAngle
 
+
     def GetNewAttributeNames( self: Self ) -> set[ str ]:
         """Get the set of new attribute names that were created.
 
@@ -172,7 +183,13 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.logger.info( f"Applying filter { self.logger.name }." )
+        msg = f"Applying filter {self.logger.name}"
+        if self.name is not None:
+            msg += f" on surface : {self.name}."
+        else:
+            msg += "."
+
+        self.logger.info( msg )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -242,7 +259,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         """Convert vectorial property coordinates from canonic to local basis.
 
         Returns:
-            bool: True if calculation successfully ended, False otherwise
+            bool: True if calculation successfully ended, False otherwise.
         """
         # Look for the list of attributes to convert
         basisFrom = "canonical"
