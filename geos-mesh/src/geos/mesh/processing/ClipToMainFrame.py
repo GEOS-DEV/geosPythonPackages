@@ -16,7 +16,6 @@ from geos.utils.Logger import logging, Logger, getLogger
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 import numpy as np
-from typing import overload, Any
 
 __doc__ = """
 Module to clip a mesh to the main frame using rigid body transformation.
@@ -219,7 +218,7 @@ loggerTitle: str = "Clip mesh to main frame."
 class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
 
-    def __init__( self, speHandler: bool = False, **properties : str ) -> None:
+    def __init__( self, speHandler: bool = False, **properties: str ) -> None:
         """Initialize the ClipToMainFrame Filter with optional speHandler args and forwarding properties to main class.
 
         Args:
@@ -244,8 +243,8 @@ class ClipToMainFrame( vtkTransformFilter ):
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
-                Logger.error("Reference point is not in the domain")
-            
+                self.logger.error( "Reference point is not in the domain" )
+
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
             clip = ClipToMainFrameElement( self.GetInput() )
@@ -308,5 +307,5 @@ class ClipToMainFrame( vtkTransformFilter ):
                         f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )
                     return DOIterator.GetCurrentFlatIndex()
             DOIterator.GoToNextItem()
-        
+
         raise IndexError
