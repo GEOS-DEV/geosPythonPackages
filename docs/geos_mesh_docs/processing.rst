@@ -36,3 +36,11 @@ geos.mesh.processing.SplitMesh filter
     :members:
     :undoc-members:
     :show-inheritance:
+
+geos.mesh.processing.ClipToMainFrame filter
+--------------------------------------------
+
+.. automodule:: geos.mesh.processing.ClipToMainFrame
+    :members:
+    :undoc-members:
+    :show-inheritance:
