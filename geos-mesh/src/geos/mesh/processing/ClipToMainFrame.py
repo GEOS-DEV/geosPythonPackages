@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Jacques Franc
 
 from vtkmodules.numpy_interface import dataset_adapter as dsa
-from vtkmodules.vtkCommonCore import vtkPoints, vtkFloatArray
+from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkFiltersGeneral import vtkOBBTree
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkDataObjectTreeIterator, vtkPolyData
@@ -19,37 +19,31 @@ __doc__ = """
 Module to clip a mesh to the main frame using rigid body transformation.
 
 Methods include:
-    - ClipToMainFrame class to compute the transformation
-    - ClipToMainFrameFilter class to apply the transformation to a mesh
+    - ClipToMainFrameElement class to compute the transformation
+    - ClipToMainFrame class to apply the transformation to a mesh
 
 To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrameFilter
+    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
 
-    # Optional inputs.
-    userTranslation: vtkFloatArray
-
     # Instantiate the filter.
-    filter: ClipToMainFrameFilter = ClipToMainFrameFilter()
+    filter: ClipToMainFrame = ClipToMainFrame()
     filter.SetInputData( multiBlockDataSet )
 
     # Do calculations.
-    if userTranslation is not None:
-        filter.SetUserTranslation( userTranslation )
     filter.Update()
     output: vtkMultiBlockDataSet = filter.GetOutput()
 
 """
 
 
-class ClipToMainFrame( vtkLandmarkTransform ):
+class ClipToMainFrameElement( vtkLandmarkTransform ):
 
-    userTranslation: vtkFloatArray | None = None  # user provided translation
     sourcePts: vtkPoints
     targetPts: vtkPoints
     mesh: vtkUnstructuredGrid
@@ -71,26 +65,9 @@ class ClipToMainFrame( vtkLandmarkTransform ):
         self.SetModeToRigidBody()
         super().Update()
 
-    def SetUserTranslation( self, userTranslation: vtkFloatArray ) -> None:
-        """Set the user translation.
-
-        Args:
-            userTranslation (vtkFloatArray): user translation to set.
-        """
-        self.userTranslation = userTranslation
-
-    def GetUserTranslation( self ) -> vtkFloatArray | None:
-        """Get the user translation.
-
-        Returns:
-            vtkFloatArray | None: user translation if set, None otherwise.
-        """
-        return self.userTranslation
-
     def __str__( self ) -> str:
         """String representation of the transformation."""
-        return super().__str__() + f"\nUser translation: {self.userTranslation}" \
-                  + f"\nSource points: {self.sourcePts}" \
+        return super().__str__() + f"\nSource points: {self.sourcePts}" \
                   + f"\nTarget points: {self.targetPts}" \
                   + f"\nAngle-Axis: {self.__getAngleAxis()}" \
                   + f"\nTranslation: {self._getTranslation()}"
@@ -187,9 +164,7 @@ class ClipToMainFrame( vtkLandmarkTransform ):
         pts += off
         further_ix = np.argmax( np.linalg.norm( pts, axis=1 ) )  # by default take the min point furthest from origin
         org = pts[ further_ix, : ]
-        if self.userTranslation is not None:
-            org = dsa.numpy_support.vtk_to_numpy( self.userTranslation )
-            logging.info( "Using user translation" )
+
         logging.info( f"Moving point {org} to origin for transformation" )
         # find 3 orthogonal vectors
         # we assume points are on a box
@@ -230,48 +205,28 @@ class ClipToMainFrame( vtkLandmarkTransform ):
         return ( sourcePts, targetPts )
 
 
-class ClipToMainFrameFilter( vtkTransformFilter ):
+class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
-
-    userTranslation: vtkFloatArray | None = None  # user provided translation
-
-    def SetUserTranslation( self, userTranslation: vtkFloatArray ) -> None:
-        """Set the user translation.
-
-        Args:
-            userTranslation (vtkFloatArray): user translation to set.
-        """
-        self.userTranslation = userTranslation
-
-    def GetUserTranslation( self ) -> vtkFloatArray | None:
-        """Get the user translation.
-
-        Returns:
-            vtkFloatArray | None: user translation if set, None otherwise.
-        """
-        return self.userTranslation
 
     def Update( self ) -> None:
         """Update the transformation."""
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
-            idBlock = self.__locate_reference_point( self.GetInput(), self.userTranslation )
-            clip = ClipToMainFrame( self.GetInput().GetBlock( idBlock - 1 ) )
+            idBlock = self.__locate_reference_point( self.GetInput())
+            clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
-            clip = ClipToMainFrame( self.GetInput() )
+            clip = ClipToMainFrameElement( self.GetInput() )
 
-        clip.SetUserTranslation( self.userTranslation )
         clip.Update()
         self.SetTransform( clip )
         super().Update()
 
-    def __locate_reference_point( self, input: vtkMultiBlockDataSet, userTranslation: vtkFloatArray | None ) -> int:
+    def __locate_reference_point( self, input: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.
 
         Args:
             input (vtkMultiBlockDataSet): input multiblock mesh.
-            userTranslation (vtkFloatArray | None): if provided use this translation instead of the computed one.
 
         Returns:
             int: index of the block to use as reference.
@@ -292,24 +247,19 @@ class ClipToMainFrameFilter( vtkTransformFilter ):
                      and pt[ 1 ] <= bounds[ 3 ] and pt[ 2 ] >= bounds[ 4 ] and pt[ 2 ] <= bounds[ 5 ] )
 
         #TODO (jacques) make a decorator for this
-        iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-        iter.SetDataSet( input )
-        iter.VisitOnlyLeavesOn()
-        iter.GoToFirstItem()
+        DOIterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+        DOIterator.SetDataSet( input )
+        DOIterator.VisitOnlyLeavesOn()
+        DOIterator.GoToFirstItem()
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( input )
         #TODO (jacques) : rewrite with a filter struct
-        while iter.GetCurrentDataObject() is not None:
-            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
+        while DOIterator.GetCurrentDataObject() is not None:
+            block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
             if block.GetNumberOfPoints() > 0:
                 bounds = block.GetBounds()
-                if userTranslation is not None:
-                    #check if user translation is inside the block
-                    if __inside( dsa.numpy_support.vtk_to_numpy( self.userTranslation ), bounds ):
-                        logging.info( f"Using block {iter.GetCurrentFlatIndex()} as reference for transformation" )
-                        return iter.GetCurrentFlatIndex()
-                else:
-                    #use the lowest bounds corner as reference point
-                    if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
-                        logging.info( f"Using block {iter.GetCurrentFlatIndex()} as reference for transformation" )
-                        return iter.GetCurrentFlatIndex()
-            iter.GoToNextItem()
+
+                #use the furthest bounds corner as reference point in the all negs quadrant
+                if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
+                    logging.info( f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )
+                    return DOIterator.GetCurrentFlatIndex()
+            DOIterator.GoToNextItem()

@@ -14,7 +14,7 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
 
-from geos.mesh.processing.ClipToMainFrame import ClipToMainFrameFilter
+from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
 
 Lx, Ly, Lz = 5, 2, 8
 nx, ny, nz = 10, 10, 10
@@ -100,7 +100,7 @@ def __build_test_mesh( mxx: Tuple[ int ] ) -> Generator[ Expected, None, None ]:
     "expected", [ item for t in list( itertools.product( [ -1, 1 ], repeat=3 ) ) for item in __build_test_mesh( t ) ] )
 def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
-    ( filter := ClipToMainFrameFilter() ).SetInputData( expected.mesh )
+    ( filter := ClipToMainFrame() ).SetInputData( expected.mesh )
     filter.Update()
     output_mesh = filter.GetOutput()
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
@@ -132,7 +132,7 @@ def test_clipToMainFrame_gen() -> None:
     reader.SetFileName( "./geos-mesh/tests/data/displacedFault.vtm" )
     reader.Update()
     input_mesh = reader.GetOutput()
-    ( filter := ClipToMainFrameFilter() ).SetInputData( input_mesh )
+    ( filter := ClipToMainFrame() ).SetInputData( input_mesh )
     filter.Update()
     print( filter.GetTransform() )
     output_mesh = filter.GetOutputDataObject( 0 )
