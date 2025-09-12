@@ -11,10 +11,12 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockData
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
+from geos.utils.Logger import logging, Logger, getLogger
+
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 import numpy as np
-import logging
+from typing import overload, Any
 
 __doc__ = """
 Module to clip a mesh to the main frame using rigid body transformation.
@@ -31,12 +33,19 @@ To use it:
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
+    # Optional Inputs
+    speHandler : bool
 
     # Instantiate the filter.
     filter: ClipToMainFrame = ClipToMainFrame()
     filter.SetInputData( multiBlockDataSet )
 
+    # Set the handler of yours (only if speHandler is True).
+    yourHandler: logging.Handler
+    filter.setLoggerHandler( yourHandler )
+
     # Do calculations.
+    filter.ComputeTransform()
     filter.Update()
     output: vtkMultiBlockDataSet = filter.GetOutput()
 
@@ -79,14 +88,14 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         Returns:
             tuple[float, np.ndarray]: Angle in degrees and axis of rotation.
         """
-        matrix : vtkMatrix4x4 = self.GetMatrix()
-        angle : np.ndarray = np.arccos(
+        matrix: vtkMatrix4x4 = self.GetMatrix()
+        angle: np.ndarray = np.arccos(
             ( matrix.GetElement( 0, 0 ) + matrix.GetElement( 1, 1 ) + matrix.GetElement( 2, 2 ) - 1 ) / 2 )
         if angle == 0:
             return 0.0, np.array( [ 1.0, 0.0, 0.0 ] )
-        rx : float = matrix.GetElement( 2, 1 ) - matrix.GetElement( 1, 2 )
-        ry : float = matrix.GetElement( 0, 2 ) - matrix.GetElement( 2, 0 )
-        rz : float = matrix.GetElement( 1, 0 ) - matrix.GetElement( 0, 1 )
+        rx: float = matrix.GetElement( 2, 1 ) - matrix.GetElement( 1, 2 )
+        ry: float = matrix.GetElement( 0, 2 ) - matrix.GetElement( 2, 0 )
+        rz: float = matrix.GetElement( 1, 0 ) - matrix.GetElement( 0, 1 )
         r = np.array( [ rx, ry, rz ] )
         r /= np.linalg.norm( r )
         return np.degrees( angle ), r
@@ -119,7 +128,6 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         OBBTree.GenerateRepresentation( 0, pdata )
         # at level 0 this should return 8 corners of the bounding box or fallback on AABB
         if pdata.GetNumberOfPoints() < 3:
-            logging.warning( "Could not get OBB points, using bounding box points instead" )
             return self.__allpoints( mesh.GetBounds() )
 
         return pdata.GetPoints()
@@ -166,7 +174,6 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         further_ix = np.argmax( np.linalg.norm( pts, axis=1 ) )  # by default take the min point furthest from origin
         org = pts[ further_ix, : ]
 
-        logging.info( f"Moving point {org} to origin for transformation" )
         # find 3 orthogonal vectors
         # we assume points are on a box
         dist_indexes = np.argsort( np.linalg.norm( pts - org, axis=1 ) )
@@ -206,22 +213,60 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         return ( sourcePts, targetPts )
 
 
+loggerTitle: str = "Clip mesh to main frame."
+
+
 class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
 
-    def Update( self ) -> None:
+    def __init__( self, speHandler: bool = False, **properties : str ) -> None:
+        """Initialize the ClipToMainFrame Filter with optional speHandler args and forwarding properties to main class.
+
+        Args:
+                speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
+                properties (**kwargs): kwargs forwarded to vtkTransformFilter.
+        """
+        super().__init__( **properties )
+        # Logger.
+        self.logger: Logger
+        if not speHandler:
+            self.logger = getLogger( loggerTitle, True )
+        else:
+            self.logger = logging.getLogger( loggerTitle )
+            self.logger.setLevel( logging.INFO )
+
+    def ComputeTransform( self ) -> None:
         """Update the transformation."""
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
-            idBlock = self.__locate_reference_point( self.GetInput())
+            try:
+                idBlock = self.__locate_reference_point( self.GetInput() )
+            except IndexError:
+                Logger.error("Reference point is not in the domain")
+            
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()
         self.SetTransform( clip )
-        super().Update()
+
+    def SetLoggerHandler( self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+
+        Args:
+            handler (logging.Handler): The handler to add.
+        """
+        if not self.logger.hasHandlers():
+            self.logger.addHandler( handler )
+        else:
+            self.logger.warning(
+                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
+            )
 
     def __locate_reference_point( self, input: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.
@@ -243,17 +288,15 @@ class ClipToMainFrame( vtkTransformFilter ):
             Returns:
                 bool: True if the point is inside the bounding box, False otherwise.
             """
-            logging.info( f"Checking if point {pt} is inside bounds {bounds}" )
+            self.logger.info( f"Checking if point {pt} is inside bounds {bounds}" )
             return ( pt[ 0 ] >= bounds[ 0 ] and pt[ 0 ] <= bounds[ 1 ] and pt[ 1 ] >= bounds[ 2 ]
                      and pt[ 1 ] <= bounds[ 3 ] and pt[ 2 ] >= bounds[ 4 ] and pt[ 2 ] <= bounds[ 5 ] )
 
-        #TODO (jacques) make a decorator for this
         DOIterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
         DOIterator.SetDataSet( input )
         DOIterator.VisitOnlyLeavesOn()
         DOIterator.GoToFirstItem()
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( input )
-        #TODO (jacques) : rewrite with a filter struct
         while DOIterator.GetCurrentDataObject() is not None:
             block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
             if block.GetNumberOfPoints() > 0:
@@ -261,6 +304,9 @@ class ClipToMainFrame( vtkTransformFilter ):
 
                 #use the furthest bounds corner as reference point in the all negs quadrant
                 if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
-                    logging.info( f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )
+                    self.logger.info(
+                        f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )
                     return DOIterator.GetCurrentFlatIndex()
             DOIterator.GoToNextItem()
+        
+        raise IndexError

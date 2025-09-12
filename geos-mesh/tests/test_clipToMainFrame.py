@@ -2,13 +2,13 @@
 # SPEDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
+# mypy: disable-error-code="operator"
 import pytest
 import itertools
 from dataclasses import dataclass
 from typing import Generator, Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron, vtkMultiBlockDataSet
-import logging  # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
@@ -48,7 +48,7 @@ def __rotate_box( angles: np.ndarray, pts: np.ndarray ) -> np.ndarray:
     return np.asarray( ( RZ @ RY @ RX @ pts.transpose() ).transpose() )
 
 
-def __build_test_mesh( mxx: Tuple[ int ] ) -> Generator[ Expected, None, None ]:
+def __build_test_mesh( mxx: Tuple[ int, ...] ) -> Generator[ Expected, None, None ]:
     # generate random points in a box Lx, Ly, Lz
     # np.random.seed(1) # for reproducibility
     np.random.default_rng()
@@ -57,16 +57,11 @@ def __build_test_mesh( mxx: Tuple[ int ] ) -> Generator[ Expected, None, None ]:
     multx, multy, multz = mxx
     pts, off = __gen_box( Lx, Ly, Lz, nx, ny, nz, multx, multy, multz )
 
-    logging.info( f"Offseting of {off}" )
-    logging.debug( f"Original pts : {pts}" )
     angles = -2 * np.pi + np.random.randn( 1, 3 ) * np.pi  # random angles in rad
-    logging.info( f"angles {angles[0]}" )
     pts = __rotate_box( angles[ 0 ], pts )
-    logging.debug( f"Rotated pts : {pts}" )
     pts[ :, 0 ] += off[ 0 ][ 0 ]
     pts[ :, 1 ] += off[ 0 ][ 1 ]
     pts[ :, 2 ] += off[ 0 ][ 2 ]
-    logging.debug( f"Translated pts : {pts}" )
 
     # Creating multiple meshes, each time with a different angles
     mesh = vtkUnstructuredGrid()
@@ -92,11 +87,13 @@ def __build_test_mesh( mxx: Tuple[ int ] ) -> Generator[ Expected, None, None ]:
     yield Expected( mesh=mesh )
 
 
+# arg-type: ignore
 @pytest.mark.parametrize(
     "expected", [ item for t in list( itertools.product( [ -1, 1 ], repeat=3 ) ) for item in __build_test_mesh( t ) ] )
 def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
     ( filter := ClipToMainFrame() ).SetInputData( expected.mesh )
+    filter.ComputeTransform()
     filter.Update()
     output_mesh = filter.GetOutput()
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
@@ -122,11 +119,11 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     assert np.abs( np.dot( v1, v2 ) ) < 1e-10
 
 
-def test_clipToMainFrame_generic(dataSetTest : vtkMultiBlockDataSet) -> None:
+def test_clipToMainFrame_generic( dataSetTest: vtkMultiBlockDataSet ) -> None:
     """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
-
-    multiBlockDataSet : vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     ( filter := ClipToMainFrame() ).SetInputData( multiBlockDataSet )
+    filter.ComputeTransform()
     filter.Update()
     print( filter.GetTransform() )
     output_mesh = filter.GetOutputDataObject( 0 )
