@@ -224,7 +224,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         Args:
                 speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
-                properties (**kwargs): kwargs forwarded to vtkTransformFilter.
+                properties (kwargs): kwargs forwarded to vtkTransformFilter.
         """
         super().__init__( **properties )
         # Logger.
