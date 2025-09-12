@@ -25,6 +25,7 @@ Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 .. Note::
     For cell, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
 To use a logger handler of yours, set the variable 'speHandler' to True and add it using the member function setLoggerHandler.
 

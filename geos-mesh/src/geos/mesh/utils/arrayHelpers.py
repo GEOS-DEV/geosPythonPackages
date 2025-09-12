@@ -47,6 +47,7 @@ def computeElementMapping(
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
     For cells, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
@@ -86,6 +87,7 @@ def UpdateElementMappingToMultiBlockDataSet(
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
     For cells, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
@@ -121,6 +123,7 @@ def UpdateElementMappingToDataSet(
     else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
 
     For cells, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
     Args:
         meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
@@ -161,6 +164,7 @@ def UpdateElementMappingFromMultiBlockDataSetToDataSet(
     the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
     For cells, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
     Args:
         multiBlockDataSetFrom (vtkMultiBlockDataSet): The source mesh with the element to map.
@@ -199,6 +203,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
 
     For cells, the coordinates of the points in the cell are compared.
+    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
 
     Args:
         dataSetFrom (vtkDataSet): The source mesh with the element to map.
@@ -244,10 +249,18 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                             coordElementFrom.append( cellPointsFrom.GetPoint( idPointFrom ) )
 
                     pointShared: bool = True
-                    for coordPointsTo in coordElementTo:
-                        if coordPointsTo not in coordElementFrom:
+                    if dataSetTo.GetClassName() == dataSetFrom.GetClassName():
+                        if not coordElementTo == coordElementFrom:
                             pointShared = False
-
+                    elif isinstance( dataSetTo, vtkPolyData ):
+                        for coordPointsTo in coordElementTo:
+                            if coordPointsTo not in coordElementFrom:
+                                pointShared = False
+                    elif isinstance( dataSetFrom, vtkPolyData ):
+                        for coordPointsFrom in coordElementFrom:
+                            if coordPointsFrom not in coordElementTo:
+                                pointShared = False
+                    
                     if pointShared:
                         elementMap[ flatIdDataSetTo ][ idElementTo ] = [ flatIdDataSetFrom, idElementFrom ]
                         ElementFromFund = True
@@ -883,24 +896,26 @@ def getComponentNamesMultiBlock(
     return ()
 
 
-def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFrame:
+def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...], onPoints: bool = False ) -> pd.DataFrame:
     """Get attribute values from input surface.
 
     Args:
         surface (vtkPolyData): Mesh where to get attribute values.
         attributeNames (tuple[str,...]): Tuple of attribute names to get the values.
+        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
 
     Returns:
         pd.DataFrame: DataFrame containing property names as columns.
 
     """
-    nbRows: int = surface.GetNumberOfCells()
+    nbRows: int = surface.GetNumberOfPoints() if onPoints else surface.GetNumberOfCells()
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
-        if not isAttributeInObject( surface, attributeName, False ):
+        if not isAttributeInObject( surface, attributeName, onPoints ):
             logging.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
-        array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
+        array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, onPoints )
 
         if len( array.shape ) > 1:
             for i in range( array.shape[ 1 ] ):

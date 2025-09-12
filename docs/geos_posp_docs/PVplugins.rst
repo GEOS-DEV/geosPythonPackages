@@ -80,10 +80,3 @@ PVplugins.PVSurfaceGeomechanics module
 
 .. automodule:: PVplugins.PVSurfaceGeomechanics
 
-
-PVTransferAttributesVolumeSurface plugin
---------------------------------------------------
-
-.. automodule:: PVplugins.PVTransferAttributesVolumeSurface
-
-

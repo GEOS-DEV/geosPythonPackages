@@ -34,19 +34,3 @@ geos_posp.filters.SurfaceGeomechanics module
    :members:
    :undoc-members:
    :show-inheritance:
-
-geos_posp.filters.TransferAttributesVolumeSurface module
-------------------------------------------------------------
-
-.. automodule:: geos_posp.filters.TransferAttributesVolumeSurface
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-geos_posp.filters.VolumeSurfaceMeshMapper module
-----------------------------------------------------
-
-.. automodule:: geos_posp.filters.VolumeSurfaceMeshMapper
-   :members:
-   :undoc-members:
-   :show-inheritance:
