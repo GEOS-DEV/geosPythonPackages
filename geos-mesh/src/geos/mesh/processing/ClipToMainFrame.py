@@ -52,7 +52,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Clip mesh to main frame.
 
         Args:
-            mesh (vtkUnstructuredGrid): mesh to clip.
+            mesh (vtkUnstructuredGrid): Mesh to clip.
         """
         super().__init__()
         self.mesh = mesh
@@ -76,7 +76,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Get the angle and axis of the rotation.
 
         Returns:
-            tuple[float, np.ndarray]: angle in degrees and axis of rotation.
+            tuple[float, np.ndarray]: Angle in degrees and axis of rotation.
         """
         matrix = self.GetMatrix()
         angle = np.arccos(
@@ -94,7 +94,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Get the translation vector.
 
         Returns:
-            np.ndarray: translation vector.
+            np.ndarray: The translation vector.
         """
         matrix = self.GetMatrix()
         return np.array( [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ) ] )
@@ -103,7 +103,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Get the OBB tree of the mesh.
 
         Args:
-            mesh (vtkUnstructuredGrid): mesh to get the OBB tree from.
+            mesh (vtkUnstructuredGrid): Mesh to get the OBB tree from.
 
         Returns:
             vtkOBBTree: OBB tree of the mesh.
@@ -127,7 +127,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Get the 8 corners of the bounding box.
 
         Args:
-            bounds (tuple[float, float, float, float, float, float]): bounding box.
+            bounds (tuple[float, float, float, float, float, float]): Bounding box.
 
         Returns:
             vtkPoints: 8 corners of the bounding box.
@@ -150,10 +150,10 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         """Get the source and target points for the transformation.
 
         Args:
-            vpts (vtkPoints): points to transform.
+            vpts (vtkPoints): Points to transform.
 
         Returns:
-            tuple[vtkPoints, vtkPoints]: source and target points for the transformation.
+            tuple[vtkPoints, vtkPoints]: Source and target points for the transformation.
         """
         pts = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
         #translate pts so they always lie on the -z,-y,-x quadrant
@@ -226,18 +226,18 @@ class ClipToMainFrame( vtkTransformFilter ):
         """Locate the block to use as reference for the transformation.
 
         Args:
-            input (vtkMultiBlockDataSet): input multiblock mesh.
+            input (vtkMultiBlockDataSet): Input multiblock mesh.
 
         Returns:
-            int: index of the block to use as reference.
+            int: Index of the block to use as reference.
         """
 
         def __inside( pt: np.ndarray, bounds: tuple[ float, float, float, float, float, float ] ) -> bool:
             """Check if a point is inside a bounding box.
 
             Args:
-                pt (np.ndarray): point to check
-                bounds (tuple[float, float, float, float, float, float]): bounding box.
+                pt (np.ndarray): Point to check
+                bounds (tuple[float, float, float, float, float, float]): Bounding box.
 
             Returns:
                 bool: True if the point is inside the bounding box, False otherwise.

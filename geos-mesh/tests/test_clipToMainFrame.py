@@ -7,8 +7,7 @@ import itertools
 from dataclasses import dataclass
 from typing import Generator, Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron, vtkMultiBlockDataSet
 import logging  # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
@@ -126,15 +125,13 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     assert np.abs( np.dot( v1, v2 ) ) < 1e-10
 
 
-def test_clipToMainFrame_gen() -> None:
+def test_clipToMainFrame_generic(dataSetTest : vtkMultiBlockDataSet) -> None:
     """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
-    reader = vtkXMLMultiBlockDataReader()
-    reader.SetFileName( "./geos-mesh/tests/data/displacedFault.vtm" )
-    reader.Update()
-    input_mesh = reader.GetOutput()
-    ( filter := ClipToMainFrame() ).SetInputData( input_mesh )
+
+    multiBlockDataSet : vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    ( filter := ClipToMainFrame() ).SetInputData( multiBlockDataSet )
     filter.Update()
     print( filter.GetTransform() )
     output_mesh = filter.GetOutputDataObject( 0 )
-    assert output_mesh.GetNumberOfPoints() == input_mesh.GetNumberOfPoints()
-    assert output_mesh.GetNumberOfCells() == input_mesh.GetNumberOfCells()
+    assert output_mesh.GetNumberOfPoints() == multiBlockDataSet.GetNumberOfPoints()
+    assert output_mesh.GetNumberOfCells() == multiBlockDataSet.GetNumberOfCells()
