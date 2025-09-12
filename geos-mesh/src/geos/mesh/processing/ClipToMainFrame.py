@@ -167,6 +167,8 @@ class ClipToMainFrame( vtkLandmarkTransform ):
         pts.SetPoint( 7, [ bounds[ 0 ], bounds[ 3 ], bounds[ 5 ] ] )
         return pts
 
+    # def _translateToNegQuadrant(self, )
+
     def __getFramePoints( self, vpts: vtkPoints ) -> tuple[ vtkPoints, vtkPoints ]:
         """Get the source and target points for the transformation.
 
@@ -177,6 +179,12 @@ class ClipToMainFrame( vtkLandmarkTransform ):
             tuple[vtkPoints, vtkPoints]: source and target points for the transformation.
         """
         pts = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
+        #translate pts so they always lie on the -z,-y,-x quadrant
+        off = np.asarray( [
+            -2 * np.amax( np.abs( pts[ :, 0 ] ) ), -2 * np.amax( np.abs( pts[ :, 1 ] ) ),
+            -2 * np.amax( np.abs( pts[ :, 2 ] ) )
+        ] )
+        pts += off
         further_ix = np.argmax( np.linalg.norm( pts, axis=1 ) )  # by default take the min point furthest from origin
         org = pts[ further_ix, : ]
         if self.userTranslation is not None:
@@ -188,21 +196,29 @@ class ClipToMainFrame( vtkLandmarkTransform ):
         dist_indexes = np.argsort( np.linalg.norm( pts - org, axis=1 ) )
         # find u,v,w
         v1 = pts[ dist_indexes[ 1 ], : ] - org
-        v1 /= np.linalg.norm( v1 )
         v2 = pts[ dist_indexes[ 2 ], : ] - org
+        v1 /= np.linalg.norm( v1 )
         v2 /= np.linalg.norm( v2 )
+        if np.abs( v1[ 0 ] ) > np.abs( v2[ 0 ] ):
+            v1, v2 = v2, v1
+
         # ensure orthogonality
         v2 -= np.dot( v2, v1 ) * v1
         v2 /= np.linalg.norm( v2 )
         v3 = np.cross( v1, v2 )
         v3 /= np.linalg.norm( v3 )
 
+        #reorder axis if v3 points downward
+        if v3[ 2 ] < 0:
+            v3 = -v3
+            v1, v2 = v2, v1
+
         sourcePts = vtkPoints()
         sourcePts.SetNumberOfPoints( 4 )
-        sourcePts.SetPoint( 0, org )
-        sourcePts.SetPoint( 1, v1 + org )
-        sourcePts.SetPoint( 2, v2 + org )
-        sourcePts.SetPoint( 3, v3 + org )
+        sourcePts.SetPoint( 0, org - off )
+        sourcePts.SetPoint( 1, v1 + org - off )
+        sourcePts.SetPoint( 2, v2 + org - off )
+        sourcePts.SetPoint( 3, v3 + org - off )
 
         targetPts = vtkPoints()
         targetPts.SetNumberOfPoints( 4 )

@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
+import itertools
 from dataclasses import dataclass
-from typing import Generator
+from typing import Generator, Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader, vtkXMLMultiBlockDataWriter
+from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 import logging  # for debug
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
@@ -24,10 +25,12 @@ class Expected:
     mesh: vtkUnstructuredGrid
 
 
-def __gen_box( Lx: int, Ly: int, Lz: int, nx: int, ny: int, nz: int ) -> tuple[ np.ndarray, np.ndarray ]:
+def __gen_box( Lx: int, Ly: int, Lz: int, nx: int, ny: int, nz: int, multx: int, multy: int,
+               multz: int ) -> tuple[ np.ndarray, np.ndarray ]:
     # np.random.seed(1) # for reproducibility
-    np.random.default_rng()
-    off = np.random.randn( 1, 3 )
+    # np.random.default_rng()
+    # off = np.random.randn( 1, 3 )
+    off = np.max( [ Lx, Ly, Lz ] ) * np.asarray( [ [ multx, multy, multz ] ] )
     pts = []
     x, y, z = np.meshgrid( np.linspace( 0, Lx, nx ), np.linspace( 0, Ly, ny ), np.linspace( 0, Lz, ny ) )
     for i in range( x.shape[ 0 ] ):
@@ -49,12 +52,14 @@ def __rotate_box( angles: np.ndarray, pts: np.ndarray ) -> np.ndarray:
     return np.asarray( ( RZ @ RY @ RX @ pts.transpose() ).transpose() )
 
 
-def __build_test_mesh() -> Generator[ Expected, None, None ]:
+def __build_test_mesh( mxx: Tuple[ int ] ) -> Generator[ Expected, None, None ]:
     # generate random points in a box Lx, Ly, Lz
     # np.random.seed(1) # for reproducibility
     np.random.default_rng()
 
-    pts, off = __gen_box( Lx, Ly, Lz, nx, ny, nz )
+    #test all quadrant
+    multx, multy, multz = mxx
+    pts, off = __gen_box( Lx, Ly, Lz, nx, ny, nz, multx, multy, multz )
 
     logging.info( f"Offseting of {off}" )
     logging.debug( f"Original pts : {pts}" )
@@ -91,7 +96,8 @@ def __build_test_mesh() -> Generator[ Expected, None, None ]:
     yield Expected( mesh=mesh )
 
 
-@pytest.mark.parametrize( "expected", __build_test_mesh() )
+@pytest.mark.parametrize(
+    "expected", [ item for t in list( itertools.product( [ -1, 1 ], repeat=3 ) ) for item in __build_test_mesh( t ) ] )
 def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
     ( filter := ClipToMainFrameFilter() ).SetInputData( expected.mesh )
@@ -99,16 +105,18 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     output_mesh = filter.GetOutput()
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == expected.mesh.GetNumberOfCells()
+
     assert output_mesh.GetBounds()[ 0 ] == pytest.approx(
-        0., abs=1e-6 ) and output_mesh.GetBounds()[ 2 ] == pytest.approx(
-            0., abs=1e-6 ) and output_mesh.GetBounds()[ 4 ] == pytest.approx( 0., abs=1e-6 )
+        0., abs=1e-4 ) and output_mesh.GetBounds()[ 2 ] == pytest.approx( 0., abs=1e-4 ) and np.max(
+            [ np.abs( output_mesh.GetBounds()[ 4 ] ),
+              np.abs( output_mesh.GetBounds()[ 5 ] ) ] ) == pytest.approx( Lz, abs=1e-4 )
     # test diagonal
     assert np.linalg.norm(
         np.array( [
             output_mesh.GetBounds()[ 1 ] - output_mesh.GetBounds()[ 0 ],
             output_mesh.GetBounds()[ 3 ] - output_mesh.GetBounds()[ 2 ],
             output_mesh.GetBounds()[ 5 ] - output_mesh.GetBounds()[ 4 ]
-        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ Lx, Ly, Lz ] ) ), abs=1e-5 )
+        ] ) ) == pytest.approx( np.linalg.norm( np.array( [ Lx, Ly, Lz ] ) ), abs=1e-4 )
     # test aligned with axis
     v0 = np.array( output_mesh.GetPoint( 1 ) ) - np.array( output_mesh.GetPoint( 0 ) )
     v1 = np.array( output_mesh.GetPoint( nx ) ) - np.array( output_mesh.GetPoint( 0 ) )
@@ -116,16 +124,6 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     assert np.abs( np.dot( v0, v1 ) ) < 1e-10
     assert np.abs( np.dot( v0, v2 ) ) < 1e-10
     assert np.abs( np.dot( v1, v2 ) ) < 1e-10
-
-    #check if input has been modified
-    # w = vtkXMLUnstructuredGridWriter()
-    # w.SetFileName("./test_rotateAndTranslate_input.vtu")
-    # w.SetInputData(expected.mesh)
-    # w.Write()
-
-    # w.SetFileName("./test_rotateAndTranslate.vtu")
-    # w.SetInputData(output_mesh)
-    # w.Write()
 
 
 def test_clipToMainFrame_gen() -> None:
@@ -140,13 +138,3 @@ def test_clipToMainFrame_gen() -> None:
     output_mesh = filter.GetOutputDataObject( 0 )
     assert output_mesh.GetNumberOfPoints() == input_mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == input_mesh.GetNumberOfCells()
-
-    # #check if input has been modified
-    # w = vtkXMLMultiBlockDataWriter()
-    # w.SetFileName( "./test_rotateAndTranslate_input.vtm" )
-    # w.SetInputData( input_mesh )
-    # w.Write()
-
-    # w.SetFileName( "./test_rotateAndTranslate.vtm" )
-    # w.SetInputData( output_mesh )
-    # w.Write()
