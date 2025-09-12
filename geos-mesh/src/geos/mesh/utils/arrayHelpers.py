@@ -218,36 +218,37 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     for idElementTo in range( nbElementsTo ):
         # Test if the element of the final mesh is already mapped.
         if -1 in elementMap[ flatIdDataSetTo ][ idElementTo ]:
-            coordElementTo: tuple[ float, ...]
+            coordElementTo: list[ tuple[ float, ...] ] = []
             if points:
-                coordElementTo = dataSetTo.GetPoint( idElementTo )
+                coordElementTo.append( dataSetTo.GetPoint( idElementTo ) )
             else:
                 # Get the coordinates of each points of the cell.
                 nbPointsTo: int = dataSetTo.GetCell( idElementTo ).GetNumberOfPoints()
                 cellPointsTo: vtkPoints = dataSetTo.GetCell( idElementTo ).GetPoints()
-                coordPointsTo: list = []
                 for idPointTo in range( nbPointsTo ):
-                    coordPointsTo.extend( cellPointsTo.GetPoint( idPointTo ) )
-                coordElementTo = tuple( coordPointsTo )
+                    coordElementTo.append( cellPointsTo.GetPoint( idPointTo ) )
 
             idElementFrom: int = 0
             ElementFromFund: bool = False
             while idElementFrom < nbElementsFrom and not ElementFromFund:
                 # Test if the element of the source mesh is already mapped.
                 if idElementFrom not in idElementsFromFund:
-                    coordElementFrom: tuple[ float, ...]
+                    coordElementFrom: list[ tuple[ float, ...] ] = []
                     if points:
-                        coordElementFrom = dataSetFrom.GetPoint( idElementFrom )
+                        coordElementFrom.append( dataSetFrom.GetPoint( idElementFrom ) )
                     else:
                         # Get the coordinates of each points of the cell.
                         nbPointsFrom: int = dataSetFrom.GetCell( idElementFrom ).GetNumberOfPoints()
                         cellPointsFrom: vtkPoints = dataSetFrom.GetCell( idElementFrom ).GetPoints()
-                        coordPointsFrom: list = []
                         for idPointFrom in range( nbPointsFrom ):
-                            coordPointsFrom.extend( cellPointsFrom.GetPoint( idPointFrom ) )
-                        coordElementFrom = tuple( coordPointsFrom )
+                            coordElementFrom.append( cellPointsFrom.GetPoint( idPointFrom ) )
 
-                    if coordElementFrom == coordElementTo:
+                    pointShared: bool = True
+                    for coordPointsTo in coordElementTo:
+                        if coordPointsTo not in coordElementFrom:
+                            pointShared = False
+
+                    if pointShared:
                         elementMap[ flatIdDataSetTo ][ idElementTo ] = [ flatIdDataSetFrom, idElementFrom ]
                         ElementFromFund = True
                         idElementsFromFund.append( idElementFrom )
