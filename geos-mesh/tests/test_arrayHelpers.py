@@ -274,18 +274,14 @@ def test_getComponentNamesMultiBlock(
     assert obtained == expected
 
 
-@pytest.mark.parametrize( "attributeNames, expected_columns", [
-    ( ( "CellAttribute1", ), ( "CellAttribute1_0", "CellAttribute1_1", "CellAttribute1_2" ) ),
-    ( (
-        "CellAttribute1",
-        "CellAttribute2",
-    ), ( "CellAttribute2", "CellAttribute1_0", "CellAttribute1_1", "CellAttribute1_2" ) ),
+@pytest.mark.parametrize( "attributeNames, onPoints, expected_columns", [
+    ( ( "collocated_nodes", ), True, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
 ] )
 def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...],
-                                 expected_columns: Tuple[ str, ...] ) -> None:
+                                 onPoints: bool, expected_columns: Tuple[ str, ...] ) -> None:
     """Test getting an attribute from a polydata as a dataframe."""
-    polydataset: vtkPolyData = dataSetTest( "polydata" )
-    data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames )
+    polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
+    data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, onPoints )
 
     obtained_columns = data.columns.values.tolist()
     assert obtained_columns == list( expected_columns )

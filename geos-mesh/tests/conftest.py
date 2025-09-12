@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader, vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
 
 @pytest.fixture
@@ -158,22 +158,19 @@ def dataSetTest() -> Any:
         Returns:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
-        reader: Union[ vtkXMLMultiBlockDataReader, vtkXMLUnstructuredGridReader ]
+        reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
         if datasetType == "multiblock":
-            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFault.vtm"
         elif datasetType == "emptymultiblock":
-            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/displacedFaultempty.vtm"
         elif datasetType == "dataset":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
             vtkFilename = "data/domain_res5_id_empty.vtu"
         elif datasetType == "polydata":
-            reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-            vtkFilename = "data/triangulatedSurface.vtu"
+            vtkFilename = "data/fracture_res5_id.vtp"
+        elif datasetType == "emptypolydata":
+            vtkFilename = "data/fracture_res5_id_empty.vtp"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()

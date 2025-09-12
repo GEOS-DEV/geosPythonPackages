@@ -3,7 +3,7 @@
     <vtkMultiBlockDataSet>
         <DataSet name="main" file="domain_res5_id.vtu"/>
         <Block name="Fracture">
-            <DataSet name="fracture" file="fracture_res5_id.vtu"/>
+            <DataSet name="fracture" file="fracture_res5_id.vtp"/>
         </Block>
     </vtkMultiBlockDataSet>
 </VTKFile>

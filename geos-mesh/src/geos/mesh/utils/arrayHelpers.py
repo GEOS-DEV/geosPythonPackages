@@ -652,24 +652,26 @@ def getComponentNamesMultiBlock(
     return ()
 
 
-def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...] ) -> pd.DataFrame:
+def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...], onPoints: bool = False ) -> pd.DataFrame:
     """Get attribute values from input surface.
 
     Args:
         surface (vtkPolyData): Mesh where to get attribute values.
         attributeNames (tuple[str,...]): Tuple of attribute names to get the values.
+        onPoints (bool, optional): True if attributes are on points, False if they are on cells.
+            Defaults to False.
 
     Returns:
         pd.DataFrame: DataFrame containing property names as columns.
 
     """
-    nbRows: int = surface.GetNumberOfCells()
+    nbRows: int = surface.GetNumberOfPoints() if onPoints else surface.GetNumberOfCells()
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:
-        if not isAttributeInObject( surface, attributeName, False ):
+        if not isAttributeInObject( surface, attributeName, onPoints ):
             logging.warning( f"Attribute {attributeName} is not in the mesh." )
             continue
-        array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, False )
+        array: npt.NDArray[ np.float64 ] = getArrayInObject( surface, attributeName, onPoints )
 
         if len( array.shape ) > 1:
             for i in range( array.shape[ 1 ] ):
