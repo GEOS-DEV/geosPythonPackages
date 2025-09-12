@@ -23,7 +23,6 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
     vtkInformation,
     vtkInformationVector,
 )

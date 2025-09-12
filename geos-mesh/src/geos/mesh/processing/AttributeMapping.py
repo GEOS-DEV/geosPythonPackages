@@ -141,8 +141,7 @@ class AttributeMapping:
         wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh."
-            )
+                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
@@ -150,8 +149,7 @@ class AttributeMapping:
         attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
         if len( attributesAlreadyInMeshTo ) > 0:
             self.logger.error(
-                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
-            )
+                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
