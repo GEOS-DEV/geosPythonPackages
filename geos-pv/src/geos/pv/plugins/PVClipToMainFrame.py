@@ -13,7 +13,9 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 ) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet, )
+    vtkMultiBlockDataSet,
+     vtkUnstructuredGrid,
+       )
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -27,7 +29,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+from geos.mesh.processing.ClipToMainFrame import ClipToMainFrameElement, ClipToMainFrame
 
 __doc__ = """
 Clip the input mesh to the main frame applying the correct LandmarkTransform
@@ -39,12 +41,47 @@ To use it:
 
 """
 
-@smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
+@smproxy.filter( name="PVClipToMainFrame", label="Clip to the main frame" )
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
-    dataTypes=[ "vtkMultiBlockDataSet" ],
+    dataTypes=[ "vtkMultiBlockDataSet", "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):
-    pass
+
+    def __init__(self):
+        VTKPythonAlgorithmBase.__init__(self,
+                                        nInputPorts=1,
+                                        nOutputPorts=1,
+                                        outputType='vtkMultiBlockDataSet')
+        
+        self.__realFilter = ClipToMainFrame()
+        if not self.__realFilter.logger.hasHandlers():
+            self.__realFilter.setLoggerHandler( VTKHandler() )
+        
+    def RequestData(self, request, inInfo, outInfo) -> int:
+        inputMesh: vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetInputData(inInfo,0,0)
+        outputMesh : vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetOutputData(outInfo,0)
+
+        # struct
+        def logInfos(obj, logger):
+            logger.info(f"outputMesh has {obj.GetNumberOfPoints()} points")
+            logger.info(f"outputMesh has {obj.GetNumberOfCells()} cells")
+            logger.info(f"output type {obj.GetClassName()}")
+
+        self.__realFilter.SetInputData(inputMesh)
+        self.__realFilter.logger.info(f"inInfo has {inInfo}")
+        logInfos(inputMesh, self.__realFilter.logger)
+
+        self.__realFilter.ComputeTransform()
+        self.__realFilter.Update()
+
+        outputMesh.SetBlock(0, self.__realFilter.GetOutput() )
+        self.__realFilter.logger.info(f"outInfo has {outInfo}")
+        logInfos(outputMesh, self.__realFilter.logger)
+
+
+        return 1
+
+        
