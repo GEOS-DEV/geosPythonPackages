@@ -159,7 +159,8 @@ def add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vt
         success = createConstantAttributeDataSet( dataSet=mesh,
                                                   listValues=listValues,
                                                   attributeName=field_info.name,
-                                                  onPoints=onPoints )
+                                                  onPoints=onPoints,
+                                                  logger=setup_logger )
         if not success:
             setup_logger.warning( f"Failed to create field {field_info.name}" )
     return mesh

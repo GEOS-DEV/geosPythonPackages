@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Dict, FrozenSet, List, Set
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.utils.genericHelpers import to_vtk_id_list
@@ -9,20 +8,20 @@ from geos.mesh.io.vtkIO import VtkOutput, read_unstructured_grid, write_mesh
 @dataclass( frozen=True )
 class Options:
     vtk_output: VtkOutput
-    cell_type_to_ordering: Dict[ int, List[ int ] ]
+    cell_type_to_ordering: dict[ int, list[ int ] ]
 
 
 @dataclass( frozen=True )
 class Result:
     output: str
-    unchanged_cell_types: FrozenSet[ int ]
+    unchanged_cell_types: frozenset[ int ]
 
 
 def mesh_action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     # The vtk cell type is an int and will be the key of the following mapping,
     # that will point to the relevant permutation.
-    cell_type_to_ordering: Dict[ int, List[ int ] ] = options.cell_type_to_ordering
-    unchanged_cell_types: Set[ int ] = set()  # For logging purpose
+    cell_type_to_ordering: dict[ int, list[ int ] ] = options.cell_type_to_ordering
+    unchanged_cell_types: set[ int ] = set()  # For logging purpose
 
     # Preparing the output mesh by first keeping the same instance type.
     output_mesh = mesh.NewInstance()
