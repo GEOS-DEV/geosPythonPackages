@@ -17,9 +17,10 @@ from geos.mesh.utils.genericHelpers import createSingleCellMesh, createMultiCell
 @pytest.fixture
 def good_mesh() -> vtkUnstructuredGrid:
     """Creates a mesh with only supported element types."""
-    return createSingleCellMesh( VTK_HEXAHEDRON,
-                                 np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ],
-                                             [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    return createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
 
 
 @pytest.fixture
@@ -27,12 +28,12 @@ def mesh_with_unsupported_std_type():
     """Creates a mesh containing an unsupported standard element type (VTK_QUADRATIC_TETRA)."""
     # Check that our chosen unsupported type is actually not in the supported list
     assert VTK_QUADRATIC_TETRA not in supported_cell_types
-    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_QUADRATIC_TETRA ],
-                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
-                                  np.array( [ [ 2, 0, 0 ], [ 3, 0, 0 ], [ 2.5, 1, 0 ], [ 2.5, 0.5, 1 ], [ 2.5, 0, 0 ],
-                                              [ 2.75, 0.5, 0 ], [ 2.25, 0.5, 0 ], [ 2.75, 0.25, 0.5 ],
-                                              [ 2.5, 0.75, 0.5 ], [ 2.25, 0.25, 0.5 ] ] ) ] )
+    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_QUADRATIC_TETRA ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ),
+        np.array( [ [ 2, 0, 0 ], [ 3, 0, 0 ], [ 2.5, 1, 0 ], [ 2.5, 0.5, 1 ], [ 2.5, 0, 0 ], [ 2.75, 0.5, 0 ],
+                    [ 2.25, 0.5, 0 ], [ 2.75, 0.25, 0.5 ], [ 2.5, 0.75, 0.5 ], [ 2.25, 0.25, 0.5 ] ] )
+    ] )
 
 
 @pytest.fixture
@@ -42,23 +43,27 @@ def mesh_with_unsupported_polyhedron() -> vtkUnstructuredGrid:
     The non-convertible one is a triangular bipyramid, which has 6 faces like a hex,
     but a different face-connectivity graph.
     """
-    points = [ [ 0, 0, 0 ],  # points for the hex
-               [ 1, 0, 0 ],
-               [ 1, 1, 0 ],
-               [ 0, 1, 0 ],
-               [ 0, 0, 1 ],
-               [ 1, 0, 1 ],
-               [ 1, 1, 1 ],
-               [ 0, 1, 1 ],
-               [ 2, 0, 1 ],  # other points to add for bipyramid
-               [ 3, -1, 0 ],
-               [ 3, 1, 0 ],
-               [ 1, 0, 0 ],
-               [ 2, 0, -1 ] ]
+    points = [
+        [ 0, 0, 0 ],  # points for the hex
+        [ 1, 0, 0 ],
+        [ 1, 1, 0 ],
+        [ 0, 1, 0 ],
+        [ 0, 0, 1 ],
+        [ 1, 0, 1 ],
+        [ 1, 1, 1 ],
+        [ 0, 1, 1 ],
+        [ 2, 0, 1 ],  # other points to add for bipyramid
+        [ 3, -1, 0 ],
+        [ 3, 1, 0 ],
+        [ 1, 0, 0 ],
+        [ 2, 0, -1 ]
+    ]
 
     mesh: vtkUnstructuredGrid = createSingleCellMesh(
-        VTK_HEXAHEDRON, np.array( [ points[ 0 ], points[ 1 ], points[ 2 ], points[ 3 ], points[ 4 ], points[ 5 ],
-                                    points[ 6 ], points[ 7 ] ] ) )
+        VTK_HEXAHEDRON,
+        np.array(
+            [ points[ 0 ], points[ 1 ], points[ 2 ], points[ 3 ], points[ 4 ], points[ 5 ], points[ 6 ],
+              points[ 7 ] ] ) )
 
     # Face stream for the triangular bipyramid (6 faces, 5 points)
     # Format: [num_faces, num_pts_face1, p1, p2, ..., num_pts_face2, p1, p2, ...]

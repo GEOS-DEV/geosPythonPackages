@@ -271,9 +271,8 @@ class MainChecks( Checks ):
 
 # Main functions for backward compatibility and standalone use
 def allChecks(
-    mesh: vtkUnstructuredGrid,
-    customParameters: dict[ str, dict[ str, Any ] ] = None
-) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
+        mesh: vtkUnstructuredGrid,
+        customParameters: dict[ str, dict[ str, Any ] ] = None ) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
     """Apply all available mesh checks to a mesh.
 
     Args:
@@ -302,9 +301,8 @@ def allChecks(
 
 
 def mainChecks(
-    mesh: vtkUnstructuredGrid,
-    customParameters: dict[ str, dict[ str, Any ] ] = None
-) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
+        mesh: vtkUnstructuredGrid,
+        customParameters: dict[ str, dict[ str, Any ] ] = None ) -> tuple[ vtkUnstructuredGrid, dict[ str, Any ] ]:
     """Apply main mesh checks to a mesh.
 
     Args:

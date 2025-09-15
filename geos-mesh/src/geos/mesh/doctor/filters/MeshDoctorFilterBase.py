@@ -63,20 +63,21 @@ class MeshDoctorFilterBase:
     ) -> None:
         """Initialize the base mesh doctor filter."""
         # Check the 'mesh' input
-        if not isinstance(mesh, vtkUnstructuredGrid):
-            raise TypeError(f"Input 'mesh' must be a vtkUnstructuredGrid, but got {type(mesh).__name__}.")
+        if not isinstance( mesh, vtkUnstructuredGrid ):
+            raise TypeError( f"Input 'mesh' must be a vtkUnstructuredGrid, but got {type(mesh).__name__}." )
         if mesh.GetNumberOfCells() == 0:
-            raise ValueError("Input 'mesh' cannot be empty.")
+            raise ValueError( "Input 'mesh' cannot be empty." )
 
         # Check the 'filterName' input
-        if not isinstance(filterName, str):
-            raise TypeError(f"Input 'filterName' must be a string, but got {type(filterName).__name__}.")
+        if not isinstance( filterName, str ):
+            raise TypeError( f"Input 'filterName' must be a string, but got {type(filterName).__name__}." )
         if not filterName.strip():
-            raise ValueError("Input 'filterName' cannot be an empty or whitespace-only string.")
+            raise ValueError( "Input 'filterName' cannot be an empty or whitespace-only string." )
 
         # Check the 'useExternalLogger' input
-        if not isinstance(useExternalLogger, bool):
-            raise TypeError(f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}.")
+        if not isinstance( useExternalLogger, bool ):
+            raise TypeError(
+                f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}." )
 
         # Non-destructive behavior.
         # The filter should contain a COPY of the mesh, not the original object.
@@ -172,14 +173,15 @@ class MeshDoctorGeneratorBase:
             useExternalLogger (bool): Whether to use external logger. Defaults to False.
         """
         # Check the 'filterName' input
-        if not isinstance(filterName, str):
-            raise TypeError(f"Input 'filterName' must be a string, but got {type(filterName).__name__}.")
+        if not isinstance( filterName, str ):
+            raise TypeError( f"Input 'filterName' must be a string, but got {type(filterName).__name__}." )
         if not filterName.strip():
-            raise ValueError("Input 'filterName' cannot be an empty or whitespace-only string.")
+            raise ValueError( "Input 'filterName' cannot be an empty or whitespace-only string." )
 
         # Check the 'useExternalLogger' input
-        if not isinstance(useExternalLogger, bool):
-            raise TypeError(f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}.")
+        if not isinstance( useExternalLogger, bool ):
+            raise TypeError(
+                f"Input 'useExternalLogger' must be a boolean, but got {type(useExternalLogger).__name__}." )
 
         self.mesh: Union[ vtkUnstructuredGrid, None ] = None
         self.filterName: str = filterName

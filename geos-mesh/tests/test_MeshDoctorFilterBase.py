@@ -200,7 +200,8 @@ class TestMeshDoctorFilterBase:
 
     def test_set_logger_handler_with_existing_handlers( self, single_tetrahedron_mesh, caplog ):
         """Test setting logger handler when handlers already exist."""
-        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh, "TestFilter_with_handlers",
+        filter_instance = ConcreteFilterForTesting( single_tetrahedron_mesh,
+                                                    "TestFilter_with_handlers",
                                                     useExternalLogger=True )
         filter_instance.logger.addHandler( logging.NullHandler() )
 

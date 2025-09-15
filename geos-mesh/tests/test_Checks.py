@@ -15,8 +15,10 @@ Tests the functionality of AllChecks, MainChecks, and base Checks class for mesh
 @pytest.fixture( scope="module" )
 def simple_hex_mesh() -> vtkUnstructuredGrid:
     """Fixture for a simple hexahedron mesh."""
-    return createSingleCellMesh( VTK_HEXAHEDRON, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                                             [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    return createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
 
 
 @pytest.fixture( scope="module" )
@@ -28,21 +30,19 @@ def simple_tetra_mesh() -> vtkUnstructuredGrid:
 @pytest.fixture( scope="module" )
 def mixed_quality_mesh() -> vtkUnstructuredGrid:
     """Fixture for a mesh with elements of varying quality."""
-    return createMultiCellMesh(
-        [ VTK_TETRA, VTK_TETRA ],
-        [ np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.5, 1.0, 0.0 ], [ 0.5, 0.5, 1.0 ] ] ),
-          np.array( [ [ 2.0, 0.0, 0.0 ], [ 5.0, 0.0, 0.0 ], [ 3.5, 0.1, 0.0 ], [ 3.5, 0.05, 0.05 ] ] ) ]
-    )
+    return createMultiCellMesh( [ VTK_TETRA, VTK_TETRA ], [
+        np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.5, 1.0, 0.0 ], [ 0.5, 0.5, 1.0 ] ] ),
+        np.array( [ [ 2.0, 0.0, 0.0 ], [ 5.0, 0.0, 0.0 ], [ 3.5, 0.1, 0.0 ], [ 3.5, 0.05, 0.05 ] ] )
+    ] )
 
 
 @pytest.fixture( scope="module" )
 def mesh_with_collocated_nodes() -> vtkUnstructuredGrid:
     """Fixture for a mesh with collocated (duplicate) nodes."""
-    return createMultiCellMesh(
-        [ VTK_TETRA, VTK_TETRA ],
-        [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ),
-          np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) ]
-    )
+    return createMultiCellMesh( [ VTK_TETRA, VTK_TETRA ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ),
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] )
+    ] )
 
 
 class TestChecksBase:
@@ -399,7 +399,10 @@ class TestOptionsBuilding:
         """Test building options with default parameters."""
         mock_options_cls = MagicMock( return_value=MagicMock() )
         mock_check_features = {
-            "test_check": MagicMock( default_params={ "param1": 1.0, "param2": "default" },
+            "test_check": MagicMock( default_params={
+                "param1": 1.0,
+                "param2": "default"
+            },
                                      options_cls=mock_options_cls )
         }
 

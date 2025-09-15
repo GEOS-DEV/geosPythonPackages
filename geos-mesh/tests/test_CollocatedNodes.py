@@ -14,11 +14,12 @@ Tests the functionality of detecting and handling collocated/duplicated nodes in
 @pytest.fixture( scope="module" )
 def mesh_with_collocated_nodes():
     """Fixture for a mesh with exactly duplicated and nearly collocated nodes."""
-    mesh = createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
-                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
-                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
-                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
+    mesh = createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ),
+        np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ], [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ],
+                    [ 1, 1, 1 ] ] )
+    ] )
     points = mesh.GetPoints()
 
     # Add nodes to create collocated situations:
@@ -35,19 +36,21 @@ def mesh_with_collocated_nodes():
 @pytest.fixture( scope="module" )
 def mesh_with_wrong_support() -> vtkUnstructuredGrid:
     """Fixture for a mesh containing a cell with repeated node indices."""
-    return createMultiCellMesh( [ VTK_TRIANGLE, VTK_TRIANGLE ],
-                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 0, 0 ] ] ),
-                                  np.array( [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 1, 1, 0 ] ] ) ] )
+    return createMultiCellMesh( [ VTK_TRIANGLE, VTK_TRIANGLE ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 0, 0 ] ] ),
+        np.array( [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 1, 1, 0 ] ] )
+    ] )
 
 
 @pytest.fixture( scope="module" )
 def clean_mesh() -> vtkUnstructuredGrid:
     """Fixture for a simple, valid mesh with no issues."""
-    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
-                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
-                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
-                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
+    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ),
+        np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ], [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ],
+                    [ 1, 1, 1 ] ] )
+    ] )
 
 
 def test_filter_on_clean_mesh( clean_mesh ):

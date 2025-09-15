@@ -398,8 +398,10 @@ def test_generate_fracture_filters_basic( test_case: TestCase, tmp_path ):
 
 def test_generate_fractures_filter_setters():
     """Test the setter methods of GenerateFractures filter."""
-    mesh = createSingleCellMesh( VTK_HEXAHEDRON, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                                             [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    mesh = createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
     createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="test_field", onPoints=False )
     # Create filter instance
     filterInstance = GenerateFractures( mesh )
@@ -441,8 +443,10 @@ def test_generate_fractures_filter_setters():
 def test_generate_fractures_filter_with_global_ids( tmp_path ):
     """Test that filter fails when mesh contains global IDs."""
     # Create a simple test mesh
-    mesh = createSingleCellMesh( VTK_HEXAHEDRON, np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                                             [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ) )
+    mesh = createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
     createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="GLOBAL_IDS_POINTS", onPoints=False )
 
     fractures_dir = tmp_path / "fractures"

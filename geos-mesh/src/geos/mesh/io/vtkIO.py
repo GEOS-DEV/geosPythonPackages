@@ -86,8 +86,7 @@ def _read_data( filepath: str, reader_class: VtkReaderClass ) -> Optional[ vtkPo
     # detect a failed read, as GetOutput() can return a default empty object on failure.
     if hasattr( reader, 'GetErrorCode' ) and reader.GetErrorCode() != 0:
         io_logger.warning(
-            f"VTK reader {reader_class.__name__} reported an error code after attempting to read '{filepath}'."
-        )
+            f"VTK reader {reader_class.__name__} reported an error code after attempting to read '{filepath}'." )
         return None
 
     output = reader.GetOutput()
@@ -239,7 +238,7 @@ def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, can_overwrite: bool = 
         if not writer_class:
             raise ValueError( f"Writing to extension '{output_path.suffix}' is not supported." )
 
-        success_code = _write_data( mesh, writer_class, str(output_path), vtk_output.is_data_mode_binary )
+        success_code = _write_data( mesh, writer_class, str( output_path ), vtk_output.is_data_mode_binary )
         if not success_code:
             raise RuntimeError( f"VTK writer failed to write file '{output_path}'." )
 

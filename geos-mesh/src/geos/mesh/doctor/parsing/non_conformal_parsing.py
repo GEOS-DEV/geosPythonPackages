@@ -59,7 +59,7 @@ def logger_results( logger, non_conformal_cells: list[ tuple[ int, int ] ] ) -> 
     """
     # Accounts for external logging object that would not contain 'results' attribute
     log_method = logger.info
-    if hasattr(logger, 'results'):
+    if hasattr( logger, 'results' ):
         log_method = logger.results
 
     unique_cells: list[ int ] = []

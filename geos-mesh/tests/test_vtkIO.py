@@ -3,10 +3,8 @@ import numpy as np
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkStructuredGrid, VTK_TETRA, VTK_HEXAHEDRON
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.mesh.io.vtkIO import (
-    VtkFormat, VtkOutput, read_mesh, read_unstructured_grid, write_mesh,
-    READER_MAP, WRITER_MAP
-)
+from geos.mesh.io.vtkIO import ( VtkFormat, VtkOutput, read_mesh, read_unstructured_grid, write_mesh, READER_MAP,
+                                 WRITER_MAP )
 
 __doc__ = """
 Test module for vtkIO module.

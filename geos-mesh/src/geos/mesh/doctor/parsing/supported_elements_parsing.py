@@ -41,8 +41,7 @@ def display_results( options: Options, result: Result ):
     logger_results( setup_logger, result.unsupported_polyhedron_elements, result.unsupported_std_elements_types )
 
 
-def logger_results( logger,
-                    unsupported_polyhedron_elements: frozenset[ int ],
+def logger_results( logger, unsupported_polyhedron_elements: frozenset[ int ],
                     unsupported_std_elements_types: list[ str ] ) -> None:
     """Log the results of the supported elements check.
 
@@ -53,7 +52,7 @@ def logger_results( logger,
     """
     # Accounts for external logging object that would not contain 'results' attribute
     log_method = logger.info
-    if hasattr(logger, 'results'):
+    if hasattr( logger, 'results' ):
         log_method = logger.results
 
     if unsupported_polyhedron_elements:
@@ -65,6 +64,6 @@ def logger_results( logger,
         log_method( "All the polyhedra (if any) can be converted to supported elements." )
     if unsupported_std_elements_types:
         log_method( "There are unsupported vtk standard element types. The list of those vtk types is"
-                    f" {tuple(sorted(unsupported_std_elements_types))}.")
+                    f" {tuple(sorted(unsupported_std_elements_types))}." )
     else:
         log_method( "All the standard vtk element types (if any) are supported." )

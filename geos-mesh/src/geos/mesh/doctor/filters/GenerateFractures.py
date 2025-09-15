@@ -211,10 +211,8 @@ class GenerateFractures( MeshDoctorFilterBase ):
             choice (int): 0 for ASCII, 1 for binary.
         """
         if choice not in [ 0, 1 ]:
-            self.logger.error(
-                f"setOutputDataMode: Please choose either 0 for {OUTPUT_BINARY_MODE_VALUES[0]} or 1 for"
-                f" {OUTPUT_BINARY_MODE_VALUES[1]}, not '{choice}'."
-            )
+            self.logger.error( f"setOutputDataMode: Please choose either 0 for {OUTPUT_BINARY_MODE_VALUES[0]} or 1 for"
+                               f" {OUTPUT_BINARY_MODE_VALUES[1]}, not '{choice}'." )
         else:
             self.allOptions[ OUTPUT_BINARY_MODE ] = OUTPUT_BINARY_MODE_VALUES[ choice ]
 
@@ -248,16 +246,14 @@ class GenerateFractures( MeshDoctorFilterBase ):
 
 
 # Main function for standalone use
-def generateFractures(
-    mesh: vtkUnstructuredGrid,
-    outputPath: str,
-    policy: int = 1,
-    fieldName: str = None,
-    fieldValues: str = None,
-    fracturesOutputDir: str = None,
-    outputDataMode: int = 0,
-    fracturesDataMode: int = 0
-) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
+def generateFractures( mesh: vtkUnstructuredGrid,
+                       outputPath: str,
+                       policy: int = 1,
+                       fieldName: str = None,
+                       fieldValues: str = None,
+                       fracturesOutputDir: str = None,
+                       outputDataMode: int = 0,
+                       fracturesDataMode: int = 0 ) -> tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]:
     """Apply fracture generation to a mesh.
 
     Args:

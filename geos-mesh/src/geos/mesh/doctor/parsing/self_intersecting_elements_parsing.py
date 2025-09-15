@@ -24,15 +24,13 @@ def convert( parsed_options ) -> Options:
 def fill_subparser( subparsers ) -> None:
     p = subparsers.add_parser( SELF_INTERSECTING_ELEMENTS,
                                help="Checks if the faces of the elements are self intersecting." )
-    p.add_argument(
-        '--' + __MIN_DISTANCE,
-        type=float,
-        required=False,
-        metavar=__MIN_DISTANCE_DEFAULT,
-        default=__MIN_DISTANCE_DEFAULT,
-        help=( "[float]: The minimum distance in the computation."
-               f" Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." )
-    )
+    p.add_argument( '--' + __MIN_DISTANCE,
+                    type=float,
+                    required=False,
+                    metavar=__MIN_DISTANCE_DEFAULT,
+                    default=__MIN_DISTANCE_DEFAULT,
+                    help=( "[float]: The minimum distance in the computation."
+                           f" Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." ) )
 
 
 def display_results( options: Options, result: Result ):
@@ -49,7 +47,7 @@ def logger_results( logger, invalid_cell_ids ) -> None:
     """
     # Accounts for external logging object that would not contain 'results' attribute
     log_method = logger.info
-    if hasattr(logger, 'results'):
+    if hasattr( logger, 'results' ):
         log_method = logger.results
 
     # Human-readable descriptions for each error type
@@ -67,6 +65,6 @@ def logger_results( logger, invalid_cell_ids ) -> None:
     # Log results for each error type that has invalid elements
     for error_type, invalid_ids in invalid_cell_ids.items():
         if invalid_ids:
-            description = error_descriptions.get(error_type, f'elements with {error_type}')
-            log_method(f"You have {len(invalid_ids)} {description}.")
-            log_method("The elements indices are:\n" + ", ".join(map(str, invalid_ids)))
+            description = error_descriptions.get( error_type, f'elements with {error_type}' )
+            log_method( f"You have {len(invalid_ids)} {description}." )
+            log_method( "The elements indices are:\n" + ", ".join( map( str, invalid_ids ) ) )

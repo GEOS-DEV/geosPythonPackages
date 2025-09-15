@@ -14,11 +14,12 @@ Tests the functionality of calculating element volumes and detecting problematic
 @pytest.fixture( scope="module" )
 def simple_hex_mesh():
     """Fixture for a simple hexahedron mesh with known volumes."""
-    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ],
-                                [ np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ],
-                                              [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ] ] ),
-                                  np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ],
-                                              [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ], [ 1, 1, 1 ] ] ) ] )
+    return createMultiCellMesh( [ VTK_HEXAHEDRON, VTK_HEXAHEDRON ], [
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ),
+        np.array( [ [ 1, 0, 0 ], [ 2, 0, 0 ], [ 2, 1, 0 ], [ 1, 1, 0 ], [ 1, 0, 1 ], [ 2, 0, 1 ], [ 2, 1, 1 ],
+                    [ 1, 1, 1 ] ] )
+    ] )
 
 
 @pytest.fixture( scope="module" )

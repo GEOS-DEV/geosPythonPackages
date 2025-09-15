@@ -190,14 +190,12 @@ class NonConformal( MeshDoctorFilterBase ):
 
 
 # Main function for standalone use
-def nonConformal(
-    mesh: vtkUnstructuredGrid,
-    outputPath: str,
-    pointTolerance: float = 0.0,
-    faceTolerance: float = 0.0,
-    angleTolerance: float = 10.0,
-    writeNonConformalCells: bool = False
-) -> tuple[ vtkUnstructuredGrid, list[ tuple[ int, int ] ] ]:
+def nonConformal( mesh: vtkUnstructuredGrid,
+                  outputPath: str,
+                  pointTolerance: float = 0.0,
+                  faceTolerance: float = 0.0,
+                  angleTolerance: float = 10.0,
+                  writeNonConformalCells: bool = False ) -> tuple[ vtkUnstructuredGrid, list[ tuple[ int, int ] ] ]:
     """Apply non-conformal detection to a mesh.
 
     Args:

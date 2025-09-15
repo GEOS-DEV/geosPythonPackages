@@ -145,11 +145,10 @@ class SelfIntersectingElements( MeshDoctorFilterBase ):
 
 # Main function for standalone use
 def selfIntersectingElements(
-    mesh: vtkUnstructuredGrid,
-    outputPath: str,
-    minDistance: float = 0.0,
-    writeInvalidElements: bool = False
-) -> tuple[ vtkUnstructuredGrid, dict[ str, list[ int ] ] ]:
+        mesh: vtkUnstructuredGrid,
+        outputPath: str,
+        minDistance: float = 0.0,
+        writeInvalidElements: bool = False ) -> tuple[ vtkUnstructuredGrid, dict[ str, list[ int ] ] ]:
     """Apply self-intersecting elements detection to a mesh.
 
     Args:

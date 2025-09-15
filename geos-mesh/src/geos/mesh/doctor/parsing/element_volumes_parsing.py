@@ -43,7 +43,7 @@ def logger_results( logger, element_volumes: list[ tuple[ int, float ] ] ) -> No
     """
     # Accounts for external logging object that would not contain 'results' attribute
     log_method = logger.info
-    if hasattr(logger, 'results'):
+    if hasattr( logger, 'results' ):
         log_method = logger.results
 
     log_method( "Elements index | Volumes calculated" )
