@@ -250,7 +250,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
 
                     pointShared: bool = True
                     if dataSetTo.GetClassName() == dataSetFrom.GetClassName():
-                        if not coordElementTo == coordElementFrom:
+                        if coordElementTo != coordElementFrom:
                             pointShared = False
                     elif isinstance( dataSetTo, vtkPolyData ):
                         for coordPointsTo in coordElementTo:
@@ -260,7 +260,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                         for coordPointsFrom in coordElementFrom:
                             if coordPointsFrom not in coordElementTo:
                                 pointShared = False
-                    
+
                     if pointShared:
                         elementMap[ flatIdDataSetTo ][ idElementTo ] = [ flatIdDataSetFrom, idElementFrom ]
                         ElementFromFund = True
@@ -896,7 +896,9 @@ def getComponentNamesMultiBlock(
     return ()
 
 
-def getAttributeValuesAsDF( surface: vtkPolyData, attributeNames: tuple[ str, ...], onPoints: bool = False ) -> pd.DataFrame:
+def getAttributeValuesAsDF( surface: vtkPolyData,
+                            attributeNames: tuple[ str, ...],
+                            onPoints: bool = False ) -> pd.DataFrame:
     """Get attribute values from input surface.
 
     Args:

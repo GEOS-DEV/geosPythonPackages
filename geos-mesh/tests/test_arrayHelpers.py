@@ -310,8 +310,8 @@ def test_getComponentNamesMultiBlock(
 @pytest.mark.parametrize( "attributeNames, onPoints, expected_columns", [
     ( ( "collocated_nodes", ), True, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
 ] )
-def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...],
-                                 onPoints: bool, expected_columns: Tuple[ str, ...] ) -> None:
+def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...], onPoints: bool,
+                                 expected_columns: Tuple[ str, ...] ) -> None:
     """Test getting an attribute from a polydata as a dataframe."""
     polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
     data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, onPoints )
