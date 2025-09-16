@@ -241,13 +241,15 @@ class ClipToMainFrame( vtkTransformFilter ):
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
+            self.logger.info(f"Processing MultiblockDataSet")
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
-                Logger.error("Reference point is not in the domain")
+                self.logger.error("Reference point is not in the domain")
             
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
+            self.logger.info(f"Processing untructuredGrid")
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()

@@ -67,24 +67,11 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         inputMesh: vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetInputData(inInfo,0,0)
         outputMesh : vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetOutputData(outInfo,0)
         
-        # outputMesh.ShallowCopy(inputMesh)
         # struct
-        self.__realFilter.logger.info(f"size Info {outInfo.GetNumberOfInformationObjects()}")
-        def logInfos(obj, logger, header):
-            logger.info(f"--{header}--")
-            logger.info(f"mesh has {obj.GetNumberOfPoints()} points")
-            logger.info(f"mesh has {obj.GetNumberOfCells()} cells")
-            logger.info(f"type {obj.GetClassName()}")
-
         self.__realFilter.SetInputData(inputMesh)
-        logInfos(inputMesh, self.__realFilter.logger,"input")
-
         self.__realFilter.ComputeTransform()
         self.__realFilter.Update()
- 
         outputMesh.ShallowCopy( self.__realFilter.GetOutputDataObject(0) )
-
-        logInfos(outputMesh, self.__realFilter.logger,"output")
 
         return 1
 
