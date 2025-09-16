@@ -30,7 +30,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.processing.FillPartialArrays import FillPartialArrays
-
+import geos.pv.utils.details
 __doc__ = """
 Fill partial arrays of input mesh.
 
@@ -47,21 +47,22 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkMultiBlockDataSet" ],
-    composite_data_supported=True,
-)
-class PVFillPartialArrays( VTKPythonAlgorithmBase ):
+# @smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
+# @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+# @smproperty.input( name="Input", port_index=0 )
+# @smdomain.datatype(
+#     dataTypes=[ "vtkMultiBlockDataSet" ],
+#     composite_data_supported=True,
+# )
+@geos.pv.utils.details.SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
+class PVFillPartialArrays:
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
-        super().__init__( nInputPorts=1,
-                          nOutputPorts=1,
-                          inputType="vtkMultiBlockDataSet",
-                          outputType="vtkMultiBlockDataSet" )
+        # super().__init__( nInputPorts=1,
+        #                   nOutputPorts=1,
+        #                   inputType="vtkMultiBlockDataSet",
+        #                   outputType="vtkMultiBlockDataSet" )
 
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
@@ -99,13 +100,13 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}
             self.clearDictAttributesValues = False
-        
+
         if attributeName is not None:
             if values is not None :
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
                 self.dictAttributesValues[ attributeName ] = None
- 
+
         self.Modified()
 
     def RequestDataObject(
@@ -156,13 +157,13 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         outputMesh.ShallowCopy( inputMesh )
 
         filter: FillPartialArrays = FillPartialArrays( outputMesh,
-                                                       self.dictAttributesValues, 
+                                                       self.dictAttributesValues,
                                                        True,
         )
-        
+
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
-        
+
         filter.applyFilter()
 
         self.clearDictAttributesValues = True
