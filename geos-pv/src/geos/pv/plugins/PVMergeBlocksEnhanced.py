@@ -7,14 +7,6 @@ from pathlib import Path
 from typing import Union
 from typing_extensions import Self
 
-# update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
-sys.path.insert( 0, str( geos_pv_path / "src" ) )
-from geos.pv.utils.config import update_paths
-
-update_paths()
-
-from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -30,6 +22,15 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
+# Update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
+
+update_paths()
+
+from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
+
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a Paraview plugin filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
 
@@ -41,9 +42,10 @@ Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMergeBlocksEnhanced.
-* Select the multiblock dataset mesh you want to merge.
-* Apply Merge Blocks Keeping Partial Attributes Filter.
+* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVMergeBlocksEnhanced
+* Select the multiblock dataset mesh you want to merge
+* Select Filters > 4- Geos Utils > Merge Blocks Keeping Partial Attributes
+* Apply
 
 
 .. Note::

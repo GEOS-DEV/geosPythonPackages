@@ -2,10 +2,12 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
+
 from typing import Union
 from typing_extensions import Self
 
-from geos.utils.Logger import logging, Logger, getLogger
+from geos.utils.Logger import Logger, getLogger
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 from vtkmodules.vtkCommonDataModel import (
@@ -20,7 +22,7 @@ Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks 
 Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
 
 .. Note::
-    - This filter is intended to be used for GEOS VTK outputs. You may encounter issues if two datasets of the input multiblock dataset have duplicated cell IDs.
+    - You may encounter issues if two datasets of the input multiblock dataset have duplicated cell IDs.
     - Partial attributes are filled with default values depending on their types.
         - 0 for uint data.
         - -1 for int data.
