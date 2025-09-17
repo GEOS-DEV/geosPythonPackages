@@ -8,28 +8,30 @@ import pytest
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 from geos.mesh.utils import multiblockModifiers
 
-
-# TODO: Add test for keepPartialAttributes = True when function fixed
 @pytest.mark.parametrize(
-    "keepPartialAttributes, expected_point_attributes, expected_cell_attributes",
+    "keepPartialAttributes, nb_pt_attributes, nb_cell_attributes, nb_field_attributes",
     [
-        ( False, ( "GLOBAL_IDS_POINTS", ), ( "GLOBAL_IDS_CELLS", ) ),
-        # ( True, ( "GLOBAL_IDS_POINTS",  ), ( "GLOBAL_IDS_CELLS", "CELL_MARKERS", "FAULT", "PERM", "PORO" ) ),
+        ( False, 0, 16, 1 ),
+        ( True, 2, 30, 1 ),
     ] )
 def test_mergeBlocks(
     dataSetTest: vtkMultiBlockDataSet,
-    expected_point_attributes: tuple[ str, ...],
-    expected_cell_attributes: tuple[ str, ...],
+    nb_pt_attributes: int,
+    nb_cell_attributes: int,
+    nb_field_attributes: int,
     keepPartialAttributes: bool,
 ) -> None:
     """Test the merging of a multiblock."""
-    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    dataset: vtkUnstructuredGrid = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
+    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
 
-    assert dataset.GetCellData().GetNumberOfArrays() == len( expected_cell_attributes )
-    for c_attribute in expected_cell_attributes:
-        assert dataset.GetCellData().HasArray( c_attribute )
+    success: bool
+    dataset: vtkUnstructuredGrid
+    success, dataset = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
 
-    assert dataset.GetPointData().GetNumberOfArrays() == len( expected_point_attributes )
-    for p_attribute in expected_point_attributes:
-        assert dataset.GetPointData().HasArray( p_attribute )
+    assert success
+
+    assert dataset.GetCellData().GetNumberOfArrays() == nb_cell_attributes, f"Expected {nb_cell_attributes} cell attributes after the merge, not {dataset.GetCellData().GetNumberOfArrays()}."
+
+    assert dataset.GetPointData().GetNumberOfArrays() == nb_pt_attributes, f"Expected {nb_pt_attributes} point attributes after the merge, not {dataset.GetPointData().GetNumberOfArrays()}."
+
+    assert dataset.GetFieldData().GetNumberOfArrays() == nb_field_attributes, f"Expected {nb_field_attributes} field attributes after the merge, not {dataset.GetFieldData().GetNumberOfArrays()}."
