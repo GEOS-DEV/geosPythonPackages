@@ -271,7 +271,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         Args:
             multiBlockDataSet (vtkMultiBlockDataSet): Input multiblock mesh.
-
+ 
         Returns:
             int: Index of the block to use as reference.
         """
