@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-import sys
 from typing import Union
 from typing_extensions import Self
 
@@ -59,12 +57,11 @@ loggerTitle: str = "Merge Block Enhanced"
 class MergeBlockEnhanced:
 
     def __init__(
-            self: Self,
-            inputMesh: vtkMultiBlockDataSet,
-            speHandler: bool = False,
-    ):
-        """
-        Merge a multiblock dataset and keep the partial attributes in the output mesh.
+        self: Self,
+        inputMesh: vtkMultiBlockDataSet,
+        speHandler: bool = False,
+    ) -> None:
+        """Merge a multiblock dataset and keep the partial attributes in the output mesh.
 
         Partial attributes are filled with default values depending on the data type such that:
             - 0 for uint data.
@@ -110,8 +107,11 @@ class MergeBlockEnhanced:
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
-        if not isinstance( self.inputMesh, vtkCompositeDataSet) or not isinstance( self.inputMesh, vtkMultiBlockDataSet ) :
-            self.logger.error( f"Expected a vtkMultiblockdataset or vtkCompositeDataSet, Got a {type(self.inputMesh)} \n The filter { self.logger.name } failed." )
+        if not isinstance( self.inputMesh, vtkCompositeDataSet ) or not isinstance( self.inputMesh,
+                                                                                    vtkMultiBlockDataSet ):
+            self.logger.error(
+                f"Expected a vtkMultiblockdataset or vtkCompositeDataSet, Got a {type(self.inputMesh)} \n The filter { self.logger.name } failed."
+            )
             return False
 
         success: bool

@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
 from pathlib import Path
 from typing import Union
@@ -20,8 +19,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)
+    VTKHandler, )
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
@@ -54,6 +52,7 @@ To use it:
     - -1 for int data.
     - nan for float data.
 """
+
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
@@ -94,7 +93,6 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )
 
-
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
@@ -111,7 +109,7 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inputMesh : Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
+        inputMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
         outputMesh: vtkUnstructuredGrid = self.GetOutputData( outInfoVec, 0 )
 
         assert inputMesh is not None, "Input mesh is null."

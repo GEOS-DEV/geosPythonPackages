@@ -10,6 +10,7 @@ from geos.utils.Logger import getLogger, Logger
 
 __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
 
+
 def mergeBlocks(
     inputMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
     keepPartialAttributes: bool = False,
@@ -18,8 +19,10 @@ def mergeBlocks(
     """Merge all blocks of a multiblock dataset mesh with the possibility of keeping all partial attributes present in the initial mesh.
 
     Args:
-        input (vtkMultiBlockDataSet | vtkCompositeDataSet ): The input multiblock dataset to merge.
+        inputMesh (vtkMultiBlockDataSet | vtkCompositeDataSet ): The input multiblock dataset to merge.
         keepPartialAttributes (bool): If False (default), only global attributes are kept during the merge. If True, partial attributes are filled with default values and kept in the output mesh.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         bool: True if the mesh was correctly merged. False otherwise
@@ -40,7 +43,9 @@ def mergeBlocks(
     outputMesh = vtkUnstructuredGrid()
 
     if not inputMesh.IsA( "vtkMultiBlockDataSet" ) and not inputMesh.IsA( "vtkCompositeDataSet" ):
-        logger.error( "The input mesh should be either a vtkMultiBlockDataSet or a vtkCompositeDataSet. Cannot proceed with the block merge." )
+        logger.error(
+            "The input mesh should be either a vtkMultiBlockDataSet or a vtkCompositeDataSet. Cannot proceed with the block merge."
+        )
         return False, outputMesh
 
     if inputMesh.IsA( "vtkDataSet" ):
@@ -48,10 +53,9 @@ def mergeBlocks(
         return False, outputMesh
 
     # Fill the partial attributes with default values to keep them during the merge.
-    if keepPartialAttributes:
-        if not fillAllPartialAttributes( inputMesh, logger ):
-            logger.error( "Failed to fill partial attributes. Cannot proceed with the block merge." )
-            return False, outputMesh
+    if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
+        logger.error( "Failed to fill partial attributes. Cannot proceed with the block merge." )
+        return False, outputMesh
 
     af: vtkAppendDataSets = vtkAppendDataSets()
     af.MergePointsOn()
