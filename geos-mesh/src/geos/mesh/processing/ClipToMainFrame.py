@@ -241,7 +241,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
-            self.logger.info(f"Processing MultiblockDataSet")
+            self.logger.info( "Processing MultiblockDataSet" )
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
@@ -249,7 +249,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
-            self.logger.info(f"Processing untructuredGrid")
+            self.logger.info( "Processing untructuredGrid" )
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()
@@ -273,7 +273,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         Args:
             multiBlockDataSet (vtkMultiBlockDataSet): Input multiblock mesh.
- 
+
         Returns:
             int: Index of the block to use as reference.
         """
