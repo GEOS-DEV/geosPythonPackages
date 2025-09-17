@@ -111,8 +111,7 @@ class MergeBlockEnhanced:
         self.logger.info( f"Applying filter { self.logger.name }." )
 
         if not isinstance( self.inputMesh, vtkCompositeDataSet) or not isinstance( self.inputMesh, vtkMultiBlockDataSet ) :
-            self.logger.error( f"Expected a vtkMultiblockdataset or vtkCompositeDataSet, Got a {type(self.inputMesh)}" )
-            self.logger.error( f"The filter { self.logger.name } failed." )
+            self.logger.error( f"Expected a vtkMultiblockdataset or vtkCompositeDataSet, Got a {type(self.inputMesh)} \n The filter { self.logger.name } failed." )
             return False
 
         success: bool
@@ -120,12 +119,10 @@ class MergeBlockEnhanced:
         success, outputMesh = mergeBlocks( self.inputMesh, True, self.logger )
 
         if not success:
-            self.logger.error( "The input mesh could not be merged." )
             self.logger.error( f"The filter {self.logger.name} failed." )
             return False
 
         else:
-            self.logger.info( "Blocks were successfully merged together." )
             self.logger.info( f"The filter { self.logger.name } succeeded." )
             self.outputMesh = outputMesh
         return True
