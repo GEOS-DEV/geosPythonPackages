@@ -176,8 +176,10 @@ def fillAllPartialAttributes(
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "fillAllPartialAttributes", True )
-    
-    logger.warning( "The filling value for the attributes is depending of the type of attribute's data:\n0 for uint data,\n-1 for int data,\nnan for float data.")
+
+    logger.warning(
+        "The filling value for the attributes is depending of the type of attribute's data:\n0 for uint data,\n-1 for int data,\nnan for float data."
+    )
 
     # Parse all partial attributes, onPoints and onCells to fill them.
     for onPoints in [ True, False ]:
