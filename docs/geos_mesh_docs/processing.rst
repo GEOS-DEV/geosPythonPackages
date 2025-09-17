@@ -36,3 +36,12 @@ geos.mesh.processing.SplitMesh filter
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+geos.mesh.processing.MergeBlockEnhanced filter
+------------------------------------------------
+
+.. automodule:: geos.mesh.processing.MergeBlockEnhanced
+    :members:
+    :undoc-members:
+    :show-inheritance:
