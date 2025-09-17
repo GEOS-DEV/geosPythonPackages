@@ -9,9 +9,7 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
 
 
-def test_MergeBlocksEnhancedFilter(
-        dataSetTest: vtkMultiBlockDataSet,
-) -> None:
+def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test MergeBlockEnhanced vtk filter."""
     multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
