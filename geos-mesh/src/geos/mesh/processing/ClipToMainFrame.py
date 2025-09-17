@@ -83,11 +83,11 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
                   + f"\nTarget points: {self.targetPts}" \
                   + f"\nAngle-Axis: {self.__getAngleAxis()}" \
                   + f"\nTranslation: {self.__getTranslation()}"
-                  
+
     def __getAngleAxis( self ) -> tuple[ float, npt.NDArray[ np.double ] ]:
         """Get the angle and axis of the rotation.
 
-            tuple[float, npt.NDArray[np.double]]: Angle in degrees and axis of rotation.
+        tuple[float, npt.NDArray[np.double]]: Angle in degrees and axis of rotation.
         """
         matrix: vtkMatrix4x4 = self.GetMatrix()
         angle: np.double = np.arccos(
@@ -154,7 +154,6 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         pts.SetPoint( 7, [ bounds[ 0 ], bounds[ 3 ], bounds[ 5 ] ] )
         return pts
 
-
     def __getFramePoints( self, vpts: vtkPoints ) -> tuple[ vtkPoints, vtkPoints ]:
         """Get the source and target points for the transformation.
 
@@ -164,22 +163,23 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         Returns:
             tuple[vtkPoints, vtkPoints]: Source and target points for the transformation.
         """
-        pts : npt.NDArray[ np.double ] = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
+        pts: npt.NDArray[ np.double ] = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
         #translate pts so they always lie on the -z,-y,-x quadrant
-        off : npt.NDArray[ np.double ] = np.asarray( [
+        off: npt.NDArray[ np.double ] = np.asarray( [
             -2 * np.amax( np.abs( pts[ :, 0 ] ) ), -2 * np.amax( np.abs( pts[ :, 1 ] ) ),
             -2 * np.amax( np.abs( pts[ :, 2 ] ) )
         ] )
         pts += off
-        further_ix : np.int_ = np.argmax( np.linalg.norm( pts, axis=1 ) )  # by default take the min point furthest from origin
-        org : npt.NDArray = pts[ further_ix, : ]
+        further_ix: np.int_ = np.argmax( np.linalg.norm(
+            pts, axis=1 ) )  # by default take the min point furthest from origin
+        org: npt.NDArray = pts[ further_ix, : ]
 
         # find 3 orthogonal vectors
         # we assume points are on a box
-        dist_indexes : npt.NDArray[np.double] = np.argsort( np.linalg.norm( pts - org, axis=1 ) )
+        dist_indexes: npt.NDArray[ np.int_ ] = np.argsort( np.linalg.norm( pts - org, axis=1 ) )
         # find u,v,w
-        v1 : npt.NDArray[np.double] = pts[ dist_indexes[ 1 ], : ] - org
-        v2 : npt.NDArray[np.double] = pts[ dist_indexes[ 2 ], : ] - org
+        v1: npt.NDArray[ np.double ] = pts[ dist_indexes[ 1 ], : ] - org
+        v2: npt.NDArray[ np.double ] = pts[ dist_indexes[ 2 ], : ] - org
         v1 /= np.linalg.norm( v1 )
         v2 /= np.linalg.norm( v2 )
         if np.abs( v1[ 0 ] ) > np.abs( v2[ 0 ] ):
@@ -188,7 +188,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         # ensure orthogonality
         v2 -= np.dot( v2, v1 ) * v1
         v2 /= np.linalg.norm( v2 )
-        v3 : npt.NDArray[np.double] = np.cross( v1, v2 )
+        v3: npt.NDArray[ np.double ] = np.cross( v1, v2 )
         v3 /= np.linalg.norm( v3 )
 
         #reorder axis if v3 points downward
@@ -198,10 +198,10 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
 
         sourcePts = vtkPoints()
         sourcePts.SetNumberOfPoints( 4 )
-        sourcePts.SetPoint( 0, org - off )
-        sourcePts.SetPoint( 1, v1 + org - off )
-        sourcePts.SetPoint( 2, v2 + org - off )
-        sourcePts.SetPoint( 3, v3 + org - off )
+        sourcePts.SetPoint( 0, list( org - off ) )
+        sourcePts.SetPoint( 1, list( v1 + org - off ) )
+        sourcePts.SetPoint( 2, list( v2 + org - off ) )
+        sourcePts.SetPoint( 3, list( v3 + org - off ) )
 
         targetPts = vtkPoints()
         targetPts.SetNumberOfPoints( 4 )
@@ -254,9 +254,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         self.SetTransform( clip )
 
     def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+        """Set a specific handler for the filter logger. In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
 
         Args:
             handler (logging.Handler): The handler to add.
@@ -272,14 +270,15 @@ class ClipToMainFrame( vtkTransformFilter ):
         """Locate the block to use as reference for the transformation.
 
         Args:
-            input (vtkMultiBlockDataSet): Input multiblock mesh.
+            multiBlockDataSet (vtkMultiBlockDataSet): Input multiblock mesh.
 
         Returns:
             int: Index of the block to use as reference.
         """
 
-        def __inside( pt: npt.NDArray[ np.double], bounds: tuple[ float, float, float, float, float, float ] ) -> bool:
-            """
+        def __inside( pt: npt.NDArray[ np.double ], bounds: tuple[ float, float, float, float, float, float ] ) -> bool:
+            """Check if a point is inside a box.
+
             Args:
                 pt (npt.NDArray[np.double]): Point to check.
                 bounds (tuple[float, float, float, float, float, float]): Bounding box.
@@ -295,9 +294,9 @@ class ClipToMainFrame( vtkTransformFilter ):
         DOIterator.SetDataSet( multiBlockDataSet )
         DOIterator.VisitOnlyLeavesOn()
         DOIterator.GoToFirstItem()
-        xmin : float
-        ymin : float
-        zmin : float
+        xmin: float
+        ymin: float
+        zmin: float
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( multiBlockDataSet )
         while DOIterator.GetCurrentDataObject() is not None:
             dataSet: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
