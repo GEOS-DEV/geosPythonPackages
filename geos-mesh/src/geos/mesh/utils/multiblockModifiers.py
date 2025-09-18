@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Martin Lemay
 from typing import Union
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
-                                            vtkUnstructuredGrid )
+                                            vtkDataSet )
 from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
 
@@ -14,7 +14,7 @@ __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
 def mergeBlocks(
     input: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
     keepPartialAttributes: bool = False,
-) -> vtkUnstructuredGrid:
+) -> vtkDataSet:
     """Merge all blocks of a multi block mesh.
 
     Args:
@@ -38,7 +38,7 @@ def mergeBlocks(
     iter.VisitOnlyLeavesOn()
     iter.GoToFirstItem()
     while iter.GetCurrentDataObject() is not None:
-        block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
+        block: vtkDataSet = vtkDataSet.SafeDownCast( iter.GetCurrentDataObject() )
         af.AddInputData( block )
         iter.GoToNextItem()
     af.Update()
