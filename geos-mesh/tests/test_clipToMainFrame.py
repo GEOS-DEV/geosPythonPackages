@@ -6,15 +6,13 @@
 import pytest
 import itertools
 from dataclasses import dataclass
-from typing import Generator, Tuple
+from typing import Generator, Tuple, List
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkHexahedron, vtkMultiBlockDataSet
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 import numpy.typing as npt
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
-
-from typing import List
 
 from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
 
