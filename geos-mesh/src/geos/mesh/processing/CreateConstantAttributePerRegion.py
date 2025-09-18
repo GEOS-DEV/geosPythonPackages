@@ -2,8 +2,9 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Romain Baville
 import numpy as np
-import numpy.typing as npt
+import logging
 
+import numpy.typing as npt
 from typing import Union, Any
 from typing_extensions import Self
 
@@ -13,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkDataSet,
 )
 
-from geos.utils.Logger import ( getLogger, Logger, logging, CountWarningHandler )
+from geos.utils.Logger import getLogger, Logger, CountWarningHandler
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )
