@@ -23,4 +23,4 @@ PVSplitMesh
 PVClipToMainFrame
 ----------------------------------
 
-.. automodule:: geos.pv.plugins.PVSClipToMainFrame
+.. automodule:: geos.pv.plugins.PVClipToMainFrame
