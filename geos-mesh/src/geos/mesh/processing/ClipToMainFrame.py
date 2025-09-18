@@ -15,8 +15,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockData
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
-
-from geos.utils.Logger import logging, Logger, getLogger
+from geos.utils.Logger import ( logging, Logger, getLogger )
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 __doc__ = """
