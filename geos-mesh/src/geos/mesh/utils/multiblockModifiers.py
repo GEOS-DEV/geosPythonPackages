@@ -48,10 +48,6 @@ def mergeBlocks(
         )
         return False, outputMesh
 
-    if inputMesh.IsA( "vtkDataSet" ):
-        logger.error( "The input mesh is already a single block. Cannot proceed with the block merge." )
-        return False, outputMesh
-
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
         logger.error( "Failed to fill partial attributes. Cannot proceed with the block merge." )
@@ -59,14 +55,14 @@ def mergeBlocks(
 
     af: vtkAppendDataSets = vtkAppendDataSets()
     af.MergePointsOn()
-    iter: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iter.SetDataSet( inputMesh )
-    iter.VisitOnlyLeavesOn()
-    iter.GoToFirstItem()
-    while iter.GetCurrentDataObject() is not None:
-        block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iter.GetCurrentDataObject() )
+    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+    iterator.SetDataSet( inputMesh )
+    iterator.VisitOnlyLeavesOn()
+    iterator.GoToFirstItem()
+    while iterator.GetCurrentDataObject() is not None:
+        block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iterator.GetCurrentDataObject() )
         af.AddInputData( block )
-        iter.GoToNextItem()
+        iterator.GoToNextItem()
     af.Update()
 
     outputMesh.ShallowCopy( af.GetOutputDataObject( 0 ) )

@@ -44,7 +44,7 @@ To use it:
 
     # Use your own handler (if speHandler is True)
     yourHandler: logging.Handler
-    filter.addLoggerHandler( yourHandler )
+    filter.setLoggerHandler( yourHandler )
 
     # Do calculations
     filter.applyFilter()
@@ -117,7 +117,7 @@ class MergeBlockEnhanced:
             return False
 
         success: bool
-        outputMesh: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkCompositeDataSet ]
+        outputMesh: vtkUnstructuredGrid
         success, outputMesh = mergeBlocks( self.inputMesh, True, self.logger )
 
         if not success:

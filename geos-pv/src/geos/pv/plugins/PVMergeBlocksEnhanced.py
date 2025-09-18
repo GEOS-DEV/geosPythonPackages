@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
