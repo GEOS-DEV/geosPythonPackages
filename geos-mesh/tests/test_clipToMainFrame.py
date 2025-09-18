@@ -138,4 +138,4 @@ def test_clipToMainFrame_generic( dataSetTest: vtkMultiBlockDataSet ) -> None:
     output_mesh: vtkMultiBlockDataSet = filter.GetOutputDataObject( 0 )
     assert output_mesh.GetNumberOfPoints() == multiBlockDataSet.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == multiBlockDataSet.GetNumberOfCells()
-    assert output_mesh.IsA('vtkMultiBlockDataSet')
+    assert output_mesh.IsA( 'vtkMultiBlockDataSet' )
