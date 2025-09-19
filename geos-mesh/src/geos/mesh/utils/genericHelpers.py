@@ -36,7 +36,7 @@ def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
     return result
 
 
-def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
+def vtk_iter( vtkContainer: Union[ vtkIdList, vtkCellTypes ] ) -> Iterator[ Any ]:
     """Utility function transforming a vtk "container" into an iterable.
 
     Args:
