@@ -60,9 +60,9 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
                                          inputType="vtkDataObject",
                                          outputType="vtkDataObject" )
 
-        self.__realFilter = ClipToMainFrame()
-        if not self.__realFilter.logger.hasHandlers():
-            self.__realFilter.setLoggerHandler( VTKHandler() )
+        self._realFilter = ClipToMainFrame( speHandler=True )
+        if not self._realFilter.logger.hasHandlers():
+            self._realFilter.SetLoggerHandler( VTKHandler() )
 
     #ensure I/O consistency
     def RequestDataObject( self, request: vtkInformation, inInfoVec: list[ vtkInformationVector ],
@@ -100,13 +100,10 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         inputMesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] = self.GetInputData( inInfo, 0, 0 )
         outputMesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] = self.GetOutputData( outInfo, 0 )
 
-        print( inputMesh.GetClassName() )
-
         # struct
-        self.__realFilter.SetInputData( inputMesh )
-        self.__realFilter.ComputeTransform()
-        self.__realFilter.Update()
-        outputMesh.ShallowCopy( self.__realFilter.GetOutputDataObject( 0 ) )
-        print( outputMesh.GetClassName() )
+        self._realFilter.SetInputData( inputMesh )
+        self._realFilter.ComputeTransform()
+        self._realFilter.Update()
+        outputMesh.ShallowCopy( self._realFilter.GetOutputDataObject( 0 ) )
 
         return 1

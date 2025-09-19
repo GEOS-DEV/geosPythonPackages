@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
 from typing import Tuple
+import logging
 
 import numpy as np
 import numpy.typing as npt
@@ -15,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockData
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
-from geos.utils.Logger import ( logging, Logger, getLogger )
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 __doc__ = """
