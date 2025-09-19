@@ -74,8 +74,9 @@ def __build_test_mesh( mxx: Tuple[ int, ...] ) -> Generator[ Expected, None, Non
 
     # Creating multiple meshes, each time with a different angles
     mesh = vtkUnstructuredGrid()
-    ( vtps := vtkPoints() ).SetData( dsa.numpy_support.numpy_to_vtk( pts ) )
-    mesh.SetPoints( vtps )
+    vpts = vtkPoints()
+    vpts.SetData( dsa.numpy_support.numpy_to_vtk( pts ) )
+    mesh.SetPoints( vpts )
 
     ids = vtkIdList()
     for i in range( nx - 1 ):
@@ -101,7 +102,8 @@ def __build_test_mesh( mxx: Tuple[ int, ...] ) -> Generator[ Expected, None, Non
     "expected", [ item for t in list( itertools.product( [ -1, 1 ], repeat=3 ) ) for item in __build_test_mesh( t ) ] )
 def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
-    ( filter := ClipToMainFrame() ).SetInputData( expected.mesh )
+    filter = ClipToMainFrame()
+    filter.SetInputData( expected.mesh )
     filter.ComputeTransform()
     filter.Update()
     output_mesh: vtkUnstructuredGrid = filter.GetOutput()
@@ -131,11 +133,12 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
 def test_clipToMainFrame_generic( dataSetTest: vtkMultiBlockDataSet ) -> None:
     """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    ( filter := ClipToMainFrame() ).SetInputData( multiBlockDataSet )
+    filter = ClipToMainFrame()
+    filter.SetInputData( multiBlockDataSet )
     filter.ComputeTransform()
     filter.Update()
     print( filter.GetTransform() )
     output_mesh: vtkMultiBlockDataSet = filter.GetOutputDataObject( 0 )
     assert output_mesh.GetNumberOfPoints() == multiBlockDataSet.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == multiBlockDataSet.GetNumberOfCells()
-    assert output_mesh.IsA('vtkMultiBlockDataSet')
+    assert output_mesh.IsA( 'vtkMultiBlockDataSet' )

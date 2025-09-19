@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
+from typing import Union
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -96,8 +97,8 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inputMesh: vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetInputData( inInfo, 0, 0 )
-        outputMesh: vtkMultiBlockDataSet | vtkUnstructuredGrid = self.GetOutputData( outInfo, 0 )
+        inputMesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] = self.GetInputData( inInfo, 0, 0 )
+        outputMesh: Union[ vtkMultiBlockDataSet, vtkUnstructuredGrid ] = self.GetOutputData( outInfo, 0 )
 
         print( inputMesh.GetClassName() )
 
