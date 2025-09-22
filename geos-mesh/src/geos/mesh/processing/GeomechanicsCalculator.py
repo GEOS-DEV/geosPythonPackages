@@ -286,7 +286,6 @@ class GeomechanicsCalculator():
         #     return False
 
         if not self.computeTotalStresses():
-            self.m_logger.error( "Total stresses computation failed." )
             return False
 
         if not self.computeElasticStrain():
@@ -481,7 +480,7 @@ class GeomechanicsCalculator():
         porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityInitialAttributeName, porosityInitialOnPoints )
 
         deltaPressureAttributeName: str = GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName
-        deltaPressureOnPoint: str = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
+        deltaPressureOnPoint: bool = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
         deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName, deltaPressureOnPoint )
 
         compressibilityRealAttributeName: str = PostProcessingOutputsEnum.COMPRESSIBILITY_REAL.attributeName
@@ -532,52 +531,36 @@ class GeomechanicsCalculator():
         """Compute total stress total stress ratio.
 
         Total stress is computed at the initial and current time steps.
-        total stress ratio is computed at current time step only.
+        Total stress ratio is computed at current time step only.
 
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        # compute total stress at initial time step
-        totalStressT0AttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName )
-        if not isAttributeInObject( self.output, totalStressT0AttributeName, self.m_attributeOnPoints ):
-            self.computeTotalStressInitial()
+        # Compute total stress at initial time step.
+        if not self.computeTotalStressInitial():
+            self.m_logger.error( "Total stress at initial time step computation failed.")
+            return False
 
-        # compute total stress at current time step
-        totalStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-        if not isAttributeInObject( self.output, totalStressAttributeName, self.m_attributeOnPoints ):
-            try:
-                effectiveStressAttributeName: str = ( GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName )
-                effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject(
-                    self.output,
-                    effectiveStressAttributeName,
-                    self.m_attributeOnPoints,
-                )
-                assert effectiveStress is not None, ( f"{effectiveStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
+        # Compute total stress at current time step.
+        effectiveStressAttributeName: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName
+        effectiveStressOnPoints: bool = GeosMeshOutputsEnum.STRESS_EFFECTIVE.isOnPoints
+        effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, effectiveStressAttributeName, effectiveStressOnPoints )
 
-                pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-                pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
-                                                                        self.m_attributeOnPoints )
-                assert pressure is not None, ( f"{pressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
+        pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
+        pressureOnPoints: bool = GeosMeshOutputsEnum.PRESSURE.isOnPoints
+        pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName, pressureOnPoints )
 
-                biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-                biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject(
-                    self.output,
-                    biotCoefficientAttributeName,
-                    self.m_attributeOnPoints,
-                )
-                assert biotCoefficient is not None, ( f"{biotCoefficientAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-
-                self.doComputeTotalStress( effectiveStress, pressure, biotCoefficient, totalStressAttributeName )
-                self.computeStressRatioReal(
-                    PostProcessingOutputsEnum.STRESS_TOTAL,
-                    PostProcessingOutputsEnum.STRESS_TOTAL_RATIO_REAL,
-                )
-
-            except AssertionError as e:
-                self.m_logger.error( "Total stress at current time step was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
-
+        totalStressAttributeName: str = PostProcessingOutputsEnum.STRESS_TOTAL.attributeName
+        totalStressOnPoints: bool = PostProcessingOutputsEnum.STRESS_TOTAL.isOnPoints
+        if not self.doComputeTotalStress( effectiveStress, pressure, self.biotCoefficient, totalStressAttributeName, totalStressOnPoints ):
+            self.m_logger.error( "Total stress at current time step computation failed.")
+            return False
+        
+        # Compute total stress ratio.
+        if not self.computeStressRatioReal( PostProcessingOutputsEnum.STRESS_TOTAL, PostProcessingOutputsEnum.STRESS_TOTAL_RATIO_REAL ):
+            self.m_logger.error( "Total stress ratio computation failed.")
+            return False
+        
         return True
 
     def computeTotalStressInitial( self: Self ) -> bool:
@@ -586,76 +569,56 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        try:
+        bulkModulusT0AttributeName: str = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.attributeName
+        youngModulusT0AttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName
+        poissonRatioT0AttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName
 
-            # compute elastic moduli at initial time step
-            bulkModulusT0: npt.NDArray[ np.float64 ]
+        bulkModulusT0OnPoints: bool = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.isOnPoints
+        youngModulusT0OnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.isOnPoints
+        poissonRatioT0OnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.isOnPoints
+        
+        # Compute BulkModulus at initial time step.
+        bulkModulusT0: npt.NDArray[ np.float64 ]
+        if isAttributeInObject( self.output, bulkModulusT0AttributeName, bulkModulusT0OnPoints ):
+            bulkModulusT0 = getArrayInObject( self.output, bulkModulusT0AttributeName, bulkModulusT0OnPoints )
+        elif isAttributeInObject( self.output, youngModulusT0AttributeName, youngModulusT0OnPoints ) \
+             and isAttributeInObject( self.output, poissonRatioT0AttributeName, poissonRatioT0OnPoints ):
+            youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, youngModulusT0AttributeName, youngModulusT0OnPoints )
+            poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioT0AttributeName, poissonRatioT0OnPoints )
+            bulkModulusT0 = fcts.bulkModulus( youngModulusT0, poissonRatioT0 )
+        else:
+            self.m_logger( "Elastic moduli at initial time are absent." )
 
-            bulkModulusT0AttributeName: str = ( PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.attributeName )
-            youngModulusT0AttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName )
-            poissonRatioT0AttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName )
-            # get bulk modulus at initial time step
-            if isAttributeInObject( self.output, bulkModulusT0AttributeName, self.m_attributeOnPoints ):
+        # Compute Biot at initial time step.
+        biotCoefficientT0: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus, bulkModulusT0 )
 
-                bulkModulusT0 = getArrayInObject( self.output, bulkModulusT0AttributeName, self.m_attributeOnPoints )
-            # or compute it from Young and Poisson if not an attribute
-            elif isAttributeInObject( self.output, youngModulusT0AttributeName,
-                                      self.m_attributeOnPoints ) and isAttributeInObject(
-                                          self.output, poissonRatioT0AttributeName, self.m_attributeOnPoints ):
+        # Compute total stress at initial time step.
+        effectiveStressT0AttributeName: str = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName
+        effectiveStressT0OnPoints: bool = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.isOnPoints
+        effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, effectiveStressT0AttributeName, effectiveStressT0OnPoints )
 
-                youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
-                                                                              youngModulusT0AttributeName,
-                                                                              self.m_attributeOnPoints )
-                poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
-                                                                              poissonRatioT0AttributeName,
-                                                                              self.m_attributeOnPoints )
-                assert poissonRatioT0 is not None, "Poisson's ratio is undefined."
-                assert youngModulusT0 is not None, "Young modulus is undefined."
-                bulkModulusT0 = fcts.bulkModulus( youngModulusT0, poissonRatioT0 )
-            else:
-                raise AssertionError( "Elastic moduli at initial time are absent." )
+        # Get pressure attribute.
+        pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
+        pressureOnPoints: bool = GeosMeshOutputsEnum.PRESSURE.isOnPoints
+        pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName, pressureOnPoints )
 
-            assert ( bulkModulusT0 is not None ), "Bulk modulus at initial time step is undefined."
+        pressureT0: npt.NDArray[ np.float64 ]
+        # Case pressureT0 is None, total stress = effective stress
+        # (managed by doComputeTotalStress function)
+        if pressure is not None:
+            # Get delta pressure to recompute pressure at initial time step (pressureTo)
+            deltaPressureAttributeName: str = GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName
+            deltaPressureOnPoint: bool = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
+            deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName, deltaPressureOnPoint )
+            pressureT0 = pressure - deltaPressure
 
-            # compute Biot at initial time step
-            biotCoefficientT0: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus,
-                                                                                 bulkModulusT0 )
-            assert ( biotCoefficientT0 is not None ), "Biot coefficient at initial time step is undefined."
-
-            # compute total stress at initial time step
-            # get effective stress attribute
-            effectiveStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName )
-            effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, effectiveStressAttributeName,
-                                                                           self.m_attributeOnPoints )
-            assert effectiveStress is not None, ( f"{effectiveStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-
-            # get pressure attribute
-            pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
-                                                                    self.m_attributeOnPoints )
-            pressureT0: npt.NDArray[ np.float64 ]
-            # case pressureT0 is None, total stress = effective stress
-            # (managed by doComputeTotalStress function)
-            if pressure is not None:
-                # get delta pressure to recompute pressure at initial time step (pressureTo)
-                deltaPressureAttributeName: str = ( GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName )
-                deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
-                                                                             self.m_attributeOnPoints )
-                assert deltaPressure is not None, ( f"{deltaPressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                pressureT0 = pressure - deltaPressure
-
-            totalStressT0AttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName )
-            return self.doComputeTotalStress(
-                effectiveStress,
-                pressureT0,
-                biotCoefficientT0,
-                totalStressT0AttributeName,
-            )
-
-        except AssertionError as e:
-            self.m_logger.error( "Total stress at initial time step was not computed due to:" )
-            self.m_logger.error( str( e ) )
-            return False
+        totalStressT0AttributeName: str = PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName
+        totalStressT0OnPoints: bool = PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.isOnPoints
+        return self.doComputeTotalStress( effectiveStress,
+                                          pressureT0,
+                                          biotCoefficientT0,
+                                          totalStressT0AttributeName,
+                                          totalStressT0OnPoints )
 
     def doComputeTotalStress(
         self: Self,
@@ -663,45 +626,37 @@ class GeomechanicsCalculator():
         pressure: Union[ npt.NDArray[ np.float64 ], None ],
         biotCoefficient: npt.NDArray[ np.float64 ],
         totalStressAttributeName: str,
+        totalStressOnPoints: bool,
     ) -> bool:
         """Compute total stress from effective stress and pressure.
 
         Args:
-            effectiveStress (npt.NDArray[np.float64]): effective stress
-            pressure (npt.NDArray[np.float64] | None): pressure
-            biotCoefficient (npt.NDArray[np.float64]): biot coefficient
-            totalStressAttributeName (str): total stress attribute name
+            effectiveStress (npt.NDArray[np.float64]): Effective stress.
+            pressure (npt.NDArray[np.float64] | None): Pressure.
+            biotCoefficient (npt.NDArray[np.float64]): Biot coefficient.
+            totalStressAttributeName (str): Total stress attribute name.
+            totalStressOnPoints (bool): True if on points, False if on cells.
 
         Returns:
-            bool: return True if calculation successfully ended, False otherwise.
+            bool: True if calculation successfully ended, False otherwise.
         """
         totalStress: npt.NDArray[ np.float64 ]
-        # if pressure data is missing, total stress equals effective stress
         if pressure is None:
-            # copy effective stress data
             totalStress = np.copy( effectiveStress )
-            mess: str = ( "Pressure attribute is undefined, " + "total stress will be equal to effective stress." )
-            self.m_logger.warning( mess )
+            self.m_logger.warning( "Pressure attribute is undefined, total stress will be equal to effective stress." )
         else:
             if np.isnan( pressure ).any():
-                mess0: str = ( "Some cells do not have pressure data, " +
-                               "total stress will be equal to effective stress." )
-                self.m_logger.warning( mess0 )
+                self.m_logger.warning( "Some cells do not have pressure data, for those cells, pressure is set to 0." )
+                pressure[ np.isnan( pressure ) ] = 0.0
 
-            # replace nan values by 0.
-            pressure[ np.isnan( pressure ) ] = 0.0
             totalStress = fcts.totalStress( effectiveStress, biotCoefficient, pressure )
 
-        # create total stress attribute
-        assert totalStress is not None, "Total stress data is null."
-        createAttribute(
-            self.output,
-            totalStress,
-            totalStressAttributeName,
-            ComponentNameEnum.XYZ.value,
-            self.m_attributeOnPoints,
-        )
-        return True
+        return createAttribute( self.output,
+                                totalStress,
+                                totalStressAttributeName,
+                                attributeName=ComponentNameEnum.XYZ.value,
+                                onPoints=totalStressOnPoints,
+                                logger=self.m_logger )
 
     def computeLithostaticStress( self: Self ) -> bool:
         """Compute lithostatic stress.
