@@ -5,8 +5,11 @@
 from typing import Union
 
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+
 import numpy as np
 import numpy.typing as npt
+import logging
+
 from geos.utils.GeosOutputsConstants import (
     AttributeEnum,
     ComponentNameEnum,
@@ -49,7 +52,7 @@ To use the filter:
 .. code-block:: python
 
     import numpy as np
-    from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
+    from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
 
     # filter inputs
     logger :Logger
@@ -64,7 +67,7 @@ To use the filter:
     # friction angle in °
     frictionAngle :float = 10 * np.pi / 180.
 
-    # instanciate the filter
+    # instantiate the filter
     geomechanicsCalculatorFilter :GeomechanicsCalculator = GeomechanicsCalculator()
 
     # set filter attributes
@@ -75,7 +78,7 @@ To use the filter:
     # set computeAdvancedOutputsOn or computeAdvancedOutputsOff to compute or
     # not advanced outputs...
     geomechanicsCalculatorFilter.computeAdvancedOutputsOn()
-    # set oter parameters
+    # set other parameters
     geomechanicsCalculatorFilter.SetGrainBulkModulus(grainBulkModulus)
     geomechanicsCalculatorFilter.SetSpecificDensity(specificDensity)
     # rock cohesion and friction angle are used for advanced outputs only
@@ -87,23 +90,36 @@ To use the filter:
     output :Union[vtkPointSet, vtkUnstructuredGrid] = geomechanicsCalculatorFilter.GetOutputDataObject(0)
 """
 
-TYPE_ERROR_MESSAGE = ( "Input object must by either a vtkPointSet or a vtkUntructuredGrid." )
+TYPE_ERROR_MESSAGE = ( "Input object must by either a vtkPointSet or a vtkUnstructuredGrid." )
 UNDEFINED_ATTRIBUTE_MESSAGE = " attribute is undefined."
 
+loggerTitle: str = "Geomechanical Calculator Filter"
 
-class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self ) -> None:
+class GeomechanicsCalculator():
+
+    def __init__(
+        self: Self,
+        mesh: Union[ vtkPointSet, vtkUnstructuredGrid ],
+        computeAdvancedOutputs: bool = False,
+        speHandler: bool = False,
+    ) -> None:
         """VTK Filter to perform Geomechanical output computation.
 
-        Input object is either a vtkPointSet or a vtkUntructuredGrid.
+        Args:
+            mesh (Union[vtkPointsSet, vtkUnstructuredGrid]): Input mesh.
+            computeAdvancedOutputs (bool, optional): True to compute advanced geomechanical parameters, False otherwise.
+                Defaults to False. 
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataSet" )  # type: ignore[no-untyped-call]
 
-        self.m_output: Union[ vtkPointSet, vtkUnstructuredGrid ]
+        self.mesh: Union[ vtkPointSet, vtkUnstructuredGrid ] = mesh
+        self.output: Union[ vtkPointSet, vtkUnstructuredGrid ] = vtkDataSet()
+        self.output.DeepCopy( self.mesh )
 
         # additional parameters
-        self.m_computeAdvancedOutputs: bool = False
+        self.m_computeAdvancedOutputs: bool = computeAdvancedOutputs
         self.m_grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
         self.m_specificDensity: float = WATER_DENSITY
         self.m_rockCohesion: float = DEFAULT_ROCK_COHESION
@@ -117,7 +133,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.m_totalStressComputed: bool = False
         self.m_effectiveStressRatioOedComputed: bool = False
 
-        # will compute resuls if m_ready is True (updated by initFilter method)
+        # will compute results if m_ready is True (updated by initFilter method)
         self.m_ready: bool = False
         # attributes are either on points or on cells
         self.m_attributeOnPoints: bool = False
@@ -125,250 +141,131 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         # or young Modulus and poisson's ratio (m_computeYoungPoisson=False)
         self.m_computeYoungPoisson: bool = True
 
-        # set m_logger
-        self.m_logger: Logger = getLogger( "Geomechanics calculator" )
+        # Logger.
+        self.m_logger: Logger
+        if not speHandler:
+            self.m_logger = getLogger( loggerTitle, True )
+        else:
+            self.m_logger = logging.getLogger( loggerTitle )
+            self.m_logger.setLevel( logging.INFO )
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet" )
-        return 1
-
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+    def applyFilter( self: Self ) -> bool:
+        """Compute the geomechanical coefficient of the mesh.
 
         Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            Boolean (bool): True if calculation successfully ended, False otherwise.
         """
-        executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
-        return 1
+        if not self.checkMandatoryAttributes():
+            mess: str = ( "Mandatory properties are missing to compute geomechanical outputs:" )
+            mess += ( f"Either {PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName} "
+                        f"and {PostProcessingOutputsEnum.POISSON_RATIO.attributeName} or "
+                        f"{GeosMeshOutputsEnum.BULK_MODULUS.attributeName} and "
+                        f"{GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName} must be "
+                        f"present in the data as well as the "
+                        f"{GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName} attribute." )
+            self.m_logger.error( mess )
+            return False
 
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+        if not self.computeBasicOutputs():
+            return False
+
+        if self.m_computeAdvancedOutputs:
+            if not self.computeAdvancedOutputs():
+                return False
+
+        return True
+
+    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            handler (logging.Handler): The handler to add.
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )  # type: ignore[no-untyped-call]
-        outData = self.GetOutputData( outInfoVec, 0 )  # type: ignore[no-untyped-call]
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore
+        if not self.m_logger.hasHandlers():
+            self.m_logger.addHandler( handler )
+        else:
+            self.m_logger.warning(
+                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
+            )
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        try:
-            input: vtkDataSet = vtkDataSet.GetData( inInfoVec[ 0 ] )
-            assert input is not None, "Input object is null."
-
-            # initialize output objects
-            self.m_output = self.GetOutputData( outInfoVec, 0 )  # type: ignore[no-untyped-call]
-            assert self.m_output is not None, "Output object is null."
-            self.m_output.ShallowCopy( input )
-
-            # check the input and update self.m_ready, m_attributeOnPoints and m_computeBulkAndShear
-            self.initFilter()
-            if not self.m_ready:
-                mess: str = ( "Mandatory properties are missing to compute geomechanical outputs:" )
-                mess += ( f"Either {PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName} "
-                          f"and {PostProcessingOutputsEnum.POISSON_RATIO.attributeName} or "
-                          f"{GeosMeshOutputsEnum.BULK_MODULUS.attributeName} and "
-                          f"{GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName} must be "
-                          f"present in the data as well as the "
-                          f"{GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName} attribute." )
-                self.m_logger.error( mess )
-                return 0
-
-            self.computeBasicOutputs()
-            if self.m_computeAdvancedOutputs:
-                self.computeAdvancedOutputs()
-
-        except AssertionError as e:
-            mess1: str = "Geomechanical attribute calculation failed due to:"
-            self.m_logger.error( mess1 )
-            self.m_logger.error( str( e ) )
-            return 0
-        except Exception as e:
-            mess2: str = "Geomechanical attribut calculation failed due to:"
-            self.m_logger.critical( mess2 )
-            self.m_logger.critical( e, exc_info=True )
-            return 0
-        return 1
-
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set the logger.
-
-        Args:
-            logger (Logger): logger
-        """
-        self.m_logger = logger
-        self.Modified()
-
-    def computeAdvancedOutputsOn( self: Self ) -> None:
-        """Activate advanced outputs calculation."""
-        self.m_computeAdvancedOutputs = True
-        self.Modified()
-
-    def computeAdvancedOutputsOff( self: Self ) -> None:
-        """Deactivate advanced outputs calculation."""
-        self.m_computeAdvancedOutputs = False
-        self.Modified()
-
-    def SetGrainBulkModulus( self: Self, grainBulkModulus: float ) -> None:
+    def setGrainBulkModulus( self: Self, grainBulkModulus: float ) -> None:
         """Set the grain bulk modulus.
 
         Args:
-            grainBulkModulus (float): grain bulk modulus
+            grainBulkModulus (float): Grain bulk modulus.
         """
         self.m_grainBulkModulus = grainBulkModulus
-        self.Modified()
 
-    def SetSpecificDensity( self: Self, specificDensity: float ) -> None:
+    def setSpecificDensity( self: Self, specificDensity: float ) -> None:
         """Set the specific density.
 
         Args:
-            specificDensity (float): pecific density
+            specificDensity (float): Specific density.
         """
         self.m_specificDensity = specificDensity
-        self.Modified()
 
-    def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
+    def setRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set the rock cohesion.
 
         Args:
-            rockCohesion (float): rock cohesion
+            rockCohesion (float): Rock cohesion.
         """
         self.m_rockCohesion = rockCohesion
-        self.Modified()
 
-    def SetFrictionAngle( self: Self, frictionAngle: float ) -> None:
+    def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
         """Set the friction angle.
 
         Args:
-            frictionAngle (float): friction angle (rad)
+            frictionAngle (float): Friction angle (rad)
         """
         self.m_frictionAngle = frictionAngle
-        self.Modified()
 
     def getOutputType( self: Self ) -> str:
         """Get output object type.
 
         Returns:
-            str: type of output object.
+            str: Type of output object.
         """
-        output: vtkDataSet = self.GetOutputDataObject( 0 )
-        assert output is not None, "Output is null."
-        return output.GetClassName()
+        return self.output.GetClassName()
 
-    def resetDefaultValues( self: Self ) -> None:
-        """Reset filter parameters to the default values."""
-        self.m_computeAdvancedOutputs = False
-        self.m_grainBulkModulus = DEFAULT_GRAIN_BULK_MODULUS
-        self.m_specificDensity = WATER_DENSITY
-        self.m_rockCohesion = DEFAULT_ROCK_COHESION
-        self.m_frictionAngle = DEFAULT_FRICTION_ANGLE_RAD
-
-        self.m_elasticModuliComputed = False
-        self.m_biotCoefficientComputed = False
-        self.m_compressibilityComputed = False
-        self.m_effectiveStressComputed = False
-        self.m_totalStressComputed = False
-        self.m_effectiveStressRatioOedComputed = False
-        self.m_ready = False
-        self.Modified()
-
-    def initFilter( self: Self ) -> None:
-        """Check that mandatory attributes are present in the data set.
-
-        Determine if attributes are on cells or on Points.
-        Set self.m_ready = True if all data is ok, False otherwise
-        """
-        # check attributes are on cells, or on points otherwise
-        attributeOnPoints: bool = False
-        attributeOnCells: bool = self.checkMandatoryAttributes( False )
-        if not attributeOnCells:
-            attributeOnPoints = self.checkMandatoryAttributes( True )
-
-        self.m_ready = attributeOnPoints or attributeOnCells
-        self.m_attributeOnPoints = attributeOnPoints
-
-    def checkMandatoryAttributes( self: Self, onPoints: bool ) -> bool:
+    def checkMandatoryAttributes( self: Self ) -> bool:
         """Check that mandatory attributes are present in the mesh.
 
         The mesh must contains either the young Modulus and Poisson's ratio
         (m_computeYoungPoisson=False) or the bulk and shear moduli
         (m_computeYoungPoisson=True)
 
-        Args:
-            onPoints (bool): attributes are on points (True) or on cells (False)
-
         Returns:
             bool: True if all needed attributes are present, False otherwise
         """
-        youngModulusAttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName )
-        poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-        bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
-        shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
-        effectiveStressAttributeName: str = ( GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName )
+        self.youngModulusAttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName
+        self.poissonRatioAttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO.attributeName
+        self.youngModulusOnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS.isOnPoints
+        self.poissonRatioOnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO.isOnPoints
 
-        self.m_computeYoungPoisson = not isAttributeInObject( self.m_output, youngModulusAttributeName,
-                                                              onPoints ) or not isAttributeInObject(
-                                                                  self.m_output, poissonRatioAttributeName, onPoints )
+        self.m_computeYoungPoisson = not isAttributeInObject( self.output, self.youngModulusAttributeName, self.youngModulusOnPoints ) \
+                                     or not isAttributeInObject( self.output, self.poissonRatioAttributeName, self.poissonRatioOnPoints )
 
         # if none of elastic moduli is present, return False
-        if self.m_computeYoungPoisson and (
-                not isAttributeInObject( self.m_output, bulkModulusAttributeName, onPoints )
-                or not isAttributeInObject( self.m_output, shearModulusAttributeName, onPoints ) ):
-            return False
+        if self.m_computeYoungPoisson:
+            self.bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
+            self.shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
+            self.bulkModulusOnPoints: str = GeosMeshOutputsEnum.BULK_MODULUS.isOnPoints
+            self.shearModulusOnPoints: str = GeosMeshOutputsEnum.SHEAR_MODULUS.isOnPoints
+
+            if not isAttributeInObject( self.output, self.bulkModulusAttributeName, self.bulkModulusOnPoints ) \
+               or not isAttributeInObject( self.output, self.shearModulusAttributeName, self.shearModulusOnPoints ):
+                return False
+
+        self.effectiveStressAttributeName: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName
+        self.effectiveStressOnPoints: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.isOnPoints
 
         # check effective Stress is present
-        ret: bool = isAttributeInObject( self.m_output, effectiveStressAttributeName, onPoints )
-        return ret
+        isAllGood: bool = isAttributeInObject( self.output, self.effectiveStressAttributeName, self.effectiveStressOnPoints )
+        return isAllGood
 
     def computeBasicOutputs( self: Self ) -> bool:
         """Compute basic geomechanical outputs.
@@ -376,76 +273,62 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        if not self.m_ready:
+        self.m_elasticModuliComputed = self.computeElasticModulus()
+        if not self.m_elasticModuliComputed:
+            mess: str = ( "Geomechanical outputs cannot be computed without elastic moduli." )
+            self.m_logger.error( mess )
             return False
 
-        try:
-            self.m_elasticModuliComputed = self.computeElasticModulus()
-            if not self.m_elasticModuliComputed:
-                mess: str = ( "Geomechanical outputs cannot be computed without elastic moduli." )
-                self.m_logger.error( mess )
-                return False
+        self.m_biotCoefficientComputed = self.computeBiotCoefficient()
+        if not self.m_biotCoefficientComputed:
+            mess2: str = ( "Total stress, elastic strain, and advanced geomechanical " +
+                            "outputs cannot be computed without Biot coefficient." )
+            self.m_logger.warning( mess2 )
 
-            self.m_biotCoefficientComputed = self.computeBiotCoefficient()
-            if not self.m_biotCoefficientComputed:
-                mess2: str = ( "Total stress, elastic strain, and advanced geomechanical " +
-                               "outputs cannot be computed without Biot coefficient." )
-                self.m_logger.warning( mess2 )
+        self.m_compressibilityComputed = self.computeCompressibilityCoefficient()
 
-            self.m_compressibilityComputed = self.computeCompressibilityCoefficient()
+        self.m_effectiveStressComputed = self.computeRealEffectiveStressRatio()
+        if not self.m_effectiveStressComputed:
+            mess3: str = ( "Total stress, elastic strain, and advanced geomechanical " +
+                            "outputs cannot be computed without effective stress." )
+            self.m_logger.warning( mess3 )
 
-            self.m_effectiveStressComputed = self.computeRealEffectiveStressRatio()
-            if not self.m_effectiveStressComputed:
-                mess3: str = ( "Total stress, elastic strain, and advanced geomechanical " +
-                               "outputs cannot be computed without effective stress." )
-                self.m_logger.warning( mess3 )
+        specificGravityComputed: bool = self.computeSpecificGravity()
 
-            specificGravityComputed: bool = self.computeSpecificGravity()
+        # TODO: deactivate lithostatic stress calculation until right formula
+        lithostaticStressComputed: bool = True  # self.computeLithostaticStress()
 
-            # TODO: deactivate lithostatic stress calculation until right formula
-            litostaticStressComputed: bool = True  # self.computeLitostaticStress()
-
-            elasticStrainComputed: bool = False
-            if self.m_effectiveStressComputed:
-                if self.m_biotCoefficientComputed:
-                    self.m_totalStressComputed = self.computeTotalStresses()
-                if self.m_elasticModuliComputed:
-                    elasticStrainComputed = self.computeElasticStrain()
-
-            reservoirStressPathOedComputed: bool = False
+        elasticStrainComputed: bool = False
+        if self.m_effectiveStressComputed:
+            if self.m_biotCoefficientComputed:
+                self.m_totalStressComputed = self.computeTotalStresses()
             if self.m_elasticModuliComputed:
-                # oedometric DRSP (effective stress ratio in oedometric conditions)
-                self.m_effectiveStressRatioOedComputed = ( self.computeEffectiveStressRatioOed() )
+                elasticStrainComputed = self.computeElasticStrain()
 
-                if self.m_biotCoefficientComputed:
-                    reservoirStressPathOedComputed = ( self.computeReservoirStressPathOed() )
+        reservoirStressPathOedComputed: bool = False
+        if self.m_elasticModuliComputed:
+            # oedometric DRSP (effective stress ratio in oedometric conditions)
+            self.m_effectiveStressRatioOedComputed = ( self.computeEffectiveStressRatioOed() )
 
-            reservoirStressPathRealComputed: bool = False
-            if self.m_totalStressComputed:
-                reservoirStressPathRealComputed = self.computeReservoirStressPathReal()
+            if self.m_biotCoefficientComputed:
+                reservoirStressPathOedComputed = ( self.computeReservoirStressPathOed() )
 
-            if ( self.m_elasticModuliComputed and self.m_biotCoefficientComputed and self.m_compressibilityComputed
-                 and self.m_effectiveStressComputed and specificGravityComputed and elasticStrainComputed
-                 and litostaticStressComputed and self.m_totalStressComputed and self.m_effectiveStressRatioOedComputed
-                 and reservoirStressPathRealComputed and reservoirStressPathRealComputed
-                 and reservoirStressPathOedComputed and reservoirStressPathRealComputed ):
-                mess4: str = ( "All geomechanical basic outputs were successfully computed." )
-                self.m_logger.info( mess4 )
-            else:
-                mess5: str = "Some geomechanical basic outputs were not computed."
-                self.m_logger.warning( mess5 )
+        reservoirStressPathRealComputed: bool = False
+        if self.m_totalStressComputed:
+            reservoirStressPathRealComputed = self.computeReservoirStressPathReal()
 
-        except AssertionError as e:
-            mess6: str = ( "Some of the geomechanical basic outputs were " + "not computed due to:" )
-            self.m_logger.error( mess6 )
-            self.m_logger.error( str( e ) )
+        if ( self.m_elasticModuliComputed and self.m_biotCoefficientComputed and self.m_compressibilityComputed
+                and self.m_effectiveStressComputed and specificGravityComputed and elasticStrainComputed
+                and lithostaticStressComputed and self.m_totalStressComputed and self.m_effectiveStressRatioOedComputed
+                and reservoirStressPathRealComputed and reservoirStressPathRealComputed
+                and reservoirStressPathOedComputed and reservoirStressPathRealComputed ):
+            mess4: str = ( "All geomechanical basic outputs were successfully computed." )
+            self.m_logger.info( mess4 )
+            return True
+        else:
+            mess5: str = "Some geomechanical basic outputs were not computed."
+            self.m_logger.error( mess5 )
             return False
-        except Exception as e:
-            mess7: str = ( "Some of the geomechanical basic outputs were " + "not computed due to:" )
-            self.m_logger.critical( mess7 )
-            self.m_logger.critical( e, exc_info=True )
-            return False
-        return True
 
     def computeAdvancedOutputs( self: Self ) -> bool:
         """Compute advanced geomechanical outputs.
@@ -453,34 +336,20 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        if not self.m_ready:
-            return False
+        fractureIndexesComputed: bool = False
+        criticalPorePressure: bool = False
+        if self.m_totalStressComputed:
+            fractureIndexesComputed = self.computeCriticalTotalStressRatio()
+            criticalPorePressure = self.computeCriticalPorePressure()
 
-        try:
-            fractureIndexesComputed: bool = False
-            criticalPorePressure: bool = False
-            if self.m_totalStressComputed:
-                fractureIndexesComputed = self.computeCriticalTotalStressRatio()
-                criticalPorePressure = self.computeCriticalPorePressure()
-
-            if ( self.m_effectiveStressRatioOedComputed and fractureIndexesComputed and criticalPorePressure ):
-                mess: str = ( "All geomechanical advanced outputs were " + "successfully computed." )
-                self.m_logger.info( mess )
-            else:
-                mess0: str = ( "Some geomechanical advanced outputs were " + "not computed." )
-                self.m_logger.warning( mess0 )
-
-        except AssertionError as e:
-            mess1: str = ( "Some of the geomechanical basic outputs were " + "not computed due to:" )
-            self.m_logger.error( mess1 )
-            self.m_logger.error( str( e ) )
+        if ( self.m_effectiveStressRatioOedComputed and fractureIndexesComputed and criticalPorePressure ):
+            mess: str = ( "All geomechanical advanced outputs were " + "successfully computed." )
+            self.m_logger.info( mess )
+            return True
+        else:
+            mess0: str = ( "Some geomechanical advanced outputs were " + "not computed." )
+            self.m_logger.error( mess0 )
             return False
-        except Exception as e:
-            mess2: str = ( "Some of the geomechanical advanced outputs " + "were not computed due to:" )
-            self.m_logger.critical( mess2 )
-            self.m_logger.critical( e, exc_info=True )
-            return False
-        return True
 
     def computeElasticModulus( self: Self ) -> bool:
         """Compute elastic moduli.
@@ -502,20 +371,15 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully ended, False otherwise
         """
-        youngModulusAttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName )
-        poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-        bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
-        shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
-
         ret: bool = True
-        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, bulkModulusAttributeName,
-                                                                   self.m_attributeOnPoints )
+        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.bulkModulusAttributeName,
+                                                                   self.bulkModulusOnPoints )
 
-        shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, shearModulusAttributeName,
-                                                                    self.m_attributeOnPoints )
+        shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.shearModulusAttributeName,
+                                                                    self.shearModulusOnPoints )
         try:
-            assert bulkModulus is not None, ( f"{bulkModulusAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-            assert shearModulus is not None, ( f"{shearModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
+            assert bulkModulus is not None, ( f"{self.bulkModulusAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
+            assert shearModulus is not None, ( f"{self.shearModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
         except AssertionError as e:
             self.m_logger.error( "Elastic moduli were not computed due to:" )
             self.m_logger.error( str( e ) )
@@ -526,11 +390,11 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             # assert np.any(youngModulus < 0), ("Young modulus yields negative " +
             #     "values. Check Bulk and Shear modulus values.")
             createAttribute(
-                self.m_output,
+                self.output,
                 youngModulus,
-                youngModulusAttributeName,
+                self.youngModulusAttributeName,
                 (),
-                self.m_attributeOnPoints,
+                self.youngModulusOnPoints,
             )
         except AssertionError as e:
             self.m_logger.error( "Young modulus was not computed due to:" )
@@ -542,9 +406,9 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             # assert np.any(poissonRatio < 0), ("Poisson ratio yields negative " +
             #     "values. Check Bulk and Shear modulus values.")
             createAttribute(
-                self.m_output,
+                self.output,
                 poissonRatio,
-                poissonRatioAttributeName,
+                self.poissonRatioAttributeName,
                 (),
                 self.m_attributeOnPoints,
             )
@@ -559,16 +423,16 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """Compute bulk modulus from Young Modulus and Poisson's ratio.
 
         Returns:
-            bool: True if bulk modulus was wuccessfully computed, False otherwise
+            bool: True if bulk modulus was successfully computed, False otherwise
         """
         try:
             youngModulusAttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName )
             poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
             bulkModulusAttributeName: str = ( GeosMeshOutputsEnum.BULK_MODULUS.attributeName )
-            if not isAttributeInObject( self.m_output, bulkModulusAttributeName, self.m_attributeOnPoints ):
-                youngModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, youngModulusAttributeName,
+            if not isAttributeInObject( self.output, bulkModulusAttributeName, self.m_attributeOnPoints ):
+                youngModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, youngModulusAttributeName,
                                                                             self.m_attributeOnPoints )
-                poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, poissonRatioAttributeName,
+                poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
                                                                             self.m_attributeOnPoints )
 
                 assert youngModulus is not None, ( f"{youngModulusAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
@@ -578,7 +442,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 # assert np.any(bulkModulus < 0), ("Bulk modulus yields negative " +
                 #     "values. Check Young modulus and Poisson ratio values.")
                 ret: bool = createAttribute(
-                    self.m_output,
+                    self.output,
                     bulkModulus,
                     bulkModulusAttributeName,
                     (),
@@ -599,9 +463,9 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: True if calculation successfully ended, False otherwise.
         """
         biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-        if not isAttributeInObject( self.m_output, biotCoefficientAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, biotCoefficientAttributeName, self.m_attributeOnPoints ):
             bulkModulusAttributeName: str = ( GeosMeshOutputsEnum.BULK_MODULUS.attributeName )
-            bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, bulkModulusAttributeName,
+            bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, bulkModulusAttributeName,
                                                                        self.m_attributeOnPoints )
             try:
                 assert bulkModulus is not None, ( f"{bulkModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
@@ -609,7 +473,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus,
                                                                                    bulkModulus )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     biotCoefficient,
                     biotCoefficientAttributeName,
                     (),
@@ -633,20 +497,20 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         compressibilityAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY.attributeName )
         bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
-        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, bulkModulusAttributeName,
+        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, bulkModulusAttributeName,
                                                                    self.m_attributeOnPoints )
         porosityAttributeName: str = GeosMeshOutputsEnum.POROSITY.attributeName
-        porosity: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, porosityAttributeName,
+        porosity: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityAttributeName,
                                                                 self.m_attributeOnPoints )
         porosityInitialAttributeName: str = ( GeosMeshOutputsEnum.POROSITY_INI.attributeName )
-        porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, porosityInitialAttributeName,
+        porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityInitialAttributeName,
                                                                        self.m_attributeOnPoints )
-        if not isAttributeInObject( self.m_output, compressibilityAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, compressibilityAttributeName, self.m_attributeOnPoints ):
             poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, poissonRatioAttributeName,
+            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
                                                                         self.m_attributeOnPoints )
             biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-            biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, biotCoefficientAttributeName,
+            biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, biotCoefficientAttributeName,
                                                                            self.m_attributeOnPoints )
 
             try:
@@ -658,7 +522,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 compressibility: npt.NDArray[ np.float64 ] = fcts.compressibility( poissonRatio, bulkModulus,
                                                                                    biotCoefficient, porosity )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     compressibility,
                     compressibilityAttributeName,
                     (),
@@ -671,9 +535,9 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
         # oedometric compressibility
         compressibilityOedAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY_OED.attributeName )
-        if not isAttributeInObject( self.m_output, compressibilityOedAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, compressibilityOedAttributeName, self.m_attributeOnPoints ):
             shearModulusAttributeName: str = ( GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName )
-            shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, shearModulusAttributeName,
+            shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, shearModulusAttributeName,
                                                                         self.m_attributeOnPoints )
             try:
                 assert poissonRatio is not None, ( f"{poissonRatioAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
@@ -682,7 +546,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 compressibilityOed: npt.NDArray[ np.float64 ] = fcts.compressibilityOed(
                     bulkModulus, shearModulus, porosityInitial )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     compressibilityOed,
                     compressibilityOedAttributeName,
                     (),
@@ -695,9 +559,9 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
         # real compressibility
         compressibilityRealAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY_REAL.attributeName )
-        if not isAttributeInObject( self.m_output, compressibilityRealAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, compressibilityRealAttributeName, self.m_attributeOnPoints ):
             deltaPressureAttributeName: str = ( GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName )
-            deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, deltaPressureAttributeName,
+            deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
                                                                          self.m_attributeOnPoints )
             try:
                 assert deltaPressure is not None, ( f"{deltaPressureAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
@@ -706,7 +570,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 compressibilityReal: npt.NDArray[ np.float64 ] = fcts.compressibilityReal(
                     deltaPressure, porosity, porosityInitial )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     compressibilityReal,
                     compressibilityRealAttributeName,
                     (),
@@ -729,16 +593,16 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: True if the attribute is correctly created, False otherwise.
         """
         densityAttributeName: str = GeosMeshOutputsEnum.ROCK_DENSITY.attributeName
-        density: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, densityAttributeName,
+        density: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, densityAttributeName,
                                                                self.m_attributeOnPoints )
         specificGravityAttributeName: str = ( PostProcessingOutputsEnum.SPECIFIC_GRAVITY.attributeName )
-        if not isAttributeInObject( self.m_output, specificGravityAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, specificGravityAttributeName, self.m_attributeOnPoints ):
             try:
                 assert density is not None, ( f"{densityAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
 
                 specificGravity: npt.NDArray[ np.float64 ] = fcts.specificGravity( density, self.m_specificDensity )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     specificGravity,
                     specificGravityAttributeName,
                     (),
@@ -759,7 +623,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         # test if effective stress is in the table
         if not isAttributeInObject(
-                self.m_output,
+                self.output,
                 GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
                 self.m_attributeOnPoints,
         ):
@@ -783,29 +647,29 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         # compute total stress at initial time step
         totalStressT0AttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName )
-        if not isAttributeInObject( self.m_output, totalStressT0AttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, totalStressT0AttributeName, self.m_attributeOnPoints ):
             self.computeTotalStressInitial()
 
         # compute total stress at current time step
         totalStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-        if not isAttributeInObject( self.m_output, totalStressAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, totalStressAttributeName, self.m_attributeOnPoints ):
             try:
                 effectiveStressAttributeName: str = ( GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName )
                 effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject(
-                    self.m_output,
+                    self.output,
                     effectiveStressAttributeName,
                     self.m_attributeOnPoints,
                 )
                 assert effectiveStress is not None, ( f"{effectiveStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 
                 pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-                pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, pressureAttributeName,
+                pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
                                                                         self.m_attributeOnPoints )
                 assert pressure is not None, ( f"{pressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 
                 biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
                 biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject(
-                    self.m_output,
+                    self.output,
                     biotCoefficientAttributeName,
                     self.m_attributeOnPoints,
                 )
@@ -839,18 +703,18 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             youngModulusT0AttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName )
             poissonRatioT0AttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName )
             # get bulk modulus at initial time step
-            if isAttributeInObject( self.m_output, bulkModulusT0AttributeName, self.m_attributeOnPoints ):
+            if isAttributeInObject( self.output, bulkModulusT0AttributeName, self.m_attributeOnPoints ):
 
-                bulkModulusT0 = getArrayInObject( self.m_output, bulkModulusT0AttributeName, self.m_attributeOnPoints )
+                bulkModulusT0 = getArrayInObject( self.output, bulkModulusT0AttributeName, self.m_attributeOnPoints )
             # or compute it from Young and Poisson if not an attribute
-            elif isAttributeInObject( self.m_output, youngModulusT0AttributeName,
+            elif isAttributeInObject( self.output, youngModulusT0AttributeName,
                                       self.m_attributeOnPoints ) and isAttributeInObject(
-                                          self.m_output, poissonRatioT0AttributeName, self.m_attributeOnPoints ):
+                                          self.output, poissonRatioT0AttributeName, self.m_attributeOnPoints ):
 
-                youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output,
+                youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
                                                                               youngModulusT0AttributeName,
                                                                               self.m_attributeOnPoints )
-                poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output,
+                poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
                                                                               poissonRatioT0AttributeName,
                                                                               self.m_attributeOnPoints )
                 assert poissonRatioT0 is not None, "Poisson's ratio is undefined."
@@ -869,13 +733,13 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             # compute total stress at initial time step
             # get effective stress attribute
             effectiveStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName )
-            effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, effectiveStressAttributeName,
+            effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, effectiveStressAttributeName,
                                                                            self.m_attributeOnPoints )
             assert effectiveStress is not None, ( f"{effectiveStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 
             # get pressure attribute
             pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, pressureAttributeName,
+            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
                                                                     self.m_attributeOnPoints )
             pressureT0: npt.NDArray[ np.float64 ]
             # case pressureT0 is None, total stress = effective stress
@@ -883,7 +747,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             if pressure is not None:
                 # get delta pressure to recompute pressure at initial time step (pressureTo)
                 deltaPressureAttributeName: str = ( GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName )
-                deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, deltaPressureAttributeName,
+                deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
                                                                              self.m_attributeOnPoints )
                 assert deltaPressure is not None, ( f"{deltaPressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
                 pressureT0 = pressure - deltaPressure
@@ -939,7 +803,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         # create total stress attribute
         assert totalStress is not None, "Total stress data is null."
         createAttribute(
-            self.m_output,
+            self.output,
             totalStress,
             totalStressAttributeName,
             ComponentNameEnum.XYZ.value,
@@ -947,17 +811,17 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         )
         return True
 
-    def computeLitostaticStress( self: Self ) -> bool:
+    def computeLithostaticStress( self: Self ) -> bool:
         """Compute lithostatic stress.
 
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        litostaticStressAttributeName: str = ( PostProcessingOutputsEnum.LITHOSTATIC_STRESS.attributeName )
-        if not isAttributeInObject( self.m_output, litostaticStressAttributeName, self.m_attributeOnPoints ):
+        lithostaticStressAttributeName: str = ( PostProcessingOutputsEnum.LITHOSTATIC_STRESS.attributeName )
+        if not isAttributeInObject( self.output, lithostaticStressAttributeName, self.m_attributeOnPoints ):
 
             densityAttributeName: str = GeosMeshOutputsEnum.ROCK_DENSITY.attributeName
-            density: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, densityAttributeName,
+            density: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, densityAttributeName,
                                                                    self.m_attributeOnPoints )
             try:
                 depth: npt.NDArray[ np.float64 ] = self.computeDepthAlongLine(
@@ -965,11 +829,11 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 assert depth is not None, "Depth is undefined."
                 assert density is not None, ( f"{densityAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 
-                litostaticStress = fcts.lithostaticStress( depth, density, GRAVITY )
+                lithostaticStress = fcts.lithostaticStress( depth, density, GRAVITY )
                 createAttribute(
-                    self.m_output,
-                    litostaticStress,
-                    litostaticStressAttributeName,
+                    self.output,
+                    lithostaticStress,
+                    lithostaticStressAttributeName,
                     (),
                     self.m_attributeOnPoints,
                 )
@@ -1010,7 +874,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         return depth
 
     def getZcoordinates( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Get z coordinates from self.m_output.
+        """Get z coordinates from self.output.
 
         Returns:
             npt.NDArray[np.float64]: 1D array with depth property
@@ -1030,22 +894,22 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: return True if calculation successfully ended, False otherwise.
         """
         elasticStrainAttributeName: str = ( PostProcessingOutputsEnum.STRAIN_ELASTIC.attributeName )
-        if not isAttributeInObject( self.m_output, elasticStrainAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, elasticStrainAttributeName, self.m_attributeOnPoints ):
             effectiveStressAttributeName: str = ( GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName )
-            effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, effectiveStressAttributeName,
+            effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, effectiveStressAttributeName,
                                                                            self.m_attributeOnPoints )
 
             effectiveStressIniAttributeName: str = ( PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName )
-            effectiveStressIni: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output,
+            effectiveStressIni: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
                                                                               effectiveStressIniAttributeName,
                                                                               self.m_attributeOnPoints )
 
             bulkModulusAttributeName: str = ( GeosMeshOutputsEnum.BULK_MODULUS.attributeName )
-            bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, bulkModulusAttributeName,
+            bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, bulkModulusAttributeName,
                                                                        self.m_attributeOnPoints )
 
             shearModulusAttributeName: str = ( GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName )
-            shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, shearModulusAttributeName,
+            shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, shearModulusAttributeName,
                                                                         self.m_attributeOnPoints )
 
             try:
@@ -1059,7 +923,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 elasticStrain: npt.NDArray[ np.float64 ] = ( fcts.elasticStrainFromBulkShear(
                     deltaEffectiveStress, bulkModulus, shearModulus ) )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     elasticStrain,
                     elasticStrainAttributeName,
                     ComponentNameEnum.XYZ.value,
@@ -1079,20 +943,20 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: return True if calculation successfully ended, False otherwise.
         """
         RSPrealAttributeName: str = PostProcessingOutputsEnum.RSP_REAL.attributeName
-        if not isAttributeInObject( self.m_output, RSPrealAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, RSPrealAttributeName, self.m_attributeOnPoints ):
             # real RSP
             try:
                 # total stress at current and initial time steps
                 totalStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-                totalStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, totalStressAttributeName,
+                totalStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, totalStressAttributeName,
                                                                            self.m_attributeOnPoints )
 
                 totalStressT0AttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName )
-                totalStressIni: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, totalStressT0AttributeName,
+                totalStressIni: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, totalStressT0AttributeName,
                                                                               self.m_attributeOnPoints )
 
                 deltaPressureAttributeName: str = ( GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName )
-                deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, deltaPressureAttributeName,
+                deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
                                                                              self.m_attributeOnPoints )
 
                 assert totalStress is not None, ( f"{totalStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
@@ -1102,11 +966,11 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 # create delta stress attribute for QC
                 deltaTotalStressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL_DELTA.attributeName )
                 deltaStress: npt.NDArray[ np.float64 ] = totalStress - totalStressIni
-                componentNames: tuple[ str, ...] = getComponentNames( self.m_output, totalStressAttributeName,
+                componentNames: tuple[ str, ...] = getComponentNames( self.output, totalStressAttributeName,
                                                                       self.m_attributeOnPoints )
                 assert deltaStress is not None, ( f"{deltaTotalStressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     deltaStress,
                     deltaTotalStressAttributeName,
                     componentNames,
@@ -1116,7 +980,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 RSPreal: npt.NDArray[ np.float64 ] = fcts.reservoirStressPathReal( deltaStress, deltaPressure )
                 assert RSPreal is not None, ( f"{RSPrealAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     RSPreal,
                     RSPrealAttributeName,
                     componentNames,
@@ -1136,14 +1000,14 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: return True if calculation successfully ended, False otherwise.
         """
         RSPOedAttributeName: str = PostProcessingOutputsEnum.RSP_OED.attributeName
-        if not isAttributeInObject( self.m_output, RSPOedAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, RSPOedAttributeName, self.m_attributeOnPoints ):
 
             poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, poissonRatioAttributeName,
+            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
                                                                         self.m_attributeOnPoints )
 
             biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-            biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, biotCoefficientAttributeName,
+            biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, biotCoefficientAttributeName,
                                                                            self.m_attributeOnPoints )
 
             try:
@@ -1152,7 +1016,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
                 RSPoed: npt.NDArray[ np.float64 ] = fcts.reservoirStressPathOed( biotCoefficient, poissonRatio )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     RSPoed,
                     RSPOedAttributeName,
                     (),
@@ -1172,10 +1036,10 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             bool: return True if calculation successfully ended, False otherwise.
         """
         stressRatioRealAttributeName = outputAttribute.attributeName
-        if not isAttributeInObject( self.m_output, stressRatioRealAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, stressRatioRealAttributeName, self.m_attributeOnPoints ):
             try:
                 stressAttributeName: str = inputAttribute.attributeName
-                stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, stressAttributeName,
+                stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
                                                                       self.m_attributeOnPoints )
                 assert stress is not None, ( f"{stressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
 
@@ -1185,7 +1049,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
                 stressRatioReal: npt.NDArray[ np.float64 ] = fcts.stressRatio( horizontalStress, verticalStress )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     stressRatioReal,
                     stressRatioRealAttributeName,
                     (),
@@ -1207,12 +1071,12 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         effectiveStressRatioOedAttributeName: str = (
             PostProcessingOutputsEnum.STRESS_EFFECTIVE_RATIO_OED.attributeName )
         if not isAttributeInObject(
-                self.m_output,
+                self.output,
                 effectiveStressRatioOedAttributeName,
                 self.m_attributeOnPoints,
         ):
             poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, poissonRatioAttributeName,
+            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
                                                                         self.m_attributeOnPoints )
 
             try:
@@ -1220,7 +1084,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
                 effectiveStressRatioOed: npt.NDArray[ np.float64 ] = ( fcts.deviatoricStressPathOed( poissonRatio ) )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     effectiveStressRatioOed,
                     effectiveStressRatioOedAttributeName,
                     (),
@@ -1241,14 +1105,14 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         ret: bool = True
 
         fractureIndexAttributeName = ( PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO.attributeName )
-        if not isAttributeInObject( self.m_output, fractureIndexAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, fractureIndexAttributeName, self.m_attributeOnPoints ):
 
             stressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, stressAttributeName,
+            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
                                                                   self.m_attributeOnPoints )
 
             pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, pressureAttributeName,
+            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
                                                                     self.m_attributeOnPoints )
 
             try:
@@ -1266,7 +1130,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 criticalTotalStressRatio: npt.NDArray[ np.float64 ] = ( fcts.criticalTotalStressRatio(
                     pressure, verticalStress ) )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     criticalTotalStressRatio,
                     fractureIndexAttributeName,
                     (),
@@ -1288,7 +1152,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 fractureThresholdAttributeName = (
                     PostProcessingOutputsEnum.TOTAL_STRESS_RATIO_THRESHOLD.attributeName )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     stressRatioThreshold,
                     fractureThresholdAttributeName,
                     (),
@@ -1309,14 +1173,14 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         ret: bool = True
         criticalPorePressureAttributeName = ( PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE.attributeName )
-        if not isAttributeInObject( self.m_output, criticalPorePressureAttributeName, self.m_attributeOnPoints ):
+        if not isAttributeInObject( self.output, criticalPorePressureAttributeName, self.m_attributeOnPoints ):
 
             stressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, stressAttributeName,
+            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
                                                                   self.m_attributeOnPoints )
 
             pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.m_output, pressureAttributeName,
+            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
                                                                     self.m_attributeOnPoints )
 
             try:
@@ -1334,7 +1198,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 criticalPorePressure: npt.NDArray[ np.float64 ] = ( fcts.criticalPorePressure(
                     -1.0 * stress, self.m_rockCohesion, self.m_frictionAngle ) )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     criticalPorePressure,
                     criticalPorePressureAttributeName,
                     (),
@@ -1353,7 +1217,7 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 criticalPorePressureIndexAttributeName = (
                     PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName )
                 createAttribute(
-                    self.m_output,
+                    self.output,
                     criticalPorePressureIndex,
                     criticalPorePressureIndexAttributeName,
                     (),
@@ -1373,10 +1237,10 @@ class GeomechanicsCalculator( VTKPythonAlgorithmBase ):
             npt.NDArray[np.float64]: points/cell center coordinates
         """
         if self.m_attributeOnPoints:
-            return self.m_output.GetPoints()  # type: ignore[no-any-return]
+            return self.output.GetPoints()  # type: ignore[no-any-return]
         else:
             # Find cell centers
             filter = vtkCellCenters()
-            filter.SetInputDataObject( self.m_output )
+            filter.SetInputDataObject( self.output )
             filter.Update()
             return filter.GetOutput().GetPoints()  # type: ignore[no-any-return]
