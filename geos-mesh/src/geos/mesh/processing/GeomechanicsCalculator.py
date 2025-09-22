@@ -368,20 +368,15 @@ class GeomechanicsCalculator():
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        fractureIndexesComputed: bool = False
-        criticalPorePressure: bool = False
-        if self.m_totalStressComputed:
-            fractureIndexesComputed = self.computeCriticalTotalStressRatio()
-            criticalPorePressure = self.computeCriticalPorePressure()
-
-        if ( self.m_effectiveStressRatioOedComputed and fractureIndexesComputed and criticalPorePressure ):
-            mess: str = ( "All geomechanical advanced outputs were " + "successfully computed." )
-            self.m_logger.info( mess )
-            return True
-        else:
-            mess0: str = ( "Some geomechanical advanced outputs were " + "not computed." )
-            self.m_logger.error( mess0 )
+        if not self.computeCriticalTotalStressRatio():
             return False
+        
+        if not self.computeCriticalPorePressure():
+            return False
+
+        mess: str = ( "All geomechanical advanced outputs were successfully computed." )
+        self.m_logger.info( mess )
+        return True
 
     def computeElasticModulus( self: Self ) -> bool:
         """Compute elastic moduli.
@@ -856,68 +851,34 @@ class GeomechanicsCalculator():
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        ret: bool = True
+        fractureIndexAttributeName: str = PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO.attributeName
+        fractureIndexOnPoints: bool = PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO.isOnPoints
+        verticalStress: npt.NDArray[ np.float64 ] = self.totalStress[ :, 2 ]
+        criticalTotalStressRatio: npt.NDArray[ np.float64 ] = fcts.criticalTotalStressRatio( self.pressure, verticalStress )
+        if not createAttribute( self.output,
+                                criticalTotalStressRatio,
+                                fractureIndexAttributeName,
+                                onPoints=fractureIndexOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Fracture index computation failed.")
+            return False
 
-        fractureIndexAttributeName = ( PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO.attributeName )
-        if not isAttributeInObject( self.output, fractureIndexAttributeName, self.m_attributeOnPoints ):
+        mask: npt.NDArray[ np.bool_ ] = np.argmin( np.abs( self.totalStress[ :, :2 ] ), axis=1 )
+        horizontalStress: npt.NDArray[ np.float64 ] = self.totalStress[ :, :2 ][ np.arange( self.totalStress[ :, :2 ].shape[ 0 ] ),
+                                                                        mask ]
 
-            stressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
-                                                                  self.m_attributeOnPoints )
+        stressRatioThreshold: npt.NDArray[ np.float64 ] = fcts.totalStressRatioThreshold( self.pressure, horizontalStress )
+        fractureThresholdAttributeName: str = PostProcessingOutputsEnum.TOTAL_STRESS_RATIO_THRESHOLD.attributeName
+        fractureThresholdOnPoints: bool = PostProcessingOutputsEnum.TOTAL_STRESS_RATIO_THRESHOLD.isOnPoints
+        if not createAttribute( self.output,
+                                stressRatioThreshold,
+                                fractureThresholdAttributeName,
+                                onPoints=fractureThresholdOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Fracture threshold computation failed.")
+            return False
 
-            pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
-                                                                    self.m_attributeOnPoints )
-
-            try:
-                assert stress is not None, ( f"{stressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert pressure is not None, ( f"{pressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert stress.shape[ 1 ] >= 3
-            except AssertionError as e:
-                self.m_logger.error( "Critical total stress ratio and threshold were not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
-
-            # fracture index
-            try:
-                verticalStress: npt.NDArray[ np.float64 ] = stress[ :, 2 ]
-                criticalTotalStressRatio: npt.NDArray[ np.float64 ] = ( fcts.criticalTotalStressRatio(
-                    pressure, verticalStress ) )
-                createAttribute(
-                    self.output,
-                    criticalTotalStressRatio,
-                    fractureIndexAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Critical total stress ratio was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                ret = False
-
-            # fracture threshold
-            try:
-                mask: npt.NDArray[ np.bool_ ] = np.argmin( np.abs( stress[ :, :2 ] ), axis=1 )
-                horizontalStress: npt.NDArray[ np.float64 ] = stress[ :, :2 ][ np.arange( stress[ :, :2 ].shape[ 0 ] ),
-                                                                               mask ]
-
-                stressRatioThreshold: npt.NDArray[ np.float64 ] = ( fcts.totalStressRatioThreshold(
-                    pressure, horizontalStress ) )
-                fractureThresholdAttributeName = (
-                    PostProcessingOutputsEnum.TOTAL_STRESS_RATIO_THRESHOLD.attributeName )
-                createAttribute(
-                    self.output,
-                    stressRatioThreshold,
-                    fractureThresholdAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Total stress ratio threshold was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                ret = False
-
-        return ret
+        return True
 
     def computeCriticalPorePressure( self: Self ) -> bool:
         """Compute the critical pore pressure and the pressure index.
@@ -925,64 +886,30 @@ class GeomechanicsCalculator():
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        ret: bool = True
-        criticalPorePressureAttributeName = ( PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE.attributeName )
-        if not isAttributeInObject( self.output, criticalPorePressureAttributeName, self.m_attributeOnPoints ):
-
-            stressAttributeName: str = ( PostProcessingOutputsEnum.STRESS_TOTAL.attributeName )
-            stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
-                                                                  self.m_attributeOnPoints )
-
-            pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-            pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
-                                                                    self.m_attributeOnPoints )
-
-            try:
-                assert self.m_rockCohesion is not None, "Rock cohesion is undefined."
-                assert self.m_frictionAngle is not None, "Friction angle is undefined."
-                assert stress is not None, ( f"{stressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert pressure is not None, ( f"{pressureAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert stress.shape[ 1 ] >= 3
-            except AssertionError as e:
-                self.m_logger.error( "Critical pore pressure and threshold were not computed due to:" )
-                self.m_logger.error( str( e ) )
+        criticalPorePressureAttributeName: str = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE.attributeName
+        criticalPorePressureOnPoints: bool = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE.isOnPoints
+        criticalPorePressure: npt.NDArray[ np.float64 ] = fcts.criticalPorePressure( -1.0 * self.totalStress, self.m_rockCohesion, self.m_frictionAngle )
+        if not createAttribute( self.output,
+                                criticalPorePressure,
+                                criticalPorePressureAttributeName,
+                                onPoints=criticalPorePressureOnPoints,
+                                logger=self.m_logger ):
+                self.m_logger.error( "Critical pore pressure computation failed.")
                 return False
+        
+        # add critical pore pressure index (i.e., ratio between pressure and criticalPorePressure)
+        criticalPorePressureIndex: npt.NDArray[ np.float64 ] = ( fcts.criticalPorePressureThreshold( self.pressure, criticalPorePressure ) )
+        criticalPorePressureIndexAttributeName: str = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName
+        criticalPorePressureIndexOnPoint: bool = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.isOnPoints
+        if not createAttribute( self.output,
+                                criticalPorePressureIndex,
+                                criticalPorePressureIndexAttributeName,
+                                onPoints=criticalPorePressureIndexOnPoint,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Critical pore pressure indexes computation failed.")
+            return False
 
-            try:
-                criticalPorePressure: npt.NDArray[ np.float64 ] = ( fcts.criticalPorePressure(
-                    -1.0 * stress, self.m_rockCohesion, self.m_frictionAngle ) )
-                createAttribute(
-                    self.output,
-                    criticalPorePressure,
-                    criticalPorePressureAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Critical pore pressure was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
-
-            try:
-                # add critical pore pressure index (i.e., ratio between pressure and criticalPorePressure)
-                assert criticalPorePressure is not None, ( "Critical pore pressure attribute" + " was not created" )
-                criticalPorePressureIndex: npt.NDArray[ np.float64 ] = ( fcts.criticalPorePressureThreshold(
-                    pressure, criticalPorePressure ) )
-                criticalPorePressureIndexAttributeName = (
-                    PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName )
-                createAttribute(
-                    self.output,
-                    criticalPorePressureIndex,
-                    criticalPorePressureIndexAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Pore pressure threshold was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                ret = False
-
-        return ret
+        return True
 
     def getPointCoordinates( self: Self ) -> npt.NDArray[ np.float64 ]:
         """Get the coordinates of Points or Cell center.
