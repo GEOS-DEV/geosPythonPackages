@@ -507,27 +507,17 @@ class GeomechanicsCalculator():
             bool: True if the attribute is correctly created, False otherwise.
         """
         densityAttributeName: str = GeosMeshOutputsEnum.ROCK_DENSITY.attributeName
-        density: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, densityAttributeName,
-                                                               self.m_attributeOnPoints )
-        specificGravityAttributeName: str = ( PostProcessingOutputsEnum.SPECIFIC_GRAVITY.attributeName )
-        if not isAttributeInObject( self.output, specificGravityAttributeName, self.m_attributeOnPoints ):
-            try:
-                assert density is not None, ( f"{densityAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
+        densityOnPoints: bool = GeosMeshOutputsEnum.ROCK_DENSITY.isOnPoints
+        density: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, densityAttributeName, densityOnPoints )
 
-                specificGravity: npt.NDArray[ np.float64 ] = fcts.specificGravity( density, self.m_specificDensity )
-                createAttribute(
-                    self.output,
-                    specificGravity,
-                    specificGravityAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Specific gravity was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
-
-        return True
+        specificGravityAttributeName: str = PostProcessingOutputsEnum.SPECIFIC_GRAVITY.attributeName
+        specificGravityOnPoints: bool = PostProcessingOutputsEnum.SPECIFIC_GRAVITY.isOnPoints
+        specificGravity: npt.NDArray[ np.float64 ] = fcts.specificGravity( density, self.m_specificDensity )
+        return createAttribute( self.output,
+                                specificGravity,
+                                specificGravityAttributeName,
+                                onPoints=specificGravityOnPoints,
+                                logger=self.m_logger )
 
     def computeRealEffectiveStressRatio( self: Self ) -> bool:
         """Compute effective stress ratio.
