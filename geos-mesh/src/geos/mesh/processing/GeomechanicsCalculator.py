@@ -125,18 +125,6 @@ class GeomechanicsCalculator():
         self.m_rockCohesion: float = DEFAULT_ROCK_COHESION
         self.m_frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-        # computation results
-        self.m_elasticModuliComputed: bool = False
-        self.m_biotCoefficientComputed: bool = False
-        self.m_compressibilityComputed: bool = False
-        self.m_effectiveStressComputed: bool = False
-        self.m_totalStressComputed: bool = False
-        self.m_effectiveStressRatioOedComputed: bool = False
-
-        # will compute results if m_ready is True (updated by initFilter method)
-        self.m_ready: bool = False
-        # attributes are either on points or on cells
-        self.m_attributeOnPoints: bool = False
         # elastic moduli are either bulk and Shear moduli (m_computeYoungPoisson=True)
         # or young Modulus and poisson's ratio (m_computeYoungPoisson=False)
         self.m_computeYoungPoisson: bool = True
@@ -273,62 +261,54 @@ class GeomechanicsCalculator():
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        self.m_elasticModuliComputed = self.computeElasticModulus()
-        if not self.m_elasticModuliComputed:
-            mess: str = ( "Geomechanical outputs cannot be computed without elastic moduli." )
-            self.m_logger.error( mess )
+        if not self.computeElasticModulus():
+            self.m_logger.error( "Elastic modulus computation failed." )
             return False
 
-        self.m_biotCoefficientComputed = self.computeBiotCoefficient()
-        if not self.m_biotCoefficientComputed:
-            mess2: str = ( "Total stress, elastic strain, and advanced geomechanical " +
-                            "outputs cannot be computed without Biot coefficient." )
-            self.m_logger.warning( mess2 )
+        if not self.computeBiotCoefficient():
+            self.m_logger.error( "Biot coefficient computation failed." )
+            return False
 
-        self.m_compressibilityComputed = self.computeCompressibilityCoefficient()
+        if not self.computeCompressibilityCoefficient():
+            self.m_logger.error( "Compressibility coefficient computation failed." )
+            return False
 
-        self.m_effectiveStressComputed = self.computeRealEffectiveStressRatio()
-        if not self.m_effectiveStressComputed:
-            mess3: str = ( "Total stress, elastic strain, and advanced geomechanical " +
-                            "outputs cannot be computed without effective stress." )
-            self.m_logger.warning( mess3 )
+        if not self.computeRealEffectiveStressRatio():
+            self.m_logger.error( "Effective stress ratio computation failed." )
+            return False
 
-        specificGravityComputed: bool = self.computeSpecificGravity()
+        if not self.computeSpecificGravity():
+            self.m_logger.error( "Specific gravity computation failed.")
+            return False
 
         # TODO: deactivate lithostatic stress calculation until right formula
-        lithostaticStressComputed: bool = True  # self.computeLithostaticStress()
+        # if not self.computeLithostaticStress():
+        #     self.m_logger.error( "Lithostatic stress computation failed." )
+        #     return False
 
-        elasticStrainComputed: bool = False
-        if self.m_effectiveStressComputed:
-            if self.m_biotCoefficientComputed:
-                self.m_totalStressComputed = self.computeTotalStresses()
-            if self.m_elasticModuliComputed:
-                elasticStrainComputed = self.computeElasticStrain()
-
-        reservoirStressPathOedComputed: bool = False
-        if self.m_elasticModuliComputed:
-            # oedometric DRSP (effective stress ratio in oedometric conditions)
-            self.m_effectiveStressRatioOedComputed = ( self.computeEffectiveStressRatioOed() )
-
-            if self.m_biotCoefficientComputed:
-                reservoirStressPathOedComputed = ( self.computeReservoirStressPathOed() )
-
-        reservoirStressPathRealComputed: bool = False
-        if self.m_totalStressComputed:
-            reservoirStressPathRealComputed = self.computeReservoirStressPathReal()
-
-        if ( self.m_elasticModuliComputed and self.m_biotCoefficientComputed and self.m_compressibilityComputed
-                and self.m_effectiveStressComputed and specificGravityComputed and elasticStrainComputed
-                and lithostaticStressComputed and self.m_totalStressComputed and self.m_effectiveStressRatioOedComputed
-                and reservoirStressPathRealComputed and reservoirStressPathRealComputed
-                and reservoirStressPathOedComputed and reservoirStressPathRealComputed ):
-            mess4: str = ( "All geomechanical basic outputs were successfully computed." )
-            self.m_logger.info( mess4 )
-            return True
-        else:
-            mess5: str = "Some geomechanical basic outputs were not computed."
-            self.m_logger.error( mess5 )
+        if not self.computeTotalStresses():
+            self.m_logger.error( "Total stresses computation failed." )
             return False
+
+        if not self.computeElasticStrain():
+            self.m_logger.error( "Elastic strain computation failed." )
+            return False
+
+        # oedometric DRSP (effective stress ratio in oedometric conditions)
+        if not self.computeEffectiveStressRatioOed():
+            self.m_logger.error( "Effective stress ration in oedometric condition computation failed." )
+            return False
+
+        if not self.computeReservoirStressPathOed():
+            self.m_logger.error( "Reservoir stress path in oedometric condition computation failed." )
+            return False
+
+        if not self.computeReservoirStressPathReal():
+            self.m_logger.error( "Reservoir stress path computation failed." )
+            return False
+
+        self.m_logger.info( "All geomechanical basic outputs were successfully computed." )
+        return True
 
     def computeAdvancedOutputs( self: Self ) -> bool:
         """Compute advanced geomechanical outputs.
@@ -361,6 +341,10 @@ class GeomechanicsCalculator():
             bool: True if elastic moduli are already present or if calculation
             successfully ended, False otherwise.
         """
+        self.bulkModulus: npt.NDArray[ np.float64 ]
+        self.shearModulus: npt.NDArray[ np.float64 ]
+        self.youngModulus: npt.NDArray[ np.float64 ]
+        self.poissonRatio: npt.NDArray[ np.float64 ]
         if self.m_computeYoungPoisson:
             return self.computeElasticModulusFromBulkShear()
         return self.computeElasticModulusFromYoungPoisson()
@@ -371,53 +355,36 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if calculation successfully ended, False otherwise
         """
-        ret: bool = True
-        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.bulkModulusAttributeName,
-                                                                   self.bulkModulusOnPoints )
+        self.bulkModulus = getArrayInObject( self.output, self.bulkModulusAttributeName, self.bulkModulusOnPoints )
+        self.shearModulus = getArrayInObject( self.output, self.shearModulusAttributeName, self.shearModulusOnPoints )
 
-        shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.shearModulusAttributeName,
-                                                                    self.shearModulusOnPoints )
-        try:
-            assert bulkModulus is not None, ( f"{self.bulkModulusAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-            assert shearModulus is not None, ( f"{self.shearModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-        except AssertionError as e:
-            self.m_logger.error( "Elastic moduli were not computed due to:" )
-            self.m_logger.error( str( e ) )
+        self.youngModulus = fcts.youngModulus( self.bulkModulus, self.shearModulus )
+        if np.any( self.youngModulus < 0 ):
+            self.m_logger.error( "Young modulus yields negative values. Check Bulk and Shear modulus values." )
+            return False
+        
+        if not createAttribute( self.output,
+                                self.youngModulus,
+                                self.youngModulusAttributeName,
+                                onPoints=self.youngModulusOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Young modulus computation failed." )
             return False
 
-        try:
-            youngModulus: npt.NDArray[ np.float64 ] = fcts.youngModulus( bulkModulus, shearModulus )
-            # assert np.any(youngModulus < 0), ("Young modulus yields negative " +
-            #     "values. Check Bulk and Shear modulus values.")
-            createAttribute(
-                self.output,
-                youngModulus,
-                self.youngModulusAttributeName,
-                (),
-                self.youngModulusOnPoints,
-            )
-        except AssertionError as e:
-            self.m_logger.error( "Young modulus was not computed due to:" )
-            self.m_logger.error( str( e ) )
-            ret = False
+        self.poissonRatio = fcts.poissonRatio( self.bulkModulus, self.shearModulus )
+        if np.any( self.poissonRatio < 0 ):
+            self.m_logger.error( "Poisson ratio yields negative values. Check Bulk and Shear modulus values.")
+            return False
 
-        try:
-            poissonRatio: npt.NDArray[ np.float64 ] = fcts.poissonRatio( bulkModulus, shearModulus )
-            # assert np.any(poissonRatio < 0), ("Poisson ratio yields negative " +
-            #     "values. Check Bulk and Shear modulus values.")
-            createAttribute(
-                self.output,
-                poissonRatio,
-                self.poissonRatioAttributeName,
-                (),
-                self.m_attributeOnPoints,
-            )
-        except AssertionError as e:
-            self.m_logger.error( "Poisson's ratio was not computed due to:" )
-            self.m_logger.error( str( e ) )
-            ret = False
+        if not createAttribute( self.output,
+                                self.poissonRatio,
+                                self.poissonRatioAttributeName,
+                                onPoints=self.poissonRatioOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Poisson ration computation failed." )
+            return False
 
-        return ret
+        return True
 
     def computeElasticModulusFromYoungPoisson( self: Self ) -> bool:
         """Compute bulk modulus from Young Modulus and Poisson's ratio.
@@ -425,35 +392,35 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if bulk modulus was successfully computed, False otherwise
         """
-        try:
-            youngModulusAttributeName: str = ( PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName )
-            poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-            bulkModulusAttributeName: str = ( GeosMeshOutputsEnum.BULK_MODULUS.attributeName )
-            if not isAttributeInObject( self.output, bulkModulusAttributeName, self.m_attributeOnPoints ):
-                youngModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, youngModulusAttributeName,
-                                                                            self.m_attributeOnPoints )
-                poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
-                                                                            self.m_attributeOnPoints )
-
-                assert youngModulus is not None, ( f"{youngModulusAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert poissonRatio is not None, ( f"{poissonRatioAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
-
-                bulkModulus: npt.NDArray[ np.float64 ] = fcts.bulkModulus( youngModulus, poissonRatio )
-                # assert np.any(bulkModulus < 0), ("Bulk modulus yields negative " +
-                #     "values. Check Young modulus and Poisson ratio values.")
-                ret: bool = createAttribute(
-                    self.output,
-                    bulkModulus,
-                    bulkModulusAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-                return ret
-
-        except AssertionError as e:
-            self.m_logger.error( "Bulk modulus was not computed due to:" )
-            self.m_logger.error( str( e ) )
+        self.youngModulus = getArrayInObject( self.output, self.youngModulusAttributeName, self.youngModulusOnPoints )
+        self.poissonRatio = getArrayInObject( self.output, self.poissonRatioAttributeName, self.poissonRatioOnPoints )
+        
+        self.bulkModulus = fcts.bulkModulus( self.youngModulus, self.poissonRatio )
+        if np.any( self.bulkModulus < 0 ):
+            self.m_logger.error( "Bulk modulus yields negative values. Check Young modulus and Poisson ratio values.")
             return False
+        
+        if not createAttribute( self.output,
+                                self.bulkModulus,
+                                self.bulkModulusAttributeName,
+                                onPoints=self.bulkModulusOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Bulk modulus computation failed." )
+            return False
+            
+        self.shearModulus = fcts.shearModulus( self.youngModulus, self.poissonRatio )
+        if np.any( self.shearModulus < 0 ):
+            self.m_logger.error( "Shear modulus yields negative values. Check Young modulus and Poisson ratio values.")
+            return False
+        
+        if not createAttribute( self.output,
+                                self.shearModulus,
+                                self.shearModulusAttributeName,
+                                onPoints=self.shearModulusOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Shear modulus computation failed." )
+            return False
+        
         return True
 
     def computeBiotCoefficient( self: Self ) -> bool:
