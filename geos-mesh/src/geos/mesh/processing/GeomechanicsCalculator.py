@@ -270,7 +270,6 @@ class GeomechanicsCalculator():
             return False
 
         if not self.computeCompressibilityCoefficient():
-            self.m_logger.error( "Compressibility coefficient computation failed." )
             return False
 
         if not self.computeRealEffectiveStressRatio():
@@ -432,13 +431,12 @@ class GeomechanicsCalculator():
         biotCoefficientAttributeName: str = PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName
         biotCoefficientOnPoints: bool = PostProcessingOutputsEnum.BIOT_COEFFICIENT.isOnPoints
 
-        biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus, self.bulkModulus )
+        self.biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus, self.bulkModulus )
         return createAttribute( self.output,
-                                biotCoefficient,
+                                self.biotCoefficient,
                                 biotCoefficientAttributeName,
                                 onPoints=biotCoefficientOnPoints,
                                 logger=self.m_logger )
-
 
     def computeCompressibilityCoefficient( self: Self ) -> bool:
         """Compute compressibility coefficient from simulation outputs.
@@ -449,91 +447,53 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if the attribute is correctly created, False otherwise.
         """
-        compressibilityAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY.attributeName )
-        bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
-        bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, bulkModulusAttributeName,
-                                                                   self.m_attributeOnPoints )
         porosityAttributeName: str = GeosMeshOutputsEnum.POROSITY.attributeName
-        porosity: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityAttributeName,
-                                                                self.m_attributeOnPoints )
-        porosityInitialAttributeName: str = ( GeosMeshOutputsEnum.POROSITY_INI.attributeName )
-        porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityInitialAttributeName,
-                                                                       self.m_attributeOnPoints )
-        if not isAttributeInObject( self.output, compressibilityAttributeName, self.m_attributeOnPoints ):
-            poissonRatioAttributeName: str = ( PostProcessingOutputsEnum.POISSON_RATIO.attributeName )
-            poissonRatio: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioAttributeName,
-                                                                        self.m_attributeOnPoints )
-            biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-            biotCoefficient: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, biotCoefficientAttributeName,
-                                                                           self.m_attributeOnPoints )
-
-            try:
-                assert poissonRatio is not None, ( f"{poissonRatioAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert bulkModulus is not None, ( f"{bulkModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert biotCoefficient is not None, ( f"{biotCoefficientAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert porosity is not None, ( f"{porosityAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-
-                compressibility: npt.NDArray[ np.float64 ] = fcts.compressibility( poissonRatio, bulkModulus,
-                                                                                   biotCoefficient, porosity )
-                createAttribute(
-                    self.output,
-                    compressibility,
-                    compressibilityAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Compressibility was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
+        porosityOnPoints: bool = GeosMeshOutputsEnum.POROSITY.isOnPoints
+        porosity: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityAttributeName, porosityOnPoints )
+        
+        compressibilityAttributeName: str = PostProcessingOutputsEnum.COMPRESSIBILITY.attributeName
+        compressibilityOnPoints: bool = PostProcessingOutputsEnum.COMPRESSIBILITY.isOnPoints
+        compressibility: npt.NDArray[ np.float64 ] = fcts.compressibility( self.poissonRatio, self.bulkModulus,
+                                                                           self.biotCoefficient, porosity )
+        if not createAttribute( self.output,
+                                compressibility,
+                                compressibilityAttributeName,
+                                onPoints=compressibilityOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Compressibility coefficient computation failed." )
+            return False
 
         # oedometric compressibility
-        compressibilityOedAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY_OED.attributeName )
-        if not isAttributeInObject( self.output, compressibilityOedAttributeName, self.m_attributeOnPoints ):
-            shearModulusAttributeName: str = ( GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName )
-            shearModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, shearModulusAttributeName,
-                                                                        self.m_attributeOnPoints )
-            try:
-                assert poissonRatio is not None, ( f"{poissonRatioAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert bulkModulus is not None, ( f"{bulkModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert porosityInitial is not None, ( f"{porosityInitialAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                compressibilityOed: npt.NDArray[ np.float64 ] = fcts.compressibilityOed(
-                    bulkModulus, shearModulus, porosityInitial )
-                createAttribute(
-                    self.output,
-                    compressibilityOed,
-                    compressibilityOedAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Oedometric Compressibility was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
+        compressibilityOedAttributeName: str = PostProcessingOutputsEnum.COMPRESSIBILITY_OED.attributeName
+        compressibilityOedOnPoints: bool = PostProcessingOutputsEnum.COMPRESSIBILITY_OED.isOnPoints
+        compressibilityOed: npt.NDArray[ np.float64 ] = fcts.compressibilityOed( self.shearModulus, self.bulkModulus, porosity )
+        if not createAttribute( self.output,
+                                compressibilityOed,
+                                compressibilityOedAttributeName,
+                                onPoints=compressibilityOedOnPoints,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Oedometric compressibility coefficient computation failed." )
+            return False
 
         # real compressibility
-        compressibilityRealAttributeName: str = ( PostProcessingOutputsEnum.COMPRESSIBILITY_REAL.attributeName )
-        if not isAttributeInObject( self.output, compressibilityRealAttributeName, self.m_attributeOnPoints ):
-            deltaPressureAttributeName: str = ( GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName )
-            deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
-                                                                         self.m_attributeOnPoints )
-            try:
-                assert deltaPressure is not None, ( f"{deltaPressureAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert porosityInitial is not None, ( f"{porosityInitialAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                assert porosity is not None, ( f"{porosityAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
-                compressibilityReal: npt.NDArray[ np.float64 ] = fcts.compressibilityReal(
-                    deltaPressure, porosity, porosityInitial )
-                createAttribute(
-                    self.output,
-                    compressibilityReal,
-                    compressibilityRealAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Real compressibility was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
+        porosityInitialAttributeName: str = GeosMeshOutputsEnum.POROSITY_INI.attributeName
+        porosityInitialOnPoints: bool = GeosMeshOutputsEnum.POROSITY_INI.isOnPoints
+        porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityInitialAttributeName, porosityInitialOnPoints )
+
+        deltaPressureAttributeName: str = GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName
+        deltaPressureOnPoint: str = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
+        deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName, deltaPressureOnPoint )
+
+        compressibilityRealAttributeName: str = PostProcessingOutputsEnum.COMPRESSIBILITY_REAL.attributeName
+        compressibilityRealOnPoint: bool = PostProcessingOutputsEnum.COMPRESSIBILITY_REAL.isOnPoints
+        compressibilityReal: npt.NDArray[ np.float64 ] = fcts.compressibilityReal( deltaPressure, porosity, porosityInitial )
+        if not createAttribute( self.output,
+                                compressibilityReal,
+                                compressibilityRealAttributeName,
+                                onPoints=compressibilityRealOnPoint,
+                                logger=self.m_logger ):
+            self.m_logger.error( "Real compressibility coefficient computation failed.")
+            return False
 
         return True
 
