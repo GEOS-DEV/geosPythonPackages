@@ -535,20 +535,8 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        # test if effective stress is in the table
-        if not isAttributeInObject(
-                self.output,
-                GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
-                self.m_attributeOnPoints,
-        ):
-            self.m_logger.error( "Effective stress is not in input data." )
-            return False
-
-        # real effective stress ratio
-        return self.computeStressRatioReal(
-            GeosMeshOutputsEnum.STRESS_EFFECTIVE,
-            PostProcessingOutputsEnum.STRESS_EFFECTIVE_RATIO_REAL,
-        )
+        return self.computeStressRatioReal( GeosMeshOutputsEnum.STRESS_EFFECTIVE,
+                                            PostProcessingOutputsEnum.STRESS_EFFECTIVE_RATIO_REAL )
 
     def computeTotalStresses( self: Self ) -> bool:
         """Compute total stress total stress ratio.
@@ -949,32 +937,22 @@ class GeomechanicsCalculator():
         Returns:
             bool: return True if calculation successfully ended, False otherwise.
         """
-        stressRatioRealAttributeName = outputAttribute.attributeName
-        if not isAttributeInObject( self.output, stressRatioRealAttributeName, self.m_attributeOnPoints ):
-            try:
-                stressAttributeName: str = inputAttribute.attributeName
-                stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName,
-                                                                      self.m_attributeOnPoints )
-                assert stress is not None, ( f"{stressAttributeName}" + UNDEFINED_ATTRIBUTE_MESSAGE )
+        stressAttributeName: str = inputAttribute.attributeName
+        stressOnPoints: bool = inputAttribute.isOnPoints
+        stress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, stressAttributeName, stressOnPoints )
 
-                verticalStress: npt.NDArray[ np.float64 ] = stress[ :, 2 ]
-                # keep the minimum of the 2 horizontal components
-                horizontalStress: npt.NDArray[ np.float64 ] = np.min( stress[ :, :2 ], axis=1 )
+        verticalStress: npt.NDArray[ np.float64 ] = stress[ :, 2 ]
+        # keep the minimum of the 2 horizontal components
+        horizontalStress: npt.NDArray[ np.float64 ] = np.min( stress[ :, :2 ], axis=1 )
 
-                stressRatioReal: npt.NDArray[ np.float64 ] = fcts.stressRatio( horizontalStress, verticalStress )
-                createAttribute(
-                    self.output,
-                    stressRatioReal,
-                    stressRatioRealAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( f"{outputAttribute.attributeName} was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
-
-        return True
+        stressRatioRealAttributeName: str = outputAttribute.attributeName
+        stressRatioRealOnPoints: bool = outputAttribute.isOnPoints
+        stressRatioReal: npt.NDArray[ np.float64 ] = fcts.stressRatio( horizontalStress, verticalStress )
+        return createAttribute( self.output,
+                                stressRatioReal,
+                                stressRatioRealAttributeName,
+                                onPoints=stressRatioRealOnPoints,
+                                logger=self.m_logger)
 
     def computeEffectiveStressRatioOed( self: Self ) -> bool:
         """Compute the effective stress ratio in oedometric conditions.
