@@ -429,29 +429,16 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        biotCoefficientAttributeName: str = ( PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName )
-        if not isAttributeInObject( self.output, biotCoefficientAttributeName, self.m_attributeOnPoints ):
-            bulkModulusAttributeName: str = ( GeosMeshOutputsEnum.BULK_MODULUS.attributeName )
-            bulkModulus: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, bulkModulusAttributeName,
-                                                                       self.m_attributeOnPoints )
-            try:
-                assert bulkModulus is not None, ( f"{bulkModulusAttributeName} " + UNDEFINED_ATTRIBUTE_MESSAGE )
+        biotCoefficientAttributeName: str = PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName
+        biotCoefficientOnPoints: bool = PostProcessingOutputsEnum.BIOT_COEFFICIENT.isOnPoints
 
-                biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus,
-                                                                                   bulkModulus )
-                createAttribute(
-                    self.output,
-                    biotCoefficient,
-                    biotCoefficientAttributeName,
-                    (),
-                    self.m_attributeOnPoints,
-                )
-            except AssertionError as e:
-                self.m_logger.error( "Biot coefficient was not computed due to:" )
-                self.m_logger.error( str( e ) )
-                return False
+        biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.m_grainBulkModulus, self.bulkModulus )
+        return createAttribute( self.output,
+                                biotCoefficient,
+                                biotCoefficientAttributeName,
+                                onPoints=biotCoefficientOnPoints,
+                                logger=self.m_logger )
 
-        return True
 
     def computeCompressibilityCoefficient( self: Self ) -> bool:
         """Compute compressibility coefficient from simulation outputs.
