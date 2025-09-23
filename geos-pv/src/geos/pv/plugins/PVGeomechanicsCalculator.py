@@ -7,15 +7,12 @@ from pathlib import Path
 from typing import Union
 from typing_extensions import Self
 
-import logging
-import numpy as np
-
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
@@ -27,7 +24,6 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Logger import ( Logger, getLogger, )
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,
@@ -81,7 +77,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-
     @smproperty.doublevector(
         name="GrainBulkModulus",
         label="Grain bulk modulus (Pa)",
@@ -102,7 +97,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         self.grainBulkModulus = grainBulkModulus
         self.Modified()
-
 
     @smproperty.doublevector(
         name="SpecificDensity",
@@ -125,7 +119,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.specificDensity = specificDensity
         self.Modified()
 
-
     @smproperty.xml( """
                 <PropertyGroup label="Basic output parameters">
                     <Property name="GrainBulkModulus"/>
@@ -135,7 +128,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
     def groupBasicOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
-
 
     @smproperty.intvector(
         name="ComputeAdvancedOutputs",
@@ -159,7 +151,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.computeAdvancedOutputs = computeAdvancedOutputs
         self.Modified()
 
-
     @smproperty.doublevector(
         name="RockCohesion",
         label="Rock Cohesion (Pa)",
@@ -180,7 +171,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         self.rockCohesion = rockCohesion
         self.Modified()
-
 
     @smproperty.doublevector(
         name="FrictionAngle",
@@ -203,7 +193,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.frictionAngle = frictionAngle
         self.Modified()
 
-
     @smproperty.xml( """
         <PropertyGroup panel_visibility="advanced">
             <Property name="RockCohesion"/>
@@ -219,7 +208,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
     def groupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
-
 
     def RequestDataObject(
         self: Self,
@@ -244,7 +232,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             outData = inData.NewInstance()
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
-
 
     def RequestData(
         self: Self,
