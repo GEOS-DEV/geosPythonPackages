@@ -39,13 +39,6 @@ PVExtractMergeBlocksVolumeWell plugin
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolumeWell
 
-
-PVGeomechanicsAnalysis plugin
----------------------------------------
-
-.. automodule:: PVplugins.PVGeomechanicsAnalysis
-
-
 PVGeomechanicsWorkflowVolume plugin
 ---------------------------------------------
 

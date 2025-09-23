@@ -19,6 +19,13 @@ geos.mesh.processing.FillPartialArrays filter
     :undoc-members:
     :show-inheritance:
 
+geos.mesh.processing.GeomechanicsCalculator module
+---------------------------------------------------
+
+.. automodule:: geos.mesh.processing.GeomechanicsCalculator
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 geos.mesh.processing.meshQualityMetricHelpers module
 -----------------------------------------------------

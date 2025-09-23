@@ -19,14 +19,6 @@ geos_posp.filters.AttributeMappingFromCellId module
    :undoc-members:
    :show-inheritance:
 
-geos_posp.filters.GeomechanicsCalculator module
----------------------------------------------------
-
-.. automodule:: geos_posp.filters.GeomechanicsCalculator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.filters.GeosBlockExtractor module
 -----------------------------------------------
 
