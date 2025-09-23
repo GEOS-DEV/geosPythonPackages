@@ -1,34 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 from typing import Union, Tuple
+from typing_extensions import Self
+
+import logging
+import numpy as np
+import numpy.typing as npt
 
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 
-import numpy as np
-import numpy.typing as npt
-import logging
-
-from geos.utils.GeosOutputsConstants import (
-    AttributeEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-)
-from geos.utils.Logger import Logger, getLogger
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_GRAIN_BULK_MODULUS,
-    DEFAULT_ROCK_COHESION,
-    GRAVITY,
-    WATER_DENSITY,
-)
-from typing_extensions import Self
-from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet,
-    vtkUnstructuredGrid,
-)
-from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
@@ -36,12 +18,39 @@ from geos.mesh.utils.arrayHelpers import (
     isAttributeInObject,
 )
 
+from geos.utils.Logger import (
+    Logger,
+    getLogger,
+)
+from geos.utils.GeosOutputsConstants import (
+    AttributeEnum,
+    GeosMeshOutputsEnum,
+    PostProcessingOutputsEnum,
+)
+from geos.utils.PhysicalConstants import (
+    DEFAULT_FRICTION_ANGLE_RAD,
+    DEFAULT_GRAIN_BULK_MODULUS,
+    DEFAULT_ROCK_COHESION,
+    GRAVITY,
+    WATER_DENSITY,
+)
+
+from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
+from vtkmodules.vtkFiltersCore import vtkCellCenters
+
 __doc__ = """
 GeomechanicsCalculator module is a vtk filter that allows to compute additional
 Geomechanical properties from existing ones.
 
-GeomechanicsCalculator filter inputs are either vtkPointSet or vtkUnstructuredGrid
-and returned object is of same type as input.
+GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
+and returned mesh is of same type as input.
+
+.. Note::
+    - The default physical constants used by the filter are:
+        - grainBulkModulus = 38e9 Pa (the one of the Quartz)
+        - specificDensity = 1000.0 kg/m³ (the one of the water)
+        - rockCohesion = 0.0 Pa
+        - frictionAngle = 10.0 / 180.0 * np.pi rad
 
 To use the filter:
 
@@ -50,40 +59,35 @@ To use the filter:
     import numpy as np
     from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
 
-    # filter inputs
-    logger :Logger
-    # input object
-    input :Union[vtkPointSet, vtkUnstructuredGrid]
-    # grain bulk modulus in Pa (e.g., use a very high value to get a Biot coefficient equal to 1)
-    grainBulkModulus :float = 1e26
-    # Reference density to compute specific gravity (e.g. fresh water density) in kg.m^-3
-    specificDensity :float = 1000.
-    # rock cohesion in Pa
-    rockCohesion :float = 1e8
-    # friction angle in °
-    frictionAngle :float = 10 * np.pi / 180.
+    # Define filter inputs
+    mesh: Union[ vtkPointSet, vtkUnstructuredGrid ]
+    computeAdvancedOutputs: bool # optional, defaults to False
+    speHandler: bool # optional, defaults to False
 
-    # instantiate the filter
-    geomechanicsCalculatorFilter :GeomechanicsCalculator = GeomechanicsCalculator()
+    # Instantiate the filter
+    filter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedOutputs, speHandler )
 
-    # set filter attributes
-    # set logger
-    geomechanicsCalculatorFilter.SetLogger(logger)
-    # set input object
-    geomechanicsCalculatorFilter.SetInputDataObject(input)
-    # set computeAdvancedOutputsOn or computeAdvancedOutputsOff to compute or
-    # not advanced outputs...
-    geomechanicsCalculatorFilter.computeAdvancedOutputsOn()
-    # set other parameters
-    geomechanicsCalculatorFilter.SetGrainBulkModulus(grainBulkModulus)
-    geomechanicsCalculatorFilter.SetSpecificDensity(specificDensity)
-    # rock cohesion and friction angle are used for advanced outputs only
-    geomechanicsCalculatorFilter.SetRockCohesion(rockCohesion)
-    geomechanicsCalculatorFilter.SetFrictionAngle(frictionAngle)
-    # do calculations
-    geomechanicsCalculatorFilter.Update()
-    # get filter output (same type as input)
-    output :Union[vtkPointSet, vtkUnstructuredGrid] = geomechanicsCalculatorFilter.GetOutputDataObject(0)
+    # Use your own handler (if speHandler is True)
+    yourHandler: logging.Handler
+    filter.setLoggerHandler( yourHandler )
+
+    # Change the physical constants if needed
+    grainBulkModulus: float
+    specificDensity: float
+    rockCohesion: float
+    frictionAngle: float
+
+    filter.SetGrainBulkModulus(grainBulkModulus)
+    filter.SetSpecificDensity(specificDensity)
+    filter.SetRockCohesion(rockCohesion)
+    filter.SetFrictionAngle(frictionAngle)
+
+    # Do calculations
+    filter.applyFilter()
+
+    # Get the mesh with the geomechanical output as attribute
+    output :Union[vtkPointSet, vtkUnstructuredGrid]
+    output = filter.getOutput()
 """
 
 loggerTitle: str = "Geomechanical Calculator Filter"
@@ -111,17 +115,17 @@ class GeomechanicsCalculator():
             self.output = vtkUnstructuredGrid()
         elif mesh.IsA( "vtkPointSet" ):
             self.output = vtkPointSet()
-
         self.output.DeepCopy( mesh )
 
-        # additional parameters
         self.doComputeAdvancedOutputs: bool = computeAdvancedOutputs
+
+        # Defaults physical constants
         self.grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
         self.specificDensity: float = WATER_DENSITY
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-        # elastic moduli are either bulk and Shear moduli (computeYoungPoisson=True)
+        # Elastic moduli are either bulk and Shear moduli (computeYoungPoisson=True)
         # or young Modulus and poisson's ratio (computeYoungPoisson=False)
         self.computeYoungPoisson: bool = True
 
