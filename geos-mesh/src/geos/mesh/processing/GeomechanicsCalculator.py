@@ -139,7 +139,7 @@ class GeomechanicsCalculator():
 
 
     def applyFilter( self: Self ) -> bool:
-        """Compute the geomechanical coefficient of the mesh.
+        """Compute the geomechanical outputs of the mesh.
 
         Returns:
             Boolean (bool): True if calculation successfully ended, False otherwise.
@@ -156,6 +156,14 @@ class GeomechanicsCalculator():
                 return False
 
         return True
+    
+    def getOutput( self: Self ) -> Union[ vtkPointSet, vtkUnstructuredGrid ]:
+        """Get the mesh with the geomechanical outputs as attributes.
+
+        Returns:
+            Union[vtkPointSet, vtkUnstructuredGrid]: The mesh with the geomechanical outputs as attributes.
+        """
+        return self.output
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
