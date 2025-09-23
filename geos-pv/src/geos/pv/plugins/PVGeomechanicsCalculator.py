@@ -1,55 +1,67 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 from typing import Union
+from typing_extensions import Self
 
+import logging
 import numpy as np
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from typing_extensions import Self
+) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import ( Logger, getLogger, )
 from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
+    DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
-from geos_posp.filters.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
-PVGeomechanicsAnalysis is a Paraview plugin that allows to compute
-additional geomechanical attributes from the input mesh.
+PVGeomechanicsCalculator is a paraview plugin that allows to compute additional
+Geomechanical properties from existing ones.
 
-Input and output types are vtkMultiBlockDataSet.
+PVGeomechanicsCalculator paraview plugin input mesh is either vtkPointSet or vtkUnstructuredGrid
+and returned mesh is of same type as input.
+
+.. Note::
+    To deals with Geos output, you may first process it with PVExtractMergeBlocksVolume
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsAnalysis.
-* Select any pipeline child of the first ouput from PVExtractMergeBlocksVolume* filter.
-* Search and Apply PVGeomechanicsAnalysis Filter.
+* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeomechanicsCalculator
+* Select the mesh you want to compute geomechanics output on
+* Search Filters > 3- Geos Geomechanics > Geos Geomechanics Calculator
+* Set physical constants and computeAdvancedOutput if needed
+* Apply
 
 """
 
 
-@smproxy.filter( name="PVGeomechanicsAnalysis", label="Geos Geomechanics Analysis" )
+@smproxy.filter( name="PVGeomechanicsCalculator", label="Geos Geomechanics Calculator" )
 @smhint.xml( """<ShowInMenu category="3- Geos Geomechanics"/>""" )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype( dataTypes=[ "vtkUnstructuredGrid", "vtkPointSet" ], composite_data_supported=True )
-class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
+class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Paraview plugin to compute additional geomechanical outputs.
@@ -59,23 +71,16 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
         """
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet" )
 
-        # outputs and additional parameters
-        self.m_computeAdvancedOutputs: bool = False
-        self.m_grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
-        self.m_specificDensity: float = WATER_DENSITY
-        self.m_rockCohesion: float = DEFAULT_ROCK_COHESION
-        self.m_frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
+        self.computeAdvancedOutputs: bool = False
 
-        # set m_logger
-        self.m_logger: Logger = getLogger( "Geomechanics Analysis Filter" )
+        # Defaults physical constants
+        ## Basic outputs
+        self.grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
+        self.specificDensity: float = WATER_DENSITY
+        ## Advanced outputs
+        self.rockCohesion: float = DEFAULT_ROCK_COHESION
+        self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set filter logger.
-
-        Args:
-            logger (Logger): logger
-        """
-        self.m_logger = logger
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -89,22 +94,15 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
                         The unit is Pa. Default is Quartz bulk modulus (i.e., 38GPa).
                     </Documentation>
                   """ )
-    def b01SetGrainBulkModulus( self: Self, value: float ) -> None:
+    def setGrainBulkModulus( self: Self, grainBulkModulus: float ) -> None:
         """Set grain bulk modulus.
 
         Args:
-            value (float): grain bulk modulus (Pa)
+            grainBulkModulus (float): Grain bulk modulus (Pa).
         """
-        self.m_grainBulkModulus = value
+        self.grainBulkModulus = grainBulkModulus
         self.Modified()
 
-    def getGrainBulkModulus( self: Self ) -> float:
-        """Access to the grain bulk modulus value.
-
-        Returns:
-            float: self.m_grainBulkModulus.
-        """
-        return self.m_grainBulkModulus
 
     @smproperty.doublevector(
         name="SpecificDensity",
@@ -118,22 +116,15 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
                         The unit is kg/m3. Default is fresh water density (i.e., 1000 kg/m3).
                     </Documentation>
                   """ )
-    def b02SetSpecificDensity( self: Self, value: float ) -> None:
+    def setSpecificDensity( self: Self, specificDensity: float ) -> None:
         """Set specific density.
 
         Args:
-            value (float): Reference specific density (kg/m3)
+            specificDensity (float): Reference specific density (kg/m3).
         """
-        self.m_specificDensity = value
+        self.specificDensity = specificDensity
         self.Modified()
 
-    def getSpecificDensity( self: Self ) -> float:
-        """Access the specific density value.
-
-        Returns:
-            float: self.m_specificDensity.
-        """
-        return self.m_specificDensity
 
     @smproperty.xml( """
                 <PropertyGroup label="Basic output parameters">
@@ -141,49 +132,33 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
                     <Property name="SpecificDensity"/>
                 </PropertyGroup>
                 """ )
-    def b09GroupBasicOutputParameters( self: Self ) -> None:
+    def groupBasicOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
+
     @smproperty.intvector(
-        name="AdvancedOutputsUse",
+        name="ComputeAdvancedOutputs",
         label="Compute advanced geomechanical outputs",
         default_values=0,
         panel_visibility="default",
     )
     @smdomain.xml( """
-                    <BooleanDomain name="AdvancedOutputsUse"/>
-                    <Documentation>
-                    Check to compute advanced geomechanical outputs including
-                    reservoir stress paths and fracture indexes.
-                    </Documentation>
-                  """ )
-    def c01SetAdvancedOutputs( self: Self, boolean: bool ) -> None:
+        <BooleanDomain name="ComputeAdvancedOutputs"/>
+        <Documentation>
+            Check to compute advanced geomechanical outputs including
+            reservoir stress paths and fracture indexes.
+        </Documentation>
+    """ )
+    def setComputeAdvancedOutputs( self: Self, computeAdvancedOutputs: bool ) -> None:
         """Set advanced output calculation option.
 
         Args:
-            boolean (bool): if True advanced outputs are computed.
+            computeAdvancedOutputs (bool): True to compute advanced geomechanical parameters, False otherwise.
         """
-        self.m_computeAdvancedOutputs = boolean
+        self.computeAdvancedOutputs = computeAdvancedOutputs
         self.Modified()
 
-    def getComputeAdvancedOutputs( self: Self ) -> float:
-        """Access the advanced outputs option.
-
-        Returns:
-            float: self.m_computeAdvancedOutputs.
-        """
-        return self.m_computeAdvancedOutputs
-
-    @smproperty.xml( """
-                    <PropertyGroup
-                        label="Advanced output parameters">
-                        panel_visibility="default">
-                        <Property name="AdvancedOutputsUse"/>
-                    </PropertyGroup>""" )
-    def c09GroupAdvancedOutputsUse( self: Self ) -> None:
-        """Organize groups."""
-        self.Modified()
 
     @smproperty.doublevector(
         name="RockCohesion",
@@ -192,93 +167,59 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
         panel_visibility="default",
     )
     @smdomain.xml( """
-                    <Documentation>
-                        Reference rock cohesion to compute critical pore pressure.
-                        The unit is Pa.Default is fractured case (i.e., 0. Pa).
-                    </Documentation>
-                  """ )
-    def d01SetRockCohesion( self: Self, value: float ) -> None:
+        <Documentation>
+            Reference rock cohesion to compute critical pore pressure.
+            The unit is Pa.Default is fractured case (i.e., 0. Pa).
+        </Documentation>
+    """ )
+    def setRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion.
 
         Args:
-            value (float): rock cohesion (Pa)
+            rockCohesion (float): Rock cohesion (Pa).
         """
-        self.m_rockCohesion = value
+        self.rockCohesion = rockCohesion
         self.Modified()
 
-    def getRockCohesion( self: Self ) -> float:
-        """Get rock cohesion.
-
-        Returns:
-            float: rock cohesion.
-        """
-        return self.m_rockCohesion
 
     @smproperty.doublevector(
         name="FrictionAngle",
-        label="Friction Angle (°)",
-        default_values=DEFAULT_FRICTION_ANGLE_DEG,
+        label="Friction Angle (rad)",
+        default_values=DEFAULT_FRICTION_ANGLE_RAD,
         panel_visibility="default",
     )
     @smdomain.xml( """
-                    <Documentation>
-                        Reference friction angle to compute critical pore pressure.
-                        The unit is °. Default is no friction case (i.e., 0.°).
-                    </Documentation>
-                  """ )
-    def d02SetFrictionAngle( self: Self, value: float ) -> None:
-        """Set frition angle.
+        <Documentation>
+            Reference friction angle to compute critical pore pressure.
+            The unit is rad. Default is 10.0 / 180.0 * np.pi rad.
+        </Documentation>
+    """ )
+    def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
+        """Set friction angle.
 
         Args:
-            value (float): friction angle (°)
+            frictionAngle (float): Friction angle (rad).
         """
-        self.m_frictionAngle = value
+        self.frictionAngle = frictionAngle
         self.Modified()
 
-    def getFrictionAngle( self: Self ) -> float:
-        """Get friction angle in radian.
-
-        Returns:
-            float: friction angle.
-        """
-        return self.m_frictionAngle * np.pi / 180.0
 
     @smproperty.xml( """
-                    <PropertyGroup
-                        panel_visibility="advanced">
-                        <Property name="RockCohesion"/>
-                        <Property name="FrictionAngle"/>
-                        <Hints>
-                            <PropertyWidgetDecorator type="GenericDecorator"
-                            mode="visibility"
-                            property="AdvancedOutputsUse"
-                            value="1" />
-                        </Hints>
-                    </PropertyGroup>
-                    """ )
-    def d09GroupAdvancedOutputParameters( self: Self ) -> None:
+        <PropertyGroup panel_visibility="advanced">
+            <Property name="RockCohesion"/>
+            <Property name="FrictionAngle"/>
+            <Hints>
+                <PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility"
+                    property="ComputeAdvancedOutputs"
+                    value="1" />
+            </Hints>
+        </PropertyGroup>
+    """ )
+    def groupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
         self.Modified()
 
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
-        return 1
 
     def RequestDataObject(
         self: Self,
@@ -289,9 +230,9 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -304,6 +245,7 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
+
     def RequestData(
         self: Self,
         request: vtkInformation,  # noqa: F841
@@ -313,53 +255,30 @@ class PVGeomechanicsAnalysis( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        try:
-            self.m_logger.info( f"Apply filter {__name__}" )
+        inputMesh: Union[ vtkPointSet, vtkUnstructuredGrid ] = self.GetInputData( inInfoVec, 0, 0 )
+        outputMesh: Union[ vtkPointSet, vtkUnstructuredGrid ] = self.GetOutputData( outInfoVec, 0 )
+        assert inputMesh is not None, "Input server mesh is null."
+        assert outputMesh is not None, "Output pipeline is null."
 
-            inData = self.GetInputData( inInfoVec, 0, 0 )
-            assert inData is not None
+        filter: GeomechanicsCalculator = GeomechanicsCalculator( inputMesh, self.computeAdvancedOutputs, True )
 
-            input: Union[ vtkPointSet, vtkUnstructuredGrid ]
-            output: Union[ vtkPointSet, vtkUnstructuredGrid ]
-            if inData.IsA( "vtkUnstructuredGrid" ):
-                input = vtkUnstructuredGrid.GetData( inInfoVec[ 0 ] )
-                output = vtkUnstructuredGrid.GetData( outInfoVec )
-            elif inData.IsA( "vtkPointSet" ):
-                input = vtkPointSet.GetData( inInfoVec[ 0 ] )
-                output = vtkPointSet.GetData( outInfoVec )
-            else:
-                raise TypeError( "Error type" )
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
 
-            assert input is not None, "Input object is null"
-            assert output is not None, "Output object is null"
+        filter.setGrainBulkModulus( self.grainBulkModulus )
+        filter.setSpecificDensity( self.specificDensity )
+        filter.setRockCohesion( self.rockCohesion )
+        filter.setFrictionAngle( self.frictionAngle )
 
-            # create new properties
-            geomechanicsCalculatorFilter: GeomechanicsCalculator = ( GeomechanicsCalculator() )
-            geomechanicsCalculatorFilter.SetLogger( self.m_logger )
-            geomechanicsCalculatorFilter.SetInputDataObject( input )
-            if self.m_computeAdvancedOutputs:
-                geomechanicsCalculatorFilter.computeAdvancedOutputsOn()
-            else:
-                geomechanicsCalculatorFilter.computeAdvancedOutputsOff()
-            geomechanicsCalculatorFilter.SetGrainBulkModulus( self.getGrainBulkModulus() )
-            geomechanicsCalculatorFilter.SetSpecificDensity( self.getSpecificDensity() )
-            geomechanicsCalculatorFilter.SetRockCohesion( self.getRockCohesion() )
-            geomechanicsCalculatorFilter.SetFrictionAngle( self.getFrictionAngle() )
-            geomechanicsCalculatorFilter.Update()
-            output.ShallowCopy( geomechanicsCalculatorFilter.GetOutputDataObject( 0 ) )
-            output.Modified()
+        if filter.applyFilter():
+            outputMesh.ShallowCopy( filter.getOutput() )
+            outputMesh.Modified()
 
-        except AssertionError as e:
-            self.m_logger.error( f"{__name__} filter execution failed due to:" )
-            self.m_logger.error( e )
-        except Exception as e:
-            self.m_logger.critical( f"{__name__} filter execution failed due to:" )
-            self.m_logger.critical( e, exc_info=True )
         return 1
