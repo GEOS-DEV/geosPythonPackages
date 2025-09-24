@@ -1,7 +1,5 @@
 name: geosPythonPackages CI 
-on: 
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
+on: pull_request
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
