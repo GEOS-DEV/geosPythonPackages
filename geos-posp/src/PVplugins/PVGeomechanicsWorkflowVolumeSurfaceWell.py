@@ -382,7 +382,9 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
-        filter = GeomechanicsCalculator( self.m_volumeMesh, computeAdvancedOutputs=self.getComputeAdvancedOutputs(), speHandler=True )
+        filter = GeomechanicsCalculator( self.m_volumeMesh,
+                                         computeAdvancedOutputs=self.getComputeAdvancedOutputs(),
+                                         speHandler=True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
         filter.setGrainBulkModulus( self.getGrainBulkModulus() )
