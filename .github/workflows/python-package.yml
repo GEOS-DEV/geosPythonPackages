@@ -127,6 +127,7 @@ jobs:
           echo "Please add the 'test-geos-integration' label to trigger GEOS integration tests"
           echo "PR cannot be merged without this label and passing GEOS integration tests"
           echo "required=false" >> "$GITHUB_OUTPUT"
+          exit 1
         fi
 
   # Step 4: Run GEOS integration tests (mandatory if label present)

@@ -59,6 +59,7 @@ jobs:
           bash "$GEOS_ROOT/scripts/setupPythonEnvironment.bash" --help || echo "Script exists but may need arguments"
         else
           echo "setupPythonEnvironment.bash not found"
+          exit 1
         fi
         echo ""
         
@@ -91,12 +92,13 @@ jobs:
             echo "geosx_python_tools built successfully!"
           else
             echo "geosx_python_tools build failed (may be due to missing dependencies)"
-            echo "This is acceptable for integration testing purposes"
+            exit 1
           fi
         else
           echo "'make geosx_python_tools' target not found"
           echo "Available targets:"
           make help | head -10
+          exit 1
         fi
         
         cd "$GEOSPYTHONPACKAGES_ROOT"
@@ -111,6 +113,7 @@ jobs:
             echo "Found $dir"
           else
             echo "Missing $dir"
+            exit 1
           fi
         done
         echo ""
@@ -130,10 +133,12 @@ jobs:
                 echo "Found $tool"
               else
                 echo "$tool not found"
+                exit 1
               fi
             done
           else
             echo "No Python files found in XML tools"
+            exit 1
           fi
           
           cd "$GEOSPYTHONPACKAGES_ROOT"
@@ -149,6 +154,7 @@ jobs:
             echo "Found run_geos_ats.py"
           else
             echo "run_geos_ats.py not found"
+            exit 1
           fi
           
           cd "$GEOSPYTHONPACKAGES_ROOT"
@@ -163,6 +169,7 @@ jobs:
           bash -n install_packages.sh && echo "install_packages.sh syntax OK" || echo "install_packages.sh has syntax errors"
         else
           echo "install_packages.sh not found"
+          exit 1
         fi
         echo ""
         
