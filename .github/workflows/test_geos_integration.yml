@@ -6,8 +6,12 @@ on:
 
 jobs:
   test_geos_integration:
-    name: Test geosPythonPackages Integration with GEOS  
+    name: Test geosPythonPackages Integration with GEOS (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     
     steps:
     - name: Checkout geosPythonPackages
@@ -25,7 +29,7 @@ jobs:
     - name: Setup Python environment
       uses: actions/setup-python@v4
       with:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ${{ matrix.python-version }}
     
     - name: Install system dependencies
       run: |
@@ -162,28 +166,42 @@ jobs:
         fi
         echo ""
         
-        echo "GEOS integration test completed successfully"
-    
-    - name: Integration test summary
+        echo "GEOS integration test completed successfully for Python ${{ matrix.python-version }}"
+
+  integration_summary:
+    name: GEOS Integration Summary
+    runs-on: ubuntu-latest
+    needs: test_geos_integration
+    if: always() # Ensures this job runs even if some matrix jobs fail
+
+    steps:
+    - name: Summarize Python version results
       run: |
+        # This script parses the results of the matrix jobs to provide a detailed summary.
+        # It uses 'jq' to process the JSON from the 'needs.test_geos_integration.jobs' context.
+        RESULTS_JSON='${{ toJSON(needs.test_geos_integration.jobs) }}'
+        ANY_FAILED=false
+
+        echo "## GEOS Integration Test Summary"
         echo ""
-        echo "GEOS Integration Test Summary"
-        echo "============================="
+
+        # Use process substitution to read from jq's output for each job in the matrix
+        while IFS=':' read -r version result; do
+          if [ "$result" == "success" ]; then
+            echo "| Python $version | Pass |"
+          else
+            echo "| Python $version | Fail |"
+            ANY_FAILED=true
+          fi
+        done < <(echo "$RESULTS_JSON" | jq -r 'to_entries[] | "\(.key):\(.value.result)"')
+
         echo ""
-        echo "Successfully tested geosPythonPackages integration with GEOS"
-        echo ""
-        echo "What was tested:"
-        echo "   * Repository structure and key directories"
-        echo "   * Python environment setup scripts compatibility"
-        echo "   * CMake integration with ENABLE_GEOSX_PYTHON_TOOLS=ON"
-        echo "   * 'make geosx_python_tools' target availability"
-        echo "   * XML tools (preprocess_xml.py, format_xml.py)"
-        echo "   * ATS integration (run_geos_ats.py)" 
-        echo "   * Package installation scripts"
-        echo ""
-        echo "This validates that geosPythonPackages structure and tools are compatible with GEOS build system and workflows."
-        echo ""
-        echo "Integration verified for:"
-        echo "   * CMake configuration with Python tools enabled"
-        echo "   * Build target 'make geosx_python_tools'"
-        echo "   * Tool availability and script integrity"
+
+        # Provide a final conclusion and fail the job if any version failed
+        if [ "$ANY_FAILED" = "true" ]; then
+          echo "**Conclusion:** At least one Python version failed the integration tests."
+          echo "Please review the logs for the failing job(s) to diagnose the issue."
+          exit 1
+        else
+          echo "**Conclusion:** All Python versions passed the integration tests successfully!"
+        fi
