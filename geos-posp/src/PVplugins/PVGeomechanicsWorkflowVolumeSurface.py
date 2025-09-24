@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
+from pathlib import Path
 import sys
 
 import numpy as np
@@ -11,16 +11,19 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
@@ -32,7 +35,7 @@ from geos.utils.PhysicalConstants import (
 )
 from PVplugins.PVExtractMergeBlocksVolumeSurface import (
     PVExtractMergeBlocksVolumeSurface, )
-from PVplugins.PVGeomechanicsAnalysis import PVGeomechanicsAnalysis
+from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
 from PVplugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
 __doc__ = """
@@ -370,16 +373,15 @@ class PVGeomechanicsWorkflowVolumeSurface( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
-        filter = PVGeomechanicsAnalysis()
-        filter.SetInputDataObject( self.m_volumeMesh )
-        filter.b01SetGrainBulkModulus( self.getGrainBulkModulus() )
-        filter.b02SetSpecificDensity( self.getSpecificDensity() )
-        filter.d01SetRockCohesion( self.getRockCohesion() )
-        filter.d02SetFrictionAngle( self.getFrictionAngle() )
-        filter.c01SetAdvancedOutputs( self.m_computeAdvancedOutputs )
-        filter.SetLogger( self.m_logger )
-        filter.Update()
-        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        filter = GeomechanicsCalculator( self.m_volumeMesh, computeAdvancedOutputs=self.getComputeAdvancedOutputs(), speHandler=True )
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+        filter.setGrainBulkModulus( self.getGrainBulkModulus() )
+        filter.setSpecificDensity( self.getSpecificDensity() )
+        filter.setRockCohesion( self.getRockCohesion() )
+        filter.setFrictionAngle( self.getFrictionAngle() )
+        filter.applyFilter()
+        self.m_volumeMesh.ShallowCopy( filter.getOutput() )
         self.m_volumeMesh.Modified()
         return True
 
