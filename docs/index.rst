@@ -99,3 +99,12 @@ Packages
     geos-xml-viewer
 
     pygeos-tools
+
+
+Developer Documentation
+-----------------------
+
+.. toctree::
+    :maxdepth: 2
+
+    ci_developer_guide
