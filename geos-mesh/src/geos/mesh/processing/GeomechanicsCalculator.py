@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-from typing import Union, Tuple
+from typing import Union
 from typing_extensions import Self
 
 import logging
@@ -245,33 +245,43 @@ class GeomechanicsCalculator():
         """
         self.youngModulusAttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName
         self.youngModulusOnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS.isOnPoints
-        youngModulusOnMesh: bool = isAttributeInObject( self.output, self.youngModulusAttributeName, self.youngModulusOnPoints )
+        youngModulusOnMesh: bool = isAttributeInObject( self.output, self.youngModulusAttributeName,
+                                                        self.youngModulusOnPoints )
 
         self.poissonRatioAttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO.attributeName
         self.poissonRatioOnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO.isOnPoints
-        poissonRationOnMesh: bool = isAttributeInObject( self.output, self.poissonRatioAttributeName, self.poissonRatioOnPoints )
+        poissonRationOnMesh: bool = isAttributeInObject( self.output, self.poissonRatioAttributeName,
+                                                         self.poissonRatioOnPoints )
 
         self.bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
         self.bulkModulusOnPoints: bool = GeosMeshOutputsEnum.BULK_MODULUS.isOnPoints
-        bulkModulusOnMesh: bool = isAttributeInObject( self.output, self.bulkModulusAttributeName, self.bulkModulusOnPoints )
+        bulkModulusOnMesh: bool = isAttributeInObject( self.output, self.bulkModulusAttributeName,
+                                                       self.bulkModulusOnPoints )
 
         self.shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
         self.shearModulusOnPoints: bool = GeosMeshOutputsEnum.SHEAR_MODULUS.isOnPoints
-        shearModulusOnMesh: bool = isAttributeInObject( self.output, self.shearModulusAttributeName, self.shearModulusOnPoints )
+        shearModulusOnMesh: bool = isAttributeInObject( self.output, self.shearModulusAttributeName,
+                                                        self.shearModulusOnPoints )
 
         if not youngModulusOnMesh and not poissonRationOnMesh:
             if bulkModulusOnMesh and shearModulusOnMesh:
                 self.computeYoungPoisson = True
             else:
-                self.logger.error( f"{ self.bulkModulusAttributeName } or { self.shearModulusAttributeName } are missing to compute geomechanical outputs." )
+                self.logger.error(
+                    f"{ self.bulkModulusAttributeName } or { self.shearModulusAttributeName } are missing to compute geomechanical outputs."
+                )
                 return False
         elif not bulkModulusOnMesh and not shearModulusOnMesh:
             if youngModulusOnMesh and poissonRationOnMesh:
                 self.computeYoungPoisson = False
             else:
-                self.logger.error( f"{ self.youngModulusAttributeName } or { self.poissonRatioAttributeName } are missing to compute geomechanical outputs." )
+                self.logger.error(
+                    f"{ self.youngModulusAttributeName } or { self.poissonRatioAttributeName } are missing to compute geomechanical outputs."
+                )
         else:
-            self.logger.error( f"{ self.bulkModulusAttributeName } and { self.shearModulusAttributeName } or { self.youngModulusAttributeName } and { self.poissonRatioAttributeName } are mandatory to compute geomechanical outputs." )
+            self.logger.error(
+                f"{ self.bulkModulusAttributeName } and { self.shearModulusAttributeName } or { self.youngModulusAttributeName } and { self.poissonRatioAttributeName } are mandatory to compute geomechanical outputs."
+            )
             return False
 
         porosityAttributeName: str = GeosMeshOutputsEnum.POROSITY.attributeName
@@ -530,8 +540,10 @@ class GeomechanicsCalculator():
                                     onPoints=biotCoefficientOnPoints,
                                     logger=self.logger )
         else:
-            self.biotCoefficient = getArrayInObject( self.output, biotCoefficientAttributeName, biotCoefficientOnPoints )
-            self.logger.warning( f"{ biotCoefficientAttributeName } is already on the mesh, it has not been computed by the filter." )
+            self.biotCoefficient = getArrayInObject( self.output, biotCoefficientAttributeName,
+                                                     biotCoefficientOnPoints )
+            self.logger.warning(
+                f"{ biotCoefficientAttributeName } is already on the mesh, it has not been computed by the filter." )
             return True
 
     def computeCompressibilityCoefficient( self: Self ) -> bool:
@@ -951,7 +963,8 @@ class GeomechanicsCalculator():
             return False
 
         # add critical pore pressure index (i.e., ratio between pressure and criticalPorePressure)
-        criticalPorePressureIndex: npt.NDArray[ np.float64 ] = fcts.criticalPorePressureThreshold( self.pressure, criticalPorePressure )
+        criticalPorePressureIndex: npt.NDArray[ np.float64 ] = fcts.criticalPorePressureThreshold(
+            self.pressure, criticalPorePressure )
         criticalPorePressureIndexAttributeName: str = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName
         criticalPorePressureIndexOnPoint: bool = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.isOnPoints
         if not createAttribute( self.output,
