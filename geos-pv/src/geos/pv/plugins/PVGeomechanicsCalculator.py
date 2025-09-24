@@ -36,6 +36,21 @@ __doc__ = """
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional
 Geomechanical properties from existing ones.
 
+The basic geomechanics outputs are:
+    - Elastic modulus (young modulus and poisson ratio or bulk modulus and shear modulus)
+    - Biot coefficient
+    - Compressibility, oedometric compressibility and real compressibility coefficient
+    - Specific gravity
+    - Real effective stress ratio
+    - Total initial stress, total current stress and total stress ratio
+    - Lithostatic stress (physic to update)
+    - Elastic stain
+    - Reservoir stress path and reservoir stress path in oedometric condition
+
+The advanced geomechanics outputs are:
+    - fracture index and threshold
+    - Critical pore pressure and pressure index
+
 PVGeomechanicsCalculator paraview plugin input mesh is either vtkPointSet or vtkUnstructuredGrid
 and returned mesh is of same type as input.
 
@@ -194,7 +209,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.Modified()
 
     @smproperty.xml( """
-        <PropertyGroup panel_visibility="advanced">
+        <PropertyGroup label="Advanced output parameters" panel_visibility="advanced">
             <Property name="RockCohesion"/>
             <Property name="FrictionAngle"/>
             <Hints>

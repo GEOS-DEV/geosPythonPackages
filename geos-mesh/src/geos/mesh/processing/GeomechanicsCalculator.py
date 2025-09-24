@@ -14,7 +14,6 @@ import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import (
     getArrayInObject,
-    getComponentNames,
     isAttributeInObject,
 )
 
@@ -24,6 +23,7 @@ from geos.utils.Logger import (
 )
 from geos.utils.GeosOutputsConstants import (
     AttributeEnum,
+    ComponentNameEnum,
     GeosMeshOutputsEnum,
     PostProcessingOutputsEnum,
 )
@@ -41,6 +41,21 @@ from vtkmodules.vtkFiltersCore import vtkCellCenters
 __doc__ = """
 GeomechanicsCalculator module is a vtk filter that allows to compute additional
 Geomechanical properties from existing ones.
+
+The basic geomechanics outputs are:
+    - Elastic modulus (young modulus and poisson ratio or bulk modulus and shear modulus)
+    - Biot coefficient
+    - Compressibility, oedometric compressibility and real compressibility coefficient
+    - Specific gravity
+    - Real effective stress ratio
+    - Total initial stress, total current stress and total stress ratio
+    - Lithostatic stress (physic to update)
+    - Elastic stain
+    - Reservoir stress path and reservoir stress path in oedometric condition
+
+The advanced geomechanics outputs are:
+    - fracture index and threshold
+    - Critical pore pressure and pressure index
 
 GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
 and returned mesh is of same type as input.
@@ -72,13 +87,15 @@ To use the filter:
     filter.setLoggerHandler( yourHandler )
 
     # Change the physical constants if needed
+    ## Basic outputs
     grainBulkModulus: float
     specificDensity: float
-    rockCohesion: float
-    frictionAngle: float
-
     filter.SetGrainBulkModulus(grainBulkModulus)
     filter.SetSpecificDensity(specificDensity)
+
+    ## Advanced outputs
+    rockCohesion: float
+    frictionAngle: float
     filter.SetRockCohesion(rockCohesion)
     filter.SetFrictionAngle(frictionAngle)
 
@@ -120,22 +137,20 @@ class GeomechanicsCalculator():
         self.doComputeAdvancedOutputs: bool = computeAdvancedOutputs
 
         # Defaults physical constants
+        ## Basic outputs
         self.grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
         self.specificDensity: float = WATER_DENSITY
+        ## Advanced outputs
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-        # Elastic moduli are either bulk and Shear moduli (computeYoungPoisson=True)
-        # or young Modulus and poisson's ratio (computeYoungPoisson=False)
-        self.computeYoungPoisson: bool = True
-
         # Logger.
-        self.m_logger: Logger
+        self.logger: Logger
         if not speHandler:
-            self.m_logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerTitle, True )
         else:
-            self.m_logger = logging.getLogger( loggerTitle )
-            self.m_logger.setLevel( logging.INFO )
+            self.logger = logging.getLogger( loggerTitle )
+            self.logger.setLevel( logging.INFO )
 
     def applyFilter( self: Self ) -> bool:
         """Compute the geomechanical outputs of the mesh.
@@ -144,7 +159,7 @@ class GeomechanicsCalculator():
             Boolean (bool): True if calculation successfully ended, False otherwise.
         """
         if not self.checkMandatoryAttributes():
-            self.m_logger.error( "The filter failed." )
+            self.logger.error( "The filter failed." )
             return False
 
         if not self.computeBasicOutputs():
@@ -171,10 +186,10 @@ class GeomechanicsCalculator():
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.m_logger.hasHandlers():
-            self.m_logger.addHandler( handler )
+        if not self.logger.hasHandlers():
+            self.logger.addHandler( handler )
         else:
-            self.m_logger.warning(
+            self.logger.warning(
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
@@ -229,33 +244,40 @@ class GeomechanicsCalculator():
             bool: True if all needed attributes are present, False otherwise
         """
         self.youngModulusAttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName
-        self.poissonRatioAttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO.attributeName
         self.youngModulusOnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS.isOnPoints
+        youngModulusOnMesh: bool = isAttributeInObject( self.output, self.youngModulusAttributeName, self.youngModulusOnPoints )
+
+        self.poissonRatioAttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO.attributeName
         self.poissonRatioOnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO.isOnPoints
+        poissonRationOnMesh: bool = isAttributeInObject( self.output, self.poissonRatioAttributeName, self.poissonRatioOnPoints )
 
-        self.computeYoungPoisson = not isAttributeInObject( self.output, self.youngModulusAttributeName, self.youngModulusOnPoints ) \
-                                     or not isAttributeInObject( self.output, self.poissonRatioAttributeName, self.poissonRatioOnPoints )
+        self.bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
+        self.bulkModulusOnPoints: bool = GeosMeshOutputsEnum.BULK_MODULUS.isOnPoints
+        bulkModulusOnMesh: bool = isAttributeInObject( self.output, self.bulkModulusAttributeName, self.bulkModulusOnPoints )
 
-        # if none of elastic moduli is present, return False
-        if self.computeYoungPoisson:
-            self.bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
-            self.shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
-            self.bulkModulusOnPoints: str = GeosMeshOutputsEnum.BULK_MODULUS.isOnPoints
-            self.shearModulusOnPoints: str = GeosMeshOutputsEnum.SHEAR_MODULUS.isOnPoints
+        self.shearModulusAttributeName: str = GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName
+        self.shearModulusOnPoints: bool = GeosMeshOutputsEnum.SHEAR_MODULUS.isOnPoints
+        shearModulusOnMesh: bool = isAttributeInObject( self.output, self.shearModulusAttributeName, self.shearModulusOnPoints )
 
-            if not isAttributeInObject( self.output, self.bulkModulusAttributeName, self.bulkModulusOnPoints ) \
-               or not isAttributeInObject( self.output, self.shearModulusAttributeName, self.shearModulusOnPoints ):
-                mess: str = ( "Mandatory properties are missing to compute geomechanical outputs:" )
-                mess += (
-                    f"Either { self.bulkModulusAttributeName } and { self.shearModulusAttributeName } or { self.youngModulusAttributeName } and { self.poissonRatioAttributeName } must be present in the table data."
-                )
-                self.m_logger.error( mess )
+        if not youngModulusOnMesh and not poissonRationOnMesh:
+            if bulkModulusOnMesh and shearModulusOnMesh:
+                self.computeYoungPoisson = True
+            else:
+                self.logger.error( f"{ self.bulkModulusAttributeName } or { self.shearModulusAttributeName } are missing to compute geomechanical outputs." )
                 return False
+        elif not bulkModulusOnMesh and not shearModulusOnMesh:
+            if youngModulusOnMesh and poissonRationOnMesh:
+                self.computeYoungPoisson = False
+            else:
+                self.logger.error( f"{ self.youngModulusAttributeName } or { self.poissonRatioAttributeName } are missing to compute geomechanical outputs." )
+        else:
+            self.logger.error( f"{ self.bulkModulusAttributeName } and { self.shearModulusAttributeName } or { self.youngModulusAttributeName } and { self.poissonRatioAttributeName } are mandatory to compute geomechanical outputs." )
+            return False
 
         porosityAttributeName: str = GeosMeshOutputsEnum.POROSITY.attributeName
         porosityOnPoints: bool = GeosMeshOutputsEnum.POROSITY.isOnPoints
         if not isAttributeInObject( self.output, porosityAttributeName, porosityOnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { porosityAttributeName } is missing to compute geomechanical outputs." )
             return False
         else:
@@ -265,7 +287,7 @@ class GeomechanicsCalculator():
         porosityInitialAttributeName: str = GeosMeshOutputsEnum.POROSITY_INI.attributeName
         porosityInitialOnPoints: bool = GeosMeshOutputsEnum.POROSITY_INI.isOnPoints
         if not isAttributeInObject( self.output, porosityInitialAttributeName, porosityInitialOnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { porosityInitialAttributeName } is missing to compute geomechanical outputs."
             )
             return False
@@ -277,7 +299,7 @@ class GeomechanicsCalculator():
         deltaPressureAttributeName: str = GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName
         deltaPressureOnPoint: bool = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
         if not isAttributeInObject( self.output, deltaPressureAttributeName, deltaPressureOnPoint ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { deltaPressureAttributeName } is missing to compute geomechanical outputs." )
             return False
         else:
@@ -287,7 +309,7 @@ class GeomechanicsCalculator():
         densityAttributeName: str = GeosMeshOutputsEnum.ROCK_DENSITY.attributeName
         densityOnPoints: bool = GeosMeshOutputsEnum.ROCK_DENSITY.isOnPoints
         if not isAttributeInObject( self.output, densityAttributeName, densityOnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { densityAttributeName } is missing to compute geomechanical outputs." )
             return False
         else:
@@ -297,7 +319,7 @@ class GeomechanicsCalculator():
         effectiveStressAttributeName: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName
         effectiveStressOnPoints: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.isOnPoints
         if not isAttributeInObject( self.output, effectiveStressAttributeName, effectiveStressOnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { effectiveStressAttributeName } is missing to compute geomechanical outputs."
             )
             return False
@@ -309,7 +331,7 @@ class GeomechanicsCalculator():
         effectiveStressT0AttributeName: str = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName
         effectiveStressT0OnPoints: bool = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.isOnPoints
         if not isAttributeInObject( self.output, effectiveStressT0AttributeName, effectiveStressT0OnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { effectiveStressT0AttributeName } is missing to compute geomechanical outputs."
             )
             return False
@@ -321,7 +343,7 @@ class GeomechanicsCalculator():
         pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
         pressureOnPoints: bool = GeosMeshOutputsEnum.PRESSURE.isOnPoints
         if not isAttributeInObject( self.output, pressureAttributeName, pressureOnPoints ):
-            self.m_logger.error(
+            self.logger.error(
                 f"The mandatory attribute { pressureAttributeName } is missing to compute geomechanical outputs." )
             return False
         else:
@@ -337,49 +359,49 @@ class GeomechanicsCalculator():
             bool: return True if calculation successfully ended, False otherwise.
         """
         if not self.computeElasticModulus():
-            self.m_logger.error( "Elastic modulus computation failed." )
+            self.logger.error( "Elastic modulus computation failed." )
             return False
 
         if not self.computeBiotCoefficient():
-            self.m_logger.error( "Biot coefficient computation failed." )
+            self.logger.error( "Biot coefficient computation failed." )
             return False
 
         if not self.computeCompressibilityCoefficient():
             return False
 
         if not self.computeRealEffectiveStressRatio():
-            self.m_logger.error( "Effective stress ratio computation failed." )
+            self.logger.error( "Effective stress ratio computation failed." )
             return False
 
         if not self.computeSpecificGravity():
-            self.m_logger.error( "Specific gravity computation failed." )
+            self.logger.error( "Specific gravity computation failed." )
             return False
 
         # TODO: deactivate lithostatic stress calculation until right formula
         # if not self.computeLithostaticStress():
-        #     self.m_logger.error( "Lithostatic stress computation failed." )
+        #     self.logger.error( "Lithostatic stress computation failed." )
         #     return False
 
         if not self.computeTotalStresses():
             return False
 
         if not self.computeElasticStrain():
-            self.m_logger.error( "Elastic strain computation failed." )
+            self.logger.error( "Elastic strain computation failed." )
             return False
 
         # oedometric DRSP (effective stress ratio in oedometric conditions)
         if not self.computeEffectiveStressRatioOed():
-            self.m_logger.error( "Effective stress ration in oedometric condition computation failed." )
+            self.logger.error( "Effective stress ration in oedometric condition computation failed." )
             return False
 
         if not self.computeReservoirStressPathOed():
-            self.m_logger.error( "Reservoir stress path in oedometric condition computation failed." )
+            self.logger.error( "Reservoir stress path in oedometric condition computation failed." )
             return False
 
         if not self.computeReservoirStressPathReal():
             return False
 
-        self.m_logger.info( "All geomechanical basic outputs were successfully computed." )
+        self.logger.info( "All geomechanical basic outputs were successfully computed." )
         return True
 
     def computeAdvancedOutputs( self: Self ) -> bool:
@@ -395,7 +417,7 @@ class GeomechanicsCalculator():
             return False
 
         mess: str = ( "All geomechanical advanced outputs were successfully computed." )
-        self.m_logger.info( mess )
+        self.logger.info( mess )
         return True
 
     def computeElasticModulus( self: Self ) -> bool:
@@ -427,28 +449,28 @@ class GeomechanicsCalculator():
 
         self.youngModulus = fcts.youngModulus( self.bulkModulus, self.shearModulus )
         if np.any( self.youngModulus < 0 ):
-            self.m_logger.error( "Young modulus yields negative values. Check Bulk and Shear modulus values." )
+            self.logger.error( "Young modulus yields negative values. Check Bulk and Shear modulus values." )
             return False
 
         if not createAttribute( self.output,
                                 self.youngModulus,
                                 self.youngModulusAttributeName,
                                 onPoints=self.youngModulusOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Young modulus computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Young modulus computation failed." )
             return False
 
         self.poissonRatio = fcts.poissonRatio( self.bulkModulus, self.shearModulus )
         if np.any( self.poissonRatio < 0 ):
-            self.m_logger.error( "Poisson ratio yields negative values. Check Bulk and Shear modulus values." )
+            self.logger.error( "Poisson ratio yields negative values. Check Bulk and Shear modulus values." )
             return False
 
         if not createAttribute( self.output,
                                 self.poissonRatio,
                                 self.poissonRatioAttributeName,
                                 onPoints=self.poissonRatioOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Poisson ration computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Poisson ration computation failed." )
             return False
 
         return True
@@ -464,28 +486,28 @@ class GeomechanicsCalculator():
 
         self.bulkModulus = fcts.bulkModulus( self.youngModulus, self.poissonRatio )
         if np.any( self.bulkModulus < 0 ):
-            self.m_logger.error( "Bulk modulus yields negative values. Check Young modulus and Poisson ratio values." )
+            self.logger.error( "Bulk modulus yields negative values. Check Young modulus and Poisson ratio values." )
             return False
 
         if not createAttribute( self.output,
                                 self.bulkModulus,
                                 self.bulkModulusAttributeName,
                                 onPoints=self.bulkModulusOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Bulk modulus computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Bulk modulus computation failed." )
             return False
 
         self.shearModulus = fcts.shearModulus( self.youngModulus, self.poissonRatio )
         if np.any( self.shearModulus < 0 ):
-            self.m_logger.error( "Shear modulus yields negative values. Check Young modulus and Poisson ratio values." )
+            self.logger.error( "Shear modulus yields negative values. Check Young modulus and Poisson ratio values." )
             return False
 
         if not createAttribute( self.output,
                                 self.shearModulus,
                                 self.shearModulusAttributeName,
                                 onPoints=self.shearModulusOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Shear modulus computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Shear modulus computation failed." )
             return False
 
         return True
@@ -498,13 +520,19 @@ class GeomechanicsCalculator():
         """
         biotCoefficientAttributeName: str = PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName
         biotCoefficientOnPoints: bool = PostProcessingOutputsEnum.BIOT_COEFFICIENT.isOnPoints
-        self.biotCoefficient: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.grainBulkModulus,
-                                                                                self.bulkModulus )
-        return createAttribute( self.output,
-                                self.biotCoefficient,
-                                biotCoefficientAttributeName,
-                                onPoints=biotCoefficientOnPoints,
-                                logger=self.m_logger )
+        self.biotCoefficient: npt.NDArray[ np.float64 ]
+
+        if not isAttributeInObject( self.output, biotCoefficientAttributeName, biotCoefficientOnPoints ):
+            self.biotCoefficient = fcts.biotCoefficient( self.grainBulkModulus, self.bulkModulus )
+            return createAttribute( self.output,
+                                    self.biotCoefficient,
+                                    biotCoefficientAttributeName,
+                                    onPoints=biotCoefficientOnPoints,
+                                    logger=self.logger )
+        else:
+            self.biotCoefficient = getArrayInObject( self.output, biotCoefficientAttributeName, biotCoefficientOnPoints )
+            self.logger.warning( f"{ biotCoefficientAttributeName } is already on the mesh, it has not been computed by the filter." )
+            return True
 
     def computeCompressibilityCoefficient( self: Self ) -> bool:
         """Compute compressibility coefficient from simulation outputs.
@@ -523,8 +551,8 @@ class GeomechanicsCalculator():
                                 compressibility,
                                 compressibilityAttributeName,
                                 onPoints=compressibilityOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Compressibility coefficient computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Compressibility coefficient computation failed." )
             return False
 
         # oedometric compressibility
@@ -536,8 +564,8 @@ class GeomechanicsCalculator():
                                 compressibilityOed,
                                 compressibilityOedAttributeName,
                                 onPoints=compressibilityOedOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Oedometric compressibility coefficient computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Oedometric compressibility coefficient computation failed." )
             return False
 
         # real compressibility
@@ -549,8 +577,8 @@ class GeomechanicsCalculator():
                                 compressibilityReal,
                                 compressibilityRealAttributeName,
                                 onPoints=compressibilityRealOnPoint,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Real compressibility coefficient computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Real compressibility coefficient computation failed." )
             return False
 
         return True
@@ -571,7 +599,7 @@ class GeomechanicsCalculator():
                                 specificGravity,
                                 specificGravityAttributeName,
                                 onPoints=specificGravityOnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeRealEffectiveStressRatio( self: Self ) -> bool:
         """Compute effective stress ratio.
@@ -593,29 +621,26 @@ class GeomechanicsCalculator():
         """
         # Compute total stress at initial time step.
         if not self.computeTotalStressInitial():
-            self.m_logger.error( "Total stress at initial time step computation failed." )
+            self.logger.error( "Total stress at initial time step computation failed." )
             return False
 
         # Compute total stress at current time step.
         totalStressAttributeName: str = PostProcessingOutputsEnum.STRESS_TOTAL.attributeName
         totalStressOnPoints: bool = PostProcessingOutputsEnum.STRESS_TOTAL.isOnPoints
-        totalStressComponentNames: Tuple[ str, ...] = ()
-        if PostProcessingOutputsEnum.STRESS_TOTAL.nbComponent > 1:
-            totalStressComponentNames = getComponentNames( self.output, totalStressAttributeName, totalStressOnPoints )
         self.totalStress: npt.NDArray[ np.float64 ] = self.doComputeTotalStress( self.effectiveStress, self.pressure,
                                                                                  self.biotCoefficient )
         if not createAttribute( self.output,
                                 self.totalStress,
                                 totalStressAttributeName,
-                                componentNames=totalStressComponentNames,
+                                componentNames=ComponentNameEnum.XYZ.value,
                                 onPoints=totalStressOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Total stress at current time step computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Total stress at current time step computation failed." )
             return False
 
         # Compute total stress ratio.
         if not self.computeStressRatioReal( self.totalStress, PostProcessingOutputsEnum.STRESS_TOTAL_RATIO_REAL ):
-            self.m_logger.error( "Total stress ratio computation failed." )
+            self.logger.error( "Total stress ratio computation failed." )
             return False
 
         return True
@@ -646,12 +671,13 @@ class GeomechanicsCalculator():
                                                                           poissonRatioT0OnPoints )
             bulkModulusT0 = fcts.bulkModulus( youngModulusT0, poissonRatioT0 )
         else:
-            self.m_logger( "Elastic moduli at initial time are absent." )
+            self.logger( "Elastic moduli at initial time are absent." )
+            return False
 
         # Compute Biot at initial time step.
         biotCoefficientT0: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.grainBulkModulus, bulkModulusT0 )
 
-        pressureT0: npt.NDArray[ np.float64 ]
+        pressureT0: Union[ npt.NDArray[ np.float64 ], None ] = None
         # Case pressureT0 is None, total stress = effective stress
         # (managed by doComputeTotalStress function)
         if self.pressure is not None:
@@ -660,17 +686,13 @@ class GeomechanicsCalculator():
 
         totalStressT0AttributeName: str = PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.attributeName
         totalStressT0OnPoints: bool = PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL.isOnPoints
-        totalStressT0ComponentNames: Tuple[ str, ...] = ()
-        if PostProcessingOutputsEnum.STRESS_TOTAL.nbComponent > 1:
-            totalStressT0ComponentNames = getComponentNames( self.output, totalStressT0AttributeName,
-                                                             totalStressT0OnPoints )
         self.totalStressT0 = self.doComputeTotalStress( self.effectiveStressT0, pressureT0, biotCoefficientT0 )
         return createAttribute( self.output,
                                 self.totalStressT0,
                                 totalStressT0AttributeName,
-                                componentNames=totalStressT0ComponentNames,
+                                componentNames=ComponentNameEnum.XYZ.value,
                                 onPoints=totalStressT0OnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def doComputeTotalStress(
         self: Self,
@@ -691,10 +713,10 @@ class GeomechanicsCalculator():
         totalStress: npt.NDArray[ np.float64 ]
         if pressure is None:
             totalStress = np.copy( effectiveStress )
-            self.m_logger.warning( "Pressure attribute is undefined, total stress will be equal to effective stress." )
+            self.logger.warning( "Pressure attribute is undefined, total stress will be equal to effective stress." )
         else:
             if np.isnan( pressure ).any():
-                self.m_logger.warning( "Some cells do not have pressure data, for those cells, pressure is set to 0." )
+                self.logger.warning( "Some cells do not have pressure data, for those cells, pressure is set to 0." )
                 pressure[ np.isnan( pressure ) ] = 0.0
 
             totalStress = fcts.totalStress( effectiveStress, biotCoefficient, pressure )
@@ -717,7 +739,7 @@ class GeomechanicsCalculator():
                                 lithostaticStress,
                                 lithostaticStressAttributeName,
                                 onPoints=lithostaticStressOnPoint,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeDepthAlongLine( self: Self ) -> npt.NDArray[ np.float64 ]:
         """Compute depth along a line.
@@ -775,10 +797,6 @@ class GeomechanicsCalculator():
 
         elasticStrainAttributeName: str = PostProcessingOutputsEnum.STRAIN_ELASTIC.attributeName
         elasticStrainOnPoints: bool = PostProcessingOutputsEnum.STRAIN_ELASTIC.isOnPoints
-        elasticStrainComponentNames: Tuple[ str, ...] = ()
-        if PostProcessingOutputsEnum.STRESS_TOTAL.nbComponent > 1:
-            elasticStrainComponentNames = getComponentNames( self.output, elasticStrainAttributeName,
-                                                             elasticStrainOnPoints )
         elasticStrain: npt.NDArray[ np.float64 ]
         if self.computeYoungPoisson:
             elasticStrain = fcts.elasticStrainFromBulkShear( deltaEffectiveStress, self.bulkModulus, self.shearModulus )
@@ -789,9 +807,9 @@ class GeomechanicsCalculator():
         return createAttribute( self.output,
                                 elasticStrain,
                                 elasticStrainAttributeName,
-                                componentNames=elasticStrainComponentNames,
+                                componentNames=ComponentNameEnum.XYZ.value,
                                 onPoints=elasticStrainOnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeReservoirStressPathReal( self: Self ) -> bool:
         """Compute reservoir stress paths.
@@ -802,34 +820,27 @@ class GeomechanicsCalculator():
         # create delta stress attribute for QC
         deltaTotalStressAttributeName: str = PostProcessingOutputsEnum.STRESS_TOTAL_DELTA.attributeName
         deltaTotalStressOnPoints: bool = PostProcessingOutputsEnum.STRESS_TOTAL_DELTA.isOnPoints
-        deltaTotalStressComponentNames: Tuple[ str, ...] = ()
-        if PostProcessingOutputsEnum.STRESS_TOTAL_DELTA.nbComponent > 1:
-            deltaTotalStressComponentNames = getComponentNames( self.output, deltaTotalStressAttributeName,
-                                                                deltaTotalStressOnPoints )
         self.deltaTotalStress: npt.NDArray[ np.float64 ] = self.totalStress - self.totalStressT0
         if not createAttribute( self.output,
                                 self.deltaTotalStress,
                                 deltaTotalStressAttributeName,
-                                componentNames=deltaTotalStressComponentNames,
+                                componentNames=ComponentNameEnum.XYZ.value,
                                 onPoints=deltaTotalStressOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Delta total stress computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Delta total stress computation failed." )
             return False
 
         rspRealAttributeName: str = PostProcessingOutputsEnum.RSP_REAL.attributeName
         rspRealOnPoints: bool = PostProcessingOutputsEnum.RSP_REAL.isOnPoints
-        rspRealComponentNames: Tuple[ str, ...] = ()
-        if PostProcessingOutputsEnum.RSP_REAL.nbComponent > 1:
-            rspRealComponentNames = getComponentNames( self.output, rspRealAttributeName, rspRealOnPoints )
         self.rspReal: npt.NDArray[ np.float64 ] = fcts.reservoirStressPathReal( self.deltaTotalStress,
                                                                                 self.deltaPressure )
         if not createAttribute( self.output,
                                 self.rspReal,
                                 rspRealAttributeName,
-                                componentNames=rspRealComponentNames,
+                                componentNames=ComponentNameEnum.XYZ.value,
                                 onPoints=rspRealOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Reservoir stress real path computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Reservoir stress real path computation failed." )
             return False
 
         return True
@@ -847,7 +858,7 @@ class GeomechanicsCalculator():
                                 self.rspOed,
                                 rspOedAttributeName,
                                 onPoints=rspOedOnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeStressRatioReal( self: Self, stress: npt.NDArray[ np.float64 ], outputAttribute: AttributeEnum ) -> bool:
         """Compute the ratio between horizontal and vertical effective stress.
@@ -866,7 +877,7 @@ class GeomechanicsCalculator():
                                 self.stressRatioReal,
                                 stressRatioRealAttributeName,
                                 onPoints=stressRatioRealOnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeEffectiveStressRatioOed( self: Self ) -> bool:
         """Compute the effective stress ratio in oedometric conditions.
@@ -881,7 +892,7 @@ class GeomechanicsCalculator():
                                 effectiveStressRatioOed,
                                 effectiveStressRatioOedAttributeName,
                                 onPoints=effectiveStressRatioOedOnPoints,
-                                logger=self.m_logger )
+                                logger=self.logger )
 
     def computeCriticalTotalStressRatio( self: Self ) -> bool:
         """Compute fracture index and fracture threshold.
@@ -898,8 +909,8 @@ class GeomechanicsCalculator():
                                 criticalTotalStressRatio,
                                 fractureIndexAttributeName,
                                 onPoints=fractureIndexOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Fracture index computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Fracture index computation failed." )
             return False
 
         mask: npt.NDArray[ np.bool_ ] = np.argmin( np.abs( self.totalStress[ :, :2 ] ), axis=1 )
@@ -914,8 +925,8 @@ class GeomechanicsCalculator():
                                 stressRatioThreshold,
                                 fractureThresholdAttributeName,
                                 onPoints=fractureThresholdOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Fracture threshold computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Fracture threshold computation failed." )
             return False
 
         return True
@@ -935,21 +946,20 @@ class GeomechanicsCalculator():
                                 criticalPorePressure,
                                 criticalPorePressureAttributeName,
                                 onPoints=criticalPorePressureOnPoints,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Critical pore pressure computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Critical pore pressure computation failed." )
             return False
 
         # add critical pore pressure index (i.e., ratio between pressure and criticalPorePressure)
-        criticalPorePressureIndex: npt.NDArray[ np.float64 ] = ( fcts.criticalPorePressureThreshold(
-            self.pressure, criticalPorePressure ) )
+        criticalPorePressureIndex: npt.NDArray[ np.float64 ] = fcts.criticalPorePressureThreshold( self.pressure, criticalPorePressure )
         criticalPorePressureIndexAttributeName: str = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName
         criticalPorePressureIndexOnPoint: bool = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD.isOnPoints
         if not createAttribute( self.output,
                                 criticalPorePressureIndex,
                                 criticalPorePressureIndexAttributeName,
                                 onPoints=criticalPorePressureIndexOnPoint,
-                                logger=self.m_logger ):
-            self.m_logger.error( "Critical pore pressure indexes computation failed." )
+                                logger=self.logger ):
+            self.logger.error( "Critical pore pressure indexes computation failed." )
             return False
 
         return True

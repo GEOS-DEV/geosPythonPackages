@@ -506,8 +506,7 @@ def reservoirStressPathReal( deltaStress: npt.NDArray[ np.float64 ],
     den: npt.NDArray[ np.float64 ] = np.copy( deltaPressure )
     den[ mask ] = 1.0
     # use -1 to agree with Geos convention (i.e., compression with negative stress)
-    # take the xx, yy, and zz components only
-    rsp: npt.NDArray[ np.float64 ] = np.copy( deltaStress[ :, :3 ] )
+    rsp: npt.NDArray[ np.float64 ] = np.copy( deltaStress[ :, : ] )
     for j in range( rsp.shape[ 1 ] ):
         rsp[ :, j ] /= den
         rsp[ mask, j ] = np.nan
