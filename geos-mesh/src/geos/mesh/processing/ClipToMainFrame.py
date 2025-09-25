@@ -240,7 +240,9 @@ class ClipToMainFrame( vtkTransformFilter ):
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
-            self.logger.info( "Processing MultiblockDataSet.\n Please make sure your MultiblockDataSet is owning a vtkUnstructured grid as a leaf." )
+            self.logger.info(
+                "Processing MultiblockDataSet.\n Please make sure your MultiblockDataSet is owning a vtkUnstructured grid as a leaf."
+            )
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
