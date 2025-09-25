@@ -6,13 +6,12 @@ on:
 
 jobs:
   test_geos_integration:
-    name: Test geosPythonPackages Integration with GEOS (Python ${{ matrix.python-version }})
+    name: Test geosPythonPackages Integration with GEOS
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10"]
     
+    container:
+      image: geosx/ubuntu20.04-gcc9:latest
+
     steps:
     - name: Checkout geosPythonPackages
       uses: actions/checkout@v4
@@ -27,259 +26,110 @@ jobs:
         path: GEOS
         submodules: recursive
     
-    - name: Setup Python environment
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          cmake \
-          build-essential \
-          gfortran \
-          libopenmpi-dev \
-          libhdf5-dev \
-          libhdf5-mpi-dev \
-          libblas-dev \
-          liblapack-dev \
-          python3-dev \
-          python3-pip \
-          pkg-config \
-          git \
-          wget \
-          curl
-    
     - name: Setup test environment
       run: |
-        echo "Testing geosPythonPackages integration with GEOS"
-        echo "================================================"
-        echo ""
-        
-        # Set up paths
-        export GEOS_ROOT="$(pwd)/GEOS"
-        export GEOSPYTHONPACKAGES_ROOT="$(pwd)/geosPythonPackages"
-        export SOURCE_DIR="$GEOS_ROOT/src"
-        export CMAKE_LIST_PATH="$SOURCE_DIR/CMakeLists.txt"
-        export SETUP_PYTHON_ENVIRONMENT_SCRIPT="$GEOS_ROOT/scripts/setupPythonEnvironment.bash"
-        
-        # Get the actual PR source branch name (not the merge commit)
-        # For PRs, use GITHUB_HEAD_REF (source branch), for direct pushes use GITHUB_REF_NAME
+        echo "Setting up test environment..."
+        GEOS_ROOT="$(pwd)/GEOS"
+        SETUP_PYTHON_ENVIRONMENT_SCRIPT="$GEOS_ROOT/scripts/setupPythonEnvironment.bash"
+
         if [ -n "${{ github.head_ref }}" ]; then
-          export CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.head_ref }}"
+          CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.head_ref }}"
         else
-          export CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.ref_name }}"
+          CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.ref_name }}"
         fi
         
-        echo "Paths:"
-        echo "   GEOS: $GEOS_ROOT"
-        echo "   geosPythonPackages: $GEOSPYTHONPACKAGES_ROOT"
-        echo "   CMakeLists.txt: $CMAKE_LIST_PATH"
-        echo "   setupPythonEnvironment.bash: $SETUP_PYTHON_ENVIRONMENT_SCRIPT"
-        echo "   Current geosPythonPackages branch: $CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME"
-        echo ""
-        
-        # Save environment variables for subsequent steps
         echo "GEOS_ROOT=$GEOS_ROOT" >> $GITHUB_ENV
-        echo "GEOSPYTHONPACKAGES_ROOT=$GEOSPYTHONPACKAGES_ROOT" >> $GITHUB_ENV
-        echo "SOURCE_DIR=$SOURCE_DIR" >> $GITHUB_ENV
-        echo "CMAKE_LIST_PATH=$CMAKE_LIST_PATH" >> $GITHUB_ENV
         echo "SETUP_PYTHON_ENVIRONMENT_SCRIPT=$SETUP_PYTHON_ENVIRONMENT_SCRIPT" >> $GITHUB_ENV
         echo "CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME=$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" >> $GITHUB_ENV
         
-        # Test Python environment setup
-        echo "Testing Python environment setup..."
-        if [ -f "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" ]; then
-          echo "Found setupPythonEnvironment.bash"
-          
-          # Test the script help output
-          echo "Testing script help functionality..."
-          if bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" --help 2>&1 | head -10; then
-            echo "setupPythonEnvironment.bash is functional"
-          else
-            echo "setupPythonEnvironment.bash exists but help failed"
-            echo "Script may still be functional for integration"
-          fi
-        else
-          echo "setupPythonEnvironment.bash not found"
-          exit 1
-        fi
-        echo ""
+        echo "GEOS Root: $GEOS_ROOT"
+        echo "Branch Name: $CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME"
         
-        # Check for GEOS CMakeLists.txt in src directory
-        if [ -f "$CMAKE_LIST_PATH" ]; then
-          echo "Found GEOS CMakeLists.txt in src/ directory"
-          echo ""
-        else
-          echo "CMakeLists.txt not found in expected location"
-          exit 1
-        fi
-        
-        # Create a minimal build directory for testing Python tools
-        echo "Creating test build directory..."
         mkdir -p build_test
-
-    - name: "Test 1: Direct setupPythonEnvironment.bash execution"
+    
+    - name: "Configure GEOS"
+      working-directory: ./GEOS
       run: |
-        cd build_test
+        echo "=== Configuring GEOS Build ==="
+        python3 scripts/config-build.py \
+          -hc /spack-generated.cmake \
+          -bt Release \
+          -bp ../build_test \
+          -DENABLE_HYPRE=OFF \
+          -DENABLE_TRILINOS=ON
+
+    - name: "Build GEOS"
+      working-directory: ./build_test
+      run: |
+        echo "=== Building GEOS ==="
+        make -j$(nproc)
+    
+    - name: "Test 1: Direct setupPythonEnvironment.bash execution"
+      working-directory: ./build_test
+      run: |
         echo "=== Test 1: Direct setupPythonEnvironment.bash execution ==="
-        echo "Using geosPythonPackages branch: $CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME"
-        
-        # Set environment variables to avoid packaging conflicts
         export SETUPTOOLS_USE_DISTUTILS=stdlib
         export PIP_DISABLE_PIP_VERSION_CHECK=1
-        
-        # Create a minimal bin directory for the direct test
         mkdir -p bin_direct
         
-        # Run the setupPythonEnvironment.bash script directly
-        if bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" \
+        bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" \
           -p $(which python3) \
           -b "$(pwd)/bin_direct" \
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
-          --verbose; then
-          
+          --verbose
+        
+        if [ -f "bin_direct/preprocess_xml" ] && [ -f "bin_direct/format_xml" ]; then
           echo "Direct setupPythonEnvironment.bash succeeded!"
-          
-          # Check if the Python tools were created
-          if [ -f "bin_direct/preprocess_xml" ] && [ -f "bin_direct/format_xml" ]; then
-            echo "Found Python tool binaries (direct method):"
-            ls -la bin_direct/
-            
-            # Test that the tools are functional
-            echo "Testing direct tools functionality..."
-            if bin_direct/preprocess_xml --help > /dev/null 2>&1; then
-              echo "preprocess_xml (direct) is functional"
-            fi
-            if bin_direct/format_xml --help > /dev/null 2>&1; then
-              echo "format_xml (direct) is functional"
-            fi
-          else
-            echo "Direct method failed to create Python tools"
-            exit 1
-          fi
         else
-          echo "Direct setupPythonEnvironment.bash failed"
+          echo "Direct method failed to create Python tools"
           exit 1
         fi
 
-    - name: "Test 2: CMake configure"
+    - name: "Test 2: make geosx_python_tools"
+      working-directory: ./build_test
       run: |
-        cd build_test
-        echo "=== Test 2: CMake configure ==="
-        
-        # Configure CMake to test the CMake targets
-        echo "Configuring CMake build..."
-        if cmake "$SOURCE_DIR" \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DENABLE_PYGEOSX=OFF \
-          -DENABLE_XML_UPDATES=OFF \
-          -DENABLE_MPI=OFF \
-          -DENABLE_OPENMP=OFF \
-          -DENABLE_CUDA=OFF \
-          -DENABLE_HIP=OFF \
-          -DENABLE_ATS=OFF \
-          -DENABLE_BENCHMARKS=OFF \
-          -DENABLE_DOCS=OFF \
-          -DPython3_EXECUTABLE=$(which python3) \
-          -DGEOS_PYTHON_PACKAGES_BRANCH="$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
-          -DCMAKE_VERBOSE_MAKEFILE=ON; then
-          
-          echo "CMake configuration succeeded!"
-        else
-          echo "CMake configuration failed"
-          exit 1
-        fi
+        echo "=== Test 2: make geosx_python_tools ==="
+        make geosx_python_tools -j$(nproc)
 
-    - name: "Test 3: make geosx_python_tools"
-      run: |
-        cd build_test
-        echo "=== Test 3: make geosx_python_tools ==="
-        
-        # Test make geosx_python_tools
-        echo "Testing make geosx_python_tools..."
-        if make geosx_python_tools -j$(nproc); then
+        if [ -f "bin/preprocess_xml" ] && [ -f "bin/format_xml" ]; then
           echo "make geosx_python_tools succeeded!"
-          
-          # Verify the tools were created
-          if [ -f "bin/preprocess_xml" ] && [ -f "bin/format_xml" ]; then
-            echo "Found Python tool binaries (CMake method):"
-            ls -la bin/preprocess_xml bin/format_xml
-            
-            # Test that the tools are functional
-            echo "Testing CMake-built tools functionality..."
-            if bin/preprocess_xml --help > /dev/null 2>&1; then
-              echo "preprocess_xml (CMake) is functional"
-            fi
-            if bin/format_xml --help > /dev/null 2>&1; then
-              echo "format_xml (CMake) is functional"
-            fi
-          else
-            echo "CMake method failed to create Python tools"
-            exit 1
-          fi
         else
-          echo "make geosx_python_tools failed"
+          echo "CMake method failed to create Python tools"
           exit 1
         fi
 
-    - name: "Test 4: make geosx_python_tools_clean"
+    - name: "Test 3: make geosx_python_tools_clean"
+      working-directory: ./build_test
       run: |
-        cd build_test
-        echo "=== Test 4: make geosx_python_tools_clean ==="
+        echo "=== Test 3: make geosx_python_tools_clean ==="
+        make geosx_python_tools_clean
         
-        # Test the clean target
-        echo "Testing make geosx_python_tools_clean..."
-        if make geosx_python_tools_clean; then
-          echo "make geosx_python_tools_clean succeeded!"
-          
-          # Verify tools were removed
-          if [ ! -f "bin/preprocess_xml" ] && [ ! -f "bin/format_xml" ]; then
-            echo "Python tools successfully removed by clean target"
-          else
-            echo "Warning: Python tools still exist after clean"
-            ls -la bin/preprocess_xml bin/format_xml 2>/dev/null || true
-          fi
+        if [ ! -f "bin/preprocess_xml" ] && [ ! -f "bin/format_xml" ]; then
+          echo "Python tools successfully removed by clean target"
         else
-          echo "make geosx_python_tools_clean failed"
+          echo "Warning: Python tools still exist after clean"
           exit 1
         fi
         
-        # Rebuild tools for next test
+        # Rebuilding tools here because the next test ('make ..._test') requires them.
         echo "Rebuilding tools for next test..."
-        if make geosx_python_tools -j$(nproc); then
-          echo "Tools rebuilt successfully"
-        else
-          echo "Failed to rebuild tools"
-          exit 1
-        fi
+        make geosx_python_tools -j$(nproc)
 
-    - name: "Test 5: make geosx_python_tools_test"
+    - name: "Test 4: make geosx_python_tools_test"
+      working-directory: ./build_test
       run: |
-        cd build_test
-        echo "=== Test 5: make geosx_python_tools_test ==="
-        
-        # Test the test target
-        echo "Testing make geosx_python_tools_test..."
+        echo "=== Test 4: make geosx_python_tools_test ==="
         if make geosx_python_tools_test; then
           echo "make geosx_python_tools_test succeeded!"
         else
           echo "make geosx_python_tools_test failed"
-          # Don't exit here as this might be expected to fail in CI environment
-          echo "Note: Test failure might be expected in CI environment"
+          exit 1
         fi
 
-    - name: "Test 6: make geosx_format_all_xml_files"
+    - name: "Test 5: make geosx_format_all_xml_files"
+      working-directory: ./build_test
       run: |
-        cd build_test
-        echo "=== Test 6: make geosx_format_all_xml_files ==="
-        
-        # Note: This target depends on geosx_xml_tools, but according to CMakeLists.txt
-        # it should be geosx_python_tools. Let's test both possibilities
-        echo "Testing make geosx_format_all_xml_files..."
-        
-        # Create some test XML files to format
+        echo "=== Test 5: make geosx_format_all_xml_files ==="
         mkdir -p test_xml
         cat > test_xml/test.xml << 'EOF'
         <?xml version="1.0" ?>
@@ -290,59 +140,25 @@ jobs:
         </Problem>
         EOF
         
-        # The target in CMakeLists.txt has a dependency issue (geosx_xml_tools vs geosx_python_tools)
-        # Let's test if the target exists and works with our current setup
-        if make geosx_format_all_xml_files 2>&1; then
+        if make geosx_format_all_xml_files; then
           echo "make geosx_format_all_xml_files succeeded!"
         else
-          echo "make geosx_format_all_xml_files failed (this may be expected due to target dependencies)"
-          echo "Testing direct format_xml functionality instead..."
-          if [ -f "bin/format_xml" ]; then
-            if bin/format_xml test_xml/test.xml; then
-              echo "format_xml tool works directly"
-            else
-              echo "format_xml tool failed on test file"
-            fi
-          fi
+          echo "make geosx_format_all_xml_files failed"
+          exit 1
         fi
-        
-        echo ""
-        echo "GEOS integration test completed successfully for Python ${{ matrix.python-version }}"
 
   integration_summary:
     name: GEOS Integration Summary
     runs-on: ubuntu-latest
     needs: test_geos_integration
-    if: always() # Ensures this job runs even if some matrix jobs fail
-
+    if: always()
     steps:
-    - name: Summarize Python version results
-      run: |
-        # This script parses the results of the matrix jobs to provide a detailed summary.
-        # It uses 'jq' to process the JSON from the 'needs.test_geos_integration.jobs' context.
-        RESULTS_JSON='${{ toJSON(needs.test_geos_integration.jobs) }}'
-        ANY_FAILED=false
-
-        echo "## GEOS Integration Test Summary"
-        echo ""
-
-        # Use process substitution to read from jq's output for each job in the matrix
-        while IFS=':' read -r version result; do
-          if [ "$result" == "success" ]; then
-            echo "| Python $version | Pass |"
+      - name: Summarize Results
+        run: |
+          echo "## GEOS Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.test_geos_integration.result }}" == "success" ]]; then
+            echo "All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Python $version | Fail |"
-            ANY_FAILED=true
+            echo "Integration tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
-        done < <(echo "$RESULTS_JSON" | jq -r 'to_entries[] | "\(.key):\(.value.result)"')
-
-        echo ""
-
-        # Provide a final conclusion and fail the job if any version failed
-        if [ "$ANY_FAILED" = "true" ]; then
-          echo "**Conclusion:** At least one Python version failed the integration tests."
-          echo "Please review the logs for the failing job(s) to diagnose the issue."
-          exit 1
-        else
-          echo "**Conclusion:** All Python versions passed the integration tests successfully!"
-        fi
