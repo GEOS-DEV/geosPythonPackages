@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     container:
-      image: geosx/ubuntu20.04-gcc9:latest
+      image: geosx/ubuntu20.04-gcc9:320-766
 
     steps:
     - name: Checkout geosPythonPackages
@@ -48,6 +48,8 @@ jobs:
         mkdir -p build_test
     
     - name: "Configure GEOS"
+      # This step is now only responsible for configuration.
+      # It runs the script from the GEOS directory and places build files in ../build_test
       working-directory: ./GEOS
       run: |
         echo "=== Configuring GEOS Build ==="
@@ -59,6 +61,7 @@ jobs:
           -DENABLE_TRILINOS=ON
 
     - name: "Build GEOS"
+      # This step is now only responsible for building.
       working-directory: ./build_test
       run: |
         echo "=== Building GEOS ==="
@@ -157,8 +160,8 @@ jobs:
         run: |
           echo "## GEOS Integration Test Summary" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.test_geos_integration.result }}" == "success" ]]; then
-            echo "All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Integration tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Integration tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
