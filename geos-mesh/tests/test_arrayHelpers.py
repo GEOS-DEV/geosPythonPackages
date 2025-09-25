@@ -48,7 +48,6 @@ def test_computeElementMapping(
     assert keysComputed == keysTest
 
     for key in keysTest:
-        print( elementMapComputed[ key ] )
         assert np.all( elementMapComputed[ key ] == elementMapTest[ key ] )
 
 

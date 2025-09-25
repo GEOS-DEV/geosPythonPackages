@@ -4,8 +4,10 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import numpy as np
 import numpy.typing as npt
-from geos.utils.Logger import logging, Logger, getLogger
-from typing_extensions import Self, Union
+import logging
+
+from geos.utils.Logger import ( Logger, getLogger )
+from typing_extensions import Self, Union, Set, List, Dict
 
 from vtkmodules.vtkCommonDataModel import (
     vtkDataSet,
@@ -38,7 +40,7 @@ To use the filter:
     # Filter inputs.
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ]
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ]
-    attributeNames: set[ str ]
+    attributeNames: Set[ str ]
     # Optional inputs.
     onPoints: bool  # defaults to False
     speHandler: bool  # defaults to False
@@ -68,7 +70,7 @@ class AttributeMapping:
         self: Self,
         meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-        attributeNames: set[ str ],
+        attributeNames: Set[ str ],
         onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
@@ -77,7 +79,7 @@ class AttributeMapping:
         Args:
             meshFrom (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The source mesh with attributes to transfer.
             meshTo (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The final mesh where to transfer attributes.
-            attributeNames (set[str]): Names of the attributes to transfer.
+            attributeNames (Set[str]): Names of the attributes to transfer.
             onPoints (bool): True if attributes are on points, False if they are on cells.
                 Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
@@ -85,12 +87,13 @@ class AttributeMapping:
         """
         self.meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshFrom
         self.meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshTo
-        self.attributeNames: set[ str ] = attributeNames
+        self.attributeNames: Set[ str ] = attributeNames
         self.onPoints: bool = onPoints
+        #TODO/refact (@RomainBaville) make it an enum
         self.piece: str = "points" if self.onPoints else "cells"
 
         # cell map
-        self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
+        self.ElementMap: Dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
         # Logger.
         self.logger: Logger
@@ -115,13 +118,13 @@ class AttributeMapping:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
+    def getElementMap( self: Self ) -> Dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.
 
         If attribute to transfer are on points it will be a pointMap, else it will be a cellMap.
 
         Returns:
-            self.elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
+            self.elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
         return self.ElementMap
 
@@ -138,16 +141,16 @@ class AttributeMapping:
             self.logger.warning( f"The filter { self.logger.name } has not been used." )
             return False
 
-        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
-        wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
+        attributesInMeshFrom: Set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
+        wrongAttributeNames: Set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
         if len( wrongAttributeNames ) > 0:
             self.logger.error(
                 f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
 
-        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
-        attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
+        attributesInMeshTo: Set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
+        attributesAlreadyInMeshTo: Set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
         if len( attributesAlreadyInMeshTo ) > 0:
             self.logger.error(
                 f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
@@ -155,7 +158,7 @@ class AttributeMapping:
             return False
 
         if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
-            partialAttributes: list[ str ] = []
+            partialAttributes: List[ str ] = []
             for attributeName in self.attributeNames:
                 if not isAttributeGlobal( self.meshFrom, attributeName, self.onPoints ):
                     partialAttributes.append( attributeName )
