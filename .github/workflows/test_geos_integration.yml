@@ -25,6 +25,7 @@ jobs:
         repository: GEOS-DEV/GEOS
         ref: develop
         path: GEOS
+        submodules: recursive
     
     - name: Setup Python environment
       uses: actions/setup-python@v4
@@ -90,7 +91,14 @@ jobs:
         export SOURCE_DIR="$GEOS_ROOT/src"
         export CMAKE_LIST_PATH="$SOURCE_DIR/CMakeLists.txt"
         export SETUP_PYTHON_ENVIRONMENT_SCRIPT="$GEOS_ROOT/scripts/setupPythonEnvironment.bash"
-        export CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME=${{ github.ref_name }}
+        
+        # Get the actual PR source branch name (not the merge commit)
+        # For PRs, use GITHUB_HEAD_REF (source branch), for direct pushes use GITHUB_REF_NAME
+        if [ -n "${{ github.head_ref }}" ]; then
+          export CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.head_ref }}"
+        else
+          export CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME="${{ github.ref_name }}"
+        fi
         
         echo "Paths:"
         echo "   GEOS: $GEOS_ROOT"
