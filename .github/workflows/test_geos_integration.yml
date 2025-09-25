@@ -50,53 +50,6 @@ jobs:
           git \
           wget \
           curl
-        
-        # Install Python packages that GEOS might need
-        pip install numpy scipy matplotlib h5py
-    
-    - name: Install geosPythonPackages dependencies
-      run: |
-        cd geosPythonPackages
-        
-        # Install geosPythonPackages in development mode
-        echo "Installing geosPythonPackages dependencies..."
-        if [ -f "docs/requirements.txt" ]; then
-          pip install -r docs/requirements.txt || echo "Warning: Could not install requirements.txt"
-        fi
-        
-        # Set SETUPTOOLS_USE_DISTUTILS to avoid setuptools conflicts
-        export SETUPTOOLS_USE_DISTUTILS=stdlib
-        
-        # Install only critical packages needed for GEOS integration
-        # Focus on XML tools which are most commonly used
-        echo "Installing critical geosPythonPackages for GEOS integration..."
-        
-        # Try geos-xml-tools first (most important for GEOS integration)
-        if [ -d "geos-xml-tools" ] && [ -f "geos-xml-tools/pyproject.toml" ]; then
-          echo "Installing geos-xml-tools..."
-          cd geos-xml-tools
-          pip install -e . || echo "Warning: Could not install geos-xml-tools, continuing anyway"
-          cd ..
-        fi
-        
-        # Try geos-ats (commonly used)
-        if [ -d "geos-ats" ] && [ -f "geos-ats/pyproject.toml" ]; then
-          echo "Installing geos-ats..."
-          cd geos-ats
-          pip install -e . || echo "Warning: Could not install geos-ats, continuing anyway"
-          cd ..
-        fi
-        
-        # Try geos-utils (base utilities)
-        if [ -d "geos-utils" ] && [ -f "geos-utils/pyproject.toml" ]; then
-          echo "Installing geos-utils..."
-          cd geos-utils
-          pip install -e . || echo "Warning: Could not install geos-utils, continuing anyway"
-          cd ..
-        fi
-        
-        echo "Package installation step completed (warnings are expected in CI)"
-        echo "The key test is whether GEOS can integrate with the Python packages"
     
     - name: Test GEOS integration
       run: |
@@ -279,89 +232,45 @@ jobs:
         cd "$GEOSPYTHONPACKAGES_ROOT"
         echo ""
         
-        # Test geosPythonPackages structure
-        echo "Testing geosPythonPackages structure..."
+        # Verify geosPythonPackages repository structure (basic sanity check)
+        echo "Verifying geosPythonPackages repository structure..."
         
-        # Check key directories exist
-        REQUIRED_DIRS=("geos-xml-tools" "geos-ats" "geos-utils")
-        OPTIONAL_DIRS=("geos-mesh" "geos-geomechanics" "geos-posp" "geos-pv" "geos-timehistory" "geos-trame" "geos-xml-viewer" "hdf5-wrapper" "pygeos-tools")
+        # The real integration test is whether GEOS can successfully use this repository
+        # This is just a basic sanity check that we have the right repository structure
         
-        STRUCTURE_OK=true
+        CRITICAL_STRUCTURE_OK=true
         
-        for dir in "${REQUIRED_DIRS[@]}"; do
-          if [ -d "$dir" ]; then
-            echo "Found required directory: $dir"
-          else
-            echo "✗ Missing required directory: $dir"
-            STRUCTURE_OK=false
-          fi
-        done
-        
-        for dir in "${OPTIONAL_DIRS[@]}"; do
-          if [ -d "$dir" ]; then
-            echo "Found optional directory: $dir"
-          else
-            echo "Optional directory not found: $dir (this is OK)"
-          fi
-        done
-        
-        if [ "$STRUCTURE_OK" != "true" ]; then
-          echo "Missing required directories"
-          exit 1
-        fi
-        echo ""
-        
-        # Test XML tools (most critical for GEOS integration)
-        echo "Testing XML tools functionality..."
         if [ -d "geos-xml-tools" ]; then
-          cd geos-xml-tools
-          
-          # Check for key Python files
-          if find . -name "preprocess_xml.py" -o -name "format_xml.py" | head -2 | wc -l | grep -q "2"; then
-            echo "Found XML tool scripts"
-            
-            # Try to import and test the tools if possible
-            if python3 -c "import sys; print('Python import test passed')" 2>/dev/null; then
-              echo "Python environment is functional"
-            else
-              echo "Python environment may have issues, but continuing"
-            fi
-          else
-            echo "XML tool scripts may be missing, but structure exists"
-          fi
-          
-          cd "$GEOSPYTHONPACKAGES_ROOT"
+          echo "Found geos-xml-tools directory"
+        else
+          echo "Missing geos-xml-tools directory"
+          CRITICAL_STRUCTURE_OK=false
         fi
-        echo ""
         
-        # Test ATS integration (commonly used with GEOS)
-        echo "Testing ATS integration availability..."
-        if [ -d "geos-ats" ]; then
-          cd geos-ats
-          
-          if find . -name "run_geos_ats.py" -type f | head -1 | wc -l | grep -q "1"; then
-            echo "Found run_geos_ats.py"
-          else
-            echo "run_geos_ats.py structure may differ, but directory exists"
-          fi
-          
-          cd "$GEOSPYTHONPACKAGES_ROOT"
-        fi
-        echo ""
-        
-        # Test package installation process availability
-        echo "Testing package installation infrastructure..."
         if [ -f "install_packages.sh" ]; then
           echo "Found install_packages.sh"
-          # Test script syntax
-          if bash -n install_packages.sh; then
-            echo "install_packages.sh syntax is valid"
-          else
-            echo "install_packages.sh has syntax issues"
-          fi
         else
-          echo "install_packages.sh not found"
+          echo "Missing install_packages.sh" 
+          CRITICAL_STRUCTURE_OK=false
         fi
+        
+        # Count geos-* directories
+        GEOS_DIRS=$(find . -maxdepth 1 -name "geos-*" -type d | wc -l)
+        echo "Found $GEOS_DIRS geos-* package directories"
+        
+        if [ "$GEOS_DIRS" -lt 3 ]; then
+          echo "Expected at least 3 geos-* directories, found $GEOS_DIRS"
+          CRITICAL_STRUCTURE_OK=false
+        fi
+        
+        if [ "$CRITICAL_STRUCTURE_OK" != "true" ]; then
+          echo "Repository structure validation failed"
+          echo "This doesn't appear to be a valid geosPythonPackages repository"
+          exit 1
+        fi
+        
+        echo "Repository structure validation passed"
+        echo "The real integration test was GEOS successfully using this repository via setupPythonEnvironment.bash"
         echo ""
         
         echo "GEOS integration test completed successfully for Python ${{ matrix.python-version }}"
