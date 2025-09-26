@@ -15,35 +15,42 @@ from geos.mesh.utils.multiblockHelpers import (
     getBlockIndexFromName, )
 
 __doc__ = """
-GeosBlockExtractor module is a vtk filter that allows to extract Volume mesh,
-Wells and Faults from a vtkMultiBlockDataSet.
+GeosBlockExtractor module is a vtk filter that allows to extract in a vtkMultiblockDataSet
+all the block of a domain of the output mesh of geos. The volume blocks are extracted by defaults.
 
-Filter input and output types are vtkMultiBlockDataSet.
+There is tree domains:
+    0 is all the blocks with volume mesh,
+    1 is all the blocks referring to faults,
+    2 is all the blocks referring to wells,
+
+The input mesh must be an output of Geos
 
 To use the filter:
 
 .. code-block:: python
 
-    from filters.GeosBlockExtractor import GeosBlockExtractor
+    from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
 
-    # filter inputs
-    logger :Logger
-    input :vtkMultiBlockDataSet
+    # Filter inputs.
+    geosMesh: vtkMultiBlockDataSet
+    # Optional inputs.
+    extractFaults: bool # Defaults to False
+    extractWells: bool # Defaults to False
+    speHandler: bool # Defaults to False
 
-    # instanciate the filter
-    blockExtractor :GeosBlockExtractor = GeosBlockExtractor()
-    # set the logger
-    blockExtractor.SetLogger(logger)
-    # set input data object
-    blockExtractor.SetInputDataObject(input)
-    # ExtractFaultsOn or ExtractFaultsOff to (de)activate the extraction of Fault blocks
-    blockExtractor.ExtractFaultsOn()
-    # ExtractWellsOn or ExtractWellsOff to (de)activate the extraction of well blocks
-    blockExtractor.ExtractWellsOn()
-    # do calculations
-    blockExtractor.Update()
-    # get output object
-    output :vtkMultiBlockDataSet = blockExtractor.GetOutputDataObject(0)
+    # Instantiate the filter
+    blockExtractor :GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFaults, extractWells, speHandler )
+
+    # Set the handler of yours (only if speHandler is True).
+    yourHandler: logging.Handler
+    filter.setLoggerHandler( yourHandler )
+
+    # Do calculations
+    filter.applyFilter()
+
+    # Get the mesh with the wanted extracted domain
+    domain: int
+    domainExtracted: vtkMultiBlockDataSet = filter.getOutput( domain )
 """
 
 loggerTitle: str =  "Geos Block Extractor Filter"
@@ -77,14 +84,28 @@ class GeosExtractDomain( vtkExtractBlock ):
 
 class GeosBlockExtractor:
 
-    def __init__( self: Self, geosMesh: vtkMultiBlockDataSet, speHandler: bool = False ) -> None:
+    def __init__(
+        self: Self,
+        geosMesh: vtkMultiBlockDataSet,
+        extractFaults: bool = False,
+        extractWells: bool = False,
+        speHandler: bool = False,
+    ) -> None:
         """Extract the volume, the surface or the well domain block of the mesh from Geos.
 
+        Args:
+            geosMesh (vtkMultiBlockDataSet): The mesh from Geos.
+            extractFaults (bool, Optional): True if the mesh contains Faults to extract, False otherwise.
+                Defaults to False.
+            extractWells (bool, Optional): True if the mesh contains wells to extract, False otherwise.
+                Defaults to False.
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
 
-        self.extractFaults: bool = False
-        self.extractWells: bool = False
+        self.extractFaults: bool = extractFaults
+        self.extractWells: bool = extractWells
 
         self.extractedDomain: Dict[ int, vtkMultiBlockDataSet ] = {
             0: vtkMultiBlockDataSet(),
@@ -148,7 +169,7 @@ class GeosBlockExtractor:
 
         return True
 
-    def getOutput( self: Self, domain: int = 0 ) -> vtkMultiBlockDataSet:
+    def getOutput( self: Self, domain: int ) -> vtkMultiBlockDataSet:
         """Get the domain extracted.
 
         The domain extracted are:
