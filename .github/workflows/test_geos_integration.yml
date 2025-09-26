@@ -83,6 +83,7 @@ jobs:
           -bp ../build_test \
           -DENABLE_HYPRE=ON \
           -DENABLE_TRILINOS=OFF \
+          -DENABLE_PVTPackage=OFF \
           -DGEOS_ENABLE_CONTACT=OFF \
           -DGEOS_ENABLE_FLUIDFLOW=OFF \
           -DGEOS_ENABLE_INDUCEDSEISMICITY=OFF \
@@ -96,7 +97,7 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Building GEOS ==="
-        make -j$(nproc)
+        make -j8
     
     - name: "Test 1: Direct setupPythonEnvironment.bash execution"
       working-directory: ./build_test
