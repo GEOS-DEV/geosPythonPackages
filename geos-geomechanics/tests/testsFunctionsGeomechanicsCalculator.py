@@ -181,11 +181,11 @@ class TestsFunctionsGeomechanicsCalculator( unittest.TestCase ):
         deltaPressure: npt.NDArray[ np.float64 ] = 0.2 * pressure
         obtained: npt.NDArray[ np.float64 ] = fcts.reservoirStressPathReal( deltaStress, deltaPressure )
         expected: npt.NDArray[ np.float64 ] = np.array( [
-            [ 8.0, 12.5, 9.0 ],
-            [ 0.32, 0.46, 0.34 ],
-            [ np.nan, np.nan, np.nan ],
-            [ 1.38, 1.81, 1.38 ],
-            [ 1.30, 1.55, 1.15 ],
+            [ 8.0, 12.5, 9.0, np.nan, 10.0, 9.5 ],
+            [ 0.32, 0.46, 0.34, np.nan, 0.39, 0.38 ],
+            [ np.nan, np.nan, np.nan, np.nan, np.nan, np.nan ],
+            [ 1.38, 1.81, 1.38, np.nan, 1.56, 1.56 ],
+            [ 1.30, 1.55, 1.15, np.nan, 1.45, 1.35 ],
         ] )
         self.assertTrue( np.array_equal( np.round( obtained, 2 ), np.round( expected, 2 ), equal_nan=True ) )
 
