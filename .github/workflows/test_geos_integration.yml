@@ -50,8 +50,8 @@ jobs:
     - name: Install Build Dependencies
       run: |
         apt-get update
-        apt-get install -y make python3-numpy python3-dev
-    
+        apt-get install -y make python3-numpy python3-dev python3-venv
+
     - name: Setup test environment
       run: |
         echo "Setting up test environment..."
