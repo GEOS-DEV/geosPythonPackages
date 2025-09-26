@@ -35,7 +35,7 @@ from geos.utils.PhysicalConstants import (
 )
 from PVplugins.PVExtractMergeBlocksVolumeSurface import (
     PVExtractMergeBlocksVolumeSurface, )
-from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from PVplugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
 __doc__ = """

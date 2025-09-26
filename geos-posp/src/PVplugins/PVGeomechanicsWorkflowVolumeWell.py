@@ -36,7 +36,7 @@ from geos.utils.PhysicalConstants import (
 
 from PVplugins.PVExtractMergeBlocksVolumeWell import (
     PVExtractMergeBlocksVolumeWell, )
-from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
 PVGeomechanicsWorkflowVolumeWell is a Paraview plugin that execute

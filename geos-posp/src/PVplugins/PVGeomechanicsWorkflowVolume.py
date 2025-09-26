@@ -34,7 +34,7 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from PVplugins.PVExtractMergeBlocksVolume import PVExtractMergeBlocksVolume
-from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
 PVGeomechanicsWorkflowVolume is a Paraview plugin that execute multiple filters

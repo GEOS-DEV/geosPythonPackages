@@ -30,7 +30,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
-from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional
