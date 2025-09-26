@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -15,12 +15,12 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 )
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
 from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
@@ -210,11 +210,12 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         inInfo = inInfoVec[ 0 ]
         # get displayed time step info before updating time
         if self.m_requestDataStep == -1:
-            self.m_logger.info( f"Apply filter {__name__}" )
+            # self.m_logger.info( f"Apply filter {__name__}" )
             self.m_timeSteps = inInfo.GetInformationObject( 0 ).Get( executive.TIME_STEPS()  # type: ignore
                                                                     )
             self.m_currentTime = inInfo.GetInformationObject( 0 ).Get( executive.UPDATE_TIME_STEP()  # type: ignore
                                                                       )
+            print( "THIS IS TIME STEP AND CURRENT TIME", self.m_currentTime, self.m_timeSteps )
             self.m_currentTimeStepIndex = getTimeStepIndex( self.m_currentTime, self.m_timeSteps )
         # update requestDataStep
         self.m_requestDataStep += 1
@@ -265,11 +266,11 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
             if self.m_requestDataStep == 0:
                 # first time step
                 # do extraction and merge (do not display phase info)
-                self.m_logger.setLevel( ERROR )
+                # self.m_logger.setLevel( ERROR )
                 outputFaults0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
                 outputWells0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
                 self.doExtractAndMerge( input, outputCells, outputFaults0, outputWells0 )
-                self.m_logger.setLevel( INFO )
+                # self.m_logger.setLevel( INFO )
                 # save input mesh to copy later
                 self.m_outputT0.ShallowCopy( outputCells )
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )  # type: ignore
@@ -291,13 +292,15 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
                 createCellCenterAttribute( outputCells, cellCenterAttributeName )
         except AssertionError as e:
             mess: str = "Block extraction and merge failed due to:"
-            self.m_logger.error( mess )
-            self.m_logger.error( str( e ) )
+            print( "ASSERTION", mess, str(e) )
+            # self.m_logger.error( mess )
+            # self.m_logger.error( str( e ) )
             return 0
         except Exception as e:
             mess1: str = "Block extraction and merge failed due to:"
-            self.m_logger.critical( mess1 )
-            self.m_logger.critical( e, exc_info=True )
+            print( "EXCEPTION", mess1, str(e) )
+            # self.m_logger.critical( mess1 )
+            # self.m_logger.critical( e, exc_info=True )
             return 0
         return 1
 
@@ -322,7 +325,7 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         # extract blocks
         blockExtractor: GeosBlockExtractor = GeosBlockExtractor(speHandler = True)
         # blockExtractor.SetLogger( self.m_logger )
-        if not blockExtractor.logger.hasHandlers():
+        if not blockExtractor.m_logger.hasHandlers():
             blockExtractor.SetLoggerHandler( VTKHandler() )
         blockExtractor.SetInputDataObject( input )
         blockExtractor.ExtractFaultsOn()
@@ -365,7 +368,7 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         """
         mergeBlockFilter = GeosBlockMerge( speHandler=True )
         # mergeBlockFilter.SetLogger( self.m_logger )
-        if not mergeBlockFilter.logger.hasHandler():
+        if not mergeBlockFilter.m_logger.hasHandler():
             mergeBlockFilter.setLoggerHandler( VTKHandler() )
         mergeBlockFilter.SetInputDataObject( input )
         if convertSurfaces:

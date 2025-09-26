@@ -10,7 +10,7 @@ from geos.utils.GeosOutputsConstants import (
     PostProcessingOutputsEnum,
     getRockSuffixRenaming,
 )
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import logging, Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -29,6 +29,7 @@ from vtkmodules.vtkFiltersCore import (
     vtkArrayRename,
     vtkPolyDataNormals,
     vtkPolyDataTangents,
+    vtkTriangleFilter,
 )
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
@@ -69,18 +70,19 @@ To use the filter:
     # get output object
     output :vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject(0)
 """
-
+loggerTitle: str = "Geos Block Merge Filter"
 
 class GeosBlockMerge( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self ) -> None:
+    def __init__( self: Self, speHandler: bool = False ) -> None:
         """VTK Filter that perform GEOS rank merge.
 
         The filter returns a multiblock mesh composed of elementary blocks.
 
         """
         super().__init__( nInputPorts=1, nOutputPorts=1,
-                          outputType="vtkMultiBlockDataSet" )  # type: ignore[no-untyped-call]
+                          outputType="vtkMultiBlockDataSet"
+                           )  # type: ignore[no-untyped-call]
 
         self.m_input: vtkMultiBlockDataSet
         self.m_output: vtkMultiBlockDataSet
@@ -88,7 +90,29 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         self.m_convertFaultToSurface: bool = True
 
         # set logger
-        self.m_logger: Logger = getLogger( "Geos Block Merge Filter" )
+        # Logger.
+        self.m_logger: Logger
+        if not speHandler:
+            self.m_logger = getLogger( loggerTitle, True )
+        else:
+            self.m_logger = logging.getLogger( loggerTitle )
+            self.m_logger.setLevel( logging.INFO )
+        # self.m_logger: Logger = getLogger( "Geos Block Merge Filter" )
+
+    def SetLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+
+        Args:
+            handler (logging.Handler): The handler to add.
+        """
+        if not self.m_logger.hasHandlers():
+            self.m_logger.addHandler( handler )
+        else:
+            self.m_logger.warning(
+                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
+            )
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -163,13 +187,13 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             return 0
         return 1
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set the logger.
+    # def SetLogger( self: Self, logger: Logger ) -> None:
+    #     """Set the logger.
 
-        Args:
-            logger (Logger): logger
-        """
-        self.m_logger = logger
+    #     Args:
+    #         logger (Logger): logger
+    #     """
+    #     self.m_logger = logger
 
     def ConvertSurfaceMeshOn( self: Self ) -> None:
         """Activate surface conversion from vtkUnstructredGrid to vtkPolyData."""
@@ -249,6 +273,7 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
                     PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
                 (),
                     False,
+                    logger = self.m_logger
             ):
                 self.m_logger.warning( "BlockIndex attribute was not created." )
 
@@ -366,7 +391,7 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             vtkUnstructuredGrid: merged block
         """
         # fill partial attributes in all children blocks
-        if not fillAllPartialAttributes( compositeBlock ):
+        if not fillAllPartialAttributes( compositeBlock, logger=self.m_logger ):
             self.m_logger.warning( "Some partial attributes may not have been propagated to the whole mesh." )
 
         # merge blocks
@@ -472,9 +497,22 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         surface1: vtkPolyData = textureFilter.GetOutput()
         assert ( surface1 is not None ), "Texture calculation during Tangent calculation failed."
 
+
+        ########### TEMPORARY SOLUTION TO CLEAN
+        # TODO
+        triangulate: vtkTriangleFilter = vtkTriangleFilter()
+        triangulate.SetInputData( surface1 )
+        # triangulate.PreservePolysOn()
+        triangulate.Update()
+
+        surface2 = triangulate.GetOutput()
+
+
+
         # compute tangents
         tangentFilter: vtkPolyDataTangents = vtkPolyDataTangents()
-        tangentFilter.SetInputData( surface1 )
+        tangentFilter.SetInputData( surface2 )
+        # tangentFilter.SetInputData( surface1 )
         tangentFilter.ComputeCellTangentsOn()
         tangentFilter.ComputePointTangentsOff()
         tangentFilter.Update()
@@ -486,7 +524,12 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         array: vtkDataArray = surfaceOut.GetCellData().GetTangents()
         assert array is not None, "Attribute Tangents is not in the mesh."
 
-        surface1.GetCellData().SetTangents( array )
-        surface1.GetCellData().Modified()
-        surface1.Modified()
-        return surface1
+        # surface1.GetCellData().SetTangents( array )
+        # surface1.GetCellData().Modified()
+        # surface1.Modified()
+        # return surface1
+        surface2.GetCellData().SetTangents( array )
+        surface2.GetCellData().Modified()
+        surface2.Modified()
+        return surface2
+

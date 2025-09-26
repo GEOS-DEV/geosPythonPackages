@@ -5,7 +5,7 @@ from geos.utils.GeosOutputsConstants import (
     GeosDomainNameEnum,
     OutputObjectEnum,
 )
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import logging, Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
@@ -46,18 +46,19 @@ To use the filter:
     # get output object
     output :vtkMultiBlockDataSet = blockExtractor.GetOutputDataObject(0)
 """
-
+loggerTitle: str = "Geos Block Extractor Filter"
 
 class GeosBlockExtractor( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self ) -> None:
+    def __init__( self: Self, speHandler: bool= False ) -> None:
         """VTK Filter that perform GEOS block extraction.
 
         The filter returns the volume mesh as the first output, Surface mesh as the second
         output, and well mesh as the third output.
         """
         super().__init__( nInputPorts=1, nOutputPorts=1,
-                          outputType="vtkMultiBlockDataSet" )  # type: ignore[no-untyped-call]
+                          outputType="vtkMultiBlockDataSet",
+                            )  # type: ignore[no-untyped-call]
 
         self.m_extractFaults: bool = False
         self.m_extractWells: bool = False
@@ -72,7 +73,29 @@ class GeosBlockExtractor( VTKPythonAlgorithmBase ):
         self.m_outputFaults: vtkMultiBlockDataSet
         self.m_outputWells: vtkMultiBlockDataSet
 
-        self.m_logger: Logger = getLogger( "Geos Block Extractor Filter" )
+        self.m_logger: Logger
+        if not speHandler:
+            self.m_logger = getLogger( loggerTitle, True )
+        else:
+            self.m_logger = logging.getLogger( loggerTitle )
+            self.m_logger.setLevel( logging.INFO )
+
+        # self.m_logger: Logger = getLogger( "Geos Block Extractor Filter" )
+
+    def SetLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+
+        Args:
+            handler (logging.Handler): The handler to add.
+        """
+        if not self.m_logger.hasHandlers():
+            self.m_logger.addHandler( handler )
+        else:
+            self.m_logger.warning(
+                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
+            )
 
     def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
@@ -267,30 +290,31 @@ class GeosBlockExtractor( VTKPythonAlgorithmBase ):
             return 0
         return 1
 
-    def extractRegion( self: Self, type: GeosDomainNameEnum ) -> int:
+    def extractRegion( self: Self, typeT: GeosDomainNameEnum ) -> int:
         """Extract volume mesh from input vtkMultiBlockDataSet.
 
         Returns:
             bool: True if volume mesh extraction successfully ended, False otherwise.
         """
         block: vtkMultiBlockDataSet
-        blockIndex = getBlockIndexFromName( self.m_input, type.value )
+        # print( "INPUT, VALUE", self.m_input, typeT.value )
+        blockIndex = getBlockIndexFromName( self.m_input, typeT.value )
         if blockIndex < 0:
             self.m_logger.warning( "Cell block index is invalid." )
             return 0
 
         block = extractBlock( self.m_input, blockIndex )
-        assert block is not None, f"Extracted {type.value} block is null."
+        assert block is not None, f"Extracted {typeT.value} block is null."
 
-        if ( type is GeosDomainNameEnum.VOLUME_DOMAIN_NAME ) and ( self.m_outputVolumeMesh is not None ):
+        if ( typeT is GeosDomainNameEnum.VOLUME_DOMAIN_NAME ) and ( self.m_outputVolumeMesh is not None ):
             self.m_outputVolumeMesh.ShallowCopy( block )
             self.m_outputVolumeMesh.Modified()
-        elif ( type is GeosDomainNameEnum.FAULT_DOMAIN_NAME ) and ( self.m_outputFaults is not None ):
+        elif ( typeT is GeosDomainNameEnum.FAULT_DOMAIN_NAME ) and ( self.m_outputFaults is not None ):
             self.m_outputFaults.ShallowCopy( block )
             self.m_outputFaults.Modified()
-        elif ( type is GeosDomainNameEnum.WELL_DOMAIN_NAME ) and ( self.m_outputWells is not None ):
+        elif ( typeT is GeosDomainNameEnum.WELL_DOMAIN_NAME ) and ( self.m_outputWells is not None ):
             self.m_outputWells.ShallowCopy( block )
             self.m_outputWells.Modified()
         else:
-            raise TypeError( f"Output object for domain {type.value} is null." )
+            raise TypeError( f"Output object for domain {typeT.value} is null." )
         return 1
