@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
+from typing import Tuple
+import logging
+
+import numpy as np
+import numpy.typing as npt
 
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonCore import vtkPoints
@@ -11,14 +16,8 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockData
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
-from geos.utils.Logger import logging, Logger, getLogger
-
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
-
-import numpy as np
-import numpy.typing as npt
-
-from typing import Tuple
 
 __doc__ = """
 Module to clip a mesh to the main frame using rigid body transformation.
@@ -241,6 +240,9 @@ class ClipToMainFrame( vtkTransformFilter ):
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             #locate reference point
+            self.logger.info(
+                "Processing MultiblockDataSet.\n Please make sure your MultiblockDataSet is owning a vtkUnstructured grid as a leaf."
+            )
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
@@ -248,6 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
+            self.logger.info( "Processing untructuredGrid" )
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()
