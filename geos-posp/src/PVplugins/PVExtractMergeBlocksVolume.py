@@ -22,7 +22,7 @@ from geos.utils.GeosOutputsConstants import (
     getAttributeToTransferFromInitialTime,
 )
 from geos.utils.Logger import ERROR, INFO, Logger, getLogger
-from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
+from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,

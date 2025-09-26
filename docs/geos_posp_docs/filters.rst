@@ -11,14 +11,6 @@ geos_posp.filters.GeomechanicsCalculator module
    :undoc-members:
    :show-inheritance:
 
-geos_posp.filters.GeosBlockExtractor module
------------------------------------------------
-
-.. automodule:: geos_posp.filters.GeosBlockExtractor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.filters.GeosBlockMerge module
 -------------------------------------------
 
