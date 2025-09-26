@@ -1,6 +1,10 @@
 Post-/Pre-processing
 =========================
 
+PVAttributeMapping
+--------------------
+
+.. automodule:: geos.pv.plugins.PVAttributeMapping
 
 PVCreateConstantAttributePerRegion
 -----------------------------------
