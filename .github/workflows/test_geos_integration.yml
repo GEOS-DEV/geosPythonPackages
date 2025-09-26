@@ -53,8 +53,6 @@ jobs:
         mkdir -p build_test
     
     - name: "Configure GEOS"
-      # This step is now only responsible for configuration.
-      # It runs the script from the GEOS directory and places build files in ../build_test
       working-directory: ./GEOS
       run: |
         echo "=== Configuring GEOS Build ==="
@@ -62,11 +60,10 @@ jobs:
           -hc /spack-generated.cmake \
           -bt Release \
           -bp ../build_test \
-          -DENABLE_HYPRE=OFF \
-          -DENABLE_TRILINOS=ON
+          -DENABLE_HYPRE=ON \
+          -DENABLE_TRILINOS=OFF
 
     - name: "Build GEOS"
-      # This step is now only responsible for building.
       working-directory: ./build_test
       run: |
         echo "=== Building GEOS ==="
