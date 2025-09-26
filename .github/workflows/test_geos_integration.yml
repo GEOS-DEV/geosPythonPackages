@@ -92,6 +92,7 @@ jobs:
           -DENABLE_TRILINOS=OFF \
           -DENABLE_UNCRUSTIFY=OFF \
           -DENABLE_YAPF=OFF \
+          -DGEOS_ENABLE_TESTS=OFF \
           -DGEOS_ENABLE_CONTACT=OFF \
           -DGEOS_ENABLE_FLUIDFLOW=OFF \
           -DGEOS_ENABLE_INDUCEDSEISMICITY=OFF \
@@ -106,7 +107,7 @@ jobs:
       run: |
         echo "=== Building GEOS ==="
         make -j8
-    
+
     - name: "Test 1: Direct setupPythonEnvironment.bash execution"
       working-directory: ./build_test
       run: |
@@ -132,7 +133,7 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 2: make geosx_python_tools ==="
-        make geosx_python_tools -j$(nproc)
+        make geosx_python_tools -j8
 
         if [ -f "bin/preprocess_xml" ] && [ -f "bin/format_xml" ]; then
           echo "make geosx_python_tools succeeded!"
@@ -156,7 +157,7 @@ jobs:
         
         # Rebuilding tools here because the next test ('make ..._test') requires them.
         echo "Rebuilding tools for next test..."
-        make geosx_python_tools -j$(nproc)
+        make geosx_python_tools -j8
 
     - name: "Test 4: make geosx_python_tools_test"
       working-directory: ./build_test
@@ -200,8 +201,8 @@ jobs:
         run: |
           echo "## GEOS Integration Test Summary" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.test_geos_integration.result }}" == "success" ]]; then
-            echo "✅ All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Integration tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
+            echo "Integration tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
