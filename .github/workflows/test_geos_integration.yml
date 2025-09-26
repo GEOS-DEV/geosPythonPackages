@@ -82,16 +82,19 @@ jobs:
           -bt Release \
           -bp ../build_test \
           -DENABLE_HYPRE=ON \
+          -DENABLE_PYGEOSX=ON \
           -DENABLE_TRILINOS=OFF \
-          -DENABLE_PVTPackage=OFF \
+          -DENABLE_BENCHMARKS=OFF \
+          -DENABLE_DOXYGEN=OFF \
+          -DENABLE_MATHPRESSO=OFF \
+          -DENABLE_UNCRUSTIFY=OFF \
           -DGEOS_ENABLE_CONTACT=OFF \
           -DGEOS_ENABLE_FLUIDFLOW=OFF \
           -DGEOS_ENABLE_INDUCEDSEISMICITY=OFF \
           -DGEOS_ENABLE_MULTIPHYSICS=OFF \
           -DGEOS_ENABLE_SIMPLEPDE=OFF \
           -DGEOS_ENABLE_SOLIDMECHANICS=OFF \
-          -DGEOS_ENABLE_SURFACEGENERATION=OFF \
-          -DGEOS_ENABLE_WAVEPROPAGATION=OFF
+          -DGEOS_ENABLE_SURFACEGENERATION=OFF
 
     - name: "Build GEOS"
       working-directory: ./build_test
