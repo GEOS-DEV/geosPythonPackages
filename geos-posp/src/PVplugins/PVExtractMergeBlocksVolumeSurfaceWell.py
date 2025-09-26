@@ -316,23 +316,19 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
             bool: True if extraction and merge successfully eneded, False otherwise
         """
         # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor()
-        blockExtractor.SetLogger( self.m_logger )
-        blockExtractor.SetInputDataObject( input )
-        blockExtractor.ExtractFaultsOn()
-        blockExtractor.ExtractWellsOn()
-        blockExtractor.Update()
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFaults=True, extractWells=True )
+        blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter and merge internal blocks
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputVolume()
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 0 )
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
         outputCells.ShallowCopy( self.mergeBlocksFilter( volumeBlockExtracted, False ) )
 
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputFaults()
+        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 1 )
         assert faultBlockExtracted is not None, "Extracted Fault mesh is null."
         outputFaults.ShallowCopy( self.mergeBlocksFilter( faultBlockExtracted, True ) )
 
-        wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputWells()
+        wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 2 )
         assert wellBlockExtracted is not None, "Extracted Well mesh is null."
         outputWells.ShallowCopy( self.mergeBlocksFilter( wellBlockExtracted, False ) )
 
