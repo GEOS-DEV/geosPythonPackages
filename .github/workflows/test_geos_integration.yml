@@ -91,6 +91,7 @@ jobs:
           -DENABLE_PVTPackage=OFF \
           -DENABLE_TRILINOS=OFF \
           -DENABLE_UNCRUSTIFY=OFF \
+          -DENABLE_XML_UPDATES=OFF \
           -DENABLE_YAPF=OFF \
           -DGEOS_ENABLE_TESTS=OFF \
           -DGEOS_ENABLE_CONTACT=OFF \
