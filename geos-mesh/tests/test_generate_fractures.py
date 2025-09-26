@@ -1,14 +1,19 @@
 from dataclasses import dataclass
-import numpy
+import numpy as np
 import pytest
 from typing import Iterable, Iterator, Sequence
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HEXAHEDRON, VTK_POLYHEDRON, VTK_QUAD )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from geos.mesh.doctor.actions.check_fractures import format_collocated_nodes
 from geos.mesh.doctor.actions.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from geos.mesh.doctor.actions.generate_fractures import ( __split_mesh_on_fractures, Options, FracturePolicy,
+from geos.mesh.doctor.actions.generate_fractures import ( split_mesh_on_fractures, Options, FracturePolicy,
                                                           Coordinates3D, IDMapping )
-from geos.mesh.utils.genericHelpers import to_vtk_id_list
+from geos.mesh.doctor.filters.GenerateFractures import GenerateFractures, generateFractures
+from geos.mesh.doctor.filters.GenerateFractures import ( FIELD_NAME, FIELD_VALUES, FRACTURES_DATA_MODE,
+                                                         FRACTURES_OUTPUT_DIR, OUTPUT_BINARY_MODE,
+                                                         OUTPUT_BINARY_MODE_VALUES, POLICY )
+from geos.mesh.utils.arrayModifiers import createConstantAttributeDataSet
+from geos.mesh.utils.genericHelpers import to_vtk_id_list, createSingleCellMesh
 
 FaceNodesCoords = tuple[ tuple[ float ] ]
 IDMatrix = Sequence[ Sequence[ int ] ]
@@ -32,7 +37,7 @@ class TestCase:
     result: TestResult
 
 
-def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
+def __build_test_case( xs: tuple[ np.ndarray, np.ndarray, np.ndarray ],
                        attribute: Iterable[ int ],
                        field_values: Iterable[ int ] = None,
                        policy: FracturePolicy = FracturePolicy.FIELD ):
@@ -40,7 +45,7 @@ def __build_test_case( xs: tuple[ numpy.ndarray, numpy.ndarray, numpy.ndarray ],
 
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( ( xyz, ) )
 
-    ref = numpy.array( attribute, dtype=int )
+    ref = np.array( attribute, dtype=int )
     if policy == FracturePolicy.FIELD:
         assert len( ref ) == mesh.GetNumberOfCells()
     attr = numpy_to_vtk( ref )
@@ -73,9 +78,9 @@ class Incrementor:
 
 
 def __generate_test_data() -> Iterator[ TestCase ]:
-    two_nodes = numpy.arange( 2, dtype=float )
-    three_nodes = numpy.arange( 3, dtype=float )
-    four_nodes = numpy.arange( 4, dtype=float )
+    two_nodes = np.arange( 2, dtype=float )
+    three_nodes = np.arange( 3, dtype=float )
+    four_nodes = np.arange( 4, dtype=float )
 
     # Split in 2
     mesh, options = __build_test_case( ( three_nodes, three_nodes, three_nodes ), ( 0, 1, 0, 1, 0, 1, 0, 1 ) )
@@ -202,7 +207,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
 
 @pytest.mark.parametrize( "test_case", __generate_test_data() )
 def test_generate_fracture( test_case: TestCase ):
-    main_mesh, fracture_meshes = __split_mesh_on_fractures( test_case.input_mesh, test_case.options )
+    main_mesh, fracture_meshes = split_mesh_on_fractures( test_case.input_mesh, test_case.options )
     fracture_mesh: vtkUnstructuredGrid = fracture_meshes[ 0 ]
     assert main_mesh.GetNumberOfPoints() == test_case.result.main_mesh_num_points
     assert main_mesh.GetNumberOfCells() == test_case.result.main_mesh_num_cells
@@ -225,8 +230,8 @@ def add_simplified_field_for_cells( mesh: vtkUnstructuredGrid, field_name: str, 
     """
     data = mesh.GetCellData()
     n = mesh.GetNumberOfCells()
-    array = numpy.ones( ( n, field_dimension ), dtype=float )
-    array = numpy.arange( 1, n * field_dimension + 1 ).reshape( n, field_dimension )
+    array = np.ones( ( n, field_dimension ), dtype=float )
+    array = np.arange( 1, n * field_dimension + 1 ).reshape( n, field_dimension )
     vtk_array = numpy_to_vtk( array )
     vtk_array.SetName( field_name )
     data.AddArray( vtk_array )
@@ -299,12 +304,12 @@ def add_quad( mesh: vtkUnstructuredGrid, face: FaceNodesCoords ):
 @pytest.mark.skip( "Test to be fixed" )
 def test_copy_fields_when_splitting_mesh():
     """This test is designed to check the __copy_fields method from generate_fractures,
-    that will be called when using __split_mesh_on_fractures method from generate_fractures.
+    that will be called when using split_mesh_on_fractures method from generate_fractures.
     """
     # Generating the rectilinear grid and its quads on all borders
-    x: numpy.array = numpy.array( [ 0, 1, 2 ] )
-    y: numpy.array = numpy.array( [ 0, 1 ] )
-    z: numpy.array = numpy.array( [ 0, 1 ] )
+    x: np.array = np.array( [ 0, 1, 2 ] )
+    y: np.array = np.array( [ 0, 1 ] )
+    z: np.array = np.array( [ 0, 1 ] )
     xyzs: XYZ = XYZ( x, y, z )
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [ xyzs ] )
     assert mesh.GetCells().GetNumberOfCells() == 2
@@ -330,7 +335,7 @@ def test_copy_fields_when_splitting_mesh():
                        field_values_per_fracture=[ frozenset( map( int, [ "9" ] ) ) ],
                        mesh_VtkOutput=None,
                        all_fractures_VtkOutput=None )
-    main_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+    main_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     fracture_mesh: vtkUnstructuredGrid = fracture_meshes[ 0 ]
     assert main_mesh.GetCellData().GetNumberOfArrays() == 1
     assert fracture_mesh.GetCellData().GetNumberOfArrays() == 1
@@ -344,7 +349,7 @@ def test_copy_fields_when_splitting_mesh():
     # Test for invalid point field name
     add_simplified_field_for_cells( mesh, "GLOBAL_IDS_POINTS", 1 )
     with pytest.raises( ValueError ) as pytest_wrapped_e:
-        main_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+        main_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     assert pytest_wrapped_e.type == ValueError
     # Test for invalid cell field name
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh( [ xyzs ] )
@@ -356,5 +361,141 @@ def test_copy_fields_when_splitting_mesh():
     add_simplified_field_for_cells( mesh, "GLOBAL_IDS_CELLS", 1 )
     assert mesh.GetCellData().GetNumberOfArrays() == 2
     with pytest.raises( ValueError ) as pytest_wrapped_e:
-        main_mesh, fracture_meshes = __split_mesh_on_fractures( mesh, options )
+        main_mesh, fracture_meshes = split_mesh_on_fractures( mesh, options )
     assert pytest_wrapped_e.type == ValueError
+
+
+"""
+Tests for GenerateFractures.py
+"""
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fracture_filters_basic( test_case: TestCase, tmp_path ):
+    fracturesDir = tmp_path / "fractures"
+    fracturesDir.mkdir( exist_ok=True )  # Create the directory
+    policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+    fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+    # Create filter instance
+    filterInstance = GenerateFractures( test_case.input_mesh,
+                                        policy=policy,
+                                        fieldName=test_case.options.field,
+                                        fieldValues=fieldValues,
+                                        fracturesOutputDir=fracturesDir )
+    # Apply filter
+    success = filterInstance.applyFilter()
+    assert success, "Filter should succeed"
+    # Get results
+    splitMesh = filterInstance.getMesh()
+    fractureMeshes = filterInstance.getFractureMeshes()
+    allGrids = filterInstance.getAllGrids()
+    # Verify results
+    assert splitMesh is not None, "Split mesh should not be None"
+    assert isinstance( fractureMeshes, list ), "Fracture meshes should be a list"
+    assert allGrids[ 0 ] is splitMesh, "getAllGrids should return split mesh as first element"
+    assert allGrids[ 1 ] is fractureMeshes, "getAllGrids should return fracture meshes as second element"
+
+
+def test_generate_fractures_filter_setters():
+    """Test the setter methods of GenerateFractures filter."""
+    mesh = createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
+    createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="test_field", onPoints=False )
+    # Create filter instance
+    filterInstance = GenerateFractures( mesh )
+
+    # Test valid setters
+    filterInstance.setFieldName( "test_field" )
+    assert filterInstance.allOptions[ FIELD_NAME ] == "test_field"
+
+    filterInstance.setFieldValues( "1,2" )
+    assert filterInstance.allOptions[ FIELD_VALUES ] == "1,2"
+
+    filterInstance.setFracturesOutputDirectory( "./output/" )
+    assert filterInstance.allOptions[ FRACTURES_OUTPUT_DIR ] == "./output/"
+
+    filterInstance.setPolicy( 1 )
+    assert filterInstance.allOptions[ POLICY ] == FracturePolicy.INTERNAL_SURFACES
+
+    filterInstance.setOutputDataMode( 1 )
+    assert filterInstance.allOptions[ OUTPUT_BINARY_MODE ] == OUTPUT_BINARY_MODE_VALUES[ 1 ]
+
+    filterInstance.setFracturesDataMode( 0 )
+    assert filterInstance.allOptions[ FRACTURES_DATA_MODE ] == OUTPUT_BINARY_MODE_VALUES[ 0 ]
+
+    # Test invalid setters
+    original_policy = filterInstance.allOptions[ POLICY ]
+    filterInstance.setPolicy( 5 )  # Invalid value
+    assert filterInstance.allOptions[ POLICY ] == original_policy
+
+    # Test invalid data modes - should not change the values
+    original_output_mode = filterInstance.allOptions[ OUTPUT_BINARY_MODE ]
+    filterInstance.setOutputDataMode( 5 )  # Invalid value
+    assert filterInstance.allOptions[ OUTPUT_BINARY_MODE ] == original_output_mode
+
+    original_fractures_mode = filterInstance.allOptions[ FRACTURES_DATA_MODE ]
+    filterInstance.setFracturesDataMode( 5 )  # Invalid value
+    assert filterInstance.allOptions[ FRACTURES_DATA_MODE ] == original_fractures_mode
+
+
+def test_generate_fractures_filter_with_global_ids( tmp_path ):
+    """Test that filter fails when mesh contains global IDs."""
+    # Create a simple test mesh
+    mesh = createSingleCellMesh(
+        VTK_HEXAHEDRON,
+        np.array( [ [ 0, 0, 0 ], [ 1, 0, 0 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ],
+                    [ 0, 1, 1 ] ] ) )
+    createConstantAttributeDataSet( dataSet=mesh, listValues=[ 1 ], attributeName="GLOBAL_IDS_POINTS", onPoints=False )
+
+    fractures_dir = tmp_path / "fractures"
+    fractures_dir.mkdir( exist_ok=True )  # Create the directory
+    # Create filter instance
+    filterInstance = GenerateFractures( mesh )
+    # Should fail due to global IDs
+    success = filterInstance.applyFilter()
+    assert not success, "Filter should fail when mesh contains global IDs"
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fractures_standalone( test_case: TestCase, tmp_path ):
+    outputPath = tmp_path / "split_mesh.vtu"
+    fractures_dir = tmp_path / "fractures"
+    fractures_dir.mkdir( exist_ok=True )  # Create the directory
+    policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+    fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+    # Create filter instance
+    splitMesh, fractureMeshes = generateFractures( test_case.input_mesh,
+                                                   outputPath=outputPath,
+                                                   policy=policy,
+                                                   fieldName=test_case.options.field,
+                                                   fieldValues=fieldValues,
+                                                   fracturesOutputDir=fractures_dir )
+    # Verify results
+    assert splitMesh is not None, "Split mesh should not be None"
+    assert isinstance( fractureMeshes, list ), "Fracture meshes should be a list"
+    # Verify output file was written
+    assert outputPath.exists(), "Output file should exist"
+
+
+@pytest.mark.parametrize( "test_case", __generate_test_data() )
+def test_generate_fractures_write_meshes( test_case: TestCase, tmp_path ):
+    outputPath = tmp_path / "split_mesh.vtu"
+    fracturesDir = tmp_path / "fractures"
+    fracturesDir.mkdir( exist_ok=True )  # Create the directory
+    policy = 1 if test_case.options.policy == FracturePolicy.INTERNAL_SURFACES else 0
+    fieldValues = ','.join( map( str, test_case.options.field_values_combined ) )
+    # Create filter instance
+    filterInstance = GenerateFractures( test_case.input_mesh,
+                                        policy=policy,
+                                        fieldName=test_case.options.field,
+                                        fieldValues=fieldValues,
+                                        fracturesOutputDir=fracturesDir )
+    # Apply filter
+    success = filterInstance.applyFilter()
+    assert success, "Filter should succeed"
+    # Test writing meshes
+    filterInstance.writeMeshes( outputPath, isDataModeBinary=False, canOverwrite=True )
+    # Verify main mesh file was written
+    assert outputPath.exists(), "Main mesh file should exist"
