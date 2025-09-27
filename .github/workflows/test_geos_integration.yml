@@ -50,7 +50,11 @@ jobs:
     - name: Install Build Dependencies
       run: |
         apt-get update
-        apt-get install -y make python3-numpy python3-dev python3-venv
+        apt-get install -y make python3-numpy python3-dev python3-venv python3-pip
+        
+        # Ensure pip installs scripts to /usr/local/bin 
+        export PATH="/usr/local/bin:$PATH"
+        echo "PATH=/usr/local/bin:$PATH" >> $GITHUB_ENV
 
     - name: Setup test environment
       run: |
@@ -115,6 +119,7 @@ jobs:
         echo "=== Test 1: Direct setupPythonEnvironment.bash execution ==="
         export SETUPTOOLS_USE_DISTUTILS=stdlib
         export PIP_DISABLE_PIP_VERSION_CHECK=1
+        export PATH="/usr/local/bin:$PATH"
         mkdir -p bin_direct
         
         bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" \
@@ -123,11 +128,26 @@ jobs:
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
           --verbose
         
+        echo "=== Checking installation paths ==="
+        echo "PATH: $PATH"
+        echo "Scripts in /usr/local/bin:"
+        ls -la /usr/local/bin/ | grep -E "(preprocess_xml|format_xml)" || echo "No scripts found in /usr/local/bin"
+        echo "Scripts in /root/.local/bin:"
+        ls -la /root/.local/bin/ 2>/dev/null | grep -E "(preprocess_xml|format_xml)" || echo "No scripts found in /root/.local/bin"
+        echo "Python site-packages scripts:"
+        find /usr/local/lib/python3.10/dist-packages -name "preprocess_xml*" -o -name "format_xml*" || echo "No scripts found in site-packages"
+        
         if [ -f "bin_direct/preprocess_xml" ] && [ -f "bin_direct/format_xml" ]; then
           echo "Direct setupPythonEnvironment.bash succeeded!"
         else
-          echo "Direct method failed to create Python tools"
-          exit 1
+          echo "Direct method failed to create Python tools, checking if they exist elsewhere..."
+          if command -v preprocess_xml >/dev/null 2>&1 && command -v format_xml >/dev/null 2>&1; then
+            echo "Scripts are installed but not linked properly"
+            exit 1
+          else
+            echo "Scripts are not installed at all"
+            exit 1
+          fi
         fi
 
     - name: "Test 2: make geosx_python_tools"
