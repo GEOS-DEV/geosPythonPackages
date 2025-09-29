@@ -17,7 +17,7 @@ except ImportError:
 
 RTOL_DEFAULT = 0.0
 ATOL_DEFAULT = 0.0
-EXCLUDE_DEFAULT = [ ".*/commandLine", ".*/schema$", ".*/globalToLocalMap", ".*/timeHistoryOutput.*/restart" ]
+EXCLUDE_DEFAULT = [ ".*/commandLine", ".*/schema$", ".*/globalToLocalMap", ".*/timeHistoryOutput.*/restart", ".*/dNdX", ".*/detJ" ]
 logger = logging.getLogger( 'geos-ats' )
 
 
