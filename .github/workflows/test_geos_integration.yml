@@ -159,13 +159,6 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 2: make geosx_python_tools ==="
-        
-        # Clean any existing virtual environment that might be corrupted
-        if [ -d "lib/PYGEOSX" ]; then
-          echo "Removing existing PYGEOSX virtual environment..."
-          rm -rf lib/PYGEOSX
-        fi
-
         make geosx_python_tools -j8
 
         if [ -f "bin/preprocess_xml" ] && [ -f "bin/format_xml" ]; then
