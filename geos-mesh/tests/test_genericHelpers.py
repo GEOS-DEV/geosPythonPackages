@@ -9,7 +9,8 @@ import pytest
 from typing import (
     Iterator, )
 
-from geos.mesh.utils.genericHelpers import getBoundsFromPointCoords, createVertices, createMultiCellMesh
+from geos.mesh.utils.genericHelpers import ( getBoundsFromPointCoords, createVertices, createMultiCellMesh,
+                                             findUniqueCellCenterCellIds )
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
@@ -181,3 +182,56 @@ def test_getBoundsFromPointCoords() -> None:
     boundsExp: list[ float ] = [ 0., 5., 1., 8., 2., 9. ]
     boundsObs: list[ float ] = getBoundsFromPointCoords( cellPtsCoord )
     assert boundsExp == boundsObs, f"Expected bounds are {boundsExp}."
+
+
+def test_findUniqueCellCenterCellIds() -> None:
+    """Test of findUniqueCellCenterCellIds method."""
+    # Create first mesh with two cells
+    cellTypes1: list[ int ] = [ VTK_TETRA, VTK_TETRA ]
+    cellPtsCoord1: list[ npt.NDArray[ np.float64 ] ] = [
+        # First tetrahedron centered around (0.25, 0.25, 0.25)
+        np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ] ], dtype=float ),
+        # Second tetrahedron centered around (2.25, 2.25, 2.25)
+        np.array( [ [ 2.0, 2.0, 2.0 ], [ 3.0, 2.0, 2.0 ], [ 2.0, 3.0, 2.0 ], [ 2.0, 2.0, 3.0 ] ], dtype=float ),
+    ]
+
+    # Create second mesh with different cells, one overlapping with first mesh
+    cellTypes2: list[ int ] = [ VTK_TETRA, VTK_TETRA ]
+    cellPtsCoord2: list[ npt.NDArray[ np.float64 ] ] = [
+        # First tetrahedron with same center as first cell in mesh1 (should overlap)
+        np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ] ], dtype=float ),
+        # Second tetrahedron with different center (unique to mesh2)
+        np.array( [ [ 4.0, 4.0, 4.0 ], [ 5.0, 4.0, 4.0 ], [ 4.0, 5.0, 4.0 ], [ 4.0, 4.0, 5.0 ] ], dtype=float ),
+    ]
+
+    # Create meshes
+    mesh1: vtkUnstructuredGrid = createMultiCellMesh( cellTypes1, cellPtsCoord1, sharePoints=True )
+    mesh2: vtkUnstructuredGrid = createMultiCellMesh( cellTypes2, cellPtsCoord2, sharePoints=True )
+
+    # Test the function
+    uniqueIds1, uniqueIds2, uniqueCoords1, uniqueCoords2 = findUniqueCellCenterCellIds( mesh1, mesh2 )
+
+    # Expected results:
+    # - Cell 0 in both meshes have the same center, so should not be in unique lists
+    # - Cell 1 in mesh1 (centered at ~(2.25, 2.25, 2.25)) is unique to mesh1
+    # - Cell 1 in mesh2 (centered at ~(4.25, 4.25, 4.25)) is unique to mesh2
+    assert len( uniqueIds1 ) == 1, f"Expected 1 unique cell in mesh1, got {len(uniqueIds1)}"
+    assert len( uniqueIds2 ) == 1, f"Expected 1 unique cell in mesh2, got {len(uniqueIds2)}"
+    assert uniqueIds1 == [ 1 ], f"Expected unique cell 1 in mesh1, got {uniqueIds1}"
+    assert uniqueIds2 == [ 1 ], f"Expected unique cell 1 in mesh2, got {uniqueIds2}"
+
+    # Test coordinate lists
+    assert len( uniqueCoords1 ) == 1, f"Expected 1 unique coordinate in mesh1, got {len(uniqueCoords1)}"
+    assert len( uniqueCoords2 ) == 1, f"Expected 1 unique coordinate in mesh2, got {len(uniqueCoords2)}"
+
+    # Test with tolerance
+    uniqueIds1_tight, uniqueIds2_tight, _, _ = findUniqueCellCenterCellIds( mesh1, mesh2, tolerance=1e-12 )
+    assert len( uniqueIds1_tight ) == 1, "Tight tolerance should still find 1 unique cell in mesh1"
+    assert len( uniqueIds2_tight ) == 1, "Tight tolerance should still find 1 unique cell in mesh2"
+
+    # Test error handling
+    with pytest.raises( ValueError, match="Input grids must be valid vtkUnstructuredGrid objects" ):
+        findUniqueCellCenterCellIds( None, mesh2 )  # type: ignore[arg-type]
+
+    with pytest.raises( ValueError, match="Input grids must be valid vtkUnstructuredGrid objects" ):
+        findUniqueCellCenterCellIds( mesh1, None )  # type: ignore[arg-type]

@@ -6,8 +6,10 @@ import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet, vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator
-from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
+                                            vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
+                                            vtkStaticPointLocator )
+from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter, vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 __doc__ = """
@@ -36,7 +38,7 @@ def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
     return result
 
 
-def vtk_iter( vtkContainer: Union[ vtkIdList, vtkCellTypes ] ) -> Iterator[ Any ]:
+def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
     """Utility function transforming a vtk "container" into an iterable.
 
     Args:
@@ -83,6 +85,78 @@ def extractSurfaceFromElevation( mesh: vtkUnstructuredGrid, elevation: float ) -
     cutter.SetInterpolateAttributes( True )
     cutter.Update()
     return cutter.GetOutputDataObject( 0 )
+
+
+def findUniqueCellCenterCellIds( grid1: vtkUnstructuredGrid,
+                                 grid2: vtkUnstructuredGrid,
+                                 tolerance: float = 1e-6 ) -> tuple[ list[ int ], list[ int ] ]:
+    """
+    Compares two vtkUnstructuredGrids and finds the IDs of cells with unique centers.
+
+    This function identifies cells whose centers exist in one grid but not the other,
+    within a specified floating-point tolerance.
+
+    Args:
+        grid1 (vtk.vtkUnstructuredGrid): The first grid.
+        grid2 (vtk.vtkUnstructuredGrid): The second grid.
+        tolerance (float): The distance threshold to consider two points as the same.
+
+    Returns:
+        tuple[list[int], list[int]]: A tuple containing two lists:
+            - The first list has the IDs of cells with centers unique to grid1.
+            - The second list has the IDs of cells with centers unique to grid2.
+    """
+    if not grid1 or not grid2:
+        raise ValueError( "Input grids must be valid vtkUnstructuredGrid objects." )
+
+    # Generate cell centers for both grids using vtkCellCenters filter
+    centersFilter1 = vtkCellCenters()
+    centersFilter1.SetInputData( grid1 )
+    centersFilter1.Update()
+    centers1 = centersFilter1.GetOutput().GetPoints()
+
+    centersFilter2 = vtkCellCenters()
+    centersFilter2.SetInputData( grid2 )
+    centersFilter2.Update()
+    centers2 = centersFilter2.GetOutput().GetPoints()
+
+    # Find cells with centers that are unique to grid1
+    uniqueIdsInGrid1: list[ int ] = []
+    uniqueIdsCoordsInGrid1: list[ tuple[ float, float, float ] ] = []
+    # Build a locator for the cell centers of grid2 for fast searching
+    locator2 = vtkStaticPointLocator()
+    locator2.SetDataSet( centersFilter2.GetOutput() )
+    locator2.BuildLocator()
+
+    for i in range( centers1.GetNumberOfPoints() ):
+        centerPt1 = centers1.GetPoint( i )
+        # Find the closest point in grid2 to the current center from grid1
+        result = vtkIdList()
+        locator2.FindPointsWithinRadius( tolerance, centerPt1, result )
+        # If no point is found within the tolerance radius, the cell center is unique
+        if result.GetNumberOfIds() == 0:
+            uniqueIdsInGrid1.append( i )
+            uniqueIdsCoordsInGrid1.append( centerPt1 )
+
+    # Find cells with centers that are unique to grid2
+    uniqueIdsInGrid2: list[ int ] = []
+    uniqueIdsCoordsInGrid2: list[ tuple[ float, float, float ] ] = []
+    # Build a locator for the cell centers of grid1 for fast searching
+    locator1 = vtkStaticPointLocator()
+    locator1.SetDataSet( centersFilter1.GetOutput() )
+    locator1.BuildLocator()
+
+    for i in range( centers2.GetNumberOfPoints() ):
+        centerPt2 = centers2.GetPoint( i )
+        # Find the closest point in grid1 to the current center from grid2
+        result = vtkIdList()
+        locator1.FindPointsWithinRadius( tolerance, centerPt2, result )
+        # If no point is found, it's unique to grid2
+        if result.GetNumberOfIds() == 0:
+            uniqueIdsInGrid2.append( i )
+            uniqueIdsCoordsInGrid2.append( centerPt2 )
+
+    return uniqueIdsInGrid1, uniqueIdsInGrid2, uniqueIdsCoordsInGrid1, uniqueIdsCoordsInGrid2
 
 
 def getBounds(
