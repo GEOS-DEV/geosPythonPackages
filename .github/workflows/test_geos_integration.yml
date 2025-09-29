@@ -55,6 +55,11 @@ jobs:
         # Ensure pip installs scripts to /usr/local/bin 
         export PATH="/usr/local/bin:$PATH"
         echo "PATH=/usr/local/bin:$PATH" >> $GITHUB_ENV
+        
+        # Set environment variables to handle setuptools/distutils issues
+        echo "SETUPTOOLS_USE_DISTUTILS=stdlib" >> $GITHUB_ENV
+        echo "PIP_DISABLE_PIP_VERSION_CHECK=1" >> $GITHUB_ENV
+        echo "PYTHONDONTWRITEBYTECODE=1" >> $GITHUB_ENV
 
     - name: Setup test environment
       run: |
@@ -117,9 +122,6 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 1: Direct setupPythonEnvironment.bash execution ==="
-        export SETUPTOOLS_USE_DISTUTILS=stdlib
-        export PIP_DISABLE_PIP_VERSION_CHECK=1
-        export PATH="/usr/local/bin:$PATH"
         mkdir -p bin_direct
         
         # Create symlinks in /usr/bin so the setup script can find them
@@ -157,6 +159,13 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 2: make geosx_python_tools ==="
+        
+        # Clean any existing virtual environment that might be corrupted
+        if [ -d "lib/PYGEOSX" ]; then
+          echo "Removing existing PYGEOSX virtual environment..."
+          rm -rf lib/PYGEOSX
+        fi
+
         make geosx_python_tools -j8
 
         if [ -f "bin/preprocess_xml" ] && [ -f "bin/format_xml" ]; then
