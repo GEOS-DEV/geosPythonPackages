@@ -23,11 +23,8 @@ def test_mergeBlocks(
     """Test the merging of a multiblock."""
     vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
 
-    success: bool
     dataset: vtkUnstructuredGrid
-    success, dataset = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
-
-    assert success
+    dataset = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
 
     assert dataset.GetCellData().GetNumberOfArrays(
     ) == nb_cell_attributes, f"Expected {nb_cell_attributes} cell attributes after the merge, not {dataset.GetCellData().GetNumberOfArrays()}."

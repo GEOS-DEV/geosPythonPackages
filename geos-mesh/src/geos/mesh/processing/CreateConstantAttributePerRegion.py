@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkDataSet,
 )
 
-from geos.utils.Logger import getLogger, Logger, CountWarningHandler
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )

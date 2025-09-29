@@ -245,7 +245,7 @@ class PVTransferAttributesVolumeSurface( VTKPythonAlgorithmBase ):
         """
         attributeNames: set[ str ] = set( getArrayChoices( self.a02GetAttributeToTransfer() ) )
         volumeMeshMerged: vtkUnstructuredGrid
-        _, volumeMeshMerged = mergeBlocks( self.m_volumeMesh )
+        volumeMeshMerged = mergeBlocks( self.m_volumeMesh )
         surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( self.m_outputSurfaceMesh )
         for blockIndex in surfaceBlockIndexes:
             surfaceBlock0: vtkDataObject = getBlockFromFlatIndex( self.m_outputSurfaceMesh, blockIndex )

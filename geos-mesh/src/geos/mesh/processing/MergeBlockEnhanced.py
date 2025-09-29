@@ -109,25 +109,21 @@ class MergeBlockEnhanced:
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
-        if not isinstance( self.inputMesh, vtkCompositeDataSet ) or not isinstance( self.inputMesh,
-                                                                                    vtkMultiBlockDataSet ):
-            self.logger.error(
-                f"Expected a vtkMultiblockdataset or vtkCompositeDataSet, Got a {type(self.inputMesh)} \n The filter { self.logger.name } failed."
-            )
-            return False
-
         success: bool
         outputMesh: vtkUnstructuredGrid
-        success, outputMesh = mergeBlocks( self.inputMesh, True, self.logger )
-
-        if not success:
-            self.logger.error( f"The filter {self.logger.name} failed." )
-            return False
-
-        else:
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
+        try:
+            outputMesh = mergeBlocks( self.inputMesh,
+                                    keepPartialAttributes=True,
+                                    logger=self.logger )
             self.outputMesh = outputMesh
-        return True
+            self.logger.info( "The filter {self.logger.name} succeeded." )
+            success = True
+        except:
+            self.logger.info( "The filter {self.logger.name} failed. ")
+            success = False
+
+        return success
+
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

@@ -801,7 +801,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # get mesh and merge if needed
         meshMerged: vtkUnstructuredGrid
         if isinstance( mesh, vtkMultiBlockDataSet ):
-            _, meshMerged = mergeBlocks( mesh )
+            meshMerged = mergeBlocks( mesh )
         else:
             meshMerged = mesh
         assert meshMerged is not None, "Input data is undefined"

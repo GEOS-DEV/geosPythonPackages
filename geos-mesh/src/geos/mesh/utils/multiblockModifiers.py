@@ -3,10 +3,18 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Union
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
-                                            vtkUnstructuredGrid )
-from vtkmodules.vtkFiltersCore import vtkAppendDataSets
+                                            vtkUnstructuredGrid, vtkDataSet )
+from packaging.version import Version
+
+# TODO: remove this condition when all codes are adapted for VTK newest version.
+import vtk
+if Version( vtk.__version__ ) >= Version( "9.5" ):
+    from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
+else:
+    from vtkmodules.vtkFiltersCore import vtkAppendDataSets
+
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
-from geos.utils.Logger import getLogger, Logger
+from geos.utils.Logger import ( getLogger, Logger )
 
 __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
 
@@ -25,8 +33,10 @@ def mergeBlocks(
             Defaults to None, an internal logger is used.
 
     Returns:
-        bool: True if the mesh was correctly merged. False otherwise
-        vtkUnstructuredGrid: Merged dataset if success, empty dataset otherwise.
+        vtkUnstructuredGrid: Merged dataset or input mesh if it's already a single block
+
+    Raises:
+        ValueError:
 
     .. Note::
         Default filling values:
@@ -38,33 +48,36 @@ def mergeBlocks(
 
     """
     if logger is None:
-        logger = getLogger( "mergeBlocks", True )
-
-    outputMesh = vtkUnstructuredGrid()
-
-    if not inputMesh.IsA( "vtkMultiBlockDataSet" ) and not inputMesh.IsA( "vtkCompositeDataSet" ):
-        logger.error(
-            "The input mesh should be either a vtkMultiBlockDataSet or a vtkCompositeDataSet. Cannot proceed with the block merge."
-        )
-        return False, outputMesh
+        logger: Logger = getLogger( "mergeBlocks", True )
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
-        logger.error( "Failed to fill partial attributes. Cannot proceed with the block merge." )
-        return False, outputMesh
+        logger.warning( "Failed to fill partial attributes. Merging without keeping partial attributes." )
 
-    af: vtkAppendDataSets = vtkAppendDataSets()
-    af.MergePointsOn()
-    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iterator.SetDataSet( inputMesh )
-    iterator.VisitOnlyLeavesOn()
-    iterator.GoToFirstItem()
-    while iterator.GetCurrentDataObject() is not None:
-        block: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( iterator.GetCurrentDataObject() )
-        af.AddInputData( block )
-        iterator.GoToNextItem()
-    af.Update()
+    if Version( vtk.__version__ ) >= Version( "9.5" ):
+        filter: vtkMergeBlocks = vtkMergeBlocks()
+        filter.SetInputData( inputMesh )
+        filter.Update()
 
-    outputMesh.ShallowCopy( af.GetOutputDataObject( 0 ) )
+        outputMesh: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
 
-    return True, outputMesh
+    else:
+        if inputMesh.IsA( "vtkDataSet" ):
+            logger.warning( "Input mesh is already a single block." )
+            outputMesh = inputMesh
+        else:
+            af: vtkAppendDataSets = vtkAppendDataSets()
+            af.MergePointsOn()
+            iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+            iterator.SetDataSet( inputMesh )
+            iterator.VisitOnlyLeavesOn()
+            iterator.GoToFirstItem()
+            while iterator.GetCurrentDataObject() is not None:
+                block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
+                af.AddInputData( block )
+                iterator.GoToNextItem()
+            af.Update()
+
+            outputMesh: vtkUnstructuredGrid = af.GetOutputDataObject( 0 )
+
+    return outputMesh
