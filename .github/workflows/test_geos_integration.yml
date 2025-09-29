@@ -189,10 +189,28 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 4: make geosx_python_tools_test ==="
+        
+        # Check if python directory exists and create if needed
+        echo "Checking for python directory..."
+        if [ ! -d "python" ]; then
+          echo "Creating missing python directory..."
+          mkdir -p python
+        fi
+        
+        echo "Contents of build directory:"
+        ls -la .
+        
+        echo "Running geosx_python_tools_test..."
         if make geosx_python_tools_test; then
           echo "make geosx_python_tools_test succeeded!"
         else
           echo "make geosx_python_tools_test failed"
+          echo "=== Debugging information ==="
+          echo "Current directory: $(pwd)"
+          echo "Contents of current directory:"
+          ls -la .
+          echo "Looking for python-related directories:"
+          find . -name "*python*" -type d 2>/dev/null || echo "No python directories found"
           exit 1
         fi
 
