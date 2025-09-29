@@ -4,14 +4,12 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import logging
 
-from typing import Union
 from typing_extensions import Self
 
 from geos.utils.Logger import Logger, getLogger
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
     vtkMultiBlockDataSet,
     vtkUnstructuredGrid,
 )
@@ -112,18 +110,15 @@ class MergeBlockEnhanced:
         success: bool
         outputMesh: vtkUnstructuredGrid
         try:
-            outputMesh = mergeBlocks( self.inputMesh,
-                                    keepPartialAttributes=True,
-                                    logger=self.logger )
+            outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
             self.outputMesh = outputMesh
             self.logger.info( "The filter {self.logger.name} succeeded." )
             success = True
-        except:
-            self.logger.info( "The filter {self.logger.name} failed. ")
+        except ( TypeError, ValueError ):
+            self.logger.info( "The filter {self.logger.name} failed." )
             success = False
 
         return success
-
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.
