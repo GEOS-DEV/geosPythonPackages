@@ -122,32 +122,35 @@ jobs:
         export PATH="/usr/local/bin:$PATH"
         mkdir -p bin_direct
         
+        # Create symlinks in /usr/bin so the setup script can find them
+        echo "=== Creating symlinks for setup script compatibility ==="
+        ln -sf /usr/local/bin/preprocess_xml /usr/bin/preprocess_xml
+        ln -sf /usr/local/bin/format_xml /usr/bin/format_xml
+        
+        # Also create any other missing scripts that might be needed
+        for script in convert_abaqus run_geos_ats setup_ats_environment geos_ats_log_check geos_ats_restart_check geos_ats_curve_check geos_ats_process_tests_fails mesh-doctor; do
+          if [ -f "/usr/local/bin/$script" ]; then
+            ln -sf "/usr/local/bin/$script" "/usr/bin/$script"
+            echo "Created symlink for $script"
+          fi
+        done
+        
         bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" \
           -p $(which python3) \
           -b "$(pwd)/bin_direct" \
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
           --verbose
         
-        echo "=== Checking installation paths ==="
-        echo "PATH: $PATH"
-        echo "Scripts in /usr/local/bin:"
-        ls -la /usr/local/bin/ | grep -E "(preprocess_xml|format_xml)" || echo "No scripts found in /usr/local/bin"
-        echo "Scripts in /root/.local/bin:"
-        ls -la /root/.local/bin/ 2>/dev/null | grep -E "(preprocess_xml|format_xml)" || echo "No scripts found in /root/.local/bin"
-        echo "Python site-packages scripts:"
-        find /usr/local/lib/python3.10/dist-packages -name "preprocess_xml*" -o -name "format_xml*" || echo "No scripts found in site-packages"
-        
         if [ -f "bin_direct/preprocess_xml" ] && [ -f "bin_direct/format_xml" ]; then
           echo "Direct setupPythonEnvironment.bash succeeded!"
         else
-          echo "Direct method failed to create Python tools, checking if they exist elsewhere..."
-          if command -v preprocess_xml >/dev/null 2>&1 && command -v format_xml >/dev/null 2>&1; then
-            echo "Scripts are installed but not linked properly"
-            exit 1
-          else
-            echo "Scripts are not installed at all"
-            exit 1
-          fi
+          echo "Direct method failed to create Python tools"
+          echo "=== Debugging: Checking what exists ==="
+          echo "Scripts in bin_direct:"
+          ls -la bin_direct/ || echo "bin_direct directory is empty"
+          echo "Scripts that exist in PATH:"
+          which preprocess_xml format_xml 2>/dev/null || echo "Scripts not found in PATH"
+          exit 1
         fi
 
     - name: "Test 2: make geosx_python_tools"
