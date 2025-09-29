@@ -800,10 +800,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """
         # get mesh and merge if needed
         meshMerged: vtkUnstructuredGrid
-        if isinstance( mesh, vtkMultiBlockDataSet ):
-            meshMerged = mergeBlocks( mesh )
-        else:
-            meshMerged = mesh
+        meshMerged = mergeBlocks( mesh ) if isinstance( mesh, vtkMultiBlockDataSet ) else mesh
+
         assert meshMerged is not None, "Input data is undefined"
 
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( meshMerged,
