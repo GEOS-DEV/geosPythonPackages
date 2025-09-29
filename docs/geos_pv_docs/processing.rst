@@ -1,6 +1,10 @@
 Post-/Pre-processing
 =========================
 
+PVAttributeMapping
+--------------------
+
+.. automodule:: geos.pv.plugins.PVAttributeMapping
 
 PVCreateConstantAttributePerRegion
 -----------------------------------
@@ -24,3 +28,9 @@ PVMergeBlocksEnhanced module
 --------------------------------------
 
 .. automodule:: geos.pv.plugins.PVMergeBlocksEnhanced
+
+
+PVClipToMainFrame
+----------------------------------
+
+.. automodule:: geos.pv.plugins.PVClipToMainFrame
