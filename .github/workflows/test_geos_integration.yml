@@ -249,6 +249,12 @@ jobs:
       working-directory: ./build_test
       run: |
         echo "=== Test 5: make geosx_format_all_xml_files ==="
+        
+        # Ensure geosx_python_tools is built (the actual dependency)
+        echo "Building geosx_python_tools dependency..."
+        make geosx_python_tools -j8
+        
+        # Create a test XML file to format
         mkdir -p test_xml
         cat > test_xml/test.xml << 'EOF'
         <?xml version="1.0" ?>
