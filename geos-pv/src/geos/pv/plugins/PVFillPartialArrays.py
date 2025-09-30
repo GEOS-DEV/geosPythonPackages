@@ -30,7 +30,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.processing.FillPartialArrays import FillPartialArrays
-import geos.pv.utils.details
+# import geos.pv.utils.details
 __doc__ = """
 Fill partial arrays of input mesh.
 
@@ -47,22 +47,22 @@ To use it:
 """
 
 
-# @smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
-# @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
-# @smproperty.input( name="Input", port_index=0 )
-# @smdomain.datatype(
-#     dataTypes=[ "vtkMultiBlockDataSet" ],
-#     composite_data_supported=True,
-# )
-@geos.pv.utils.details.SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
-class PVFillPartialArrays:
+@smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
+@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smproperty.input( name="Input", port_index=0 )
+@smdomain.datatype(
+    dataTypes=[ "vtkMultiBlockDataSet" ],
+    composite_data_supported=True,
+)
+# @geos.pv.utils.details.SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
+class PVFillPartialArrays(VTKPythonAlgorithmBase):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
-        # super().__init__( nInputPorts=1,
-        #                   nOutputPorts=1,
-        #                   inputType="vtkMultiBlockDataSet",
-        #                   outputType="vtkMultiBlockDataSet" )
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType="vtkMultiBlockDataSet",
+                          outputType="vtkMultiBlockDataSet" )
 
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
@@ -158,7 +158,7 @@ class PVFillPartialArrays:
 
         filter: FillPartialArrays = FillPartialArrays( outputMesh,
                                                        self.dictAttributesValues,
-                                                       True,
+                                                       speHandler=True,
         )
 
         if not filter.logger.hasHandlers():
