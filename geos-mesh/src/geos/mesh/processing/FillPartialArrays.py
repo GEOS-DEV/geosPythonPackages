@@ -52,7 +52,7 @@ To use it:
 loggerTitle: str = "Fill Partial Attribute"
 
 
-@addLogSupport(loggerTitle= loggerTitle)
+@addLogSupport( loggerTitle=loggerTitle )
 class FillPartialArrays:
 
     def __init__(
@@ -76,8 +76,7 @@ class FillPartialArrays:
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
 
-
-    def applyFilter( self : Self ) -> bool:
+    def applyFilter( self: Self ) -> bool:
         """Create a constant attribute per region in the mesh.
 
         Returns:
