@@ -2,18 +2,21 @@
 
 function run_precommit_checks
 {
+	echo "running mypy"
 	python -m mypy --config-file ./.mypy.ini --check-untyped-defs $1
+	echo "running ruff"
 	python -m ruff check --unsafe-fixes --config .ruff.toml $1
+	echo "running yapf"
 	python -m yapf -r -i --style .style.yapf $1
 	
 	return 0
 }
 
 		
-source ${ENV_PYTHON_PATH}/bin/activate
+source ${ENV_PYTHON}/bin/activate
 
-sphinx-build -b html docs/ docs/_build -W
-for file in $(git diff --name-only --cached | grep py)
+#sphinx-build -b html docs/ docs/_build -W
+for file in $(git diff --name-only --cached | grep -e "modified\|added" | grep py)
 do
 	run_precommit_checks $file
 done

@@ -9,10 +9,10 @@ from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
@@ -30,7 +30,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.processing.FillPartialArrays import FillPartialArrays
-# import geos.pv.utils.details
+
 __doc__ = """
 Fill partial arrays of input mesh.
 
@@ -54,8 +54,7 @@ To use it:
     dataTypes=[ "vtkMultiBlockDataSet" ],
     composite_data_supported=True,
 )
-# @geos.pv.utils.details.SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
-class PVFillPartialArrays(VTKPythonAlgorithmBase):
+class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
@@ -67,8 +66,7 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
 
-
-    @smproperty.xml("""
+    @smproperty.xml( """
         <StringVectorProperty
             name="AttributeTable"
             number_of_elements="2"
@@ -80,7 +78,7 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
                     attributeName | fillingValueComponent1 fillingValueComponent2 ...\n
                 To fill the attribute with the default value, live a blanc. The default value is:\n
                     0 for uint type, -1 for int type and nan for float type.
-            </Documentation>     
+            </Documentation>
             <Hints>
                 <AllowRestoreDefaults />
                 <ShowComponentLabels>
@@ -102,10 +100,10 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
             self.clearDictAttributesValues = False
 
         if attributeName is not None:
-            if values is not None :
+            if values is not None:
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
-                self.dictAttributesValues[ attributeName ] = None
+                self.dictAttributesValues[ attributeName ] = None  # type: ignore[unreachable]
 
         self.Modified()
 
@@ -156,9 +154,10 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
 
         outputMesh.ShallowCopy( inputMesh )
 
-        filter: FillPartialArrays = FillPartialArrays( outputMesh,
-                                                       self.dictAttributesValues,
-                                                       speHandler=True,
+        filter: FillPartialArrays = FillPartialArrays(
+            outputMesh,
+            self.dictAttributesValues,
+            speHandler=True,
         )
 
         if not filter.logger.hasHandlers():
