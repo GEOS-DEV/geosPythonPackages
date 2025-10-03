@@ -2,29 +2,13 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-from typing_extensions import Self
-import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
-import geos.utils.geometryFunctions as geom
+import logging
 import numpy as np
-import numpy.typing as npt
-import vtkmodules.util.numpy_support as vnp
-from geos.utils.algebraFunctions import (
-    getAttributeMatrixFromVector,
-    getAttributeVectorFromMatrix,
-)
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-    getAttributeToConvertFromLocalToXYZ,
-    getAttributeToConvertFromXYZToLocal,
-)
-from geos.utils.Logger import logging, Logger, getLogger
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_ROCK_COHESION,
-)
 
+from typing_extensions import Self, Union
+import numpy.typing as npt
+
+import vtkmodules.util.numpy_support as vnp
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -39,11 +23,35 @@ from geos.mesh.utils.arrayHelpers import (
     getAttributeSet,
     isAttributeInObject,
 )
-
+import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.PhysicalConstants import (
+    DEFAULT_FRICTION_ANGLE_RAD,
+    DEFAULT_ROCK_COHESION,
+)
+from geos.utils.algebraFunctions import (
+    getAttributeMatrixFromVector,
+    getAttributeVectorFromMatrix,
+)
+from geos.utils.GeosOutputsConstants import (
+    ComponentNameEnum,
+    GeosMeshOutputsEnum,
+    PostProcessingOutputsEnum,
+)
+import geos.utils.geometryFunctions as geom
 
 __doc__ = """
-SurfaceGeomechanics vtk filter allows to compute Geomechanical
-properties on surfaces.
+SurfaceGeomechanics is a VTK filter that allows:
+    - Conversion of a set of attributes from local basis to XYZ basis
+    - Computation of the shear capacity utilization (SCU)
+
+.. Warning::
+    The computation of the SCU requires the presence of a 'traction' attribute in the input mesh.
+
+.. Note::
+    Default values for physical constants used in this filter:
+        - rock cohesion: 0.0 Pa ( fractured case)
+        - friction angle: 10°
 
 Filter input and output types are vtkPolyData.
 
@@ -68,7 +76,7 @@ To use the filter:
     yourHandler: logging.Handler
     filter.SetLoggerHandler( yourHandler )
 
-    # Set rock cohesion and friction angle  (optional)
+    # [optional] Set rock cohesion and friction angle
     filter.SetRockCohesion( rockCohesion )
     filter.SetFrictionAngle( frictionAngle )
 
@@ -80,6 +88,14 @@ To use the filter:
 
     # Get created attribute names
     newAttributeNames: set[str] = filter.GetNewAttributeNames()
+
+
+.. Note::
+    By default, conversion of attributes from local to XYZ basis is performed for the following list: { 'displacementJump' }.
+    This list can be modified in different ways:
+        - Addition of one or several additional attributes to the set by using the filter function `AddAttributesToConvert`.
+        - Replace the list completely with the function `SetAttributesToConvert`.
+    Note that the dimension of the attributes to convert must be equal or greater than 3.
 """
 loggerTitle: str = "Surface Geomechanics"
 
@@ -118,6 +134,9 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.name = None
         # Output surfacic mesh
         self.outputMesh: vtkPolyData
+        # Default attributes to convert from local to XYZ
+        self.convertAttributesOn: bool = True
+        self.attributesToConvert: set[ str ] = { GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName, }
 
         # Attributes are either on points or on cells
         self.attributeOnPoints: bool = False
@@ -161,12 +180,64 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.rockCohesion = rockCohesion
 
     def SetFrictionAngle( self: Self, frictionAngle: float ) -> None:
-        """Set friction angle value. Defaults to 10 / 180 * pi rad.
+        """Set friction angle value in radians. Defaults to 10 / 180 * pi rad.
 
         Args:
             frictionAngle (float): The friction angle in radians.
         """
         self.frictionAngle = frictionAngle
+
+
+    def ConvertAttributesOn( self: Self ) -> None:
+        """Activate the conversion of attributes from local to XYZ basis."""
+        self.convertAttributesOn = True
+
+
+    def ConvertAttributesOff( self: Self ) -> None:
+        """Deactivate the conversion of attributes from local to XYZ bais."""
+        self.convertAttributesOn = False
+
+
+    def GetConvertAttributes( self: Self ) -> bool:
+        """If convertAttributesOn is True, the set of attributes will be converted from local to XYZ during filter application. Default is True.
+
+        Returns:
+            bool: Current state of the attributes conversion request.
+        """
+        return self.convertAttributesOn
+
+
+    def GetAttributesToConvert( self: Self ) -> set[ str ]:
+        """Get the set of attributes that will be converted from local to XYZ basis.
+
+        Returns:
+            set[ str ]: The set of attributes that should be converted.
+        """
+        return self.attributesToConvert
+
+
+    def SetAttributesToConvert( self: Self, attributesToConvert: set[ str ] ) -> None:
+        """Set the list of attributes that will be converted from local to XYZ basis.
+
+        Args:
+            attributesToConvert (set[str]): The set of attributes names that will be converted from local to XYZ basis
+        """
+        self.attributesToConvert = attributesToConvert
+        if len( self.attributesToConvert ) != 0:
+            self.ConvertAttributesOn()
+        else:
+            self.ConvertAttributesOff()
+            self.logger.warning( "Empty set of attributes to convert." )
+
+
+    def AddAttributesToConvert( self: Self, attributeName: Union[ list[ str ], set[ str ] ] ) -> None:
+        """Add an attribute to the set of attributes to convert.
+
+        Args:
+            attributeName (Union[ list[str],set[ str]]): List of the attribute array names.
+        """
+        self.attributesToConvert.add( attributeName )
+        self.ConvertAttributesOn()
 
 
     def GetNewAttributeNames( self: Self ) -> set[ str ]:
@@ -176,6 +247,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
             set[str]: The set of new attribute names.
         """
         return self.newAttributeNames
+
 
     def applyFilter( self: Self ) -> bool:
         """Compute Geomechanical properties on input surface.
@@ -194,10 +266,12 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
 
-        # Conversion of vectorial attributes from Normal/Tangent basis to xyz basis
-        if not self.convertLocalToXYZBasisAttributes():
-            self.logger.error( "Error while converting Local to XYZ basis attributes." )
-            return False
+        # Conversion of attributes from Normal/Tangent basis to xyz basis
+        if self.convertAttributesOn:
+            self.logger.info( "Conversion of attributes from local to XYZ basis.")
+            if not self._convertAttributesFromLocalToXYZBasis():
+                self.logger.error( "Error while converting attributes from local to XYZ basis." )
+                return False
 
         # Compute shear capacity utilization
         if not self.computeShearCapacityUtilization():
@@ -207,138 +281,75 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.logger.info( f"Filter {self.logger.name} succeeded." )
         return True
 
-    def convertLocalToXYZBasisAttributes( self: Self ) -> bool:
-        """Convert vectorial property coordinates from local to canonic basis.
+
+    def _convertAttributesFromLocalToXYZBasis( self: Self ) -> bool:
+        """Convert attributes from local to XYZ basis.
 
         Returns:
-            bool: True if calculation successfully ended, False otherwise
+            bool: True if calculation successfully ended or no attributes, False otherwise
         """
-        # Look for the list of attributes to convert
-        basisFrom = "local"
-        basisTo = "XYZ"
-        attributesToConvert: set[ str ] = self.__getAttributesToConvert( basisFrom, basisTo )
+        # Get the list of attributes to convert and filter
+        attributesToConvert: set[ str ] = self.__filterAttributesToConvert( self.attributesToConvert )
+
         if len( attributesToConvert ) == 0:
-            self.logger.error( f"No attribute to convert from {basisFrom} to {basisTo} basis were found." )
-            return False
+            self.logger.warning( f"No attribute to convert from local to XYZ basis were found." )
+            return True
 
         # Get local coordinate vectors
-        normalTangentVectors: npt.NDArray[ np.float64 ] = self.getNormalTangentsVectors()
-        # Do conversion from local to canonic for each attribute
-        for attrName in attributesToConvert:
+        normalTangentVectors: npt.NDArray[ np.float64 ] = self.__getNormalTangentsVectors()
+        # Do conversion from local to XYZ for each attribute
+        for attrNameLocal in attributesToConvert:
             # Skip attribute if it is already in the object
-            newAttrName: str = attrName + "_" + ComponentNameEnum.XYZ.name
-            if isAttributeInObject( self.outputMesh, newAttrName, False ):
+            attrNameXYZ: str = f" {attrNameLocal}_{ComponentNameEnum.XYZ.name}"
+            if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributeOnPoints ):
                 continue
 
-            attr: vtkDoubleArray = self.outputMesh.GetCellData().GetArray( attrName )
-            if attr is None:
-                self.logger.error( f"Attribute {attrName} is undefined." )
-            if not attr.GetNumberOfComponents() > 2:
-                self.logger.error( f"Dimension of the attribute {attrName} must be equal or greater than 3." )
+            attrArray: vtkDoubleArray = getArrayInObject( self.outputMesh, attrNameLocal, self.attributeOnPoints)
 
-            attrArray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( attr )  # type: ignore[no-untyped-call]
-            newAttrArray: npt.NDArray[ np.float64 ] = self.computeNewCoordinates( attrArray, normalTangentVectors,
+            newAttrArray: npt.NDArray[ np.float64 ] = self.__computeNewCoordinates( attrArray, normalTangentVectors,
                                                                                   True )
 
             # create attribute
-            if not createAttribute(
+            if createAttribute(
                     self.outputMesh,
                     newAttrArray,
-                    newAttrName,
+                    attrNameXYZ,
                     ComponentNameEnum.XYZ.value,
-                    False,
-                    logger = self.logger
-                ):
-                self.logger.error( f"Failed to create attribute {newAttrName}." )
-            else:
-                self.logger.info( f"Attribute {newAttrName} added to the output mesh." )
-                self.newAttributeNames.add( newAttrName )
-        return True
+                    onPoints = self.attributeOnPoints,
+                    logger = self.logger):
+                self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
+                self.newAttributeNames.add( attrNameXYZ )
 
-    def convertXYZToLocalBasisAttributes( self: Self ) -> bool:
-        """Convert vectorial property coordinates from canonic to local basis.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
-        # Look for the list of attributes to convert
-        basisFrom = "canonical"
-        basisTo = "local"
-        attributesToConvert: set[ str ] = self.__getAttributesToConvert( basisFrom, basisTo )
-        if len( attributesToConvert ) == 0:
-            self.logger.error( "No attribute to convert from canonic to local basis were found." )
-            return False
-
-        # get local coordinate vectors
-        normalTangentVectors: npt.NDArray[ np.float64 ] = self.getNormalTangentsVectors()
-        # Do conversion from canonic to local for each attribute
-        for attrName in attributesToConvert:
-            # Skip attribute if it is already in the object
-            newAttrName: str = attrName + "_" + ComponentNameEnum.NORMAL_TANGENTS.name
-            if isAttributeInObject( self.outputMesh, newAttrName, False ):
-                continue
-
-            attr: vtkDoubleArray = self.outputMesh.GetCellData().GetArray( attrName )
-            if attr is None:
-                self.logger.error( f"Attribute {attrName} is undefined." )
-            if not attr.GetNumberOfComponents() > 2:
-                self.logger.error( f"Dimension of the attribute {attrName} must be equal or greater than 3." )
-
-            attrArray: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( attr )  # type: ignore[no-untyped-call]
-            newAttrArray: npt.NDArray[ np.float64 ] = self.computeNewCoordinates( attrArray, normalTangentVectors,
-                                                                                  False )
-
-            # Create attribute
-            if not createAttribute(
-                self.outputMesh,
-                newAttrArray,
-                newAttrName,
-                ComponentNameEnum.NORMAL_TANGENTS.value,
-                False,
-                logger = self.logger
-                ):
-                self.logger.error( f"Failed to create attribute {newAttrName}." )
-                return False
-            else:
-                self.logger.info( f"Attribute {newAttrName} added to the output mesh." )
-                self.newAttributeNames.add( newAttrName )
         return True
 
 
-    def __getAttributesToConvert( self: Self, basisFrom: str, basisTo: str ):
-        """Get the list of attributes to convert from one basis to another.
-        Choices of basis are "local" or "XYZ".
-
-        Returns:
-            set[ str ]: Set of the attributes names
-        """
-        if basisFrom == "local" and basisTo == "XYZ":
-            return getAttributeToConvertFromLocalToXYZ()
-        elif basisFrom == "XYZ" and basisTo == "local":
-            return getAttributeToConvertFromXYZToLocal()
-        else:
-            self.logger.error( f"Unknow basis named {basisFrom} or {basisTo}." )
-
-
-    def filterAttributesToConvert( self: Self, attributesToFilter: set[ str ] ) -> set[ str ]:
+    def __filterAttributesToConvert( self: Self ) -> set[ str ]:
         """Filter the set of attribute names if they are vectorial and present.
-
-        Args:
-            attributesToFilter (set[str]): set of attribute names to filter.
 
         Returns:
              set[str]: Set of the attribute names.
         """
         attributesFiltered: set[ str ] = set()
-        attributeSet: set[ str ] = getAttributeSet( self.outputMesh, False )
-        for attrName in attributesToFilter:
-            if attrName in attributeSet:
-                attr: vtkDataArray = self.outputMesh.GetCellData().GetArray( attrName )
-                if attr.GetNumberOfComponents() > 2:
-                    attributesFiltered.add( attrName )
+
+        if len( self.attributesToConvert ) != 0:
+            attributeSet: set[ str ] = getAttributeSet( self.outputMesh, False )
+            for attrName in self.attributesToConvert:
+                if attrName in attributeSet:
+                    attr: vtkDataArray = self.outputMesh.GetCellData().GetArray( attrName )
+                    if attr.GetNumberOfComponents() > 2:
+                        attributesFiltered.add( attrName )
+                    else:
+                        self.logger.warning( f"Attribute {attrName} filtered out. Dimension of the attribute must be equal or greater than 3." )
+                else:
+                    self.logger.warning( f"Attribute {attrName} not in the input mesh.")
+
+            if len( attributesFiltered ) == 0:
+                self.logger.warning( "All attributes filtered out." )
+                self.ConvertAttributesOff()
+
         return attributesFiltered
 
-    def computeNewCoordinates(
+    def __computeNewCoordinates(
         self: Self,
         attrArray: npt.NDArray[ np.float64 ],
         normalTangentVectors: npt.NDArray[ np.float64 ],
@@ -427,7 +438,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         # Inverse the change of basis matrix
         return np.linalg.inv( P ).astype( np.float64 )
 
-    def getNormalTangentsVectors( self: Self ) -> npt.NDArray[ np.float64 ]:
+    def __getNormalTangentsVectors( self: Self ) -> npt.NDArray[ np.float64 ]:
         """Compute the change of basis matrix from Local to XYZ bases.
 
         Returns:
@@ -460,6 +471,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
         if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributeOnPoints ):
+            # Get the traction to compute the SCU
             tractionAttributeName: str = GeosMeshOutputsEnum.TRACTION.attributeName
             traction: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, tractionAttributeName,
                                                                     self.attributeOnPoints )
@@ -467,6 +479,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
                 self.logger.error( f"{tractionAttributeName} attribute is undefined." )
                 self.logger.error( f"Failed to compute {SCUAttributeName}." )
 
+            # Computation of the shear capacity utilization (SCU)
             scuAttribute: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization(
                 traction, self.rockCohesion, self.frictionAngle )
 

@@ -49,7 +49,8 @@ additional geomechanical attributes from the input surfaces, such as shear capac
 
 Input and output are vtkMultiBlockDataSet.
 .. Important::
-    Please refer to the GeosExtractMergeBlockVolumeSurface* filters to provide the correct input.
+    - Please refer to the GeosExtractMergeBlockVolumeSurface* filters to provide the correct input.
+    - This filter only works on triangles at the moment. Please apply a triangulation algorithm beforehand if required.
 
 
 To use it:
@@ -57,7 +58,7 @@ To use it:
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVSurfaceGeomechanics.
 * Select any pipeline child of the second ouput from
     GeosExtractMergeBlocksVolumeSurface* filter.
-* Select Filters > 3-Geos Geomechanics > Geos Surface Geomechanics.
+* Select Filters > 3- Geos Geomechanics > Geos Surface Geomechanics.
 * (Optional) Set rock cohesion and/or friction angle.
 * Apply.
 
