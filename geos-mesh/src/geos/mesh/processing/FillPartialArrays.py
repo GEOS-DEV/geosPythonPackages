@@ -70,8 +70,6 @@ class FillPartialArrays:
         Args:
             multiBlockDataSet (vtkMultiBlockDataSet): The mesh where to fill the attribute.
             dictAttributesValues (dict[str, Any]): The dictionary with the attribute to fill as keys and the list of filling values as items.
-            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
-                Defaults to False.
         """
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
