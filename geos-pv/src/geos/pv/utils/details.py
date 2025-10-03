@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from functools import update_wrapper
 from typing import Protocol
+from abc import abstractmethod
 # from functools import wraps
 # from dataclasses import dataclass
 
@@ -91,9 +92,19 @@ Usage is:
 
 #     return decorated_class
 
+# def IsSISOFilter(Protocol):    
+
+#     @abstractmethod
+#     def RequestData(
+#         self,
+#         request: vtkInformation,  # noqa: F841
+#         inInfoVec: list[ vtkInformationVector ],
+#         outInfoVec: vtkInformationVector,
+#     ) -> int:
+#         raise NotImplementedError
 
 
-def SISOFilter(decorated_name, decorated_label, decorated_type):
+def SISOFilter(decorated_label, decorated_type):
     """
     Decorate single input single output filter
     """
@@ -112,17 +123,39 @@ def SISOFilter(decorated_name, decorated_label, decorated_type):
             )
             cls.__init__(self, *ar, **kw)
 
+        def RequestDataObject(
+            self,
+            request: vtkInformation,
+            inInfoVec: list[ vtkInformationVector ],
+            outInfoVec: vtkInformationVector, ) -> int:
+            """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+
+            Args:
+                request (vtkInformation): Request
+                inInfoVec (list[vtkInformationVector]): Input objects
+                outInfoVec (vtkInformationVector): Output objects
+
+            Returns:
+                int: 1 if calculation successfully ended, 0 otherwise.
+            """
+            inData = self.GetInputData( inInfoVec, 0, 0 )
+            outData = self.GetOutputData( outInfoVec, 0 )
+            assert inData is not None
+            if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
+                outData = inData.NewInstance()
+                outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+            return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+
         print(f"Is creating Wrapping class") 
         # Créer dynamiquement la nouvelle classe
         WrappingClass = type(
             cls.__name__,  # Nom de la classe
-            (VTKPythonAlgorithmBase,),  # Bases
+            (VTKPythonAlgorithmBase,cls),  # Bases
             {
                 '__init__': new_init,
                 '__module__': cls.__module__,
                 '__qualname__': cls.__qualname__,
-                'RequestData' : cls.RequestData,
-                'RequestDataObject':cls.RequestDataObject,
+                'RequestDataObject' : RequestDataObject,
             }
         )
         
@@ -131,9 +164,9 @@ def SISOFilter(decorated_name, decorated_label, decorated_type):
 
         #decorate it old fashion way
         smhint.xml( '<ShowInMenu category="4- Geos Utils"/>')(WrappingClass)
-        smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )(WrappingClass)
-        smproperty.input( name="Input", port_index=0 )(WrappingClass)
-        smdomain.datatype(dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True, )(WrappingClass)
+        smproxy.filter( name=cls.__name__, label=decorated_label)(WrappingClass)
+        # smproperty.input( name="Input", port_index=0 )(WrappingClass)
+        smdomain.datatype(dataTypes=[ decorated_type ], composite_data_supported=True, )(WrappingClass)
         print(f"returned class ids {cls.__name__}")
         # dbg = getattr(WrappingClass)
         print(f"returned class ids {dir(WrappingClass)}") 

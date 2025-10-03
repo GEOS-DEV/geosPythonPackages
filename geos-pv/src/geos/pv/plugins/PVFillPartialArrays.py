@@ -47,7 +47,8 @@ To use it:
 """
 
 print(f"Is using PVFillPartialArrays")
-@SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
+@smproperty.input(name="Input", port_index=0)
+@SISOFilter( decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
 class PVFillPartialArrays:
 
     def __init__( self: Self, ) -> None:
@@ -98,29 +99,29 @@ class PVFillPartialArrays:
 
         self.Modified()
 
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+    # def RequestDataObject(
+    #     self: Self,
+    #     request: vtkInformation,
+    #     inInfoVec: list[ vtkInformationVector ],
+    #     outInfoVec: vtkInformationVector,
+    # ) -> int:
+    #     """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+    #     Args:
+    #         request (vtkInformation): Request
+    #         inInfoVec (list[vtkInformationVector]): Input objects
+    #         outInfoVec (vtkInformationVector): Output objects
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+    #     Returns:
+    #         int: 1 if calculation successfully ended, 0 otherwise.
+    #     """
+    #     inData = self.GetInputData( inInfoVec, 0, 0 )
+    #     outData = self.GetOutputData( outInfoVec, 0 )
+    #     assert inData is not None
+    #     if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
+    #         outData = inData.NewInstance()
+    #         outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+    #     return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
         self: Self,
