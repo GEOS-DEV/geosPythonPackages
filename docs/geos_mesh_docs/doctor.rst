@@ -14,7 +14,7 @@ To use mesh-doctor, you first need to have installed the ``geos-mesh`` package u
 
     python -m pip install --upgrade ./geos-mesh
 
-Once done, you can call ``mesh-doctor`` in your command line as presented in the rest of this documentation.
+Once done, you can call ``mesh-doctor`` or ``meshDoctor`` in your command line as presented in the rest of this documentation.
 
 Modules
 ^^^^^^^
@@ -24,30 +24,30 @@ To list all the modules available through ``mesh-doctor``, you can simply use th
 .. code-block::
 
       $ mesh-doctor --help
-      usage: mesh_doctor.py [-h] [-v] [-q] -i VTK_MESH_FILE
-                      {collocated_nodes,element_volumes,fix_elements_orderings,generate_cube,generate_fractures,generate_global_ids,non_conformal,self_intersecting_elements,supported_elements}
+      usage: meshDoctor.py [-h] [-v] [-q] -i VTK_MESH_FILE
+                      {collocatedNodes,elementVolumes,fixElementsOrderings,generateCube,generateFractures,generateGlobalIds,nonConformal,selfIntersectingElements,supportedElements}
                       ...
       Inspects meshes for GEOSX.
       positional arguments:
-      {collocated_nodes,element_volumes,fix_elements_orderings,generate_cube,generate_fractures,generate_global_ids,non_conformal,self_intersecting_elements,supported_elements}
+      {collocatedNodes,elementVolumes,fixElementsOrderings,generateCube,generateFractures,generateGlobalIds,nonConformal,selfIntersectingElements,supportedElements}
             Modules
-         collocated_nodes
+         collocatedNodes
             Checks if nodes are collocated.
-         element_volumes
+         elementVolumes
             Checks if the volumes of the elements are greater than "min".
-         fix_elements_orderings
+         fixElementsOrderings
             Reorders the support nodes for the given cell types.
-         generate_cube
+         generateCube
             Generate a cube and its fields.
-         generate_fractures
+         generateFractures
             Splits the mesh to generate the faults and fractures. [EXPERIMENTAL]
-         generate_global_ids
+         generateGlobalIds
             Adds globals ids for points and cells.
-         non_conformal
+         nonConformal
             Detects non conformal elements. [EXPERIMENTAL]
-         self_intersecting_elements
+         selfIntersectingElements
             Checks if the faces of the elements are self intersecting.
-         supported_elements
+         supportedElements
             Check that all the elements of the mesh are supported by GEOSX.
       options:
       -h, --help
@@ -64,8 +64,8 @@ For example
 
 .. code-block::
 
-      $ mesh-doctor collocated_nodes --help
-      usage: mesh_doctor.py collocated_nodes [-h] --tolerance TOLERANCE
+      $ mesh-doctor collocatedNodes --help
+      usage: meshDoctor.py collocatedNodes [-h] --tolerance TOLERANCE
       options:
       -h, --help              show this help message and exit
       --tolerance TOLERANCE   [float]: The absolute distance between two nodes for them to be considered collocated.
@@ -76,51 +76,51 @@ If you see a message like
 
 .. code-block:: bash
 
-    [1970-04-14 03:07:15,625][WARNING] Could not load module "collocated_nodes": No module named 'vtkmodules'
+    [1970-04-14 03:07:15,625][WARNING] Could not load module "collocatedNodes": No module named 'vtkmodules'
 
-then most likely ``mesh-doctor`` could not load the ``collocated_nodes`` module, because the ``vtk`` python package was not found.
-Thereafter, the documentation for module ``collocated_nodes`` will not be displayed.
+then most likely ``mesh-doctor`` could not load the ``collocatedNodes`` module, because the ``vtk`` python package was not found.
+Thereafter, the documentation for module ``collocatedNodes`` will not be displayed.
 You can solve this issue by installing the dependencies of ``mesh-doctor`` defined in its ``requirements.txt`` file (``python -m pip install -r requirements.txt``).
 
 Here is a list and brief description of all the modules available.
 
-``all_checks`` and ``main_checks``
-""""""""""""""""""""""""""""""""""
+``allChecks`` and ``mainChecks``
+""""""""""""""""""""""""""""""""
 
 ``mesh-doctor`` modules are called ``actions`` and they can be split into 2 different categories:
 ``check actions`` that will give you a feedback on a .vtu mesh that you would like to use in GEOS.
 ``operate actions`` that will either create a new mesh or modify an existing mesh.
 
-``all_checks`` aims at applying every single ``check`` action in one single command. The available list is of check is:
-``collocated_nodes``, ``element_volumes``, ``non_conformal``, ``self_intersecting_elements``, ``supported_elements``.
+``allChecks`` aims at applying every single ``check`` action in one single command. The available list is of check is:
+``collocatedNodes``, ``elementVolumes``, ``nonConformal``, ``selfIntersectingElements``, ``supportedElements``.
 
-``main_checks`` does only the fastest checks ``collocated_nodes``, ``element_volumes`` and ``self_intersecting_elements``
+``mainChecks`` does only the fastest checks ``collocatedNodes``, ``elementVolumes`` and ``selfIntersectingElements``
 that can quickly highlight some issues to deal with before investigating the other checks.
 
-Both ``all_checks`` and ``main_checks`` have the same keywords and can be operated in the same way. The example below shows
-the case of ``all_checks``, but it can be swapped for ``main_checks``.
+Both ``allChecks`` and ``mainChecks`` have the same keywords and can be operated in the same way. The example below shows
+the case of ``allChecks``, but it can be swapped for ``mainChecks``.
 
 .. code-block::
 
-      $ mesh-doctor all_checks --help                                                                                
-      usage: mesh-doctor all_checks [-h] [--checks_to_perform CHECKS_TO_PERFORM] [--set_parameters SET_PARAMETERS]
+      $ mesh-doctor allChecks --help                                                                                
+      usage: mesh-doctor allChecks [-h] [--checksToPerform checksToPerform] [--set_parameters SET_PARAMETERS]
 
       options:
       -h, --help            show this help message and exit
-      --checks_to_perform CHECKS_TO_PERFORM
+      --checksToPerform checksToPerform
                               Comma-separated list of mesh-doctor checks to perform.
-                              If no input was given, all of the following checks will be executed by default: ['collocated_nodes', 'element_volumes', 'self_intersecting_elements'].
-                              The available choices for checks are ['collocated_nodes', 'element_volumes', 'non_conformal', 'self_intersecting_elements', 'supported_elements'].
+                              If no input was given, all of the following checks will be executed by default: ['collocatedNodes', 'elementVolumes', 'selfIntersectingElements'].
+                              The available choices for checks are ['collocatedNodes', 'elementVolumes', 'nonConformal', 'selfIntersectingElements', 'supportedElements'].
                               If you want to choose only certain of them, you can name them individually.
-                              Example: --checks_to_perform collocated_nodes,element_volumes (default: )
-      --set_parameters SET_PARAMETERS
+                              Example: --checksToPerform collocatedNodes,elementVolumes (default: )
+      --setParameters setParameters
                               Comma-separated list of parameters to set for the checks (e.g., 'param_name:value'). These parameters override the defaults.
-                              Default parameters are: For collocated_nodes: tolerance:0.0. For element_volumes: min_volume:0.0.
-                              For non_conformal: angle_tolerance:10.0, point_tolerance:0.0, face_tolerance:0.0.
-                              For self_intersecting_elements: min_distance:2.220446049250313e-16. For supported_elements: chunk_size:1, nproc:8.
-                              Example: --set_parameters parameter_name:10.5,other_param:25 (default: )
+                              Default parameters are: For collocatedNodes: tolerance:0.0. For elementVolumes: minVolume:0.0.
+                              For nonConformal: angleTolerance:10.0, pointTolerance:0.0, faceTolerance:0.0.
+                              For selfIntersectingElements: minDistance:2.220446049250313e-16. For supportedElements: chunkSize:1, nproc:8.
+                              Example: --setParameters parameter_name:10.5,other_param:25 (default: )
 
-``collocated_nodes``
+``collocatedNodes``
 """"""""""""""""""""
 
 Displays the neighboring nodes that are closer to each other than a prescribed threshold.
@@ -128,37 +128,37 @@ It is not uncommon to define multiple nodes for the exact same position, which w
 
 .. code-block::
 
-      $ mesh-doctor collocated_nodes --help
-      usage: mesh_doctor.py collocated_nodes [-h] --tolerance TOLERANCE
+      $ mesh-doctor collocatedNodes --help
+      usage: meshDoctor.py collocatedNodes [-h] --tolerance TOLERANCE
       options:
       -h, --help              show this help message and exit
       --tolerance TOLERANCE   [float]: The absolute distance between two nodes for them to be considered collocated.
 
-``element_volumes``
-"""""""""""""""""""
+``elementVolumes``
+""""""""""""""""""
 
 Computes the volumes of all the cells and displays the ones that are below a prescribed threshold.
 Cells with negative volumes will typically be an issue for ``geos`` and should be fixed.
 
 .. code-block::
 
-      $ mesh-doctor element_volumes --help
-      usage: mesh_doctor.py element_volumes [-h] --min 0.0
+      $ mesh-doctor elementVolumes --help
+      usage: meshDoctor.py elementVolumes [-h] --minVolume 0.0
       options:
       -h, --help              show this help message and exit
-      --min 0.0               [float]: The minimum acceptable volume. Defaults to 0.0.
+      --minVolume 0.0         [float]: The minimum acceptable volume. Defaults to 0.0.
 
-``fix_elements_orderings``
-""""""""""""""""""""""""""
+``fixElementsOrderings``
+""""""""""""""""""""""""
 
 It sometimes happens that an exported mesh does not abide by the ``vtk`` orderings.
-The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
+The ``fixElementsOrderings`` module can rearrange the nodes of given types of elements.
 This can be convenient if you cannot regenerate the mesh.
 
 .. code-block::
 
-      $ mesh-doctor fix_elements_orderings --help
-      usage: mesh_doctor.py fix_elements_orderings [-h] [--Hexahedron 1,6,5,4,7,0,2,3] [--Prism5 8,2,0,7,6,9,5,1,4,3]
+      $ mesh-doctor fixElementsOrderings --help
+      usage: meshDoctor.py fixElementsOrderings [-h] [--Hexahedron 1,6,5,4,7,0,2,3] [--Prism5 8,2,0,7,6,9,5,1,4,3]
                                                    [--Prism6 11,2,8,10,5,0,9,7,6,1,4,3] [--Pyramid 3,4,0,2,1]
                                                    [--Tetrahedron 2,0,3,1] [--Voxel 1,6,5,4,7,0,2,3]
                                                    [--Wedge 3,5,4,0,2,1] --output OUTPUT [--data-mode binary, ascii]
@@ -178,8 +178,8 @@ This can be convenient if you cannot regenerate the mesh.
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
-``generate_cube``
-"""""""""""""""""
+``generateCube``
+""""""""""""""""
 
 This module conveniently generates cubic meshes in ``vtk``.
 It can also generate fields with simple values.
@@ -187,8 +187,8 @@ This tool can also be useful to generate a trial mesh that will later be refined
 
 .. code-block::
 
-      $ mesh-doctor generate_cube --help
-      usage: mesh_doctor.py generate_cube [-h] [--x 0:1.5:3] [--y 0:5:10] [--z 0:1] [--nx 2:2] [--ny 1:1] [--nz 4]
+      $ mesh-doctor generateCube --help
+      usage: meshDoctor.py generateCube [-h] [--x 0:1.5:3] [--y 0:5:10] [--z 0:1] [--nx 2:2] [--ny 1:1] [--nz 4]
                                           [--fields name:support:dim [name:support:dim ...]] [--cells] [--no-cells]      
                                           [--points] [--no-points] --output OUTPUT [--data-mode binary, ascii]
       options:
@@ -209,17 +209,17 @@ This tool can also be useful to generate a trial mesh that will later be refined
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
-``generate_fractures``
-""""""""""""""""""""""
+``generateFractures``
+"""""""""""""""""""""
 
 For a conformal fracture to be defined in a mesh, ``geos`` requires the mesh to be split at the faces where the fracture gets across the mesh.
-The ``generate_fractures`` module will split the mesh and generate the multi-block ``vtk`` files.
+The ``generateFractures`` module will split the mesh and generate the multi-block ``vtk`` files.
 
 .. code-block::
 
-      $ mesh-doctor generate_fractures --help
-      usage: mesh_doctor.py generate_fractures [-h] --policy field, internal_surfaces [--name NAME] [--values VALUES] --output OUTPUT
-                                               [--data-mode binary, ascii] [--fractures_output_dir FRACTURES_OUTPUT_DIR]
+      $ mesh-doctor generateFractures --help
+      usage: meshDoctor.py generateFractures [-h] --policy field, internal_surfaces [--name NAME] [--values VALUES] --output OUTPUT
+                                               [--data-mode binary, ascii] [--fracturesOutputDir FRACTURES_OUTPUT_DIR]
       options:
       -h, --help              show this help message and exit
       --policy field, internal_surfaces
@@ -234,21 +234,21 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
       --output OUTPUT         [string]: The vtk output file destination.
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
-      --fractures_output_dir FRACTURES_OUTPUT_DIR
+      --fracturesOutputDir FRACTURES_OUTPUT_DIR
                               [string]: The output directory for the fractures meshes that will be generated from the mesh.
-      --fractures_data_mode FRACTURES_DATA_MODE
+      --fracturesDataMode FRACTURES_DATA_MODE
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
-``generate_global_ids``
-"""""""""""""""""""""""
+``generateGlobalIds``
+"""""""""""""""""""""
 
 When running ``geos`` in parallel, `global ids` can be used to refer to data across multiple ranks.
-The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` mesh.
+The ``generateGlobalIds`` can generate `global ids` for the imported ``vtk`` mesh.
 
 .. code-block::
 
-      $ mesh-doctor generate_global_ids --help
-      usage: mesh_doctor.py generate_global_ids [-h] [--cells] [--no-cells] [--points] [--no-points] --output OUTPUT
+      $ mesh-doctor generateGlobalIds --help
+      usage: meshDoctor.py generateGlobalIds [-h] [--cells] [--no-cells] [--points] [--no-points] --output OUTPUT
                                                 [--data-mode binary, ascii]
       options:
       -h, --help              show this help message and exit
@@ -260,8 +260,8 @@ The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` m
       --data-mode binary, ascii
                               [string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.
 
-``non_conformal``
-"""""""""""""""""
+``nonConformal``
+""""""""""""""""
 
 This module will detect elements which are close enough (there's a user defined threshold) but which are not in front of each other (another threshold can be defined).
 `Close enough` can be defined in terms or proximity of the nodes and faces of the elements.
@@ -270,48 +270,48 @@ This module can be a bit time consuming.
 
 .. code-block::
 
-      $ mesh-doctor non_conformal --help
-      usage: mesh_doctor.py non_conformal [-h] [--angle_tolerance 10.0] [--point_tolerance POINT_TOLERANCE]
-                                          [--face_tolerance FACE_TOLERANCE]
+      $ mesh-doctor nonConformal --help
+      usage: meshDoctor.py nonConformal [-h] [--angleTolerance 10.0] [--pointTolerance POINT_TOLERANCE]
+                                          [--faceTolerance FACE_TOLERANCE]
       options:
       -h, --help              show this help message and exit
-      --angle_tolerance 10.0  [float]: angle tolerance in degrees. Defaults to 10.0
-      --point_tolerance POINT_TOLERANCE
+      --angleTolerance 10.0  [float]: angle tolerance in degrees. Defaults to 10.0
+      --pointTolerance POINT_TOLERANCE
                               [float]: tolerance for two points to be considered collocated.
-      --face_tolerance FACE_TOLERANCE
+      --faceTolerance FACE_TOLERANCE
                               [float]: tolerance for two faces to be considered "touching".
 
-``self_intersecting_elements``
-""""""""""""""""""""""""""""""
+``selfIntersectingElements``
+""""""""""""""""""""""""""""
 
 Some meshes can have cells that auto-intersect.
 This module will display the elements that have faces intersecting.
 
 .. code-block::
 
-      $ mesh-doctor self_intersecting_elements --help
-      usage: mesh_doctor.py self_intersecting_elements [-h] [--min 2.220446049250313e-16]
+      $ mesh-doctor selfIntersectingElements --help
+      usage: meshDoctor.py selfIntersectingElements [-h] [--minDistance 2.220446049250313e-16]
       options:
       -h, --help              show this help message and exit
-      --min 2.220446049250313e-16
+      --minDistance 2.220446049250313e-16
                               [float]: The tolerance in the computation. Defaults to your machine precision 2.220446049250313e-16.
 
-``supported_elements``
-""""""""""""""""""""""
+``supportedElements``
+""""""""""""""""""""
 
 ``geos`` supports a specific set of elements.
 Let's cite the standard elements like `tetrahedra`, `wedges`, `pyramids` or `hexahedra`.
 But also prismes up to 11 faces.
 ``geos`` also supports the generic ``VTK_POLYHEDRON``/``42`` elements, which are converted on the fly into one of the elements just described.
 
-The ``supported_elements`` check will validate that no unsupported element is included in the input mesh.
+The ``supportedElements`` check will validate that no unsupported element is included in the input mesh.
 It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get converted into a supported type of element.
 
 .. code-block::
 
-      $ mesh-doctor supported_elements --help
-      usage: mesh_doctor.py supported_elements [-h] [--chunck_size 1] [--nproc 8]
+      $ mesh-doctor supportedElements --help
+      usage: meshDoctor.py supportedElements [-h] [--chunkSize 1] [--nproc 8]
       options:
       -h, --help              show this help message and exit
-      --chunck_size 1         [int]: Defaults chunk size for parallel processing to 1
+      --chunkSize 1           [int]: Defaults chunk size for parallel processing to 1
       --nproc 8               [int]: Number of threads used for parallel processing. Defaults to your CPU count 8.
