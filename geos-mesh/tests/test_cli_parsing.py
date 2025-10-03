@@ -2,8 +2,8 @@ import argparse
 from dataclasses import dataclass
 import pytest
 from typing import Iterator, Sequence
-from geos.mesh.doctor.actions.generate_fractures import FracturePolicy, Options
-from geos.mesh.doctor.parsing.generate_fractures_parsing import convert, displayResults, fillSubparser
+from geos.mesh.doctor.actions.generateFractures import FracturePolicy, Options
+from geos.mesh.doctor.parsing.generateFracturesParsing import convert, displayResults, fillSubparser
 from geos.mesh.io.vtkIO import VtkOutput
 
 

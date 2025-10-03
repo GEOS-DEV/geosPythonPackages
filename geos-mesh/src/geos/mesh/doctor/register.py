@@ -2,8 +2,8 @@ import argparse
 import importlib
 from typing import Dict, Callable, Any, Tuple
 import geos.mesh.doctor.parsing as parsing
-from geos.mesh.doctor.parsing import ActionHelper, cli_parsing
-from geos.mesh.doctor.parsing.cli_parsing import setupLogger
+from geos.mesh.doctor.parsing import ActionHelper, cliParsing
+from geos.mesh.doctor.parsing.cliParsing import setupLogger
 
 __HELPERS: Dict[ str, Callable[ [ None ], ActionHelper ] ] = dict()
 __ACTIONS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
@@ -14,7 +14,7 @@ def __loadModuleAction( moduleName: str, actionFct="action" ):
     return getattr( module, actionFct )
 
 
-def __loadModuleActionHelper( moduleName: str, parsingFctSuffix="_parsing" ):
+def __loadModuleActionHelper( moduleName: str, parsingFctSuffix="Parsing" ):
     module = importlib.import_module( "geos.mesh.doctor.parsing." + moduleName + parsingFctSuffix )
     return ActionHelper( fillSubparser=module.fillSubparser,
                          convert=module.convert,
@@ -44,7 +44,7 @@ def registerParsingActions(
     Register all the parsing actions. Eventually initiate the registration of all the actions too.
     :return: The actions and the actions helpers.
     """
-    parser = cli_parsing.initParser()
+    parser = cliParsing.initParser()
     subparsers = parser.add_subparsers( help="Modules", dest="subparsers" )
 
     def closureTrick( cn: str ):
