@@ -1,10 +1,10 @@
 from geos.mesh.doctor.actions.generate_cube import __build, Options, FieldInfo
 
 
-def test_generate_cube():
-    options = Options( vtk_output=None,
-                       generate_cells_global_ids=True,
-                       generate_points_global_ids=False,
+def test_generateCube():
+    options = Options( vtkOutput=None,
+                       generateCellsGlobalIds=True,
+                       generatePointsGlobalIds=False,
                        xs=( 0, 5, 10 ),
                        ys=( 0, 4, 8 ),
                        zs=( 0, 1 ),

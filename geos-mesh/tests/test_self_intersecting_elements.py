@@ -3,7 +3,7 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkUnstru
 from geos.mesh.doctor.actions.self_intersecting_elements import Options, __action
 
 
-def test_jumbled_hex():
+def test_jumbledHex():
     # creating a simple hexahedron
     points = vtkPoints()
     points.SetNumberOfPoints( 8 )
@@ -16,7 +16,7 @@ def test_jumbled_hex():
     points.SetPoint( 6, ( 1, 1, 1 ) )
     points.SetPoint( 7, ( 0, 1, 1 ) )
 
-    cell_types = [ VTK_HEXAHEDRON ]
+    cellTypes = [ VTK_HEXAHEDRON ]
     cells = vtkCellArray()
     cells.AllocateExact( 1, 8 )
 
@@ -33,9 +33,9 @@ def test_jumbled_hex():
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
-    mesh.SetCells( cell_types, cells )
+    mesh.SetCells( cellTypes, cells )
 
-    result = __action( mesh, Options( min_distance=0. ) )
+    result = __action( mesh, Options( minDistance=0. ) )
 
-    assert len( result.intersecting_faces_elements ) == 1
-    assert result.intersecting_faces_elements[ 0 ] == 0
+    assert len( result.intersectingFacesElements ) == 1
+    assert result.intersectingFacesElements[ 0 ] == 0

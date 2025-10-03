@@ -8,22 +8,22 @@ from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
                                             VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
                                             VTK_WEDGE )
-from geos.mesh.doctor.actions.vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.actions.vtk_polyhedron import buildFaceToFaceConnectivityThroughEdges, FaceStream
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 from geos.mesh.io.vtkIO import read_mesh
-from geos.mesh.utils.genericHelpers import vtk_iter
+from geos.mesh.utils.genericHelpers import vtkIter
 
 
 @dataclass( frozen=True )
 class Options:
     nproc: int
-    chunk_size: int
+    chunkSize: int
 
 
 @dataclass( frozen=True )
 class Result:
-    unsupported_std_elements_types: FrozenSet[ int ]  # list of unsupported types
-    unsupported_polyhedron_elements: FrozenSet[
+    unsupportedStdElementsTypes: FrozenSet[ int ]  # list of unsupported types
+    unsupportedPolyhedronElements: FrozenSet[
         int ]  # list of polyhedron elements that could not be converted to supported std elements
 
 
@@ -31,20 +31,20 @@ class Result:
 MESH: Optional[ vtkUnstructuredGrid ] = None
 
 
-def init_worker_mesh( input_file_for_worker: str ):
+def initWorkerMesh( inputFileForWorker: str ):
     """Initializer for multiprocessing.Pool to set the global MESH variable in each worker process.
 
     Args:
-        input_file_for_worker (str): Filepath to vtk grid
+        inputFileForWorker (str): Filepath to vtk grid
     """
     global MESH
-    setup_logger.debug(
-        f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {input_file_for_worker}"
+    setupLogger.debug(
+        f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {inputFileForWorker}"
     )
-    MESH = read_mesh( input_file_for_worker )
+    MESH = read_mesh( inputFileForWorker )
     if MESH is None:
-        setup_logger.error(
-            f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {input_file_for_worker}"
+        setupLogger.error(
+            f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {inputFileForWorker}"
         )
         # You might want to raise an error here or ensure MESH being None is handled downstream
         # For now, the assert MESH is not None in __call__ will catch this.
@@ -54,7 +54,7 @@ class IsPolyhedronConvertible:
 
     def __init__( self ):
 
-        def build_prism_graph( n: int, name: str ) -> networkx.Graph:
+        def buildPrismGraph( n: int, name: str ) -> networkx.Graph:
             """Builds the face to face connectivities (through edges) for prism graphs.
 
             Args:
@@ -72,39 +72,39 @@ class IsPolyhedronConvertible:
             return tmp
 
         # Building the reference graphs
-        tet_graph = networkx.complete_graph( 4 )
-        tet_graph.name = "Tetrahedron"
-        pyr_graph = build_prism_graph( 4, "Pyramid" )
-        pyr_graph.remove_node( 5 )  # Removing a node also removes its associated edges.
-        self.__reference_graphs: Mapping[ int, Iterable[ networkx.Graph ] ] = {
-            4: ( tet_graph, ),
-            5: ( pyr_graph, build_prism_graph( 3, "Wedge" ) ),
-            6: ( build_prism_graph( 4, "Hexahedron" ), ),
-            7: ( build_prism_graph( 5, "Prism5" ), ),
-            8: ( build_prism_graph( 6, "Prism6" ), ),
-            9: ( build_prism_graph( 7, "Prism7" ), ),
-            10: ( build_prism_graph( 8, "Prism8" ), ),
-            11: ( build_prism_graph( 9, "Prism9" ), ),
-            12: ( build_prism_graph( 10, "Prism10" ), ),
-            13: ( build_prism_graph( 11, "Prism11" ), ),
+        tetGraph = networkx.complete_graph( 4 )
+        tetGraph.name = "Tetrahedron"
+        pyrGraph = buildPrismGraph( 4, "Pyramid" )
+        pyrGraph.remove_node( 5 )  # Removing a node also removes its associated edges.
+        self.__referenceGraphs: Mapping[ int, Iterable[ networkx.Graph ] ] = {
+            4: ( tetGraph, ),
+            5: ( pyrGraph, buildPrismGraph( 3, "Wedge" ) ),
+            6: ( buildPrismGraph( 4, "Hexahedron" ), ),
+            7: ( buildPrismGraph( 5, "Prism5" ), ),
+            8: ( buildPrismGraph( 6, "Prism6" ), ),
+            9: ( buildPrismGraph( 7, "Prism7" ), ),
+            10: ( buildPrismGraph( 8, "Prism8" ), ),
+            11: ( buildPrismGraph( 9, "Prism9" ), ),
+            12: ( buildPrismGraph( 10, "Prism10" ), ),
+            13: ( buildPrismGraph( 11, "Prism11" ), ),
         }
 
-    def __is_polyhedron_supported( self, face_stream ) -> str:
+    def __isPolyhedronSupported( self, faceStream ) -> str:
         """Checks if a polyhedron can be converted into a supported cell.
         If so, returns the name of the type. If not, the returned name will be empty.
 
         Args:
-            face_stream (_type_): The polyhedron.
+            faceStream (_type_): The polyhedron.
 
         Returns:
             str: The name of the supported type or an empty string.
         """
-        cell_graph = build_face_to_face_connectivity_through_edges( face_stream, add_compatibility=True )
-        if cell_graph.order() not in self.__reference_graphs:
+        cellGraph = buildFaceToFaceConnectivityThroughEdges( faceStream, add_compatibility=True )
+        if cellGraph.order() not in self.__referenceGraphs:
             return ""
-        for reference_graph in self.__reference_graphs[ cell_graph.order() ]:
-            if networkx.is_isomorphic( reference_graph, cell_graph ):
-                return str( reference_graph.name )
+        for referenceGraph in self.__referenceGraphs[ cellGraph.order() ]:
+            if networkx.is_isomorphic( referenceGraph, cellGraph ):
+                return str( referenceGraph.name )
         return ""
 
     def __call__( self, ic: int ) -> int:
@@ -117,61 +117,61 @@ class IsPolyhedronConvertible:
             int: -1 if the polyhedron vtk element can be converted into a supported element type. The index otherwise.
         """
         global MESH
-        assert MESH is not None, f"MESH global variable not initialized in worker process (PID: {multiprocessing.current_process().pid}). This should have been set by init_worker_mesh."
+        assert MESH is not None, f"MESH global variable not initialized in worker process (PID: {multiprocessing.current_process().pid}). This should have been set by initWorkerMesh."
         if MESH.GetCellType( ic ) != VTK_POLYHEDRON:
             return -1
-        pt_ids = vtkIdList()
-        MESH.GetFaceStream( ic, pt_ids )
-        face_stream = FaceStream.build_from_vtk_id_list( pt_ids )
-        converted_type_name = self.__is_polyhedron_supported( face_stream )
-        if converted_type_name:
-            setup_logger.debug( f"Polyhedron cell {ic} can be converted into \"{converted_type_name}\"" )
+        ptIds = vtkIdList()
+        MESH.GetFaceStream( ic, ptIds )
+        faceStream = FaceStream.buildFromVtkIdList( ptIds )
+        convertedTypeName = self.__isPolyhedronSupported( faceStream )
+        if convertedTypeName:
+            setupLogger.debug( f"Polyhedron cell {ic} can be converted into \"{convertedTypeName}\"" )
             return -1
         else:
-            setup_logger.debug(
+            setupLogger.debug(
                 f"Polyhedron cell {ic} (in PID {multiprocessing.current_process().pid}) cannot be converted into any supported element."
             )
             return ic
 
 
-def __action( vtk_input_file: str, options: Options ) -> Result:
+def __action( vtkInputFile: str, options: Options ) -> Result:
     # Main process loads the mesh for its own use
-    mesh = read_mesh( vtk_input_file )
+    mesh = read_mesh( vtkInputFile )
     if mesh is None:
-        setup_logger.error( f"Main process failed to load mesh from {vtk_input_file}. Aborting." )
+        setupLogger.error( f"Main process failed to load mesh from {vtkInputFile}. Aborting." )
         # Return an empty/error result or raise an exception
-        return Result( unsupported_std_elements_types=frozenset(), unsupported_polyhedron_elements=frozenset() )
+        return Result( unsupportedStdElementsTypes=frozenset(), unsupportedPolyhedronElements=frozenset() )
 
     if hasattr( mesh, "GetDistinctCellTypesArray" ):
-        cell_types_numpy = vtk_to_numpy( mesh.GetDistinctCellTypesArray() )
-        cell_types = set( cell_types_numpy.tolist() )
+        cellTypesNumpy = vtk_to_numpy( mesh.GetDistinctCellTypesArray() )
+        cellTypes = set( cellTypesNumpy.tolist() )
     else:
-        vtk_cell_types_obj = vtkCellTypes()
-        mesh.GetCellTypes( vtk_cell_types_obj )
-        cell_types = set( vtk_iter( vtk_cell_types_obj ) )
+        vtkCellTypesObj = vtkCellTypes()
+        mesh.GetCellTypes( vtkCellTypesObj )
+        cellTypes = set( vtkIter( vtkCellTypesObj ) )
 
-    supported_cell_types = {
+    supportedCellTypes = {
         VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON, VTK_PENTAGONAL_PRISM, VTK_POLYHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_VOXEL,
         VTK_WEDGE
     }
-    unsupported_std_elements_types = cell_types - supported_cell_types
+    unsupportedStdElementsTypes = cellTypes - supportedCellTypes
 
     # Dealing with polyhedron elements.
-    num_cells = mesh.GetNumberOfCells()
-    polyhedron_converter = IsPolyhedronConvertible()
+    numCells = mesh.GetNumberOfCells()
+    polyhedronConverter = IsPolyhedronConvertible()
 
-    unsupported_polyhedron_indices = []
-    # Pass the vtk_input_file to the initializer
-    with multiprocessing.Pool( processes=options.nproc, initializer=init_worker_mesh,
-                               initargs=( vtk_input_file, ) ) as pool:  # Comma makes it a tuple
-        generator = pool.imap_unordered( polyhedron_converter, range( num_cells ), chunksize=options.chunk_size )
-        for cell_index_or_neg_one in tqdm( generator, total=num_cells, desc="Testing support for elements" ):
-            if cell_index_or_neg_one != -1:
-                unsupported_polyhedron_indices.append( cell_index_or_neg_one )
+    unsupportedPolyhedronIndices = []
+    # Pass the vtkInputFile to the initializer
+    with multiprocessing.Pool( processes=options.nproc, initializer=initWorkerMesh,
+                               initargs=( vtkInputFile, ) ) as pool:  # Comma makes it a tuple
+        generator = pool.imap_unordered( polyhedronConverter, range( numCells ), chunksize=options.chunkSize )
+        for cellIndexOrNegOne in tqdm( generator, total=numCells, desc="Testing support for elements" ):
+            if cellIndexOrNegOne != -1:
+                unsupportedPolyhedronIndices.append( cellIndexOrNegOne )
 
-    return Result( unsupported_std_elements_types=frozenset( unsupported_std_elements_types ),
-                   unsupported_polyhedron_elements=frozenset( unsupported_polyhedron_indices ) )
+    return Result( unsupportedStdElementsTypes=frozenset( unsupportedStdElementsTypes ),
+                   unsupportedPolyhedronElements=frozenset( unsupportedPolyhedronIndices ) )
 
 
-def action( vtk_input_file: str, options: Options ) -> Result:
-    return __action( vtk_input_file, options )
+def action( vtkInputFile: str, options: Options ) -> Result:
+    return __action( vtkInputFile, options )

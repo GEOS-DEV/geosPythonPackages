@@ -269,7 +269,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                 idElementFrom += 1
 
 
-def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
+def hasArray( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
     """Checks if input mesh contains at least one of input data arrays.
 
     Args:

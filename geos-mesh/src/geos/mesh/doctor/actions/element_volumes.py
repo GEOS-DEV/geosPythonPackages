@@ -4,18 +4,18 @@ import uuid
 from vtkmodules.vtkCommonDataModel import VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 from geos.mesh.io.vtkIO import read_mesh
 
 
 @dataclass( frozen=True )
 class Options:
-    min_volume: float
+    minVolume: float
 
 
 @dataclass( frozen=True )
 class Result:
-    element_volumes: List[ Tuple[ int, float ] ]
+    elementVolumes: List[ Tuple[ int, float ] ]
 
 
 def __action( mesh, options: Options ) -> Result:
@@ -26,8 +26,8 @@ def __action( mesh, options: Options ) -> Result:
     cs.ComputeSumOff()
     cs.ComputeVertexCountOff()
     cs.ComputeVolumeOn()
-    volume_array_name = "__MESH_DOCTOR_VOLUME-" + str( uuid.uuid4() )  # Making the name unique
-    cs.SetVolumeArrayName( volume_array_name )
+    volumeArrayName = "__MESH_DOCTOR_VOLUME-" + str( uuid.uuid4() )  # Making the name unique
+    cs.SetVolumeArrayName( volumeArrayName )
 
     cs.SetInputData( mesh )
     cs.Update()
@@ -43,29 +43,29 @@ def __action( mesh, options: Options ) -> Result:
         mq.SetWedgeQualityMeasureToVolume()
         SUPPORTED_TYPES.append( VTK_WEDGE )
     else:
-        setup_logger.warning(
+        setupLogger.warning(
             "Your \"pyvtk\" version does not bring pyramid nor wedge support with vtkMeshQuality. Using the fallback solution."
         )
 
     mq.SetInputData( mesh )
     mq.Update()
 
-    volume = cs.GetOutput().GetCellData().GetArray( volume_array_name )
+    volume = cs.GetOutput().GetCellData().GetArray( volumeArrayName )
     quality = mq.GetOutput().GetCellData().GetArray( "Quality" )  # Name is imposed by vtk.
 
     assert volume is not None
     assert quality is not None
     volume = vtk_to_numpy( volume )
     quality = vtk_to_numpy( quality )
-    small_volumes: List[ Tuple[ int, float ] ] = []
+    smallVolumes: List[ Tuple[ int, float ] ] = []
     for i, pack in enumerate( zip( volume, quality ) ):
         v, q = pack
         vol = q if mesh.GetCellType( i ) in SUPPORTED_TYPES else v
-        if vol < options.min_volume:
-            small_volumes.append( ( i, float( vol ) ) )
-    return Result( element_volumes=small_volumes )
+        if vol < options.minVolume:
+            smallVolumes.append( ( i, float( vol ) ) )
+    return Result( elementVolumes=smallVolumes )
 
 
-def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh = read_mesh( vtk_input_file )
+def action( vtkInputFile: str, options: Options ) -> Result:
+    mesh = read_mesh( vtkInputFile )
     return __action( mesh, options )

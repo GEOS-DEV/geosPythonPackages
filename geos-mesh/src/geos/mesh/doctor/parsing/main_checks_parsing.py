@@ -1,9 +1,8 @@
 import argparse
 from copy import deepcopy
 from geos.mesh.doctor.actions.all_checks import Options as AllChecksOptions
-from geos.mesh.doctor.parsing._shared_checks_parsing_logic import ( CheckFeature, convert as shared_convert,
-                                                                    fill_subparser as shared_fill_subparser,
-                                                                    display_results )
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import ( CheckFeature, convert as sharedConvert,
+                                                                    fillSubparser as sharedFillSubparser )
 
 # Import constants for check names
 from geos.mesh.doctor.parsing import (
@@ -31,39 +30,39 @@ ORDERED_CHECK_NAMES = [
 CHECK_FEATURES_CONFIG = {
     COLLOCATES_NODES:
     CheckFeature( name=COLLOCATES_NODES,
-                  options_cls=cn_parser.Options,
-                  result_cls=cn_parser.Result,
-                  default_params=deepcopy( cn_parser.__COLLOCATED_NODES_DEFAULT ),
-                  display=cn_parser.display_results ),
+                  optionsCls=cn_parser.Options,
+                  resultCls=cn_parser.Result,
+                  defaultParams=deepcopy( cn_parser.__COLLOCATED_NODES_DEFAULT ),
+                  display=cn_parser.displayResults ),
     ELEMENT_VOLUMES:
     CheckFeature( name=ELEMENT_VOLUMES,
-                  options_cls=ev_parser.Options,
-                  result_cls=ev_parser.Result,
-                  default_params=deepcopy( ev_parser.__ELEMENT_VOLUMES_DEFAULT ),
-                  display=ev_parser.display_results ),
+                  optionsCls=ev_parser.Options,
+                  resultCls=ev_parser.Result,
+                  defaultParams=deepcopy( ev_parser.__ELEMENT_VOLUMES_DEFAULT ),
+                  display=ev_parser.displayResults ),
     SELF_INTERSECTING_ELEMENTS:
     CheckFeature( name=SELF_INTERSECTING_ELEMENTS,
-                  options_cls=sie_parser.Options,
-                  result_cls=sie_parser.Result,
-                  default_params=deepcopy( sie_parser.__SELF_INTERSECTING_ELEMENTS_DEFAULT ),
-                  display=sie_parser.display_results ),
+                  optionsCls=sie_parser.Options,
+                  resultCls=sie_parser.Result,
+                  defaultParams=deepcopy( sie_parser.__SELF_INTERSECTING_ELEMENTS_DEFAULT ),
+                  display=sie_parser.displayResults ),
 }
 
 
-def fill_subparser( subparsers: argparse._SubParsersAction ) -> None:
+def fillSubparser( subparsers: argparse._SubParsersAction ) -> None:
     """Fills the subparser by calling the shared logic with the specific 'main_checks' configuration."""
-    shared_fill_subparser( subparsers=subparsers,
-                           subparser_name=MAIN_CHECKS,
-                           help_message="Perform a curated set of main mesh-doctor checks.",
-                           ordered_check_names=ORDERED_CHECK_NAMES,
-                           check_features_config=CHECK_FEATURES_CONFIG )
+    sharedFillSubparser( subparsers=subparsers,
+                         subparserName=MAIN_CHECKS,
+                         helpMessage="Perform a curated set of main mesh-doctor checks.",
+                         orderedCheckNames=ORDERED_CHECK_NAMES,
+                         checkFeaturesConfig=CHECK_FEATURES_CONFIG )
 
 
-def convert( parsed_args: argparse.Namespace ) -> AllChecksOptions:
+def convert( parsedArgs: argparse.Namespace ) -> AllChecksOptions:
     """Converts arguments by calling the shared logic with the 'main_checks' configuration."""
-    return shared_convert( parsed_args=parsed_args,
-                           ordered_check_names=ORDERED_CHECK_NAMES,
-                           check_features_config=CHECK_FEATURES_CONFIG )
+    return sharedConvert( parsedArgs=parsedArgs,
+                          orderedCheckNames=ORDERED_CHECK_NAMES,
+                          checkFeaturesConfig=CHECK_FEATURES_CONFIG )
 
 
-# The display_results function is imported directly as it needs no special configuration.
+# The displayResults function is imported directly as it needs no special configuration.

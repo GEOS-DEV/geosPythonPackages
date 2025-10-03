@@ -4,7 +4,7 @@ from vtkmodules.vtkCommonDataModel import VTK_TETRA, vtkCellArray, vtkTetra, vtk
 from geos.mesh.doctor.actions.element_volumes import Options, __action
 
 
-def test_simple_tet():
+def test_simpleTet():
     # creating a simple tetrahedron
     points = vtkPoints()
     points.SetNumberOfPoints( 4 )
@@ -13,7 +13,7 @@ def test_simple_tet():
     points.SetPoint( 2, ( 0, 1, 0 ) )
     points.SetPoint( 3, ( 0, 0, 1 ) )
 
-    cell_types = [ VTK_TETRA ]
+    cellTypes = [ VTK_TETRA ]
     cells = vtkCellArray()
     cells.AllocateExact( 1, 4 )
 
@@ -26,14 +26,14 @@ def test_simple_tet():
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
-    mesh.SetCells( cell_types, cells )
+    mesh.SetCells( cellTypes, cells )
 
-    result = __action( mesh, Options( min_volume=1. ) )
+    result = __action( mesh, Options( minVolume=1. ) )
 
-    assert len( result.element_volumes ) == 1
-    assert result.element_volumes[ 0 ][ 0 ] == 0
-    assert abs( result.element_volumes[ 0 ][ 1 ] - 1. / 6. ) < 10 * numpy.finfo( float ).eps
+    assert len( result.elementVolumes ) == 1
+    assert result.elementVolumes[ 0 ][ 0 ] == 0
+    assert abs( result.elementVolumes[ 0 ][ 1 ] - 1. / 6. ) < 10 * numpy.finfo( float ).eps
 
-    result = __action( mesh, Options( min_volume=0. ) )
+    result = __action( mesh, Options( minVolume=0. ) )
 
-    assert len( result.element_volumes ) == 0
+    assert len( result.elementVolumes ) == 0

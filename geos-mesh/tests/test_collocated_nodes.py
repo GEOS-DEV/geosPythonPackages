@@ -5,7 +5,7 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkTetra, vtkUnstructure
 from geos.mesh.doctor.actions.collocated_nodes import Options, __action
 
 
-def get_points() -> Iterator[ Tuple[ vtkPoints, int ] ]:
+def getPoints() -> Iterator[ Tuple[ vtkPoints, int ] ]:
     """Generates the data for the cases.
     One case has two nodes at the exact same position.
     The other has two differente nodes
@@ -16,26 +16,26 @@ def get_points() -> Iterator[ Tuple[ vtkPoints, int ] ]:
         points.SetNumberOfPoints( 2 )
         points.SetPoint( 0, p0 )
         points.SetPoint( 1, p1 )
-        num_nodes_bucket = 1 if p0 == p1 else 0
-        yield points, num_nodes_bucket
+        numNodesBucket = 1 if p0 == p1 else 0
+        yield points, numNodesBucket
 
 
-@pytest.mark.parametrize( "data", get_points() )
-def test_simple_collocated_points( data: Tuple[ vtkPoints, int ] ):
-    points, num_nodes_bucket = data
+@pytest.mark.parametrize( "data", getPoints() )
+def test_simpleCollocatedPoints( data: Tuple[ vtkPoints, int ] ):
+    points, numNodesBucket = data
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
 
     result = __action( mesh, Options( tolerance=1.e-12 ) )
 
-    assert len( result.wrong_support_elements ) == 0
-    assert len( result.nodes_buckets ) == num_nodes_bucket
-    if num_nodes_bucket == 1:
-        assert len( result.nodes_buckets[ 0 ] ) == points.GetNumberOfPoints()
+    assert len( result.wrongSupportElements ) == 0
+    assert len( result.nodesBuckets ) == numNodesBucket
+    if numNodesBucket == 1:
+        assert len( result.nodesBuckets[ 0 ] ) == points.GetNumberOfPoints()
 
 
-def test_wrong_support_elements():
+def test_wrongSupportElements():
     points = vtkPoints()
     points.SetNumberOfPoints( 4 )
     points.SetPoint( 0, ( 0, 0, 0 ) )
@@ -43,7 +43,7 @@ def test_wrong_support_elements():
     points.SetPoint( 2, ( 0, 1, 0 ) )
     points.SetPoint( 3, ( 0, 0, 1 ) )
 
-    cell_types = [ VTK_TETRA ]
+    cellTypes = [ VTK_TETRA ]
     cells = vtkCellArray()
     cells.AllocateExact( 1, 4 )
 
@@ -56,10 +56,10 @@ def test_wrong_support_elements():
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
-    mesh.SetCells( cell_types, cells )
+    mesh.SetCells( cellTypes, cells )
 
     result = __action( mesh, Options( tolerance=1.e-12 ) )
 
-    assert len( result.nodes_buckets ) == 0
-    assert len( result.wrong_support_elements ) == 1
-    assert result.wrong_support_elements[ 0 ] == 0
+    assert len( result.nodesBuckets ) == 0
+    assert len( result.wrongSupportElements ) == 1
+    assert result.wrongSupportElements[ 0 ] == 0

@@ -1,10 +1,10 @@
 import multiprocessing
 from geos.mesh.doctor.actions.supported_elements import Options, Result
 from geos.mesh.doctor.parsing import SUPPORTED_ELEMENTS
-from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import getOptionsUsedMessage
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 
-__CHUNK_SIZE = "chunk_size"
+__CHUNK_SIZE = "chunkSize"
 __NUM_PROC = "nproc"
 
 __CHUNK_SIZE_DEFAULT = 1
@@ -13,11 +13,11 @@ __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
 __SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC: __NUM_PROC_DEFAULT }
 
 
-def convert( parsed_options ) -> Options:
-    return Options( chunk_size=parsed_options[ __CHUNK_SIZE ], nproc=parsed_options[ __NUM_PROC ] )
+def convert( parsedOptions ) -> Options:
+    return Options( chunkSize=parsedOptions[ __CHUNK_SIZE ], nproc=parsedOptions[ __NUM_PROC ] )
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( SUPPORTED_ELEMENTS,
                                help="Check that all the elements of the mesh are supported by GEOSX." )
     p.add_argument( '--' + __CHUNK_SIZE,
@@ -36,19 +36,21 @@ def fill_subparser( subparsers ) -> None:
     )
 
 
-def display_results( options: Options, result: Result ):
-    setup_logger.results( get_options_used_message( options ) )
-    if result.unsupported_polyhedron_elements:
-        setup_logger.results(
-            f"There is/are {len(result.unsupported_polyhedron_elements)} polyhedra that may not be converted to supported elements."
+def displayResults( options: Options, result: Result ):
+    setupLogger.results( getOptionsUsedMessage( options ) )
+    if result.unsupportedPolyhedronElements:
+        setupLogger.results(
+            f"There is/are {len(result.unsupportedPolyhedronElements)} polyhedra that may not be "
+            f"converted to supported elements."
         )
-        setup_logger.results(
-            f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupported_polyhedron_elements))}." )
+        setupLogger.results(
+            f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupportedPolyhedronElements))}." )
     else:
-        setup_logger.results( "All the polyhedra (if any) can be converted to supported elements." )
-    if result.unsupported_std_elements_types:
-        setup_logger.results(
-            f"There are unsupported vtk standard element types. The list of those vtk types is {tuple(sorted(result.unsupported_std_elements_types))}."
+        setupLogger.results( "All the polyhedra (if any) can be converted to supported elements." )
+    if result.unsupportedStdElementsTypes:
+        setupLogger.results(
+            f"There are unsupported vtk standard element types. The list of those vtk types is "
+            f"{tuple(sorted(result.unsupportedStdElementsTypes))}."
         )
     else:
-        setup_logger.results( "All the standard vtk element types (if any) are supported." )
+        setupLogger.results( "All the standard vtk element types (if any) are supported." )

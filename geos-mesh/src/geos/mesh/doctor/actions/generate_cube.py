@@ -5,8 +5,8 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
-from geos.mesh.doctor.actions.generate_global_ids import __build_global_ids
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.actions.generate_global_ids import __buildGlobalIds
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput, write_mesh
 
 
@@ -24,9 +24,9 @@ class FieldInfo:
 
 @dataclass( frozen=True )
 class Options:
-    vtk_output: VtkOutput
-    generate_cells_global_ids: bool
-    generate_points_global_ids: bool
+    vtkOutput: VtkOutput
+    generateCellsGlobalIds: bool
+    generatePointsGlobalIds: bool
     xs: Sequence[ float ]
     ys: Sequence[ float ]
     zs: Sequence[ float ]
@@ -43,7 +43,7 @@ class XYZ:
     z: numpy.ndarray
 
 
-def build_rectilinear_blocks_mesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGrid:
+def buildRectilinearBlocksMesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGrid:
     """
     Builds an unstructured vtk grid from the `xyzs` blocks. Kind of InternalMeshGenerator.
     :param xyzs: The blocks.
@@ -58,89 +58,89 @@ def build_rectilinear_blocks_mesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGri
         rg.SetZCoordinates( numpy_to_vtk( xyz.z ) )
         rgs.append( rg )
 
-    num_points = sum( map( lambda r: r.GetNumberOfPoints(), rgs ) )
-    num_cells = sum( map( lambda r: r.GetNumberOfCells(), rgs ) )
+    numPoints = sum( map( lambda r: r.GetNumberOfPoints(), rgs ) )
+    numCells = sum( map( lambda r: r.GetNumberOfCells(), rgs ) )
 
     points = vtkPoints()
-    points.Allocate( num_points )
+    points.Allocate( numPoints )
     for rg in rgs:
         for i in range( rg.GetNumberOfPoints() ):
             points.InsertNextPoint( rg.GetPoint( i ) )
 
-    cell_types = [ VTK_HEXAHEDRON ] * num_cells
+    cellTypes = [ VTK_HEXAHEDRON ] * numCells
     cells = vtkCellArray()
-    cells.AllocateExact( num_cells, num_cells * 8 )
+    cells.AllocateExact( numCells, numCells * 8 )
 
     m = ( 0, 1, 3, 2, 4, 5, 7, 6 )  # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
     offset = 0
     for rg in rgs:
         for i in range( rg.GetNumberOfCells() ):
             c = rg.GetCell( i )
-            new_cell = vtkHexahedron()
+            newCell = vtkHexahedron()
             for j in range( 8 ):
-                new_cell.GetPointIds().SetId( j, offset + c.GetPointId( m[ j ] ) )
-            cells.InsertNextCell( new_cell )
+                newCell.GetPointIds().SetId( j, offset + c.GetPointId( m[ j ] ) )
+            cells.InsertNextCell( newCell )
         offset += rg.GetNumberOfPoints()
 
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
-    mesh.SetCells( cell_types, cells )
+    mesh.SetCells( cellTypes, cells )
 
     return mesh
 
 
-def __add_fields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
-    for field_info in fields:
-        if field_info.support == "CELLS":
+def __addFields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
+    for fieldInfo in fields:
+        if fieldInfo.support == "CELLS":
             data = mesh.GetCellData()
             n = mesh.GetNumberOfCells()
-        elif field_info.support == "POINTS":
+        elif fieldInfo.support == "POINTS":
             data = mesh.GetPointData()
             n = mesh.GetNumberOfPoints()
-        array = numpy.ones( ( n, field_info.dimension ), dtype=float )
-        vtk_array = numpy_to_vtk( array )
-        vtk_array.SetName( field_info.name )
-        data.AddArray( vtk_array )
+        array = numpy.ones( ( n, fieldInfo.dimension ), dtype=float )
+        vtkArray = numpy_to_vtk( array )
+        vtkArray.SetName( fieldInfo.name )
+        data.AddArray( vtkArray )
     return mesh
 
 
 def __build( options: Options ):
 
-    def build_coordinates( positions, num_elements ):
+    def buildCoordinates( positions, numElements ):
         result = []
-        it = zip( zip( positions, positions[ 1: ] ), num_elements )
+        it = zip( zip( positions, positions[ 1: ] ), numElements )
         try:
             coords, n = next( it )
             while True:
                 start, stop = coords
-                end_point = False
-                tmp = numpy.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
+                endPoint = False
+                tmp = numpy.linspace( start=start, stop=stop, num=n + endPoint, endpoint=endPoint )
                 coords, n = next( it )
                 result.append( tmp )
         except StopIteration:
-            end_point = True
-            tmp = numpy.linspace( start=start, stop=stop, num=n + end_point, endpoint=end_point )
+            endPoint = True
+            tmp = numpy.linspace( start=start, stop=stop, num=n + endPoint, endpoint=endPoint )
             result.append( tmp )
         return numpy.concatenate( result )
 
-    x = build_coordinates( options.xs, options.nxs )
-    y = build_coordinates( options.ys, options.nys )
-    z = build_coordinates( options.zs, options.nzs )
-    cube = build_rectilinear_blocks_mesh( ( XYZ( x, y, z ), ) )
-    cube = __add_fields( cube, options.fields )
-    __build_global_ids( cube, options.generate_cells_global_ids, options.generate_points_global_ids )
+    x = buildCoordinates( options.xs, options.nxs )
+    y = buildCoordinates( options.ys, options.nys )
+    z = buildCoordinates( options.zs, options.nzs )
+    cube = buildRectilinearBlocksMesh( ( XYZ( x, y, z ), ) )
+    cube = __addFields( cube, options.fields )
+    __buildGlobalIds( cube, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
     return cube
 
 
 def __action( options: Options ) -> Result:
-    output_mesh = __build( options )
-    write_mesh( output_mesh, options.vtk_output )
-    return Result( info=f"Mesh was written to {options.vtk_output.output}" )
+    outputMesh = __build( options )
+    write_mesh( outputMesh, options.vtkOutput )
+    return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 
-def action( vtk_input_file: str, options: Options ) -> Result:
+def action( vtkInputFile: str, options: Options ) -> Result:
     try:
         return __action( options )
     except BaseException as e:
-        setup_logger.error( e )
+        setupLogger.error( e )
         return Result( info="Something went wrong." )

@@ -1,23 +1,23 @@
 import sys
 from geos.mesh.doctor.parsing import ActionHelper
-from geos.mesh.doctor.parsing.cli_parsing import parse_and_set_verbosity, setup_logger
-from geos.mesh.doctor.register import register_parsing_actions
+from geos.mesh.doctor.parsing.cli_parsing import parseAndSetVerbosity, setupLogger
+from geos.mesh.doctor.register import registerParsingActions
 
 
 def main():
-    parse_and_set_verbosity( sys.argv )
-    main_parser, all_actions, all_actions_helpers = register_parsing_actions()
-    args = main_parser.parse_args( sys.argv[ 1: ] )
-    setup_logger.info( f"Working on mesh \"{args.vtk_input_file}\"." )
-    action_options = all_actions_helpers[ args.subparsers ].convert( vars( args ) )
+    parseAndSetVerbosity( sys.argv )
+    mainParser, allActions, allActionsHelpers = registerParsingActions()
+    args = mainParser.parse_args( sys.argv[ 1: ] )
+    setupLogger.info( f"Working on mesh \"{args.vtkInputFile}\"." )
+    actionOptions = allActionsHelpers[ args.subparsers ].convert( vars( args ) )
     try:
-        action = all_actions[ args.subparsers ]
+        action = allActions[ args.subparsers ]
     except KeyError:
-        setup_logger.error( f"Action {args.subparsers} is not a valid action." )
+        setupLogger.error( f"Action {args.subparsers} is not a valid action." )
         sys.exit( 1 )
-    helper: ActionHelper = all_actions_helpers[ args.subparsers ]
-    result = action( args.vtk_input_file, action_options )
-    helper.display_results( action_options, result )
+    helper: ActionHelper = allActionsHelpers[ args.subparsers ]
+    result = action( args.vtkInputFile, actionOptions )
+    helper.displayResults( actionOptions, result )
 
 
 if __name__ == '__main__':

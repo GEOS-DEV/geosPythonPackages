@@ -11,13 +11,13 @@ __POLICIES = ( __FIELD_POLICY, __INTERNAL_SURFACES_POLICY )
 __FIELD_NAME = "name"
 __FIELD_VALUES = "values"
 
-__FRACTURES_OUTPUT_DIR = "fractures_output_dir"
-__FRACTURES_DATA_MODE = "fractures_data_mode"
+__FRACTURES_OUTPUT_DIR = "fracturesOutputDir"
+__FRACTURES_DATA_MODE = "fracturesDataMode"
 __FRACTURES_DATA_MODE_VALUES = "binary", "ascii"
 __FRACTURES_DATA_MODE_DEFAULT = __FRACTURES_DATA_MODE_VALUES[ 0 ]
 
 
-def convert_to_fracture_policy( s: str ) -> FracturePolicy:
+def convertToFracturePolicy( s: str ) -> FracturePolicy:
     """
     Converts the user input to the proper enum chosen.
     I do not want to use the auto conversion already available to force explicit conversion.
@@ -31,10 +31,10 @@ def convert_to_fracture_policy( s: str ) -> FracturePolicy:
     raise ValueError( f"Policy {s} is not valid. Please use one of \"{', '.join(map(str, __POLICIES))}\"." )
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( GENERATE_FRACTURES, help="Splits the mesh to generate the faults and fractures." )
     p.add_argument( '--' + __POLICY,
-                    type=convert_to_fracture_policy,
+                    type=convertToFracturePolicy,
                     metavar=", ".join( __POLICIES ),
                     required=True,
                     help=f"[string]: The criterion to define the surfaces that will be changed into fracture zones. "
@@ -55,7 +55,7 @@ def fill_subparser( subparsers ) -> None:
         f"You can create multiple fractures by separating the values with ':' like shown in this example. "
         f"--{__FIELD_VALUES} 10,12:13,14,16,18:22 will create 3 fractures identified respectively with the values (10,12), (13,14,16,18) and (22). "
         f"If no ':' is found, all values specified will be assumed to create only 1 single fracture." )
-    vtk_output_parsing.fill_vtk_output_subparser( p )
+    vtk_output_parsing.fillVtkOutputSubparser( p )
     p.add_argument(
         '--' + __FRACTURES_OUTPUT_DIR,
         type=str,
@@ -68,42 +68,41 @@ def fill_subparser( subparsers ) -> None:
         help=f'[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
 
-def convert( parsed_options ) -> Options:
-    policy: str = parsed_options[ __POLICY ]
-    field: str = parsed_options[ __FIELD_NAME ]
-    all_values: str = parsed_options[ __FIELD_VALUES ]
-    if not are_values_parsable( all_values ):
+def convert( parsedOptions ) -> Options:
+    policy: str = parsedOptions[ __POLICY ]
+    field: str = parsedOptions[ __FIELD_NAME ]
+    allValues: str = parsedOptions[ __FIELD_VALUES ]
+    if not areValuesParsable( allValues ):
         raise ValueError(
             f"When entering --{__FIELD_VALUES}, respect this given format example:\n--{__FIELD_VALUES} " +
             "10,12:13,14,16,18:22 to create 3 fractures identified with respectively the values (10,12), (13,14,16,18) and (22)."
         )
-    all_values_no_separator: str = all_values.replace( ":", "," )
-    field_values_combined: frozenset[ int ] = frozenset( map( int, all_values_no_separator.split( "," ) ) )
-    mesh_vtk_output = vtk_output_parsing.convert( parsed_options )
+    allValuesNoSeparator: str = allValues.replace( ":", "," )
+    fieldValuesCombined: frozenset[ int ] = frozenset( map( int, allValuesNoSeparator.split( "," ) ) )
+    meshVtkOutput = vtk_output_parsing.convert( parsedOptions )
     # create the different fractures
-    per_fracture: list[ str ] = all_values.split( ":" )
-    field_values_per_fracture: list[ frozenset[ int ] ] = [
-        frozenset( map( int, fracture.split( "," ) ) ) for fracture in per_fracture
+    perFracture: list[ str ] = allValues.split( ":" )
+    fieldValuesPerFracture: list[ frozenset[ int ] ] = [
+        frozenset( map( int, fracture.split( "," ) ) ) for fracture in perFracture
     ]
-    fracture_names: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in per_fracture ]
-    fractures_output_dir: str = parsed_options[ __FRACTURES_OUTPUT_DIR ]
-    fractures_data_mode: str = parsed_options[ __FRACTURES_DATA_MODE ] == __FRACTURES_DATA_MODE_DEFAULT
-    all_fractures_VtkOutput: list[ VtkOutput ] = build_all_fractures_VtkOutput( fractures_output_dir,
-                                                                                fractures_data_mode, mesh_vtk_output,
-                                                                                fracture_names )
+    fractureNames: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in perFracture ]
+    fracturesOutputDir: str = parsedOptions[ __FRACTURES_OUTPUT_DIR ]
+    fracturesDataMode: str = parsedOptions[ __FRACTURES_DATA_MODE ] == __FRACTURES_DATA_MODE_DEFAULT
+    allFracturesVtkOutput: list[ VtkOutput ] = buildAllFracturesVtkOutput(
+        fracturesOutputDir, fracturesDataMode, meshVtkOutput, fractureNames )
     return Options( policy=policy,
                     field=field,
-                    field_values_combined=field_values_combined,
-                    field_values_per_fracture=field_values_per_fracture,
-                    mesh_VtkOutput=mesh_vtk_output,
-                    all_fractures_VtkOutput=all_fractures_VtkOutput )
+                    fieldValuesCombined=fieldValuesCombined,
+                    fieldValuesPerFracture=fieldValuesPerFracture,
+                    meshVtkOutput=meshVtkOutput,
+                    allFracturesVtkOutput=allFracturesVtkOutput )
 
 
-def display_results( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ):
     pass
 
 
-def are_values_parsable( values: str ) -> bool:
+def areValuesParsable( values: str ) -> bool:
     if not all( character.isdigit() or character in { ':', ',' } for character in values ):
         return False
     if values.startswith( ":" ) or values.startswith( "," ):
@@ -113,19 +112,19 @@ def are_values_parsable( values: str ) -> bool:
     return True
 
 
-def build_all_fractures_VtkOutput( fracture_output_dir: str, fractures_data_mode: bool, mesh_vtk_output: VtkOutput,
-                                   fracture_names: list[ str ] ) -> list[ VtkOutput ]:
-    if not os.path.exists( fracture_output_dir ):
-        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fracture_output_dir}' does not exist." )
+def buildAllFracturesVtkOutput( fractureOutputDir: str, fracturesDataMode: bool,
+                                meshVtkOutput: VtkOutput, fractureNames: list[ str ] ) -> list[ VtkOutput ]:
+    if not os.path.exists( fractureOutputDir ):
+        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fractureOutputDir}' does not exist." )
 
-    if not os.access( fracture_output_dir, os.W_OK ):
-        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fracture_output_dir}' is not writable." )
+    if not os.access( fractureOutputDir, os.W_OK ):
+        raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fractureOutputDir}' is not writable." )
 
-    output_name = os.path.basename( mesh_vtk_output.output )
-    splitted_name_without_expension: list[ str ] = output_name.split( "." )[ :-1 ]
-    name_without_extension: str = '_'.join( splitted_name_without_expension ) + "_"
-    all_fractures_VtkOuput: list[ VtkOutput ] = list()
-    for fracture_name in fracture_names:
-        fracture_path = os.path.join( fracture_output_dir, name_without_extension + fracture_name )
-        all_fractures_VtkOuput.append( VtkOutput( fracture_path, fractures_data_mode ) )
-    return all_fractures_VtkOuput
+    outputName = os.path.basename( meshVtkOutput.output )
+    splittedNameWithoutExtension: list[ str ] = outputName.split( "." )[ :-1 ]
+    nameWithoutExtension: str = '_'.join( splittedNameWithoutExtension ) + "_"
+    allFracturesVtkOutput: list[ VtkOutput ] = list()
+    for fractureName in fractureNames:
+        fracturePath = os.path.join( fractureOutputDir, nameWithoutExtension + fractureName )
+        allFracturesVtkOutput.append( VtkOutput( fracturePath, fracturesDataMode ) )
+    return allFracturesVtkOutput

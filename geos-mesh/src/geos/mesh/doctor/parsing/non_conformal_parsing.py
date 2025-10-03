@@ -1,11 +1,11 @@
 from geos.mesh.doctor.actions.non_conformal import Options, Result
 from geos.mesh.doctor.parsing import NON_CONFORMAL
-from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import getOptionsUsedMessage
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 
-__ANGLE_TOLERANCE = "angle_tolerance"
-__POINT_TOLERANCE = "point_tolerance"
-__FACE_TOLERANCE = "face_tolerance"
+__ANGLE_TOLERANCE = "angleTolerance"
+__POINT_TOLERANCE = "pointTolerance"
+__FACE_TOLERANCE = "faceTolerance"
 
 __ANGLE_TOLERANCE_DEFAULT = 10.
 __POINT_TOLERANCE_DEFAULT = 0.
@@ -18,13 +18,13 @@ __NON_CONFORMAL_DEFAULT = {
 }
 
 
-def convert( parsed_options ) -> Options:
-    return Options( angle_tolerance=parsed_options[ __ANGLE_TOLERANCE ],
-                    point_tolerance=parsed_options[ __POINT_TOLERANCE ],
-                    face_tolerance=parsed_options[ __FACE_TOLERANCE ] )
+def convert( parsedOptions ) -> Options:
+    return Options( angleTolerance=parsedOptions[ __ANGLE_TOLERANCE ],
+                    pointTolerance=parsedOptions[ __POINT_TOLERANCE ],
+                    faceTolerance=parsedOptions[ __FACE_TOLERANCE ] )
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( NON_CONFORMAL, help="Detects non conformal elements. [EXPERIMENTAL]" )
     p.add_argument( '--' + __ANGLE_TOLERANCE,
                     type=float,
@@ -45,11 +45,11 @@ def fill_subparser( subparsers ) -> None:
         help=f"[float]: tolerance for two faces to be considered \"touching\". Defaults to {__FACE_TOLERANCE_DEFAULT}" )
 
 
-def display_results( options: Options, result: Result ):
-    setup_logger.results( get_options_used_message( options ) )
-    non_conformal_cells: list[ int ] = []
-    for i, j in result.non_conformal_cells:
-        non_conformal_cells += i, j
-    non_conformal_cells: frozenset[ int ] = frozenset( non_conformal_cells )
-    setup_logger.results( f"You have {len( non_conformal_cells )} non conformal cells." )
-    setup_logger.results( f"{', '.join( map( str, sorted( non_conformal_cells ) ) )}" )
+def displayResults( options: Options, result: Result ):
+    setupLogger.results( getOptionsUsedMessage( options ) )
+    nonConformalCells: list[ int ] = []
+    for i, j in result.nonConformalCells:
+        nonConformalCells += i, j
+    nonConformalCells: frozenset[ int ] = frozenset( nonConformalCells )
+    setupLogger.results( f"You have {len( nonConformalCells )} non conformal cells." )
+    setupLogger.results( f"{', '.join( map( str, sorted( nonConformalCells ) ) )}" )

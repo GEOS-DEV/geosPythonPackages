@@ -4,7 +4,7 @@ import numpy
 from typing import Collection, Iterable
 from vtkmodules.vtkCommonCore import reference, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 from geos.mesh.io.vtkIO import read_mesh
 
 
@@ -15,8 +15,8 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    nodes_buckets: Iterable[ Iterable[ int ] ]  # Each bucket contains the duplicated node indices.
-    wrong_support_elements: Collection[ int ]  # Element indices with support node indices appearing more than once.
+    nodesBuckets: Iterable[ Iterable[ int ] ]  # Each bucket contains the duplicated node indices.
+    wrongSupportElements: Collection[ int ]  # Element indices with support node indices appearing more than once.
 
 
 def __action( mesh, options: Options ) -> Result:
@@ -28,41 +28,42 @@ def __action( mesh, options: Options ) -> Result:
     locator.InitPointInsertion( output, points.GetBounds() )
 
     # original ids to/from filtered ids.
-    filtered_to_original = numpy.ones( points.GetNumberOfPoints(), dtype=int ) * -1
+    filteredToOriginal = numpy.ones( points.GetNumberOfPoints(), dtype=int ) * -1
 
-    rejected_points = defaultdict( list )
-    point_id = reference( 0 )
+    rejectedPoints = defaultdict( list )
+    pointId = reference( 0 )
     for i in range( points.GetNumberOfPoints() ):
-        is_inserted = locator.InsertUniquePoint( points.GetPoint( i ), point_id )
-        if not is_inserted:
-            # If it's not inserted, `point_id` contains the node that was already at that location.
-            # But in that case, `point_id` is the new numbering in the destination points array.
+        isInserted = locator.InsertUniquePoint( points.GetPoint( i ), pointId )
+        if not isInserted:
+            # If it's not inserted, `pointId` contains the node that was already at that location.
+            # But in that case, `pointId` is the new numbering in the destination points array.
             # It's more useful for the user to get the old index in the original mesh, so he can look for it in his data.
-            setup_logger.debug(
-                f"Point {i} at {points.GetPoint(i)} has been rejected, point {filtered_to_original[point_id.get()]} is already inserted."
+            setupLogger.debug(
+                f"Point {i} at {points.GetPoint(i)} has been rejected, "
+                f"point {filteredToOriginal[pointId.get()]} is already inserted."
             )
-            rejected_points[ point_id.get() ].append( i )
+            rejectedPoints[ pointId.get() ].append( i )
         else:
-            # If it's inserted, `point_id` contains the new index in the destination array.
+            # If it's inserted, `pointId` contains the new index in the destination array.
             # We store this information to be able to connect the source and destination arrays.
-            # original_to_filtered[i] = point_id.get()
-            filtered_to_original[ point_id.get() ] = i
+            # originalToFiltered[i] = pointId.get()
+            filteredToOriginal[ pointId.get() ] = i
 
     tmp = []
-    for n, ns in rejected_points.items():
+    for n, ns in rejectedPoints.items():
         tmp.append( ( n, *ns ) )
 
     # Checking that the support node indices appear only once per element.
-    wrong_support_elements = []
+    wrongSupportElements = []
     for c in range( mesh.GetNumberOfCells() ):
         cell = mesh.GetCell( c )
-        num_points_per_cell = cell.GetNumberOfPoints()
-        if len( { cell.GetPointId( i ) for i in range( num_points_per_cell ) } ) != num_points_per_cell:
-            wrong_support_elements.append( c )
+        numPointsPerCell = cell.GetNumberOfPoints()
+        if len( { cell.GetPointId( i ) for i in range( numPointsPerCell ) } ) != numPointsPerCell:
+            wrongSupportElements.append( c )
 
-    return Result( nodes_buckets=tmp, wrong_support_elements=wrong_support_elements )
+    return Result( nodesBuckets=tmp, wrongSupportElements=wrongSupportElements )
 
 
-def action( vtk_input_file: str, options: Options ) -> Result:
-    mesh = read_mesh( vtk_input_file )
+def action( vtkInputFile: str, options: Options ) -> Result:
+    mesh = read_mesh( vtkInputFile )
     return __action( mesh, options )

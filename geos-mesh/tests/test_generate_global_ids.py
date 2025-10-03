@@ -1,9 +1,9 @@
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkUnstructuredGrid, vtkVertex, VTK_VERTEX
-from geos.mesh.doctor.actions.generate_global_ids import __build_global_ids
+from geos.mesh.doctor.actions.generate_global_ids import __buildGlobalIds
 
 
-def test_generate_global_ids():
+def test_generateGlobalIds():
     points = vtkPoints()
     points.InsertNextPoint( 0, 0, 0 )
 
@@ -17,9 +17,9 @@ def test_generate_global_ids():
     mesh.SetPoints( points )
     mesh.SetCells( [ VTK_VERTEX ], vertices )
 
-    __build_global_ids( mesh, True, True )
+    __buildGlobalIds( mesh, True, True )
 
-    global_cell_ids = mesh.GetCellData().GetGlobalIds()
-    global_point_ids = mesh.GetPointData().GetGlobalIds()
-    assert global_cell_ids.GetNumberOfValues() == 1
-    assert global_point_ids.GetNumberOfValues() == 1
+    globalCellIds = mesh.GetCellData().GetGlobalIds()
+    globalPointIds = mesh.GetPointData().GetGlobalIds()
+    assert globalCellIds.GetNumberOfValues() == 1
+    assert globalPointIds.GetNumberOfValues() == 1

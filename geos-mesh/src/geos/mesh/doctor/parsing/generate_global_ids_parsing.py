@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from geos.mesh.doctor.actions.generate_global_ids import Options, Result
 from geos.mesh.doctor.parsing import vtk_output_parsing, GENERATE_GLOBAL_IDS
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 
 __CELLS, __POINTS = "cells", "points"
 
@@ -12,18 +12,18 @@ class GlobalIdsInfo:
     points: bool
 
 
-def convert_global_ids( parsed_options ) -> GlobalIdsInfo:
-    return GlobalIdsInfo( cells=parsed_options[ __CELLS ], points=parsed_options[ __POINTS ] )
+def convertGlobalIds( parsedOptions ) -> GlobalIdsInfo:
+    return GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
 
 
-def convert( parsed_options ) -> Options:
-    gids: GlobalIdsInfo = convert_global_ids( parsed_options )
-    return Options( vtk_output=vtk_output_parsing.convert( parsed_options ),
-                    generate_cells_global_ids=gids.cells,
-                    generate_points_global_ids=gids.points )
+def convert( parsedOptions ) -> Options:
+    gids: GlobalIdsInfo = convertGlobalIds( parsedOptions )
+    return Options( vtkOutput=vtk_output_parsing.convert( parsedOptions ),
+                    generateCellsGlobalIds=gids.cells,
+                    generatePointsGlobalIds=gids.points )
 
 
-def fill_generate_global_ids_subparser( p ):
+def fillGenerateGlobalIdsSubparser( p ):
     p.add_argument( '--' + __CELLS,
                     action="store_true",
                     help=f"[bool]: Generate global ids for cells. Defaults to true." )
@@ -42,11 +42,11 @@ def fill_generate_global_ids_subparser( p ):
     p.set_defaults( **{ __POINTS: True } )
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
-    fill_generate_global_ids_subparser( p )
-    vtk_output_parsing.fill_vtk_output_subparser( p )
+    fillGenerateGlobalIdsSubparser( p )
+    vtk_output_parsing.fillVtkOutputSubparser( p )
 
 
-def display_results( options: Options, result: Result ):
-    setup_logger.info( result.info )
+def displayResults( options: Options, result: Result ):
+    setupLogger.info( result.info )

@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
 
 
 @dataclass( frozen=True )
 class Options:
-    vtk_output: VtkOutput
-    generate_cells_global_ids: bool
-    generate_points_global_ids: bool
+    vtkOutput: VtkOutput
+    generateCellsGlobalIds: bool
+    generatePointsGlobalIds: bool
 
 
 @dataclass( frozen=True )
@@ -16,7 +16,7 @@ class Result:
     info: str
 
 
-def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_global_ids: bool ) -> None:
+def __buildGlobalIds( mesh, generateCellsGlobalIds: bool, generatePointsGlobalIds: bool ) -> None:
     """
     Adds the global ids for cells and points in place into the mesh instance.
     :param mesh:
@@ -25,36 +25,36 @@ def __build_global_ids( mesh, generate_cells_global_ids: bool, generate_points_g
     # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
     # First for points...
     if mesh.GetPointData().GetGlobalIds():
-        setup_logger.error( "Mesh already has globals ids for points; nothing done." )
-    elif generate_points_global_ids:
-        point_global_ids = vtkIdTypeArray()
-        point_global_ids.SetName( "GLOBAL_IDS_POINTS" )
-        point_global_ids.Allocate( mesh.GetNumberOfPoints() )
+        setupLogger.error( "Mesh already has globals ids for points; nothing done." )
+    elif generatePointsGlobalIds:
+        pointGlobalIds = vtkIdTypeArray()
+        pointGlobalIds.SetName( "GLOBAL_IDS_POINTS" )
+        pointGlobalIds.Allocate( mesh.GetNumberOfPoints() )
         for i in range( mesh.GetNumberOfPoints() ):
-            point_global_ids.InsertNextValue( i )
-        mesh.GetPointData().SetGlobalIds( point_global_ids )
+            pointGlobalIds.InsertNextValue( i )
+        mesh.GetPointData().SetGlobalIds( pointGlobalIds )
     # ... then for cells.
     if mesh.GetCellData().GetGlobalIds():
-        setup_logger.error( "Mesh already has globals ids for cells; nothing done." )
-    elif generate_cells_global_ids:
-        cells_global_ids = vtkIdTypeArray()
-        cells_global_ids.SetName( "GLOBAL_IDS_CELLS" )
-        cells_global_ids.Allocate( mesh.GetNumberOfCells() )
+        setupLogger.error( "Mesh already has globals ids for cells; nothing done." )
+    elif generateCellsGlobalIds:
+        cellsGlobalIds = vtkIdTypeArray()
+        cellsGlobalIds.SetName( "GLOBAL_IDS_CELLS" )
+        cellsGlobalIds.Allocate( mesh.GetNumberOfCells() )
         for i in range( mesh.GetNumberOfCells() ):
-            cells_global_ids.InsertNextValue( i )
-        mesh.GetCellData().SetGlobalIds( cells_global_ids )
+            cellsGlobalIds.InsertNextValue( i )
+        mesh.GetCellData().SetGlobalIds( cellsGlobalIds )
 
 
 def __action( mesh, options: Options ) -> Result:
-    __build_global_ids( mesh, options.generate_cells_global_ids, options.generate_points_global_ids )
-    write_mesh( mesh, options.vtk_output )
-    return Result( info=f"Mesh was written to {options.vtk_output.output}" )
+    __buildGlobalIds( mesh, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
+    write_mesh( mesh, options.vtkOutput )
+    return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 
-def action( vtk_input_file: str, options: Options ) -> Result:
+def action( vtkInputFile: str, options: Options ) -> Result:
     try:
-        mesh = read_mesh( vtk_input_file )
+        mesh = read_mesh( vtkInputFile )
         return __action( mesh, options )
     except BaseException as e:
-        setup_logger.error( e )
+        setupLogger.error( e )
         return Result( info="Something went wrong." )

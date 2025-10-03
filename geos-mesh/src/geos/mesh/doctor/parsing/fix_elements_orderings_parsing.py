@@ -10,7 +10,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from geos.mesh.doctor.actions.fix_elements_orderings import Options, Result
 from geos.mesh.doctor.parsing import vtk_output_parsing, FIX_ELEMENTS_ORDERINGS
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 
 __CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
@@ -33,10 +33,10 @@ __CELL_TYPE_SUPPORT_SIZE = {
 }
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
-    for key, vtk_key in __CELL_TYPE_MAPPING.items():
-        tmp = list( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) )
+    for key, vtkKey in __CELL_TYPE_MAPPING.items():
+        tmp = list( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) )
         random.Random( 4 ).shuffle( tmp )
         p.add_argument( '--' + key,
                         type=str,
@@ -44,36 +44,36 @@ def fill_subparser( subparsers ) -> None:
                         default=None,
                         required=False,
                         help=f"[list of integers]: node permutation for \"{key}\"." )
-    vtk_output_parsing.fill_vtk_output_subparser( p )
+    vtk_output_parsing.fillVtkOutputSubparser( p )
 
 
-def convert( parsed_options ) -> Options:
+def convert( parsedOptions ) -> Options:
     """
     From the parsed cli options, return the converted options for self intersecting elements check.
-    :param options_str: Parsed cli options.
+    :param parsedOptions: Parsed cli options.
     :return: Options instance.
     """
-    cell_type_to_ordering = {}
-    for key, vtk_key in __CELL_TYPE_MAPPING.items():
-        raw_mapping = parsed_options[ key ]
-        if raw_mapping:
-            tmp = tuple( map( int, raw_mapping.split( "," ) ) )
-            if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtk_key ] ) ):
-                err_msg = f"Permutation {raw_mapping} for type {key} is not valid."
-                setup_logger.error( err_msg )
-                raise ValueError( err_msg )
-            cell_type_to_ordering[ vtk_key ] = tmp
-    vtk_output = vtk_output_parsing.convert( parsed_options )
-    return Options( vtk_output=vtk_output, cell_type_to_ordering=cell_type_to_ordering )
+    cellTypeToOrdering = {}
+    for key, vtkKey in __CELL_TYPE_MAPPING.items():
+        rawMapping = parsedOptions[ key ]
+        if rawMapping:
+            tmp = tuple( map( int, rawMapping.split( "," ) ) )
+            if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) ):
+                errMsg = f"Permutation {rawMapping} for type {key} is not valid."
+                setupLogger.error( errMsg )
+                raise ValueError( errMsg )
+            cellTypeToOrdering[ vtkKey ] = tmp
+    vtkOutput = vtk_output_parsing.convert( parsedOptions )
+    return Options( vtkOutput=vtkOutput, cellTypeToOrdering=cellTypeToOrdering )
 
 
-def display_results( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ):
     if result.output:
-        setup_logger.info( f"New mesh was written to file '{result.output}'" )
-        if result.unchanged_cell_types:
-            setup_logger.info(
-                f"Those vtk types were not reordered: [{', '.join(map(str, result.unchanged_cell_types))}]." )
+        setupLogger.info( f"New mesh was written to file '{result.output}'" )
+        if result.unchangedCellTypes:
+            setupLogger.info(
+                f"Those vtk types were not reordered: [{', '.join(map(str, result.unchangedCellTypes))}]." )
         else:
-            setup_logger.info( "All the cells of the mesh were reordered." )
+            setupLogger.info( "All the cells of the mesh were reordered." )
     else:
-        setup_logger.info( "No output file was written." )
+        setupLogger.info( "No output file was written." )

@@ -1,28 +1,28 @@
 import numpy
 from geos.mesh.doctor.actions.self_intersecting_elements import Options, Result
 from geos.mesh.doctor.parsing import SELF_INTERSECTING_ELEMENTS
-from geos.mesh.doctor.parsing._shared_checks_parsing_logic import get_options_used_message
-from geos.mesh.doctor.parsing.cli_parsing import setup_logger
+from geos.mesh.doctor.parsing._shared_checks_parsing_logic import getOptionsUsedMessage
+from geos.mesh.doctor.parsing.cli_parsing import setupLogger
 
-__MIN_DISTANCE = "min_distance"
+__MIN_DISTANCE = "minDistance"
 __MIN_DISTANCE_DEFAULT = numpy.finfo( float ).eps
 
 __SELF_INTERSECTING_ELEMENTS_DEFAULT = { __MIN_DISTANCE: __MIN_DISTANCE_DEFAULT }
 
 
-def convert( parsed_options ) -> Options:
-    min_distance = parsed_options[ __MIN_DISTANCE ]
-    if min_distance == 0:
-        setup_logger.warning(
+def convert( parsedOptions ) -> Options:
+    minDistance = parsedOptions[ __MIN_DISTANCE ]
+    if minDistance == 0:
+        setupLogger.warning(
             "Having minimum distance set to 0 can induce lots of false positive results (adjacent faces may be considered intersecting)."
         )
-    elif min_distance < 0:
+    elif minDistance < 0:
         raise ValueError(
-            f"Negative minimum distance ({min_distance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
-    return Options( min_distance=min_distance )
+            f"Negative minimum distance ({minDistance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
+    return Options( minDistance=minDistance )
 
 
-def fill_subparser( subparsers ) -> None:
+def fillSubparser( subparsers ) -> None:
     p = subparsers.add_parser( SELF_INTERSECTING_ELEMENTS,
                                help="Checks if the faces of the elements are self intersecting." )
     p.add_argument(
@@ -36,9 +36,9 @@ def fill_subparser( subparsers ) -> None:
     )
 
 
-def display_results( options: Options, result: Result ):
-    setup_logger.results( get_options_used_message( options ) )
-    setup_logger.results( f"You have {len(result.intersecting_faces_elements)} elements with self intersecting faces." )
-    if result.intersecting_faces_elements:
-        setup_logger.results( "The elements indices are:\n" +
-                              ", ".join( map( str, result.intersecting_faces_elements ) ) )
+def displayResults( options: Options, result: Result ):
+    setupLogger.results( getOptionsUsedMessage( options ) )
+    setupLogger.results( f"You have {len(result.intersectingFacesElements)} elements with self intersecting faces." )
+    if result.intersectingFacesElements:
+        setupLogger.results( "The elements indices are:\n" +
+                             ", ".join( map( str, result.intersectingFacesElements ) ) )

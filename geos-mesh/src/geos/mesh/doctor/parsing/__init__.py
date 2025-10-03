@@ -17,6 +17,6 @@ SUPPORTED_ELEMENTS = "supported_elements"
 
 @dataclass( frozen=True )
 class ActionHelper:
-    fill_subparser: Callable[ [ Any ], argparse.ArgumentParser ]
+    fillSubparser: Callable[ [ Any ], argparse.ArgumentParser ]
     convert: Callable[ [ Any ], Any ]
-    display_results: Callable[ [ Any, Any ], None ]
+    displayResults: Callable[ [ Any, Any ], None ]
