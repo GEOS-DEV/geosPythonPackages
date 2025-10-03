@@ -46,6 +46,7 @@ To use it:
 
 """
 
+print(f"Is using PVFillPartialArrays")
 @SISOFilter(decorated_name="PVFillPartialArrays", decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
 class PVFillPartialArrays:
 
@@ -146,7 +147,7 @@ class PVFillPartialArrays:
 
         filter: FillPartialArrays = FillPartialArrays( outputMesh,
                                                        self.dictAttributesValues,
-                                                       True,
+                                                       speHandler=True,
         )
 
         if not filter.logger.hasHandlers():
