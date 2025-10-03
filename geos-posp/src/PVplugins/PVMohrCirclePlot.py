@@ -778,6 +778,10 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 )
                 Render()
 
+        except (ValueError,TypeError) as e:
+            self.m_logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+            return 0
+
         except Exception as e:
             self.m_logger.error( "Mohr circles cannot be plotted due to:" )
             self.m_logger.error( str( e ) )
@@ -799,10 +803,12 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             list[MohrCircle]: list of MohrCircles for the current time step.
         """
         # get mesh and merge if needed
-        meshMerged: vtkUnstructuredGrid
-        meshMerged = mergeBlocks( mesh ) if isinstance( mesh, vtkMultiBlockDataSet ) else mesh
+        try:
+            meshMerged: vtkUnstructuredGrid = mergeBlocks( mesh )
+        except (ValueError,TypeError):
+            raise
 
-        assert meshMerged is not None, "Input data is undefined"
+        # assert meshMerged is not None, "Input data is undefined"
 
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( meshMerged,
                                                                    GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,

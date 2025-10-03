@@ -99,7 +99,7 @@ class MergeBlockEnhanced:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
 
         Returns:
@@ -107,18 +107,16 @@ class MergeBlockEnhanced:
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
-        success: bool
         outputMesh: vtkUnstructuredGrid
         try:
             outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
-            self.outputMesh = outputMesh
-            self.logger.info( "The filter {self.logger.name} succeeded." )
-            success = True
         except ( TypeError, ValueError ):
-            self.logger.info( "The filter {self.logger.name} failed." )
-            success = False
+            self.logger.info( f"The filter {self.logger.name} failed." )
+            raise
+        else:
+            self.outputMesh = outputMesh
+            self.logger.info( f"The filter {self.logger.name} succeeded." )
 
-        return success
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

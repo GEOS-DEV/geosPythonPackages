@@ -70,7 +70,6 @@ To use the filter:
     output :vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject(0)
 """
 
-
 class GeosBlockMerge( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -143,25 +142,28 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         try:
             self.m_input = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
 
-            # initialize output objects
+            # initialize output objects -- TODO: separate it as soon as we are sure not to alter behavior
             self.m_output = self.GetOutputData( outInfoVec, 0 )  # type: ignore[no-untyped-call]
-
-            assert self.m_input is not None, "Input object is null."
-            assert self.m_output is not None, "Output object is null."
+            # assert self.m_input is not None, "Input object is null."
+            # assert self.m_output is not None, "Output object is null."
 
             self.doMerge()
-
-        except AssertionError as e:
-            mess: str = "Geos block merge failed due to:"
-            self.m_logger.error( mess )
-            self.m_logger.error( e, exc_info=True )
-            return 0
-        except Exception as e:
+        # except (AssertionError, ValueError, TypeError) as e:
+        #     mess: str = "Geos block merge failed due to:"
+        #     self.m_logger.error( mess )
+        #     self.m_logger.error( e, exc_info=True )
+        #     return 0
+        except (ValueError,TypeError) as e:
             mess0: str = "Geos block merge failed due to:"
             self.m_logger.critical( mess0 )
             self.m_logger.critical( e, exc_info=True )
             return 0
-        return 1
+        except RuntimeError:
+            self.m_logger.critical( "Geos block merge failed due to" )
+            self.m_logger.critical( e, exc_info=True )
+            return 0
+        else:
+            return 1
 
     def SetLogger( self: Self, logger: Logger ) -> None:
         """Set the logger.
@@ -185,22 +187,16 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if block merge successfully ended, False otherwise.
         """
-        try:
-            self.mergeRankBlocks()
-            if self.m_convertFaultToSurface:
-                self.convertFaultsToSurfaces()
-            assert self.m_outputMesh is not None, "Output mesh in null."
-            self.m_output.ShallowCopy( self.m_outputMesh )
-        except AssertionError as e:
-            mess: str = "Block merge failed due to:"
-            self.m_logger.error( mess )
-            self.m_logger.error( e, exc_info=True )
-            return 0
-        except Exception as e:
-            mess1: str = "Block merge failed due to:"
-            self.m_logger.critical( mess1 )
-            self.m_logger.critical( e, exc_info=True )
-            return 0
+        self.mergeRankBlocks()
+        if self.m_convertFaultToSurface:
+            self.convertFaultsToSurfaces()
+            # assert self.m_outputMesh is not None, "Output mesh in null."
+        # except AssertionError as e:
+        #     mess: str = "Block merge failed due to:"
+        #     self.m_logger.error( mess )
+        #     self.m_logger.error( e, exc_info=True )
+        #     return 0
+        self.m_output.ShallowCopy( self.m_outputMesh )
         return 1
 
     def mergeRankBlocks( self: Self ) -> bool:
@@ -238,7 +234,6 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
 
             # merge all its children
             mergedBlock: vtkUnstructuredGrid = self.mergeChildBlocks( blockToMerge2 )
-            assert mergedBlock is not None, "Merged block is null."
 
             # create index attribute keeping the index in intial mesh
             if not createConstantAttribute(
@@ -370,8 +365,12 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             self.m_logger.warning( "Some partial attributes may not have been propagated to the whole mesh." )
 
         # merge blocks
-        mergedBlocks = mergeBlocks( compositeBlock )
-        return mergedBlocks
+        try:
+            mergedBlocks = mergeBlocks( compositeBlock )
+        except (ValueError,TypeError):
+            raise
+        else:
+            return mergedBlocks
 
     def convertFaultsToSurfaces( self: Self ) -> bool:
         """Convert blocks corresponding to faults to surface.

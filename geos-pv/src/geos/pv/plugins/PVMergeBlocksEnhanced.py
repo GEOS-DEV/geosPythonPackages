@@ -114,18 +114,24 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
         inputMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
         outputMesh: vtkUnstructuredGrid = self.GetOutputData( outInfoVec, 0 )
 
-        assert inputMesh is not None, "Input mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
+        # assert inputMesh is not None, "Input mesh is null."
+        # assert outputMesh is not None, "Output pipeline is null."
 
         filter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
 
-        success = filter.applyFilter()
-
-        if success:
+        try:
+            filter.applyFilter()
+        except (ValueError,TypeError) as e:
+            filter.logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+            return 0
+        except RuntimeError as e:
+            filter.logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+            return 0
+        else:
             outputMesh.ShallowCopy( filter.getOutput() )
             outputMesh.Modified()
 
-        return 1
+            return 1

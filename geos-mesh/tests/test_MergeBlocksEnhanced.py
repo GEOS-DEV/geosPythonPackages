@@ -13,5 +13,4 @@ def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None
     """Test MergeBlockEnhanced vtk filter."""
     multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
-
-    assert filter.applyFilter()
+    filter.applyFilter()
