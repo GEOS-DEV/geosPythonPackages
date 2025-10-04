@@ -3,7 +3,8 @@ from typing import Collection, List
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersGeneral import vtkCellValidator
 from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
-from geos.mesh.io.vtkIO import read_mesh
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from geos.mesh.io.vtkIO import readUnstructuredGrid
 
 
 @dataclass( frozen=True )
@@ -21,7 +22,7 @@ class Result:
     facesAreOrientedIncorrectlyElements: Collection[ int ]
 
 
-def __action( mesh, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     errOut = vtkFileOutputWindow()
     errOut.SetFileName( "/dev/null" )  # vtkCellValidator outputs loads for each cell...
     vtkStdErrOut = vtkOutputWindow()
@@ -75,5 +76,5 @@ def __action( mesh, options: Options ) -> Result:
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
-    mesh = read_mesh( vtkInputFile )
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
     return __action( mesh, options )

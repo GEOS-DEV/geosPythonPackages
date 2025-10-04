@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, readUnstructuredGrid, writeMesh
 
 
 @dataclass( frozen=True )
@@ -45,15 +46,15 @@ def __buildGlobalIds( mesh, generateCellsGlobalIds: bool, generatePointsGlobalId
         mesh.GetCellData().SetGlobalIds( cellsGlobalIds )
 
 
-def __action( mesh, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     __buildGlobalIds( mesh, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
-    write_mesh( mesh, options.vtkOutput )
+    writeMesh( mesh, options.vtkOutput )
     return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
     try:
-        mesh = read_mesh( vtkInputFile )
+        mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
         return __action( mesh, options )
     except BaseException as e:
         setupLogger.error( e )

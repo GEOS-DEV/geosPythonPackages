@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 import uuid
-from vtkmodules.vtkCommonDataModel import VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import readUnstructuredGrid
 
 
 @dataclass( frozen=True )
@@ -18,7 +18,7 @@ class Result:
     elementVolumes: List[ Tuple[ int, float ] ]
 
 
-def __action( mesh, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     cs = vtkCellSizeFilter()
 
     cs.ComputeAreaOff()
@@ -67,5 +67,5 @@ def __action( mesh, options: Options ) -> Result:
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
-    mesh = read_mesh( vtkInputFile )
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
     return __action( mesh, options )

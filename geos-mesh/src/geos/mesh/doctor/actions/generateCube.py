@@ -7,7 +7,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRect
                                             VTK_HEXAHEDRON )
 from geos.mesh.doctor.actions.generateGlobalIds import __buildGlobalIds
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import VtkOutput, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, writeMesh
 
 
 @dataclass( frozen=True )
@@ -134,7 +134,7 @@ def __build( options: Options ):
 
 def __action( options: Options ) -> Result:
     outputMesh = __build( options )
-    write_mesh( outputMesh, options.vtkOutput )
+    writeMesh( outputMesh, options.vtkOutput )
     return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 

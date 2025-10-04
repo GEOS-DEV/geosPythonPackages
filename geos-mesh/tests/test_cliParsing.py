@@ -31,8 +31,8 @@ def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
             field=field,
             fieldValuesCombined=frozenset( ( 0, 1 ) ),
             fieldValuesPerFracture=[ frozenset( ( 0, 1 ) ) ],
-            meshVtkOutput=VtkOutput( output=mainMesh, is_data_mode_binary=True ),
-            allFracturesVtkOutput=[ VtkOutput( output=fractureMesh, is_data_mode_binary=True ) ] )
+            meshVtkOutput=VtkOutput( output=mainMesh, isDataModeBinary=True ),
+            allFracturesVtkOutput=[ VtkOutput( output=fractureMesh, isDataModeBinary=True ) ] )
         yield TestCase( cliArgs, options, exception )
 
 

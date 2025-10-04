@@ -15,7 +15,7 @@ from geos.mesh.doctor.actions.vtkPolyhedron import FaceStream
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
 from geos.mesh.utils.arrayHelpers import hasArray
 from geos.mesh.utils.genericHelpers import toVtkIdList, vtkIter
-from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, readUnstructuredGrid, writeMesh
 """
 TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
 https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
@@ -547,18 +547,18 @@ def __splitMeshOnFractures( mesh: vtkUnstructuredGrid,
     return ( outputMesh, fractureMeshes )
 
 
-def __action( mesh, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     outputMesh, fractureMeshes = __splitMeshOnFractures( mesh, options )
-    write_mesh( outputMesh, options.meshVtkOutput )
+    writeMesh( outputMesh, options.meshVtkOutput )
     for i, fractureMesh in enumerate( fractureMeshes ):
-        write_mesh( fractureMesh, options.allFracturesVtkOutput[ i ] )
+        writeMesh( fractureMesh, options.allFracturesVtkOutput[ i ] )
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result( info="OK" )
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
     try:
-        mesh = read_mesh( vtkInputFile )
+        mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
         # Mesh cannot contain global ids before splitting.
         if hasArray( mesh, [ "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS" ] ):
             errMsg: str = ( "The mesh cannot contain global ids for neither cells nor points. The correct procedure " +

@@ -1,192 +1,250 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
-
-import os.path
-import logging
 from dataclasses import dataclass
-from typing import Optional
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkStructuredGrid, vtkPointSet
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter, vtkUnstructuredGridReader
-from vtkmodules.vtkIOXML import ( vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
-                                  vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
+from enum import Enum
+from pathlib import Path
+from typing import Optional, Type, TypeAlias
+from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
+from vtkmodules.vtkIOCore import vtkWriter
+from vtkmodules.vtkIOLegacy import vtkDataReader, vtkUnstructuredGridWriter, vtkUnstructuredGridReader
+from vtkmodules.vtkIOXML import ( vtkXMLDataReader, vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
+                                  vtkXMLWriter, vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
                                   vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
+from geos.utils.Logger import getLogger
 
 __doc__ = """
-Input and Ouput methods for VTK meshes:
-    - VTK, VTU, VTS, PVTU, PVTS readers
-    - VTK, VTS, VTU writers
+Input and Output methods for various VTK mesh formats.
+Supports reading: .vtk, .vtu, .vts, .pvtu, .pvts
+Supports writing: .vtk, .vtu, .vts
 """
+
+ioLogger = getLogger( "IO for geos-mesh" )
+ioLogger.propagate = False
+
+
+class VtkFormat( Enum ):
+    """Enumeration for supported VTK file formats and their extensions."""
+    VTK = ".vtk"
+    VTS = ".vts"
+    VTU = ".vtu"
+    PVTU = ".pvtu"
+    PVTS = ".pvts"
+
+
+# Use TypeAlias for cleaner and more readable type hints
+VtkReaderClass: TypeAlias = Type[ vtkDataReader | vtkXMLDataReader ]
+VtkWriterClass: TypeAlias = Type[ vtkWriter | vtkXMLWriter ]
+
+# Centralized mapping of formats to their corresponding reader classes
+READER_MAP: dict[ VtkFormat, VtkReaderClass ] = {
+    VtkFormat.VTK: vtkUnstructuredGridReader,
+    VtkFormat.VTS: vtkXMLStructuredGridReader,
+    VtkFormat.VTU: vtkXMLUnstructuredGridReader,
+    VtkFormat.PVTU: vtkXMLPUnstructuredGridReader,
+    VtkFormat.PVTS: vtkXMLPStructuredGridReader
+}
+
+# Centralized mapping of formats to their corresponding writer classes
+WRITER_MAP: dict[ VtkFormat, VtkWriterClass ] = {
+    VtkFormat.VTK: vtkUnstructuredGridWriter,
+    VtkFormat.VTS: vtkXMLStructuredGridWriter,
+    VtkFormat.VTU: vtkXMLUnstructuredGridWriter,
+}
 
 
 @dataclass( frozen=True )
 class VtkOutput:
+    """Configuration for writing a VTK file."""
     output: str
-    is_data_mode_binary: bool
+    isDataModeBinary: bool = True
 
 
-def __read_vtk( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
-    reader = vtkUnstructuredGridReader()
-    logging.info( f"Testing file format \"{vtk_input_file}\" using legacy format reader..." )
-    reader.SetFileName( vtk_input_file )
-    if reader.IsFileUnstructuredGrid():
-        logging.info( f"Reader matches. Reading file \"{vtk_input_file}\" using legacy format reader." )
-        reader.Update()
-        return reader.GetOutput()
-    else:
-        logging.info( "Reader did not match the input file format." )
-        return None
-
-
-def __read_vts( vtk_input_file: str ) -> Optional[ vtkStructuredGrid ]:
-    reader = vtkXMLStructuredGridReader()
-    logging.info( f"Testing file format \"{vtk_input_file}\" using XML format reader..." )
-    if reader.CanReadFile( vtk_input_file ):
-        reader.SetFileName( vtk_input_file )
-        logging.info( f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader." )
-        reader.Update()
-        return reader.GetOutput()
-    else:
-        logging.info( "Reader did not match the input file format." )
-        return None
-
-
-def __read_vtu( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
-    reader = vtkXMLUnstructuredGridReader()
-    logging.info( f"Testing file format \"{vtk_input_file}\" using XML format reader..." )
-    if reader.CanReadFile( vtk_input_file ):
-        reader.SetFileName( vtk_input_file )
-        logging.info( f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader." )
-        reader.Update()
-        return reader.GetOutput()
-    else:
-        logging.info( "Reader did not match the input file format." )
-        return None
-
-
-def __read_pvts( vtk_input_file: str ) -> Optional[ vtkStructuredGrid ]:
-    reader = vtkXMLPStructuredGridReader()
-    logging.info( f"Testing file format \"{vtk_input_file}\" using XML format reader..." )
-    if reader.CanReadFile( vtk_input_file ):
-        reader.SetFileName( vtk_input_file )
-        logging.info( f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader." )
-        reader.Update()
-        return reader.GetOutput()
-    else:
-        logging.info( "Reader did not match the input file format." )
-        return None
-
-
-def __read_pvtu( vtk_input_file: str ) -> Optional[ vtkUnstructuredGrid ]:
-    reader = vtkXMLPUnstructuredGridReader()
-    logging.info( f"Testing file format \"{vtk_input_file}\" using XML format reader..." )
-    if reader.CanReadFile( vtk_input_file ):
-        reader.SetFileName( vtk_input_file )
-        logging.info( f"Reader matches. Reading file \"{vtk_input_file}\" using XML format reader." )
-        reader.Update()
-        return reader.GetOutput()
-    else:
-        logging.info( "Reader did not match the input file format." )
-        return None
-
-
-def read_mesh( vtk_input_file: str ) -> vtkPointSet:
-    """Read vtk file and build either an unstructured grid or a structured grid from it.
+def _readData( filepath: str, readerClass: VtkReaderClass ) -> Optional[ vtkPointSet ]:
+    """Generic helper to read a VTK file using a specific reader class.
 
     Args:
-        vtk_input_file (str): The file name. Extension will be used to guess file format\
-                            If first guess fails, other available readers will be tried.
-
-    Raises:
-        ValueError: Invalid file path error
-        ValueError: No appropriate reader available for the file format
+        filepath (str): Path to the VTK file.
+        readerClass (VtkReaderClass): The VTK reader class to use.
 
     Returns:
-        vtkPointSet: Mesh read
+        Optional[ vtkPointSet ]: The read VTK point set, or None if reading failed.
     """
-    if not os.path.exists( vtk_input_file ):
-        err_msg: str = f"Invalid file path. Could not read \"{vtk_input_file}\"."
-        logging.error( err_msg )
-        raise ValueError( err_msg )
-    file_extension = os.path.splitext( vtk_input_file )[ -1 ]
-    extension_to_reader = {
-        ".vtk": __read_vtk,
-        ".vts": __read_vts,
-        ".vtu": __read_vtu,
-        ".pvtu": __read_pvtu,
-        ".pvts": __read_pvts
-    }
-    # Testing first the reader that should match
-    if file_extension in extension_to_reader:
-        output_mesh = extension_to_reader.pop( file_extension )( vtk_input_file )
-        if output_mesh:
-            return output_mesh
-    # If it does not match, then test all the others.
-    for reader in extension_to_reader.values():
-        output_mesh = reader( vtk_input_file )
-        if output_mesh:
-            return output_mesh
-    # No reader did work.
-    err_msg = f"Could not find the appropriate VTK reader for file \"{vtk_input_file}\"."
-    logging.error( err_msg )
-    raise ValueError( err_msg )
+    reader = readerClass()
+    ioLogger.info( f"Attempting to read '{filepath}' with {readerClass.__name__}..." )
+
+    reader.SetFileName( str( filepath ) )
+
+    # For XML-based readers, CanReadFile is a reliable and fast pre-check.
+    if hasattr( reader, 'CanReadFile' ) and not reader.CanReadFile( filepath ):
+        ioLogger.error( f"Reader {readerClass.__name__} reports it cannot read file '{filepath}'." )
+        return None
+
+    reader.Update()
+
+    # Check the reader's error code. This is the most reliable way to
+    # detect a failed read, as GetOutput() can return a default empty object on failure.
+    if hasattr( reader, 'GetErrorCode' ) and reader.GetErrorCode() != 0:
+        ioLogger.warning(
+            f"VTK reader {readerClass.__name__} reported an error code after attempting to read '{filepath}'." )
+        return None
+
+    output = reader.GetOutput()
+
+    if output is None:
+        return None
+
+    ioLogger.info( "Read successful." )
+    return output
 
 
-def __write_vtk( mesh: vtkUnstructuredGrid, output: str ) -> int:
-    logging.info( f"Writing mesh into file \"{output}\" using legacy format." )
-    writer = vtkUnstructuredGridWriter()
-    writer.SetFileName( output )
-    writer.SetInputData( mesh )
-    return writer.Write()
-
-
-def __write_vts( mesh: vtkStructuredGrid, output: str, toBinary: bool = False ) -> int:
-    logging.info( f"Writing mesh into file \"{output}\" using XML format." )
-    writer = vtkXMLStructuredGridWriter()
-    writer.SetFileName( output )
-    writer.SetInputData( mesh )
-    writer.SetDataModeToBinary() if toBinary else writer.SetDataModeToAscii()
-    return writer.Write()
-
-
-def __write_vtu( mesh: vtkUnstructuredGrid, output: str, toBinary: bool = False ) -> int:
-    logging.info( f"Writing mesh into file \"{output}\" using XML format." )
-    writer = vtkXMLUnstructuredGridWriter()
-    writer.SetFileName( output )
-    writer.SetInputData( mesh )
-    writer.SetDataModeToBinary() if toBinary else writer.SetDataModeToAscii()
-    return writer.Write()
-
-
-def write_mesh( mesh: vtkPointSet, vtk_output: VtkOutput, canOverwrite: bool = False ) -> int:
-    """Write mesh to disk.
-
-    Nothing is done if file already exists.
+def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isBinary: bool ) -> int:
+    """Generic helper to write a VTK file using a specific writer class.
 
     Args:
-        mesh (vtkPointSet): Grid to write
-        vtk_output (VtkOutput): File path. File extension will be used to select VTK file format
-        canOverwrite (bool, optional): Authorize overwriting the file. Defaults to False.
-
-    Raises:
-        ValueError: Invalid VTK format.
+        mesh (vtkPointSet): The grid data to write.
+        writerClass (VtkWriterClass): The VTK writer class to use.
+        output (str): The output file path.
+        isBinary (bool): Whether to write the file in binary mode (True) or ASCII (False).
 
     Returns:
-        int: 0 if success
+        int: 1 if success, 0 otherwise.
     """
-    if os.path.exists( vtk_output.output ) and canOverwrite:
-        logging.error( f"File \"{vtk_output.output}\" already exists, nothing done." )
-        return 1
-    file_extension = os.path.splitext( vtk_output.output )[ -1 ]
-    if file_extension == ".vtk":
-        success_code = __write_vtk( mesh, vtk_output.output )
-    elif file_extension == ".vts":
-        success_code = __write_vts( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
-    elif file_extension == ".vtu":
-        success_code = __write_vtu( mesh, vtk_output.output, vtk_output.is_data_mode_binary )
-    else:
-        # No writer found did work. Dying.
-        err_msg = f"Could not find the appropriate VTK writer for extension \"{file_extension}\"."
-        logging.error( err_msg )
-        raise ValueError( err_msg )
-    return 0 if success_code else 2  # the Write member function return 1 in case of success, 0 otherwise.
+    ioLogger.info( f"Writing mesh to '{output}' using {writerClass.__name__}..." )
+    writer = writerClass()
+    writer.SetFileName( output )
+    writer.SetInputData( mesh )
+
+    # Set data mode only for XML writers that support it
+    if isinstance( writer, vtkXMLWriter ):
+        if isBinary:
+            writer.SetDataModeToBinary()
+            ioLogger.info( "Data mode set to Binary." )
+        else:
+            writer.SetDataModeToAscii()
+            ioLogger.info( "Data mode set to ASCII." )
+
+    return writer.Write()
+
+
+def readMesh( filepath: str ) -> vtkPointSet:
+    """
+    Reads a VTK file, automatically detecting the format.
+
+    It first tries the reader associated with the file extension, then falls
+    back to trying all other available readers if the first attempt fails.
+
+    Args:
+        filepath (str): The path to the VTK file.
+
+    Raises:
+        FileNotFoundError: If the input file does not exist.
+        ValueError: If no suitable reader can be found for the file.
+
+    Returns:
+        vtkPointSet: The resulting mesh data.
+    """
+    filepathPath: Path = Path( filepath )
+    if not filepathPath.exists():
+        raise FileNotFoundError( f"Invalid file path: '{filepath}' does not exist." )
+
+    candidateReaders: list[ VtkReaderClass ] = []
+    # 1. Prioritize the reader associated with the file extension
+    try:
+        fileFormat = VtkFormat( filepathPath.suffix )
+        if fileFormat in READER_MAP:
+            candidateReaders.append( READER_MAP[ fileFormat ] )
+    except ValueError:
+        ioLogger.warning( f"Unknown file extension '{filepathPath.suffix}'. Trying all available readers." )
+
+    # 2. Add all other unique readers as fallbacks
+    for readerCls in READER_MAP.values():
+        if readerCls not in candidateReaders:
+            candidateReaders.append( readerCls )
+
+    # 3. Attempt to read with the candidates in order
+    for readerClass in candidateReaders:
+        outputMesh = _readData( filepath, readerClass )
+        if outputMesh:
+            return outputMesh
+
+    raise ValueError( f"Could not find a suitable reader for '{filepath}'." )
+
+
+def readUnstructuredGrid( filepath: str ) -> vtkUnstructuredGrid:
+    """
+    Reads a VTK file and ensures it is a vtkUnstructuredGrid.
+
+    This function uses the general `readMesh` to load the data and then
+    validates its type.
+
+    Args:
+        filepath (str): The path to the VTK file.
+
+    Raises:
+        FileNotFoundError: If the input file does not exist.
+        ValueError: If no suitable reader can be found for the file.
+        TypeError: If the file is read successfully but is not a vtkUnstructuredGrid.
+
+    Returns:
+        vtkUnstructuredGrid: The resulting unstructured grid data.
+    """
+    ioLogger.info( f"Reading file '{filepath}' and expecting vtkUnstructuredGrid." )
+    mesh = readMesh( filepath )
+
+    if not isinstance( mesh, vtkUnstructuredGrid ):
+        errorMsg = ( f"File '{filepath}' was read successfully, but it is of type "
+                     f"'{type(mesh).__name__}', not the expected vtkUnstructuredGrid." )
+        ioLogger.error( errorMsg )
+        raise TypeError( errorMsg )
+
+    ioLogger.info( "Validation successful. Mesh is a vtkUnstructuredGrid." )
+    return mesh
+
+
+def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = False ) -> int:
+    """
+    Writes a vtkPointSet to a file.
+
+    The format is determined by the file extension in `VtkOutput.output`.
+
+    Args:
+        mesh (vtkPointSet): The grid data to write.
+        vtkOutput (VtkOutput): Configuration for the output file.
+        canOverwrite (bool, optional): If False, raises an error if the file
+                                      already exists. Defaults to False.
+
+    Raises:
+        FileExistsError: If the output file exists and `canOverwrite` is False.
+        ValueError: If the file extension is not a supported write format.
+        RuntimeError: If the VTK writer fails to write the file.
+
+    Returns:
+        int: Returns 1 on success, consistent with the VTK writer's return code.
+    """
+    outputPath = Path( vtkOutput.output )
+    if outputPath.exists() and not canOverwrite:
+        raise FileExistsError( f"File '{outputPath}' already exists. Set canOverwrite=True to replace it." )
+
+    try:
+        # Catch the ValueError from an invalid enum to provide a consistent error message.
+        try:
+            fileFormat = VtkFormat( outputPath.suffix )
+        except ValueError:
+            # Re-raise with the message expected by the test.
+            raise ValueError( f"Writing to extension '{outputPath.suffix}' is not supported." )
+
+        writerClass = WRITER_MAP.get( fileFormat )
+        if not writerClass:
+            raise ValueError( f"Writing to extension '{outputPath.suffix}' is not supported." )
+
+        successCode = _writeData( mesh, writerClass, str( outputPath ), vtkOutput.isDataModeBinary )
+        if not successCode:
+            raise RuntimeError( f"VTK writer failed to write file '{outputPath}'." )
+
+        ioLogger.info( f"Successfully wrote mesh to '{outputPath}'." )
+        return successCode
+
+    except ( ValueError, RuntimeError ) as e:
+        ioLogger.error( e )
+        raise

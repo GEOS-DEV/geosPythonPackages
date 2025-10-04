@@ -10,7 +10,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, V
                                             VTK_WEDGE )
 from geos.mesh.doctor.actions.vtkPolyhedron import buildFaceToFaceConnectivityThroughEdges, FaceStream
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import readUnstructuredGrid
 from geos.mesh.utils.genericHelpers import vtkIter
 
 
@@ -41,7 +41,7 @@ def initWorkerMesh( inputFileForWorker: str ):
     setupLogger.debug(
         f"Worker process (PID: {multiprocessing.current_process().pid}) initializing MESH from file: {inputFileForWorker}"
     )
-    MESH = read_mesh( inputFileForWorker )
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( inputFileForWorker )
     if MESH is None:
         setupLogger.error(
             f"Worker process (PID: {multiprocessing.current_process().pid}) failed to load mesh from {inputFileForWorker}"
@@ -136,7 +136,7 @@ class IsPolyhedronConvertible:
 
 def __action( vtkInputFile: str, options: Options ) -> Result:
     # Main process loads the mesh for its own use
-    mesh = read_mesh( vtkInputFile )
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
     if mesh is None:
         setupLogger.error( f"Main process failed to load mesh from {vtkInputFile}. Aborting." )
         # Return an empty/error result or raise an exception

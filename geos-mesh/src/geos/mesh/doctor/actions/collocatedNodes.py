@@ -3,9 +3,9 @@ from dataclasses import dataclass
 import numpy
 from typing import Collection, Iterable
 from vtkmodules.vtkCommonCore import reference, vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator
+from vtkmodules.vtkCommonDataModel import vtkIncrementalOctreePointLocator, vtkUnstructuredGrid
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
-from geos.mesh.io.vtkIO import read_mesh
+from geos.mesh.io.vtkIO import readUnstructuredGrid
 
 
 @dataclass( frozen=True )
@@ -19,7 +19,7 @@ class Result:
     wrongSupportElements: Collection[ int ]  # Element indices with support node indices appearing more than once.
 
 
-def __action( mesh, options: Options ) -> Result:
+def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     points = mesh.GetPoints()
 
     locator = vtkIncrementalOctreePointLocator()
@@ -65,5 +65,5 @@ def __action( mesh, options: Options ) -> Result:
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
-    mesh = read_mesh( vtkInputFile )
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
     return __action( mesh, options )
