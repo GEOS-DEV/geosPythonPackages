@@ -7,10 +7,16 @@
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
-
+from unittest import TestCase
 
 def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test MergeBlockEnhanced vtk filter."""
     multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
     filter.applyFilter()
+
+class RaiseMergeBlocksEnhanced(TestCase):
+    def test_TypeError(self):
+        multiBlockDataset = vtkMultiBlockDataSet()
+        filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
+        self.assertRaises((TypeError,ValueError), filter.applyFilter )
