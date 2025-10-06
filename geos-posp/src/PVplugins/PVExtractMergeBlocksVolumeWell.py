@@ -302,7 +302,7 @@ class PVExtractMergeBlocksVolumeWell( VTKPythonAlgorithmBase ):
             bool: True if extraction and merge successfully eneded, False otherwise
         """
         # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractWells=True)
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractWells=True )
         blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter and merge internal blocks

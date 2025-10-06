@@ -2,8 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 from geos.utils.GeosOutputsConstants import (
-    GeosDomainNameEnum,
-)
+    GeosDomainNameEnum, )
 import logging
 from enum import Enum
 from geos.utils.Logger import ( Logger, getLogger )
@@ -53,13 +52,14 @@ To use the filter:
     domainExtracted: vtkMultiBlockDataSet = filter.getOutput( domain )
 """
 
-loggerTitle: str =  "Geos Block Extractor Filter"
+loggerTitle: str = "Geos Block Extractor Filter"
 
 
 class GeosExtractDomain( vtkExtractBlock ):
 
-    def __init__( self, **properties ):
-        super().__init__( **properties )
+    def __init__( self: Self ) -> None:
+        """Extract Bock (volume, surface, well) from geos output."""
+        super().__init__()
 
         self.geosDomainType: Dict[ int, Enum ] = {
             0: GeosDomainNameEnum.VOLUME_DOMAIN_NAME,
@@ -81,6 +81,7 @@ class GeosExtractDomain( vtkExtractBlock ):
         """
         domainIndex: int = getBlockIndexFromName( self.geosDomainType[ domainType ] )
         return super().AddIndex( domainIndex )
+
 
 class GeosBlockExtractor:
 
@@ -184,4 +185,3 @@ class GeosBlockExtractor:
             vtkMultiBlockDataSet: The domain block extracted.
         """
         return self.extractedDomain[ domain ]
-
