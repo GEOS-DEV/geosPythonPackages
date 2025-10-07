@@ -366,12 +366,8 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             self.m_logger.warning( "Some partial attributes may not have been propagated to the whole mesh." )
 
         # merge blocks
-        try:
-            mergedBlocks = mergeBlocks( compositeBlock )
-        except (VTKError):
-            raise
-        else:
-            return mergedBlocks
+        mergedBlocks = mergeBlocks( compositeBlock )
+        return mergedBlocks
 
     def convertFaultsToSurfaces( self: Self ) -> bool:
         """Convert blocks corresponding to faults to surface.

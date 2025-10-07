@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Union
+import logging
+# import re
 
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
                                             vtkUnstructuredGrid, vtkDataSet )
@@ -16,7 +18,8 @@ else:
     from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
-from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
+from geos.utils.Errors import VTKError
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter)
 
 __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
 
@@ -52,7 +55,8 @@ def mergeBlocks(
         logger: Logger = getLogger( "mergeBlocks", True )
 
     vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
-    logger.addFilter(RegexExceptionFilter())
+    logger.addFilter(RegexExceptionFilter()) # will raise VTKError if captured VTK Error
+    logger.setLevel(logging.DEBUG)
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
@@ -87,7 +91,7 @@ def mergeBlocks(
                 captured_log.seek(0) #be kind let's just rewind
                 captured = captured_log.read().decode()
 
-            logger.error(captured.strip())
+            logger.debug(captured.strip())
             outputMesh: vtkUnstructuredGrid = af.GetOutputDataObject( 0 )
 
     return outputMesh

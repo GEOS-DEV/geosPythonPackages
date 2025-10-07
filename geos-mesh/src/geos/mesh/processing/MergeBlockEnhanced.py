@@ -110,18 +110,17 @@ class MergeBlockEnhanced:
 
         Returns:
             bool: True if the blocks were successfully merged, False otherwise.
+
+        Raises:
+            VTKError (geos.utils.Errors) : error captured if any from the VTK log
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
         outputMesh: vtkUnstructuredGrid
-        try:
-            outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
-        except ( VTKError ):
-            self.logger.info( f"The filter {self.logger.name} failed." )
-            raise
-        else:
-            self.outputMesh = outputMesh
-            self.logger.info( f"The filter {self.logger.name} succeeded." )
+        outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
+        self.logger.info( f"The filter {self.logger.name} failed." )
+        self.outputMesh = outputMesh
+        self.logger.info( f"The filter {self.logger.name} succeeded." )
 
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:

@@ -54,10 +54,13 @@ class RegexExceptionFilter(logging.Filter):
 
     def filter(self, record : logging.LogRecord):
         """
-            Filter VTK Error from stdErr
+            Filter VTK Error from stdErr.
             
             Args:
                 record(loggging.LogRecord)
+
+            Raises:
+                VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
         """
         message = record.getMessage()
         if self.regex.search(message):
@@ -82,7 +85,8 @@ def VTKCaptureLog()->Generator[Any,Any,Any]:
     #     print(err)
 
     # Save original stderr file descriptor
-    original_stderr_fd = sys.stderr.fileno()
+    # original_stderr_fd = sys.stderr.fileno()
+    original_stderr_fd = 2
     saved_stderr_fd = os.dup(original_stderr_fd)
 
     # Create a temporary file to capture stderr
