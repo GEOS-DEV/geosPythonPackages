@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Collection, List
+from typing import Collection
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkFiltersGeneral import vtkCellValidator
 from vtkmodules.vtkCommonCore import vtkOutputWindow, vtkFileOutputWindow
@@ -36,12 +36,12 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     nonConvex = 0x10
     facesAreOrientedIncorrectly = 0x20
 
-    wrongNumberOfPointsElements: List[ int ] = []
-    intersectingEdgesElements: List[ int ] = []
-    intersectingFacesElements: List[ int ] = []
-    nonContiguousEdgesElements: List[ int ] = []
-    nonConvexElements: List[ int ] = []
-    facesAreOrientedIncorrectlyElements: List[ int ] = []
+    wrongNumberOfPointsElements: list[ int ] = []
+    intersectingEdgesElements: list[ int ] = []
+    intersectingFacesElements: list[ int ] = []
+    nonContiguousEdgesElements: list[ int ] = []
+    nonConvexElements: list[ int ] = []
+    facesAreOrientedIncorrectlyElements: list[ int ] = []
 
     f = vtkCellValidator()
     f.SetTolerance( options.minDistance )

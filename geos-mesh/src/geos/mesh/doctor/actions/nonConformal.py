@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import math
 import numpy
 from tqdm import tqdm
-from typing import List, Tuple, Any
 from vtk import reference as vtkReference
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkBoundingBox, vtkCell, vtkCellArray, vtkPointSet, vtkPolyData,
@@ -26,7 +25,7 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    nonConformalCells: List[ Tuple[ int, int ] ]
+    nonConformalCells: list[ tuple[ int, int ] ]
 
 
 class BoundaryMesh:
@@ -68,10 +67,8 @@ class BoundaryMesh:
                 self.__normals[ ic, : ] = __normals.GetTuple3( ic )
 
     @staticmethod
-    def __buildBoundaryMesh(
-        mesh: vtkUnstructuredGrid,
-        consistency=True
-    ) -> Tuple[ vtkUnstructuredGrid, vtkDataArray, vtkDataArray ]:
+    def __buildBoundaryMesh( mesh: vtkUnstructuredGrid,
+                             consistency=True ) -> tuple[ vtkUnstructuredGrid, vtkDataArray, vtkDataArray ]:
         """From a 3d mesh, build the envelope meshes.
 
         Args:
@@ -79,7 +76,7 @@ class BoundaryMesh:
             consistency (bool, optional): The vtk option passed to the `vtkDataSetSurfaceFilter`. Defaults to True.
 
         Returns:
-            Tuple[ vtkUnstructuredGrid, Any, Any ]: A tuple containing the boundary mesh, the normal vectors array,
+            tuple[ vtkUnstructuredGrid, Any, Any ]: A tuple containing the boundary mesh, the normal vectors array,
                              an array that maps the id of the boundary element to the id of the 3d cell it touches.
         """
         f = vtkDataSetSurfaceFilter()
@@ -125,14 +122,14 @@ class BoundaryMesh:
         """
         return self.reBoundaryMesh.GetNumberOfPoints()
 
-    def bounds( self, i: int ) -> Tuple[ float, float, float, float, float, float ]:
+    def bounds( self, i: int ) -> tuple[ float, float, float, float, float, float ]:
         """The boundrary box of cell `i`.
 
         Args:
             i (int): The boundary cell index.
 
         Returns:
-            Tuple[ float, float, float, float, float, float ]: The bounding box of the cell.
+            tuple[ float, float, float, float, float, float ]: The bounding box of the cell.
         """
         return self.reBoundaryMesh.GetCell( i ).GetBounds()
 
@@ -158,13 +155,13 @@ class BoundaryMesh:
         """
         return self.reBoundaryMesh.GetCell( i )
 
-    def GetPoint( self, i: int ) -> Tuple[ float, float, float ]:
+    def GetPoint( self, i: int ) -> tuple[ float, float, float ]:
         """Point i of the boundary mesh.
         Args:
             i (int): The boundary point index.
 
         Returns:
-            Tuple[ float, float, float ]: A length-3 tuple containing the coordinates of the point.
+            tuple[ float, float, float ]: A length-3 tuple containing the coordinates of the point.
         """
         return self.reBoundaryMesh.GetPoint( i )
 
@@ -243,7 +240,7 @@ class Extruder:
     """
 
     def __init__( self, boundaryMesh: BoundaryMesh, faceTolerance: float ):
-        self.__extrusions: List[ vtkPolyData ] = [
+        self.__extrusions: list[ vtkPolyData ] = [
             None,
         ] * boundaryMesh.GetNumberOfCells()
         self.__boundaryMesh = boundaryMesh

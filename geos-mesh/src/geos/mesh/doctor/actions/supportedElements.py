@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import multiprocessing
 import networkx
 from tqdm import tqdm
-from typing import FrozenSet, Iterable, Mapping, Optional
+from typing import Iterable, Mapping, Optional
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
@@ -22,8 +22,8 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    unsupportedStdElementsTypes: FrozenSet[ int ]  # list of unsupported types
-    unsupportedPolyhedronElements: FrozenSet[
+    unsupportedStdElementsTypes: frozenset[ int ]  # list of unsupported types
+    unsupportedPolyhedronElements: frozenset[
         int ]  # list of polyhedron elements that could not be converted to supported std elements
 
 

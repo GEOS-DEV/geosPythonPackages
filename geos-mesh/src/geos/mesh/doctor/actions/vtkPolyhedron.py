@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import networkx
-from typing import Collection, Dict, FrozenSet, Iterable, List, Sequence, Tuple
+from typing import Collection, Iterable, Sequence
 from vtkmodules.vtkCommonCore import vtkIdList
 from geos.mesh.utils.genericHelpers import vtkIter
 
@@ -92,7 +92,7 @@ class FaceStream:
         Returns:
             Collection[ int ]: The set of all the point ids.
         """
-        tmp: List[ int ] = []
+        tmp: list[ int ] = []
         for nodes in self.faceNodes:
             tmp += nodes
         return frozenset( tmp )
@@ -167,10 +167,10 @@ def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatib
         networkx.Graph: A graph which nodes are actually the faces of the polyhedron.
         Two nodes of the graph are connected if they share an edge.
     """
-    edgesToFaceIndices: Dict[ FrozenSet[ int ], List[ int ] ] = defaultdict( list )
+    edgesToFaceIndices: dict[ frozenset[ int ], list[ int ] ] = defaultdict( list )
     for faceIndex, faceNodes in enumerate( faceStream.faceNodes ):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
-        faceIndices: Tuple[ int, int ]
+        faceIndices: tuple[ int, int ]
         for faceIndices in zip( faceNodes, faceNodes[ 1: ] + ( faceNodes[ 0 ], ) ):
             edgesToFaceIndices[ frozenset( faceIndices ) ].append( faceIndex )
     # We are doing here some small validations w.r.t. the connections of the faces
@@ -180,7 +180,7 @@ def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatib
     for faceIndices in edgesToFaceIndices.values():
         assert len( faceIndices ) == 2
     # Computing the graph degree for validation
-    degrees: Dict[ int, int ] = defaultdict( int )
+    degrees: dict[ int, int ] = defaultdict( int )
     for faceIndices in edgesToFaceIndices.values():
         for faceIndex in faceIndices:
             degrees[ faceIndex ] += 1

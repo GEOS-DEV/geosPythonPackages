@@ -1,7 +1,7 @@
 import networkx
 import numpy
 from tqdm import tqdm
-from typing import Dict, FrozenSet, Iterator, List, Tuple
+from typing import Iterator
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( VTK_POLYHEDRON, VTK_TRIANGLE, vtkCellArray, vtkPolyData, vtkPolygon,
                                             vtkUnstructuredGrid, vtkTetra )
@@ -65,14 +65,14 @@ def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
     return cellVolume
 
 
-def __selectAndFlipFaces( meshPoints: vtkPoints, colors: Dict[ FrozenSet[ int ], int ],
+def __selectAndFlipFaces( meshPoints: vtkPoints, colors: dict[ frozenset[ int ], int ],
                           faceStream: FaceStream ) -> FaceStream:
     """Given a polyhedra, given that we were able to paint the faces in two colors,
     we now need to select which faces/color to flip such that the volume of the element is positive.
 
     Args:
         meshPoints (vtkPoints): The mesh points, needed to compute the volume.
-        colors (Dict[ FrozenSet[ int ], int ]): Maps the nodes of each connected component (defined as a frozenset)
+        colors (dict[ frozenset[ int ], int ]): Maps the nodes of each connected component (defined as a frozenset)
                                                 to its color.
         faceStream (FaceStream): The face stream representing the polyhedron.
 
@@ -80,12 +80,12 @@ def __selectAndFlipFaces( meshPoints: vtkPoints, colors: Dict[ FrozenSet[ int ],
         FaceStream: The face stream that leads to a positive volume.
     """
     # Flipping either color 0 or 1.
-    colorToNodes: Dict[ int, List[ int ] ] = { 0: [], 1: [] }
+    colorToNodes: dict[ int, list[ int ] ] = { 0: [], 1: [] }
     for connectedComponentsIndices, color in colors.items():
         colorToNodes[ color ] += connectedComponentsIndices
     # This implementation works even if there is one unique color.
     # Admittedly, there will be one face stream that won't be flipped.
-    fs: Tuple[ FaceStream,
+    fs: tuple[ FaceStream,
                FaceStream ] = ( faceStream.flipFaces( colorToNodes[ 0 ] ), faceStream.flipFaces( colorToNodes[ 1 ] ) )
     volumes = __computeVolume( meshPoints, fs[ 0 ] ), __computeVolume( meshPoints, fs[ 1 ] )
     # We keep the flipped element for which the volume is largest
@@ -116,7 +116,7 @@ def __reorientElement( meshPoints: vtkPoints, faceStreamIds: vtkIdList ) -> vtkI
     # W.r.t. the nature of our problem (a normal can be directed inwards or outwards),
     # two colors should be enough to color the face graph.
     # `colors` maps the nodes of each connected component to its color.
-    colors: Dict[ FrozenSet[ int ], int ] = networkx.algorithms.greedy_color( quotientGraph )
+    colors: dict[ frozenset[ int ], int ] = networkx.algorithms.greedy_color( quotientGraph )
     assert len( colors ) in ( 1, 2 )
     # We now compute the face stream which generates outwards normal vectors.
     flippedFaceStream = __selectAndFlipFaces( meshPoints, colors, faceStream )

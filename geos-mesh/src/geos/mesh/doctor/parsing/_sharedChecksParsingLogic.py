@@ -2,7 +2,6 @@ import argparse
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Type, Any
-
 from geos.mesh.doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh.doctor.actions.allChecks import Result as AllChecksResult
 from geos.mesh.doctor.parsing.cliParsing import parseCommaSeparatedString, setupLogger

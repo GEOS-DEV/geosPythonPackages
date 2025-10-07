@@ -2,7 +2,7 @@ import itertools
 from math import sqrt
 import numpy
 from numpy.linalg import norm
-from typing import Tuple, Union
+from typing import Union
 
 
 def __divClamp( num: float, den: float ) -> float:
@@ -28,7 +28,7 @@ def __divClamp( num: float, den: float ) -> float:
 
 
 def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.ndarray,
-                                d1: numpy.ndarray ) -> Tuple[ numpy.ndarray, numpy.ndarray ]:
+                                d1: numpy.ndarray ) -> tuple[ numpy.ndarray, numpy.ndarray ]:
     """Computes the minimum distance between two segments.
 
     Args:
@@ -38,7 +38,7 @@ def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.
         d1 (numpy.ndarray): Director vector such that x1 + d1 is the second point of segment 1.
 
     Returns:
-        Tuple[ numpy.ndarray, numpy.ndarray ]: A tuple containing the two points closest point for segments
+        tuple[ numpy.ndarray, numpy.ndarray ]: A tuple containing the two points closest point for segments
                                                0 and 1 respectively.
     """
     # The reference paper is:
@@ -74,8 +74,8 @@ def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.
 
 
 def __computeNodesToTriangleDistance(
-        tri0: numpy.ndarray, edges0,
-        tri1: numpy.ndarray ) -> Tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
+    tri0: numpy.ndarray, edges0, tri1: numpy.ndarray
+) -> tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
     """Computes the distance from nodes of `tri1` points onto `tri0`.
 
     Args:
@@ -84,7 +84,7 @@ def __computeNodesToTriangleDistance(
         tri1 (numpy.ndarray): Second triangle.
 
     Returns:
-        Tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
+        tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
         The distance, the closest point on triangle 0, the closest on triangle 1 and a boolean indicating of the
         triangles are disjoint. If nothing was found, then the first three arguments are None.
         The boolean being still defined.
@@ -125,7 +125,7 @@ def __computeNodesToTriangleDistance(
 
 
 def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
-                                 tri1: numpy.ndarray ) -> Tuple[ float, numpy.ndarray, numpy.ndarray ]:
+                                 tri1: numpy.ndarray ) -> tuple[ float, numpy.ndarray, numpy.ndarray ]:
     """Returns the minimum distance between two triangles, and the two points where this minimum occurs.
     If the two triangles touch, then distance is exactly 0.
     But the two points are dummy and cannot be used as contact points (they are still though).
@@ -135,7 +135,7 @@ def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
         tri1 (numpy.ndarray): The second 3x3 triangle points.
 
     Returns:
-        Tuple[ float, numpy.ndarray, numpy.ndarray ]: The distance and the two points.
+        tuple[ float, numpy.ndarray, numpy.ndarray ]: The distance and the two points.
     """
     # Compute vectors along the 6 sides
     edges0 = numpy.empty( ( 3, 3 ), dtype=float )

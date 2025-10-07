@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List, Tuple
 import uuid
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
@@ -15,7 +14,7 @@ class Options:
 
 @dataclass( frozen=True )
 class Result:
-    elementVolumes: List[ Tuple[ int, float ] ]
+    elementVolumes: list[ tuple[ int, float ] ]
 
 
 def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
@@ -57,7 +56,7 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     assert quality is not None
     volume = vtk_to_numpy( volume )
     quality = vtk_to_numpy( quality )
-    smallVolumes: List[ Tuple[ int, float ] ] = []
+    smallVolumes: list[ tuple[ int, float ] ] = []
     for i, pack in enumerate( zip( volume, quality ) ):
         v, q = pack
         vol = q if mesh.GetCellType( i ) in SUPPORTED_TYPES else v

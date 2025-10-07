@@ -1,12 +1,12 @@
 import argparse
 import importlib
-from typing import Dict, Callable, Any, Tuple
+from typing import Callable, Any
 import geos.mesh.doctor.parsing as parsing
 from geos.mesh.doctor.parsing import ActionHelper, cliParsing
 from geos.mesh.doctor.parsing.cliParsing import setupLogger
 
-__HELPERS: Dict[ str, Callable[ [ None ], ActionHelper ] ] = dict()
-__ACTIONS: Dict[ str, Callable[ [ None ], Any ] ] = dict()
+__HELPERS: dict[ str, Callable[ [ None ], ActionHelper ] ] = dict()
+__ACTIONS: dict[ str, Callable[ [ None ], Any ] ] = dict()
 
 
 def __loadModuleAction( moduleName: str, actionFct="action" ):
@@ -21,15 +21,15 @@ def __loadModuleActionHelper( moduleName: str, parsingFctSuffix="Parsing" ):
                          displayResults=module.displayResults )
 
 
-def __loadActions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
+def __loadActions() -> dict[ str, Callable[ [ str, Any ], Any ] ]:
     """Loads all the actions.
     This function acts like a protection layer if a module fails to load.
     A action that fails to load won't stop the process.
 
     Returns:
-        Dict[ str, Callable[ [ str, Any ], Any ] ]: The actions.
+        dict[ str, Callable[ [ str, Any ], Any ] ]: The actions.
     """
-    loadedActions: Dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
+    loadedActions: dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
     for actionName, actionProvider in __ACTIONS.items():
         try:
             loadedActions[ actionName ] = actionProvider()
@@ -40,11 +40,11 @@ def __loadActions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
 
 
 def registerParsingActions(
-) -> Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
+) -> tuple[ argparse.ArgumentParser, dict[ str, Callable[ [ str, Any ], Any ] ], dict[ str, ActionHelper ] ]:
     """Register all the parsing actions. Eventually initiate the registration of all the actions too.
 
     Returns:
-        Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
+        tuple[ argparse.ArgumentParser, dict[ str, Callable[ [ str, Any ], Any ] ], dict[ str, ActionHelper ] ]:
         The parser, actions and helpers.
     """
     parser = cliParsing.initParser()
@@ -60,8 +60,8 @@ def registerParsingActions(
                         parsing.GENERATE_GLOBAL_IDS, parsing.MAIN_CHECKS, parsing.NON_CONFORMAL,
                         parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS ):
         closureTrick( actionName )
-    loadedActions: Dict[ str, Callable[ [ str, Any ], Any ] ] = __loadActions()
-    loadedActionsHelpers: Dict[ str, ActionHelper ] = dict()
+    loadedActions: dict[ str, Callable[ [ str, Any ], Any ] ] = __loadActions()
+    loadedActionsHelpers: dict[ str, ActionHelper ] = dict()
     for actionName in loadedActions.keys():
         h = __HELPERS[ actionName ]()
         h.fillSubparser( subparsers )
