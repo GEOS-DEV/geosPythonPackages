@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-from typing import Union
+from typing import Union, Dict, Any
 from typing_extensions import Self
 
 import logging
@@ -39,8 +39,16 @@ from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 
 __doc__ = """
-GeomechanicsCalculator module is a vtk filter that allows to compute additional
-Geomechanical properties from existing ones.
+GeomechanicsCalculator module is a vtk filter that allows to compute additional geomechanical properties from existing ones:
+    - The Young modulus and the Poisson's ratio named "youngModulus" and "poissonRatio" or bulk and shear moduli named "bulkModulus" and "shearModulus"
+    - The initial Young modulus and Poisson's ratio named "youngModulusInitial" and "poissonRatioInitial" or the initial bulk modulus named "bulkModulusInitial"
+    - The porosity named "porosity"
+    - The initial porosity named "porosityInitial"
+    - The delta of pressure named "deltaPressure"
+    - The density named "density"
+    - The effective stress named "stressEffective"
+    - The initial effective stress named "stressEffectiveInitial"
+    - The pressure named "pressure"
 
 The basic geomechanics outputs are:
     - Elastic modulus (young modulus and poisson ratio or bulk modulus and shear modulus)
@@ -54,7 +62,7 @@ The basic geomechanics outputs are:
     - Reservoir stress path and reservoir stress path in oedometric condition
 
 The advanced geomechanics outputs are:
-    - fracture index and threshold
+    - Fracture index and threshold
     - Critical pore pressure and pressure index
 
 GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
@@ -239,13 +247,21 @@ class GeomechanicsCalculator():
     def checkMandatoryAttributes( self: Self ) -> bool:
         """Check that mandatory attributes are present in the mesh.
 
-        The mesh must contains either the young Modulus and Poisson's ratio
-        (computeYoungPoisson=False) or the bulk and shear moduli
-        (computeYoungPoisson=True)
+        The mesh must contains:
+            - The Young modulus and the Poisson's ratio named "youngModulus" and "poissonRatio" or bulk and shear moduli named "bulkModulus" and "shearModulus"
+            - The initial Young modulus and Poisson's ratio named "youngModulusInitial" and "poissonRatioInitial" or the initial bulk modulus named "bulkModulusInitial"
+            - The porosity named "porosity"
+            - The initial porosity named "porosityInitial"
+            - The delta of pressure named "deltaPressure"
+            - The density named "density"
+            - The effective stress named "stressEffective"
+            - The initial effective stress named "stressEffectiveInitial"
+            - The pressure named "pressure"
 
         Returns:
             bool: True if all needed attributes are present, False otherwise
         """
+        # Check the presence of the elastic moduli at the current time.
         self.youngModulusAttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS.attributeName
         self.youngModulusOnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS.isOnPoints
         youngModulusOnMesh: bool = isAttributeInObject( self.output, self.youngModulusAttributeName,
@@ -253,8 +269,8 @@ class GeomechanicsCalculator():
 
         self.poissonRatioAttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO.attributeName
         self.poissonRatioOnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO.isOnPoints
-        poissonRationOnMesh: bool = isAttributeInObject( self.output, self.poissonRatioAttributeName,
-                                                         self.poissonRatioOnPoints )
+        poissonRatioOnMesh: bool = isAttributeInObject( self.output, self.poissonRatioAttributeName,
+                                                        self.poissonRatioOnPoints )
 
         self.bulkModulusAttributeName: str = GeosMeshOutputsEnum.BULK_MODULUS.attributeName
         self.bulkModulusOnPoints: bool = GeosMeshOutputsEnum.BULK_MODULUS.isOnPoints
@@ -266,7 +282,8 @@ class GeomechanicsCalculator():
         shearModulusOnMesh: bool = isAttributeInObject( self.output, self.shearModulusAttributeName,
                                                         self.shearModulusOnPoints )
 
-        if not youngModulusOnMesh and not poissonRationOnMesh:
+        self.computeYoungPoisson: bool
+        if not youngModulusOnMesh and not poissonRatioOnMesh:
             if bulkModulusOnMesh and shearModulusOnMesh:
                 self.computeYoungPoisson = True
             else:
@@ -275,93 +292,74 @@ class GeomechanicsCalculator():
                 )
                 return False
         elif not bulkModulusOnMesh and not shearModulusOnMesh:
-            if youngModulusOnMesh and poissonRationOnMesh:
+            if youngModulusOnMesh and poissonRatioOnMesh:
                 self.computeYoungPoisson = False
             else:
                 self.logger.error(
                     f"{ self.youngModulusAttributeName } or { self.poissonRatioAttributeName } are missing to compute geomechanical outputs."
                 )
+                return False
         else:
             self.logger.error(
                 f"{ self.bulkModulusAttributeName } and { self.shearModulusAttributeName } or { self.youngModulusAttributeName } and { self.poissonRatioAttributeName } are mandatory to compute geomechanical outputs."
             )
             return False
 
-        porosityAttributeName: str = GeosMeshOutputsEnum.POROSITY.attributeName
-        porosityOnPoints: bool = GeosMeshOutputsEnum.POROSITY.isOnPoints
-        if not isAttributeInObject( self.output, porosityAttributeName, porosityOnPoints ):
-            self.logger.error(
-                f"The mandatory attribute { porosityAttributeName } is missing to compute geomechanical outputs." )
-            return False
-        else:
-            self.porosity: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, porosityAttributeName,
-                                                                         porosityOnPoints )
+        # Check the presence of the elastic moduli at the initial time.
+        self.bulkModulusT0AttributeName: str = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.attributeName
+        self.bulkModulusT0OnPoints: bool = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.isOnPoints
+        bulkModulusT0OnMesh: bool = isAttributeInObject( self.output, self.bulkModulusT0AttributeName,
+                                                         self.bulkModulusT0OnPoints )
 
-        porosityInitialAttributeName: str = GeosMeshOutputsEnum.POROSITY_INI.attributeName
-        porosityInitialOnPoints: bool = GeosMeshOutputsEnum.POROSITY_INI.isOnPoints
-        if not isAttributeInObject( self.output, porosityInitialAttributeName, porosityInitialOnPoints ):
+        self.youngModulusT0AttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName
+        self.youngModulusT0OnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.isOnPoints
+        youngModulusT0OnMesh: bool = isAttributeInObject( self.output, self.youngModulusT0AttributeName,
+                                                          self.youngModulusT0OnPoints )
+
+        self.poissonRatioT0AttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName
+        self.poissonRatioT0OnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.isOnPoints
+        poissonRatioT0OnMesh: bool = isAttributeInObject( self.output, self.poissonRatioT0AttributeName,
+                                                          self.poissonRatioT0OnPoints )
+
+        self.computeInitialBulkModulus: bool
+        if bulkModulusT0OnMesh:
+            self.computeInitialBulkModulus = False
+        elif youngModulusT0OnMesh and poissonRatioT0OnMesh:
+            self.computeInitialBulkModulus = True
+        else:
             self.logger.error(
-                f"The mandatory attribute { porosityInitialAttributeName } is missing to compute geomechanical outputs."
+                f"{ self.bulkModulusT0AttributeName } or { self.youngModulusT0AttributeName } and { self.poissonRatioT0AttributeName } are mandatory to compute geomechanical outputs."
             )
             return False
-        else:
-            self.porosityInitial: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
-                                                                                porosityInitialAttributeName,
-                                                                                porosityInitialOnPoints )
 
-        deltaPressureAttributeName: str = GeosMeshOutputsEnum.DELTA_PRESSURE.attributeName
-        deltaPressureOnPoint: bool = GeosMeshOutputsEnum.DELTA_PRESSURE.isOnPoints
-        if not isAttributeInObject( self.output, deltaPressureAttributeName, deltaPressureOnPoint ):
-            self.logger.error(
-                f"The mandatory attribute { deltaPressureAttributeName } is missing to compute geomechanical outputs." )
-            return False
-        else:
-            self.deltaPressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, deltaPressureAttributeName,
-                                                                              deltaPressureOnPoint )
+        # Check the presence of the other mandatory attributes
+        dictMandatoryAttribute: Dict[ Any, Any ] = {
+            GeosMeshOutputsEnum.POROSITY: None,
+            GeosMeshOutputsEnum.POROSITY_INI: None,
+            GeosMeshOutputsEnum.DELTA_PRESSURE: None,
+            GeosMeshOutputsEnum.ROCK_DENSITY: None,
+            GeosMeshOutputsEnum.STRESS_EFFECTIVE: None,
+            PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL: None,
+            GeosMeshOutputsEnum.PRESSURE: None,
+        }
+        for mandatoryAttribute in dictMandatoryAttribute:
+            attributeName: str = mandatoryAttribute.attributeName
+            onPoints: bool = mandatoryAttribute.isOnPoints
+            if not isAttributeInObject( self.output, attributeName, onPoints ):
+                self.logger.error(
+                    f"The mandatory attribute { attributeName } is missing to compute geomechanical outputs." )
+                return False
+            else:
+                dictMandatoryAttribute[ mandatoryAttribute ] = getArrayInObject( self.output, attributeName, onPoints )
 
-        densityAttributeName: str = GeosMeshOutputsEnum.ROCK_DENSITY.attributeName
-        densityOnPoints: bool = GeosMeshOutputsEnum.ROCK_DENSITY.isOnPoints
-        if not isAttributeInObject( self.output, densityAttributeName, densityOnPoints ):
-            self.logger.error(
-                f"The mandatory attribute { densityAttributeName } is missing to compute geomechanical outputs." )
-            return False
-        else:
-            self.density: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, densityAttributeName,
-                                                                        densityOnPoints )
-
-        effectiveStressAttributeName: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName
-        effectiveStressOnPoints: str = GeosMeshOutputsEnum.STRESS_EFFECTIVE.isOnPoints
-        if not isAttributeInObject( self.output, effectiveStressAttributeName, effectiveStressOnPoints ):
-            self.logger.error(
-                f"The mandatory attribute { effectiveStressAttributeName } is missing to compute geomechanical outputs."
-            )
-            return False
-        else:
-            self.effectiveStress: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
-                                                                                effectiveStressAttributeName,
-                                                                                effectiveStressOnPoints )
-
-        effectiveStressT0AttributeName: str = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName
-        effectiveStressT0OnPoints: bool = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.isOnPoints
-        if not isAttributeInObject( self.output, effectiveStressT0AttributeName, effectiveStressT0OnPoints ):
-            self.logger.error(
-                f"The mandatory attribute { effectiveStressT0AttributeName } is missing to compute geomechanical outputs."
-            )
-            return False
-        else:
-            self.effectiveStressT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output,
-                                                                                  effectiveStressT0AttributeName,
-                                                                                  effectiveStressT0OnPoints )
-
-        pressureAttributeName: str = GeosMeshOutputsEnum.PRESSURE.attributeName
-        pressureOnPoints: bool = GeosMeshOutputsEnum.PRESSURE.isOnPoints
-        if not isAttributeInObject( self.output, pressureAttributeName, pressureOnPoints ):
-            self.logger.error(
-                f"The mandatory attribute { pressureAttributeName } is missing to compute geomechanical outputs." )
-            return False
-        else:
-            self.pressure: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, pressureAttributeName,
-                                                                         pressureOnPoints )
+        self.porosity: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.POROSITY ]
+        self.porosityInitial: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.POROSITY_INI ]
+        self.deltaPressure: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.DELTA_PRESSURE ]
+        self.density: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.ROCK_DENSITY ]
+        self.effectiveStress: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.STRESS_EFFECTIVE ]
+        self.effectiveStressT0: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[
+            PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL ]
+        self.pressure: npt.NDArray[ np.float64 ] = dictMandatoryAttribute[ GeosMeshOutputsEnum.PRESSURE ]
 
         return True
 
@@ -666,28 +664,15 @@ class GeomechanicsCalculator():
         Returns:
             bool: True if calculation successfully ended, False otherwise.
         """
-        bulkModulusT0AttributeName: str = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.attributeName
-        youngModulusT0AttributeName: str = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName
-        poissonRatioT0AttributeName: str = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName
-
-        bulkModulusT0OnPoints: bool = PostProcessingOutputsEnum.BULK_MODULUS_INITIAL.isOnPoints
-        youngModulusT0OnPoints: bool = PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.isOnPoints
-        poissonRatioT0OnPoints: bool = PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.isOnPoints
-
-        # Compute BulkModulus at initial time step.
         bulkModulusT0: npt.NDArray[ np.float64 ]
-        if isAttributeInObject( self.output, bulkModulusT0AttributeName, bulkModulusT0OnPoints ):
-            bulkModulusT0 = getArrayInObject( self.output, bulkModulusT0AttributeName, bulkModulusT0OnPoints )
-        elif isAttributeInObject( self.output, youngModulusT0AttributeName, youngModulusT0OnPoints ) \
-             and isAttributeInObject( self.output, poissonRatioT0AttributeName, poissonRatioT0OnPoints ):
-            youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, youngModulusT0AttributeName,
-                                                                          youngModulusT0OnPoints )
-            poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, poissonRatioT0AttributeName,
-                                                                          poissonRatioT0OnPoints )
+        if self.computeInitialBulkModulus:
+            youngModulusT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.youngModulusT0AttributeName,
+                                                                          self.youngModulusT0OnPoints )
+            poissonRatioT0: npt.NDArray[ np.float64 ] = getArrayInObject( self.output, self.poissonRatioT0AttributeName,
+                                                                          self.poissonRatioT0OnPoints )
             bulkModulusT0 = fcts.bulkModulus( youngModulusT0, poissonRatioT0 )
         else:
-            self.logger( "Elastic moduli at initial time are absent." )
-            return False
+            bulkModulusT0 = getArrayInObject( self.output, self.bulkModulusT0AttributeName, self.bulkModulusT0OnPoints )
 
         # Compute Biot at initial time step.
         biotCoefficientT0: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.grainBulkModulus, bulkModulusT0 )
