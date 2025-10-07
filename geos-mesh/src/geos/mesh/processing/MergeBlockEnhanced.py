@@ -117,9 +117,7 @@ class MergeBlockEnhanced:
 
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
-        self.logger.info( f"The filter {self.logger.name} failed." )
         self.outputMesh = outputMesh
-        self.logger.info( f"The filter {self.logger.name} succeeded." )
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.
