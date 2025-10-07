@@ -7,6 +7,7 @@ import logging
 from typing_extensions import Self
 
 from geos.utils.Logger import Logger, getLogger
+from geos.utils.Errors import VTKError
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 from vtkmodules.vtkCommonDataModel import (
@@ -32,6 +33,8 @@ To use it:
 .. code-block:: python
 
     from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
+    import logging
+    from geos.utils.Errors import VTKError
 
     # Define filter inputs
     multiblockdataset: vtkMultiblockDataSet
@@ -45,7 +48,10 @@ To use it:
     filter.setLoggerHandler( yourHandler )
 
     # Do calculations
-    filter.applyFilter()
+    try:
+        filter.applyFilter()
+    except VTKError:
+        logging.error("Something went wrong in VTK")
 
     # Get the merged mesh
     filter.getOutput()
@@ -110,7 +116,7 @@ class MergeBlockEnhanced:
         outputMesh: vtkUnstructuredGrid
         try:
             outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
-        except ( TypeError, ValueError ):
+        except ( VTKError ):
             self.logger.info( f"The filter {self.logger.name} failed." )
             raise
         else:

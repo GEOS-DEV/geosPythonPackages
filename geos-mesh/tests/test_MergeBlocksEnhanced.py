@@ -8,6 +8,7 @@
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
 from unittest import TestCase
+from geos.utils.Errors import VTKError
 
 def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test MergeBlockEnhanced vtk filter."""
@@ -16,7 +17,8 @@ def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None
     filter.applyFilter()
 
 class RaiseMergeBlocksEnhanced(TestCase):
-    def test_TypeError(self):
+    """Test failure on empty multiBlockDataSet."""
+    def test_TypeError(self) -> None:
         multiBlockDataset = vtkMultiBlockDataSet()
         filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
-        self.assertRaises((TypeError,ValueError), filter.applyFilter )
+        self.assertRaises(VTKError, filter.applyFilter )

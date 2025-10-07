@@ -11,6 +11,7 @@ from geos.utils.GeosOutputsConstants import (
     getRockSuffixRenaming,
 )
 from geos.utils.Logger import Logger, getLogger
+from geos.utils.Errors import VTKError
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -367,7 +368,7 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         # merge blocks
         try:
             mergedBlocks = mergeBlocks( compositeBlock )
-        except (ValueError,TypeError):
+        except (VTKError):
             raise
         else:
             return mergedBlocks

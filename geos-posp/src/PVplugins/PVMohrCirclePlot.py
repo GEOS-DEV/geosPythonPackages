@@ -38,6 +38,7 @@ from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
 )
 from geos.utils.Logger import Logger, getLogger
+from geos.utils.Errors import VTKError
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
@@ -805,7 +806,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # get mesh and merge if needed
         try:
             meshMerged: vtkUnstructuredGrid = mergeBlocks( mesh )
-        except (ValueError,TypeError):
+        except (VTKError):
             raise
 
         # assert meshMerged is not None, "Input data is undefined"

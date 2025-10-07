@@ -2,14 +2,98 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 import logging
-from typing import Any, Union
+from typing import Any, Union, Generator
 from typing_extensions import Self
+
+import sys
+import os
+import re
+import tempfile
+from contextlib import contextmanager
+
+from geos.utils.Errors import VTKError
 
 __doc__ = """
 Logger module manages logging tools.
 
 Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
+
+It also include adaptor strategy to make vtkLogger behave as a logging's logger.
+Indeed, C++ adapted class is based on private Callback assignement which is not compatible
+with logging python's logic.
+
+usage:
+    #near logger definition
+    from vtkmodules.vtkCommonCore import vtkLogger
+
+    vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
+    logger.addFilter(RegexExceptionFilter())
+
+    ...
+
+    #near VTK calls
+     with VTKCaptureLog() as captured_log:
+        vtkcalls..
+        captured_log.seek(0) # be kind let's just rewind
+        captured = captured_log.read().decode()
+    
+    logger.error(captured.strip())
+
 """
+
+class RegexExceptionFilter(logging.Filter):
+    """
+        Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
+    """
+
+    pattern : str = r"vtkExecutive.cxx" #pattern captured that will raise a vtkError
+
+    def __init__(self):
+        super().__init__()
+        self.regex = re.compile(self.pattern)
+
+    def filter(self, record : logging.LogRecord):
+        """
+            Filter VTK Error from stdErr
+            
+            Args:
+                record(loggging.LogRecord)
+        """
+        message = record.getMessage()
+        if self.regex.search(message):
+            raise VTKError(f"Log message matched forbidden pattern: {message}")
+        return True  # Allow other messages to pass
+
+
+@contextmanager
+def VTKCaptureLog()->Generator[Any,Any,Any]:
+    """
+        Hard way of adapting C-like vtkLogger to logging class by throwing in
+        stderr and reading back from it.
+
+        Return:
+            Generator buffering os.stderr
+
+    """
+    #equiv to pyvista's        
+    # from pyvista.utilities import VtkErrorCatcher
+    # with VtkErrorCatcher() as err:
+    #     append_filter.Update()
+    #     print(err)
+
+    # Save original stderr file descriptor
+    original_stderr_fd = sys.stderr.fileno()
+    saved_stderr_fd = os.dup(original_stderr_fd)
+
+    # Create a temporary file to capture stderr
+    with tempfile.TemporaryFile(mode='w+b') as tmp:
+        os.dup2(tmp.fileno(), original_stderr_fd)
+        try:
+            yield tmp
+        finally:
+            # Restore original stderr
+            os.dup2(saved_stderr_fd, original_stderr_fd)
+            os.close(saved_stderr_fd)
 
 
 class CountWarningHandler( logging.Handler ):

@@ -2,9 +2,11 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 from typing import Union
+
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
                                             vtkUnstructuredGrid, vtkDataSet )
 from packaging.version import Version
+from vtkmodules.vtkCommonCore import vtkLogger
 
 # TODO: remove this condition when all codes are adapted for VTK newest version.
 import vtk
@@ -14,10 +16,9 @@ else:
     from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
-from geos.utils.Logger import ( getLogger, Logger )
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 
 __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
-
 
 def mergeBlocks(
     inputMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
@@ -36,7 +37,7 @@ def mergeBlocks(
         vtkUnstructuredGrid: Merged dataset or input mesh if it's already a single block
 
     Raises:
-        ValueError:
+        geos.utilsVTKError ():
 
     .. Note::
         Default filling values:
@@ -49,6 +50,9 @@ def mergeBlocks(
     """
     if logger is None:
         logger: Logger = getLogger( "mergeBlocks", True )
+
+    vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
+    logger.addFilter(RegexExceptionFilter())
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
@@ -66,18 +70,24 @@ def mergeBlocks(
             logger.warning( "Input mesh is already a single block." )
             outputMesh = inputMesh
         else:
-            af: vtkAppendDataSets = vtkAppendDataSets()
-            af.MergePointsOn()
-            iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-            iterator.SetDataSet( inputMesh )
-            iterator.VisitOnlyLeavesOn()
-            iterator.GoToFirstItem()
-            while iterator.GetCurrentDataObject() is not None:
-                block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
-                af.AddInputData( block )
-                iterator.GoToNextItem()
-            af.Update()
+            with VTKCaptureLog() as captured_log:
 
+                af: vtkAppendDataSets = vtkAppendDataSets()
+                af.MergePointsOn()
+                iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
+                iterator.SetDataSet( inputMesh )
+                iterator.VisitOnlyLeavesOn()
+                iterator.GoToFirstItem()
+                while iterator.GetCurrentDataObject() is not None:
+                    block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
+                    af.AddInputData( block )
+                    iterator.GoToNextItem()
+                
+                af.Update()
+                captured_log.seek(0) #be kind let's just rewind
+                captured = captured_log.read().decode()
+
+            logger.error(captured.strip())
             outputMesh: vtkUnstructuredGrid = af.GetOutputDataObject( 0 )
 
     return outputMesh
