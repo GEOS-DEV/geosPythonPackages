@@ -18,10 +18,10 @@ else:
     from vtkmodules.vtkFiltersCore import vtkAppendDataSets
 
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
-from geos.utils.Errors import VTKError
-from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter)
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 
 __doc__ = """Contains a method to merge blocks of a VTK multiblock dataset."""
+
 
 def mergeBlocks(
     inputMesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
@@ -54,9 +54,9 @@ def mergeBlocks(
     if logger is None:
         logger: Logger = getLogger( "mergeBlocks", True )
 
-    vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
-    logger.addFilter(RegexExceptionFilter()) # will raise VTKError if captured VTK Error
-    logger.setLevel(logging.DEBUG)
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_TRACE )
+    logger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    logger.setLevel( logging.DEBUG )
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
@@ -86,12 +86,11 @@ def mergeBlocks(
                     block: vtkDataSet = vtkDataSet.SafeDownCast( iterator.GetCurrentDataObject() )
                     af.AddInputData( block )
                     iterator.GoToNextItem()
-                
                 af.Update()
-                captured_log.seek(0) #be kind let's just rewind
+                captured_log.seek( 0 )  #be kind let's just rewind
                 captured = captured_log.read().decode()
 
-            logger.debug(captured.strip())
+            logger.debug( captured.strip() )
             outputMesh: vtkUnstructuredGrid = af.GetOutputDataObject( 0 )
 
     return outputMesh

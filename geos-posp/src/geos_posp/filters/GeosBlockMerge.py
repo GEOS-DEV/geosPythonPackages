@@ -11,7 +11,6 @@ from geos.utils.GeosOutputsConstants import (
     getRockSuffixRenaming,
 )
 from geos.utils.Logger import Logger, getLogger
-from geos.utils.Errors import VTKError
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
@@ -70,6 +69,7 @@ To use the filter:
     # get output object
     output :vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject(0)
 """
+
 
 class GeosBlockMerge( VTKPythonAlgorithmBase ):
 
@@ -154,12 +154,12 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         #     self.m_logger.error( mess )
         #     self.m_logger.error( e, exc_info=True )
         #     return 0
-        except (ValueError,TypeError) as e:
+        except ( ValueError, TypeError ) as e:
             mess0: str = "Geos block merge failed due to:"
             self.m_logger.critical( mess0 )
             self.m_logger.critical( e, exc_info=True )
             return 0
-        except RuntimeError:
+        except RuntimeError as e:
             self.m_logger.critical( "Geos block merge failed due to" )
             self.m_logger.critical( e, exc_info=True )
             return 0

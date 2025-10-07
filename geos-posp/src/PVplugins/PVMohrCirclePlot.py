@@ -38,7 +38,6 @@ from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
 )
 from geos.utils.Logger import Logger, getLogger
-from geos.utils.Errors import VTKError
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
@@ -779,8 +778,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 )
                 Render()
 
-        except (ValueError,TypeError) as e:
-            self.m_logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+        except ( ValueError, TypeError ) as e:
+            self.m_logger.error( f"MergeBlock failed due to {e}",
+                                 exc_info=True )  #no critical as there is no reason to crash here
             return 0
 
         except Exception as e:

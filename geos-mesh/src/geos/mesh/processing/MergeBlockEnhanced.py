@@ -7,7 +7,6 @@ import logging
 from typing_extensions import Self
 
 from geos.utils.Logger import Logger, getLogger
-from geos.utils.Errors import VTKError
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 from vtkmodules.vtkCommonDataModel import (
@@ -121,7 +120,6 @@ class MergeBlockEnhanced:
         self.logger.info( f"The filter {self.logger.name} failed." )
         self.outputMesh = outputMesh
         self.logger.info( f"The filter {self.logger.name} succeeded." )
-
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

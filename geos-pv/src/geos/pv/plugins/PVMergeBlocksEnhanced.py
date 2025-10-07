@@ -124,11 +124,13 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         try:
             filter.applyFilter()
-        except (ValueError,TypeError) as e:
-            filter.logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+        except ( ValueError, TypeError ) as e:
+            filter.logger.error( f"MergeBlock failed due to {e}",
+                                 exc_info=True )  #no critical as there is no reason to crash here
             return 0
         except RuntimeError as e:
-            filter.logger.error(f"MergeBlock failed due to {e}", exc_info=True) #no critical as there is no reason to crash here
+            filter.logger.error( f"MergeBlock failed due to {e}",
+                                 exc_info=True )  #no critical as there is no reason to crash here
             return 0
         else:
             outputMesh.ShallowCopy( filter.getOutput() )

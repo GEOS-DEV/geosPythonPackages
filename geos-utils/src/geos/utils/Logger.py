@@ -5,7 +5,6 @@ import logging
 from typing import Any, Union, Generator
 from typing_extensions import Self
 
-import sys
 import os
 import re
 import tempfile
@@ -36,68 +35,63 @@ usage:
         vtkcalls..
         captured_log.seek(0) # be kind let's just rewind
         captured = captured_log.read().decode()
-    
+
     logger.error(captured.strip())
 
 """
 
-class RegexExceptionFilter(logging.Filter):
-    """
-        Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
-    """
 
-    pattern : str = r"vtkExecutive.cxx" #pattern captured that will raise a vtkError
+class RegexExceptionFilter( logging.Filter ):
+    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog."""
 
-    def __init__(self):
+    pattern: str = r"vtkExecutive.cxx"  #pattern captured that will raise a vtkError
+
+    def __init__( self ) -> None:
+        """Init filter with class based pattern as this is patch to logging logic."""
         super().__init__()
-        self.regex = re.compile(self.pattern)
+        self.regex = re.compile( self.pattern )
 
-    def filter(self, record : logging.LogRecord):
-        """
-            Filter VTK Error from stdErr.
-            
-            Args:
-                record(loggging.LogRecord)
+    def filter( self, record: logging.LogRecord ) -> None:
+        """Filter VTK Error from stdErr.
 
-            Raises:
-                VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
+        Args:
+            record(loggging.LogRecord) : record that logger will provide as evaluated
+
+        Raises:
+            VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
         """
         message = record.getMessage()
-        if self.regex.search(message):
-            raise VTKError(f"Log message matched forbidden pattern: {message}")
+        if self.regex.search( message ):
+            raise VTKError( f"Log message matched forbidden pattern: {message}" )
         return True  # Allow other messages to pass
 
 
 @contextmanager
-def VTKCaptureLog()->Generator[Any,Any,Any]:
-    """
-        Hard way of adapting C-like vtkLogger to logging class by throwing in
-        stderr and reading back from it.
+def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
+    """Hard way of adapting C-like vtkLogger to logging class by throwing in stderr and reading back from it.
 
-        Return:
-            Generator buffering os.stderr
+    Returns:
+        Generator: buffering os stderr.
 
     """
-    #equiv to pyvista's        
+    #equiv to pyvista's
     # from pyvista.utilities import VtkErrorCatcher
     # with VtkErrorCatcher() as err:
     #     append_filter.Update()
     #     print(err)
-
-    # Save original stderr file descriptor
     # original_stderr_fd = sys.stderr.fileno()
     original_stderr_fd = 2
-    saved_stderr_fd = os.dup(original_stderr_fd)
+    saved_stderr_fd = os.dup( original_stderr_fd )
 
     # Create a temporary file to capture stderr
-    with tempfile.TemporaryFile(mode='w+b') as tmp:
-        os.dup2(tmp.fileno(), original_stderr_fd)
+    with tempfile.TemporaryFile( mode='w+b' ) as tmp:
+        os.dup2( tmp.fileno(), original_stderr_fd )
         try:
             yield tmp
         finally:
             # Restore original stderr
-            os.dup2(saved_stderr_fd, original_stderr_fd)
-            os.close(saved_stderr_fd)
+            os.dup2( saved_stderr_fd, original_stderr_fd )
+            os.close( saved_stderr_fd )
 
 
 class CountWarningHandler( logging.Handler ):
