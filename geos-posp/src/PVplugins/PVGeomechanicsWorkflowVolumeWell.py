@@ -11,12 +11,13 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
+# TODO: Change the way of import file, it is not working with Paraview 5.13
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 parent_dir_path = os.path.dirname( dir_path )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-import PVplugins # noqa: F401
+import PVplugins  # noqa: F401
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
