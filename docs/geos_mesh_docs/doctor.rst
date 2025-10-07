@@ -297,7 +297,7 @@ This module will display the elements that have faces intersecting.
                               [float]: The tolerance in the computation. Defaults to your machine precision 2.220446049250313e-16.
 
 ``supportedElements``
-""""""""""""""""""""
+"""""""""""""""""""""
 
 ``geos`` supports a specific set of elements.
 Let's cite the standard elements like `tetrahedra`, `wedges`, `pyramids` or `hexahedra`.
