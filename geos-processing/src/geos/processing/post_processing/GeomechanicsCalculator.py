@@ -60,12 +60,15 @@ The advanced geomechanics outputs are:
 GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
 and returned mesh is of same type as input.
 
+  .. Important::
+            Please refer to the GeosExtractMergeBlockVolume* filters to provide the correct input.
+
 .. Note::
     - The default physical constants used by the filter are:
-        - grainBulkModulus = 38e9 Pa (the one of the Quartz)
-        - specificDensity = 1000.0 kg/m³ (the one of the water)
-        - rockCohesion = 0.0 Pa
-        - frictionAngle = 10.0 / 180.0 * np.pi rad
+        - grainBulkModulus = 38e9 Pa ( quartz value )
+        - specificDensity = 1000.0 kg/m³ ( water value )
+        - rockCohesion = 0.0 Pa ( fractured case )
+        - frictionAngle = 10.0°
 
 To use the filter:
 

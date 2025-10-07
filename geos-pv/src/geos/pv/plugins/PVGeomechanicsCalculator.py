@@ -43,7 +43,7 @@ The basic geomechanics outputs are:
     - Specific gravity
     - Real effective stress ratio
     - Total initial stress, total current stress and total stress ratio
-    - Lithostatic stress (physic to update)
+    - Lithostatic stress (physics to update)
     - Elastic stain
     - Reservoir stress path and reservoir stress path in oedometric condition
 
@@ -54,8 +54,8 @@ The advanced geomechanics outputs are:
 PVGeomechanicsCalculator paraview plugin input mesh is either vtkPointSet or vtkUnstructuredGrid
 and returned mesh is of same type as input.
 
-.. Note::
-    To deals with Geos output, you may first process it with PVExtractMergeBlocksVolume
+.. Important::
+    Please refer to the PVGeosExtractMergeBlockVolume* plugins to provide the correct input.
 
 To use it:
 
