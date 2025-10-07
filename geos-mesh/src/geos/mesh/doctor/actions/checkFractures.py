@@ -44,10 +44,13 @@ def __readMultiblock( vtkInputFile: str, matrixName: str,
 
 
 def formatCollocatedNodes( fractureMesh: vtkUnstructuredGrid ) -> Sequence[ Iterable[ int ] ]:
-    """
-    Extract the collocated nodes information from the mesh and formats it in a python way.
-    :param fractureMesh: The mesh of the fracture (with 2d cells).
-    :return: An iterable over all the buckets of collocated nodes.
+    """Extract the collocated nodes information from the mesh and formats it in a python way.
+
+    Args:
+        fractureMesh (vtkUnstructuredGrid): The mesh of the fracture (with 2d cells).
+
+    Returns:
+        Sequence[ Iterable[ int ] ]: An iterable over all the buckets of collocated nodes.
     """
     collocatedNodes: numpy.ndarray = vtk_to_numpy( fractureMesh.GetPointData().GetArray( "collocatedNodes" ) )
     if len( collocatedNodes.shape ) == 1:

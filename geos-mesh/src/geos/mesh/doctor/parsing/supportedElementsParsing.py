@@ -39,18 +39,14 @@ def fillSubparser( subparsers ) -> None:
 def displayResults( options: Options, result: Result ):
     setupLogger.results( getOptionsUsedMessage( options ) )
     if result.unsupportedPolyhedronElements:
-        setupLogger.results(
-            f"There is/are {len(result.unsupportedPolyhedronElements)} polyhedra that may not be "
-            f"converted to supported elements."
-        )
+        setupLogger.results( f"There is/are {len(result.unsupportedPolyhedronElements)} polyhedra that may not be "
+                             f"converted to supported elements." )
         setupLogger.results(
             f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupportedPolyhedronElements))}." )
     else:
         setupLogger.results( "All the polyhedra (if any) can be converted to supported elements." )
     if result.unsupportedStdElementsTypes:
-        setupLogger.results(
-            f"There are unsupported vtk standard element types. The list of those vtk types is "
-            f"{tuple(sorted(result.unsupportedStdElementsTypes))}."
-        )
+        setupLogger.results( f"There are unsupported vtk standard element types. The list of those vtk types is "
+                             f"{tuple(sorted(result.unsupportedStdElementsTypes))}." )
     else:
         setupLogger.results( "All the standard vtk element types (if any) are supported." )

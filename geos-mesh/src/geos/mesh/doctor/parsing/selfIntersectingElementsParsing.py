@@ -40,5 +40,4 @@ def displayResults( options: Options, result: Result ):
     setupLogger.results( getOptionsUsedMessage( options ) )
     setupLogger.results( f"You have {len(result.intersectingFacesElements)} elements with self intersecting faces." )
     if result.intersectingFacesElements:
-        setupLogger.results( "The elements indices are:\n" +
-                             ", ".join( map( str, result.intersectingFacesElements ) ) )
+        setupLogger.results( "The elements indices are:\n" + ", ".join( map( str, result.intersectingFacesElements ) ) )

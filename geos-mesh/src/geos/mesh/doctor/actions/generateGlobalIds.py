@@ -17,11 +17,13 @@ class Result:
     info: str
 
 
-def __buildGlobalIds( mesh, generateCellsGlobalIds: bool, generatePointsGlobalIds: bool ) -> None:
-    """
-    Adds the global ids for cells and points in place into the mesh instance.
-    :param mesh:
-    :return: None
+def __buildGlobalIds( mesh: vtkUnstructuredGrid, generateCellsGlobalIds: bool, generatePointsGlobalIds: bool ) -> None:
+    """Adds the global ids for cells and points in place into the mesh instance.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The mesh to modify.
+        generateCellsGlobalIds (bool): If True, generates the global ids for cells. Else, does nothing.
+        generatePointsGlobalIds (bool): If True, generates the global ids for points. Else, does nothing.
     """
     # Building GLOBAL_IDS for points and cells.g GLOBAL_IDS for points and cells.
     # First for points...

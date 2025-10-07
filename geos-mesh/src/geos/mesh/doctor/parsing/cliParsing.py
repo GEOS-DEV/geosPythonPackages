@@ -22,12 +22,12 @@ def parseCommaSeparatedString( value: str ) -> list[ str ]:
 
 
 def parseAndSetVerbosity( cliArgs: List[ str ] ) -> None:
-    """
-    Parse the verbosity flag only and set the root logger's level accordingly.
+    """Parse the verbosity flag only and set the root logger's level accordingly.
     Messages from loggers created with `get_custom_logger` will inherit this level
     if their own level is set to NOTSET.
-    :param cliArgs: The list of command-line arguments (e.g., sys.argv)
-    :return: None
+
+    Args:
+        cliArgs (List[ str ]): The list of command-line arguments (e.g., sys.argv)
     """
     dummyVerbosityParser = argparse.ArgumentParser( add_help=False )
     # Add verbosity arguments to this dummy parser

@@ -21,10 +21,13 @@ def fillSubparser( subparsers ) -> None:
 
 
 def convert( parsedOptions ) -> Options:
-    """
-    From the parsed cli options, return the converted options for elements volumes check.
-    :param parsedOptions: Parsed cli options.
-    :return: Options instance.
+    """From the parsed cli options, return the converted options for elements volumes check.
+
+    Args:
+        parsedOptions: Parsed cli options.
+
+    Returns:
+        Options: The converted options for elements volumes check.
     """
     return Options( minVolume=parsedOptions[ __MIN_VOLUME ] )
 

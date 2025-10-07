@@ -148,10 +148,12 @@ def test_displayResultsWithChecks( mockLogger, checkFeaturesConfig, orderedCheck
     options = AllChecksOptions( checksToPerform=[ "check1", "check2" ],
                                 checksOptions={
                                     "check1": MockOptions(),
-                                    "check2": MockOptions() },
+                                    "check2": MockOptions()
+                                },
                                 checkDisplays={
                                     "check1": mockDisplayFunc,
-                                    "check2": mockDisplayFunc } )
+                                    "check2": mockDisplayFunc
+                                } )
     result = AllChecksResult( checkResults={
         "check1": MockResult( value="result1" ),
         "check2": MockResult( value="result2" )

@@ -6,12 +6,15 @@ from typing import Tuple, Union
 
 
 def __divClamp( num: float, den: float ) -> float:
-    """
-    Computes the division `num / den`. and clamps the result between 0 and 1.
+    """Computes the division `num / den`. and clamps the result between 0 and 1.
     If `den` is zero, the result of the division is set to 0.
-    :param num: The numerator.
-    :param den: The denominator.
-    :return: The result between 0 and 1.
+
+    Args:
+        num (float): The numerator.
+        den (float): The denominator.
+
+    Returns:
+        float: The result between 0 and 1.
     """
     if den == 0.:
         return 0.
@@ -26,13 +29,17 @@ def __divClamp( num: float, den: float ) -> float:
 
 def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.ndarray,
                                 d1: numpy.ndarray ) -> Tuple[ numpy.ndarray, numpy.ndarray ]:
-    """
-    Compute the minimum distance between two segments.
-    :param x0: First point of segment 0.
-    :param d0: Director vector such that x0 + d0 is the second point of segment 0.
-    :param x1: First point of segment 1.
-    :param d1: Director vector such that x1 + d1 is the second point of segment 1.
-    :return: A tuple containing the two points closest point for segments 0 and 1 respectively.
+    """Computes the minimum distance between two segments.
+
+    Args:
+        x0 (numpy.ndarray): First point of segment 0.
+        d0 (numpy.ndarray): Director vector such that x0 + d0 is the second point of segment 0.
+        x1 (numpy.ndarray): First point of segment 1.
+        d1 (numpy.ndarray): Director vector such that x1 + d1 is the second point of segment 1.
+
+    Returns:
+        Tuple[ numpy.ndarray, numpy.ndarray ]: A tuple containing the two points closest point for segments
+                                               0 and 1 respectively.
     """
     # The reference paper is:
     # "On fast computation of distance between line segments" by Vladimir J. Lumelsky.
@@ -67,16 +74,20 @@ def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.
 
 
 def __computeNodesToTriangleDistance(
-        tri0, edges0,
-        tri1 ) -> Tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
-    """
-    Computes the distance from nodes of `tri1` points onto `tri0`.
-    :param tri0: First triangle.
-    :param edges0: The edges of triangle 0. First element being edge [0, 1], etc.
-    :param tri1: Second triangle
-    :return: The distance, the closest point on triangle 0, the closest on triangle 1
-    and a boolean indicating of the triangles are disjoint. If nothing was found,
-    then the first three arguments are None. The boolean being still defined.
+        tri0: numpy.ndarray, edges0,
+        tri1: numpy.ndarray ) -> Tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
+    """Computes the distance from nodes of `tri1` points onto `tri0`.
+
+    Args:
+        tri0 (numpy.ndarray): First triangle.
+        edges0: The edges of triangle 0. First element being edge [0, 1], etc.
+        tri1 (numpy.ndarray): Second triangle.
+
+    Returns:
+        Tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
+        The distance, the closest point on triangle 0, the closest on triangle 1 and a boolean indicating of the
+        triangles are disjoint. If nothing was found, then the first three arguments are None.
+        The boolean being still defined.
     """
     areDisjoint: bool = False
     tri0Normal: numpy.ndarray = numpy.cross( edges0[ 0 ], edges0[ 1 ] )
@@ -115,13 +126,16 @@ def __computeNodesToTriangleDistance(
 
 def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
                                  tri1: numpy.ndarray ) -> Tuple[ float, numpy.ndarray, numpy.ndarray ]:
-    """
-    Returns the minimum distance between two triangles, and the two points where this minimum occurs.
+    """Returns the minimum distance between two triangles, and the two points where this minimum occurs.
     If the two triangles touch, then distance is exactly 0.
     But the two points are dummy and cannot be used as contact points (they are still though).
-    :param tri0: The first 3x3 triangle points.
-    :param tri1: The second 3x3 triangle points.
-    :return: The distance and the two points.
+
+    Args:
+        tri0 (numpy.ndarray): The first 3x3 triangle points.
+        tri1 (numpy.ndarray): The second 3x3 triangle points.
+
+    Returns:
+        Tuple[ float, numpy.ndarray, numpy.ndarray ]: The distance and the two points.
     """
     # Compute vectors along the 6 sides
     edges0 = numpy.empty( ( 3, 3 ), dtype=float )

@@ -48,10 +48,16 @@ def fillSubparser( subparsers ) -> None:
 
 
 def convert( parsedOptions ) -> Options:
-    """
-    From the parsed cli options, return the converted options for self intersecting elements check.
-    :param parsedOptions: Parsed cli options.
-    :return: Options instance.
+    """From the parsed cli options, return the converted options for self intersecting elements check.
+
+    Args:
+        parsedOptions: Parsed cli options.
+
+    Raises:
+        ValueError: If the parsed options are invalid.
+
+    Returns:
+        Options: The converted options for self intersecting elements check.
     """
     cellTypeToOrdering = {}
     for key, vtkKey in __CELL_TYPE_MAPPING.items():

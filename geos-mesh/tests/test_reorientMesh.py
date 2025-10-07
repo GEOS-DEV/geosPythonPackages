@@ -27,7 +27,8 @@ def __buildTestMeshes() -> Generator[ Expected, None, None ]:
         ( 3, 2, 0 ),
         ( 3, 3, 0 ),
         ( 0, 3, 0 ),
-    ), dtype=float )
+    ),
+                              dtype=float )
     frontNodes = numpy.array( frontNodes, dtype=float )
     backNodes = frontNodes - ( 0., 0., 1. )
 

@@ -22,11 +22,12 @@ def __loadModuleActionHelper( moduleName: str, parsingFctSuffix="Parsing" ):
 
 
 def __loadActions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
-    """
-    Loads all the actions.
+    """Loads all the actions.
     This function acts like a protection layer if a module fails to load.
     A action that fails to load won't stop the process.
-    :return: The actions.
+
+    Returns:
+        Dict[ str, Callable[ [ str, Any ], Any ] ]: The actions.
     """
     loadedActions: Dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
     for actionName, actionProvider in __ACTIONS.items():
@@ -40,9 +41,11 @@ def __loadActions() -> Dict[ str, Callable[ [ str, Any ], Any ] ]:
 
 def registerParsingActions(
 ) -> Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
-    """
-    Register all the parsing actions. Eventually initiate the registration of all the actions too.
-    :return: The actions and the actions helpers.
+    """Register all the parsing actions. Eventually initiate the registration of all the actions too.
+
+    Returns:
+        Tuple[ argparse.ArgumentParser, Dict[ str, Callable[ [ str, Any ], Any ] ], Dict[ str, ActionHelper ] ]:
+        The parser, actions and helpers.
     """
     parser = cliParsing.initParser()
     subparsers = parser.add_subparsers( help="Modules", dest="subparsers" )

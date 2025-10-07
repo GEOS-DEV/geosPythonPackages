@@ -44,10 +44,13 @@ class XYZ:
 
 
 def buildRectilinearBlocksMesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGrid:
-    """
-    Builds an unstructured vtk grid from the `xyzs` blocks. Kind of InternalMeshGenerator.
-    :param xyzs: The blocks.
-    :return: The unstructured mesh, even if it's topologically structured.
+    """Builds an unstructured vtk grid from the `xyzs` blocks. Kind of InternalMeshGenerator.
+
+    Args:
+        xyzs (Iterable[ XYZ ]): The blocks.
+
+    Returns:
+        vtkUnstructuredGrid: The unstructured mesh, even if it's topologically structured.
     """
     rgs = []
     for xyz in xyzs:

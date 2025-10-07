@@ -1,8 +1,7 @@
 import argparse
 from copy import deepcopy
-from geos.mesh.doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert,
-                                                                 fillSubparser as sharedFillSubparser,
-                                                                 displayResults )
+from geos.mesh.doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
+                                                                 as sharedFillSubparser, displayResults )
 from geos.mesh.doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh.doctor.parsing import (
     ALL_CHECKS,

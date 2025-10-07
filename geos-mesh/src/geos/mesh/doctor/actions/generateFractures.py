@@ -158,12 +158,15 @@ def buildFractureInfo( mesh: vtkUnstructuredGrid,
 
 
 def buildCellToCellGraph( mesh: vtkUnstructuredGrid, fracture: FractureInfo ) -> networkx.Graph:
-    """
-    Connects all the cells that touch the fracture by at least one node.
+    """Connects all the cells that touch the fracture by at least one node.
     Two cells are connected when they share at least a face which is not a face of the fracture.
-    :param mesh: The input mesh.
-    :param fracture: The fracture info.
-    :return: The graph: each node of this graph is the index of the cell.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh.
+        fracture (FractureInfo): The fracture info.
+
+    Returns:
+        networkx.Graph: The graph: each node of this graph is the index of the cell.
     There's an edge between two nodes of the graph if the cells share a face.
     """
     # Faces are identified by their nodes. But the order of those nodes may vary while referring to the same face.
@@ -200,13 +203,16 @@ def buildCellToCellGraph( mesh: vtkUnstructuredGrid, fracture: FractureInfo ) ->
 
 def _identifySplit( numPoints: int, cellToCell: networkx.Graph,
                     nodeToCells: dict[ int, Iterable[ int ] ] ) -> dict[ int, IDMapping ]:
-    """
-    For each cell, compute the node indices replacements.
-    :param numPoints: Number of points in the whole mesh (not the fracture).
-    :param cellToCell: The cell to cell graph (connection through common faces).
-    :param nodeToCells: Maps the nodes of the fracture to the cells relying on this node.
-    :return: For each cell (first key), returns a mapping from the current index
-    and the new index that should replace the current index.
+    """For each cell, compute the node indices replacements.
+
+    Args:
+        numPoints (int): The number of points in the whole mesh (not the fracture).
+        cellToCell (networkx.Graph): The cell to cell graph (connection through common faces).
+        nodeToCells (dict[ int, Iterable[ int ] ]): Maps the nodes of the fracture to the cells relying on this node.
+
+    Returns:
+        dict[ int, IDMapping ]: For each cell (first key), returns a mapping from the current index
+                                and the new index that should replace the current index.
     Note that the current index and the new index can be identical: no replacement should be done then.
     """
 
@@ -242,14 +248,15 @@ def _identifySplit( numPoints: int, cellToCell: networkx.Graph,
     return result
 
 
-def __copyFieldsSplittedMesh( oldMesh: vtkUnstructuredGrid, splittedMesh: vtkUnstructuredGrid,
-                              addedPointsWithOldId: list[ tuple[ int ] ] ) -> None:
-    """
-    Copies the fields from the old mesh to the new one.
+def __copyFieldsSplitMesh( oldMesh: vtkUnstructuredGrid, splitMesh: vtkUnstructuredGrid,
+                           addedPointsWithOldId: list[ tuple[ int ] ] ) -> None:
+    """Copies the fields from the old mesh to the new one.
     Point data will be duplicated for collocated nodes.
-    :param oldMesh: The mesh before the split.
-    :param newMesh: The mesh after the split. Will receive the fields in place.
-    :return: None
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The mesh before the split._
+        splitMesh (vtkUnstructuredGrid): The mesh after the split. Will receive the fields in place.
+        addedPointsWithOldId (list[ tuple[ int ] ]): _description_
     """
     # Copying the cell data. The cells are the same, just their nodes support have changed.
     inputCellData = oldMesh.GetCellData()
@@ -258,7 +265,7 @@ def __copyFieldsSplittedMesh( oldMesh: vtkUnstructuredGrid, splittedMesh: vtkUns
         setupLogger.info( f"Copying cell field \"{inputArray.GetName()}\"." )
         tmp = inputArray.NewInstance()
         tmp.DeepCopy( inputArray )
-        splittedMesh.GetCellData().AddArray( inputArray )
+        splitMesh.GetCellData().AddArray( inputArray )
 
     # Copying field data. This data is a priori not related to geometry.
     inputFieldData = oldMesh.GetFieldData()
@@ -267,11 +274,11 @@ def __copyFieldsSplittedMesh( oldMesh: vtkUnstructuredGrid, splittedMesh: vtkUns
         setupLogger.info( f"Copying field data \"{inputArray.GetName()}\"." )
         tmp = inputArray.NewInstance()
         tmp.DeepCopy( inputArray )
-        splittedMesh.GetFieldData().AddArray( inputArray )
+        splitMesh.GetFieldData().AddArray( inputArray )
 
     # Copying copy data. Need to take into account the new points.
     inputPointData = oldMesh.GetPointData()
-    newNumberPoints: int = splittedMesh.GetNumberOfPoints()
+    newNumberPoints: int = splitMesh.GetNumberOfPoints()
     for i in range( inputPointData.GetNumberOfArrays() ):
         oldPointsArray = vtk_to_numpy( inputPointData.GetArray( i ) )
         name: str = inputPointData.GetArrayName( i )
@@ -293,16 +300,18 @@ def __copyFieldsSplittedMesh( oldMesh: vtkUnstructuredGrid, splittedMesh: vtkUns
         else:
             vtkArray = numpy_to_vtk( newPointsArray )
         vtkArray.SetName( name )
-        splittedMesh.GetPointData().AddArray( vtkArray )
+        splitMesh.GetPointData().AddArray( vtkArray )
 
 
-def __copyFieldsFractureMesh( oldMesh: vtkUnstructuredGrid, fractureMesh: vtkUnstructuredGrid,
-                              faceCellId: list[ int ], node3dToNode2d: IDMapping ) -> None:
-    """
-    Copies the fields from the old mesh to the new fracture when using internal_surfaces policy.
-    :param oldMesh: The mesh before the split.
-    :param fracture: The fracture mesh generated from the fractureInfo.
-    :return: None
+def __copyFieldsFractureMesh( oldMesh: vtkUnstructuredGrid, fractureMesh: vtkUnstructuredGrid, faceCellId: list[ int ],
+                              node3dToNode2d: IDMapping ) -> None:
+    """Copies the fields from the old mesh to the new fracture when using internal_surfaces policy.
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The mesh before the split.
+        fractureMesh (vtkUnstructuredGrid): The fracture mesh generated from the fractureInfo.
+        faceCellId (list[ int ]): The list of cell IDs that define the fracture faces.
+        node3dToNode2d (IDMapping): A mapping from 3D node IDs to 2D node IDs.
     """
     # No copy of field data will be done with the fracture mesh because may lose its relevance compared to the splitted.
     # Copying the cell data. The interesting cells are the ones stored in faceCellId.
@@ -348,13 +357,16 @@ def __copyFieldsFractureMesh( oldMesh: vtkUnstructuredGrid, fractureMesh: vtkUns
         fractureMesh.GetPointData().AddArray( vtkArray )
 
 
-def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ int,
-                                                                              IDMapping ] ) -> vtkUnstructuredGrid:
-    """
-    Split the main 3d mesh based on the node duplication information contained in @p cellToNodeMapping
-    :param oldMesh: The main 3d mesh.
-    :param cellToNodeMapping: For each cell, gives the nodes that must be duplicated and their new index.
-    :return: The main 3d mesh split at the fracture location.
+def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
+    """Split the main 3d mesh based on the node duplication information contained in @p cellToNodeMapping
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The main 3d mesh.
+        cellToNodeMapping (Mapping[ int, IDMapping ]): For each cell,
+        gives the nodes that must be duplicated and their new index.
+
+    Returns:
+        vtkUnstructuredGrid: The main 3d mesh split at the fracture location.
     """
     addedPoints: set[ int ] = set()
     addedPointsWithOldId: list[ tuple[ int ] ] = list()
@@ -420,19 +432,23 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
                 cellPointIds.SetId( i, newPointId )
             newMesh.InsertNextCell( cellType, cellPointIds )
 
-    __copyFieldsSplittedMesh( oldMesh, newMesh, addedPointsWithOldId )
+    __copyFieldsSplitMesh( oldMesh, newMesh, addedPointsWithOldId )
 
     return newMesh
 
 
 def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: FractureInfo,
                             cellToNodeMapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
-    """
-    Generates the mesh of the fracture.
-    :param meshPoints: The points of the main 3d mesh.
-    :param fractureInfo: The fracture description.
-    :param cellToNodeMapping: For each cell, gives the nodes that must be duplicated and their new index.
-    :return: The fracture mesh.
+    """Generates the mesh of the fracture.
+
+    Args:
+        oldMesh (vtkUnstructuredGrid): The main 3d mesh.
+        fractureInfo (FractureInfo): The fracture description.
+        cellToNodeMapping (Mapping[ int, IDMapping ]): For each cell, gives the nodes that must be duplicated
+                                                       and their new index.
+
+    Returns:
+        vtkUnstructuredGrid: The fracture mesh.
     """
     setupLogger.info( "Generating the meshes" )
 
@@ -541,8 +557,7 @@ def __splitMeshOnFractures( mesh: vtkUnstructuredGrid,
     outputMesh: vtkUnstructuredGrid = __performSplit( mesh, cellToNodeMapping )
     fractureMeshes: list[ vtkUnstructuredGrid ] = list()
     for fractureInfoSeparated in allFractureInfos:
-        fractureMesh: vtkUnstructuredGrid = __generateFractureMesh( mesh, fractureInfoSeparated,
-                                                                    cellToNodeMapping )
+        fractureMesh: vtkUnstructuredGrid = __generateFractureMesh( mesh, fractureInfoSeparated, cellToNodeMapping )
         fractureMeshes.append( fractureMesh )
     return ( outputMesh, fractureMeshes )
 

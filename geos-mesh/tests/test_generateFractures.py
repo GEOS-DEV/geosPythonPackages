@@ -6,8 +6,8 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkQuad, VTK_HE
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from geos.mesh.doctor.actions.checkFractures import formatCollocatedNodes
 from geos.mesh.doctor.actions.generateCube import buildRectilinearBlocksMesh, XYZ
-from geos.mesh.doctor.actions.generateFractures import ( __splitMeshOnFractures, Options, FracturePolicy,
-                                                          Coordinates3D, IDMapping )
+from geos.mesh.doctor.actions.generateFractures import ( __splitMeshOnFractures, Options, FracturePolicy, Coordinates3D,
+                                                         IDMapping )
 from geos.mesh.utils.genericHelpers import toVtkIdList
 
 FaceNodesCoords = tuple[ tuple[ float ] ]

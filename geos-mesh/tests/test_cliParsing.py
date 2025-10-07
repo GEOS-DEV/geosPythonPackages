@@ -26,13 +26,12 @@ def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
     policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
     exceptions = False, False, True
     for cliArgs, policy, exception in zip( allCliArgs, policies, exceptions ):
-        options: Options = Options(
-            policy=policy,
-            field=field,
-            fieldValuesCombined=frozenset( ( 0, 1 ) ),
-            fieldValuesPerFracture=[ frozenset( ( 0, 1 ) ) ],
-            meshVtkOutput=VtkOutput( output=mainMesh, isDataModeBinary=True ),
-            allFracturesVtkOutput=[ VtkOutput( output=fractureMesh, isDataModeBinary=True ) ] )
+        options: Options = Options( policy=policy,
+                                    field=field,
+                                    fieldValuesCombined=frozenset( ( 0, 1 ) ),
+                                    fieldValuesPerFracture=[ frozenset( ( 0, 1 ) ) ],
+                                    meshVtkOutput=VtkOutput( output=mainMesh, isDataModeBinary=True ),
+                                    allFracturesVtkOutput=[ VtkOutput( output=fractureMesh, isDataModeBinary=True ) ] )
         yield TestCase( cliArgs, options, exception )
 
 

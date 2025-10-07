@@ -38,10 +38,8 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
             # If it's not inserted, `pointId` contains the node that was already at that location.
             # But in that case, `pointId` is the new numbering in the destination points array.
             # It's more useful for the user to get the old index in the original mesh, so he can look for it in his data.
-            setupLogger.debug(
-                f"Point {i} at {points.GetPoint(i)} has been rejected, "
-                f"point {filteredToOriginal[pointId.get()]} is already inserted."
-            )
+            setupLogger.debug( f"Point {i} at {points.GetPoint(i)} has been rejected, "
+                               f"point {filteredToOriginal[pointId.get()]} is already inserted." )
             rejectedPoints[ pointId.get() ].append( i )
         else:
             # If it's inserted, `pointId` contains the new index in the destination array.

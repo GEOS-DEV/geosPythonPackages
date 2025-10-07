@@ -42,7 +42,7 @@ def displayResults( options: Options, result: Result ):
 
     if result.wrongSupportElements:
         tmp: str = ", ".join( map( str, result.wrongSupportElements ) )
-        setupLogger.results(
-            f"You have {len(result.wrongSupportElements)} elements with duplicated support nodes.\n" + tmp )
+        setupLogger.results( f"You have {len(result.wrongSupportElements)} elements with duplicated support nodes.\n" +
+                             tmp )
     else:
         setupLogger.results( "You have no element with duplicated support nodes." )

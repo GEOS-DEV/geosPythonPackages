@@ -17,11 +17,14 @@ class Result:
 
 
 def parseFaceStream( ids: vtkIdList ) -> Sequence[ Sequence[ int ] ]:
-    """
-    Parses the face stream raw information and converts it into a tuple of tuple of integers,
+    """Parses the face stream raw information and converts it into a tuple of tuple of integers,
     each tuple of integer being the nodes of a face.
-    :param ids: The raw vtk face stream.
-    :return: The tuple of tuple of integers.
+
+    Args:
+        ids (vtkIdList): The raw vtk face stream.
+
+    Returns:
+        Sequence[ Sequence[ int ] ]: The tuple of tuple of integers.
     """
     result = []
     it = vtkIter( ids )
@@ -54,34 +57,40 @@ class FaceStream:
 
     @staticmethod
     def buildFromVtkIdList( ids: vtkIdList ):
-        """
-        Builds a FaceStream from the raw vtk face stream.
-        :param ids: The vtk face stream.
-        :return: A new FaceStream instance.
+        """Builds a FaceStream from the raw vtk face stream.
+
+        Args:
+            ids (vtkIdList): The vtk face stream.
+
+        Returns:
+            FaceStream: A new FaceStream instance.
         """
         return FaceStream( parseFaceStream( ids ) )
 
     @property
     def faceNodes( self ) -> Iterable[ Sequence[ int ] ]:
-        """
-        Iterate on the nodes of all the faces.
-        :return: An iterator.
+        """Iterate on the nodes of all the faces.
+
+        Returns:
+            Iterable[ Sequence[ int ] ]: An iterator over the nodes of all the faces.
         """
         return iter( self.__data )
 
     @property
     def numFaces( self ) -> int:
-        """
-        Number of faces in the face stream
-        :return: An integer
+        """Number of faces in the face stream
+
+        Returns:
+            int: The number of faces.
         """
         return len( self.__data )
 
     @property
     def supportPointIds( self ) -> Collection[ int ]:
-        """
-        The list of all (unique) support points of the face stream, in no specific order.
-        :return: The set of all the point ids.
+        """The list of all (unique) support points of the face stream, in no specific order.
+
+        Returns:
+            Collection[ int ]: The set of all the point ids.
         """
         tmp: List[ int ] = []
         for nodes in self.faceNodes:
@@ -90,25 +99,32 @@ class FaceStream:
 
     @property
     def numSupportPoints( self ) -> int:
-        """
-        The number of unique support nodes of the polyhedron.
-        :return: An integer.
+        """The number of unique support nodes of the polyhedron.
+
+        Returns:
+            int: The number of unique support nodes.
         """
         return len( self.supportPointIds )
 
-    def __getitem__( self, faceIndex ) -> Sequence[ int ]:
-        """
-        The support point ids for the `faceIndex` face.
-        :param faceIndex: The face index (within the face stream).
-        :return: A tuple containing all the point ids.
+    def __getitem__( self, faceIndex: int ) -> Sequence[ int ]:
+        """The support point ids for the `faceIndex` face.
+
+        Args:
+            faceIndex (int): The face index (within the face stream).
+
+        Returns:
+            Sequence[ int ]: A tuple containing all the point ids.
         """
         return self.__data[ faceIndex ]
 
-    def flipFaces( self, faceIndices ):
-        """
-        Returns a new FaceStream instance with the face indices defined in faceIndices flipped.,
-        :param faceIndices: The faces (local) indices to flip.
-        :return: A newly created instance.
+    def flipFaces( self, faceIndices: Collection[ int ] ) -> "FaceStream":
+        """Returns a new FaceStream instance with the face indices defined in faceIndices flipped.
+
+        Args:
+            faceIndices (Collection[ int ]): The faces (local) indices to flip.
+
+        Returns:
+            FaceStream: A newly created instance.
         """
         result = []
         for faceIndex, faceNodes in enumerate( self.__data ):
@@ -116,10 +132,11 @@ class FaceStream:
         return FaceStream( tuple( result ) )
 
     def dump( self ) -> Sequence[ int ]:
-        """
-        Returns the face stream awaited by vtk, but in a python container.
+        """Returns the face stream awaited by vtk, but in a python container.
         The content can be used, once converted to a vtkIdList, to define another polyhedron in vtk.
-        :return: The face stream in a python container.
+
+        Returns:
+            Sequence[ int ]: The face stream in a python container.
         """
         result = [ len( self.__data ) ]
         for faceNodes in self.__data:
@@ -136,15 +153,18 @@ class FaceStream:
 
 
 def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatibility=False ) -> networkx.Graph:
-    """
-    Given a face stream/polyhedron, builds the connections between the faces.
+    """Given a face stream/polyhedron, builds the connections between the faces.
     Those connections happen when two faces share an edge.
-    :param faceStream: The face stream description of the polyhedron.
-    :param addCompatibility: Two faces are considered compatible if their normals point in the same direction (inwards or outwards).
-        If `addCompatibility=True`, we add a `compatible={"-", "+"}` flag on the edges
+
+    Args:
+        faceStream (FaceStream): The face stream description of the polyhedron.
+        addCompatibility (bool, optional): Two faces are considered compatible if their normals point in the same
+        direction (inwards or outwards). If `addCompatibility=True`, we add a `compatible={"-", "+"}` flag on the edges
         to indicate that the two connected faces are compatible or not.
-        If `addCompatibility=False`, non-compatible faces are simply not connected by any edge.
-    :return: A graph which nodes are actually the faces of the polyhedron.
+        If `addCompatibility=False`, non-compatible faces are simply not connected by any edge.. Defaults to False.
+
+    Returns:
+        networkx.Graph: A graph which nodes are actually the faces of the polyhedron.
         Two nodes of the graph are connected if they share an edge.
     """
     edgesToFaceIndices: Dict[ FrozenSet[ int ], List[ int ] ] = defaultdict( list )

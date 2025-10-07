@@ -18,11 +18,17 @@ __FRACTURES_DATA_MODE_DEFAULT = __FRACTURES_DATA_MODE_VALUES[ 0 ]
 
 
 def convertToFracturePolicy( s: str ) -> FracturePolicy:
-    """
-    Converts the user input to the proper enum chosen.
+    """Converts the user input to the proper enum chosen.
     I do not want to use the auto conversion already available to force explicit conversion.
-    :param s: The user input
-    :return: The matching enum.
+
+    Args:
+        s (str): The user input
+
+    Raises:
+        ValueError: If the parsed options are invalid.
+
+    Returns:
+        FracturePolicy: The matching enum.
     """
     if s == __FIELD_POLICY:
         return FracturePolicy.FIELD
@@ -88,8 +94,8 @@ def convert( parsedOptions ) -> Options:
     fractureNames: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in perFracture ]
     fracturesOutputDir: str = parsedOptions[ __FRACTURES_OUTPUT_DIR ]
     fracturesDataMode: str = parsedOptions[ __FRACTURES_DATA_MODE ] == __FRACTURES_DATA_MODE_DEFAULT
-    allFracturesVtkOutput: list[ VtkOutput ] = buildAllFracturesVtkOutput(
-        fracturesOutputDir, fracturesDataMode, meshVtkOutput, fractureNames )
+    allFracturesVtkOutput: list[ VtkOutput ] = buildAllFracturesVtkOutput( fracturesOutputDir, fracturesDataMode,
+                                                                           meshVtkOutput, fractureNames )
     return Options( policy=policy,
                     field=field,
                     fieldValuesCombined=fieldValuesCombined,
@@ -112,8 +118,8 @@ def areValuesParsable( values: str ) -> bool:
     return True
 
 
-def buildAllFracturesVtkOutput( fractureOutputDir: str, fracturesDataMode: bool,
-                                meshVtkOutput: VtkOutput, fractureNames: list[ str ] ) -> list[ VtkOutput ]:
+def buildAllFracturesVtkOutput( fractureOutputDir: str, fracturesDataMode: bool, meshVtkOutput: VtkOutput,
+                                fractureNames: list[ str ] ) -> list[ VtkOutput ]:
     if not os.path.exists( fractureOutputDir ):
         raise ValueError( f"The --{__FRACTURES_OUTPUT_DIR} given directory '{fractureOutputDir}' does not exist." )
 

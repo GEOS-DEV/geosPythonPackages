@@ -4,7 +4,7 @@ import numpy
 from tqdm import tqdm
 from typing import List, Tuple, Any
 from vtk import reference as vtkReference
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
+from vtkmodules.vtkCommonCore import vtkDataArray, vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkBoundingBox, vtkCell, vtkCellArray, vtkPointSet, vtkPolyData,
                                             vtkStaticCellLocator, vtkStaticPointLocator, vtkUnstructuredGrid,
                                             VTK_POLYHEDRON )
@@ -40,9 +40,10 @@ class BoundaryMesh:
     """
 
     def __init__( self, mesh: vtkUnstructuredGrid ):
-        """
-        Builds a boundary mesh.
-        :param mesh: The 3d mesh.
+        """Builds a boundary mesh.
+
+        Args:
+            mesh (vtkUnstructuredGrid): The 3d mesh.
         """
         # Building the boundary meshes
         boundaryMesh, __normals, self.__originalCells = BoundaryMesh.__buildBoundaryMesh( mesh )
@@ -67,13 +68,19 @@ class BoundaryMesh:
                 self.__normals[ ic, : ] = __normals.GetTuple3( ic )
 
     @staticmethod
-    def __buildBoundaryMesh( mesh: vtkUnstructuredGrid, consistency=True ) -> Tuple[ vtkUnstructuredGrid, Any, Any ]:
-        """
-        From a 3d mesh, build the envelope meshes.
-        :param mesh: The input 3d mesh.
-        :param consistency: The vtk option passed to the `vtkDataSetSurfaceFilter`.
-        :return: A tuple containing the boundary mesh, the normal vectors array,
-                 an array that maps the id of the boundary element to the id of the 3d cell it touches.
+    def __buildBoundaryMesh(
+        mesh: vtkUnstructuredGrid,
+        consistency=True
+    ) -> Tuple[ vtkUnstructuredGrid, vtkDataArray, vtkDataArray ]:
+        """From a 3d mesh, build the envelope meshes.
+
+        Args:
+            mesh (vtkUnstructuredGrid): The input 3d mesh.
+            consistency (bool, optional): The vtk option passed to the `vtkDataSetSurfaceFilter`. Defaults to True.
+
+        Returns:
+            Tuple[ vtkUnstructuredGrid, Any, Any ]: A tuple containing the boundary mesh, the normal vectors array,
+                             an array that maps the id of the boundary element to the id of the 3d cell it touches.
         """
         f = vtkDataSetSurfaceFilter()
         f.PassThroughCellIdsOn()
@@ -94,78 +101,92 @@ class BoundaryMesh:
         n.ComputeCellNormalsOn()
         n.SetInputData( boundaryMesh )
         n.Update()
-        normals = n.GetOutput().GetCellData().GetArray( "Normals" )
+        normals: vtkDataArray = n.GetOutput().GetCellData().GetArray( "Normals" )
         assert normals
         assert normals.GetNumberOfComponents() == 3
         assert normals.GetNumberOfTuples() == boundaryMesh.GetNumberOfCells()
-        originalCells = boundaryMesh.GetCellData().GetArray( originalCellsKey )
+        originalCells: vtkDataArray = boundaryMesh.GetCellData().GetArray( originalCellsKey )
         assert originalCells
         return boundaryMesh, normals, originalCells
 
     def GetNumberOfCells( self ) -> int:
-        """
-        The number of cells.
-        :return: An integer.
+        """The number of cells.
+
+        Returns:
+            int: An integer.
         """
         return self.reBoundaryMesh.GetNumberOfCells()
 
     def GetNumberOfPoints( self ) -> int:
-        """
-        The number of points.
-        :return: An integer.
+        """The number of points.
+
+        Returns:
+            int: An integer.
         """
         return self.reBoundaryMesh.GetNumberOfPoints()
 
-    def bounds( self, i ) -> Tuple[ float, float, float, float, float, float ]:
-        """
-        The boundrary box of cell `i`.
-        :param i: The boundary cell index.
-        :return: The vtk bounding box.
+    def bounds( self, i: int ) -> Tuple[ float, float, float, float, float, float ]:
+        """The boundrary box of cell `i`.
+
+        Args:
+            i (int): The boundary cell index.
+
+        Returns:
+            Tuple[ float, float, float, float, float, float ]: The bounding box of the cell.
         """
         return self.reBoundaryMesh.GetCell( i ).GetBounds()
 
-    def normals( self, i ) -> numpy.ndarray:
-        """
-        The normal of cell `i`. This normal will be directed outwards
-        :param i: The boundary cell index.
-        :return: The normal as a length-3 numpy array.
+    def normals( self, i: int ) -> numpy.ndarray:
+        """The normal of cell `i`. This normal will be directed outwards
+
+        Args:
+            i (int): The boundary cell index.
+
+        Returns:
+            numpy.ndarray: The normal as a length-3 numpy array.
         """
         return self.__normals[ i ]
 
-    def GetCell( self, i ) -> vtkCell:
-        """
-        Cell i of the boundary mesh. This cell will have its normal directed outwards.
-        :param i: The boundary cell index.
-        :return: The cell instance.
-        :warning: This member function relies on the vtkUnstructuredGrid.GetCell member function which is not thread safe.
+    def GetCell( self, i: int ) -> vtkCell:
+        """Cell i of the boundary mesh. This cell will have its normal directed outwards.
+
+        Args:
+            i (int): The boundary cell index.
+
+        Returns:
+            vtkCell: The cell instance.
         """
         return self.reBoundaryMesh.GetCell( i )
 
-    def GetPoint( self, i ) -> Tuple[ float, float, float ]:
-        """
-        Point i of the boundary mesh.
-        :param i: The boundary point index.
-        :return: A length-3 tuple containing the coordinates of the point.
-        :warning: This member function relies on the vtkUnstructuredGrid.GetPoint member function which is not thread safe.
+    def GetPoint( self, i: int ) -> Tuple[ float, float, float ]:
+        """Point i of the boundary mesh.
+        Args:
+            i (int): The boundary point index.
+
+        Returns:
+            Tuple[ float, float, float ]: A length-3 tuple containing the coordinates of the point.
         """
         return self.reBoundaryMesh.GetPoint( i )
 
     @property
-    def originalCells( self ):
-        """
-        Returns the 2d boundary cell to the 3d cell index of the original mesh.
-        :return: A 1d array.
+    def originalCells( self ) -> vtkDataArray:
+        """Returns the 2d boundary cell to the 3d cell index of the original mesh.
+
+        Returns:
+            vtkDataArray: A 1d array.
         """
         return self.__originalCells
 
 
 def buildPolyDataForExtrusion( i: int, boundaryMesh: BoundaryMesh ) -> vtkPolyData:
-    """
-    Creates a vtkPolyData containing the unique cell `i` of the boundary mesh.
-    This operation is needed to use the vtk extrusion filter.
-    :param i: The boundary cell index that will eventually be extruded.
-    :param boundaryMesh:
-    :return: The created vtkPolyData.
+    """Creates a vtkPolyData containing the unique cell `i` of the boundary mesh.
+
+    Args:
+        i (int): The boundary cell index that will eventually be extruded.
+        boundaryMesh (BoundaryMesh): The boundary mesh containing the cell.
+
+    Returns:
+        vtkPolyData: The created vtkPolyData.
     """
     cell = boundaryMesh.GetCell( i )
     copiedCell = cell.NewInstance()
@@ -187,12 +208,15 @@ def buildPolyDataForExtrusion( i: int, boundaryMesh: BoundaryMesh ) -> vtkPolyDa
 
 
 def arePointsConformal( pointTolerance: float, cellI: vtkCell, cellJ: vtkCell ) -> bool:
-    """
-    Checks if points of cell `i` matches, one by one, the points of cell `j`.
-    :param pointTolerance: The point tolerance to consider that two points match.
-    :param cellI: The first cell.
-    :param cellJ: The second cell.
-    :return: A boolean.
+    """Checks if points of cell `i` matches, one by one, the points of cell `j`.
+
+    Args:
+        pointTolerance (float): The point tolerance to consider that two points match.
+        cellI (vtkCell): The first cell.
+        cellJ (vtkCell): The second cell.
+
+    Returns:
+        bool: True if the points are conformal, False otherwise.
     """
     # In this last step, we check that the nodes are (or not) matching each other.
     if cellI.GetNumberOfPoints() != cellJ.GetNumberOfPoints():
@@ -225,12 +249,15 @@ class Extruder:
         self.__boundaryMesh = boundaryMesh
         self.__faceTolerance = faceTolerance
 
-    def __extrude( self, polygonPolyData, normal ) -> vtkPolyData:
-        """
-        Extrude the polygon data to create a volume that will be used for intersection.
-        :param polygonPolyData: The data to extrude
-        :param normal: The (uniform) direction of the extrusion.
-        :return: The extrusion.
+    def __extrude( self, polygonPolyData: vtkPolyData, normal: numpy.ndarray ) -> vtkPolyData:
+        """Extrude the polygon data to create a volume that will be used for intersection.
+
+        Args:
+            polygonPolyData (vtkPolyData): The data to extrude
+            normal (numpy.ndarray): The (uniform) direction of the extrusion.
+
+        Returns:
+            vtkPolyData: The extruded volume.
         """
         extruder = vtkLinearExtrusionFilter()
         extruder.SetExtrusionTypeToVectorExtrusion()
@@ -240,11 +267,14 @@ class Extruder:
         extruder.Update()
         return extruder.GetOutput()
 
-    def __getitem__( self, i ) -> vtkPolyData:
-        """
-        Returns the vtk extrusion for boundary element i.
-        :param i: The cell index.
-        :return: The vtk instance.
+    def __getitem__( self, i: int ) -> vtkPolyData:
+        """Returns the vtk extrusion for boundary element i.
+
+        Args:
+            i (int): The cell index.
+
+        Returns:
+            vtkPolyData: The vtk extrusion.
         """
         extrusion = self.__extrusions[ i ]
         if extrusion:
@@ -259,12 +289,16 @@ def areFacesConformalUsingExtrusions( extrusions: Extruder, i: int, j: int, boun
                                       pointTolerance: float ) -> bool:
     """
     Tests if two boundary faces are conformal, checking for intersection between their normal extruded volumes.
-    :param extrusions: The extrusions cache.
-    :param i: The cell index of the first cell.
-    :param j: The cell index of the second cell.
-    :param boundaryMesh: The boundary mesh.
-    :param pointTolerance: The point tolerance to consider that two points match.
-    :return: A boolean.
+
+    Args:
+        extrusions (Extruder): The extrusions cache.
+        i (int): The cell index of the first cell.
+        j (int): The cell index of the second cell.
+        boundaryMesh (vtkUnstructuredGrid): The boundary mesh.
+        pointTolerance (float): The point tolerance to consider that two points match.
+
+    Returns:
+        bool: True if the faces are conformal, False otherwise.
     """
     collision = vtkCollisionDetectionFilter()
     collision.SetCollisionModeToFirstContact()
@@ -289,14 +323,17 @@ def areFacesConformalUsingExtrusions( extrusions: Extruder, i: int, j: int, boun
 
 def areFacesConformalUsingDistances( i: int, j: int, boundaryMesh: vtkUnstructuredGrid, faceTolerance: float,
                                      pointTolerance: float ) -> bool:
-    """
-    Tests if two boundary faces are conformal, checking the minimal distance between triangulated surfaces.
-    :param i: The cell index of the first cell.
-    :param j: The cell index of the second cell.
-    :param boundaryMesh: The boundary mesh.
-    :param faceTolerance: The tolerance under which we should consider the two faces "touching" each other.
-    :param pointTolerance: The point tolerance to consider that two points match.
-    :return: A boolean.
+    """Tests if two boundary faces are conformal, checking the minimal distance between triangulated surfaces.
+
+    Args:
+        i (int): The cell index of the first cell.
+        j (int): The cell index of the second cell.
+        boundaryMesh (vtkUnstructuredGrid): The boundary mesh.
+        faceTolerance (float): The tolerance under which we should consider the two faces "touching" each other.
+        pointTolerance (float): The point tolerance to consider that two points match.
+
+    Returns:
+        bool: True if the faces are conformal, False otherwise.
     """
     cpI = boundaryMesh.GetCell( i ).NewInstance()
     cpI.DeepCopy( boundaryMesh.GetCell( i ) )
@@ -345,11 +382,15 @@ def areFacesConformalUsingDistances( i: int, j: int, boundaryMesh: vtkUnstructur
 
 
 def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
-    """
-    Checks if the mesh is "conformal" (i.e. if some of its boundary faces may not be too close to each other without matching nodes).
-    :param mesh: The vtk mesh
-    :param options: The check options.
-    :return: The Result instance.
+    """Checks if the mesh is "conformal" (i.e. if some of its boundary faces may not be too close to each other
+    without matching nodes).
+
+    Args:
+        mesh (vtkUnstructuredGrid): The vtk mesh
+        options (Options): The check options.
+
+    Returns:
+        Result: The result of the conformity check.
     """
     boundaryMesh = BoundaryMesh( mesh )
     cosTheta = abs( math.cos( numpy.deg2rad( options.angleTolerance ) ) )

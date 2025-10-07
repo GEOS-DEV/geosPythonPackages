@@ -12,15 +12,19 @@ from geos.mesh.utils.genericHelpers import toVtkIdList
 
 
 def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
-    """
-    Computes the volume of a polyhedron element (defined by its faceStream).
-    :param meshPoints: The mesh points, needed to compute the volume.
-    :param faceStream: The vtk face stream.
-    :return: The volume of the element.
-    :note: The faces of the polyhedron are triangulated and the volumes of the tetrahedra
+    """Computes the volume of a polyhedron element (defined by its faceStream).
+
+    To note that the faces of the polyhedron are triangulated and the volumes of the tetrahedra
     from the barycenter to the triangular bases are summed.
     The normal of each face plays critical role,
     since the volume of each tetrahedron can be positive or negative.
+
+    Args:
+        meshPoints (vtkPoints): The mesh points, needed to compute the volume.
+        faceStream (FaceStream): The vtk face stream.
+
+    Returns:
+        float: The volume of the element.
     """
     # Triangulating the envelope of the polyhedron for further volume computation.
     polygons = vtkCellArray()
@@ -63,13 +67,17 @@ def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
 
 def __selectAndFlipFaces( meshPoints: vtkPoints, colors: Dict[ FrozenSet[ int ], int ],
                           faceStream: FaceStream ) -> FaceStream:
-    """
-    Given a polyhedra, given that we were able to paint the faces in two colors,
+    """Given a polyhedra, given that we were able to paint the faces in two colors,
     we now need to select which faces/color to flip such that the volume of the element is positive.
-    :param meshPoints: The mesh points, needed to compute the volume.
-    :param colors: Maps the nodes of each connected component (defined as a frozenset) to its color.
-    :param faceStream: the polyhedron.
-    :return: The face stream that leads to a positive volume.
+
+    Args:
+        meshPoints (vtkPoints): The mesh points, needed to compute the volume.
+        colors (Dict[ FrozenSet[ int ], int ]): Maps the nodes of each connected component (defined as a frozenset)
+                                                to its color.
+        faceStream (FaceStream): The face stream representing the polyhedron.
+
+    Returns:
+        FaceStream: The face stream that leads to a positive volume.
     """
     # Flipping either color 0 or 1.
     colorToNodes: Dict[ int, List[ int ] ] = { 0: [], 1: [] }
@@ -77,8 +85,8 @@ def __selectAndFlipFaces( meshPoints: vtkPoints, colors: Dict[ FrozenSet[ int ],
         colorToNodes[ color ] += connectedComponentsIndices
     # This implementation works even if there is one unique color.
     # Admittedly, there will be one face stream that won't be flipped.
-    fs: Tuple[ FaceStream, FaceStream ] = ( faceStream.flipFaces( colorToNodes[ 0 ] ),
-                                            faceStream.flipFaces( colorToNodes[ 1 ] ) )
+    fs: Tuple[ FaceStream,
+               FaceStream ] = ( faceStream.flipFaces( colorToNodes[ 0 ] ), faceStream.flipFaces( colorToNodes[ 1 ] ) )
     volumes = __computeVolume( meshPoints, fs[ 0 ] ), __computeVolume( meshPoints, fs[ 1 ] )
     # We keep the flipped element for which the volume is largest
     # (i.e. positive, since they should be the opposite of each other).
@@ -86,11 +94,14 @@ def __selectAndFlipFaces( meshPoints: vtkPoints, colors: Dict[ FrozenSet[ int ],
 
 
 def __reorientElement( meshPoints: vtkPoints, faceStreamIds: vtkIdList ) -> vtkIdList:
-    """
-    Considers a vtk face stream and flips the appropriate faces to get an element with normals directed outwards.
-    :param meshPoints: The mesh points, needed to compute the volume.
-    :param faceStreamIds: The raw vtk face stream, not converted into a more practical python class.
-    :return: The raw vtk face stream with faces properly flipped.
+    """Considers a vtk face stream and flips the appropriate faces to get an element with normals directed outwards.
+
+    Args:
+        meshPoints (vtkPoints): The mesh points, needed to compute the volume.
+        faceStreamIds (vtkIdList): The raw vtk face stream, not converted into a more practical python class.
+
+    Returns:
+        vtkIdList: The raw vtk face stream with faces properly flipped.
     """
     faceStream = FaceStream.buildFromVtkIdList( faceStreamIds )
     faceGraph = buildFaceToFaceConnectivityThroughEdges( faceStream, addCompatibility=True )
@@ -112,12 +123,15 @@ def __reorientElement( meshPoints: vtkPoints, faceStreamIds: vtkIdList ) -> vtkI
     return toVtkIdList( flippedFaceStream.dump() )
 
 
-def reorientMesh( mesh, cellIndices: Iterator[ int ] ) -> vtkUnstructuredGrid:
-    """
-    Reorient the polyhedron elements such that they all have their normals directed outwards.
-    :param mesh: The input vtk mesh.
-    :param cellIndices: We may need to only flip a limited number of polyhedron cells (only on the boundary for example).
-    :return: The vtk mesh with the desired polyhedron cells directed outwards.
+def reorientMesh( mesh: vtkUnstructuredGrid, cellIndices: Iterator[ int ] ) -> vtkUnstructuredGrid:
+    """Reorient the polyhedron elements such that they all have their normals directed outwards.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input vtk mesh.
+        cellIndices (Iterator[ int ]): The indices of the cells to reorient.
+
+    Returns:
+        vtkUnstructuredGrid: The vtk mesh with the desired polyhedron cells directed outwards.
     """
     numCells = mesh.GetNumberOfCells()
     # Building an indicator/predicate from the list
@@ -131,7 +145,7 @@ def reorientMesh( mesh, cellIndices: Iterator[ int ] ) -> vtkUnstructuredGrid:
     outputMesh.SetPoints( mesh.GetPoints() )
     setupLogger.info( "Reorienting the polyhedron cells to enforce normals directed outward." )
     with tqdm( total=needsToBeReoriented.sum(), desc="Reorienting polyhedra"
-               ) as progressBar:  # For smoother progress, we only update on reoriented elements.
+              ) as progressBar:  # For smoother progress, we only update on reoriented elements.
         for ic in range( numCells ):
             cell = mesh.GetCell( ic )
             cellType = cell.GetCellType()
