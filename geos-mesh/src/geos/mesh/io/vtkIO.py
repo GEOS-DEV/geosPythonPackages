@@ -8,15 +8,15 @@ from typing import Optional, Type, TypeAlias
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 from vtkmodules.vtkIOCore import vtkWriter
 from vtkmodules.vtkIOLegacy import vtkDataReader, vtkUnstructuredGridWriter, vtkUnstructuredGridReader
-from vtkmodules.vtkIOXML import ( vtkXMLDataReader, vtkXMLUnstructuredGridReader, vtkXMLUnstructuredGridWriter,
-                                  vtkXMLWriter, vtkXMLStructuredGridReader, vtkXMLPUnstructuredGridReader,
-                                  vtkXMLPStructuredGridReader, vtkXMLStructuredGridWriter )
+from vtkmodules.vtkIOXML import ( vtkXMLGenericDataObjectReader, vtkXMLUnstructuredGridWriter, vtkXMLWriter,
+                                  vtkXMLStructuredGridWriter )
 from geos.utils.Logger import getLogger
 
 __doc__ = """
 Input and Output methods for various VTK mesh formats.
-Supports reading: .vtk, .vtu, .vts, .pvtu, .pvts
+Supports reading: .vtk (legacy), .vtu, .vts, .vti, .vtp, .vtr, .pvtu, .pvts, .pvti, .pvtp, .pvtr
 Supports writing: .vtk, .vtu, .vts
+Uses vtkXMLGenericDataObjectReader for automatic XML format detection.
 """
 
 ioLogger = getLogger( "IO for geos-mesh" )
@@ -28,21 +28,24 @@ class VtkFormat( Enum ):
     VTK = ".vtk"
     VTS = ".vts"
     VTU = ".vtu"
+    VTI = ".vti"
+    VTP = ".vtp"
+    VTR = ".vtr"
     PVTU = ".pvtu"
     PVTS = ".pvts"
+    PVTI = ".pvti"
+    PVTP = ".pvtp"
+    PVTR = ".pvtr"
 
 
 # Use TypeAlias for cleaner and more readable type hints
-VtkReaderClass: TypeAlias = Type[ vtkDataReader | vtkXMLDataReader ]
+VtkReaderClass: TypeAlias = Type[ vtkDataReader | vtkXMLGenericDataObjectReader ]
 VtkWriterClass: TypeAlias = Type[ vtkWriter | vtkXMLWriter ]
 
-# Centralized mapping of formats to their corresponding reader classes
-READER_MAP: dict[ VtkFormat, VtkReaderClass ] = {
-    VtkFormat.VTK: vtkUnstructuredGridReader,
-    VtkFormat.VTS: vtkXMLStructuredGridReader,
-    VtkFormat.VTU: vtkXMLUnstructuredGridReader,
-    VtkFormat.PVTU: vtkXMLPUnstructuredGridReader,
-    VtkFormat.PVTS: vtkXMLPStructuredGridReader
+# XML-based formats that can be read by vtkXMLGenericDataObjectReader
+XML_FORMATS: set[ VtkFormat ] = {
+    VtkFormat.VTU, VtkFormat.VTS, VtkFormat.VTI, VtkFormat.VTP, VtkFormat.VTR, VtkFormat.PVTU, VtkFormat.PVTS,
+    VtkFormat.PVTI, VtkFormat.PVTP, VtkFormat.PVTR
 }
 
 # Centralized mapping of formats to their corresponding writer classes
@@ -75,10 +78,13 @@ def _readData( filepath: str, readerClass: VtkReaderClass ) -> Optional[ vtkPoin
 
     reader.SetFileName( str( filepath ) )
 
-    # For XML-based readers, CanReadFile is a reliable and fast pre-check.
-    if hasattr( reader, 'CanReadFile' ) and not reader.CanReadFile( filepath ):
-        ioLogger.error( f"Reader {readerClass.__name__} reports it cannot read file '{filepath}'." )
-        return None
+    # Note: vtkXMLGenericDataObjectReader's CanReadFile() is unreliable, so we skip it for that reader
+    # and rely on Update() + error checking instead
+    if readerClass != vtkXMLGenericDataObjectReader:
+        # For other XML-based readers, CanReadFile is a reliable and fast pre-check
+        if hasattr( reader, 'CanReadFile' ) and not reader.CanReadFile( filepath ):
+            ioLogger.error( f"Reader {readerClass.__name__} reports it cannot read file '{filepath}'." )
+            return None
 
     reader.Update()
 
@@ -131,8 +137,8 @@ def readMesh( filepath: str ) -> vtkPointSet:
     """
     Reads a VTK file, automatically detecting the format.
 
-    It first tries the reader associated with the file extension, then falls
-    back to trying all other available readers if the first attempt fails.
+    Uses vtkXMLGenericDataObjectReader for all XML-based formats (.vtu, .vts, .vti, .vtp, .vtr
+    and their parallel variants) and vtkUnstructuredGridReader for legacy .vtk format.
 
     Args:
         filepath (str): The path to the VTK file.
@@ -148,27 +154,39 @@ def readMesh( filepath: str ) -> vtkPointSet:
     if not filepathPath.exists():
         raise FileNotFoundError( f"Invalid file path: '{filepath}' does not exist." )
 
-    candidateReaders: list[ VtkReaderClass ] = []
-    # 1. Prioritize the reader associated with the file extension
+    # Determine the appropriate reader based on file extension
     try:
         fileFormat = VtkFormat( filepathPath.suffix )
-        if fileFormat in READER_MAP:
-            candidateReaders.append( READER_MAP[ fileFormat ] )
+        if fileFormat in XML_FORMATS:
+            # Use the generic XML reader for all XML-based formats
+            readerClass = vtkXMLGenericDataObjectReader
+        elif fileFormat == VtkFormat.VTK:
+            # Use legacy reader for .vtk files
+            readerClass = vtkUnstructuredGridReader
+        else:
+            raise ValueError( f"Unsupported file format: '{filepathPath.suffix}'." )
     except ValueError:
-        ioLogger.warning( f"Unknown file extension '{filepathPath.suffix}'. Trying all available readers." )
+        # Unknown extension - try both readers
+        ioLogger.warning( f"Unknown file extension '{filepathPath.suffix}'. Trying available readers." )
 
-    # 2. Add all other unique readers as fallbacks
-    for readerCls in READER_MAP.values():
-        if readerCls not in candidateReaders:
-            candidateReaders.append( readerCls )
-
-    # 3. Attempt to read with the candidates in order
-    for readerClass in candidateReaders:
-        outputMesh = _readData( filepath, readerClass )
+        # Try XML reader first (more common)
+        outputMesh = _readData( filepath, vtkXMLGenericDataObjectReader )
         if outputMesh:
             return outputMesh
 
-    raise ValueError( f"Could not find a suitable reader for '{filepath}'." )
+        # Fall back to legacy reader
+        outputMesh = _readData( filepath, vtkUnstructuredGridReader )
+        if outputMesh:
+            return outputMesh
+
+        raise ValueError( f"Could not find a suitable reader for '{filepath}'." )
+
+    # Attempt to read with the selected reader
+    outputMesh = _readData( filepath, readerClass )
+    if outputMesh:
+        return outputMesh
+
+    raise ValueError( f"Failed to read file '{filepath}' with {readerClass.__name__}." )
 
 
 def readUnstructuredGrid( filepath: str ) -> vtkUnstructuredGrid:

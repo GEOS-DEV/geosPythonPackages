@@ -3,7 +3,7 @@ import numpy as np
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkStructuredGrid, VTK_TETRA
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.mesh.io.vtkIO import ( VtkFormat, VtkOutput, readMesh, readUnstructuredGrid, writeMesh, READER_MAP,
+from geos.mesh.io.vtkIO import ( VtkFormat, VtkOutput, readMesh, readUnstructuredGrid, writeMesh, XML_FORMATS,
                                  WRITER_MAP )
 
 __doc__ = """
@@ -42,16 +42,28 @@ class TestVtkFormat:
         assert VtkFormat.VTK.value == ".vtk"
         assert VtkFormat.VTS.value == ".vts"
         assert VtkFormat.VTU.value == ".vtu"
+        assert VtkFormat.VTI.value == ".vti"
+        assert VtkFormat.VTP.value == ".vtp"
+        assert VtkFormat.VTR.value == ".vtr"
         assert VtkFormat.PVTU.value == ".pvtu"
         assert VtkFormat.PVTS.value == ".pvts"
+        assert VtkFormat.PVTI.value == ".pvti"
+        assert VtkFormat.PVTP.value == ".pvtp"
+        assert VtkFormat.PVTR.value == ".pvtr"
 
     def test_vtkFormatFromString( self ):
         """Test creating VtkFormat from string values."""
         assert VtkFormat( ".vtk" ) == VtkFormat.VTK
         assert VtkFormat( ".vtu" ) == VtkFormat.VTU
         assert VtkFormat( ".vts" ) == VtkFormat.VTS
+        assert VtkFormat( ".vti" ) == VtkFormat.VTI
+        assert VtkFormat( ".vtp" ) == VtkFormat.VTP
+        assert VtkFormat( ".vtr" ) == VtkFormat.VTR
         assert VtkFormat( ".pvtu" ) == VtkFormat.PVTU
         assert VtkFormat( ".pvts" ) == VtkFormat.PVTS
+        assert VtkFormat( ".pvti" ) == VtkFormat.PVTI
+        assert VtkFormat( ".pvtp" ) == VtkFormat.PVTP
+        assert VtkFormat( ".pvtr" ) == VtkFormat.PVTR
 
     def test_invalidFormat( self ):
         """Test that invalid format raises ValueError."""
@@ -84,22 +96,18 @@ class TestVtkOutput:
 class TestMappings:
     """Test class for reader and writer mappings."""
 
-    def test_readerMapCompleteness( self ):
-        """Test that READER_MAP contains all readable formats."""
-        expectedFormats = { VtkFormat.VTK, VtkFormat.VTS, VtkFormat.VTU, VtkFormat.PVTU, VtkFormat.PVTS }
-        assert set( READER_MAP.keys() ) == expectedFormats
+    def test_xmlFormatsCompleteness( self ):
+        """Test that XML_FORMATS contains all XML-based readable formats."""
+        expectedFormats = {
+            VtkFormat.VTU, VtkFormat.VTS, VtkFormat.VTI, VtkFormat.VTP, VtkFormat.VTR, VtkFormat.PVTU, VtkFormat.PVTS,
+            VtkFormat.PVTI, VtkFormat.PVTP, VtkFormat.PVTR
+        }
+        assert XML_FORMATS == expectedFormats
 
     def test_writerMapCompleteness( self ):
         """Test that WRITER_MAP contains all writable formats."""
         expectedFormats = { VtkFormat.VTK, VtkFormat.VTS, VtkFormat.VTU }
         assert set( WRITER_MAP.keys() ) == expectedFormats
-
-    def test_readerMapClasses( self ):
-        """Test that READER_MAP contains valid reader classes."""
-        for formatType, readerClass in READER_MAP.items():
-            assert hasattr( readerClass, '__name__' )
-            # All readers should be classes
-            assert isinstance( readerClass, type )
 
     def test_writerMapClasses( self ):
         """Test that WRITER_MAP contains valid writer classes."""
@@ -269,7 +277,7 @@ class TestReadMesh:
         invalidFile = tmp_path / "invalid.vtu"
         invalidFile.write_text( "This is not a valid VTU file" )
 
-        with pytest.raises( ValueError, match="Could not find a suitable reader" ):
+        with pytest.raises( ValueError, match="Failed to read file" ):
             readMesh( str( invalidFile ) )
 
 
