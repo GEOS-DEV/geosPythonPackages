@@ -38,6 +38,7 @@ requires-python = ">= 3.10"
 dependencies = [
     "geos-geomechanics",
     "geos-utils",
+    "geos-mesh",
     "vtk >= 9.3",
     "numpy >= 2.2",
     "pandas >= 2.2",
@@ -56,11 +57,11 @@ build = [
   "build ~= 1.2"
 ]
 dev = [
-   "mypy", 
+   "mypy",
    "yapf",
 ]
 test = [
-   "pytest-cov", 
+   "pytest-cov",
    "pytest"
 ]
 
