@@ -12,8 +12,16 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
-from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
-    vtkMergeBlocks, )
+from packaging.version import Version
+
+# TODO: remove this condition when all codes are adapted for Paraview 6.0
+import paraview
+if Version( paraview.__version__ ) >= Version( "6.0" ):
+    from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
+else:
+    from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
+        vtkMergeBlocks, )
+
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
