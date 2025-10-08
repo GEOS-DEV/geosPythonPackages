@@ -44,7 +44,7 @@ usage:
 class RegexExceptionFilter( logging.Filter ):
     """Class to regexp VTK messages rethrown into logger by VTKCaptureLog."""
 
-    pattern: str = r"vtkExecutive.cxx"  #pattern captured that will raise a vtkError
+    pattern: str = r"ERR"  #pattern captured that will raise a vtkError
 
     def __init__( self ) -> None:
         """Init filter with class based pattern as this is patch to logging logic."""
