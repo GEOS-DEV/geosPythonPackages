@@ -51,7 +51,7 @@ class RegexExceptionFilter( logging.Filter ):
         super().__init__()
         self.regex = re.compile( self.pattern )
 
-    def filter( self, record: logging.LogRecord ) -> None:
+    def filter( self, record: logging.LogRecord ) -> bool:
         """Filter VTK Error from stdErr.
 
         Args:
