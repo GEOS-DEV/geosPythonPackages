@@ -1,4 +1,4 @@
-name: geosPythonPackages CI 
+name: geosPythonPackages CI
 on: pull_request
 
 # Cancels in-progress workflows for a PR when updated
@@ -9,13 +9,13 @@ concurrency:
 
 jobs:
   # Checks if PR title follows conventional semantics
-  semantic_pull_request:    
+  semantic_pull_request:
     permissions:
-      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
+      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and
       statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
-      contents: read    
+      contents: read
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check if the PR name has conventional semantics
         if: github.event_name == 'pull_request'
@@ -27,7 +27,7 @@ jobs:
           wip: true
           # Configure that a scope doesn't need to be provided.
           requireScope: false
-    
+
       - name: Skip the check on main branch
         if:  github.ref_name == 'main'
         run: |
@@ -40,11 +40,12 @@ jobs:
       max-parallel: 3
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        package-name: 
+        package-name:
           - geos-ats
           - geos-geomechanics
           - geos-mesh
           - geos-posp
+          - geos-processing
           - geos-timehistory
           - geos-trame
           - geos-utils
@@ -59,6 +60,8 @@ jobs:
             dependencies: "geos-utils geos-geomechanics"
           - package-name: geos-posp
             dependencies: "geos-utils geos-mesh geos-geomechanics"
+          - package-name: geos-processing
+            dependencies: "geos-utils geos-mesh geos-geomechanics geos-posp"
           - package-name: pygeos-tools
             dependencies: "geos-utils geos-mesh"
           - package-name: geos-timehistory
@@ -77,7 +80,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pytest yapf toml
 
-        DEPS="${{ matrix.dependencies || '' }}"  
+        DEPS="${{ matrix.dependencies || '' }}"
 
         if [ -n "$DEPS" ]; then
         echo "Installing additional dependencies: $DEPS"
