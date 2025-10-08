@@ -124,20 +124,18 @@ jobs:
         echo "=== Test 1: Direct setupPythonEnvironment.bash execution ==="
         mkdir -p bin_direct
         
-        # Create symlinks in /usr/bin so the setup script can find them
-        echo "=== Creating symlinks for setup script compatibility ==="
-        ln -sf /usr/local/bin/preprocess_xml /usr/bin/preprocess_xml
-        ln -sf /usr/local/bin/format_xml /usr/bin/format_xml
+        # The setup script searches /usr/bin but pip installs to /usr/local/bin
+        # We need to patch the setup script to also search /usr/local/bin
+        echo "=== Patching setupPythonEnvironment.bash to search /usr/local/bin ==="
         
-        # Also create any other missing scripts that might be needed
-        for script in convert_abaqus run_geos_ats setup_ats_environment geos_ats_log_check geos_ats_restart_check geos_ats_curve_check geos_ats_process_tests_fails mesh-doctor; do
-          if [ -f "/usr/local/bin/$script" ]; then
-            ln -sf "/usr/local/bin/$script" "/usr/bin/$script"
-            echo "Created symlink for $script"
-          fi
-        done
+        # Create a temporary modified version of the setup script
+        TEMP_SETUP_SCRIPT="/tmp/setupPythonEnvironment_patched.bash"
+        cp "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" "$TEMP_SETUP_SCRIPT"
         
-        bash "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" \
+        # Add /usr/local/bin to the search paths (after /usr/bin but before ~/.local/bin)
+        sed -i 's|for ff in /usr/bin/\$f |for ff in /usr/bin/\$f /usr/local/bin/\$f |g' "$TEMP_SETUP_SCRIPT"
+        
+        bash "$TEMP_SETUP_SCRIPT" \
           -p $(which python3) \
           -b "$(pwd)/bin_direct" \
           --python-pkg-branch "$CURRENT_GEOSPYTHONPACKAGES_BRANCH_NAME" \
