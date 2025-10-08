@@ -27,5 +27,5 @@ class RaiseMergeBlocksEnhanced( TestCase ):
     def test_TypeError( self ) -> None:
         multiBlockDataset = vtkMultiBlockDataSet()  # should fail on empty data
         filter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
-        if Version( vtk.__version__ ) >= Version( "9.5" ):
+        if Version( vtk.__version__ ) < Version( "9.5" ):
             self.assertRaises( VTKError, filter.applyFilter )
