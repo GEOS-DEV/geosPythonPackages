@@ -677,7 +677,6 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return False
-
     return True
 
 

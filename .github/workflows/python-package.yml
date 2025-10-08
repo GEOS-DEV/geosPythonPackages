@@ -41,13 +41,13 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         package-name: 
-          - geos-ats
+          - geos-ats  
+          - geos-utils
           - geos-geomechanics
           - geos-mesh
           - geos-posp
           - geos-timehistory
           - geos-trame
-          - geos-utils
           - geos-xml-tools
           - geos-xml-viewer
           - hdf5-wrapper
