@@ -124,7 +124,7 @@ jobs:
         echo "=== Test 1: Direct setupPythonEnvironment.bash execution ==="
         mkdir -p bin_direct
         
-        # The setup script searches /usr/bin but pip installs to /usr/local/bin
+        # The setup script searches specific paths but pip installs to /usr/local/bin
         # We need to patch the setup script to also search /usr/local/bin
         echo "=== Patching setupPythonEnvironment.bash to search /usr/local/bin ==="
         
@@ -132,8 +132,10 @@ jobs:
         TEMP_SETUP_SCRIPT="/tmp/setupPythonEnvironment_patched.bash"
         cp "$SETUP_PYTHON_ENVIRONMENT_SCRIPT" "$TEMP_SETUP_SCRIPT"
         
-        # Add /usr/local/bin to the search paths (after /usr/bin but before ~/.local/bin)
-        sed -i 's|for ff in /usr/bin/\$f |for ff in /usr/bin/\$f /usr/local/bin/\$f |g' "$TEMP_SETUP_SCRIPT"
+        # Add /usr/local/bin to the MOD_SEARCH_PATH array right after the python bin directory
+        # The original line looks like: declare -a MOD_SEARCH_PATH=("$(dirname $PYTHON_TARGET)"
+        # We insert /usr/local/bin as the second entry
+        sed -i '/^declare -a MOD_SEARCH_PATH=.*PYTHON_TARGET)"/a\                            "/usr/local/bin"' "$TEMP_SETUP_SCRIPT"
         
         bash "$TEMP_SETUP_SCRIPT" \
           -p $(which python3) \
