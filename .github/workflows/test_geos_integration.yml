@@ -175,11 +175,17 @@ jobs:
         make geosx_python_tools_clean
         
         if [ ! -f "bin/preprocess_xml" ] && [ ! -f "bin/format_xml" ]; then
-          echo "Python tools successfully removed by clean target"
+          echo "✓ Python tool symlinks successfully removed by clean target"
         else
-          echo "Warning: Python tools still exist after clean"
+          echo "ERROR: Python tool symlinks still exist after clean"
           exit 1
         fi
+        
+        echo ""
+        echo "Note: The geosx_python_tools_clean target only removes symlinks in bin/,"
+        echo "not the system-wide packages installed by Test 1. This is expected behavior."
+        echo "System packages in /usr/local/bin/ and /usr/local/lib/ are reused by subsequent builds."
+        echo ""
         
         # Rebuilding tools here because the next test ('make ..._test') requires them.
         echo "Rebuilding tools for next test..."
