@@ -29,9 +29,12 @@ from geos.utils.PhysicalConstants import (
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from PVplugins.PVExtractMergeBlocksVolume import PVExtractMergeBlocksVolume
-from PVplugins.PVGeomechanicsAnalysis import PVGeomechanicsAnalysis
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 
 __doc__ = """
 PVGeomechanicsWorkflowVolume is a Paraview plugin that execute multiple filters
@@ -330,7 +333,8 @@ class PVGeomechanicsWorkflowVolume( VTKPythonAlgorithmBase ):
             # 1. extract volume
             self.doExtractAndMerge()
             # 2. compute Geomechanical outputs in volume mesh
-            self.computeAdditionalOutputsVolume()
+            a = self.computeAdditionalOutputsVolume()
+            print( a )
 
         except AssertionError as e:
             mess: str = "Geomechanics workflow failed due to:"
@@ -369,15 +373,16 @@ class PVGeomechanicsWorkflowVolume( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
-        filter = PVGeomechanicsAnalysis()
-        filter.SetInputDataObject( self.m_volumeMesh )
-        filter.b01SetGrainBulkModulus( self.getGrainBulkModulus() )
-        filter.b02SetSpecificDensity( self.getSpecificDensity() )
-        filter.d01SetRockCohesion( self.getRockCohesion() )
-        filter.d02SetFrictionAngle( self.getFrictionAngle() )
-        filter.c01SetAdvancedOutputs( self.m_computeAdvancedOutputs )
-        filter.SetLogger( self.m_logger )
-        filter.Update()
-        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        filter = GeomechanicsCalculator( self.m_volumeMesh,
+                                         computeAdvancedOutputs=self.getComputeAdvancedOutputs(),
+                                         speHandler=True )
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+        filter.setGrainBulkModulus( self.getGrainBulkModulus() )
+        filter.setSpecificDensity( self.getSpecificDensity() )
+        filter.setRockCohesion( self.getRockCohesion() )
+        filter.setFrictionAngle( self.getFrictionAngle() )
+        filter.applyFilter()
+        self.m_volumeMesh.ShallowCopy( filter.getOutput() )
         self.m_volumeMesh.Modified()
         return True

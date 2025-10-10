@@ -47,7 +47,7 @@ To do this, you can clone a copy of the geosPythonPackages repository and instal
     cd geosPythonPackages/
     python -m pip install --upgrade geos-ats
 
-    
+
 .. note::
     To upgrade an existing installation, the python executable in the above command should correspond to the version you indicated in your host config.  If you have previously built the tools, this version will be linked in the build directory: `build_dir/bin/python`.
 
@@ -87,7 +87,9 @@ Packages
     geos-mesh
 
     geos-posp
-    
+
+    geos-processing
+
     geos-pv
 
     geos-timehistory
