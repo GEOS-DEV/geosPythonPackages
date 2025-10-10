@@ -104,7 +104,7 @@ Usage is:
 #         raise NotImplementedError
 
 
-def SISOFilter(decorated_label, decorated_type):
+def SISOFilter(category, decorated_label, decorated_type):
     """
     Decorate single input single output filter
     """
@@ -114,7 +114,6 @@ def SISOFilter(decorated_label, decorated_type):
         original_init = cls.__init__
         # Créer une fonction __init__ personnalisée
         def new_init(self, *ar, **kw):
-            print(f"Is decorating init")
             VTKPythonAlgorithmBase.__init__(
                 self, 
                 nInputPorts=1,
@@ -149,22 +148,26 @@ def SISOFilter(decorated_label, decorated_type):
                 outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
             return VTKPythonAlgorithmBase.RequestDataObject(self, request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
         
+        # to be inserted in the class
         class_dict = {
                 '__init__': new_init,
                 '__module__': cls.__module__,
                 '__qualname__': cls.__qualname__,
                 'RequestDataObject' : RequestDataObject,
-                'RequestData': cls.RequestData,
+                # 'RequestData': cls.RequestData,
             }
-        print(f"Is creating Wrapping class") 
-        # Créer dynamiquement la nouvelle classe
+
+        # if hasattr(cls,'RequestData'):
+            # class_dict['RequestData'] = cls.RequestData
+
+        # dynamically creates a class
         WrappingClass = type(
             cls.__name__,  # Nom de la classe
-            (VTKPythonAlgorithmBase,cls),  # Bases
+            (cls,VTKPythonAlgorithmBase),  # Bases
             class_dict
         )
         
-        # Copier les métadonnées
+        # Copy metadata
         update_wrapper(WrappingClass, cls, updated=[])
 
         #decorate it old fashion way
@@ -172,12 +175,9 @@ def SISOFilter(decorated_label, decorated_type):
                                             composite_data_supported=True,
                                               )(WrappingClass)
         WrappingClass = smproperty.input( name="Input", port_index=0 )(WrappingClass)
-        WrappingClass = smhint.xml( '<ShowInMenu category="4- Geos Utils"/>')(WrappingClass)
+        WrappingClass = smhint.xml( category )(WrappingClass)
         WrappingClass = smproxy.filter( name=cls.__name__, 
                                        label=decorated_label)(WrappingClass)
-        print(f"returned class ids {cls.__name__}")
-        print(f"returned class ids {dir(WrappingClass)}") 
-        print(f"returned class WrappingClass {WrappingClass.__name__}") 
         
         return WrappingClass
     return decorated_class
