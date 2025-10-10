@@ -12,8 +12,8 @@ import pandas as pd  # type: ignore[import-untyped]
 from packaging.version import Version
 
 # TODO: remove this condition when all codes are adapted for Paraview 6.0
-import paraview
-if Version( paraview.__version__ ) >= Version( "6.0" ):
+import vtk
+if Version( vtk.__version__ ) >= Version( "9.5" ):
     from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
 else:
     from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
