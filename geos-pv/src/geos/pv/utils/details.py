@@ -148,6 +148,32 @@ def SISOFilter(category, decorated_label, decorated_type):
                 outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
             return VTKPythonAlgorithmBase.RequestDataObject(self, request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
         
+
+        def RequestData( self , 
+                        request: vtkInformation,  # noqa: F841
+                        inInfoVec: list[ vtkInformationVector ],
+                        outInfoVec: vtkInformationVector,
+                        ) -> int:
+            """Inherited from VTKPythonAlgorithmBase::RequestData.
+
+            Args:
+                request (vtkInformation): Request
+                inInfoVec (list[vtkInformationVector]): Input objects
+                outInfoVec (vtkInformationVector): Output objects
+
+            Returns:
+                int: 1 if calculation successfully ended, 0 otherwise.
+            """
+            inputMesh: vtkMultiBlockDataSet = self.GetInputData( inInfoVec, 0, 0 )
+            outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
+            assert inputMesh is not None, "Input server mesh is null."
+            assert outputMesh is not None, "Output pipeline is null."
+
+            outputMesh.ShallowCopy( inputMesh )
+
+            cls.Filter(self, inputMesh,outputMesh) #TODO make it abstract in a Protocol
+            return 1
+
         # to be inserted in the class
         class_dict = {
                 '__init__': new_init,
@@ -155,6 +181,7 @@ def SISOFilter(category, decorated_label, decorated_type):
                 '__qualname__': cls.__qualname__,
                 '__doc__' : cls.__doc__,
                 'RequestDataObject' : RequestDataObject,
+                'RequestData' : RequestData
             }
         # Copy all methods and attributes from cls, including decorator metadata
         for attr_name in dir(cls):

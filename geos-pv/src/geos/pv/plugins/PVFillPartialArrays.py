@@ -100,29 +100,7 @@ class PVFillPartialArrays:
 
         self.Modified()
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
-
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inputMesh: vtkMultiBlockDataSet = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
-        assert inputMesh is not None, "Input server mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
-        outputMesh.ShallowCopy( inputMesh )
-
+    def Filter(self,inputMesh, outputMesh):
         filter: FillPartialArrays = FillPartialArrays( outputMesh,
                                                        self.dictAttributesValues,
                                                        speHandler=True,
@@ -134,5 +112,5 @@ class PVFillPartialArrays:
         filter.applyFilter()
 
         self.clearDictAttributesValues = True
-
-        return 1
+        
+        return 
