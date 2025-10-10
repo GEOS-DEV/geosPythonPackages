@@ -47,7 +47,10 @@ To use it:
 """
 
 print(f"Is using PVFillPartialArrays")
-@smproperty.input(name="Input", port_index=0)
+@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>')
+@smproxy.filter( name="PVFillPartialArray", label="Fill Partial Arrays")
+@smproperty.input( name="Input", port_index=0 )
+@smdomain.datatype(dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True, )
 @SISOFilter( decorated_label="Fill Partial Arrays",decorated_type="vtkMultiBlockDataSet")
 class PVFillPartialArrays:
 

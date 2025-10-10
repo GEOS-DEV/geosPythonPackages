@@ -144,7 +144,7 @@ def SISOFilter(decorated_label, decorated_type):
             if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
                 outData = inData.NewInstance()
                 outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-            return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+            return VTKPythonAlgorithmBase.RequestDataObject(self, request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
         print(f"Is creating Wrapping class") 
         # Créer dynamiquement la nouvelle classe
@@ -156,6 +156,7 @@ def SISOFilter(decorated_label, decorated_type):
                 '__module__': cls.__module__,
                 '__qualname__': cls.__qualname__,
                 'RequestDataObject' : RequestDataObject,
+                'RequestData': cls.RequestData,
             }
         )
         
@@ -163,12 +164,11 @@ def SISOFilter(decorated_label, decorated_type):
         update_wrapper(WrappingClass, cls, updated=[])
 
         #decorate it old fashion way
-        smhint.xml( '<ShowInMenu category="4- Geos Utils"/>')(WrappingClass)
-        smproxy.filter( name=cls.__name__, label=decorated_label)(WrappingClass)
+        # smhint.xml( '<ShowInMenu category="4- Geos Utils"/>')(WrappingClass)
+        # smproxy.filter( name=cls.__name__, label=decorated_label)(WrappingClass)
         # smproperty.input( name="Input", port_index=0 )(WrappingClass)
-        smdomain.datatype(dataTypes=[ decorated_type ], composite_data_supported=True, )(WrappingClass)
+        # smdomain.datatype(dataTypes=[ decorated_type ], composite_data_supported=True, )(WrappingClass)
         print(f"returned class ids {cls.__name__}")
-        # dbg = getattr(WrappingClass)
         print(f"returned class ids {dir(WrappingClass)}") 
         print(f"returned class WrappingClass {WrappingClass.__name__}") 
         
