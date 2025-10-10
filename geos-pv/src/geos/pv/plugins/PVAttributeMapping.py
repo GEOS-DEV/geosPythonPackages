@@ -114,7 +114,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
                          input_domain_name="onPiece_Attribute_List">
             <RequiredProperties>
                 <Property function="Input" name="meshFrom" />
-                <Property function="FieldDataSelection" name="AttributeType" />
+                <Property function="FieldDataSelection" name="AttributePiece" />
             </RequiredProperties>
         </ArrayListDomain>
         <Documentation>
