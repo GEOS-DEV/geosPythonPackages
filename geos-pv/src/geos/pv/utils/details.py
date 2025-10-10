@@ -153,12 +153,18 @@ def SISOFilter(category, decorated_label, decorated_type):
                 '__init__': new_init,
                 '__module__': cls.__module__,
                 '__qualname__': cls.__qualname__,
+                '__doc__' : cls.__doc__,
                 'RequestDataObject' : RequestDataObject,
-                # 'RequestData': cls.RequestData,
             }
-
-        # if hasattr(cls,'RequestData'):
-            # class_dict['RequestData'] = cls.RequestData
+        # Copy all methods and attributes from cls, including decorator metadata
+        for attr_name in dir(cls):
+            if attr_name.startswith('_'):
+                continue  # Skip private/magic methods (already handled or inherited)
+            
+            attr = getattr(cls, attr_name)
+            # Copy methods with their decorators
+            if callable(attr) and attr_name not in class_dict:
+                class_dict[attr_name] = attr
 
         # dynamically creates a class
         WrappingClass = type(
