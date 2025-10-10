@@ -190,29 +190,6 @@ def getBlockFromFlatIndex( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCo
     return None
 
 
-def getBlockFromName( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-                      blockName: str ) -> Union[ None, vtkDataObject ]:
-    """Get the block named blockName from the vtkMultiBlockDataSet.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): MultiBlockDataSet with the block to get.
-        blockName (str): The name of the block to get.
-
-    Returns:
-        Union[None, vtkDataObject]: The block name blockName if it exists, None otherwise
-    """
-    # initialize data object tree iterator
-    iterator: vtkDataObjectTreeIterator = vtkDataObjectTreeIterator()
-    iterator.SetDataSet( multiBlockDataSet )
-    iterator.VisitOnlyLeavesOff()
-    iterator.GoToFirstItem()
-    while iterator.GetCurrentDataObject() is not None:
-        if iterator.GetCurrentMetaData().Get( vtkMultiBlockDataSet.NAME() ) == blockName:
-            return iterator.GetCurrentDataObject()
-        iterator.GoToNextItem()
-    return None
-
-
 def extractBlock( multiBlockDataSet: vtkMultiBlockDataSet, blockIndex: int ) -> vtkMultiBlockDataSet:
     """Extract the block with index blockIndex from multiBlockDataSet.
 
