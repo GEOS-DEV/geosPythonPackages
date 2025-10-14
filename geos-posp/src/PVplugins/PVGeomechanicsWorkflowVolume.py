@@ -333,7 +333,7 @@ class PVGeomechanicsWorkflowVolume( VTKPythonAlgorithmBase ):
             # 1. extract volume
             self.doExtractAndMerge()
             # 2. compute Geomechanical outputs in volume mesh
-            a = self.computeAdditionalOutputsVolume()
+            self.computeAdditionalOutputsVolume()
 
         except AssertionError as e:
             mess: str = "Geomechanics workflow failed due to:"
