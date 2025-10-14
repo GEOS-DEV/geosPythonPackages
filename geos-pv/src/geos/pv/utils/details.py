@@ -16,6 +16,7 @@ from enum import Enum
 class FilterCategory( str, Enum ):
     GEOS_UTILS = '4- Geos Utils'
     GEOS_MESH = '1- Geos Mesh'
+    GEOS_PROP = '0- Geos Pre-processing'
     GEOS_GEOMECHANICS = '2- Geos Geomechanics'
     GEOS_PV = '3- Geos PV'
     GEOS_QC = '5- Geos QC'
@@ -99,8 +100,8 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
                 VTKPythonAlgorithmBase.__init__( self,
                                                  nInputPorts=1,
                                                  nOutputPorts=1,
-                                                 inputType=decorated_type,
-                                                 outputType=decorated_type )
+                                                 inputType=decorated_type if not isinstance(list,decorated_type) else "vtkDataObject",
+                                                 outputType=decorated_type if not isinstance(list,decorated_type) else "vtkDataObject")
 
                 #If wrapped class has more to init there it is applied
                 #avoid the overwritten init by decorator taking place of the cls

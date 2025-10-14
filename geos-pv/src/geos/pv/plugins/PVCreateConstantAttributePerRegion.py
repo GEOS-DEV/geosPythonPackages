@@ -5,23 +5,18 @@
 import sys
 from pathlib import Path
 
-from typing import Union, Any
+from typing import Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smhint, smproperty, smproxy,
+    smdomain, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
+
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
     vtkDataSet,
 )
 
@@ -32,6 +27,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.pv.utils.details import SISOFilter, FilterCategory
 from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, vnp, np
 
 __doc__ = """
@@ -42,7 +38,7 @@ If other region indexes exist, values are set to nan for float type, -1 for int 
 Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
 The relation index/values is given by a dictionary. Its keys are the indexes and its items are the list of values for each component.
 
-.. Warning:: 
+.. Warning::
     The input mesh should contain an attribute corresponding to the regions.
 
 To use it:
@@ -54,24 +50,13 @@ To use it:
 * Apply.
 
 """
-
-
-@smproxy.filter(
-    name="PVCreateConstantAttributePerRegion",
-    label="Create Constant Attribute Per Region",
-)
-@smhint.xml( """<ShowInMenu category="0- Geos Pre-processing"/>""" )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkMultiBlockDataSet", "vtkDataSet" ],
-    composite_data_supported=True,
-)
-class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
+@SISOFilter( category=FilterCategory.GEOS_PROP,
+             decorated_label="Create Constant Attribute Per Region",
+             decorated_type=[ "vtkMultiBlockDataSet", "vtkDataSet" ])
+class PVCreateConstantAttributePerRegion:
 
     def __init__( self: Self ) -> None:
         """Create an attribute with constant value per region."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, inputType="vtkDataObject", outputType="vtkDataObject" )
-
         self.clearDictRegionValues: bool = True
 
         # Region attribute settings.
@@ -287,53 +272,13 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Group the widgets to set the settings of the new attribute."""
         self.Modified()
 
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+    def Filter(self, inputMesh: vtkDataSet , outputMesh: vtkDataSet) -> None:
+        """Is applying CreateConstantAttributePerRegion filter.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            inputMesh : a mesh to transform
+            outputMesh : a mesh transformed
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
-
-    def RequestData(
-            self: Self,
-            request: vtkInformation,  # noqa: F841
-            inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-            outInfoVec: vtkInformationVector,  # noqa: F841
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
-
-        Args:
-            request (vtkInformation): Request.
-            inInfoVec (list[vtkInformationVector]): Input objects.
-            outInfoVec (vtkInformationVector): Output objects.
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = self.GetOutputData( outInfoVec, 0 )
-
-        assert inputMesh is not None, "Input mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
-        outputMesh.ShallowCopy( inputMesh )
         filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
             outputMesh,
             self.regionName,
@@ -352,4 +297,4 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
         self.clearDictRegion = True
 
-        return 1
+        return

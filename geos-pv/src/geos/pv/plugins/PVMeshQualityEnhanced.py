@@ -7,11 +7,9 @@ from pathlib import Path
 from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+     VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
     vtkDataArraySelection,
 )
 from vtkmodules.vtkCommonDataModel import (
@@ -44,6 +42,8 @@ from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 
+from geos.pv.utils.details import SISOFilter, FilterCategory
+
 __doc__ = """
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
 
@@ -65,21 +65,13 @@ To use it:
 .. IMPORTANT::
     Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
-
-
-@smproxy.filter( name="PVMeshQualityEnhanced", label="Mesh Quality Enhanced" )
-@smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid" ],
-    composite_data_supported=True,
-)
-class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
+@SISOFilter( category=FilterCategory.GEOS_QC,
+             decorated_label="Mesh Quality Enhanced",
+             decorated_type="vtkUnstructuredGrid")
+class PVMeshQualityEnhanced:
 
     def __init__( self: Self ) -> None:
         """Merge collocated points."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-
         self._filename: Optional[ str ] = None
         self._saveToFile: bool = True
         self._blockIndex: int = 0
@@ -212,31 +204,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
     def Modified( self: Self ) -> None:
         """Overload Modified method to reset _blockIndex."""
         self._blockIndex = 0
-        super().Modified()
-
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
-
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )
+        VTKPythonAlgorithmBase.Modified()
 
     def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.
@@ -247,27 +215,14 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
+    def Filter(self, inputMesh: vtkUnstructuredGrid, outputMesh:vtkUnstructuredGrid) -> int:
+        """Is applying MeshQualityEnhanced to the input Mesh.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            inputMesh : a mesh to transform
+            outputMesh : a mesh transformed
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inputMesh: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( outInfoVec, 0 )
-        assert inputMesh is not None, "Input server mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
         triangleMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
             self._getQualityMetricsToUse( self._triangleQualityMetric ) )
         quadMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
