@@ -18,6 +18,7 @@ class FilterCategory( str, Enum ):
     GEOS_MESH = '1- Geos Mesh'
     GEOS_GEOMECHANICS = '2- Geos Geomechanics'
     GEOS_PV = '3- Geos PV'
+    GEOS_QC = '5- Geos QC'
     # Add more as needed
 
 

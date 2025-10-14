@@ -57,7 +57,7 @@ class PVFillPartialArrays:
         <StringVectorProperty
             name="AttributeTable"
             number_of_elements="2"
-            command="setDictAttributesValues"
+            command="_setDictAttributesValues"
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
@@ -75,7 +75,7 @@ class PVFillPartialArrays:
             </Hints>
         </StringVectorProperty>
     """ )
-    def setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
+    def _setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
