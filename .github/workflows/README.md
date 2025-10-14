@@ -16,6 +16,7 @@ Tests each Python package independently to ensure:
 - Code quality (linting with yapf)
 - Functionality (unit tests with pytest)
 - Python version compatibility (3.10, 3.11, 3.12)
+- VTK version compatibility (>= 9.3)
 
 ### Tested Packages
 - `geos-ats` - Automated Testing System for GEOS
