@@ -5,7 +5,7 @@ from geos.mesh.io.vtkIO import VtkOutput
 
 __POLICY = "policy"
 __FIELD_POLICY = "field"
-__INTERNAL_SURFACES_POLICY = "internal_surfaces"
+__INTERNAL_SURFACES_POLICY = "internalSurfaces"
 __POLICIES = ( __FIELD_POLICY, __INTERNAL_SURFACES_POLICY )
 
 __FIELD_NAME = "name"

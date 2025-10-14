@@ -20,8 +20,8 @@ def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
     mainMesh: str = "output.vtu"
     fractureMesh: str = "fracture.vtu"
 
-    cliGen: str = f"generate_fractures --policy {{}} --name {field} --values 0,1 --output {mainMesh} --fracturesOutputDir ."
-    allCliArgs = cliGen.format( "field" ).split(), cliGen.format( "internal_surfaces" ).split(), cliGen.format(
+    cliGen: str = f"generateFractures --policy {{}} --name {field} --values 0,1 --output {mainMesh} --fracturesOutputDir ."
+    allCliArgs = cliGen.format( "field" ).split(), cliGen.format( "internalSurfaces" ).split(), cliGen.format(
         "dummy" ).split()
     policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
     exceptions = False, False, True
@@ -35,7 +35,22 @@ def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
         yield TestCase( cliArgs, options, exception )
 
 
-def __f( testCase: TestCase ):
+def __parseAndValidateOptions( testCase: TestCase ):
+    """
+    Parse CLI arguments and validate that the resulting options match expected values.
+
+    This helper function simulates the CLI parsing process by:
+    1. Creating an argument parser with the generateFractures subparser
+    2. Parsing the test case's CLI arguments
+    3. Converting the parsed arguments to Options
+    4. Asserting that key fields match the expected options
+
+    Args:
+        testCase (TestCase): Test case containing CLI arguments and expected options.
+
+    Raises:
+        AssertionError: If any of the parsed options don't match expected values.
+    """
     parser = argparse.ArgumentParser( description='Testing.' )
     subparsers = parser.add_subparsers()
     fillSubparser( subparsers )
@@ -56,7 +71,7 @@ def test( testCase: TestCase ):
     if testCase.exception:
         with pytest.raises( SystemExit ):
             pytest.skip( "Test to be fixed" )
-            __f( testCase )
+            __parseAndValidateOptions( testCase )
     else:
         pytest.skip( "Test to be fixed" )
-        __f( testCase )
+        __parseAndValidateOptions( testCase )

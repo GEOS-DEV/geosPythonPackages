@@ -200,18 +200,18 @@ def __generateTestData() -> Iterator[ TestCase ]:
                     result=TestResult( 4 * 4, 3, 4, 1 ) )
 
 
-@pytest.mark.parametrize( "test_case", __generateTestData() )
-def test_generate_fracture( test_case: TestCase ):
-    mainMesh, fractureMeshes = __splitMeshOnFractures( test_case.inputMesh, test_case.options )
+@pytest.mark.parametrize( "TestCase", __generateTestData() )
+def test_generateFracture( TestCase: TestCase ):
+    mainMesh, fractureMeshes = __splitMeshOnFractures( TestCase.inputMesh, TestCase.options )
     fractureMesh: vtkUnstructuredGrid = fractureMeshes[ 0 ]
-    assert mainMesh.GetNumberOfPoints() == test_case.result.mainMeshNumPoints
-    assert mainMesh.GetNumberOfCells() == test_case.result.mainMeshNumCells
-    assert fractureMesh.GetNumberOfPoints() == test_case.result.fractureMeshNumPoints
-    assert fractureMesh.GetNumberOfCells() == test_case.result.fractureMeshNumCells
+    assert mainMesh.GetNumberOfPoints() == TestCase.result.mainMeshNumPoints
+    assert mainMesh.GetNumberOfCells() == TestCase.result.mainMeshNumCells
+    assert fractureMesh.GetNumberOfPoints() == TestCase.result.fractureMeshNumPoints
+    assert fractureMesh.GetNumberOfCells() == TestCase.result.fractureMeshNumCells
 
     res = formatCollocatedNodes( fractureMesh )
-    assert res == test_case.collocatedNodes
-    assert len( res ) == test_case.result.fractureMeshNumPoints
+    assert res == TestCase.collocatedNodes
+    assert len( res ) == TestCase.result.fractureMeshNumPoints
 
 
 def addSimplifiedFieldForCells( mesh: vtkUnstructuredGrid, field_name: str, fieldDimension: int ):

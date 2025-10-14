@@ -1,29 +1,30 @@
 # import os
 import pytest
-from typing import Tuple
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
-# from geos.mesh.doctor.actions.supported_elements import Options, action, __action
+# from geos.mesh.doctor.actions.supportedElements import Options, action, __action
 from geos.mesh.doctor.actions.vtkPolyhedron import parseFaceStream, FaceStream
 from geos.mesh.utils.genericHelpers import toVtkIdList
 
 
 # TODO Update this test to have access to another meshTests file
 @pytest.mark.parametrize( "baseName", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )
-def test_supportedElements( baseName ) -> None:
+def test_supportedElements( baseName: str ) -> None:
     """Testing that the supported elements are properly detected as supported!
-    :param baseName: Supported elements are provided as standard elements or polyhedron elements.
+
+    Args:
+        baseName (str): Supported elements are provided as standard elements or polyhedron elements.
     """
     ...
     # directory = os.path.dirname( os.path.realpath( __file__ ) )
-    # supportedElements_file_name = os.path.join( directory, "../../../../unitTests/meshTests", baseName )
-    # options = Options( chunk_size=1, num_proc=4 )
-    # result = check( supportedElements_file_name, options )
-    # assert not result.unsupported_std_elements_types
-    # assert not result.unsupported_polyhedron_elements
+    # supportedElementsFileName = os.path.join( directory, "../../../../unitTests/meshTests", baseName )
+    # options = Options( chunkSize=1, numProc=4 )
+    # result = check( supportedElementsFileName, options )
+    # assert not result.unsupportedStdElementsTypes
+    # assert not result.unsupportedPolyhedronElements
 
 
-def makeDodecahedron() -> Tuple[ vtkPoints, vtkIdList ]:
+def makeDodecahedron() -> tuple[ vtkPoints, vtkIdList ]:
     """Returns the points and faces for a dodecahedron.
     This code was adapted from an official vtk example.
     :return: The tuple of points and faces (as vtk instances).

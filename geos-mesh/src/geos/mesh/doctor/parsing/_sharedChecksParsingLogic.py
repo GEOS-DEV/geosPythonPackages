@@ -58,10 +58,10 @@ def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, h
 
     Args:
         subparsers: The subparsers action from argparse.
-        subparser_name: The name for this specific subparser (e.g., 'all-checks').
-        help_message: The help message for this subparser.
-        ordered_checkNames: The list of check names to be used in help messages.
-        check_features_config: The configuration dictionary for the checks.
+        subparserName: The name for this specific subparser (e.g., 'all-checks').
+        helpMessage: The help message for this subparser.
+        orderedCheckNames: The list of check names to be used in help messages.
+        checkFeaturesConfig: The configuration dictionary for the checks.
     """
     parser = subparsers.add_parser( subparserName,
                                     help=helpMessage,

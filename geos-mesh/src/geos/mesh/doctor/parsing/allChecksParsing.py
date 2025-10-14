@@ -62,7 +62,7 @@ CHECK_FEATURES_CONFIG = {
 
 
 def fillSubparser( subparsers: argparse._SubParsersAction ) -> None:
-    """Fills the subparser by calling the shared logic with the specific 'all_checks' configuration."""
+    """Fills the subparser by calling the shared logic with the specific 'allChecks' configuration."""
     sharedFillSubparser( subparsers=subparsers,
                          subparserName=ALL_CHECKS,
                          helpMessage="Perform one or multiple mesh-doctor checks from the complete set available.",
@@ -71,7 +71,7 @@ def fillSubparser( subparsers: argparse._SubParsersAction ) -> None:
 
 
 def convert( parsedArgs: argparse.Namespace ) -> AllChecksOptions:
-    """Converts arguments by calling the shared logic with the 'all_checks' configuration."""
+    """Converts arguments by calling the shared logic with the 'allChecks' configuration."""
     return sharedConvert( parsedArgs=parsedArgs,
                           orderedCheckNames=ORDERED_CHECK_NAMES,
                           checkFeaturesConfig=CHECK_FEATURES_CONFIG )

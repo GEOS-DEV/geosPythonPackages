@@ -305,7 +305,7 @@ def __copyFieldsSplitMesh( oldMesh: vtkUnstructuredGrid, splitMesh: vtkUnstructu
 
 def __copyFieldsFractureMesh( oldMesh: vtkUnstructuredGrid, fractureMesh: vtkUnstructuredGrid, faceCellId: list[ int ],
                               node3dToNode2d: IDMapping ) -> None:
-    """Copies the fields from the old mesh to the new fracture when using internal_surfaces policy.
+    """Copies the fields from the old mesh to the new fracture when using internalSurfaces policy.
 
     Args:
         oldMesh (vtkUnstructuredGrid): The mesh before the split.
@@ -463,7 +463,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     # In this case, it's mandatory not get rid of this element because the neighboring 3d elements won't follow.
     faceNodes: list[ Collection[ int ] ] = list()
     discardedFaceNodes: set[ Iterable[ int ] ] = set()
-    if fractureInfo.faceCellId != list():  # The fracture policy is 'internal_surfaces'
+    if fractureInfo.faceCellId != list():  # The fracture policy is 'internalSurfaces'
         faceCellId: list[ int ] = list()
         for ns, fId in zip( fractureInfo.faceNodes, fractureInfo.faceCellId ):
             if any( map( isNodeDuplicated.__getitem__, ns ) ):
@@ -505,7 +505,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
         node3dToNode2d[ n ] = i
 
     # The polygons are constructed in the same order as the faces defined in the fractureInfo. Therefore,
-    # fractureInfo.faceCellId can be used to link old cells to fracture cells for copy with internal_surfaces.
+    # fractureInfo.faceCellId can be used to link old cells to fracture cells for copy with internalSurfaces.
     polygons = vtkCellArray()
     for ns in faceNodes:
         polygon = vtkPolygon()
@@ -536,7 +536,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
         fractureMesh.SetCells( [ VTK_POLYGON ] * polygons.GetNumberOfCells(), polygons )
     fractureMesh.GetPointData().AddArray( array )
 
-    # The copy of fields from the old mesh to the fracture is only available when using the internal_surfaces policy
+    # The copy of fields from the old mesh to the fracture is only available when using the internalSurfaces policy
     # because the FractureInfo is linked to 2D elements from the oldMesh
     if fractureInfo.faceCellId != list():
         __copyFieldsFractureMesh( oldMesh, fractureMesh, faceCellId, node3dToNode2d )

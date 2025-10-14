@@ -9,6 +9,7 @@ from geos.mesh.io.vtkIO import ( VtkFormat, VtkOutput, readMesh, readUnstructure
 __doc__ = """
 Test module for vtkIO module.
 Tests the functionality of reading and writing various VTK file formats.
+Note: we will use the "tmp_path" fixture from pytest through some of these tests to allow for temporary file creation.
 """
 
 
@@ -424,10 +425,10 @@ class TestEdgeCases:
         # Create a deep directory structure
         deepDir = tmp_path
         for i in range( 5 ):
-            deepDir = deepDir / f"very_long_directory_name_level_{i}"
+            deepDir = deepDir / f"veryLongDirectoryNameLevel{i}"
         deepDir.mkdir( parents=True )
 
-        outputFile = deepDir / "mesh_with_very_longFilename_that_should_still_work.vtu"
+        outputFile = deepDir / "meshWithVeryLongFilenameThatShouldStillWork.vtu"
         vtkOutput = VtkOutput( str( outputFile ) )
 
         # Should work fine

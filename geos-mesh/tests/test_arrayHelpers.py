@@ -53,7 +53,7 @@ def test_computeElementMapping(
 
 @pytest.mark.parametrize( "onpoints, expected", [ ( True, {
     'GLOBAL_IDS_POINTS': 1,
-    'collocatedNodes': 2,
+    'collocated_nodes': 2,
     'PointAttribute': 3
 } ), ( False, {
     'CELL_MARKERS': 1,
@@ -198,7 +198,7 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
 @pytest.mark.parametrize( "attributeName, vtkDataType, onPoints", [
     ( "CellAttribute", 11, False ),
     ( "PointAttribute", 11, True ),
-    ( "collocatedNodes", 12, True ),
+    ( "collocated_nodes", 12, True ),
 ] )
 def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attributeName: str, vtkDataType: int,
                                       onPoints: bool ) -> None:
@@ -307,7 +307,7 @@ def test_getComponentNamesMultiBlock(
 
 
 @pytest.mark.parametrize( "attributeNames, onPoints, expected_columns", [
-    ( ( "collocatedNodes", ), True, ( "collocatedNodes_0", "collocatedNodes_1" ) ),
+    ( ( "collocated_nodes", ), True, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
 ] )
 def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...], onPoints: bool,
                                  expected_columns: Tuple[ str, ...] ) -> None:
