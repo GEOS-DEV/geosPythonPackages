@@ -392,10 +392,10 @@ class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
                                          speHandler=True )
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
-        filter.setGrainBulkModulus( self.getGrainBulkModulus() )
-        filter.setSpecificDensity( self.getSpecificDensity() )
-        filter.setRockCohesion( self.getRockCohesion() )
-        filter.setFrictionAngle( self.getFrictionAngle() )
+        filter.physicalConstants.grainBulkModulus = self.grainBulkModulus
+        filter.physicalConstants.specificDensity = self.specificDensity
+        filter.physicalConstants.rockCohesion = self.rockCohesion
+        filter.physicalConstants.frictionAngle = self.frictionAngle
         filter.applyFilter()
         self.m_volumeMesh.ShallowCopy( filter.getOutput() )
         self.m_volumeMesh.Modified()

@@ -274,10 +274,10 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
 
-        filter.setGrainBulkModulus( self.grainBulkModulus )
-        filter.setSpecificDensity( self.specificDensity )
-        filter.setRockCohesion( self.rockCohesion )
-        filter.setFrictionAngle( self.frictionAngle )
+        filter.physicalConstants.grainBulkModulus = self.grainBulkModulus
+        filter.physicalConstants.specificDensity = self.specificDensity
+        filter.physicalConstants.rockCohesion = self.rockCohesion
+        filter.physicalConstants.frictionAngle = self.frictionAngle
 
         if filter.applyFilter():
             outputMesh.ShallowCopy( filter.getOutput() )
