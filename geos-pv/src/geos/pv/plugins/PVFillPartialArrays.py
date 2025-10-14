@@ -17,11 +17,6 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
@@ -29,7 +24,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.pv.utils.details import SISOFilter
+from geos.pv.utils.details import SISOFilter, FilterCategory
 from geos.mesh.processing.FillPartialArrays import FillPartialArrays
 __doc__ = """
 Fill partial arrays of input mesh.
@@ -46,8 +41,7 @@ To use it:
 
 """
 
-print(f"Is using PVFillPartialArrays")
-@SISOFilter( category = '<ShowInMenu category="4- Geos Utils"/>',
+@SISOFilter( category = FilterCategory.GEOS_UTILS,
             decorated_label="Fill Partial Arrays",
             decorated_type="vtkMultiBlockDataSet")
 class PVFillPartialArrays:
@@ -100,7 +94,7 @@ class PVFillPartialArrays:
 
         self.Modified()
 
-    def Filter(self,inputMesh, outputMesh):
+    def Filter(self,inputMesh : vtkMultiBlockDataSet, outputMesh : vtkMultiBlockDataSet):
         filter: FillPartialArrays = FillPartialArrays( outputMesh,
                                                        self.dictAttributesValues,
                                                        speHandler=True,
