@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 # Add Enum for filter categories
 from functools import update_wrapper
-from typing import Protocol, Any, Type, TypeVar, Callable
+from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable
 from abc import abstractmethod
 from enum import Enum
 
@@ -54,15 +54,16 @@ Usage is:
 
 """
 
-
-class IsSISOFilter( Protocol ):
+U = TypeVar('U')
+@runtime_checkable
+class IsSISOFilter( Protocol[U] ):
     """Protocol to ensure that the wrapped filter defines the correct Filter core function."""
 
     @abstractmethod
     def Filter(
         self,
-        inputMesh: vtkMultiBlockDataSet,  #maybe too reducing scope
-        outputMesh: vtkMultiBlockDataSet,
+        inputMesh: U, 
+        outputMesh: U,
     ) -> None:
         """Define filter here.
 
