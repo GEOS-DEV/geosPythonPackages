@@ -15,7 +15,9 @@ name = "geos-utils"
 version = "0.1.0"
 description = "geos-utils is a Python package that gathers utilities common to all GEOS python packages."
 authors = [{name = "GEOS Contributors" }]
-maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
   "Development Status :: 4 - Beta",

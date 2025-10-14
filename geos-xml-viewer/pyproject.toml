@@ -14,7 +14,9 @@ exclude = ['tests*']
 name = "geos-xml-viewer"
 version = "1.2.1"
 description = "geos-xml-viewer is a Python package dedicated to preprocessing and postpressing of data for the geos simulation framework"
-authors = [{name = "Lionel Untereiner", email = "lionel.untereiner@external.totalenergies.com"}]
+authors = [{name = "GEOS Contributors" }]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Programming Language :: Python :: 3",
