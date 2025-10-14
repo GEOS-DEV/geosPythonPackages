@@ -1,4 +1,4 @@
-Processing
+Utilities
 ==========
 
 .. toctree::
@@ -7,5 +7,7 @@ Processing
    geosLogReaderUtils
 
    pyplotUtils
+
+   pythonViewUtils
 
    utils
