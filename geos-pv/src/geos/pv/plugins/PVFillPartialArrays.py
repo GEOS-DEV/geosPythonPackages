@@ -9,10 +9,10 @@ from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
-) # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
@@ -66,8 +66,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
 
-
-    @smproperty.xml("""
+    @smproperty.xml( """
         <StringVectorProperty
             name="AttributeTable"
             number_of_elements="2"
@@ -79,7 +78,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
                     attributeName | fillingValueComponent1 fillingValueComponent2 ...\n
                 To fill the attribute with the default value, live a blanc. The default value is:\n
                     0 for uint type, -1 for int type and nan for float type.
-            </Documentation>     
+            </Documentation>
             <Hints>
                 <AllowRestoreDefaults />
                 <ShowComponentLabels>
@@ -99,13 +98,13 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}
             self.clearDictAttributesValues = False
-        
+
         if attributeName is not None:
-            if values is not None :
+            if values is not None:
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
-                self.dictAttributesValues[ attributeName ] = None
- 
+                self.dictAttributesValues[ attributeName ] = None  # type: ignore[unreachable]
+
         self.Modified()
 
     def RequestDataObject(
@@ -155,14 +154,15 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
         outputMesh.ShallowCopy( inputMesh )
 
-        filter: FillPartialArrays = FillPartialArrays( outputMesh,
-                                                       self.dictAttributesValues, 
-                                                       True,
+        filter: FillPartialArrays = FillPartialArrays(
+            outputMesh,
+            self.dictAttributesValues,
+            speHandler=True,
         )
-        
+
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
-        
+
         filter.applyFilter()
 
         self.clearDictAttributesValues = True
