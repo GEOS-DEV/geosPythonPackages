@@ -4,9 +4,9 @@
 from geos.utils.GeosOutputsConstants import (
     GeosDomainNameEnum, )
 import logging
-from enum import Enum
+from dataclasses import dataclass
 from geos.utils.Logger import ( Logger, getLogger )
-from typing_extensions import Self, Dict
+from typing_extensions import Self
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
@@ -61,29 +61,83 @@ class GeosExtractDomain( vtkExtractBlock ):
         """Extract Bock (volume, surface, well) from geos output."""
         super().__init__()
 
-        self.geosDomainType: Dict[ int, Enum ] = {
+        self.geosDomainName: dict[ int, str ] = {
             0: GeosDomainNameEnum.VOLUME_DOMAIN_NAME,
             1: GeosDomainNameEnum.FAULT_DOMAIN_NAME,
             2: GeosDomainNameEnum.WELL_DOMAIN_NAME,
         }
 
-    def AddIndex( self, domainType: int ) -> None:
-        """Add the type of the domain to extract.
+    def GetGeosDomainName( self: Self, domainId: int ) -> str:
+        return self.geosDomainName[ domainId ]
+
+    def AddGeosDomainIndex( self, domainId: int ) -> None:
+        """Add the index of the Geos domain to extract.
 
         The domain type to extract are:
-            - Volumes -> block type = 0
-            - Faults -> block type = 1
-            - Wells -> block type = 2
+            - Volumes -> domain index = 0
+            - Faults -> domain index = 1
+            - Wells -> domain index = 2
 
         Args:
-            domainType (int): Type of the domain to extract.
+            domainId (int): Index of the Geos domain to extract.
 
         """
-        domainIndex: int = getBlockIndexFromName( self.geosDomainType[ domainType ] )
+        domainIndex: int = getBlockIndexFromName( self.geosDomainName[ domainId ] )
         return super().AddIndex( domainIndex )
 
 
 class GeosBlockExtractor:
+
+    @dataclass
+    class ExtractDomain:
+
+        _volume: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+        _fault: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+        _well: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+
+        @property
+        def volume( self: Self ) -> vtkMultiBlockDataSet:
+            return self._volume
+
+        @volume.setter
+        def volume( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            self._volume.DeepCopy( multiBlockDataSet )
+
+        @property
+        def fault( self: Self ) -> vtkMultiBlockDataSet:
+            return self._fault
+
+        @fault.setter
+        def fault( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            self._fault.DeepCopy( multiBlockDataSet )
+
+        @property
+        def well( self: Self ) -> vtkMultiBlockDataSet:
+            return self._well
+
+        @well.setter
+        def well( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            self._well.DeepCopy( multiBlockDataSet )
+
+        def getExtractDomain( self: Self, domain: int ) -> vtkMultiBlockDataSet:
+            if domain == 0:
+                return self.volume
+            elif domain == 1:
+                return self.fault
+            elif domain == 2:
+                return self.well
+            else:
+                raise IndexError
+
+        def setExtractDomain( self: Self, domain: int, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            if domain == 0:
+                self.volume = multiBlockDataSet
+            elif domain == 1:
+                self.fault = multiBlockDataSet
+            elif domain == 2:
+                self.well = multiBlockDataSet
+
+    extractDomain: ExtractDomain = ExtractDomain()
 
     def __init__(
         self: Self,
@@ -105,14 +159,11 @@ class GeosBlockExtractor:
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
 
-        self.extractFaults: bool = extractFaults
-        self.extractWells: bool = extractWells
-
-        self.extractedDomain: Dict[ int, vtkMultiBlockDataSet ] = {
-            0: vtkMultiBlockDataSet(),
-            1: vtkMultiBlockDataSet(),
-            2: vtkMultiBlockDataSet(),
-        }
+        self.domainToExtract: list[ int ] = [ 0 ]
+        if extractFaults:
+            self.domainToExtract.append( 1 )
+        if extractWells:
+            self.domainToExtract.append( 2 )
 
         # Logger.
         self.logger: Logger
@@ -145,28 +196,15 @@ class GeosBlockExtractor:
         """
         extractBlock: GeosExtractDomain = GeosExtractDomain()
         extractBlock.SetInputData( self.geosMesh )
-        extractBlock.AddIndex( 0 )
-        extractBlock.Update()
-        self.extractedDomain[ 0 ].DeepCopy( extractBlock.GetOutput() )
-        if self.extractedDomain[ 0 ].GetNumberOfBlocks() == 0:
-            self.logger.error( "The input mesh does not have volume to extract." )
-            return False
 
-        if self.extractFaults:
+        for domain in self.domainToExtract:
             extractBlock.RemoveAllIndices()
-            extractBlock.AddIndex( 1 )
+            extractBlock.AddIndex( domain )
             extractBlock.Update()
-            self.extractedDomain[ 1 ].DeepCopy( extractBlock.GetOutput() )
-            if self.extractedDomain[ 1 ].GetNumberOfBlocks() == 0:
-                self.logger.warning( "The input mesh does not have fault to extract." )
-
-        if self.extractWells:
-            extractBlock.RemoveAllIndices()
-            extractBlock.AddIndex( 2 )
-            extractBlock.Update()
-            self.extractedDomain[ 2 ].DeepCopy( extractBlock.GetOutput() )
-            if self.extractedDomain[ 2 ].GetNumberOfBlocks() == 0:
-                self.logger.warning( "The input mesh does not have well to extract." )
+            self.extractDomain.setExtractDomain( domain, extractBlock.GetOutput() )
+            if self.extractDomain.getExtractDomain( domain ).GetNumberOfBlocks() == 0:
+                self.logger.error( f"The input mesh does not have { extractBlock.GetGeosDomainName( domain ) } to extract." )
+                return False
 
         return True
 
@@ -184,4 +222,4 @@ class GeosBlockExtractor:
         Returns:
             vtkMultiBlockDataSet: The domain block extracted.
         """
-        return self.extractedDomain[ domain ]
+        return self.extractDomain.getExtractDomain( domain )
