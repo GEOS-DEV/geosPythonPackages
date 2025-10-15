@@ -749,7 +749,7 @@ class GeomechanicsCalculator:
                                     logger=self.logger ):
                 return False
 
-        self.logger.info( "All the geomechanics properties have been add to the mesh." )
+        self.logger.info( "All the geomechanics properties have been added to the mesh." )
         self.logger.info( "The filter succeeded." )
         return True
 
