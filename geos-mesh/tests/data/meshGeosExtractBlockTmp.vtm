@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0">
+    <vtkMultiBlockDataSet>
+        <Block name="CellElementRegion">
+            <DataSet name="domain" file="domain_res5_id.vtu"/>
+            <DataSet name="emptyDomain" file="domain_res5_id_empty.vtu"/>
+        </Block>
+        <Block name="SurfaceElementRegion">
+            <DataSet name="fracture" file="fracture_res5_id.vtu"/>
+            <DataSet name="emptyFracture" file="fracture_res5_id_empty.vtu"/>
+        </Block>
+        <Block name="WellElementRegion">
+            <DataSet name="triangulatedSurface" file="triangulatedSurface.vtu"/>
+        </Block>
+    </vtkMultiBlockDataSet>
+</VTKFile>

@@ -175,6 +175,8 @@ def dataSetTest() -> Any:
             vtkFilename = "data/fracture_res5_id.vtp"
         elif datasetType == "emptypolydata":
             vtkFilename = "data/fracture_res5_id_empty.vtp"
+        elif datasetType == "meshGeosExtractBlockTmp":
+            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()

@@ -22,7 +22,7 @@ There is tree domains:
     2: all the blocks referring to wells,
 
 .. Important::
-    The input mesh must be an output of a Geos simulation.
+    The input mesh must be an output of a Geos simulation or have the same domain name.
 
 .. Note::
     The volume domain is automatically extracted, by defaults the fault and well domain are empty multiBlockDataSet.
@@ -41,7 +41,7 @@ To use the filter:
     speHandler: bool # Defaults to False
 
     # Instantiate the filter
-    blockExtractor: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFaults, extractWells, speHandler )
+    filter: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFaults, extractWells, speHandler )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
@@ -93,6 +93,7 @@ class GeosExtractDomain( vtkExtractBlock ):
             domainId (int): Index of the Geos domain to extract.
         """
         blockIndex: int = getBlockIndexFromName( self.GetInput(), self.geosDomainName[ domainId ] )
+        print( domainId )
         return super().AddIndex( blockIndex )
 
 
