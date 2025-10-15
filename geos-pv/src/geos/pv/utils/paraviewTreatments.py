@@ -8,8 +8,16 @@ from typing import Any, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
-from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
-    vtkMergeBlocks, )
+
+from packaging.version import Version
+
+# TODO: remove this condition when all codes are adapted for Paraview 6.0
+import vtk
+if Version( vtk.__version__ ) >= Version( "9.5" ):
+    from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
+else:
+    from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
+        vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
