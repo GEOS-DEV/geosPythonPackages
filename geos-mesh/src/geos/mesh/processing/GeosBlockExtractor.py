@@ -65,9 +65,9 @@ class GeosExtractDomain( vtkExtractBlock ):
         super().__init__()
 
         self.geosDomainName: dict[ int, str ] = {
-            0: GeosDomainNameEnum.VOLUME_DOMAIN_NAME,
-            1: GeosDomainNameEnum.FAULT_DOMAIN_NAME,
-            2: GeosDomainNameEnum.WELL_DOMAIN_NAME,
+            0: GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value,
+            1: GeosDomainNameEnum.FAULT_DOMAIN_NAME.value,
+            2: GeosDomainNameEnum.WELL_DOMAIN_NAME.value,
         }
 
     def GetGeosDomainName( self: Self, domainId: int ) -> str:
@@ -78,12 +78,11 @@ class GeosExtractDomain( vtkExtractBlock ):
 
         Returns:
             str: The name of the Geos domain.
-
         """
         return self.geosDomainName[ domainId ]
 
     def AddGeosDomainIndex( self, domainId: int ) -> None:
-        """Add the index of the Geos domain to extract.
+        """Add the index of the wanted Geos domain block to extract.
 
         The domain type to extract are:
             - Volumes -> domain index = 0
@@ -92,9 +91,8 @@ class GeosExtractDomain( vtkExtractBlock ):
 
         Args:
             domainId (int): Index of the Geos domain to extract.
-
         """
-        blockIndex: int = getBlockIndexFromName( self.geosDomainName[ domainId ] )
+        blockIndex: int = getBlockIndexFromName( self.GetInput(), self.geosDomainName[ domainId ] )
         return super().AddIndex( blockIndex )
 
 
@@ -188,11 +186,11 @@ class GeosBlockExtractor:
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
 
-        self.domainIdToExtract: list[ int ] = [ int( 0 ) ]
+        self.domainIdToExtract: list[ int ] = [ 0 ]
         if extractFaults:
-            self.domainIdToExtract.append( int( 1 ) )
+            self.domainIdToExtract.append( 1 )
         if extractWells:
-            self.domainIdToExtract.append( int( 2 ) )
+            self.domainIdToExtract.append( 2 )
 
         # Logger.
         self.logger: Logger
