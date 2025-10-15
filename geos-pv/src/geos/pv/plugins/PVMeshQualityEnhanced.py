@@ -68,7 +68,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_QC,
              decorated_label="Mesh Quality Enhanced",
              decorated_type="vtkUnstructuredGrid")
-class PVMeshQualityEnhanced:
+class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
         """Merge collocated points."""
@@ -164,7 +164,7 @@ class PVMeshQualityEnhanced:
         """
         if self._saveToFile != saveToFile:
             self._saveToFile = saveToFile
-            self.Modified()
+            PVMeshQualityEnhanced.Modified(self)
 
     @smproperty.stringvector( name="FilePath", label="File Path" )
     @smdomain.xml( """
@@ -183,7 +183,7 @@ class PVMeshQualityEnhanced:
         """
         if self._filename != fname:
             self._filename = fname
-            self.Modified()
+            PVMeshQualityEnhanced.Modified(self)
 
     @smproperty.xml( """
                     <PropertyGroup
@@ -199,12 +199,12 @@ class PVMeshQualityEnhanced:
                     """ )
     def b03GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
-        self.Modified()
+        PVMeshQualityEnhanced.Modified(self)
 
     def Modified( self: Self ) -> None:
         """Overload Modified method to reset _blockIndex."""
         self._blockIndex = 0
-        VTKPythonAlgorithmBase.Modified()
+        VTKPythonAlgorithmBase.Modified(self)
 
     def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.

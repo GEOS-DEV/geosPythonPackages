@@ -8,7 +8,7 @@ from typing import Union, Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smproperty,
+    VTKPythonAlgorithmBase, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
@@ -46,7 +46,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decorated_label="Fill Partial Arrays",
              decorated_type="vtkMultiBlockDataSet" )
-class PVFillPartialArrays:
+class PVFillPartialArrays(VTKPythonAlgorithmBase):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
@@ -57,7 +57,7 @@ class PVFillPartialArrays:
         <StringVectorProperty
             name="AttributeTable"
             number_of_elements="2"
-            command="_setDictAttributesValues"
+            command="setDictAttributesValues"
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
@@ -75,7 +75,7 @@ class PVFillPartialArrays:
             </Hints>
         </StringVectorProperty>
     """ )
-    def _setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
+    def setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:

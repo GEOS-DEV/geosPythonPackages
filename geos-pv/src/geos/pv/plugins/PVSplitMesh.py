@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 from typing_extensions import Self
 
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+     VTKPythonAlgorithmBase
+)
 
 from vtkmodules.vtkCommonDataModel import (
     vtkPointSet, )
@@ -36,7 +39,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decorated_label="Split Mesh",
              decorated_type="vtkPointSet")
-class PVSplitMesh:
+class PVSplitMesh(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
         """Split mesh cells."""

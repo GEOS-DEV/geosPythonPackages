@@ -9,7 +9,7 @@ from typing import Any
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty,
+    VTKPythonAlgorithmBase, smdomain, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
@@ -53,7 +53,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_PROP,
              decorated_label="Create Constant Attribute Per Region",
              decorated_type=[ "vtkMultiBlockDataSet", "vtkDataSet" ])
-class PVCreateConstantAttributePerRegion:
+class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
         """Create an attribute with constant value per region."""
@@ -96,7 +96,7 @@ class PVCreateConstantAttributePerRegion:
             <NoDefault />
         </Hints>
     """ )
-    def _setRegionAttributeName( self: Self, regionName: str ) -> None:
+    def setRegionAttributeName( self: Self, regionName: str ) -> None:
         """Set region attribute name.
 
         Args:
@@ -109,7 +109,7 @@ class PVCreateConstantAttributePerRegion:
         <StringVectorProperty
             name="SetDictRegionValues"
             number_of_elements="2"
-            command="_setDictRegionValues"
+            command="setDictRegionValues"
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
@@ -127,7 +127,7 @@ class PVCreateConstantAttributePerRegion:
             </Hints>
         </StringVectorProperty>
     """ )
-    def _setDictRegionValues( self: Self, regionIndex: str, value: str ) -> None:
+    def setDictRegionValues( self: Self, regionIndex: str, value: str ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of values for each components.
 
         Args:
@@ -151,7 +151,7 @@ class PVCreateConstantAttributePerRegion:
             <Property name="SetDictRegionValues"/>
         </PropertyGroup>
     """ )
-    def _groupRegionAttributeSettingsWidgets( self: Self ) -> None:
+    def groupRegionAttributeSettingsWidgets( self: Self ) -> None:
         """Group the widgets to set the settings of the region attribute."""
         self.Modified()
 
@@ -168,7 +168,7 @@ class PVCreateConstantAttributePerRegion:
             </Documentation>
         </StringVectorProperty>
     """ )
-    def _setAttributeName( self: Self, newAttributeName: str ) -> None:
+    def setAttributeName( self: Self, newAttributeName: str ) -> None:
         """Set attribute name.
 
         Args:
@@ -201,7 +201,7 @@ class PVCreateConstantAttributePerRegion:
             The requested numpy scalar type for values of the new attribute.
         </Documentation>
     """ )
-    def _setValueType( self: Self, valueType: int ) -> None:
+    def setValueType( self: Self, valueType: int ) -> None:
         """Set the type for the value used to create the new attribute.
 
         Args:
@@ -223,7 +223,7 @@ class PVCreateConstantAttributePerRegion:
             The number of components for the new attribute to create.
         </Documentation>
     """ )
-    def _setNbComponent( self: Self, nbComponents: int ) -> None:
+    def setNbComponent( self: Self, nbComponents: int ) -> None:
         """Set the number of components of the attribute to create.
 
         Args:
@@ -246,7 +246,7 @@ class PVCreateConstantAttributePerRegion:
                 Names of components: X, Y, Z
         </Documentation>
         """ )
-    def _setComponentNames( self: Self, componentNames: str ) -> None:
+    def setComponentNames( self: Self, componentNames: str ) -> None:
         """Set the names of the components of the attribute to create.
 
         Args:
@@ -268,7 +268,7 @@ class PVCreateConstantAttributePerRegion:
             <Property name="NumberOfComponents"/>
             <Property name="ComponentNames"/>
         </PropertyGroup>""" )
-    def _groupNewAttributeSettingsWidgets( self: Self ) -> None:
+    def groupNewAttributeSettingsWidgets( self: Self ) -> None:
         """Group the widgets to set the settings of the new attribute."""
         self.Modified()
 

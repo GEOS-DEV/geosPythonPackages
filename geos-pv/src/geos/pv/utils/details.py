@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 # Add Enum for filter categories
 from functools import update_wrapper
-from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable
+from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable, Union
 from abc import abstractmethod
 from enum import Enum
 
@@ -81,14 +81,14 @@ T = TypeVar( 'T', bound='IsSISOFilter' )
 
 
 def SISOFilter( category: FilterCategory, decorated_label: str,
-                decorated_type: str ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+                decorated_type: Union[str,list] ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
     """Decorate single input single output filter."""
 
     def decorated_class( cls: Type[ T ] ) -> Type[ T ]:
         """Outer wrapper function. All is in the WrappingClass below."""
         original_init = cls.__init__
 
-        class WrappingClass( cls, VTKPythonAlgorithmBase ):  # type: ignore[valid-type]
+        class WrappingClass( cls ):  # type: ignore[valid-type]
 
             def __init__( self, *ar: Any, **kw: Any ) -> None:
                 """Pre-init the filter with the Base algo and I/O single type (usually vtkMultiBlockDataSet).
@@ -100,8 +100,8 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
                 VTKPythonAlgorithmBase.__init__( self,
                                                  nInputPorts=1,
                                                  nOutputPorts=1,
-                                                 inputType=decorated_type if not isinstance(list,decorated_type) else "vtkDataObject",
-                                                 outputType=decorated_type if not isinstance(list,decorated_type) else "vtkDataObject")
+                                                 inputType=decorated_type if isinstance(decorated_type,str) else "vtkDataObject",
+                                                 outputType=decorated_type if isinstance(decorated_type,str) else "vtkDataObject")
 
                 #If wrapped class has more to init there it is applied
                 #avoid the overwritten init by decorator taking place of the cls
@@ -158,6 +158,16 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
 
                 cls.Filter( self, inputMesh, outputMesh )
                 return 1
+        
+        # Copy all methods and attributes from cls, including decorator metadata
+        for attr_name in dir(cls):
+            if attr_name.startswith('_'):
+                continue  # Skip private/magic methods (already handled or inherited)
+            
+            attr = getattr(cls, attr_name)
+            # Copy methods with their decorators
+            if callable(attr) and attr_name not in WrappingClass.__dict__:
+                setattr(WrappingClass,attr_name,attr)
 
         # Copy metadata
         WrappingClass.__name__ = cls.__name__
@@ -168,7 +178,7 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
 
         #decorate it old fashion way
         WrappingClass = smdomain.datatype(
-            dataTypes=[ decorated_type ],
+            dataTypes=[ decorated_type ] if isinstance(decorated_type,str) else decorated_type,
             composite_data_supported=True,
         )( WrappingClass )
         WrappingClass = smproperty.input( name="Input", port_index=0 )( WrappingClass )
