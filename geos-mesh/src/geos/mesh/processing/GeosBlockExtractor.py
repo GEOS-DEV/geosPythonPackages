@@ -1,28 +1,31 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
-from geos.utils.GeosOutputsConstants import (
-    GeosDomainNameEnum, )
 import logging
 from dataclasses import dataclass
-from geos.utils.Logger import ( Logger, getLogger )
 from typing_extensions import Self
+
+from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.GeosOutputsConstants import ( GeosDomainNameEnum )
+from geos.mesh.utils.multiblockHelpers import ( getBlockIndexFromName )
+
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
-from geos.mesh.utils.multiblockHelpers import (
-    getBlockIndexFromName, )
-
 __doc__ = """
-GeosBlockExtractor module is a vtk filter that allows to extract in a vtkMultiblockDataSet
-all the block of a domain of the output mesh of geos. The volume blocks are extracted by defaults.
+GeosBlockExtractor is a vtk filter that allows to extract from an output Geos multiBlockDataSet
+all the blocks in a multiBlockDataSet of a Geos domain with its index.
 
 There is tree domains:
-    0 is all the blocks with volume mesh,
-    1 is all the blocks referring to faults,
-    2 is all the blocks referring to wells,
+    0: all the blocks referring to volume,
+    1: all the blocks referring to faults,
+    2: all the blocks referring to wells,
 
-The input mesh must be an output of Geos
+.. Important::
+    The input mesh must be an output of a Geos simulation.
+
+.. Note::
+    The volume domain is automatically extracted, by defaults the fault and well domain are empty multiBlockDataSet.
 
 To use the filter:
 
@@ -38,7 +41,7 @@ To use the filter:
     speHandler: bool # Defaults to False
 
     # Instantiate the filter
-    blockExtractor :GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFaults, extractWells, speHandler )
+    blockExtractor: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFaults, extractWells, speHandler )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
@@ -47,7 +50,7 @@ To use the filter:
     # Do calculations
     filter.applyFilter()
 
-    # Get the mesh with the wanted extracted domain
+    # Get the mesh of the wanted extracted domain
     domainId: int
     domainExtracted: vtkMultiBlockDataSet = filter.getOutput( domainId )
 """
