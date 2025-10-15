@@ -48,8 +48,8 @@ To use the filter:
     filter.applyFilter()
 
     # Get the mesh with the wanted extracted domain
-    domain: int
-    domainExtracted: vtkMultiBlockDataSet = filter.getOutput( domain )
+    domainId: int
+    domainExtracted: vtkMultiBlockDataSet = filter.getOutput( domainId )
 """
 
 loggerTitle: str = "Geos Block Extractor Filter"
@@ -58,7 +58,7 @@ loggerTitle: str = "Geos Block Extractor Filter"
 class GeosExtractDomain( vtkExtractBlock ):
 
     def __init__( self: Self ) -> None:
-        """Extract Bock (volume, surface, well) from geos output."""
+        """Extract domain (volume, fault, well) from geos output."""
         super().__init__()
 
         self.geosDomainName: dict[ int, str ] = {
@@ -68,6 +68,15 @@ class GeosExtractDomain( vtkExtractBlock ):
         }
 
     def GetGeosDomainName( self: Self, domainId: int ) -> str:
+        """Get the name from the Geos domain index.
+
+        Args:
+            domainId (int): The index of the Geos domain.
+
+        Returns:
+            str: The name of the Geos domain.
+
+        """
         return self.geosDomainName[ domainId ]
 
     def AddGeosDomainIndex( self, domainId: int ) -> None:
@@ -82,21 +91,22 @@ class GeosExtractDomain( vtkExtractBlock ):
             domainId (int): Index of the Geos domain to extract.
 
         """
-        domainIndex: int = getBlockIndexFromName( self.geosDomainName[ domainId ] )
-        return super().AddIndex( domainIndex )
+        blockIndex: int = getBlockIndexFromName( self.geosDomainName[ domainId ] )
+        return super().AddIndex( blockIndex )
 
 
 class GeosBlockExtractor:
 
     @dataclass
     class ExtractDomain:
-
+        """The dataclass with the three Geos domains (volume, fault, well)."""
         _volume: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         _fault: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         _well: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
 
         @property
         def volume( self: Self ) -> vtkMultiBlockDataSet:
+            """Get the mesh corresponding to the Geos volume domain."""
             return self._volume
 
         @volume.setter
@@ -105,6 +115,7 @@ class GeosBlockExtractor:
 
         @property
         def fault( self: Self ) -> vtkMultiBlockDataSet:
+            """Get the mesh corresponding to the Geos fault domain."""
             return self._fault
 
         @fault.setter
@@ -113,28 +124,43 @@ class GeosBlockExtractor:
 
         @property
         def well( self: Self ) -> vtkMultiBlockDataSet:
+            """Get the mesh corresponding to the Geos well domain."""
             return self._well
 
         @well.setter
         def well( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
             self._well.DeepCopy( multiBlockDataSet )
 
-        def getExtractDomain( self: Self, domain: int ) -> vtkMultiBlockDataSet:
-            if domain == 0:
+        def getExtractDomain( self: Self, domainId: int ) -> vtkMultiBlockDataSet:
+            """Get the mesh for the correct domain.
+
+            Args:
+                domainId (int): The index of the Geos domain to get.
+
+            Returns:
+                vtkMultiBlockDataSet: The mesh with the Geos domain.
+            """
+            if domainId == 0:
                 return self.volume
-            elif domain == 1:
+            elif domainId == 1:
                 return self.fault
-            elif domain == 2:
+            elif domainId == 2:
                 return self.well
             else:
                 raise IndexError
 
-        def setExtractDomain( self: Self, domain: int, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
-            if domain == 0:
+        def setExtractDomain( self: Self, domainId: int, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            """Set the mesh to the correct domain.
+
+            Args:
+                domainId (int): The index of the Geos domain.
+                multiBlockDataSet (vtkMultiBlockDataSet): The mesh to set.
+            """
+            if domainId == 0:
                 self.volume = multiBlockDataSet
-            elif domain == 1:
+            elif domainId == 1:
                 self.fault = multiBlockDataSet
-            elif domain == 2:
+            elif domainId == 2:
                 self.well = multiBlockDataSet
 
     extractDomain: ExtractDomain = ExtractDomain()
@@ -159,11 +185,11 @@ class GeosBlockExtractor:
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
 
-        self.domainToExtract: list[ int ] = [ 0 ]
+        self.domainIdToExtract: list[ int ] = [ int( 0 ) ]
         if extractFaults:
-            self.domainToExtract.append( 1 )
+            self.domainIdToExtract.append( int( 1 ) )
         if extractWells:
-            self.domainToExtract.append( 2 )
+            self.domainIdToExtract.append( int( 2 ) )
 
         # Logger.
         self.logger: Logger
@@ -189,37 +215,38 @@ class GeosBlockExtractor:
             )
 
     def applyFilter( self: Self ) -> bool:
-        """Extract the volume, the surface or the well domain block of the mesh from Geos.
+        """Extract the volume, the surface or the well domain of the mesh from Geos.
 
         Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            bool: True if calculation successfully ended, False otherwise.
         """
         extractBlock: GeosExtractDomain = GeosExtractDomain()
         extractBlock.SetInputData( self.geosMesh )
 
-        for domain in self.domainToExtract:
+        for domainId in self.domainIdToExtract:
             extractBlock.RemoveAllIndices()
-            extractBlock.AddIndex( domain )
+            extractBlock.AddGeosDomainIndex( domainId )
             extractBlock.Update()
-            self.extractDomain.setExtractDomain( domain, extractBlock.GetOutput() )
-            if self.extractDomain.getExtractDomain( domain ).GetNumberOfBlocks() == 0:
-                self.logger.error( f"The input mesh does not have { extractBlock.GetGeosDomainName( domain ) } to extract." )
+            self.extractDomain.setExtractDomain( domainId, extractBlock.GetOutput() )
+            if self.extractDomain.getExtractDomain( domainId ).GetNumberOfBlocks() == 0:
+                self.logger.error(
+                    f"The input mesh does not have { extractBlock.GetGeosDomainName( domainId ) } to extract." )
                 return False
 
         return True
 
-    def getOutput( self: Self, domain: int ) -> vtkMultiBlockDataSet:
-        """Get the domain extracted.
+    def getOutput( self: Self, domainId: int ) -> vtkMultiBlockDataSet:
+        """Get the Geos domain extracted.
 
         The domain extracted are:
-            - Volumes -> domain = 0
-            - Faults -> domain = 1
-            - Wells -> domain = 2
+            - Volumes -> domain index = 0
+            - Faults -> domain index = 1
+            - Wells -> domain index = 2
 
         Args:
-            domain (int): The domain to get.
+            domainId (int): The index of the Geos domain to get.
 
         Returns:
-            vtkMultiBlockDataSet: The domain block extracted.
+            vtkMultiBlockDataSet: The Geos domain extracted.
         """
-        return self.extractDomain.getExtractDomain( domain )
+        return self.extractDomain.getExtractDomain( domainId )
