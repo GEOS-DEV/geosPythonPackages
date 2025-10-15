@@ -52,6 +52,7 @@ GeomechanicsCalculator module is a vtk filter that allows to compute additional 
     - The pressure named "pressure"
 
 The basic geomechanics outputs are:
+    - The elastic moduli not present on the mesh
     - Biot coefficient
     - Compressibility, oedometric compressibility and real compressibility coefficient
     - Specific gravity
@@ -59,7 +60,7 @@ The basic geomechanics outputs are:
     - Total initial stress, total current stress and total stress ratio
     - Lithostatic stress (physic to update)
     - Elastic stain
-    - Reservoir stress path and reservoir stress path in oedometric condition
+    - Real reservoir stress path and reservoir stress path in oedometric condition
 
 The advanced geomechanics outputs are:
     - Fracture index and threshold
@@ -68,8 +69,8 @@ The advanced geomechanics outputs are:
 GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
 and returned mesh is of same type as input.
 
-  .. Important::
-            Please refer to the GeosExtractMergeBlockVolume* filters to provide the correct input.
+.. Important::
+     Please refer to the GeosExtractMergeBlockVolume* filters to provide the correct input.
 
 .. Note::
     - The default physical constants used by the filter are:
@@ -101,20 +102,20 @@ To use the filter:
     ## Basic outputs
     grainBulkModulus: float
     specificDensity: float
-    filter.SetGrainBulkModulus(grainBulkModulus)
-    filter.SetSpecificDensity(specificDensity)
+    filter.physicalConstants.grainBulkModulus = grainBulkModulus
+    filter.physicalConstants.specificDensity = specificDensity
 
     ## Advanced outputs
     rockCohesion: float
     frictionAngle: float
-    filter.SetRockCohesion(rockCohesion)
-    filter.SetFrictionAngle(frictionAngle)
+    filter.physicalConstants.rockCohesion = rockCohesion
+    filter.physicalConstants.frictionAngle = frictionAngle
 
     # Do calculations
     filter.applyFilter()
 
     # Get the mesh with the geomechanical output as attribute
-    output :Union[vtkPointSet, vtkUnstructuredGrid]
+    output: Union[vtkPointSet, vtkUnstructuredGrid]
     output = filter.getOutput()
 """
 
@@ -177,6 +178,7 @@ class GeomechanicsCalculator:
 
     @dataclass
     class PhysicalConstants:
+        """The dataclass with the  value of the physical constant used to compute geomechanics properties."""
         ## Basic outputs
         _grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
         _specificDensity: float = WATER_DENSITY
@@ -186,6 +188,7 @@ class GeomechanicsCalculator:
 
         @property
         def grainBulkModulus( self: Self ) -> float:
+            """Get the grain bulk modulus value."""
             return self._grainBulkModulus
 
         @grainBulkModulus.setter
@@ -194,6 +197,7 @@ class GeomechanicsCalculator:
 
         @property
         def specificDensity( self: Self ) -> float:
+            """Get the specific density value."""
             return self._specificDensity
 
         @specificDensity.setter
@@ -202,6 +206,7 @@ class GeomechanicsCalculator:
 
         @property
         def rockCohesion( self: Self ) -> float:
+            """Get the rock cohesion value."""
             return self._rockCohesion
 
         @rockCohesion.setter
@@ -210,6 +215,7 @@ class GeomechanicsCalculator:
 
         @property
         def frictionAngle( self: Self ) -> float:
+            """Get the friction angle value."""
             return self._frictionAngle
 
         @frictionAngle.setter
@@ -220,6 +226,7 @@ class GeomechanicsCalculator:
 
     @dataclass
     class ElasticModuliValue:
+        """The dataclass with the value of the elastic moduli."""
         _bulkModulus: npt.NDArray[ np.float64 ] = np.array( [] )
         _shearModulus: npt.NDArray[ np.float64 ] = np.array( [] )
         _youngModulus: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -230,6 +237,7 @@ class GeomechanicsCalculator:
 
         @property
         def bulkModulus( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the bulk modulus value."""
             return self._bulkModulus
 
         @bulkModulus.setter
@@ -238,6 +246,7 @@ class GeomechanicsCalculator:
 
         @property
         def shearModulus( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the shear modulus value."""
             return self._shearModulus
 
         @shearModulus.setter
@@ -246,6 +255,7 @@ class GeomechanicsCalculator:
 
         @property
         def youngModulus( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the young modulus value."""
             return self._youngModulus
 
         @youngModulus.setter
@@ -254,6 +264,7 @@ class GeomechanicsCalculator:
 
         @property
         def poissonRatio( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the poisson ratio value."""
             return self._poissonRatio
 
         @poissonRatio.setter
@@ -262,6 +273,7 @@ class GeomechanicsCalculator:
 
         @property
         def bulkModulusT0( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the bulk modulus at the initial time value."""
             return self._bulkModulusT0
 
         @bulkModulusT0.setter
@@ -270,6 +282,7 @@ class GeomechanicsCalculator:
 
         @property
         def youngModulusT0( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the young modulus at the initial time value."""
             return self._youngModulusT0
 
         @youngModulusT0.setter
@@ -278,6 +291,7 @@ class GeomechanicsCalculator:
 
         @property
         def poissonRatioT0( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the poisson ration at the initial time value."""
             return self._poissonRatioT0
 
         @poissonRatioT0.setter
@@ -285,6 +299,12 @@ class GeomechanicsCalculator:
             self._poissonRatioT0 = value
 
         def setElasticModulusValue( self: Self, name: str, value: npt.NDArray[ np.float64 ] ) -> None:
+            """Set the elastic modulus value wanted.
+
+            Args:
+                name (str): The name of the elastic modulus.
+                value (npt.NDArray[np.float64]): The value to set.
+            """
             if name == BULK_MODULUS.attributeName:
                 self.bulkModulus = value
             elif name == BULK_MODULUS_T0.attributeName:
@@ -301,6 +321,14 @@ class GeomechanicsCalculator:
                 self.poissonRatioT0 = value
 
         def getElasticModulusValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ]:
+            """Get the wanted elastic modulus value.
+
+            Args:
+                name (str): The name of the wanted elastic modulus.
+
+            Returns:
+                npt.NDArray[np.float64]: The value of the elastic modulus.
+            """
             if name == BULK_MODULUS.attributeName:
                 return self.bulkModulus
             elif name == BULK_MODULUS_T0.attributeName:
@@ -322,6 +350,7 @@ class GeomechanicsCalculator:
 
     @dataclass
     class MandatoryAttributesValue:
+        """The dataclass with the value of mandatory properties to have to compute other geomechanics properties."""
         _porosity: npt.NDArray[ np.float64 ] = np.array( [] )
         _porosityInitial: npt.NDArray[ np.float64 ] = np.array( [] )
         _pressure: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -332,33 +361,46 @@ class GeomechanicsCalculator:
 
         @property
         def porosity( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the porosity value."""
             return self._porosity
 
         @property
         def porosityInitial( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the initial porosity value."""
             return self._porosityInitial
 
         @property
         def pressure( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the pressure value."""
             return self._pressure
 
         @property
         def deltaPressure( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the delta pressure value."""
             return self._deltaPressure
 
         @property
         def density( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the density value."""
             return self._density
 
         @property
         def effectiveStress( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the effective stress value."""
             return self._effectiveStress
 
         @property
         def effectiveStressT0( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the initial effective stress value."""
             return self._effectiveStressT0
 
         def setMandatoryAttributeValue( self: Self, name: str, value: npt.NDArray[ np.float64 ] ) -> None:
+            """Set the value of a mandatory property.
+
+            Args:
+                name (str): The name of the property.
+                value (npt.NDArray[np.float64]): The value to set.
+            """
             if name == POROSITY.attributeName:
                 self._porosity = value
             elif name == POROSITY_T0.attributeName:
@@ -378,6 +420,7 @@ class GeomechanicsCalculator:
 
     @dataclass
     class BasicOutputValue:
+        """The dataclass with the value of the basic geomechanics outputs."""
         _biotCoefficient: npt.NDArray[ np.float64 ] = np.array( [] )
         _compressibility: npt.NDArray[ np.float64 ] = np.array( [] )
         _compressibilityOed: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -396,6 +439,7 @@ class GeomechanicsCalculator:
 
         @property
         def biotCoefficient( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the biot coefficient value."""
             return self._biotCoefficient
 
         @biotCoefficient.setter
@@ -404,6 +448,7 @@ class GeomechanicsCalculator:
 
         @property
         def compressibility( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the compressibility value."""
             return self._compressibility
 
         @compressibility.setter
@@ -412,6 +457,7 @@ class GeomechanicsCalculator:
 
         @property
         def compressibilityOed( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the compressibility in oedometric condition value."""
             return self._compressibilityOed
 
         @compressibilityOed.setter
@@ -420,6 +466,7 @@ class GeomechanicsCalculator:
 
         @property
         def compressibilityReal( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the real compressibility value."""
             return self._compressibilityReal
 
         @compressibilityReal.setter
@@ -428,6 +475,7 @@ class GeomechanicsCalculator:
 
         @property
         def specificGravity( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the specific gravity value."""
             return self._specificGravity
 
         @specificGravity.setter
@@ -436,6 +484,7 @@ class GeomechanicsCalculator:
 
         @property
         def effectiveStressRatioReal( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the real effective stress ratio value."""
             return self._effectiveStressRatioReal
 
         @effectiveStressRatioReal.setter
@@ -444,6 +493,7 @@ class GeomechanicsCalculator:
 
         @property
         def totalStress( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the total stress value."""
             return self._totalStress
 
         @totalStress.setter
@@ -452,6 +502,7 @@ class GeomechanicsCalculator:
 
         @property
         def totalStressT0( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the initial total stress value."""
             return self._totalStressT0
 
         @totalStressT0.setter
@@ -460,6 +511,7 @@ class GeomechanicsCalculator:
 
         @property
         def totalStressRatioReal( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the total real stress ratio value."""
             return self._totalStressRatioReal
 
         @totalStressRatioReal.setter
@@ -468,6 +520,7 @@ class GeomechanicsCalculator:
 
         @property
         def lithostaticStress( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the lithostatic stress value."""
             return self._lithostaticStress
 
         @lithostaticStress.setter
@@ -476,6 +529,7 @@ class GeomechanicsCalculator:
 
         @property
         def elasticStrain( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the elastic strain value."""
             return self._elasticStrain
 
         @elasticStrain.setter
@@ -484,6 +538,7 @@ class GeomechanicsCalculator:
 
         @property
         def deltaTotalStress( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the total delta stress value."""
             return self._deltaTotalStress
 
         @deltaTotalStress.setter
@@ -492,6 +547,7 @@ class GeomechanicsCalculator:
 
         @property
         def rspReal( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the real reservoir stress path value."""
             return self._rspReal
 
         @rspReal.setter
@@ -500,6 +556,7 @@ class GeomechanicsCalculator:
 
         @property
         def rspOed( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the reservoir stress path in oedometric condition value."""
             return self._rspOed
 
         @rspOed.setter
@@ -508,6 +565,7 @@ class GeomechanicsCalculator:
 
         @property
         def effectiveStressRatioOed( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the effective stress ratio oedometric value."""
             return self._effectiveStressRatioOed
 
         @effectiveStressRatioOed.setter
@@ -515,6 +573,14 @@ class GeomechanicsCalculator:
             self._effectiveStressRatioOed = value
 
         def getBasicOutputValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ]:
+            """Get the value of the basic output wanted.
+
+            Args:
+                name (str): The name of the basic output.
+
+            Returns:
+                npt.NDArray[ np.float64 ]: the value of the basic output.
+            """
             if name == BIOT_COEFFICIENT.attributeName:
                 return self.biotCoefficient
             elif name == COMPRESSIBILITY.attributeName:
@@ -552,6 +618,7 @@ class GeomechanicsCalculator:
 
     @dataclass
     class AdvancedOutputValue:
+        """The dataclass with the value of the advanced geomechanics outputs."""
         _criticalTotalStressRatio: npt.NDArray[ np.float64 ] = np.array( [] )
         _stressRatioThreshold: npt.NDArray[ np.float64 ] = np.array( [] )
         _criticalPorePressure: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -559,6 +626,7 @@ class GeomechanicsCalculator:
 
         @property
         def criticalTotalStressRatio( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the critical total stress ratio value."""
             return self._criticalTotalStressRatio
 
         @criticalTotalStressRatio.setter
@@ -567,6 +635,7 @@ class GeomechanicsCalculator:
 
         @property
         def stressRatioThreshold( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the stress ratio threshold value."""
             return self._stressRatioThreshold
 
         @stressRatioThreshold.setter
@@ -575,6 +644,7 @@ class GeomechanicsCalculator:
 
         @property
         def criticalPorePressure( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the critical pore pressure value."""
             return self._criticalPorePressure
 
         @criticalPorePressure.setter
@@ -583,6 +653,7 @@ class GeomechanicsCalculator:
 
         @property
         def criticalPorePressureIndex( self: Self ) -> npt.NDArray[ np.float64 ]:
+            """Get the critical pore pressure index value."""
             return self._criticalPorePressureIndex
 
         @criticalPorePressureIndex.setter
@@ -590,6 +661,14 @@ class GeomechanicsCalculator:
             self._criticalPorePressureIndex = value
 
         def getAdvancedOutputValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ]:
+            """Get the value of the advanced output wanted.
+
+            Args:
+                name (str): The name of the advanced output.
+
+            Returns:
+                npt.NDArray[ np.float64 ]: the value of the advanced output.
+            """
             if name == CRITICAL_TOTAL_STRESS_RATIO.attributeName:
                 return self.criticalTotalStressRatio
             elif name == TOTAL_STRESS_RATIO_THRESHOLD.attributeName:
