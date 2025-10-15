@@ -1,6 +1,10 @@
 Post-/Pre-processing
 =========================
 
+PVAttributeMapping
+--------------------
+
+.. automodule:: geos.pv.plugins.PVAttributeMapping
 
 PVCreateConstantAttributePerRegion
 -----------------------------------
@@ -18,3 +22,9 @@ PVSplitMesh
 ----------------------------------
 
 .. automodule:: geos.pv.plugins.PVSplitMesh
+
+
+PVClipToMainFrame
+----------------------------------
+
+.. automodule:: geos.pv.plugins.PVClipToMainFrame
