@@ -33,8 +33,10 @@ jobs:
         run: |
           echo "This is not a Pull-Request, skipping"
 
+  # build and test the standalone CI
   build:
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -88,7 +90,6 @@ jobs:
 
         echo "Installing main package..."
         python -m pip install ./${{ matrix.package-name }}/[test]
-
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
