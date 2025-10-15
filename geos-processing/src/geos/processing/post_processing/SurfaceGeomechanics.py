@@ -23,15 +23,15 @@ from geos.mesh.utils.arrayHelpers import (
     getAttributeSet,
     isAttributeInObject,
 )
+from geos.mesh.utils.genericHelpers import (
+    getLocalBasisVectors,
+    convertAttributeFromLocalToXYZForOneCell,
+)
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_ROCK_COHESION,
-)
-from geos.utils.algebraFunctions import (
-    getAttributeMatrixFromVector,
-    getAttributeVectorFromMatrix,
 )
 from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
@@ -46,7 +46,8 @@ SurfaceGeomechanics is a VTK filter that allows:
     - Computation of the shear capacity utilization (SCU)
 
 .. Warning::
-    The computation of the SCU requires the presence of a 'traction' attribute in the input mesh.
+    - The computation of the SCU requires the presence of a 'traction' attribute in the input mesh.
+    - Conversion from local to XYZ basis is currently only handled for cell attributes.
 
 .. Note::
     Default values for physical constants used in this filter:
@@ -269,7 +270,7 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
         # Conversion of attributes from Normal/Tangent basis to xyz basis
         if self.convertAttributesOn:
             self.logger.info( "Conversion of attributes from local to XYZ basis.")
-            if not self._convertAttributesFromLocalToXYZBasis():
+            if not self.convertAttributesFromLocalToXYZBasis():
                 self.logger.error( "Error while converting attributes from local to XYZ basis." )
                 return False
 
@@ -278,41 +279,41 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
             self.logger.error( "Error while computing SCU." )
             return False
 
-        self.logger.info( f"Filter {self.logger.name} succeeded." )
+        self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
         return True
 
 
-    def _convertAttributesFromLocalToXYZBasis( self: Self ) -> bool:
+    def convertAttributesFromLocalToXYZBasis( self: Self ) -> bool:
         """Convert attributes from local to XYZ basis.
 
         Returns:
-            bool: True if calculation successfully ended or no attributes, False otherwise
+            bool: True if calculation successfully ended or no attributes, False otherwise.
         """
         # Get the list of attributes to convert and filter
-        attributesToConvert: set[ str ] = self.__filterAttributesToConvert( self.attributesToConvert )
+        attributesToConvert: set[ str ] = self.__filterAttributesToConvert()
 
         if len( attributesToConvert ) == 0:
             self.logger.warning( f"No attribute to convert from local to XYZ basis were found." )
             return True
 
-        # Get local coordinate vectors
-        normalTangentVectors: npt.NDArray[ np.float64 ] = self.__getNormalTangentsVectors()
         # Do conversion from local to XYZ for each attribute
         for attrNameLocal in attributesToConvert:
+            attrNameXYZ: str = f"{attrNameLocal}_{ComponentNameEnum.XYZ.name}"
+
             # Skip attribute if it is already in the object
-            attrNameXYZ: str = f" {attrNameLocal}_{ComponentNameEnum.XYZ.name}"
             if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributeOnPoints ):
                 continue
 
-            attrArray: vtkDoubleArray = getArrayInObject( self.outputMesh, attrNameLocal, self.attributeOnPoints)
+            if self.attributeOnPoints:
+                self.logger.error( "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
+            localArray: vtkDoubleArray = getArrayInObject( self.outputMesh, attrNameLocal, self.attributeOnPoints)
 
-            newAttrArray: npt.NDArray[ np.float64 ] = self.__computeNewCoordinates( attrArray, normalTangentVectors,
-                                                                                  True )
+            arrayXYZ: npt.NDArray[ np.float64 ] = self.__computeXYZCoordinates( localArray )
 
-            # create attribute
+            # Create converted attribute array in dataset
             if createAttribute(
                     self.outputMesh,
-                    newAttrArray,
+                    arrayXYZ,
                     attrNameXYZ,
                     ComponentNameEnum.XYZ.value,
                     onPoints = self.attributeOnPoints,
@@ -349,118 +350,37 @@ class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
         return attributesFiltered
 
-    def __computeNewCoordinates(
+    # TODO: Adapt to handle point attributes.
+    def __computeXYZCoordinates(
         self: Self,
         attrArray: npt.NDArray[ np.float64 ],
-        normalTangentVectors: npt.NDArray[ np.float64 ],
-        fromLocalToYXZ: bool,
     ) -> npt.NDArray[ np.float64 ]:
-        """Compute the coordinates of a vectorial attribute.
+        """Compute the XYZ coordinates of a vectorial attribute.
 
         Args:
             attrArray (npt.NDArray[np.float64]): vector of attribute values
-            normalTangentVectors (npt.NDArray[np.float64]): 3xNx3 local vector
-                coordinates
-            fromLocalToYXZ (bool): if True, conversion is done from local to XYZ
-                basis, otherwise conversion is done from XZY to Local basis.
 
         Returns:
             npt.NDArray[np.float64]: Vector of new coordinates of the attribute.
         """
-        attrArrayNew = np.full_like( attrArray, np.nan )
-        # For each cell
-        for i in range( attrArray.shape[ 0 ] ):
-            # Get the change of basis matrix
-            localBasis: npt.NDArray[ np.float64 ] = normalTangentVectors[ :, i, : ]
-            changeOfBasisMatrix = self.__computeChangeOfBasisMatrix( localBasis, fromLocalToYXZ )
-            if attrArray.shape[ 1 ] == 3:
-                attrArrayNew[ i ] = self.__computeNewCoordinatesVector3( attrArray[ i ], changeOfBasisMatrix )
-            else:
-                attrArrayNew[ i ] = self.__computeNewCoordinatesVector6( attrArray[ i ], changeOfBasisMatrix )
+        attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
-        if not np.any( np.isfinite( attrArrayNew ) ):
+        # Get all local basis vectors
+        localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh )
+
+        for i, cellAttribute in enumerate( attrArray ):
+            if len( cellAttribute ) not in ( 3, 6, 9 ):
+                raise ValueError( f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( cellAttribute.shape ) }." )
+
+            # Compute attribute XYZ components
+            cellLocalBasis: npt.NDArray[ np.float64 ] = localBasis[ :, i, : ]
+            attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
+
+        if not np.any( np.isfinite( attrXYZ ) ):
             self.logger.error( "Attribute new coordinate calculation failed." )
-        return attrArrayNew
 
-    def __computeNewCoordinatesVector3(
-        self: Self,
-        vector: npt.NDArray[ np.float64 ],
-        changeOfBasisMatrix: npt.NDArray[ np.float64 ],
-    ) -> npt.NDArray[ np.float64 ]:
-        """Compute attribute new coordinates of vector of size 3.
+        return attrXYZ
 
-        Args:
-            vector (npt.NDArray[np.float64]): input coordinates.
-            changeOfBasisMatrix (npt.NDArray[np.float64]): change of basis matrix
-
-        Returns:
-            npt.NDArray[np.float64]: new coordinates
-        """
-        return geom.computeCoordinatesInNewBasis( vector, changeOfBasisMatrix )
-
-    def __computeNewCoordinatesVector6(
-        self: Self,
-        vector: npt.NDArray[ np.float64 ],
-        changeOfBasisMatrix: npt.NDArray[ np.float64 ],
-    ) -> npt.NDArray[ np.float64 ]:
-        """Compute attribute new coordinates of vector of size > 3.
-
-        Args:
-            vector (npt.NDArray[np.float64]): input coordinates.
-            changeOfBasisMatrix (npt.NDArray[np.float64]): change of basis matrix
-
-        Returns:
-            npt.NDArray[np.float64]: new coordinates
-        """
-        attributeMatrix: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( vector )
-        attributeMatrixNew: npt.NDArray[ np.float64 ] = np.full_like( attributeMatrix, np.nan )
-        # For each column of the matrix
-        for j in range( attributeMatrix.shape[ 1 ] ):
-            attributeMatrixNew[ :, j ] = geom.computeCoordinatesInNewBasis( attributeMatrix[ :, j ],
-                                                                            changeOfBasisMatrix )
-        return getAttributeVectorFromMatrix( attributeMatrixNew, vector.size )
-
-    def __computeChangeOfBasisMatrix( self: Self, localBasis: npt.NDArray[ np.float64 ],
-                                    fromLocalToYXZ: bool ) -> npt.NDArray[ np.float64 ]:
-        """Compute the change of basis matrix according to local coordinates.
-
-        Args:
-            localBasis (npt.NDArray[np.float64]): local coordinate vectors.
-            fromLocalToYXZ (bool): if True, change of basis matrix is from local
-                to XYZ bases, otherwise it is from XYZ to local bases.
-
-        Returns:
-            npt.NDArray[np.float64]: change of basis matrix.
-        """
-        P: npt.NDArray[ np.float64 ] = np.transpose( localBasis )
-        if fromLocalToYXZ:
-            return P
-        # Inverse the change of basis matrix
-        return np.linalg.inv( P ).astype( np.float64 )
-
-    def __getNormalTangentsVectors( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Compute the change of basis matrix from Local to XYZ bases.
-
-        Returns:
-             npt.NDArray[np.float64]: Nx3 matrix of local vector coordinates.
-        """
-        # Get normal and first tangent components
-        normals: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy(
-            self.outputMesh.GetCellData().GetNormals() )  # type: ignore[no-untyped-call]
-        if normals is None:
-            self.logger.error( "Normal attribute was not found." )
-        tangents1: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy(
-            self.outputMesh.GetCellData().GetTangents() )  # type: ignore[no-untyped-call]
-        if tangents1 is None:
-            self.logger.error( "Tangents attribute was not found." )
-
-        # Compute second tangential component
-        tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
-        if tangents2 is None:
-            self.logger.error( "Local basis third axis was not computed." )
-
-        # Put vectors as columns
-        return np.array( ( normals, tangents1, tangents2 ) )
 
     def computeShearCapacityUtilization( self: Self ) -> bool:
         """Compute the shear capacity utilization (SCU) on surface.
