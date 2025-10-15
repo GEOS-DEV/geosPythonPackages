@@ -4,11 +4,21 @@
 import numpy as np
 import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union
-from vtkmodules.util.numpy_support import numpy_to_vtk
+from vtkmodules.util.numpy_support import (
+    numpy_to_vtk,
+    vtk_to_numpy
+)
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet, vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator
 from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
+
+from geos.utils.algebraFunctions import (
+    getAttributeMatrixFromVector,
+    getAttributeVectorFromMatrix,
+    getLocalToXYZTransformMatrix,
+)
+
 
 __doc__ = """
 Generic VTK utilities.
@@ -267,3 +277,74 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
             cellVertexMap += [ ptId.get() ]  # type: ignore
         cellVertexMapAll += [ tuple( cellVertexMap ) ]
     return points, cellVertexMapAll
+
+
+def convertAttributeFromLocalToXYZForOneCell( vector, localBasisVectors ) -> npt.NDArray[ np.float64 ]:
+    """
+    Convert one cell attribute from local to XYZ basis.
+
+    .. Warning::
+        Vectors components are considered to be in GEOS output order such that \
+        v = ( M00, M11, M22, M12, M02, M01, M21, M20, M10 )
+
+    Args:
+        vector (npt.NDArray[np.float64]): The attribute expressed in local basis. The size of the vector must be 3, 9 or 6 (symmetrical case)
+        localBasisVectors (np.NDArray[np.float64]): The local basis vectors expressed in the XYZ basis.
+
+    Returns:
+        vectorXYZ (npt.NDArray[np.float64]): The attribute expressed in XYZ basis.
+    """
+    # Get components matrix from GEOS attribute vector
+    matrix3x3: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( vector )
+
+    # Get transform matrix
+    transformMatrix: npt.NDArray[ np.float64 ] = getLocalToXYZTransformMatrix( localBasisVectors )
+
+    # Apply transformation
+    arrayXYZ: npt.NDArray[ np.float64 ] = transformMatrix @ matrix3x3 @ transformMatrix.T
+
+    # Convert back to GEOS type attribute
+    vectorXYZ: npt.NDArray[ np.float64 ] = getAttributeVectorFromMatrix( arrayXYZ, vector.size )
+
+    return vectorXYZ
+
+
+def getNormalVectors( dataset,  ) -> npt.NDArray[ np.float64 ]:
+    normals: npt.NDArray[ np.float64 ] = vtk_to_numpy(
+        dataset.GetCellData().GetNormals() )  # type: ignore[no-untyped-call]
+    # TODO: if normals not defined, compute it on the fly
+    if normals is None:
+        raise ValueError( "Normal attribute was not found." )
+
+    return normals
+
+
+def getTangentsVectors( dataset, normals = None ) -> npt.NDArray[ np.float64 ]:
+    # Get first tangential component
+    tangents1: npt.NDArray[ np.float64 ] = vtk_to_numpy(
+        dataset.GetCellData().GetTangents() )  # type: ignore[no-untyped-call]
+    if tangents1 is None:
+        raise ValueError( "Tangents attribute was not found." )
+
+    # Compute second tangential component
+    if normals is None:
+        normals = getNormalVectors( dataset )
+
+    tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
+    if tangents2 is None:
+        raise ValueError( "Local basis third axis was not computed." )
+
+    return ( tangents1, tangents2 )
+
+
+def getLocalBasisVectors( dataset: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
+    """Return the local basis vectors for all cells of the input dataset.
+
+    Args:
+        dataset(vtkPolydata): The input dataset
+
+    """
+    normals = getNormalVectors( dataset )
+    tangents = getTangentsVectors( dataset, normals=normals )
+
+    return np.array( ( normals, *tangents ) )
