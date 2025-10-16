@@ -3,7 +3,7 @@
   <PolyData>
     <Piece NumberOfPoints="212"                  NumberOfVerts="0"                    NumberOfLines="0"                    NumberOfStrips="0"                    NumberOfPolys="156"                 >
       <PointData GlobalIds="GLOBAL_IDS_POINTS">
-        <DataArray type="Int64" IdType="1" Name="collocated_nodes" NumberOfComponents="2" format="appended" RangeMin="3905.8931117"         RangeMax="5326.4624283"         offset="0"                   >
+        <DataArray type="Int64" IdType="1" Name="collocatedNodes" NumberOfComponents="2" format="appended" RangeMin="3905.8931117"         RangeMax="5326.4624283"         offset="0"                   >
           <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
             <Value index="0">
               3905.8931117

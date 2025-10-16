@@ -3,16 +3,14 @@
 # SPDX-FileContributor: Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
-
 from typing import Union, Any
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
 from geos.mesh.processing.AttributeMapping import AttributeMapping
-
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
-    ( "fracture", "emptyFracture", { "collocated_nodes" }, True ),
+    ( "fracture", "emptyFracture", { "collocatedNodes" }, True ),
     ( "multiblock", "emptyFracture", { "FAULT" }, False ),
     ( "multiblock", "emptymultiblock", { "FAULT" }, False ),
     ( "dataset", "emptymultiblock", { "FAULT" }, False ),
