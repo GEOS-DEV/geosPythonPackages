@@ -31,7 +31,7 @@ usage:
     ...
 
     #near VTK calls
-     with VTKCaptureLog() as captured_log:
+    with VTKCaptureLog() as captured_log:
         vtkcalls..
         captured_log.seek(0) # be kind let's just rewind
         captured = captured_log.read().decode()
@@ -42,7 +42,8 @@ usage:
 
 
 class RegexExceptionFilter( logging.Filter ):
-    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog."""
+    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
+    This transforms silent VTK errors into catchable Python exceptions."""
 
     pattern: str = r'\bERR\|\b'  # Pattern captured that will raise a vtkError
 
@@ -60,7 +61,7 @@ class RegexExceptionFilter( logging.Filter ):
         Raises:
             VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
         """
-        message = record.getMessage()
+        message = record.getMessage()  # Intercepts every log record before it's emitted
         if self.regex.search( message ):
             raise VTKError( f"Log message matched forbidden pattern: {message}" )
         return True  # Allow other messages to pass
@@ -72,16 +73,15 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
 
     Returns:
         Generator: Buffering os stderr.
-
     """
-    #equiv to pyvista's
+    # equiv to pyvista's
     # from pyvista.utilities import VtkErrorCatcher
     # with VtkErrorCatcher() as err:
     #     append_filter.Update()
     #     print(err)
     # originalStderrFd = sys.stderr.fileno()
-    originalStderrFd = 2
-    savedStderrFd = os.dup( originalStderrFd )
+    originalStderrFd = 2  # Standard stderr file descriptor, not dynamic like sys.stderr.fileno()
+    savedStderrFd = os.dup( originalStderrFd )  # Backup original stderr
 
     # Create a temporary file to capture stderr
     with tempfile.TemporaryFile( mode='w+b' ) as tmp:
