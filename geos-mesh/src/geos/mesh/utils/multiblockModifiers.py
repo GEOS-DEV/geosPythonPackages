@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay, Paloma Martinez
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez, Jacques Franc
 from typing import Union
 import logging
-# import re
 
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTreeIterator, vtkMultiBlockDataSet,
                                             vtkUnstructuredGrid, vtkDataSet )
@@ -37,10 +36,10 @@ def mergeBlocks(
             Defaults to None, an internal logger is used.
 
     Returns:
-        vtkUnstructuredGrid: Merged dataset or input mesh if it's already a single block
+        vtkUnstructuredGrid: Merged dataset or input mesh if it's already a single block.
 
     Raises:
-        geos.utilsVTKError ():
+        geos.utils.VTKError (): Error raised during call of VTK function
 
     .. Note::
         Default filling values:
@@ -52,27 +51,31 @@ def mergeBlocks(
 
     """
     if logger is None:
-        logger: Logger = getLogger( "mergeBlocks", True )
+        logger = getLogger( "mergeBlocks", True )
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_TRACE )
     logger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+
+    logCurrentLevel: int = logger.getEffectiveLevel()
     logger.setLevel( logging.DEBUG )
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
         logger.warning( "Failed to fill partial attributes. Merging without keeping partial attributes." )
 
+    outputMesh: vtkUnstructuredGrid
+
     if Version( vtk.__version__ ) >= Version( "9.5" ):
         filter: vtkMergeBlocks = vtkMergeBlocks()
         filter.SetInputData( inputMesh )
         filter.Update()
 
-        outputMesh: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
+        outputMesh = filter.GetOutputDataObject( 0 )
 
     else:
         if inputMesh.IsA( "vtkDataSet" ):
             logger.warning( "Input mesh is already a single block." )
-            outputMesh = inputMesh
+            outputMesh = vtkUnstructuredGrid.SafeDownCast( inputMesh )
         else:
             with VTKCaptureLog() as captured_log:
 
@@ -87,10 +90,12 @@ def mergeBlocks(
                     af.AddInputData( block )
                     iterator.GoToNextItem()
                 af.Update()
-                captured_log.seek( 0 )  #be kind let's just rewind
+                captured_log.seek( 0 )
                 captured = captured_log.read().decode()
 
             logger.debug( captured.strip() )
-            outputMesh: vtkUnstructuredGrid = af.GetOutputDataObject( 0 )
+            outputMesh = af.GetOutputDataObject( 0 )
+
+    logger.setLevel( logCurrentLevel )
 
     return outputMesh

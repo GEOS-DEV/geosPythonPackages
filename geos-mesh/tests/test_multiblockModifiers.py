@@ -3,21 +3,22 @@
 # SPDX-FileContributor: Paloma Martinez
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
+# mypy: disable-error-code="operator"
 import pytest
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 from geos.mesh.utils import multiblockModifiers
 
 
-@pytest.mark.parametrize( "keepPartialAttributes, nb_pt_attributes, nb_cell_attributes, nb_field_attributes", [
+@pytest.mark.parametrize( "keepPartialAttributes, nbPointAttributes, nbCellAttributes, nbFieldAttributes", [
     ( False, 0, 16, 1 ),
     ( True, 2, 30, 1 ),
 ] )
 def test_mergeBlocks(
     dataSetTest: vtkMultiBlockDataSet,
-    nb_pt_attributes: int,
-    nb_cell_attributes: int,
-    nb_field_attributes: int,
+    nbPointAttributes: int,
+    nbCellAttributes: int,
+    nbFieldAttributes: int,
     keepPartialAttributes: bool,
 ) -> None:
     """Test the merging of a multiblock."""
@@ -27,10 +28,10 @@ def test_mergeBlocks(
     dataset = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )
 
     assert dataset.GetCellData().GetNumberOfArrays(
-    ) == nb_cell_attributes, f"Expected {nb_cell_attributes} cell attributes after the merge, not {dataset.GetCellData().GetNumberOfArrays()}."
+    ) == nbCellAttributes, f"Expected {nbCellAttributes} cell attributes after the merge, not {dataset.GetCellData().GetNumberOfArrays()}."
 
     assert dataset.GetPointData().GetNumberOfArrays(
-    ) == nb_pt_attributes, f"Expected {nb_pt_attributes} point attributes after the merge, not {dataset.GetPointData().GetNumberOfArrays()}."
+    ) == nbPointAttributes, f"Expected {nbPointAttributes} point attributes after the merge, not {dataset.GetPointData().GetNumberOfArrays()}."
 
     assert dataset.GetFieldData().GetNumberOfArrays(
-    ) == nb_field_attributes, f"Expected {nb_field_attributes} field attributes after the merge, not {dataset.GetFieldData().GetNumberOfArrays()}."
+    ) == nbFieldAttributes, f"Expected {nbFieldAttributes} field attributes after the merge, not {dataset.GetFieldData().GetNumberOfArrays()}."

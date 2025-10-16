@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 import logging
 from typing import Any, Union, Generator
 from typing_extensions import Self
@@ -44,7 +44,7 @@ usage:
 class RegexExceptionFilter( logging.Filter ):
     """Class to regexp VTK messages rethrown into logger by VTKCaptureLog."""
 
-    pattern: str = r"ERR"  #pattern captured that will raise a vtkError
+    pattern: str = r'\bERR\|\b'  # Pattern captured that will raise a vtkError
 
     def __init__( self ) -> None:
         """Init filter with class based pattern as this is patch to logging logic."""
@@ -71,7 +71,7 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
     """Hard way of adapting C-like vtkLogger to logging class by throwing in stderr and reading back from it.
 
     Returns:
-        Generator: buffering os stderr.
+        Generator: Buffering os stderr.
 
     """
     #equiv to pyvista's
@@ -79,19 +79,19 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
     # with VtkErrorCatcher() as err:
     #     append_filter.Update()
     #     print(err)
-    # original_stderr_fd = sys.stderr.fileno()
-    original_stderr_fd = 2
-    saved_stderr_fd = os.dup( original_stderr_fd )
+    # originalStderrFd = sys.stderr.fileno()
+    originalStderrFd = 2
+    savedStderrFd = os.dup( originalStderrFd )
 
     # Create a temporary file to capture stderr
     with tempfile.TemporaryFile( mode='w+b' ) as tmp:
-        os.dup2( tmp.fileno(), original_stderr_fd )
+        os.dup2( tmp.fileno(), originalStderrFd )
         try:
             yield tmp
         finally:
             # Restore original stderr
-            os.dup2( saved_stderr_fd, original_stderr_fd )
-            os.close( saved_stderr_fd )
+            os.dup2( savedStderrFd, originalStderrFd )
+            os.close( savedStderrFd )
 
 
 class CountWarningHandler( logging.Handler ):

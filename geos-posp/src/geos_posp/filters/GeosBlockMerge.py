@@ -145,22 +145,10 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
 
             # initialize output objects -- TODO: separate it as soon as we are sure not to alter behavior
             self.m_output = self.GetOutputData( outInfoVec, 0 )  # type: ignore[no-untyped-call]
-            # assert self.m_input is not None, "Input object is null."
-            # assert self.m_output is not None, "Output object is null."
 
             self.doMerge()
-        # except (AssertionError, ValueError, TypeError) as e:
-        #     mess: str = "Geos block merge failed due to:"
-        #     self.m_logger.error( mess )
-        #     self.m_logger.error( e, exc_info=True )
-        #     return 0
-        except ( ValueError, TypeError ) as e:
-            mess0: str = "Geos block merge failed due to:"
-            self.m_logger.critical( mess0 )
-            self.m_logger.critical( e, exc_info=True )
-            return 0
-        except RuntimeError as e:
-            self.m_logger.critical( "Geos block merge failed due to" )
+        except ( ValueError, TypeError, RuntimeError ) as e:
+            self.m_logger.critical( "Geos block merge failed due to:" )
             self.m_logger.critical( e, exc_info=True )
             return 0
         else:
@@ -191,12 +179,7 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         self.mergeRankBlocks()
         if self.m_convertFaultToSurface:
             self.convertFaultsToSurfaces()
-            # assert self.m_outputMesh is not None, "Output mesh in null."
-        # except AssertionError as e:
-        #     mess: str = "Block merge failed due to:"
-        #     self.m_logger.error( mess )
-        #     self.m_logger.error( e, exc_info=True )
-        #     return 0
+
         self.m_output.ShallowCopy( self.m_outputMesh )
         return 1
 

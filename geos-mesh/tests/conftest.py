@@ -165,7 +165,6 @@ def dataSetTest() -> Any:
             vtkFilename = "data/displacedFaultempty.vtm"
         elif datasetType == "multiblockGeosOutput":
             # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
-            reader: vtkXMLMultiBlockDataReader = vtkXMLMultiBlockDataReader()
             vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
         elif datasetType == "fracture":
             vtkFilename = "data/fracture_res5_id.vtu"

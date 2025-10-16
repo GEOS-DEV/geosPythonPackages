@@ -805,7 +805,6 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """
         # get mesh and merge if needed
         meshMerged: vtkUnstructuredGrid = mergeBlocks( mesh )
-        # assert meshMerged is not None, "Input data is undefined"
 
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( meshMerged,
                                                                    GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
