@@ -33,11 +33,23 @@ jobs:
         run: |
           echo "This is not a Pull-Request, skipping"
 
+  check_draft:
+    runs-on: ubuntu-latest
+    needs: [semantic_pull_request]
+    steps:
+      - name: Fail if PR is a draft
+        run: |
+          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+            echo "✗ This PR is a draft. CI will not proceed."
+            exit 1
+          else
+            echo "✓ This PR is ready for review."
+          fi
+
   # build and test the standalone CI
   build:
     runs-on: ubuntu-latest
-    needs: [semantic_pull_request]
-    if: ${{ !github.event.pull_request.draft }}
+    needs: [check_draft]
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -121,7 +133,25 @@ jobs:
             fi
           done
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
-
+  
+  check_force_integration_label:
+    runs-on: ubuntu-latest
+    needs: [build]
+    outputs:
+      has_geos_integration_force_label: ${{ steps.set-label.outputs.has_label }}
+    steps:
+      - name: Check if PR has 'force-geos-integration' label
+        id: set-label
+        run: |
+          echo "Checking for label..."
+          LABEL_FOUND=false
+          for label in "${{ toJson(github.event.pull_request.labels) }}"; do
+            if [[ "$label" == *"force-geos-integration"* ]]; then
+              LABEL_FOUND=true
+              break
+            fi
+          done
+          echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
 
   # Step 3: Check if GEOS integration is required based on changed files
   check_geos_integration_required:
@@ -233,39 +263,67 @@ jobs:
           echo "required=false" >> "$GITHUB_OUTPUT"
           echo "skip_reason=no-geos-integrated-changes" >> "$GITHUB_OUTPUT"
         fi
+  
+  geos_ci_dispatch:
+    name: Dispatch cases of GEOS CI
+    runs-on: ubuntu-latest
+    outputs: 
+      is_GEOS_CI_skipped: ${{ steps.dispatch.outputs.skipped }}
+      fwd_geos_integration_required: ${{ steps.dispatch.outputs.fwd_geos_integration_required }}
+      fwd_skip_reason: ${{ steps.dispatch.outputs.skip_reason }}
+    needs: [check_geos_integration_required,check_integration_label, check_force_integration_label]
+    steps:
+      - name : Dispatch flag and req cases
+        id: dispatch
+        run: |
+          GEOS_REQUIRED="${{ needs.check_geos_integration_required.outputs.geos_integration_required }}"
+          echo "fwd_geos_integration_required=${GEOS_REQUIRED}" >> "$GITHUB_OUTPUT"
+          SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
+          echo "fwd_skip_reason=${SKIP_REASON}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]; then
+              echo "skipped=false" >> "$GITHUB_OUTPUT"
+              echo "✓ GEOS integration is required and flag is present - will proceed with GEOS integration tests"
+              exit 0
+          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true"]; then
+              echo "skipped=false" >> "$GITHUB_OUTPUT"
+              echo "✓ GEOS integration is forced - will proceed with GEOS integration tests"
+              exit 0
+          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]; then
+              echo "skipped=false" >> "$GITHUB_OUTPUT"
+              echo "✗ You are missing *test-geos-integration* flag while needing it"
+              exit 1
+          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true"  ]; then
+              echo "skipped=false" >> "$GITHUB_OUTPUT"
+              echo "✗ You have *test-geos-integration* flag while not needing it. If you want to force GEOS-integration CI add *force-geos-integration*"
+              exit 1
+          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]; then
+              echo "skipped=true" >> "$GITHUB_OUTPUT"
+              exit 0
+          fi
 
   # Step 4: Run GEOS integration tests (only if required or label present)
   geos_integration_test:
     name: GEOS Integration Test
-    needs: [check_geos_integration_required,check_integration_label]
-    if: ${{needs.check_geos_integration_required.outputs.geos_integration_required == 'true' }} && ${{ needs.check_integration_label.outputs.has_geos_integration_label == 'true' }}
+    needs: [geos_ci_dispatch]
+    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped.skipped != 'true' }}
     uses: ./.github/workflows/test_geos_integration.yml
-  
-  # # warn if not used
-  # geos_integration_test_fail:
-  #   name: GEOS Integration Test
-  #   runs-on: ubuntu-latest
-  #   needs: [check_geos_integration_required,check_integration_label]
-  #   if: ${{needs.check_geos_integration_required.outputs.geos_integration_required == 'true' }} && ${{ needs.check_integration_label.outputs.has_geos_integration_label == 'false' }}
-  #   steps:
-  #   - name: Send an error is GEOS-integration is required but no flag is detected
-  #     id: send_missing_flag_error
-  #     run: echo "You need to test for GEOS-integration please add /test-geos-integration/ label and rerun the CI"
 
   # Final validation - Summarize CI results
   final_validation:
     name: Final CI Validation
     runs-on: ubuntu-latest
-    needs: [check_geos_integration_required, geos_integration_test]
+    needs: [geos_ci_dispatch, geos_integration_test]
     if: always() && github.event_name == 'pull_request'
     steps:
     - name: Validate CI completion
       run: |
         echo "Final CI Validation"
         echo "==================="
-        
-        GEOS_REQUIRED="${{ needs.check_geos_integration_required.outputs.geos_integration_required }}"
-        SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
+
+        GEOS_REQUIRED="${{ needs.geos_ci_dispatch.outputs.fwd_geos_integration_required }}"
+        SKIP_REASON="${{ needs.geos_ci_dispatch.outputs.fwd_skip_reason }}"
+       
         GEOS_RESULT="${{ needs.geos_integration_test.result }}"
         
         if [[ "$GEOS_REQUIRED" == "true" ]]; then
