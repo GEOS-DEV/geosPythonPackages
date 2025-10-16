@@ -243,9 +243,13 @@ jobs:
   # warn if not used
   geos_integration_test_fail:
     name: GEOS Integration Test
+    runs-on: ubuntu-latest
     needs: [check_geos_integration_required,check_integration_label]
     if: ${{needs.check_geos_integration_required.outputs.geos_integration_required == 'true' }} && ${{ needs.check_integration_label.outputs.has_geos_integration_label == 'false' }}
-    uses: echo "You need to test for GEOS-integration please add 'test-geos-integration' label and rerun the CI"
+    steps:
+    - name: Send an error is GEOS-integration is required but no flag is detected
+      id: send_missing_flag_error
+      run: echo "You need to test for GEOS-integration please add /test-geos-integration/ label and rerun the CI"
 
   # Final validation - Summarize CI results
   final_validation:
