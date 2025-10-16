@@ -281,7 +281,7 @@ jobs:
           SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
           echo "fwd_skip_reason=${SKIP_REASON}" >> "$GITHUB_OUTPUT"
 
-          if [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]; then
+          if [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]]; then
               echo "skipped=false" >> "$GITHUB_OUTPUT"
               echo "✓ GEOS integration is required and flag is present - will proceed with GEOS integration tests"
               exit 0
@@ -289,15 +289,15 @@ jobs:
               echo "skipped=false" >> "$GITHUB_OUTPUT"
               echo "✓ GEOS integration is forced - will proceed with GEOS integration tests"
               exit 0
-          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]; then
+          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]]; then
               echo "skipped=false" >> "$GITHUB_OUTPUT"
               echo "✗ You are missing *test-geos-integration* flag while needing it"
               exit 1
-          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true"  ]; then
+          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true"  ]]; then
               echo "skipped=false" >> "$GITHUB_OUTPUT"
               echo "✗ You have *test-geos-integration* flag while not needing it. If you want to force GEOS-integration CI add *force-geos-integration*"
               exit 1
-          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]; then
+          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]]; then
               echo "skipped=true" >> "$GITHUB_OUTPUT"
               exit 0
           fi
