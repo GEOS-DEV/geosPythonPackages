@@ -129,6 +129,7 @@ jobs:
           for label in "${{ toJson(github.event.pull_request.labels) }}"; do
             if [[ "$label" == *"test-geos-integration"* ]]; then
               LABEL_FOUND=true
+              echo "Label ${label} found"
               break
             fi
           done
@@ -148,6 +149,7 @@ jobs:
           for label in "${{ toJson(github.event.pull_request.labels) }}"; do
             if [[ "$label" == *"force-geos-integration"* ]]; then
               LABEL_FOUND=true
+              echo "Label ${label} found"
               break
             fi
           done
@@ -280,14 +282,14 @@ jobs:
           echo "fwd_geos_integration_required=${GEOS_REQUIRED}" >> "$GITHUB_OUTPUT"
           SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
           echo "fwd_skip_reason=${SKIP_REASON}" >> "$GITHUB_OUTPUT"
-
-          if [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]]; then
-              echo "skipped=false" >> "$GITHUB_OUTPUT"
-              echo "✓ GEOS integration is required and flag is present - will proceed with GEOS integration tests"
-              exit 0
-          elif [ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true"]; then
+          
+          if [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" ]]; then
               echo "skipped=false" >> "$GITHUB_OUTPUT"
               echo "✓ GEOS integration is forced - will proceed with GEOS integration tests"
+              exit 0
+          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]]; then
+              echo "skipped=false" >> "$GITHUB_OUTPUT"
+              echo "✓ GEOS integration is required and flag is present - will proceed with GEOS integration tests"
               exit 0
           elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]]; then
               echo "skipped=false" >> "$GITHUB_OUTPUT"
