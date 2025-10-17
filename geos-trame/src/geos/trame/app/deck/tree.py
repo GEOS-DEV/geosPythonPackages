@@ -4,6 +4,7 @@
 import os
 from collections import defaultdict
 from typing import Any
+from datetime import timedelta, datetime
 
 import dpath
 import funcy
@@ -33,6 +34,7 @@ class DeckTree( object ):
         self.root = None
         self.input_has_errors = False
         self._sm_id = sm_id
+        self.world_origin_time = datetime(1924,3,28). strftime("%Y-%m-%d")# Total start date !!
 
     def set_input_file( self, input_filename: str ) -> None:
         """Set a new input file.
@@ -134,7 +136,8 @@ class DeckTree( object ):
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "summary": e.name,
-                "start_date": e.begin_time,
+                "start_date": ( datetime.strptime(self.world_origin_time,"%Y-%m-%d") + timedelta(seconds=float(e.begin_time)) ).strftime("%Y-%m-%d"),
+                "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)) )
             }
             timeline.append( item )
             global_id = global_id + 1
