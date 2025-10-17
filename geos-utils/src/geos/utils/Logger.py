@@ -44,7 +44,9 @@ Usage::
 
 class RegexExceptionFilter( logging.Filter ):
     """Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
-    This transforms silent VTK errors into catchable Python exceptions."""
+
+    This transforms silent VTK errors into catchable Python exceptions.
+    """
 
     pattern: str = r'\bERR\|'  # Pattern captured that will raise a vtkError
 
