@@ -273,36 +273,78 @@ jobs:
       is_GEOS_CI_skipped: ${{ steps.dispatch.outputs.skipped }}
       fwd_geos_integration_required: ${{ steps.dispatch.outputs.fwd_geos_integration_required }}
       fwd_skip_reason: ${{ steps.dispatch.outputs.skip_reason }}
-    needs: [check_geos_integration_required,check_integration_label, check_force_integration_label]
+    needs: [check_geos_integration_required, check_integration_label, check_force_integration_label]
     steps:
-      - name : Dispatch flag and req cases
+      - name: Dispatch flag and req cases
         id: dispatch
         run: |
           GEOS_REQUIRED="${{ needs.check_geos_integration_required.outputs.geos_integration_required }}"
-          echo "fwd_geos_integration_required=${GEOS_REQUIRED}" >> "$GITHUB_OUTPUT"
+          HAS_TEST_LABEL="${{ needs.check_integration_label.outputs.has_geos_integration_label }}"
+          HAS_FORCE_LABEL="${{ needs.check_force_integration_label.outputs.has_geos_integration_force_label }}"
           SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
+          
+          echo "fwd_geos_integration_required=${GEOS_REQUIRED}" >> "$GITHUB_OUTPUT"
           echo "fwd_skip_reason=${SKIP_REASON}" >> "$GITHUB_OUTPUT"
           
-          if [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" ]]; then
-              echo "skipped=false" >> "$GITHUB_OUTPUT"
-              echo "✓ GEOS integration is forced - will proceed with GEOS integration tests"
-              exit 0
-          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true" ]]; then
-              echo "skipped=false" >> "$GITHUB_OUTPUT"
-              echo "✓ GEOS integration is required and flag is present - will proceed with GEOS integration tests"
-              exit 0
-          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "true" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]]; then
-              echo "skipped=false" >> "$GITHUB_OUTPUT"
-              echo "✗ You are missing *test-geos-integration* flag while needing it"
-              exit 1
-          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "true"  ]]; then
-              echo "skipped=false" >> "$GITHUB_OUTPUT"
-              echo "✗ You have *test-geos-integration* flag while not needing it. If you want to force GEOS-integration CI add *force-geos-integration*"
-              exit 1
-          elif [[ "${{needs.check_geos_integration_required.outputs.geos_integration_required}}" == "false" && "${{ needs.check_integration_label.outputs.has_geos_integration_label }}" == "false"  ]]; then
-              echo "skipped=true" >> "$GITHUB_OUTPUT"
-              exit 0
+          echo "=== GEOS Integration Dispatch ==="
+          echo "GEOS Required (by file changes): ${GEOS_REQUIRED}"
+          echo "Has 'test-geos-integration' label: ${HAS_TEST_LABEL}"
+          echo "Has 'force-geos-integration' label: ${HAS_FORCE_LABEL}"
+          echo ""
+          
+          # Case 1: Force label - always run tests
+          if [[ "$HAS_FORCE_LABEL" == "true" ]]; then
+            echo "✓ 'force-geos-integration' label present - forcing GEOS integration tests"
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          
+          # Case 2: GEOS required AND test label present - run tests
+          if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "true" ]]; then
+            echo "✓ GEOS integration required and 'test-geos-integration' label present"
+            echo "  Will proceed with GEOS integration tests"
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Case 3: GEOS required BUT test label missing - ERROR
+          if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "false" ]]; then
+            echo "✗ ERROR: GEOS integration is required but 'test-geos-integration' label is missing"
+            echo ""
+            echo "Your PR modifies GEOS-integrated packages:"
+            echo "  - geos-utils, geos-mesh, geos-xml-tools"
+            echo "  - hdf5-wrapper, pygeos-tools, geos-ats"
+            echo ""
+            echo "Action required: Add the 'test-geos-integration' label to this PR"
+            exit 1
+          fi
+          
+          # Case 4: GEOS NOT required BUT test label present - SKIP TESTS
+          if [[ "$GEOS_REQUIRED" == "false" && "$HAS_TEST_LABEL" == "true" ]]; then
+            echo "⊘ SKIPPED: 'test-geos-integration' label present but GEOS integration is not required"
+            echo ""
+            echo "Your changes only affect:"
+            echo "  - Documentation"
+            echo "  - Non-integrated packages"
+            echo "  - Configuration files"
+            echo ""
+            echo "If you want to run GEOS integration tests anyway, use 'force-geos-integration' label to explicitly force testing"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Case 5: GEOS NOT required AND no labels - SKIP TESTS
+          if [[ "$GEOS_REQUIRED" == "false" && "$HAS_TEST_LABEL" == "false" ]]; then
+            echo "⊘ GEOS integration not required and no labels present"
+            echo "  Skipping GEOS integration tests"
+            echo "  Reason: ${SKIP_REASON}"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Should never reach here
+          echo "✗ ERROR: Unexpected state in dispatch logic"
+          exit 1
 
   # Step 4: Run GEOS integration tests (only if required or label present)
   geos_integration_test:
