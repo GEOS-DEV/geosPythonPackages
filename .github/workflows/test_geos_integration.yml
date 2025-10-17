@@ -282,14 +282,13 @@ jobs:
         fi
 
   integration_summary:
-    name: GEOS Integration Summary
+    name: GEOS Integration Test Summary
     runs-on: ubuntu-latest
     needs: test_geos_integration
     if: always()
     steps:
       - name: Summarize Results
         run: |
-          echo "## GEOS Integration Test Summary" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.test_geos_integration.result }}" == "success" ]]; then
             echo "All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
           else

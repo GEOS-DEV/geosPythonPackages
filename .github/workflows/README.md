@@ -41,7 +41,15 @@ semantic_pull_request:
   - Examples: `feat: add new feature`, `fix(mesh): resolve bug`
 ```
 
-#### 2. Build and Test
+#### 2. Draft PR Check
+```yaml
+check_draft:
+  - Fails CI if PR is still in draft mode
+  - Prevents accidental merging of incomplete work
+  - Mark PR as "Ready for review" to proceed
+```
+
+#### 3. Build and Test
 ```yaml
 build:
   - Matrix testing across Python 3.10, 3.11, 3.12
@@ -50,7 +58,16 @@ build:
   - Runs pytest tests
 ```
 
-#### 3. GEOS Integration Check
+#### 4. Label Checks
+```yaml
+check_integration_label:
+  - Checks for 'test-geos-integration' label
+  
+check_force_integration_label:
+  - Checks for 'force-geos-integration' label
+```
+
+#### 5. GEOS Integration Required Check
 ```yaml
 check_geos_integration_required:
   - Analyzes changed files
@@ -58,14 +75,22 @@ check_geos_integration_required:
   - See "Smart GEOS Integration Testing" section below
 ```
 
-#### 4. GEOS Integration Test (Conditional)
+#### 6. GEOS CI Dispatch
+```yaml
+geos_ci_dispatch:
+  - Evaluates label + file change requirements
+  - Decides whether to run, skip, or fail
+  - Provides clear error messages for incorrect label usage
+```
+
+#### 7. GEOS Integration Test (Conditional)
 ```yaml
 geos_integration_test:
-  - Only runs if required by file changes or label
+  - Only runs if dispatch job says to proceed
   - Calls test_geos_integration.yml workflow
 ```
 
-#### 5. Final Validation
+#### 8. Final Validation
 ```yaml
 final_validation:
   - Summarizes all test results
@@ -249,35 +274,78 @@ Tests are automatically skipped when changes only affect:
 - `.github/workflows/doc-test.yml` - Documentation CI
 - `.github/workflows/typing-check.yml` - Type checking CI
 
-### Manual Override
+### Manual Override Labels
 
-Add the **`test-geos-integration`** label to any PR to force GEOS integration tests to run, regardless of changed files.
+The CI supports two labels for controlling GEOS integration tests:
+
+1. **`test-geos-integration`** - Must be added when changes affect GEOS-integrated packages
+   - Required when modifying: `geos-utils`, `geos-mesh`, `geos-xml-tools`, `hdf5-wrapper`, `pygeos-tools`, `geos-ats`
+   - CI will fail if this label is missing when required
+   - CI will warn if this label is present but not needed (suggest using `force-geos-integration` instead)
+
+2. **`force-geos-integration`** - Forces tests to run regardless of changed files
+   - Use this when testing CI changes themselves
+   - Use this for docs/config-only PRs where you want to verify GEOS integration still works
+   - Overrides all other logic - tests will always run
+
+### Label Decision Logic
+
+The CI uses the following decision matrix:
+
+| GEOS Required<br/>(by file changes) | `test-geos-integration`<br/>label | `force-geos-integration`<br/>label | Result |
+|-------------------------------------|-----------------------------------|-------------------------------------|--------|
+| - | - | ✅ Yes | ✅ **Run tests** (forced) |
+| ✅ Yes | ✅ Yes | ❌ No | ✅ **Run tests** (normal) |
+| ✅ Yes | ❌ No | ❌ No | ❌ **ERROR** - Label required |
+| ❌ No | ✅ Yes | ❌ No | ⊘ **Skip** - Wrong label (use force instead) |
+| ❌ No | ❌ No | ❌ No | ⊘ **Skip tests** (not needed) |
 
 ### Example Scenarios
 
-✅ **Tests Will Run**
+✅ **Tests Will Run (Required + Label)**
 ```
 Changes:
   - geos-mesh/src/mesh_converter.py
   - geos-xml-tools/src/preprocessor.py
-Result: GEOS integration required (affects integrated packages)
+Labels: test-geos-integration
+Result: GEOS integration will run (changes affect integrated packages)
 ```
 
-⊘ **Tests Will Skip**
+❌ **CI Will Fail (Required but Missing Label)**
+```
+Changes:
+  - geos-utils/src/table_loader.py
+  - hdf5-wrapper/src/wrapper.py
+Labels: (none)
+Result: ERROR - 'test-geos-integration' label required
+```
+
+⊘ **Tests Will Skip (Not Required)**
 ```
 Changes:
   - docs/user_guide.md
   - README.md
   - geos-pv/src/visualizer.py
-Result: GEOS integration not required (only docs and non-integrated packages)
+Labels: (none)
+Result: GEOS integration not required (skipped)
 ```
 
-✅ **Tests Will Run (Manual)**
+⊘ **Tests Will Skip (Wrong Label)**
 ```
 Changes:
   - docs/installation.md
+  - .style.yapf
 Labels: test-geos-integration
-Result: GEOS integration required (manual override via label)
+Result: Warning - Label not needed, use 'force-geos-integration' to force tests (skipped)
+```
+
+✅ **Tests Will Run (Forced)**
+```
+Changes:
+  - docs/installation.md
+  - .github/workflows/python-package.yml
+Labels: force-geos-integration
+Result: GEOS integration forced (tests will run regardless of changes)
 ```
 
 ## GEOS Integration: How It Works
@@ -393,6 +461,23 @@ When adding new Python packages or modifying existing ones:
 4. **Test Integration**:
    - If package integrates with GEOS, add `test-geos-integration` label to PR
    - Verify all 5 integration tests pass
+   - If only testing CI changes on a docs PR, use `force-geos-integration` label
+
+### PR Label Usage Guide
+
+**For PR Authors:**
+
+| Your PR Changes | Required Label | What Happens |
+|-----------------|----------------|--------------|
+| GEOS-integrated packages<br/>(utils, mesh, xml-tools, etc.) | `test-geos-integration` | ✅ Tests run (required) |
+| Docs/config only | (none) | ⊘ Tests skipped |
+| Docs + you want to test integration | `force-geos-integration` | ✅ Tests run (forced) |
+| CI workflow files | `force-geos-integration` | ✅ Tests run (verify CI works) |
+
+**Common Mistakes:**
+- ❌ Modifying `geos-mesh/` without label → CI fails, add `test-geos-integration`
+- ❌ Adding `test-geos-integration` to docs-only PR → Warning, remove label or use `force-geos-integration`
+- ✅ Modifying `.github/workflows/` with `force-geos-integration` → Tests run to verify CI changes
 
 ## References
 
