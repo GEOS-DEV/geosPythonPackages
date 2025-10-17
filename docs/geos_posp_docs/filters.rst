@@ -3,14 +3,6 @@ vtk Filters
 
 This package defines vtk filters that allows to process Geos outputs.
 
-geos_posp.filters.GeomechanicsCalculator module
----------------------------------------------------
-
-.. automodule:: geos_posp.filters.GeomechanicsCalculator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 geos_posp.filters.GeosBlockExtractor module
 -----------------------------------------------
 

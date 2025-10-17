@@ -17,7 +17,7 @@ import sys
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-posp', 'geos-pv', 'geos-timehistory',
+python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-posp', 'geos-processing', 'geos-pv', 'geos-timehistory',
                    'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'pygeos-tools' )
 
 
@@ -45,7 +45,7 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.napoleon', 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput', 
+    'sphinx.ext.napoleon', 'sphinx_design', 'sphinx_rtd_theme', 'sphinxarg.ext', 'sphinxcontrib.programoutput',
     'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.mathjax', 'sphinx.ext.todo', 'sphinx.ext.viewcode'
 ]
 

@@ -21,6 +21,9 @@ import PVplugins  # noqa: F401
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
@@ -32,7 +35,7 @@ from geos.utils.PhysicalConstants import (
 )
 from PVplugins.PVExtractMergeBlocksVolumeSurfaceWell import (
     PVExtractMergeBlocksVolumeSurfaceWell, )
-from PVplugins.PVGeomechanicsAnalysis import PVGeomechanicsAnalysis
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from PVplugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
 __doc__ = """
@@ -379,16 +382,17 @@ class PVGeomechanicsWorkflowVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
-        filter = PVGeomechanicsAnalysis()
-        filter.SetInputDataObject( self.m_volumeMesh )
-        filter.b01SetGrainBulkModulus( self.getGrainBulkModulus() )
-        filter.b02SetSpecificDensity( self.getSpecificDensity() )
-        filter.d01SetRockCohesion( self.getRockCohesion() )
-        filter.d02SetFrictionAngle( self.getFrictionAngle() )
-        filter.c01SetAdvancedOutputs( self.m_computeAdvancedOutputs )
-        filter.SetLogger( self.m_logger )
-        filter.Update()
-        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        filter = GeomechanicsCalculator( self.m_volumeMesh,
+                                         computeAdvancedOutputs=self.getComputeAdvancedOutputs(),
+                                         speHandler=True )
+        if not filter.logger.hasHandlers():
+            filter.setLoggerHandler( VTKHandler() )
+        filter.physicalConstants.grainBulkModulus = self.grainBulkModulus
+        filter.physicalConstants.specificDensity = self.specificDensity
+        filter.physicalConstants.rockCohesion = self.rockCohesion
+        filter.physicalConstants.frictionAngle = self.frictionAngle
+        filter.applyFilter()
+        self.m_volumeMesh.ShallowCopy( filter.getOutput() )
         self.m_volumeMesh.Modified()
         return True
 
