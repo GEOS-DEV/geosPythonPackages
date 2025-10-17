@@ -517,7 +517,7 @@ def test_transferAttributeWithElementMap(
 
         arrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataTo.GetArray( attributeName ) )
         for idElementTo in range( len( arrayTo ) ):
-            idElementFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
+            idElementFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ] )
             if idElementFrom == -1:
                 assert arrayTo[ idElementTo ] == defaultValueTest
 
@@ -526,7 +526,7 @@ def test_transferAttributeWithElementMap(
                 if isinstance( meshFrom, vtkDataSet ):
                     dataFrom = meshFrom.GetPointData() if onPoints else meshFrom.GetCellData()
                 elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-                    flatIdDataSetFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
+                    flatIdDataSetFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ] )
                     dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
                     dataFrom = dataSetFrom.GetPointData() if onPoints else dataSetFrom.GetCellData()
 
