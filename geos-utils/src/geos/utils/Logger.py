@@ -21,8 +21,9 @@ It also include adaptor strategy to make vtkLogger behave as a logging's logger.
 Indeed, C++ adapted class is based on private Callback assignement which is not compatible
 with logging python's logic.
 
-usage:
-    #near logger definition
+Usage::
+
+    # near logger definition
     from vtkmodules.vtkCommonCore import vtkLogger
 
     vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
@@ -30,10 +31,10 @@ usage:
 
     ...
 
-    #near VTK calls
+    # near VTK calls
     with VTKCaptureLog() as captured_log:
         vtkcalls..
-        captured_log.seek(0) # be kind let's just rewind
+        captured_log.seek(0)  # be kind let's just rewind
         captured = captured_log.read().decode()
 
     logger.error(captured.strip())
