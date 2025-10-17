@@ -51,13 +51,15 @@ def mergeBlocks(
 
     """
     if logger is None:
-        logger = getLogger( "mergeBlocks", True )
+        logger = getLogger( "mergeBlocks" )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    mbLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
 
-    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_TRACE )
-    logger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    mbLogger.propagate = False
 
-    logCurrentLevel: int = logger.getEffectiveLevel()
-    logger.setLevel( logging.DEBUG )
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+    mbLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    mbLogger.setLevel( logging.DEBUG )
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
@@ -93,9 +95,8 @@ def mergeBlocks(
                 captured_log.seek( 0 )
                 captured = captured_log.read().decode()
 
-            logger.debug( captured.strip() )
-            outputMesh = af.GetOutputDataObject( 0 )
+            mbLogger.debug( captured.strip() )
 
-    logger.setLevel( logCurrentLevel )
+            outputMesh = af.GetOutputDataObject( 0 )
 
     return outputMesh
