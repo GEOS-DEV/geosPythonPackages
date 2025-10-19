@@ -21,7 +21,9 @@ class TimelineEditor( vuetify.VCard ):
 
         self.tree = source
         self.simput_manager = get_simput_manager( id=self.state.sm_id )
-        self.state.change("set_start_date")(self._set_start_date)
+
+        self.state.sdate = self.tree.world_origin_time
+        self.state.change("sdate")(self._set_start_date)
 
         items = self.tree.timeline()
 
@@ -33,23 +35,23 @@ class TimelineEditor( vuetify.VCard ):
                 "placeholder": "Add a new task...",
             },
             "start_date": {
-                "label": "Start",
+                "label": "",# "Start",
                 "component": "gantt-date",
-                "width": 175,
+                "width": -1,
                 "placeholder": "Start",
                 "sort": "date",
             },
             "end_date": {
-                "label": "End",
+                "label": "",# "End",
                 "component": "gantt-date",
-                "width": 0,
+                "width": -1,
                 "placeholder": "End",
                 "sort": "date",
             },
             "duration": {
                 "label": "Days",
                 "component": "gantt-number",
-                "width": 50,
+                "width": 150,
                 "placeholder": "0",
             },
         } ]
@@ -61,7 +63,7 @@ class TimelineEditor( vuetify.VCard ):
                 prepend_icon="",
                 prepend_inner_icon="$calendar",
                 # placeholder="09/18/2024",
-                v_model="start_date",
+                v_model="sdate"
             )
             vuetify.VDivider()
             # with (
@@ -79,10 +81,10 @@ class TimelineEditor( vuetify.VCard ):
 
             with vuetify.VContainer( "Events chart" ):
                 gantt.Gantt(
-                    canEdit=True,
+                    canEdit=False,
                     dateLimit=40,
-                    startDate= self.state.start_date if self.state.start_date else self.tree.world_origin_time,
-                    endDate=(datetime.strptime( self.state.start_date if self.state.start_date else self.tree.world_origin_time,date_fmt) + timedelta(days=40)).strftime(date_fmt),
+                    startDate= self.state.sdate,
+                    endDate=(datetime.strptime( self.state.sdate,date_fmt) + timedelta(days=40)).strftime(date_fmt) if self.state.sdate else '2012-12-12',
                     # title='Gantt-pre-test',
                     fields=fields,
                     update=( self.update_from_js, "items" ),
@@ -90,12 +92,13 @@ class TimelineEditor( vuetify.VCard ):
                     classes="fill_height",
                 )
 
-    def _set_start_date(self, start_date : str | None, **_: Any) -> None:
-        if start_date is None:
-            start_date = self.tree.world_origin_time.strftime(date_fmt)
+    def _set_start_date(self, sdate : str | None, **_: Any) -> None:
+        if sdate is None:
+            self.state.sdate = self.tree.world_origin_time.strftime(date_fmt)
             return
         
-        self.state.start_date = start_date
+        self.state.sdate = sdate
+        print(f"new date :{self.state.sdate}")
 
     def update_from_js( self, *items: tuple ) -> None:
         """Update method called from javascript."""
