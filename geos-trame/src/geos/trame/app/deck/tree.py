@@ -132,11 +132,12 @@ class DeckTree( object ):
         timeline = []
         # list root events
         global_id = 0
-        for e in self.input_file.problem.events[ 0 ].periodic_event:
+        solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
+        for e in solver_events:
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "summary": e.name,
-                "start_date": ( datetime.strptime(self.world_origin_time,"%Y-%m-%d") + timedelta(seconds=float(e.begin_time)) ).strftime("%Y-%m-%d"),
+                "start_date": str( datetime.strptime(self.world_origin_time,"%Y-%m-%d") + timedelta(seconds=float(e.begin_time)) ), #.strftime("%Y-%m-%d"),
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)) )
             }
             timeline.append( item )
