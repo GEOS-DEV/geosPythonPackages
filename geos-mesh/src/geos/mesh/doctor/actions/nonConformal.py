@@ -247,14 +247,14 @@ class Extruder:
         self.__faceTolerance = faceTolerance
 
     def __extrude( self, polygonPolyData: vtkPolyData, normal: numpy.ndarray ) -> vtkPolyData:
-        """Extrude the polygon data to create a volume that will be used for intersection.
+        """Extrude the polygon data to create a surface that will be used for intersection.
 
         Args:
             polygonPolyData (vtkPolyData): The data to extrude
             normal (numpy.ndarray): The (uniform) direction of the extrusion.
 
         Returns:
-            vtkPolyData: The extruded volume.
+            vtkPolyData: The extruded surface.
         """
         extruder = vtkLinearExtrusionFilter()
         extruder.SetExtrusionTypeToVectorExtrusion()

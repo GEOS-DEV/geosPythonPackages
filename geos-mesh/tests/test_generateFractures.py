@@ -298,8 +298,8 @@ def addQuad( mesh: vtkUnstructuredGrid, face: FaceNodesCoords ):
 
 @pytest.mark.skip( "Test to be fixed" )
 def test_copyFieldsWhenSplittingMesh():
-    """This test is designed to check the __copyFields method from generate_fractures,
-    that will be called when using __splitMeshOnFractures method from generate_fractures.
+    """This test is designed to check the __copyFields method from generateFractures,
+    that will be called when using __splitMeshOnFractures method from generateFractures.
     """
     # Generating the rectilinear grid and its quads on all borders
     x: numpy.array = numpy.array( [ 0, 1, 2 ] )

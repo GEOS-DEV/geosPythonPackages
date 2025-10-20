@@ -14,10 +14,11 @@ from geos.mesh.utils.genericHelpers import toVtkIdList
 def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
     """Computes the volume of a polyhedron element (defined by its faceStream).
 
-    To note that the faces of the polyhedron are triangulated and the volumes of the tetrahedra
-    from the barycenter to the triangular bases are summed.
-    The normal of each face plays critical role,
-    since the volume of each tetrahedron can be positive or negative.
+    .. Note::
+        The faces of the polyhedron are triangulated and the volumes of the tetrahedra
+        from the barycenter to the triangular bases are summed.
+        The normal of each face plays critical role,
+        since the volume of each tetrahedron can be positive or negative.
 
     Args:
         meshPoints (vtkPoints): The mesh points, needed to compute the volume.

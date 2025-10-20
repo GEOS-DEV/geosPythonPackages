@@ -108,7 +108,7 @@ class IsPolyhedronConvertible:
         return ""
 
     def __call__( self, ic: int ) -> int:
-        """Checks if a vtk polyhedron cell can be converted into a supported GEOSX element.
+        """Checks if a vtk polyhedron cell can be converted into a supported GEOS element.
 
         Args:
             ic (int): The index element.

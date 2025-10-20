@@ -479,14 +479,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
                 discardedFaceNodes.add( ns )
 
     if discardedFaceNodes:
-        # tmp = list()
-        # for dfns in discardedFaceNodes:
-        #     tmp.append(", ".join(map(str, dfns)))
         msg: str = "(" + '), ('.join( map( lambda dfns: ", ".join( map( str, dfns ) ), discardedFaceNodes ) ) + ")"
-        # setupLogger.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
-        #                   + "from the fracture mesh because none of their/its nodes were duplicated.")
-        # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded"
-        #              + "from the fracture mesh because none of their/its nodes were duplicated.")
         setupLogger.info( f"The faces made of nodes [{msg}] were/was discarded"
                           " from the fracture mesh because none of their/its nodes were duplicated." )
 
