@@ -57,11 +57,6 @@ PVGeomechanicsWorkflowVolumeWell plugin
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
 
-PVplugins.PVMergeBlocksEnhanced module
---------------------------------------
-
-.. automodule:: PVplugins.PVMergeBlocksEnhanced
-
 
 PVMohrCirclePlot plugin
 ---------------------------------

@@ -8,7 +8,8 @@ import pytest
 from typing import Union, Any
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
 
-from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, np
+from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+import numpy as np
 
 
 @pytest.mark.parametrize(

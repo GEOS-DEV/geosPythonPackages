@@ -31,6 +31,12 @@ PVSplitMesh
 .. automodule:: geos.pv.plugins.PVSplitMesh
 
 
+PVMergeBlocksEnhanced module
+--------------------------------------
+
+.. automodule:: geos.pv.plugins.PVMergeBlocksEnhanced
+
+
 PVClipToMainFrame
 ----------------------------------
 
