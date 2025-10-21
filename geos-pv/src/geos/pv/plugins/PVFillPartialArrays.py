@@ -46,7 +46,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
-class PVFillPartialArrays(VTKPythonAlgorithmBase):
+class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
@@ -90,7 +90,7 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
             if values is not None:
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
-                self.dictAttributesValues[ attributeName ] = None  # ignore : type[unreachable]
+                self.dictAttributesValues[ attributeName ] = None  #ignore : type[unreachable]
 
         self.Modified()
 

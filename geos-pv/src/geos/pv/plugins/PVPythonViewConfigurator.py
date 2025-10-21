@@ -41,6 +41,9 @@ from vtkmodules.vtkCommonCore import (
     vtkInformation,
 )
 
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase )
+
 from vtkmodules.vtkCommonDataModel import vtkDataObject
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
@@ -59,10 +62,12 @@ To use it:
 * Search and Apply PVPythonViewConfigurator Filter.
 
 """
+
+
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Python View Configurator",
-             decoratedType="vtkDataObject")
-class PVPythonViewConfigurator:
+             decoratedType="vtkDataObject" )
+class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Paraview plugin to create cross-plots in a Python View.
@@ -805,7 +810,7 @@ class PVPythonViewConfigurator:
             info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject" )
         return 1
 
-    def Filter(self, inputMesh : vtkDataObject, outputMesh : vtkDataObject) -> None:
+    def Filter( self, inputMesh: vtkDataObject, outputMesh: vtkDataObject ) -> None:
         """Dummy interface for plugin to fit decorator reqs.
 
         Args:

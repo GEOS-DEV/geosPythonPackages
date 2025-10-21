@@ -18,20 +18,16 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 
 import vtkmodules.util.numpy_support as vnp
 
-
 from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet,
-)
+    vtkDataSet, )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
-from geos.pv.utils.config import update_paths
 
 from geos.mesh.processing.CreateConstantAttributePerRegion import ( CreateConstantAttributePerRegion )
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
-from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
 __doc__ = """
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to create an attribute
@@ -53,10 +49,12 @@ To use it:
 * Apply.
 
 """
+
+
 @SISOFilter( category=FilterCategory.GEOS_PROP,
              decoratedLabel="Create Constant Attribute Per Region",
-             decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ])
-class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
+             decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
+class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Create an attribute with constant value per region."""
@@ -275,12 +273,12 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
         """Group the widgets to set the settings of the new attribute."""
         self.Modified()
 
-    def Filter(self, inputMesh: vtkDataSet , outputMesh: vtkDataSet) -> None:
+    def Filter( self, inputMesh: vtkDataSet, outputMesh: vtkDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
-            outputMesh : A mesh transformed.
+
         Args:
             inputMesh : A mesh to transform
-            outputMesh : A mesh transformed
+            outputMesh : A mesh transformed.
         """
         filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
             outputMesh,

@@ -11,13 +11,14 @@ from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable, Un
 from abc import abstractmethod
 from enum import Enum
 
-
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet, )
+    vtkMultiBlockDataSet,
+    vtkDataObject,
+)
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -43,6 +44,8 @@ Usage is:
         ...
 
 """
+
+
 # Enum for filter categories
 class FilterCategory( str, Enum ):
     """String Enum to sort into category in PV task bar under Plugins."""
@@ -55,15 +58,17 @@ class FilterCategory( str, Enum ):
     # Add more as needed
 
 
-U = TypeVar('U')
+U = TypeVar( 'U', bound='vtkDataObject' )
+
+
 @runtime_checkable
-class IsSISOFilter( Protocol[U] ):
+class IsSISOFilter( Protocol[ U ] ):
     """Protocol to ensure that the wrapped filter defines the correct Filter core function."""
 
     @abstractmethod
     def Filter(
         self,
-        inputMesh: U, 
+        inputMesh: U,
         outputMesh: U,
     ) -> None:
         """Define filter here.
@@ -75,12 +80,14 @@ class IsSISOFilter( Protocol[U] ):
         """
         raise NotImplementedError
 
+
 T = TypeVar( 'T', bound='IsSISOFilter' )
 
 
 def SISOFilter( category: FilterCategory, decoratedLabel: str,
-                decoratedType: Union[str,list] ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+                decoratedType: Union[ str, list ] ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
     """Decorate Single Input Single Output (SISO) filter."""
+
     def decoratedClass( cls: Type[ T ] ) -> Type[ T ]:
         """Outer wrapper function. All is in the WrappingClass below."""
         originalInit = cls.__init__
@@ -94,11 +101,12 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
                     ar : Fowarded arguments
                     kw : Forwarded keywords args
                 """
-                VTKPythonAlgorithmBase.__init__( self,
-                                                 nInputPorts=1,
-                                                 nOutputPorts=1,
-                                                 inputType=decoratedType if isinstance(decoratedType,str) else "vtkDataObject",
-                                                 outputType=decoratedType if isinstance(decoratedType,str) else "vtkDataObject")
+                VTKPythonAlgorithmBase.__init__(
+                    self,
+                    nInputPorts=1,
+                    nOutputPorts=1,
+                    inputType=decoratedType if isinstance( decoratedType, str ) else "vtkDataObject",
+                    outputType=decoratedType if isinstance( decoratedType, str ) else "vtkDataObject" )
 
                 #If wrapped class has more to init there it is applied
                 #avoid the overwritten init by decorator taking place of the cls
@@ -155,16 +163,16 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
 
                 cls.Filter( self, inputMesh, outputMesh )
                 return 1
-        
+
         # Copy all methods and attributes from cls, including decorator metadata
-        for attrName in dir(cls):
-            if attrName.startswith('_'):
+        for attrName in dir( cls ):
+            if attrName.startswith( '_' ):
                 continue  # Skip private/magic methods (already handled or inherited)
-            
-            attr = getattr(cls, attrName)
+
+            attr = getattr( cls, attrName )
             # Copy methods with their decorators
-            if callable(attr) and attrName not in WrappingClass.__dict__:
-                setattr(WrappingClass,attrName,attr)
+            if callable( attr ) and attrName not in WrappingClass.__dict__:
+                setattr( WrappingClass, attrName, attr )
 
         # Copy metadata
         WrappingClass.__name__ = cls.__name__
@@ -175,7 +183,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
 
         #decorate it old fashion way
         WrappingClass = smdomain.datatype(
-            dataTypes=[ decoratedType ] if isinstance(decoratedType,str) else decoratedType,
+            dataTypes=[ decoratedType ] if isinstance( decoratedType, str ) else decoratedType,
             composite_data_supported=True,
         )( WrappingClass )
         WrappingClass = smproperty.input( name="Input", port_index=0 )( WrappingClass )

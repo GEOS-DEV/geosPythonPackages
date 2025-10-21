@@ -7,11 +7,10 @@ from pathlib import Path
 from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-     VTKPythonAlgorithmBase, smdomain, smproperty,
+    VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
-)
+    vtkDataArraySelection, )
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, )
 
@@ -65,10 +64,12 @@ To use it:
 .. IMPORTANT::
     Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
+
+
 @SISOFilter( category=FilterCategory.GEOS_QC,
              decoratedLabel="Mesh Quality Enhanced",
-             decoratedType="vtkUnstructuredGrid")
-class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
+             decoratedType="vtkUnstructuredGrid" )
+class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Merge collocated points."""
@@ -164,7 +165,7 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
         """
         if self._saveToFile != saveToFile:
             self._saveToFile = saveToFile
-            PVMeshQualityEnhanced.Modified(self)
+            PVMeshQualityEnhanced.Modified( self )
 
     @smproperty.stringvector( name="FilePath", label="File Path" )
     @smdomain.xml( """
@@ -183,7 +184,7 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
         """
         if self._filename != fname:
             self._filename = fname
-            PVMeshQualityEnhanced.Modified(self)
+            PVMeshQualityEnhanced.Modified( self )
 
     @smproperty.xml( """
                     <PropertyGroup
@@ -199,12 +200,12 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
                     """ )
     def b03GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
-        PVMeshQualityEnhanced.Modified(self)
+        PVMeshQualityEnhanced.Modified( self )
 
     def Modified( self: Self ) -> None:
         """Overload Modified method to reset _blockIndex."""
         self._blockIndex = 0
-        VTKPythonAlgorithmBase.Modified(self)
+        VTKPythonAlgorithmBase.Modified( self )
 
     def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.
@@ -215,7 +216,7 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
-    def Filter(self, inputMesh: vtkUnstructuredGrid, outputMesh:vtkUnstructuredGrid) -> None:
+    def Filter( self, inputMesh: vtkUnstructuredGrid, outputMesh: vtkUnstructuredGrid ) -> None:
         """Is applying MeshQualityEnhanced to the input Mesh.
 
         Args:
