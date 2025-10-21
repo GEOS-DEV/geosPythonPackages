@@ -517,7 +517,7 @@ def test_transferAttributeWithElementMap(
 
         arrayTo: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataTo.GetArray( attributeName ) )
         for idElementTo in range( len( arrayTo ) ):
-            idElementFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
+            idElementFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ] )
             if idElementFrom == -1:
                 assert arrayTo[ idElementTo ] == defaultValueTest
 
