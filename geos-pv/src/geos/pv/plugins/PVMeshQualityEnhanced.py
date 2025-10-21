@@ -66,8 +66,8 @@ To use it:
     Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
 @SISOFilter( category=FilterCategory.GEOS_QC,
-             decorated_label="Mesh Quality Enhanced",
-             decorated_type="vtkUnstructuredGrid")
+             decoratedLabel="Mesh Quality Enhanced",
+             decoratedType="vtkUnstructuredGrid")
 class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
@@ -215,12 +215,12 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
-    def Filter(self, inputMesh: vtkUnstructuredGrid, outputMesh:vtkUnstructuredGrid) -> int:
+    def Filter(self, inputMesh: vtkUnstructuredGrid, outputMesh:vtkUnstructuredGrid) -> None:
         """Is applying MeshQualityEnhanced to the input Mesh.
 
         Args:
-            inputMesh : a mesh to transform
-            outputMesh : a mesh transformed
+            inputMesh : A mesh to transform.
+            outputMesh : A mesh transformed.
 
         """
         triangleMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(

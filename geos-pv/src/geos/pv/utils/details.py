@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay, Romain Baville
+# SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="misc"
 import sys
@@ -11,20 +11,6 @@ from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable, Un
 from abc import abstractmethod
 from enum import Enum
 
-
-# Enum for filter categories
-class FilterCategory( str, Enum ):
-    GEOS_UTILS = '4- Geos Utils'
-    GEOS_MESH = '1- Geos Mesh'
-    GEOS_PROP = '0- Geos Pre-processing'
-    GEOS_GEOMECHANICS = '2- Geos Geomechanics'
-    GEOS_PV = '3- Geos PV'
-    GEOS_QC = '5- Geos QC'
-    # Add more as needed
-
-
-# from functools import wraps
-# from dataclasses import dataclass
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -50,11 +36,24 @@ Set of decorators that allows quicker generation of MultiBlockDataSet to MultiBl
 
 Usage is:
 
-    @SISO(name='MyFilter',label='This is my filter',dtype='vtkMultiBlockDataSet')
+    from geos.pv.utils.details import SISOFilter, FilterCategory
+
+    @SISO(category=FilterCategory.GEOS_UTILS,decoratedLabel='Awesome Filter',decoratedType='vtkMultiBlockDataSet')
     class PVMyFilter:
         ...
 
 """
+# Enum for filter categories
+class FilterCategory( str, Enum ):
+    """String Enum to sort into category in PV task bar under Plugins."""
+    GEOS_PROP = '0- Geos Pre-processing'
+    GEOS_MESH = '1- Geos Mesh'
+    GEOS_GEOMECHANICS = '2- Geos Geomechanics'
+    GEOS_PV = '3- Geos PV'
+    GEOS_UTILS = '4- Geos Utils'
+    GEOS_QC = '5- Geos QC'
+    # Add more as needed
+
 
 U = TypeVar('U')
 @runtime_checkable
@@ -70,23 +69,21 @@ class IsSISOFilter( Protocol[U] ):
         """Define filter here.
 
         Args:
-            inputMesh : a mesh to transform
-            outputMesh : a mesh transformed
+            inputMesh : A mesh to transform
+            outputMesh : A mesh transformed
 
         """
         raise NotImplementedError
 
-
 T = TypeVar( 'T', bound='IsSISOFilter' )
 
 
-def SISOFilter( category: FilterCategory, decorated_label: str,
-                decorated_type: Union[str,list] ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
-    """Decorate single input single output filter."""
-
-    def decorated_class( cls: Type[ T ] ) -> Type[ T ]:
+def SISOFilter( category: FilterCategory, decoratedLabel: str,
+                decoratedType: Union[str,list] ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+    """Decorate Single Input Single Output (SISO) filter."""
+    def decoratedClass( cls: Type[ T ] ) -> Type[ T ]:
         """Outer wrapper function. All is in the WrappingClass below."""
-        original_init = cls.__init__
+        originalInit = cls.__init__
 
         class WrappingClass( cls ):  # type: ignore[valid-type]
 
@@ -94,19 +91,19 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
                 """Pre-init the filter with the Base algo and I/O single type (usually vtkMultiBlockDataSet).
 
                 Args:
-                    ar : fowarded arguments
-                    kw : forwarded keywords args
+                    ar : Fowarded arguments
+                    kw : Forwarded keywords args
                 """
                 VTKPythonAlgorithmBase.__init__( self,
                                                  nInputPorts=1,
                                                  nOutputPorts=1,
-                                                 inputType=decorated_type if isinstance(decorated_type,str) else "vtkDataObject",
-                                                 outputType=decorated_type if isinstance(decorated_type,str) else "vtkDataObject")
+                                                 inputType=decoratedType if isinstance(decoratedType,str) else "vtkDataObject",
+                                                 outputType=decoratedType if isinstance(decoratedType,str) else "vtkDataObject")
 
                 #If wrapped class has more to init there it is applied
                 #avoid the overwritten init by decorator taking place of the cls
-                if original_init is not object.__init__:
-                    original_init( self, *ar, **kw )
+                if originalInit is not object.__init__:
+                    originalInit( self, *ar, **kw )
 
             def RequestDataObject(
                 self,
@@ -160,14 +157,14 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
                 return 1
         
         # Copy all methods and attributes from cls, including decorator metadata
-        for attr_name in dir(cls):
-            if attr_name.startswith('_'):
+        for attrName in dir(cls):
+            if attrName.startswith('_'):
                 continue  # Skip private/magic methods (already handled or inherited)
             
-            attr = getattr(cls, attr_name)
+            attr = getattr(cls, attrName)
             # Copy methods with their decorators
-            if callable(attr) and attr_name not in WrappingClass.__dict__:
-                setattr(WrappingClass,attr_name,attr)
+            if callable(attr) and attrName not in WrappingClass.__dict__:
+                setattr(WrappingClass,attrName,attr)
 
         # Copy metadata
         WrappingClass.__name__ = cls.__name__
@@ -178,14 +175,14 @@ def SISOFilter( category: FilterCategory, decorated_label: str,
 
         #decorate it old fashion way
         WrappingClass = smdomain.datatype(
-            dataTypes=[ decorated_type ] if isinstance(decorated_type,str) else decorated_type,
+            dataTypes=[ decoratedType ] if isinstance(decoratedType,str) else decoratedType,
             composite_data_supported=True,
         )( WrappingClass )
         WrappingClass = smproperty.input( name="Input", port_index=0 )( WrappingClass )
         # Use enum value for category
         WrappingClass = smhint.xml( f'<ShowInMenu category="{category}"/>' )( WrappingClass )
         WrappingClass = smproxy.filter( name=getattr( cls, '__name__', str( cls ) ),
-                                        label=decorated_label )( WrappingClass )
+                                        label=decoratedLabel )( WrappingClass )
         return WrappingClass
 
-    return decorated_class
+    return decoratedClass

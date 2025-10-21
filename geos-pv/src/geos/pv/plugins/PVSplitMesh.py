@@ -37,8 +37,8 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decorated_label="Split Mesh",
-             decorated_type="vtkPointSet")
+             decoratedLabel="Split Mesh",
+             decoratedType="vtkPointSet")
 class PVSplitMesh(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
@@ -53,8 +53,8 @@ class PVSplitMesh(VTKPythonAlgorithmBase):
         """Apply vtk filter.
 
         Args:
-            inputMesh(vtkPointSet): input mesh
-            outputMesh: output mesh
+            inputMesh(vtkPointSet): Input mesh.
+            outputMesh: Output mesh.
         """
         filter: SplitMesh = SplitMesh()
         filter.SetInputDataObject( inputMesh )

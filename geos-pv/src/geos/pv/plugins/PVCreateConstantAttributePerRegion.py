@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import numpy as np
 from pathlib import Path
 
 from typing import Any
@@ -15,6 +16,8 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
+import vtkmodules.util.numpy_support as vnp
+
 
 from vtkmodules.vtkCommonDataModel import (
     vtkDataSet,
@@ -25,7 +28,7 @@ geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
-update_paths()
+from geos.mesh.processing.CreateConstantAttributePerRegion import ( CreateConstantAttributePerRegion )
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
 from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, vnp, np
@@ -51,8 +54,8 @@ To use it:
 
 """
 @SISOFilter( category=FilterCategory.GEOS_PROP,
-             decorated_label="Create Constant Attribute Per Region",
-             decorated_type=[ "vtkMultiBlockDataSet", "vtkDataSet" ])
+             decoratedLabel="Create Constant Attribute Per Region",
+             decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ])
 class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
 
     def __init__( self: Self ) -> None:
@@ -274,10 +277,10 @@ class PVCreateConstantAttributePerRegion(VTKPythonAlgorithmBase):
 
     def Filter(self, inputMesh: vtkDataSet , outputMesh: vtkDataSet) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
-
+            outputMesh : A mesh transformed.
         Args:
-            inputMesh : a mesh to transform
-            outputMesh : a mesh transformed
+            inputMesh : A mesh to transform
+            outputMesh : A mesh transformed
         """
         filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
             outputMesh,

@@ -44,8 +44,8 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decorated_label="Fill Partial Arrays",
-             decorated_type="vtkMultiBlockDataSet" )
+             decoratedLabel="Fill Partial Arrays",
+             decoratedType="vtkMultiBlockDataSet" )
 class PVFillPartialArrays(VTKPythonAlgorithmBase):
 
     def __init__( self: Self, ) -> None:
@@ -98,8 +98,8 @@ class PVFillPartialArrays(VTKPythonAlgorithmBase):
         """Is applying FillPartialArrays to the mesh and return with the class's dictionnary for attributes values.
 
         Args:
-            inputMesh : a mesh to transform
-            outputMesh : a mesh transformed
+            inputMesh : A mesh to transform.
+            outputMesh : A mesh transformed.
 
         """
         filter: FillPartialArrays = FillPartialArrays(

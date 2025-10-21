@@ -60,8 +60,8 @@ To use it:
 
 """
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decorated_label="Python View Configurator",
-             decorated_type="vtkDataObject")
+             decoratedLabel="Python View Configurator",
+             decoratedType="vtkDataObject")
 class PVPythonViewConfigurator:
 
     def __init__( self: Self ) -> None:
@@ -809,8 +809,8 @@ class PVPythonViewConfigurator:
         """Dummy interface for plugin to fit decorator reqs.
 
         Args:
-            inputMesh : a dummy mesh to transform
-            outputMesh : a dummy mesh transformed
+            inputMesh : A dummy mesh to transform
+            outputMesh : A dummy mesh transformed
 
         """
         assert self.m_pythonView is not None, "No Python View was found."

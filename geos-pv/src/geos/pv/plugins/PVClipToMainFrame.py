@@ -37,8 +37,8 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decorated_label="Clip to the main frame",
-             decorated_type=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
+             decoratedLabel="Clip to the main frame",
+             decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:
@@ -51,8 +51,8 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         """Is applying CreateConstantAttributePerRegion filter.
 
         Args:
-            inputMesh : a mesh to transform
-            outputMesh : a mesh transformed
+            inputMesh : A mesh to transform.
+            outputMesh : A mesh transformed.
         """
         # struct
         self._realFilter.SetInputData( inputMesh )
