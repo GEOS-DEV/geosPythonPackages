@@ -2,21 +2,21 @@ import argparse
 from dataclasses import dataclass
 from typing import Callable, Any
 
-ALL_CHECKS = "all_checks"
-MAIN_CHECKS = "main_checks"
-COLLOCATES_NODES = "collocated_nodes"
-ELEMENT_VOLUMES = "element_volumes"
-FIX_ELEMENTS_ORDERINGS = "fix_elements_orderings"
-GENERATE_CUBE = "generate_cube"
-GENERATE_FRACTURES = "generate_fractures"
-GENERATE_GLOBAL_IDS = "generate_global_ids"
-NON_CONFORMAL = "non_conformal"
-SELF_INTERSECTING_ELEMENTS = "self_intersecting_elements"
-SUPPORTED_ELEMENTS = "supported_elements"
+ALL_CHECKS = "allChecks"
+MAIN_CHECKS = "mainChecks"
+COLLOCATES_NODES = "collocatedNodes"
+ELEMENT_VOLUMES = "elementVolumes"
+FIX_ELEMENTS_ORDERINGS = "fixElementsOrderings"
+GENERATE_CUBE = "generateCube"
+GENERATE_FRACTURES = "generateFractures"
+GENERATE_GLOBAL_IDS = "generateGlobalIds"
+NON_CONFORMAL = "nonConformal"
+SELF_INTERSECTING_ELEMENTS = "selfIntersectingElements"
+SUPPORTED_ELEMENTS = "supportedElements"
 
 
 @dataclass( frozen=True )
 class ActionHelper:
-    fill_subparser: Callable[ [ Any ], argparse.ArgumentParser ]
+    fillSubparser: Callable[ [ Any ], argparse.ArgumentParser ]
     convert: Callable[ [ Any ], Any ]
-    display_results: Callable[ [ Any, Any ], None ]
+    displayResults: Callable[ [ Any, Any ], None ]
