@@ -257,7 +257,7 @@ class PVMeshQualityEnhanced(VTKPythonAlgorithmBase):
             stats: QualityMetricSummary = filter.GetQualityMetricSummary()
             self.saveFile( stats )
         self._blockIndex += 1
-        return 1
+        return
 
     def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
         """Export mesh quality metric summary file."""
