@@ -3,14 +3,22 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 import numpy as np
 import numpy.typing as npt
-from typing import Iterator, List, Sequence, Any, Union
-from vtkmodules.util.numpy_support import (
-    numpy_to_vtk,
-    vtk_to_numpy
+from typing import Iterator, List, Sequence, Any, Union, Tuple
+from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray
+from vtkmodules.vtkCommonDataModel import (
+    vtkUnstructuredGrid,
+    vtkMultiBlockDataSet,
+    vtkPolyData,
+    vtkDataSet,
+    vtkDataObject,
+    vtkPlane,
+    vtkCellTypes,
+    vtkIncrementalOctreePointLocator,
 )
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet, vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator
-from vtkmodules.vtkFiltersCore import vtk3DLinearGridPlaneCutter
+from vtkmodules.vtkFiltersCore import ( vtk3DLinearGridPlaneCutter, vtkPolyDataNormals, vtkPolyDataTangents )
+from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
+
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 from geos.utils.algebraFunctions import (
@@ -18,7 +26,6 @@ from geos.utils.algebraFunctions import (
     getAttributeVectorFromMatrix,
     getLocalToXYZTransformMatrix,
 )
-
 
 __doc__ = """
 Generic VTK utilities.
@@ -279,9 +286,9 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
     return points, cellVertexMapAll
 
 
-def convertAttributeFromLocalToXYZForOneCell( vector, localBasisVectors ) -> npt.NDArray[ np.float64 ]:
-    """
-    Convert one cell attribute from local to XYZ basis.
+def convertAttributeFromLocalToXYZForOneCell(
+        vector: npt.NDArray[ np.float64 ], localBasisVectors: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    """Convert one cell attribute from local to XYZ basis.
 
     .. Warning::
         Vectors components are considered to be in GEOS output order such that \
@@ -303,48 +310,150 @@ def convertAttributeFromLocalToXYZForOneCell( vector, localBasisVectors ) -> npt
     # Apply transformation
     arrayXYZ: npt.NDArray[ np.float64 ] = transformMatrix @ matrix3x3 @ transformMatrix.T
 
-    # Convert back to GEOS type attribute
-    vectorXYZ: npt.NDArray[ np.float64 ] = getAttributeVectorFromMatrix( arrayXYZ, vector.size )
-
-    return vectorXYZ
+    # Convert back to GEOS type attribute and return
+    return getAttributeVectorFromMatrix( arrayXYZ, vector.size )
 
 
-def getNormalVectors( dataset,  ) -> npt.NDArray[ np.float64 ]:
-    normals: npt.NDArray[ np.float64 ] = vtk_to_numpy(
-        dataset.GetCellData().GetNormals() )  # type: ignore[no-untyped-call]
-    # TODO: if normals not defined, compute it on the fly
+def getNormalVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
+    """Return the normal vectors of a surface mesh.
+
+    Args:
+        surface (vtkPolyData): The input surface.
+
+    Raises:
+        ValueError: No normal attribute found in the mesh. Use the computeNormals function beforehand.
+
+    Returns:
+        npt.NDArray[ np.float64 ]: The normal vectors of the input surface.
+    """
+    normals: Union[ npt.NDArray[ np.float64 ],
+                    None ] = vtk_to_numpy( surface.GetCellData().GetNormals() )  # type: ignore[no-untyped-call]
     if normals is None:
-        raise ValueError( "Normal attribute was not found." )
+        raise ValueError( "No normal attribute found in the mesh. Use the computeNormals function beforehand." )
 
     return normals
 
 
-def getTangentsVectors( dataset, normals = None ) -> npt.NDArray[ np.float64 ]:
+def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
+    """Return the tangential vectors of a surface.
+
+    Args:
+        surface (vtkPolyData): The input surface.
+
+    Raises:
+        ValueError: Tangent attribute not found in the mesh. Use computeTangents beforehand.
+        ValueError: Problem during the calculation of the second tangential vectors.
+
+    Returns:
+        Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]: The tangents vectors of the input surface.
+    """
     # Get first tangential component
-    tangents1: npt.NDArray[ np.float64 ] = vtk_to_numpy(
-        dataset.GetCellData().GetTangents() )  # type: ignore[no-untyped-call]
+    tangents1: Union[ npt.NDArray[ np.float64 ],
+                      None ] = vtk_to_numpy( surface.GetCellData().GetTangents() )  # type: ignore[no-untyped-call]
     if tangents1 is None:
-        raise ValueError( "Tangents attribute was not found." )
+        raise ValueError( "No tangential attribute found in the mesh. Use the computeTangents function beforehand." )
 
     # Compute second tangential component
-    if normals is None:
-        normals = getNormalVectors( dataset )
+    normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
 
-    tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
+    tangents2: Union[ npt.NDArray[ np.float64 ], None ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
     if tangents2 is None:
         raise ValueError( "Local basis third axis was not computed." )
 
     return ( tangents1, tangents2 )
 
 
-def getLocalBasisVectors( dataset: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
-    """Return the local basis vectors for all cells of the input dataset.
+def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
+    """Return the local basis vectors for all cells of the input surface.
 
     Args:
-        dataset(vtkPolydata): The input dataset
+        surface(vtkPolydata): The input surface.
 
+    Returns:
+        Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]: Array with normal, tangential 1 and tangential 2 vectors.
     """
-    normals = getNormalVectors( dataset )
-    tangents = getTangentsVectors( dataset, normals=normals )
+    try:
+        normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
+    except ValueError:
+        surfaceWithNormals: vtkPolyData = computeNormals( surface )
+        normals = getNormalVectors( surfaceWithNormals )
+
+    try:
+        tangents: Tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ] = getTangentsVectors( surface )
+    except ValueError:
+        surfaceWithTangents: vtkPolyData = computeTangents( surface )
+        tangents = getTangentsVectors( surfaceWithTangents )
 
     return np.array( ( normals, *tangents ) )
+
+
+def computeNormals( surface: vtkPolyData ) -> vtkPolyData:
+    """Compute and set the normals of a given surface.
+
+    Args:
+        surface (vtkPolyData): The input surface.
+
+    Returns:
+        vtkPolyData: The surface with normal attribute.
+    """
+    normalFilter: vtkPolyDataNormals = vtkPolyDataNormals()
+    normalFilter.SetInputData( surface )
+    normalFilter.ComputeCellNormalsOn()
+    normalFilter.ComputePointNormalsOff()
+    normalFilter.Update()
+
+    return normalFilter.GetOutput()
+
+
+def computeTangents( triangulatedSurface: vtkPolyData ) -> vtkPolyData:
+    """Compute and set the tangents of a given surface.
+
+    .. Warning:: The computation of tangents requires a triangulated surface.
+
+    Args:
+        triangulatedSurface (vtkPolyData): The input surface. It should be triangulated beforehand.
+
+    Returns:
+        vtkPolyData: The surface with tangent attribute
+    """
+    # need to compute texture coordinates required for tangent calculation
+    surface1: vtkPolyData = computeSurfaceTextureCoordinates( triangulatedSurface )
+
+    # TODO: triangulate the surface before computation of the tangents if needed.
+
+    # compute tangents
+    tangentFilter: vtkPolyDataTangents = vtkPolyDataTangents()
+    tangentFilter.SetInputData( surface1 )
+    tangentFilter.ComputeCellTangentsOn()
+    tangentFilter.ComputePointTangentsOff()
+    tangentFilter.Update()
+    surfaceOut: vtkPolyData = tangentFilter.GetOutput()
+    assert surfaceOut is not None, "Tangent components calculation failed."
+
+    # copy tangents attributes into filter input surface because surface attributes
+    # are not transferred to the output (bug that should be corrected by Kitware)
+    array: vtkDataArray = surfaceOut.GetCellData().GetTangents()
+    assert array is not None, "Attribute Tangents is not in the mesh."
+
+    surface1.GetCellData().SetTangents( array )
+    surface1.GetCellData().Modified()
+    surface1.Modified()
+    return surface1
+
+
+def computeSurfaceTextureCoordinates( surface: vtkPolyData ) -> vtkPolyData:
+    """Generate the 2D texture coordinates required for tangent computation. The dataset points are mapped onto a plane generated automatically.
+
+    Args:
+        surface (vtkPolyData): The input surface.
+
+    Returns:
+        vtkPolyData: The input surface with generated texture map.
+    """
+    # Need to compute texture coordinates required for tangent calculation
+    textureFilter: vtkTextureMapToPlane = vtkTextureMapToPlane()
+    textureFilter.SetInputData( surface )
+    textureFilter.AutomaticPlaneGenerationOn()
+    textureFilter.Update()
+
+    return textureFilter.GetOutput()

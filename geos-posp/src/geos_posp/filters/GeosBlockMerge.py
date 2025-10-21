@@ -14,7 +14,6 @@ from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
-    vtkDataArray,
     vtkInformation,
     vtkInformationVector,
 )
@@ -25,19 +24,18 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPolyData,
     vtkUnstructuredGrid,
 )
-from vtkmodules.vtkFiltersCore import (
-    vtkArrayRename,
-    vtkPolyDataNormals,
-    vtkPolyDataTangents,
-)
+from vtkmodules.vtkFiltersCore import vtkArrayRename
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 
 from geos.mesh.utils.multiblockHelpers import getElementaryCompositeBlockIndexes
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import createConstantAttribute, fillAllPartialAttributes
 from geos.mesh.utils.multiblockHelpers import extractBlock
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
+from geos.mesh.utils.genericHelpers import (
+    computeNormals,
+    computeTangents,
+)
 
 __doc__ = """
 GeosBlockMerge module is a vtk filter that allows to merge Geos ranks, rename
@@ -397,10 +395,10 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             surface1: vtkPolyData = self.convertBlockToSurface( surface0 )
             assert surface1 is not None, "Surface extraction from block failed."
             # compute normals
-            surface2: vtkPolyData = self.computeNormals( surface1 )
+            surface2: vtkPolyData = computeNormals( surface1 )
             assert surface2 is not None, "Normal calculation failed."
             # compute tangents
-            surface3: vtkPolyData = self.computeTangents( surface2 )
+            surface3: vtkPolyData = computeTangents( surface2 )
             assert surface3 is not None, "Tangent calculation failed."
 
             # set surface to output multiBlockDataSet
@@ -437,56 +435,3 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
         extractSurfaceFilter.Update()
         output: vtkPolyData = extractSurfaceFilter.GetOutput()
         return output
-
-    def computeNormals( self: Self, surface: vtkPolyData ) -> vtkPolyData:
-        """Compute normals of the given surface.
-
-        Args:
-            surface (vtkPolyData): surface to compute the normals
-
-        Returns:
-            vtkPolyData: surface with normal attribute
-        """
-        normalFilter: vtkPolyDataNormals = vtkPolyDataNormals()
-        normalFilter.SetInputData( surface )
-        normalFilter.ComputeCellNormalsOn()
-        normalFilter.ComputePointNormalsOff()
-        normalFilter.Update()
-        output: vtkPolyData = normalFilter.GetOutput()
-        return output
-
-    def computeTangents( self: Self, surface: vtkPolyData ) -> vtkPolyData:
-        """Compute tangents of the given surface.
-
-        Args:
-            surface (vtkPolyData): surface to compute the tangents
-
-        Returns:
-            vtkPolyData: surface with tangent attribute
-        """
-        # need to compute texture coordinates required for tangent calculation
-        textureFilter: vtkTextureMapToPlane = vtkTextureMapToPlane()
-        textureFilter.SetInputData( surface )
-        textureFilter.AutomaticPlaneGenerationOn()
-        textureFilter.Update()
-        surface1: vtkPolyData = textureFilter.GetOutput()
-        assert ( surface1 is not None ), "Texture calculation during Tangent calculation failed."
-
-        # compute tangents
-        tangentFilter: vtkPolyDataTangents = vtkPolyDataTangents()
-        tangentFilter.SetInputData( surface1 )
-        tangentFilter.ComputeCellTangentsOn()
-        tangentFilter.ComputePointTangentsOff()
-        tangentFilter.Update()
-        surfaceOut: vtkPolyData = tangentFilter.GetOutput()
-        assert surfaceOut is not None, "Tangent components calculation failed."
-
-        # copy tangents attributes into filter input surface because surface attributes
-        # are not transferred to the output (bug that should be corrected by Kitware)
-        array: vtkDataArray = surfaceOut.GetCellData().GetTangents()
-        assert array is not None, "Attribute Tangents is not in the mesh."
-
-        surface1.GetCellData().SetTangents( array )
-        surface1.GetCellData().Modified()
-        surface1.Modified()
-        return surface1
