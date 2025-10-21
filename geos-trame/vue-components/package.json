@@ -17,11 +17,6 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore --ignore-pattern public",
     "semantic-release": "semantic-release"
   },
-  "dependencies": {
-  },
-  "peerDependencies": {
-    "vue": "^2.7.0 || >=3.0.0"
-  },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
     "@vue/eslint-config-prettier": "^7.0.0",
@@ -29,8 +24,8 @@
     "eslint-plugin-vue": "^9.3.0",
     "prettier": "^2.7.1",
     "semantic-release": "19.0.2",
-    "vite": "^4.1.0",
-    "vue": "^3.0.0"
+    "vite": "^5.2.12",
+    "vue": "^3.4.27"
   },
   "files": [
     "dist/*",

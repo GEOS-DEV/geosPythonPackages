@@ -4,7 +4,8 @@
 from typing import Any
 from datetime import datetime, timedelta
 
-from trame.widgets import gantt
+# from trame.widgets import gantt
+from geos.trame.app.misc.widgets import gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
@@ -90,6 +91,9 @@ class TimelineEditor( vuetify.VCard ):
                     update=( self.update_from_js, "items" ),
                     items=( "items", items ),
                     classes="fill_height",
+                )
+                gantt.GanttChart(
+
                 )
 
     def _set_start_date(self, sdate : str | None, **_: Any) -> None:
