@@ -300,14 +300,3 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
         PostProcessingOutputsEnum.POISSON_RATIO.attributeName:
         PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName,
     }
-
-
-def getAttributeToConvertFromLocalToXYZ() -> set[ str ]:
-    """Get the list of attribute names to convert from local to xyz basis.
-
-    Returns:
-        list[str]: list of attributes to convert
-    """
-    return {
-        GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName,
-    }
