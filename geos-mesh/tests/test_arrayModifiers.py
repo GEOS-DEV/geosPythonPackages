@@ -58,12 +58,12 @@ from geos.mesh.utils import arrayModifiers
               np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
         # Test fill attributes with different number of component with or without component names.
         ( 3, "PORO", 1, (), False, None, [ np.float32( np.nan ) ], VTK_FLOAT ),
-        ( 1, "collocated_nodes", 2, ( None, None ), True, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
+        ( 1, "collocatedNodes", 2, ( None, None ), True, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
         # Test fill an attribute with different type of value.
         ( 3, "FAULT", 1, (), False, None, [ np.int32( -1 ) ], VTK_INT ),
         ( 3, "FAULT", 1, (), False, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
         ( 3, "PORO", 1, (), False, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
-        ( 1, "collocated_nodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
+        ( 1, "collocatedNodes", 2, ( None, None ), True, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
         ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), False, [ 4, 4, 4 ],
           [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
     ] )
@@ -140,7 +140,7 @@ def test_FillAllPartialAttributes(
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( blockIndex ) )
         attributeExist: int
-        for attributeNameOnPoint in [ "PointAttribute", "collocated_nodes" ]:
+        for attributeNameOnPoint in [ "PointAttribute", "collocatedNodes" ]:
             attributeExist = dataSet.GetPointData().HasArray( attributeNameOnPoint )
             assert attributeExist == 1
         for attributeNameOnCell in [ "CELL_MARKERS", "CellAttribute", "FAULT", "PERM", "PORO" ]:
@@ -482,7 +482,7 @@ def test_copyAttributeDataSet(
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeName, onPoints, defaultValueTest", [
-    ( "fracture", "emptyFracture", "collocated_nodes", True, [ -1, -1 ] ),
+    ( "fracture", "emptyFracture", "collocatedNodes", True, [ -1, -1 ] ),
     ( "multiblock", "emptyFracture", "FAULT", False, -1 ),
     ( "multiblock", "emptymultiblock", "FAULT", False, -1 ),
     ( "dataset", "emptymultiblock", "FAULT", False, -1 ),
