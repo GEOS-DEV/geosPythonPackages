@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
-from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
+from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader, vtkXMLMultiBlockDataReader
 
 
 @pytest.fixture
@@ -163,6 +163,9 @@ def dataSetTest() -> Any:
             vtkFilename = "data/displacedFault.vtm"
         elif datasetType == "emptymultiblock":
             vtkFilename = "data/displacedFaultempty.vtm"
+        elif datasetType == "multiblockGeosOutput":
+            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
+            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
         elif datasetType == "fracture":
             vtkFilename = "data/fracture_res5_id.vtu"
         elif datasetType == "emptyFracture":
