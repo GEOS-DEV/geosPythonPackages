@@ -6,6 +6,7 @@ PVAttributeMapping
 
 .. automodule:: geos.pv.plugins.PVAttributeMapping
 
+
 PVCreateConstantAttributePerRegion
 -----------------------------------
 
@@ -16,6 +17,12 @@ PVFillPartialArrays
 --------------------
 
 .. automodule:: geos.pv.plugins.PVFillPartialArrays
+
+
+PVGeomechanicsCalculator plugin
+---------------------------------------
+
+.. automodule:: geos.pv.plugins.PVGeomechanicsCalculator
 
 
 PVSplitMesh

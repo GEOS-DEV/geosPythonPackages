@@ -27,7 +27,6 @@ geos.mesh.processing.FillPartialArrays filter
     :undoc-members:
     :show-inheritance:
 
-
 geos.mesh.processing.meshQualityMetricHelpers module
 -----------------------------------------------------
 

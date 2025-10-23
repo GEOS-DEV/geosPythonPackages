@@ -61,6 +61,7 @@ jobs:
           - geos-geomechanics
           - geos-mesh
           - geos-posp
+          - geos-processing
           - geos-timehistory
           - geos-trame
           - geos-xml-tools
@@ -72,8 +73,10 @@ jobs:
             dependencies: "geos-utils"
           - package-name: geos-mesh
             dependencies: "geos-utils geos-geomechanics"
-          - package-name: geos-posp
+          - package-name: geos-processing
             dependencies: "geos-utils geos-mesh geos-geomechanics"
+          - package-name: geos-posp
+            dependencies: "geos-utils geos-mesh geos-geomechanics geos-processing"
           - package-name: pygeos-tools
             dependencies: "geos-utils geos-mesh"
           - package-name: geos-timehistory
