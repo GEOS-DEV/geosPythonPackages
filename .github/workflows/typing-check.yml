@@ -1,5 +1,5 @@
 name: "Pull Request Typing Check"
-on: 
+on:
 - pull_request
 
 # Cancels in-progress workflows for a PR when updated
@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         # add packages to check typing
-        package-name: ["geos-geomechanics", "geos-posp", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper"]
+        package-name: ["geos-geomechanics", "geos-posp", "geos-processing", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper"]
 
     steps:
     - uses: actions/checkout@v4

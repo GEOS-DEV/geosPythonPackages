@@ -7,42 +7,33 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["geos_posp*", "PVplugins*"]
+include = ["geos.processing*"]
 exclude = ['tests*']
 
 [project]
-name = "geos-posp"
-version = "1.0.0"
-description = "The Python package geos-posp is dedicated to post-process data from the geos simulation tool."
+name = "geos-processing"
+version = "0.1.0"
+description = "GEOS post- and pre-processing tools"
 authors = [{name = "GEOS Contributors" }]
-maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+maintainers = [
+               {name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
                {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
-               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
+]
 license = {text = "Apache-2.0"}
 classifiers = [
-    "Intended Audience :: Developers",
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: Apache Software License ",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Scientific/Engineering :: Visualization",
-]
-keywords = [
-    "GEOS",
-    "Simulation",
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
 ]
 
-requires-python = ">= 3.10"
+requires-python = ">=3.10"
 
 dependencies = [
     "geos-geomechanics",
     "geos-utils",
     "geos-mesh",
-    "geos-processing",
     "vtk >= 9.3",
     "numpy >= 2.2",
-    "pandas >= 2.2",
     "typing_extensions >= 4.12",
 ]
 
@@ -59,6 +50,7 @@ build = [
 ]
 dev = [
    "mypy",
+   "ruff",
    "yapf",
 ]
 test = [
@@ -66,29 +58,13 @@ test = [
    "pytest"
 ]
 
-[tool.bumpversion]
-current_version = "1.0.0"
-
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
-search = 'version = "{current_version}"'
-
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 console_output_style = "count"
-pythonpath = [".", "src"]
+pythonpath = ["src"]
 python_classes = "Test"
 python_files = "test*.py"
 python_functions = "test*"
 testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
-
-[tool.coverage.run]
-branch = true
-source = ["geos-posp"]
-omit = [
-    "*/pyvistaUtils/*",
-    "*/visu/*",
-    "*/PVplugins/*",
-]
