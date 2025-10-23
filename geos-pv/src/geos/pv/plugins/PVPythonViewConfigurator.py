@@ -16,7 +16,6 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.utils.multiblockModifiers import mergeBlocks
 import geos.pv.utils.paraviewTreatments as pvt
 from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
@@ -35,21 +34,13 @@ from paraview.simple import (  # type: ignore[import-not-found]
     GetActiveSource, GetActiveView, Render, Show, servermanager,
 )
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty,
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from vtkmodules.vtkCommonCore import (
     vtkDataArraySelection,
     vtkInformation,
+    vtkInformationVector,
 )
-
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase )
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataObject,
-    vtkMultiBlockDataSet,
-)
-from geos.pv.utils.details import SISOFilter, FilterCategory
 
 __doc__ = """
 PVPythonViewConfigurator is a Paraview plugin that allows to create cross-plots
@@ -68,9 +59,10 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decoratedLabel="Python View Configurator",
-             decoratedType="vtkDataObject" )
+@smproxy.filter( name="PVPythonViewConfigurator", label="Python View Configurator" )
+@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smproperty.input( name="Input" )
+@smdomain.datatype( dataTypes=[ "vtkDataObject" ], composite_data_supported=True )
 class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -78,7 +70,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
         Input is a vtkDataObject.
         """
-        # super().__init__( nInputPorts=1, nOutputPorts=1 )
+        super().__init__( nInputPorts=1, nOutputPorts=1 )
         # Python view layout and object.
         self.m_layoutName: str = ""
         self.m_pythonView: Any
@@ -88,9 +80,6 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         # Input source and curve names.
         inputSource = GetActiveSource()
         dataset = servermanager.Fetch( inputSource )
-        # Handle vtkMultiBlockDataSet by merging blocks first
-        if isinstance( dataset, vtkMultiBlockDataSet ):
-            dataset = mergeBlocks( dataset, keepPartialAttributes=True )
         dataframe: pd.DataFrame = pvt.vtkToDataframe( dataset )
         self.m_pathPythonViewScript: Path = geos_pv_path / "src/geos/pv/pythonViewUtils/mainPythonView.py"
 
@@ -817,14 +806,47 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
             info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject" )
         return 1
 
-    def Filter( self, inputMesh: vtkDataObject, outputMesh: vtkDataObject ) -> None:
-        """Dummy interface for plugin to fit decorator reqs.
+    def RequestDataObject(
+        self: Self,
+        request: vtkInformation,
+        inInfoVec: list[ vtkInformationVector ],
+        outInfoVec: vtkInformationVector,
+    ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            inputMesh : A dummy mesh to transform
-            outputMesh : A dummy mesh transformed
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
         """
+        inData = self.GetInputData( inInfoVec, 0, 0 )
+        outData = self.GetOutputData( outInfoVec, 0 )
+        assert inData is not None
+        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
+            outData = inData.NewInstance()
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+
+    def RequestData(
+            self: Self,
+            request: vtkInformation,  # noqa: F841
+            inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+            outInfoVec: vtkInformationVector,  # noqa: F841
+    ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestData.
+
+        Args:
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        # pythonViewGeneration
         assert self.m_pythonView is not None, "No Python View was found."
         viewSize = GetActiveView().ViewSize
         self.m_userChoices[ "ratio" ] = viewSize[ 0 ] / viewSize[ 1 ]
@@ -833,4 +855,4 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         self.defineCurvesAspect()
         self.m_pythonView.Script = self.buildPythonViewScript()
         Render()
-        return
+        return 1
