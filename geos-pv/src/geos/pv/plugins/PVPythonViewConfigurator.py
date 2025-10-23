@@ -16,6 +16,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 import geos.pv.utils.paraviewTreatments as pvt
 from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
@@ -44,7 +45,10 @@ from vtkmodules.vtkCommonCore import (
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase )
 
-from vtkmodules.vtkCommonDataModel import vtkDataObject
+from vtkmodules.vtkCommonDataModel import (
+    vtkDataObject,
+    vtkMultiBlockDataSet,
+)
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
 __doc__ = """
@@ -84,6 +88,9 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         # Input source and curve names.
         inputSource = GetActiveSource()
         dataset = servermanager.Fetch( inputSource )
+        # Handle vtkMultiBlockDataSet by merging blocks first
+        if isinstance( dataset, vtkMultiBlockDataSet ):
+            dataset = mergeBlocks( dataset, keepPartialAttributes=True )
         dataframe: pd.DataFrame = pvt.vtkToDataframe( dataset )
         self.m_pathPythonViewScript: Path = geos_pv_path / "src/geos/pv/pythonViewUtils/mainPythonView.py"
 
