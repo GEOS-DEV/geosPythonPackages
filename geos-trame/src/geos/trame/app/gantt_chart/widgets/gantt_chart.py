@@ -23,20 +23,15 @@ class Gantt(HtmlElement):
 
     def __init__(self, **kwargs):
         super().__init__(
-            "gantt",
+            "GanttChart",
             **kwargs,
         )
         self._attr_names += [
-            "items",
-            "title",
-            "fields",
-            "levels",
-            "dateLimit",
+            "tasks",
             "startDate",
-            "endDate",
-            "canEdit"
+            "endDate"
         ]
         self._event_names += [
-            "input",
-            "update"
+            # "input",
+            # "update"
         ]

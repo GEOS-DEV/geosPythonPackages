@@ -5,12 +5,12 @@ from typing import Any
 from datetime import datetime, timedelta
 
 # from trame.widgets import gantt
-from geos.trame.app.misc.widgets import gantt
+from geos.trame.app.gantt_chart.widgets.gantt_chart import Gantt
 from trame.widgets import vuetify3 as vuetify
+from trame.widgets.html import Html
 from trame_simput import get_simput_manager
 
 from geos.trame.app.deck.tree import DeckTree
-
 
 date_fmt = "%Y-%m-%d"
                 
@@ -81,20 +81,22 @@ class TimelineEditor( vuetify.VCard ):
             #     vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
 
             with vuetify.VContainer( "Events chart" ):
-                gantt.Gantt(
-                    canEdit=False,
-                    dateLimit=40,
-                    startDate= self.state.sdate,
-                    endDate=(datetime.strptime( self.state.sdate,date_fmt) + timedelta(days=40)).strftime(date_fmt) if self.state.sdate else '2012-12-12',
-                    # title='Gantt-pre-test',
-                    fields=fields,
-                    update=( self.update_from_js, "items" ),
-                    items=( "items", items ),
-                    classes="fill_height",
-                )
-                gantt.GanttChart(
-
-                )
+               Gantt()
+                    # tasks=[{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"}],
+                    # startDate="2012-11-01",
+                    # endDate="2013-01-12")
+                # 
+                # Gantt(
+                #     canEdit=False,
+                #     dateLimit=40,
+                #     startDate= self.state.sdate,
+                #     endDate=(datetime.strptime( self.state.sdate,date_fmt) + timedelta(days=40)).strftime(date_fmt) if self.state.sdate else '2012-12-12',
+                #     # title='Gantt-pre-test',
+                #     fields=fields,
+                #     update=( self.update_from_js, "items" ),
+                #     items=( "items", items ),
+                #     classes="fill_height",
+                # )
 
     def _set_start_date(self, sdate : str | None, **_: Any) -> None:
         if sdate is None:

@@ -17,6 +17,10 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore --ignore-pattern public",
     "semantic-release": "semantic-release"
   },
+  "dependencies":{
+    "vue":"^3.4.27",
+    "d3":"^7.9.0"
+  },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
     "@vue/eslint-config-prettier": "^7.0.0",
