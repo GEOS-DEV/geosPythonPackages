@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
-from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader, vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
 
 @pytest.fixture
@@ -178,6 +178,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/fracture_res5_id.vtp"
         elif datasetType == "emptypolydata":
             vtkFilename = "data/fracture_res5_id_empty.vtp"
+        elif datasetType == "meshGeosExtractBlockTmp":
+            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
+        elif datasetType == "well":
+            vtkFilename = "data/well.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()

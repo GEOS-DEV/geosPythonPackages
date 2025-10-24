@@ -19,6 +19,23 @@ from geos.mesh.utils import arrayHelpers
 from geos.mesh.utils.arrayModifiers import createConstantAttribute
 
 
+@pytest.mark.parametrize( "meshName, cellDimExpected", [
+    ( "dataset", { 3 } ),
+    ( "fracture", { 2 } ),
+    ( "well", { 1 } ),
+    ( "meshGeosExtractBlockTmp", { 3, 2, 1 } ),
+] )
+def test_getCellDimension(
+    dataSetTest: vtkDataSet,
+    meshName: str,
+    cellDimExpected: set[ int ],
+) -> None:
+    """Test getting the different cells dimension in a mesh."""
+    mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshName )
+    cellDimObtained: set[ int ] = arrayHelpers.getCellDimension( mesh )
+    assert cellDimObtained == cellDimExpected
+
+
 @pytest.mark.parametrize( "meshFromName, meshToName, points", [
     ( "multiblock", "emptymultiblock", False ),
     ( "multiblock", "emptyFracture", False ),
