@@ -292,12 +292,12 @@ class PVExtractMergeBlocksVolumeSurface( VTKPythonAlgorithmBase ):
             bool: True if extraction and merge successfully eneded, False otherwise
         """
         # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFaults=True )
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFault=True )
         blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 0 )
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 1 )
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
+        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
 
         # rename attributes and merge blocks
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."

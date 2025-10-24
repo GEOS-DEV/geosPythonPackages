@@ -10,7 +10,7 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
 
 
-@pytest.mark.parametrize( "extractFaults, extractWells", [
+@pytest.mark.parametrize( "extractFault, extractWell", [
     ( False, False ),
     ( True, False ),
     ( False, True ),
@@ -18,23 +18,23 @@ from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
 ] )
 def test_GeosExtractBlock(
     dataSetTest: vtkMultiBlockDataSet,
-    extractFaults: bool,
-    extractWells: bool,
+    extractFault: bool,
+    extractWell: bool,
 ) -> None:
     """Test GeosExtractBlock vtk filter."""
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "meshGeosExtractBlockTmp" )
 
-    filter: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFaults, extractWells )
-    assert filter.applyFilter()
+    filter: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
+    filter.applyFilter()
 
-    extractVolume: vtkMultiBlockDataSet = filter.getOutput( 0 )
-    extractFault: vtkMultiBlockDataSet = filter.getOutput( 1 )
-    extractWell: vtkMultiBlockDataSet = filter.getOutput( 2 )
+    extractedVolume: vtkMultiBlockDataSet = filter.extractedGeosDomain.volume
+    extractedFault: vtkMultiBlockDataSet = filter.extractedGeosDomain.fault
+    extractedWell: vtkMultiBlockDataSet = filter.extractedGeosDomain.well
 
-    assert extractVolume.GetNumberOfBlocks() == 2
+    assert extractedVolume.GetNumberOfBlocks() == 2
 
-    if extractFaults:
-        assert extractFault.GetNumberOfBlocks() == 2
+    if extractFault:
+        assert extractedFault.GetNumberOfBlocks() == 2
 
-    if extractWells:
-        assert extractWell.GetNumberOfBlocks() == 1
+    if extractWell:
+        assert extractedWell.GetNumberOfBlocks() == 1

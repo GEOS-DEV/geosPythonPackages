@@ -320,15 +320,15 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter and merge internal blocks
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 0 )
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
         outputCells.ShallowCopy( self.mergeBlocksFilter( volumeBlockExtracted, False ) )
 
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 1 )
+        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
         assert faultBlockExtracted is not None, "Extracted Fault mesh is null."
         outputFaults.ShallowCopy( self.mergeBlocksFilter( faultBlockExtracted, True ) )
 
-        wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 2 )
+        wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.well
         assert wellBlockExtracted is not None, "Extracted Well mesh is null."
         outputWells.ShallowCopy( self.mergeBlocksFilter( wellBlockExtracted, False ) )
 

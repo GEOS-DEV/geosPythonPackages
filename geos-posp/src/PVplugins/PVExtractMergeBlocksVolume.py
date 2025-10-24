@@ -281,7 +281,7 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
         blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutput( 0 )
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
 
         # merge internal blocks

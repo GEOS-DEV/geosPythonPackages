@@ -7,25 +7,24 @@ from typing_extensions import Self
 
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.GeosOutputsConstants import ( GeosDomainNameEnum )
+from geos.mesh.utils.arrayHelpers import ( getCellDimension )
 from geos.mesh.utils.multiblockHelpers import ( getBlockIndexFromName )
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
 
 __doc__ = """
-GeosBlockExtractor is a vtk filter that allows to extract blocks from the ElementRegions from a GEOS output multiBlockDataset mesh.
-
-The three ElementRegions are:
-    0: CellElementRegion,
-    1: SurfaceElementRegion,
-    2: WellElementRegion,
+GeosBlockExtractor is a vtk filter that allows to extract the domain (volume, fault and well) from a GEOS output multiBlockDataset mesh.
 
 .. Important::
-    The input mesh must be an output of a GEOS simulation or contain blocks labeled with the same names.
-    See more: https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html?_sm_au_=iVVT5rrr5fN00R8sQ0WpHK6H8sjL6#xml-element-elementregions
+    The input mesh must be an output of a GEOS simulation or contain at least three blocks labeled with the same domain names:
+        "CellElementRegion" for volume domain
+        "SurfaceElementRegion" for fault domain
+        "WellElementRegion" for well domain
+        See more https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html?_sm_au_=iVVT5rrr5fN00R8sQ0WpHK6H8sjL6#xml-element-elementregions
 
 .. Note::
-    CellElementRegion is automatically extracted, by defaults SurfaceElementRegion and SurfaceElementRegion are empty multiBlockDataSet.
+    Volume domain is automatically extracted, by defaults Fault and Well domains are empty multiBlockDataSet.
 
 To use the filter:
 
@@ -36,12 +35,12 @@ To use the filter:
     # Filter inputs.
     geosMesh: vtkMultiBlockDataSet
     # Optional inputs.
-    extractSurface: bool # Defaults to False
+    extractFault: bool # Defaults to False
     extractWell: bool # Defaults to False
     speHandler: bool # Defaults to False
 
     # Instantiate the filter
-    filter: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractSurface, extractWell, speHandler )
+    filter: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFault, extractWell, speHandler )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
@@ -50,79 +49,65 @@ To use the filter:
     # Do calculations
     filter.applyFilter()
 
-    # Get the multiBlockDataSet with blocks of the extracted ElementRegions
-    elementRegionId: int
-    elementRegionExtracted: vtkMultiBlockDataSet = filter.getOutput( elementRegionId )
+    # Get the multiBlockDataSet with blocks of the extracted domain.
+    geosDomainExtracted: vtkMultiBlockDataSet
+    geosDomainExtracted = filter.extractedGeosDomain.volume # For volume domain
+    geosDomainExtracted = filter.extractedGeosDomain.fault # For fault domain
+    geosDomainExtracted = filter.extractedGeosDomain.well # For well domain
 """
 
 loggerTitle: str = "Geos Block Extractor Filter"
 
 
-class GeosExtractElementRegionsBlock( vtkExtractBlock ):
+class GeosExtractDomainBlock( vtkExtractBlock ):
 
     def __init__( self: Self ) -> None:
-        """Extract ElementRegions block from a GEOS output multiBlockDataset mesh."""
-        super().__init__()
+        """Extract blocks from a GEOS output multiBlockDataset mesh."""
 
-        self.geosElementRegionsName: dict[ int, str ] = {
-            0: GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value,
-            1: GeosDomainNameEnum.FAULT_DOMAIN_NAME.value,
-            2: GeosDomainNameEnum.WELL_DOMAIN_NAME.value,
-        }
-
-    def GetGeosElementRegionsName( self: Self, elementRegionId: int ) -> str:
-        """Get the name of the GEOS ElementRegions from its index.
+    def AddGeosDomainName( self: Self, geosDomainName: GeosDomainNameEnum ) -> None:
+        """Add the index of the GEOS domain to extract from its name.
 
         Args:
-            elementRegionId (int): The index of the GEOS ElementRegions.
-
-        Returns:
-            str: The name of the GEOS ElementRegions.
+            geosDomainName (GeosDomainNameEnum): Name of the GEOS domain to extract.
         """
-        return self.geosElementRegionsName[ elementRegionId ]
-
-    def AddGeosElementRegionsBlockIndex( self, elementRegionId: int ) -> None:
-        """Add the index of the wanted GEOS ElementRegions to extract.
-
-        The GEOS ElementRegions indexes are:
-            0: CellElementRegion,
-            1: SurfaceElementRegion,
-            2: WellElementRegion,
-
-        Args:
-            elementRegionId (int): Index of the GEOS ElementRegions to extract.
-        """
-        elementRegionsBlockIndex: int = getBlockIndexFromName( self.GetInput(),
-                                                               self.geosElementRegionsName[ elementRegionId ] )
-        return super().AddIndex( elementRegionsBlockIndex )
+        domainBlockIndex: int = getBlockIndexFromName( self.GetInput(), geosDomainName.value )
+        return super().AddIndex( domainBlockIndex )
 
 
 class GeosBlockExtractor:
 
     @dataclass
-    class ExtractedElementRegionsMesh:
-        """The dataclass with the three GEOS ElementRegions mesh."""
-        _cell: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-        _surface: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+    class ExtractedGeosDomain:
+        """The dataclass with the three GEOS domain mesh."""
+        _volume: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+        _fault: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         _well: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
 
         @property
-        def cell( self: Self ) -> vtkMultiBlockDataSet:
+        def volume( self: Self ) -> vtkMultiBlockDataSet:
             """Get the mesh with the blocks of the GEOS CellElementRegion."""
-            return self._cell
+            return self._volume
 
-        @cell.setter
-        def cell( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
-            self._cell.DeepCopy( multiBlockDataSet )
+        @volume.setter
+        def volume( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            cellDim: set[ int ] = getCellDimension( multiBlockDataSet )
+            if len( cellDim ) == 1 and 3 in cellDim:
+                self._volume.DeepCopy( multiBlockDataSet )
+            else:
+                raise TypeError( "The input mesh must be a volume mesh with cells dimension equal to 3." )
 
         @property
-        def surface( self: Self ) -> vtkMultiBlockDataSet:
+        def fault( self: Self ) -> vtkMultiBlockDataSet:
             """Get the mesh with the blocks of the GEOS SurfaceElementRegion."""
-            return self._surface
+            return self._fault
 
-        @surface.setter
-        def surface( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
-            self._surface.DeepCopy( multiBlockDataSet )
+        @fault.setter
+        def fault( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            cellDim: set[ int ] = getCellDimension( multiBlockDataSet )
+            if len( cellDim ) == 1 and 2 in cellDim:
+                self._fault.DeepCopy( multiBlockDataSet )
+            else:
+                raise TypeError( "The input mesh must be a surface mesh with cells dimension equal to 2." )
 
         @property
         def well( self: Self ) -> vtkMultiBlockDataSet:
@@ -131,52 +116,37 @@ class GeosBlockExtractor:
 
         @well.setter
         def well( self: Self, multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
-            self._well.DeepCopy( multiBlockDataSet )
-
-        def getExtractedElementRegions( self: Self, elementRegionId: int ) -> vtkMultiBlockDataSet:
-            """Get the GEOS ElementRegions mesh extracted from its index.
-
-            The GEOS ElementRegions indexes are:
-                0: CellElementRegion,
-                1: SurfaceElementRegion,
-                2: WellElementRegion,
-
-            Args:
-                elementRegionId (int): Index of the GEOS ElementRegions to get.
-
-            Returns:
-                vtkMultiBlockDataSet: The mesh with the GEOS ElementRegions blocks.
-            """
-            if elementRegionId == 0:
-                return self.cell
-            elif elementRegionId == 1:
-                return self.surface
-            elif elementRegionId == 2:
-                return self.well
+            cellDim: set[ int ] = getCellDimension( multiBlockDataSet )
+            if len( cellDim ) == 1 and 1 in cellDim:
+                self._well.DeepCopy( multiBlockDataSet )
             else:
-                raise IndexError
+                raise TypeError( "The input mesh must be a segment mesh with cells dimension equal to 1." )
 
-        def setExtractedElementRegions( self: Self, elementRegionId: int,
-                                        multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
-            """Set the mesh to the correct ElementRegions.
+        def setExtractedDomain( self: Self, geosDomainName: GeosDomainNameEnum,
+                                multiBlockDataSet: vtkMultiBlockDataSet ) -> None:
+            """Set the mesh to the correct domain.
 
             Args:
-                elementRegionId (int): Index of the GEOS ElementRegions.
+                geosDomainName (GeosDomainNameEnum): Name of the GEOS domain.
                 multiBlockDataSet (vtkMultiBlockDataSet): The mesh to set.
             """
-            if elementRegionId == 0:
-                self.cell = multiBlockDataSet
-            elif elementRegionId == 1:
-                self.surface = multiBlockDataSet
-            elif elementRegionId == 2:
+            if geosDomainName.value == "CellElementRegion":
+                self.volume = multiBlockDataSet
+            elif geosDomainName.value == "SurfaceElementRegion":
+                self.fault = multiBlockDataSet
+            elif geosDomainName.value == "WellElementRegion":
                 self.well = multiBlockDataSet
+            else:
+                raise ValueError(
+                    f"The GEOS extractable domains are { GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value }, { GeosDomainNameEnum.FAULT_DOMAIN_NAME.value } and { GeosDomainNameEnum.WELL_DOMAIN_NAME.value }."
+                )
 
-    extractedElementRegions: ExtractedElementRegionsMesh
+    extractedGeosDomain: ExtractedGeosDomain
 
     def __init__(
         self: Self,
         geosMesh: vtkMultiBlockDataSet,
-        extractSurface: bool = False,
+        extractFault: bool = False,
         extractWell: bool = False,
         speHandler: bool = False,
     ) -> None:
@@ -184,7 +154,7 @@ class GeosBlockExtractor:
 
         Args:
             geosMesh (vtkMultiBlockDataSet): The mesh from Geos.
-            extractSurface (bool, Optional): True if SurfaceElementRegion needs to be extracted, False otherwise.
+            extractFault (bool, Optional): True if SurfaceElementRegion needs to be extracted, False otherwise.
                 Defaults to False.
             extractWell (bool, Optional): True if WellElementRegion needs to be extracted, False otherwise.
                 Defaults to False.
@@ -192,13 +162,13 @@ class GeosBlockExtractor:
                 Defaults to False.
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
-        self.extractedElementRegions = self.ExtractedElementRegionsMesh()
+        self.extractedGeosDomain = self.ExtractedGeosDomain()
 
-        self.elementRegionsIdToExtract: list[ int ] = [ 0 ]
-        if extractSurface:
-            self.elementRegionsIdToExtract.append( 1 )
+        self.domainToExtract: list[ GeosDomainNameEnum ] = [ GeosDomainNameEnum.VOLUME_DOMAIN_NAME ]
+        if extractFault:
+            self.domainToExtract.append( GeosDomainNameEnum.FAULT_DOMAIN_NAME )
         if extractWell:
-            self.elementRegionsIdToExtract.append( 2 )
+            self.domainToExtract.append( GeosDomainNameEnum.WELL_DOMAIN_NAME )
 
         # Logger.
         self.logger: Logger
@@ -223,41 +193,23 @@ class GeosBlockExtractor:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def applyFilter( self: Self ) -> bool:
-        """Extract the volume, the surface or the well domain of the mesh from Geos.
+    def applyFilter( self: Self ) -> None:
+        """Extract the volume, the fault or the well domain of the mesh from GEOS."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
 
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
-        extractElementRegions: GeosExtractElementRegionsBlock = GeosExtractElementRegionsBlock()
-        extractElementRegions.SetInputData( self.geosMesh )
+        try:
+            extractGeosDomain: GeosExtractDomainBlock = GeosExtractDomainBlock()
+            extractGeosDomain.SetInputData( self.geosMesh )
 
-        for elementRegionId in self.elementRegionsIdToExtract:
-            extractElementRegions.RemoveAllIndices()
-            extractElementRegions.AddGeosElementRegionsBlockIndex( elementRegionId )
-            extractElementRegions.Update()
-            self.extractedElementRegions.setExtractedElementRegions( elementRegionId,
-                                                                     extractElementRegions.GetOutput() )
-            if self.extractedElementRegions.getExtractedElementRegions( elementRegionId ).GetNumberOfBlocks() == 0:
-                self.logger.error(
-                    f"The input mesh does not have { extractElementRegions.GetGeosElementRegionsName( elementRegionId ) } to extract."
-                )
-                return False
+            for domain in self.domainToExtract:
+                extractGeosDomain.RemoveAllIndices()
+                extractGeosDomain.AddGeosDomainName( domain )
+                extractGeosDomain.Update()
+                self.extractedGeosDomain.setExtractedDomain( domain, extractGeosDomain.GetOutput() )
 
-        return True
+            self.logger.info( "The filter succeeded." )
 
-    def getOutput( self: Self, elementRegionId: int ) -> vtkMultiBlockDataSet:
-        """Get the GEOS ElementRegions extracted from its index.
-
-        The GEOS ElementRegions indexes are:
-            0: CellElementRegion,
-            1: SurfaceElementRegion,
-            2: WellElementRegion,
-
-        Args:
-            elementRegionId (int): Index of the GEOS ElementRegions to get.
-
-        Returns:
-            vtkMultiBlockDataSet: The GEOS ElementRegions mesh extracted.
-        """
-        return self.extractedElementRegions.getExtractedElementRegions( elementRegionId )
+        except ValueError as ve:
+            self.logger.error( f"The filter failed.\n{ ve }." )
+        except TypeError as te:
+            self.logger.error( f"The filter failed.\n{ te }." )
