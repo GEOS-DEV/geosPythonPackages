@@ -149,6 +149,7 @@
 
         <PeriodicEvent
             name="statistics"
+            endTime="0"
             timeFrequency="31536000"
             target="/Tasks/compflowStatistics"/>
         
