@@ -129,13 +129,12 @@ jobs:
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          for label in "${{ toJson(github.event.pull_request.labels) }}"; do
-            if [[ "$label" == *"test-geos-integration"* ]]; then
-              LABEL_FOUND=true
-              echo "Label ${label} found"
-              break
-            fi
-          done
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "test-geos-integration"; then
+            LABEL_FOUND=true
+            echo "Label 'test-geos-integration' found"
+          fi
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
   
   check_force_integration_label:
@@ -149,13 +148,12 @@ jobs:
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          for label in "${{ toJson(github.event.pull_request.labels) }}"; do
-            if [[ "$label" == *"force-geos-integration"* ]]; then
-              LABEL_FOUND=true
-              echo "Label ${label} found"
-              break
-            fi
-          done
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "force-geos-integration"; then
+            LABEL_FOUND=true
+            echo "Label 'force-geos-integration' found"
+          fi
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
 
   # Step 3: Check if GEOS integration is required based on changed files
@@ -353,7 +351,7 @@ jobs:
   geos_integration_test:
     name: GEOS Integration Test
     needs: [geos_ci_dispatch]
-    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped.skipped != 'true' }}
+    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped != 'true' }}
     uses: ./.github/workflows/test_geos_integration.yml
 
   # Final validation - Summarize CI results
@@ -396,4 +394,3 @@ jobs:
           echo ""
           echo "✓ CI requirements satisfied - PR can be merged"
         fi
-
