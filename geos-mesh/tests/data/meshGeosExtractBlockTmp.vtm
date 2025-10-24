@@ -10,7 +10,7 @@
             <DataSet name="emptyFracture" file="fracture_res5_id_empty.vtu"/>
         </Block>
         <Block name="WellElementRegion">
-            <DataSet name="triangulatedSurface" file="triangulatedSurface.vtu"/>
+            <DataSet name="well" file="well.vtu"/>
         </Block>
     </vtkMultiBlockDataSet>
 </VTKFile>
