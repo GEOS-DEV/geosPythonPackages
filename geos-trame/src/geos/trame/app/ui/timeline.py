@@ -85,7 +85,8 @@ class TimelineEditor( vuetify.VCard ):
                Gantt(
                     tasks=("tasks", tasks_),
                     startDate="2012-11-01",
-                    endDate="2013-01-12"
+                    endDate="2013-01-12",
+                    taskUpdated=(self._updated_tasks,"tasks")
                     )
                 # 
                 # Gantt(
@@ -111,3 +112,6 @@ class TimelineEditor( vuetify.VCard ):
     def update_from_js( self, *items: tuple ) -> None:
         """Update method called from javascript."""
         self.state.items = list( items )
+
+    def _updated_tasks(self, *tasks: tuple) -> None:
+        self.state.tasks_ = list( tasks )

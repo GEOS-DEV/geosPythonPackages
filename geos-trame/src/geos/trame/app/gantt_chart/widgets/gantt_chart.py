@@ -11,7 +11,7 @@ class HtmlElement(AbstractElement):
     def __init__(self, _elem_name, children=None, **kwargs):
         super().__init__(_elem_name, children, **kwargs)
         if self.server:
-            self.server.enable_module(module)
+            self.server.enable_module(module)   
 
 class Gantt(HtmlElement):
     """
@@ -33,6 +33,6 @@ class Gantt(HtmlElement):
         ]
         self._event_names += [
             # "input",
-            "task"
+            "taskUpdated"
             # "update"
         ]
