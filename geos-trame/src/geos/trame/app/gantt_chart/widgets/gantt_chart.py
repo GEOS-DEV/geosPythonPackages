@@ -33,5 +33,6 @@ class Gantt(HtmlElement):
         ]
         self._event_names += [
             # "input",
+            "task"
             # "update"
         ]

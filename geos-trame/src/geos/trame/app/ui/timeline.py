@@ -79,12 +79,14 @@ class TimelineEditor( vuetify.VCard ):
             # ):
             #     vuetify.VAlert( "{{ item.summary }}" )
             #     vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
-
+            tasks_ =  [{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"},
+                       {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#151A77"}]
             with vuetify.VContainer( "Events chart" ):
-               Gantt()
-                    # tasks=[{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"}],
-                    # startDate="2012-11-01",
-                    # endDate="2013-01-12")
+               Gantt(
+                    tasks=("tasks", tasks_),
+                    startDate="2012-11-01",
+                    endDate="2013-01-12"
+                    )
                 # 
                 # Gantt(
                 #     canEdit=False,
