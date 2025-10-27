@@ -1,14 +1,7 @@
-Paraview readers
-================
+Readers
+=============
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
+PVGeosLogReader
+--------------------
 
-   ./PVGeosDeckReader.rst
-
-
-readers.PVGeosLogReader module
-----------------------------------
-
-.. automodule:: readers.PVGeosLogReader
+.. automodule:: geos.pv.plugins.PVGeosLogReader

@@ -5,8 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "geos-xml-tools"
 version = "0.7.0"
-description = "Tools for enabling advanced xml features in GEOS"
-maintainers = [{name = "Christopher Sherman", email = "sherman27@llnl.gov" }]
+description = "Tools for enabling advanced xml features in GEOSX"
+authors = [{name = "GEOS Contributors" }]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Christopher Sherman", email = "sherman27@llnl.gov"}]
 license = {text = "LGPL-2.1"}
 classifiers = [
     "Programming Language :: Python :: 3",

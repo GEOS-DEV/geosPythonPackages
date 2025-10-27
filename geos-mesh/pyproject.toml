@@ -15,7 +15,10 @@ name = "geos-mesh"
 version = "0.0.1"
 description = "GEOS mesh tools"
 authors = [{name = "GEOS Contributors" }]
-maintainers = [{name = "Christopher Sherman", email = "sherman27@llnl.gov"}]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
+               {name = "Christopher Sherman", email = "sherman27@llnl.gov"}]
 license = {text = "LGPL-2.1"}
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -32,10 +35,12 @@ dependencies = [
     "pandas >= 2.2",
     "meshio >= 5.3",
     "typing_extensions >= 4.12",
+    "geos-utils",
 ]
 
 [project.scripts]
-    mesh-doctor = "geos.mesh.doctor.mesh_doctor:main"
+    mesh-doctor = "geos.mesh.doctor.meshDoctor:main"
+    meshDoctor = "geos.mesh.doctor.meshDoctor:main"
     convert_abaqus = "geos.mesh.conversion.main:main"
     
 [project.urls]

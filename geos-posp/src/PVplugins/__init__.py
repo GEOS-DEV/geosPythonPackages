@@ -5,7 +5,7 @@ import sys
 dir_path = os.path.dirname( os.path.realpath( __file__ ) )
 python_root = '../../..'
 
-python_modules = ( 'geos-posp', 'geos-utils', 'geos-geomechanics' )
+python_modules = ( 'geos-posp', 'geos-utils', 'geos-geomechanics', 'geos-mesh', 'geos-processing' )
 
 for m in python_modules:
     m_path = os.path.abspath( os.path.join( dir_path, python_root, m, 'src' ) )

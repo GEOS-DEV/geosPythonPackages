@@ -10,17 +10,6 @@ The plugins include:
 * Processing plugins to compute additional geomechanical properties;
 * Visualization plugins to plot Mohr's circles and cross plots using Paraview Python View.
 
-PVAttributeMapping plugin
------------------------------------
-
-.. automodule:: PVplugins.PVAttributeMapping
-
-
-PVCreateConstantAttributePerRegion plugin
----------------------------------------------------
-
-.. automodule:: PVplugins.PVCreateConstantAttributePerRegion
-
 
 PVExtractMergeBlocksVolume plugin
 -------------------------------------------
@@ -45,13 +34,6 @@ PVExtractMergeBlocksVolumeWell plugin
 
 .. automodule:: PVplugins.PVExtractMergeBlocksVolumeWell
 
-
-PVGeomechanicsAnalysis plugin
----------------------------------------
-
-.. automodule:: PVplugins.PVGeomechanicsAnalysis
-
-
 PVGeomechanicsWorkflowVolume plugin
 ---------------------------------------------
 
@@ -75,11 +57,6 @@ PVGeomechanicsWorkflowVolumeWell plugin
 
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
 
-PVplugins.PVMergeBlocksEnhanced module
---------------------------------------
-
-.. automodule:: PVplugins.PVMergeBlocksEnhanced
-
 
 PVMohrCirclePlot plugin
 ---------------------------------
@@ -90,11 +67,4 @@ PVplugins.PVSurfaceGeomechanics module
 --------------------------------------
 
 .. automodule:: PVplugins.PVSurfaceGeomechanics
-
-
-PVTransferAttributesVolumeSurface plugin
---------------------------------------------------
-
-.. automodule:: PVplugins.PVTransferAttributesVolumeSurface
-
 

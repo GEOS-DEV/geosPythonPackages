@@ -15,7 +15,9 @@ name = "geos-posp"
 version = "1.0.0"
 description = "The Python package geos-posp is dedicated to post-process data from the geos simulation tool."
 authors = [{name = "GEOS Contributors" }]
-maintainers = [{name = "Martin Lemay", email = "martin.lemay@external.totalenergies.com"}]
+maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
+               {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Intended Audience :: Developers",
@@ -36,6 +38,8 @@ requires-python = ">= 3.10"
 dependencies = [
     "geos-geomechanics",
     "geos-utils",
+    "geos-mesh",
+    "geos-processing",
     "vtk >= 9.3",
     "numpy >= 2.2",
     "pandas >= 2.2",
@@ -54,11 +58,11 @@ build = [
   "build ~= 1.2"
 ]
 dev = [
-   "mypy", 
+   "mypy",
    "yapf",
 ]
 test = [
-   "pytest-cov", 
+   "pytest-cov",
    "pytest"
 ]
 

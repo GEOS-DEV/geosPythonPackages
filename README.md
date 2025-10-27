@@ -17,7 +17,7 @@ Package summary
 * `geos-ats` package includes tools for managing integrated tests for GEOS.
 * `pygeos-tools` package adds a variety of tools for working with *pygeosx* objects.
 
-The next packages are dedicated to pre- and post-process GEOS inputs/outputs. 
+The next packages are dedicated to pre- and post-process GEOS inputs/outputs.
 
 The following packages contain basic utilities used by the other ones:
 
@@ -105,7 +105,7 @@ Installation
 
 * *Manual installation:*
 
-  GEOS Python packages can be manually installed with pip using `python` >= 3.10. 
+  GEOS Python packages can be manually installed with pip using `python` >= 3.10.
 
     To install any package, run the following commands from the geosPythonPackage directory:
 
@@ -126,7 +126,7 @@ Installation
   [!WARNING]
    Due to local package conflicts with `pip install`, it is recommended to use the `--upgrade` option when building packages, or to use the script `install_packages.sh` located at the root of the repository.
   [!NOTE]
-  geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from geos-pv/PVplugins can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).
+  geos-pv package cannot be build alone, but together with Paraview ([see Paraview compilation guide](https://gitlab.kitware.com/paraview/paraview/-/blob/master/Documentation/dev/build.md)). It is recommended to use Paraview v5.12+, which is based on python 3.10+. Alternatively, plugins from `geos-pv/src/geos/pv/plugins` can be manually loaded into Paraview ([see documentation](https://docs.paraview.org/en/latest/ReferenceManual/pythonProgrammableFilter.html#python-algorithm)).
 
 
 Contributions
@@ -134,13 +134,20 @@ Contributions
 
 GEOS Python packages repository gathers python scripts from any GEOS developpers and users. Feel free to share any scripts that may benefit to the GEOS community.
 
-If you would like to report a bug, please submit an [issue](https://github.com/GEOS-DEV/geosPythonPackages/issues/new). 
+If you would like to report a bug, please submit an [issue](https://github.com/GEOS-DEV/geosPythonPackages/issues/new).
 
 If you would like to contribute to GEOS Python packages, please respect the following guidelines:
 
 1. Create a new branch named from this template: `[CONTRIBUTOR]/[TYPE]/[TITLE]` where CONTRIBUTOR is the name of the contributor, TYPE is the type of contribution among 'feature', 'refactor', 'doc', 'ci', TITLE is a short title for the branch.
 2. Add your code trying to integrate into the current code architecture.
-3. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
+3. Run mypy, ruff and yapf in this order
+  ```
+  python -m pip install --upgrade mypy ruff yapf
+  python -m mypy --config-file ./.mypy.ini --check-untyped-defs ./<PACKAGE_NAME>
+  python -m ruff check --fix --config .ruff.toml ./<PACKAGE_NAME>
+  python -m yapf -r -i --style .style.yapf ./<PACKAGE_NAME>
+  ```
+4. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
