@@ -29,7 +29,7 @@ class TimelineEditor( vuetify.VCard ):
         # self.state.change("sdate")(self._set_start_date)
         self.state.tasks = []
         dtasks = [{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"},
-                       {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#151A77"}]
+                       {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 2", "progress": "100", "color": "#151A77"}]
         # self.state.tasks = list( tasks )
         # self.state.change("tasks")(self._updated_tasks)
         self.state.tasks = dtasks
@@ -92,7 +92,8 @@ class TimelineEditor( vuetify.VCard ):
                     tasks=("tasks",),
                     startDate="2012-11-01",
                     endDate="2013-01-12",
-                    taskUpdated=(self._updated_tasks,"$event")
+                    taskUpdated=(self._updated_tasks,"$event"),
+                    classes="fill_height",
                     )
             with vuetify.VContainer("Debug"):
                vuetify.VAlert("{{tasks}}", vmodel=("tasks",))
@@ -106,7 +107,7 @@ class TimelineEditor( vuetify.VCard ):
                 #     fields=fields,
                 #     update=( self.update_from_js, "items" ),
                 #     items=( "items", items ),
-                #     classes="fill_height",
+                #     
                 # )
 
     def _set_start_date(self, sdate : str | None, **_: Any) -> None:
