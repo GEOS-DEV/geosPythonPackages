@@ -30,9 +30,9 @@ class TimelineEditor( vuetify.VCard ):
                        {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 2", "progress": "100", "color": "#151A77"}]
         # self.state.tasks = list( tasks )
         # self.state.change("tasks")(self._updated_tasks)
-        self.state.tasks = dtasks
+        # self.state.tasks = dtasks
 
-        items = self.tree.timeline()
+        self.state.tasks = self.tree.timeline()
 
         fields = [ {
             "summary": {
