@@ -821,8 +821,8 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
         """Dummy interface for plugin to fit decorator reqs.
 
         Args:
-            inputMesh : A dummy mesh to transform
-            outputMesh : A dummy mesh transformed
+            inputMesh : A dummy mesh to transform.
+            outputMesh : A dummy mesh transformed.
 
         """
         assert self.m_pythonView is not None, "No Python View was found."
