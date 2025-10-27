@@ -33,7 +33,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 __doc__ = """
-Set of decorators that allows quicker generation of MultiBlockDataSet to MultiBlockDataSet filters
+Set of decorators that allows quicker generation of DataSet derived to the same DataSet derived filters. If it a list of type is provided, then the unique output type is set to vtkDataObject.
 
 Usage is:
 
@@ -59,7 +59,6 @@ class FilterCategory( str, Enum ):
 
 
 U = TypeVar( 'U', bound='vtkDataObject' )
-
 
 @runtime_checkable
 class IsSISOFilter( Protocol[ U ] ):

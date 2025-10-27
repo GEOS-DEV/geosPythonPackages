@@ -59,3 +59,5 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         self._realFilter.ComputeTransform()
         self._realFilter.Update()
         outputMesh.ShallowCopy( self._realFilter.GetOutputDataObject( 0 ) )
+
+        return

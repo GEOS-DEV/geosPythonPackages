@@ -36,7 +36,9 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
+@SISOFilter( category=FilterCategory.GEOS_UTILS,
+             decoratedLabel="Split Mesh", 
+             decoratedType="vtkPointSet" )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
