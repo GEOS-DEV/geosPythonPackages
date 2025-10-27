@@ -25,8 +25,6 @@ class TimelineEditor( vuetify.VCard ):
         self.tree = source
         self.simput_manager = get_simput_manager( id=self.state.sm_id )
 
-        # self.state.sdate = self.tree.world_origin_time
-        # self.state.change("sdate")(self._set_start_date)
         self.state.tasks = []
         dtasks = [{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"},
                        {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 2", "progress": "100", "color": "#151A77"}]
@@ -75,18 +73,6 @@ class TimelineEditor( vuetify.VCard ):
             #     v_model="sdate"
             # )
             vuetify.VDivider()
-            # with (
-            #         vuetify.VContainer( "Events timeline" ),
-            #         vuetify.VTimeline(
-            #             direction="horizontal",
-            #             truncate_line="both",
-            #             align="center",
-            #             side="end",
-            #         ),
-            #         vuetify.VTimelineItem( v_for=( f"item in {items}", ), key="i", value="item", size="small" ),
-            # ):
-            #     vuetify.VAlert( "{{ item.summary }}" )
-            #     vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
             with vuetify.VContainer( "Events chart" ):
                Gantt(
                     tasks=("tasks",),
@@ -97,30 +83,6 @@ class TimelineEditor( vuetify.VCard ):
                     )
             with vuetify.VContainer("Debug"):
                vuetify.VAlert("{{tasks}}", vmodel=("tasks",))
-                # 
-                # Gantt(
-                #     canEdit=False,
-                #     dateLimit=40,
-                #     startDate= self.state.sdate,
-                #     endDate=(datetime.strptime( self.state.sdate,date_fmt) + timedelta(days=40)).strftime(date_fmt) if self.state.sdate else '2012-12-12',
-                #     # title='Gantt-pre-test',
-                #     fields=fields,
-                #     update=( self.update_from_js, "items" ),
-                #     items=( "items", items ),
-                #     
-                # )
-
-    def _set_start_date(self, sdate : str | None, **_: Any) -> None:
-        if sdate is None:
-            self.state.sdate = self.tree.world_origin_time.strftime(date_fmt)
-            return
-        
-        self.state.sdate = sdate
-        print(f"new date :{self.state.sdate}")
-
-    def update_from_js( self, *items: tuple ) -> None:
-        """Update method called from javascript."""
-        self.state.items = list( items )
 
     def _updated_tasks(self, *tasks: Any, **_: Any) -> None:
         if tasks is None:

@@ -32,7 +32,5 @@ class Gantt(HtmlElement):
             "endDate"
         ]
         self._event_names += [
-            # "input",
             "taskUpdated"
-            # "update"
         ]
