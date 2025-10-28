@@ -38,7 +38,7 @@ XML preprocessing and variable substitution.
     -c, --compiled-name FILE  Output compiled XML file
     -s, --schema FILE         Schema file for validation
     -v, --verbose LEVEL       Verbosity level (0-3, default: 0)
-    -p, --parameters NAME VALUE  Parameter overrides (multiple allowed)
+    -p, --parameters NAME     VALUE  Parameter overrides (multiple allowed)
 
 
 **Examples:**

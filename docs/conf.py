@@ -53,7 +53,7 @@ autodoc_mock_imports = [ "ats", "colorcet", "meshio", "mpi4py", "numba", "paravi
                          "pyevtk", "pylvarray", "scipy", "segyio", "xmltodict", "xsdata" ]
 autodoc_typehints = 'none'
 autodoc_typehints_format = 'short'
-suppress_warnings = [ "autodoc.mocked_object" ]
+suppress_warnings = [ "autodoc", "autodoc.mocked_object" ]
 typehints_defaults = 'braces'
 
 # The suffix(es) of source filenames.

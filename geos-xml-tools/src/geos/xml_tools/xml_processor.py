@@ -210,7 +210,7 @@ def process(
     2) Building a map of variables from <Parameters> blocks.
     3) Applying regex substitutions for parameters ($variable), units (10[m/s]), symbolic math expressions (`1+2*3`).
     4) Write the XML after these first 3 steps as a new file.
-    4) Optionally validates the final XML against a schema.
+    5) Optionally validates the final XML against a schema.
 
     Args:
         inputFiles (list): Input file names.
