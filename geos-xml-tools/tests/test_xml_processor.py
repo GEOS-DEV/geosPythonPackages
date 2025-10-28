@@ -2,6 +2,8 @@ import pytest
 import os
 import time
 from lxml import etree as ElementTree
+from pathlib import Path
+from typing import Any, Generator
 from geos.xml_tools import xml_processor
 from geos.xml_tools import unit_manager
 
@@ -9,7 +11,7 @@ from geos.xml_tools import unit_manager
 
 
 @pytest.fixture
-def base_xml_content():
+def base_xml_content() -> str:
     """Provides a basic XML structure as a string."""
     return """
     <Problem name="BaseProblem">
@@ -19,7 +21,7 @@ def base_xml_content():
 
 
 @pytest.fixture
-def include_xml_content():
+def include_xml_content() -> str:
     """Provides an XML structure to be included."""
     return """
     <Problem name="IncludeProblem">
@@ -30,7 +32,7 @@ def include_xml_content():
 
 
 @pytest.fixture
-def complex_xml_content_with_params():
+def complex_xml_content_with_params() -> str:
     """Provides an XML with parameters, units, and symbolic math."""
     return """
     <Problem>
@@ -53,7 +55,8 @@ def complex_xml_content_with_params():
 class TestNodeMerging:
     """Tests for the merge_xml_nodes function."""
 
-    def test_merge_attributes( self ):
+    def test_merge_attributes( self ) -> None:
+        """Tests that attributes from the target node are merged into the existing node."""
         existing = ElementTree.fromstring( '<Node a="1" b="2"/>' )
         target = ElementTree.fromstring( '<Node a="3" c="4"/>' )
         xml_processor.merge_xml_nodes( existing, target, level=1 )
@@ -62,7 +65,8 @@ class TestNodeMerging:
         assert existing.get( "b" ) == "2"
         assert existing.get( "c" ) == "4"
 
-    def test_merge_new_children( self ):
+    def test_merge_new_children( self ) -> None:
+        """Tests that new child nodes from the target are added to the existing node."""
         existing = ElementTree.fromstring( '<Root><A/></Root>' )
         target = ElementTree.fromstring( '<Root><B/><C/></Root>' )
         xml_processor.merge_xml_nodes( existing, target, level=1 )
@@ -71,7 +75,8 @@ class TestNodeMerging:
         # The merge logic inserts new children at the beginning.
         assert [ child.tag for child in existing ] == [ 'B', 'C', 'A' ]
 
-    def test_merge_named_children_recursively( self ):
+    def test_merge_named_children_recursively( self ) -> None:
+        """Tests that named child nodes are merged recursively."""
         existing = ElementTree.fromstring( '<Root><Child name="child1" val="a"/></Root>' )
         target = ElementTree.fromstring( '<Root><Child name="child1" val="b" new_attr="c"/></Root>' )
         xml_processor.merge_xml_nodes( existing, target, level=1 )
@@ -81,7 +86,8 @@ class TestNodeMerging:
         assert merged_child.get( 'val' ) == 'b'
         assert merged_child.get( 'new_attr' ) == 'c'
 
-    def test_merge_root_problem_node( self ):
+    def test_merge_root_problem_node( self ) -> None:
+        """Tests merging when the root node is 'Problem'."""
         existing = ElementTree.fromstring( '<Problem name="base"><A/></Problem>' )
         target = ElementTree.fromstring( '<Problem name="included" attr="new"><B/></Problem>' )
         xml_processor.merge_xml_nodes( existing, target, level=0 )
@@ -97,7 +103,9 @@ class TestFileInclusion:
     """Tests for merge_included_xml_files."""
 
     # FIX: Use monkeypatch for chdir to ensure test isolation.
-    def test_simple_include( self, tmp_path, base_xml_content, include_xml_content, monkeypatch ):
+    def test_simple_include( self, tmp_path: Path, base_xml_content: str, include_xml_content: str,
+                             monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Tests that including a simple XML file merges its content correctly."""
         base_file = tmp_path / "base.xml"
         include_file = tmp_path / "include.xml"
         base_file.write_text( base_xml_content )
@@ -114,14 +122,16 @@ class TestFileInclusion:
         assert b_node is not None and b_node.get( "val" ) == "override"
         assert c_node is not None and c_node.get( "val" ) == "3"
 
-    def test_include_nonexistent_file( self, tmp_path ):
+    def test_include_nonexistent_file( self, tmp_path: Path ) -> None:
+        """Tests that including a nonexistent file raises an exception."""
         root = ElementTree.Element( "Problem" )
         # FIX: Adjust the regex to correctly match the exception message.
         with pytest.raises( Exception, match="(?i)Check included file path!" ):
             xml_processor.merge_included_xml_files( root, str( tmp_path / "nonexistent.xml" ), 0 )
 
     # FIX: Use monkeypatch for chdir
-    def test_include_loop_fails( self, tmp_path, monkeypatch ):
+    def test_include_loop_fails( self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Tests that including files in a loop raises an exception."""
         file_a_content = '<Problem><Included><File name="b.xml"/></Included></Problem>'
         file_b_content = '<Problem><Included><File name="a.xml"/></Included></Problem>'
 
@@ -133,7 +143,8 @@ class TestFileInclusion:
         with pytest.raises( Exception, match="Reached maximum recursive includes" ):
             xml_processor.merge_included_xml_files( root, "a.xml", 0, maxInclude=5 )
 
-    def test_malformed_include_file( self, tmp_path ):
+    def test_malformed_include_file( self, tmp_path: Path ) -> None:
+        """Tests that including a malformed XML file raises an exception."""
         ( tmp_path / "malformed.xml" ).write_text( "<Problem><UnclosedTag></Problem>" )
         root = ElementTree.Element( "Problem" )
         with pytest.raises( Exception, match="(?i)Check included file!" ):
@@ -145,7 +156,8 @@ class TestRegexSubstitution:
 
     # FIX: Properly restore global state after the test.
     @pytest.fixture( autouse=True )
-    def setup_handlers( self ):
+    def setup_handlers( self ) -> Generator[ Any ]:
+        """Sets up the regex handlers before each test and restores them after."""
         # Store original state
         original_target = xml_processor.parameterHandler.target
         original_unit_manager = xml_processor.unitManager
@@ -160,19 +172,22 @@ class TestRegexSubstitution:
         xml_processor.parameterHandler.target = original_target
         xml_processor.unitManager = original_unit_manager
 
-    def test_unit_substitution( self ):
+    def test_unit_substitution( self ) -> None:
+        """Tests that unit substitutions are performed correctly."""
         node = ElementTree.fromstring( '<Node val="10[ft]"/>' )
         xml_processor.apply_regex_to_node( node )
         # 10[ft] to meters should be approx 3.048
         assert pytest.approx( float( node.get( "val" ) ) ) == 3.047851
 
-    def test_symbolic_math_substitution( self ):
+    def test_symbolic_math_substitution( self ) -> None:
+        """Tests that symbolic math substitutions are performed correctly."""
         node = ElementTree.fromstring( '<Node val="`2 * (3 + 5)`"/>' )
         xml_processor.apply_regex_to_node( node )
         # `2 * 8` = 16.0
         assert pytest.approx( float( node.get( "val" ) ) ) == 16.0
 
-    def test_combined_substitution( self ):
+    def test_combined_substitution( self ) -> None:
+        """Tests that combined substitutions are performed correctly."""
         node = ElementTree.fromstring( '<Node val="`$:varA$ * $:varB$`"/>' )
         xml_processor.apply_regex_to_node( node )
         # `10 * 2.5` = 25.0, which is represented as 2.5e1 in scientific notation
@@ -181,9 +196,9 @@ class TestRegexSubstitution:
 
 # FIX: Removed the duplicate fixture definition.
 @pytest.fixture
-def setup_test_files( tmp_path ):
-    """
-    Creates a set of test files with absolute paths to avoid issues with chdir.
+def setup_test_files( tmp_path: Path ) -> dict[ str, str ]:
+    """Creates a set of test files with absolute paths to avoid issues with chdir.
+
     Returns a dictionary of absolute paths to the created files.
     """
     main_xml_content = """
@@ -220,12 +235,9 @@ class TestProcessFunction:
             ( False, False, False ),  # Remove both entirely
             ( True, False, True ),  # Keep includes as comments, remove parameters
         ] )
-    def test_process_success_and_cleanup( self, setup_test_files, monkeypatch, keep_includes, keep_parameters,
-                                          expect_comments ):
-        """
-        Tests the main success path of the process function, including includes,
-        parameters, overrides, and cleanup flags.
-        """
+    def test_process_success_and_cleanup( self, setup_test_files: dict[str, str], monkeypatch: pytest.MonkeyPatch,
+                                          keep_includes: bool, keep_parameters: bool, expect_comments: bool ) -> None:
+        """Tests the main success path of the process function, including includes, parameters, overrides, and cleanup flags."""
         # Mock the external formatter to isolate the test
         monkeypatch.setattr( xml_processor.xml_formatter, 'format_file', lambda *args, **kwargs: None )
 
@@ -270,10 +282,8 @@ class TestProcessFunction:
             assert not any( '<Included>' in c for c in comments )
             assert not any( '<Parameters>' in c for c in comments )
 
-    def test_process_fails_on_unmatched_character( self, tmp_path, monkeypatch ):
-        """
-        Tests that the function fails if a special character makes it to the final output.
-        """
+    def test_process_fails_on_unmatched_character( self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Tests that the function fails if a special character makes it to the final output."""
         monkeypatch.setattr( xml_processor.xml_formatter, 'format_file', lambda *args, **kwargs: None )
 
         bad_file = tmp_path / "bad.xml"
@@ -283,10 +293,8 @@ class TestProcessFunction:
         with pytest.raises( Exception, match="Reached maximum symbolic expands" ):
             xml_processor.process( inputFiles=[ str( bad_file ) ] )
 
-    def test_process_fails_on_undefined_parameter( self, tmp_path, monkeypatch ):
-        """
-        Tests that the function fails if a parameter is used but not defined.
-        """
+    def test_process_fails_on_undefined_parameter( self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Tests that the function fails if a parameter is used but not defined."""
         monkeypatch.setattr( xml_processor.xml_formatter, 'format_file', lambda *args, **kwargs: None )
 
         bad_file = tmp_path / "bad.xml"
@@ -299,7 +307,8 @@ class TestProcessFunction:
 class TestHelpers:
     """Tests for miscellaneous helper functions."""
 
-    def test_generate_random_name( self ):
+    def test_generate_random_name( self ) -> None:
+        """Tests that random name generation works and produces unique names."""
         name1 = xml_processor.generate_random_name( prefix="test_", suffix=".tmp" )
         # Small delay to prevent a race condition with time.time()
         time.sleep( 0.001 )
@@ -308,7 +317,8 @@ class TestHelpers:
         assert name1.endswith( ".tmp" )
         assert name1 != name2
 
-    def test_validate_xml( self, tmp_path, capsys ):
+    def test_validate_xml( self, tmp_path: Path, capsys: pytest.CaptureFixture ) -> None:
+        """Tests that XML validation against a schema works and captures warnings."""
         schema_content = """
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
             <xs:element name="Problem">

@@ -17,7 +17,7 @@ class TestSymbolicMathRegexHandler:
             ( "1.23000e+00", "1.23" ),
             ( "5.000e-01", "5e-1" )
         ] )
-    def test_symbolic_math_evaluation( self, input_str, expected_output ):
+    def test_symbolic_math_evaluation( self, input_str: str, expected_output: str ) -> None:
         """Verify correct evaluation of various math expressions."""
         # Create a real match object using the pattern from the module
         pattern = regex_tools.patterns[ 'symbolic' ]
@@ -28,7 +28,7 @@ class TestSymbolicMathRegexHandler:
         result = regex_tools.SymbolicMathRegexHandler( match )
         assert result == expected_output
 
-    def test_empty_match_returns_empty_string( self ):
+    def test_empty_match_returns_empty_string( self ) -> None:
         """Verify that an empty match group returns an empty string."""
         pattern = regex_tools.patterns[ 'symbolic' ]
         match = re.match( pattern, "``" )
@@ -41,13 +41,13 @@ class TestDictRegexHandler:
     """Tests for the DictRegexHandler class."""
 
     @pytest.fixture
-    def populated_handler( self ):
+    def populated_handler( self ) -> regex_tools.DictRegexHandler:
         """Provides a handler instance with a prepopulated target dictionary."""
         handler = regex_tools.DictRegexHandler()
         handler.target = { "var1": "100", "var2": "some_string", "pressure": "1.0e5" }
         return handler
 
-    def test_successful_lookup( self, populated_handler ):
+    def test_successful_lookup( self, populated_handler: regex_tools.DictRegexHandler ) -> None:
         """Verify that a known key is replaced with its target value."""
         # We can use a simple regex for testing the handler logic
         pattern = r"\$([a-zA-Z0-9_]*)"
@@ -56,7 +56,7 @@ class TestDictRegexHandler:
         result = populated_handler( match )
         assert result == "100"
 
-    def test_string_value_lookup( self, populated_handler ):
+    def test_string_value_lookup( self, populated_handler: regex_tools.DictRegexHandler ) -> None:
         """Verify that non-numeric string values are returned correctly."""
         pattern = r"\$([a-zA-Z0-9_]*)"
         match = re.match( pattern, "$var2" )
@@ -64,7 +64,7 @@ class TestDictRegexHandler:
         result = populated_handler( match )
         assert result == "some_string"
 
-    def test_fails_on_undefined_target( self, populated_handler ):
+    def test_fails_on_undefined_target( self, populated_handler: regex_tools.DictRegexHandler ) -> None:
         """Verify that an exception is raised for an unknown key."""
         pattern = r"\$([a-zA-Z0-9_]*)"
         match = re.match( pattern, "$unknown_var" )
@@ -72,7 +72,7 @@ class TestDictRegexHandler:
         with pytest.raises( Exception, match="Error: Target \\(unknown_var\\) is not defined" ):
             populated_handler( match )
 
-    def test_empty_match_group_returns_empty_string( self, populated_handler ):
+    def test_empty_match_group_returns_empty_string( self, populated_handler: regex_tools.DictRegexHandler ) -> None:
         """Verify that an empty match group returns an empty string."""
         pattern = r"\$()"  # Match a '$' followed by an empty group
         match = re.match( pattern, "$" )

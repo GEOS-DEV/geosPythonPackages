@@ -1,11 +1,12 @@
 import sys
+from pytest import MonkeyPatch
 from geos.xml_tools import command_line_parsers
 
 
 class TestPreprocessorParser:
     """Tests for the XML preprocessor command line parser."""
 
-    def test_preprocessor_defaults( self ):
+    def test_preprocessor_defaults( self ) -> None:
         """Verify the parser's default values when no arguments are given."""
         parser = command_line_parsers.build_preprocessor_input_parser()
         args = parser.parse_args( [] )
@@ -15,7 +16,7 @@ class TestPreprocessorParser:
         assert args.verbose == 0
         assert args.parameters == []
 
-    def test_preprocessor_all_args( self ):
+    def test_preprocessor_all_args( self ) -> None:
         """Test the parser with all arguments provided."""
         parser = command_line_parsers.build_preprocessor_input_parser()
         cmd_args = [
@@ -29,7 +30,7 @@ class TestPreprocessorParser:
         assert args.verbose == 1
         assert args.parameters == [ [ 'p1', 'v1' ], [ 'p2', 'v2' ] ]
 
-    def test_parse_known_args( self, monkeypatch ):
+    def test_parse_known_args( self, monkeypatch: MonkeyPatch ) -> None:
         """Test that unknown arguments are separated correctly."""
         test_args = [
             'script_name.py',  # The first element is always the script name
@@ -54,7 +55,7 @@ class TestPreprocessorParser:
 class TestFormatterParser:
     """Tests for the XML formatter command line parser."""
 
-    def test_formatter_defaults( self ):
+    def test_formatter_defaults( self ) -> None:
         """Verify the formatter parser's defaults."""
         parser = command_line_parsers.build_xml_formatter_input_parser()
         args = parser.parse_args( [ 'my_file.xml' ] )
@@ -66,7 +67,7 @@ class TestFormatterParser:
         assert args.close == 0
         assert args.namespace == 0
 
-    def test_formatter_custom_args( self ):
+    def test_formatter_custom_args( self ) -> None:
         """Test providing custom arguments to the formatter parser."""
         parser = command_line_parsers.build_xml_formatter_input_parser()
         cmd_args = [
@@ -86,14 +87,14 @@ class TestFormatterParser:
 class TestAttributeCoverageParser:
     """Tests for the attribute coverage command line parser."""
 
-    def test_coverage_defaults( self ):
+    def test_coverage_defaults( self ) -> None:
         """Verify the coverage parser's defaults."""
         parser = command_line_parsers.build_attribute_coverage_input_parser()
         args = parser.parse_args( [] )
         assert args.root == ''
         assert args.output == 'attribute_test.xml'
 
-    def test_coverage_custom_args( self ):
+    def test_coverage_custom_args( self ) -> None:
         """Test providing custom arguments to the coverage parser."""
         parser = command_line_parsers.build_attribute_coverage_input_parser()
         args = parser.parse_args( [ '-r', '/my/root', '-o', 'report.xml' ] )
@@ -104,13 +105,13 @@ class TestAttributeCoverageParser:
 class TestXmlRedundancyParser:
     """Tests for the XML redundancy command line parser."""
 
-    def test_redundancy_defaults( self ):
+    def test_redundancy_defaults( self ) -> None:
         """Verify the redundancy parser's defaults."""
         parser = command_line_parsers.build_xml_redundancy_input_parser()
         args = parser.parse_args( [] )
         assert args.root == ''
 
-    def test_redundancy_custom_args( self ):
+    def test_redundancy_custom_args( self ) -> None:
         """Test providing a custom root to the redundancy parser."""
         parser = command_line_parsers.build_xml_redundancy_input_parser()
         args = parser.parse_args( [ '--root', '/some/path' ] )

@@ -1,11 +1,12 @@
 import pytest
-from lxml import etree as ElementTree
 from copy import deepcopy
+from lxml import etree as ElementTree
+from pathlib import Path
 from geos.xml_tools import xml_redundancy_check
 
 
 @pytest.fixture
-def mock_schema():
+def mock_schema() -> dict:
     """Provides a mock schema dictionary for testing."""
     return {
         "Problem": {
@@ -39,7 +40,7 @@ def mock_schema():
 
 
 @pytest.fixture
-def sample_xml_tree():
+def sample_xml_tree() -> ElementTree.Element:
     """Provides a sample XML tree with redundant and required data."""
     xml_string = """
     <Problem name="Test1" version="1.1" mode="normal" component="Solver">
@@ -53,11 +54,8 @@ def sample_xml_tree():
 class TestXmlRedundancyCheck:
     """Tests for the XML redundancy check script."""
 
-    def test_check_redundancy_level( self, mock_schema, sample_xml_tree ):
-        """
-        Tests the core recursive function to ensure it correctly identifies
-        and removes redundant attributes and nodes wrt a schema.
-        """
+    def test_check_redundancy_level( self, mock_schema: dict, sample_xml_tree: ElementTree.Element ) -> None:
+        """Tests the core recursive function to ensure it correctly identifies and removes redundant attributes and nodes wrt a schema."""
         # We work on a copy to not modify the original fixture object
         node_to_modify = deepcopy( sample_xml_tree )
         schema_level = mock_schema[ "Problem" ]
@@ -76,11 +74,9 @@ class TestXmlRedundancyCheck:
         assert node_to_modify.find( "RequiredChild" ) is not None  # Kept (has a required attribute)
         assert node_to_modify.find( "RedundantChild" ) is None  # Removed (child became empty and was pruned)
 
-    def test_check_xml_redundancy_file_io( self, mock_schema, sample_xml_tree, tmp_path, monkeypatch ):
-        """
-        Tests the wrapper function to ensure it reads, processes, and writes
-        the file correctly.
-        """
+    def test_check_xml_redundancy_file_io( self, mock_schema: dict, sample_xml_tree: ElementTree.Element,
+                                           tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Tests the wrapper function to ensure it reads, processes, and writes the file correctly."""
         # Create a temporary file with the sample XML content
         xml_file = tmp_path / "test.xml"
         tree = ElementTree.ElementTree( sample_xml_tree )

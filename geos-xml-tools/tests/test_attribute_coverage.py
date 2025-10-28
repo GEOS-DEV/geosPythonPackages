@@ -1,10 +1,11 @@
 import pytest
 from lxml import etree as ElementTree
+from pathlib import Path
 from geos.xml_tools import attribute_coverage
 
 
 @pytest.fixture
-def mock_project_files( tmp_path ):
+def mock_project_files( tmp_path: Path ) -> dict[ str, str ]:
     """Creates a mock file system with a schema and some XML files for testing."""
     # 1. Define a simple schema
     schema_content = """<?xml version="1.0" encoding="UTF-8" ?>
@@ -50,7 +51,7 @@ def mock_project_files( tmp_path ):
 class TestAttributeCoverageWorkflow:
     """Tests the individual functions of the attribute_coverage module."""
 
-    def test_parse_schema( self, mock_project_files ):
+    def test_parse_schema( self, mock_project_files: dict[ str, str] ) -> None:
         """Verify that the schema is parsed into the correct dictionary structure."""
         schema_file = mock_project_files[ "schema" ]
 
@@ -72,7 +73,7 @@ class TestAttributeCoverageWorkflow:
         child_attrs = problem_children[ "ChildNode" ][ "attributes" ]
         assert "id" in child_attrs
 
-    def test_collect_xml_attributes( self, mock_project_files ):
+    def test_collect_xml_attributes( self, mock_project_files: dict[ str, str] ) -> None:
         """Verify that attributes from an XML file are collected into the structure."""
         schema_file = mock_project_files[ "schema" ]
         src_xml_file = mock_project_files[ "src_xml" ]
@@ -94,7 +95,7 @@ class TestAttributeCoverageWorkflow:
         # Ensure other folders are still empty
         assert problem_attrs[ "name" ][ "examples" ] == []
 
-    def test_write_attribute_usage_xml( self, mock_project_files, tmp_path ):
+    def test_write_attribute_usage_xml( self, mock_project_files: dict[ str, str], tmp_path: Path ) -> None:
         """Verify that the final XML report is written correctly."""
         schema_file = mock_project_files[ "schema" ]
         src_xml_file = mock_project_files[ "src_xml" ]

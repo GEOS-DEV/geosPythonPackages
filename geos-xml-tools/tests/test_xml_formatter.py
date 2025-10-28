@@ -1,5 +1,7 @@
 import pytest
 import sys
+from pathlib import Path
+from typing import Any
 from geos.xml_tools import xml_formatter
 
 
@@ -14,13 +16,13 @@ class TestFormatAttribute:
             ( "  a   b  ", " a b " ),
             ( "{{1,2,3}}", "{ { 1, 2, 3 } }" )
         ] )
-    def test_basic_formatting( self, input_str, expected_str ):
+    def test_basic_formatting( self, input_str: str, expected_str: str ) -> None:
         """Tests basic whitespace and comma/bracket handling."""
         # Dummy indent and key name, as they don't affect these tests
         formatted = xml_formatter.format_attribute( "  ", "key", input_str )
         assert formatted == expected_str
 
-    def test_multiline_attribute_formatting( self ):
+    def test_multiline_attribute_formatting( self ) -> None:
         """Tests the specific logic for splitting attributes onto multiple lines."""
         input_str = "{{1,2,3}, {4,5,6}}"
         # The indent length and key name length (4 + 5 + 4) determine the newline indent
@@ -37,14 +39,14 @@ class TestFormatFile:
     """Tests the main file formatting logic."""
 
     @pytest.fixture
-    def unformatted_xml_path( self, tmp_path ):
+    def unformatted_xml_path( self, tmp_path: Path ) -> str:
         """Creates a temporary, messy XML file and returns its path."""
         content = '<?xml version="1.0" ?><Root z="3" a="1"><Child b="2" a="1"/><Empty/></Root>'
         xml_file = tmp_path / "test.xml"
         xml_file.write_text( content )
         return str( xml_file )
 
-    def test_format_file_defaults( self, unformatted_xml_path ):
+    def test_format_file_defaults( self, unformatted_xml_path: str ) -> None:
         """Tests the formatter with its default settings."""
         xml_formatter.format_file( unformatted_xml_path )
 
@@ -62,7 +64,7 @@ class TestFormatFile:
                              '</Root>\n' )
         assert content == expected_content
 
-    def test_format_file_sorted_and_hanging_indent( self, unformatted_xml_path ):
+    def test_format_file_sorted_and_hanging_indent( self, unformatted_xml_path: str ) -> None:
         """Tests with attribute sorting and hanging indents enabled."""
         xml_formatter.format_file(
             unformatted_xml_path,
@@ -86,14 +88,12 @@ class TestFormatFile:
 class TestMainFunction:
     """Tests the main() function which handles command-line execution."""
 
-    def test_main_calls_format_file_correctly( self, monkeypatch ):
-        """
-        Verifies that main() parses arguments and calls format_file with them.
-        """
+    def test_main_calls_format_file_correctly( self, monkeypatch: pytest.MonkeyPatch ) -> None:
+        """Verifies that main() parses arguments and calls format_file with them."""
         # Create a spy to record the arguments passed to format_file
         call_args = {}
 
-        def spy_format_file( *args, **kwargs ):
+        def spy_format_file( *args: Any, **kwargs: Any ) -> None:
             call_args[ 'args' ] = args
             call_args[ 'kwargs' ] = kwargs
 

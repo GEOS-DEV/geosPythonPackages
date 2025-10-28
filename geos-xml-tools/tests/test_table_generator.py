@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 import os
+from pathlib import Path
+from typing import Any
 from geos.xml_tools import table_generator
 
 
@@ -8,7 +10,7 @@ class TestGEOS_Table:
     """A test suite for the GEOS table read/write functions."""
 
     @pytest.fixture
-    def sample_data( self ):
+    def sample_data( self ) -> dict[ str, Any ]:
         """Provides a reusable set of sample axes and properties for tests."""
         # Define table axes (e.g., 2x3 grid)
         a = np.array( [ 10.0, 20.0 ] )
@@ -26,10 +28,8 @@ class TestGEOS_Table:
             "property_names": [ 'porosity' ]
         }
 
-    def test_write_read_round_trip( self, tmp_path, sample_data ):
-        """
-        Tests that writing a table and reading it back results in the original data.
-        """
+    def test_write_read_round_trip( self, tmp_path: Path, sample_data: dict[ str, Any ] ) -> None:
+        """Tests that writing a table and reading it back results in the original data."""
         # Change to the temporary directory to work with files
         os.chdir( tmp_path )
 
@@ -59,11 +59,8 @@ class TestGEOS_Table:
         for key in original_properties:
             np.testing.assert_allclose( read_properties[ key ], original_properties[ key ] )
 
-    def test_write_fails_on_shape_mismatch( self, sample_data ):
-        """
-        Tests that write_GEOS_table raises an exception if property and axis shapes
-        are incompatible.
-        """
+    def test_write_fails_on_shape_mismatch( self, sample_data: dict[ str, Any ] ) -> None:
+        """Tests that write_GEOS_table raises an exception if property and axis shapes are incompatible."""
         # Create a property with a deliberately incorrect shape (2x2 instead of 2x3)
         bad_properties = { 'porosity': np.array( [ [ 1, 2 ], [ 3, 4 ] ] ) }
 

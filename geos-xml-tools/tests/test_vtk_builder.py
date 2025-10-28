@@ -1,20 +1,17 @@
 import pytest
 import vtk
 from pathlib import Path
+from typing import Any, Generator
 from geos.xml_tools import vtk_builder
 from geos.xml_tools import xml_processor  # Make sure this import is at the top
 
 
 @pytest.fixture
-def cleanup_processed_xml( tmp_path, monkeypatch ):
-    """
-    Fixture to ensure processed XML files are created in a temporary
-    directory that pytest will automatically clean up.
-    """
-
+def cleanup_processed_xml( tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> Generator[ Any ]:
+    """Fixture to ensure processed XML files are created in a temporary directory that pytest will automatically clean up."""
     # We are going to temporarily replace the original function that creates files with the random "prep_..." name
     # with a function that creates files with a predictable name inside the temp path.
-    def temp_name_generator( prefix='', suffix='.xml' ):
+    def temp_name_generator( prefix: str = '', suffix: str = '.xml' ) -> None:
         """A new function that creates a predictable name inside the temp path."""
         # tmp_path is a unique temporary directory managed by pytest
         return str( tmp_path / f"{prefix}processed_test_output{suffix}" )
@@ -28,13 +25,13 @@ def cleanup_processed_xml( tmp_path, monkeypatch ):
 
 
 @pytest.fixture
-def temp_dir( tmp_path ):
+def temp_dir( tmp_path: Path ) -> Path:
     """Create a temporary directory for test files."""
     return tmp_path
 
 
 @pytest.fixture
-def simple_xml_content( temp_dir ):
+def simple_xml_content( temp_dir: Path ) -> str:
     """Create a basic XML file for testing."""
     xml_content = """
     <Problem name="TestProblem">
@@ -51,7 +48,7 @@ def simple_xml_content( temp_dir ):
 
 
 @pytest.fixture
-def vtk_file( temp_dir ):
+def vtk_file( temp_dir: Path ) -> str:
     """Create a dummy VTK .vtu file for testing."""
     points = vtk.vtkPoints()
     points.InsertNextPoint( 0, 0, 0 )
@@ -88,7 +85,7 @@ def vtk_file( temp_dir ):
 
 
 @pytest.fixture
-def complex_xml_content( temp_dir, vtk_file ):
+def complex_xml_content( temp_dir: Path, vtk_file: str ) -> str:
     """Create a more complex XML for testing wells, boxes, and external meshes."""
     # Correct the format of polylineNodeCoords to be a list of tuples
     xml_content = f"""
@@ -112,7 +109,7 @@ def complex_xml_content( temp_dir, vtk_file ):
     return str( xml_file )
 
 
-def test_read_valid_xml( simple_xml_content, cleanup_processed_xml ):
+def test_read_valid_xml( simple_xml_content: str, cleanup_processed_xml: str ) -> None:
     """Test reading a valid and simple XML file."""
     deck = vtk_builder.read( simple_xml_content )
     assert deck is not None
@@ -121,13 +118,13 @@ def test_read_valid_xml( simple_xml_content, cleanup_processed_xml ):
     assert deck.xml_root.attrib[ "name" ] == "TestProblem"
 
 
-def test_read_nonexistent_xml():
+def test_read_nonexistent_xml() -> None:
     """Test that reading a non-existent file raises FileNotFoundError."""
     with pytest.raises( FileNotFoundError ):
         vtk_builder.read( "nonexistent_file.xml" )
 
 
-def test_create_vtk_deck_simple( simple_xml_content, cleanup_processed_xml ):
+def test_create_vtk_deck_simple( simple_xml_content: str, cleanup_processed_xml: str ) -> None:
     """Test the main entry point with a simple internal mesh."""
     collection = vtk_builder.create_vtk_deck( simple_xml_content )
     assert isinstance( collection, vtk.vtkPartitionedDataSetCollection )
@@ -139,7 +136,7 @@ def test_create_vtk_deck_simple( simple_xml_content, cleanup_processed_xml ):
     assert assembly.GetRootNodeName() == "TestProblem"
 
 
-def test_create_vtk_deck_complex( complex_xml_content, cleanup_processed_xml ):
+def test_create_vtk_deck_complex( complex_xml_content: str, cleanup_processed_xml: str ) -> None:
     """Test creating a VTK deck with an external mesh, well, and box."""
     collection = vtk_builder.create_vtk_deck( complex_xml_content )
     assert isinstance( collection, vtk.vtkPartitionedDataSetCollection )
@@ -157,7 +154,7 @@ def test_create_vtk_deck_complex( complex_xml_content, cleanup_processed_xml ):
     assert assembly.GetFirstNodeByPath( f"/{root_name}/Mesh" ) is not None
 
 
-def test_well_creation( complex_xml_content, cleanup_processed_xml ):
+def test_well_creation( complex_xml_content: str, cleanup_processed_xml: str ) -> None:
     """Test that wells and perforations are correctly created."""
     collection = vtk_builder.create_vtk_deck( complex_xml_content )
     assembly = collection.GetDataAssembly()
@@ -173,7 +170,7 @@ def test_well_creation( complex_xml_content, cleanup_processed_xml ):
     assert well_name == "TestWell"
 
 
-def test_box_creation( complex_xml_content, cleanup_processed_xml ):
+def test_box_creation( complex_xml_content: str, cleanup_processed_xml: str ) -> None:
     """Test that box geometries are correctly created."""
     collection = vtk_builder.create_vtk_deck( complex_xml_content )
     assembly = collection.GetDataAssembly()
@@ -192,7 +189,7 @@ def test_box_creation( complex_xml_content, cleanup_processed_xml ):
     assert bounds == ( 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 )
 
 
-def test_unsupported_mesh_extension( tmp_path, cleanup_processed_xml ):
+def test_unsupported_mesh_extension( tmp_path: Path, cleanup_processed_xml: str ) -> None:
     """Test that an unsupported mesh file extension is handled gracefully."""
     unsupported_file = tmp_path / "mesh.unsupported"
     unsupported_file.write_text( "<fake/>" )
@@ -214,7 +211,7 @@ def test_unsupported_mesh_extension( tmp_path, cleanup_processed_xml ):
     assert collection.GetNumberOfPartitionedDataSets() == 0
 
 
-def test_missing_mesh_attribute( vtk_file, tmp_path, cleanup_processed_xml ):
+def test_missing_mesh_attribute( vtk_file: str, tmp_path: Path, cleanup_processed_xml: str ) -> None:
     """Test behavior when the specified cell attribute is not in the mesh."""
     xml_content = f"""
     <Problem name="MissingAttribute">
