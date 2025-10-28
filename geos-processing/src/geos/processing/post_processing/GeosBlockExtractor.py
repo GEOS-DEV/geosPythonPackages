@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing_extensions import Self
 
 from geos.utils.Logger import ( Logger, getLogger )
-from geos.utils.GeosOutputsConstants import ( GeosDomainNameEnum )
-from geos.mesh.utils.arrayHelpers import ( getCellDimension )
-from geos.mesh.utils.multiblockHelpers import ( getBlockIndexFromName )
+from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
+from geos.mesh.utils.arrayHelpers import getCellDimension
+from geos.mesh.utils.multiblockHelpers import getBlockIndexFromName
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractBlock
@@ -30,7 +30,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
+    from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 
     # Filter inputs.
     geosMesh: vtkMultiBlockDataSet
@@ -40,23 +40,23 @@ To use the filter:
     speHandler: bool # Defaults to False
 
     # Instantiate the filter
-    filter: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFault, extractWell, speHandler )
+    geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFault, extractWell, speHandler )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    geosBlockExtractor.setLoggerHandler( yourHandler )
 
     # Do calculations
-    filter.applyFilter()
+    geosBlockExtractor.applyFilter()
 
     # Get the multiBlockDataSet with blocks of the extracted domain.
     geosDomainExtracted: vtkMultiBlockDataSet
-    geosDomainExtracted = filter.extractedGeosDomain.volume # For volume domain
-    geosDomainExtracted = filter.extractedGeosDomain.fault # For fault domain
-    geosDomainExtracted = filter.extractedGeosDomain.well # For well domain
+    geosDomainExtracted = geosBlockExtractor.extractedGeosDomain.volume # For volume domain
+    geosDomainExtracted = geosBlockExtractor.extractedGeosDomain.fault # For fault domain
+    geosDomainExtracted = geosBlockExtractor.extractedGeosDomain.well # For well domain
 """
 
-loggerTitle: str = "Geos Block Extractor Filter"
+loggerTitle: str = "Geos Block Extractor"
 
 
 class GeosExtractDomainBlock( vtkExtractBlock ):

@@ -7,7 +7,7 @@
 import pytest
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
-from geos.mesh.processing.GeosBlockExtractor import GeosBlockExtractor
+from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 
 
 @pytest.mark.parametrize( "extractFault, extractWell", [
@@ -24,12 +24,12 @@ def test_GeosExtractBlock(
     """Test GeosExtractBlock vtk filter."""
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "meshGeosExtractBlockTmp" )
 
-    filter: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
-    filter.applyFilter()
+    geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
+    geosBlockExtractor.applyFilter()
 
-    extractedVolume: vtkMultiBlockDataSet = filter.extractedGeosDomain.volume
-    extractedFault: vtkMultiBlockDataSet = filter.extractedGeosDomain.fault
-    extractedWell: vtkMultiBlockDataSet = filter.extractedGeosDomain.well
+    extractedVolume: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.volume
+    extractedFault: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.fault
+    extractedWell: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.well
 
     assert extractedVolume.GetNumberOfBlocks() == 2
 
