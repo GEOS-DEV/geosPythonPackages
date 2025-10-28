@@ -25,6 +25,7 @@ classifiers = [
 requires-python = ">=3.10"
 
 dependencies = [
+    "vtk >= 9.3",
     "lxml>=4.9",
     "colorcet>=3.0.1",
     "parameterized",
@@ -47,7 +48,7 @@ dev = [
     "mypy"
 ]
 test = [
-    "pytest-cov", 
+    "pytest-cov",
     "pytest"
 ]
 

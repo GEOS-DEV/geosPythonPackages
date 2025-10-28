@@ -55,12 +55,13 @@ build = [
 ]
 dev = [
    "mypy",
-   "ruff", 
+   "ruff",
    "yapf",
 ]
 test = [
-   "pytest-cov", 
-   "pytest"
+   "pytest-cov",
+   "pytest",
+   "pyvista"
 ]
 
 [tool.pytest.ini_options]
