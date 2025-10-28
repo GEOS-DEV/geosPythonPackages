@@ -19,7 +19,7 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -27,6 +27,11 @@ update_paths()
 
 __doc__ = """
 PVGeosDeckReader is a Paraview plugin to load and create mesh objects from GEOS xml input file.
+
+To use it:
+
+* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeosDeckReader.py
+* Create a new reader: File > Open... > select your GEOS xml file > Apply
 """
 
 paraview_plugin_version = "0.1.0"
