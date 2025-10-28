@@ -6,6 +6,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  LABEL_TEST_GEOS_INTEGRATION: 'test-geos-integration'
+  LABEL_FORCE_GEOS_INTEGRATION: 'force-geos-integration'
 
 jobs:
   # Checks if PR title follows conventional semantics
@@ -124,18 +127,17 @@ jobs:
     outputs:
       has_geos_integration_label: ${{ steps.set-label.outputs.has_label }}
     steps:
-      - name: Check if PR has 'test-geos-integration' label
+      - name: Check if PR has '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label
         id: set-label
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          for label in "${{ toJson(github.event.pull_request.labels) }}"; do
-            if [[ "$label" == *"test-geos-integration"* ]]; then
-              LABEL_FOUND=true
-              echo "Label ${label} found"
-              break
-            fi
-          done
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "${{ env.LABEL_TEST_GEOS_INTEGRATION }}"; then
+            LABEL_FOUND=true
+            echo "Label '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' found"
+          fi
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
   
   check_force_integration_label:
@@ -144,18 +146,17 @@ jobs:
     outputs:
       has_geos_integration_force_label: ${{ steps.set-label.outputs.has_label }}
     steps:
-      - name: Check if PR has 'force-geos-integration' label
+      - name: Check if PR has '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label
         id: set-label
         run: |
           echo "Checking for label..."
           LABEL_FOUND=false
-          for label in "${{ toJson(github.event.pull_request.labels) }}"; do
-            if [[ "$label" == *"force-geos-integration"* ]]; then
-              LABEL_FOUND=true
-              echo "Label ${label} found"
-              break
-            fi
-          done
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "${{ env.LABEL_FORCE_GEOS_INTEGRATION }}"; then
+            LABEL_FOUND=true
+            echo "Label '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' found"
+          fi
           echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
 
   # Step 3: Check if GEOS integration is required based on changed files
@@ -264,7 +265,7 @@ jobs:
         else
           echo "⊘ GEOS integration test NOT required"
           echo "  All changes are in documentation, non-integrated packages, or config files"
-          echo "  To force GEOS integration testing, add the 'test-geos-integration' label"
+          echo "  To force GEOS integration testing, add the '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label"
           echo "required=false" >> "$GITHUB_OUTPUT"
           echo "skip_reason=no-geos-integrated-changes" >> "$GITHUB_OUTPUT"
         fi
@@ -291,20 +292,20 @@ jobs:
           
           echo "=== GEOS Integration Dispatch ==="
           echo "GEOS Required (by file changes): ${GEOS_REQUIRED}"
-          echo "Has 'test-geos-integration' label: ${HAS_TEST_LABEL}"
-          echo "Has 'force-geos-integration' label: ${HAS_FORCE_LABEL}"
+          echo "Has '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label: ${HAS_TEST_LABEL}"
+          echo "Has '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label: ${HAS_FORCE_LABEL}"
           echo ""
           
           # Case 1: Force label - always run tests
           if [[ "$HAS_FORCE_LABEL" == "true" ]]; then
-            echo "✓ 'force-geos-integration' label present - forcing GEOS integration tests"
+            echo "✓ '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label present - forcing GEOS integration tests"
             echo "skipped=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           
           # Case 2: GEOS required AND test label present - run tests
           if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "true" ]]; then
-            echo "✓ GEOS integration required and 'test-geos-integration' label present"
+            echo "✓ GEOS integration required and '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label present"
             echo "  Will proceed with GEOS integration tests"
             echo "skipped=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -312,26 +313,26 @@ jobs:
           
           # Case 3: GEOS required BUT test label missing - ERROR
           if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "false" ]]; then
-            echo "✗ ERROR: GEOS integration is required but 'test-geos-integration' label is missing"
+            echo "✗ ERROR: GEOS integration is required but '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label is missing"
             echo ""
             echo "Your PR modifies GEOS-integrated packages:"
             echo "  - geos-utils, geos-mesh, geos-xml-tools"
             echo "  - hdf5-wrapper, pygeos-tools, geos-ats"
             echo ""
-            echo "Action required: Add the 'test-geos-integration' label to this PR"
+            echo "Action required: Add the '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label to this PR"
             exit 1
           fi
           
           # Case 4: GEOS NOT required BUT test label present - SKIP TESTS
           if [[ "$GEOS_REQUIRED" == "false" && "$HAS_TEST_LABEL" == "true" ]]; then
-            echo "⊘ SKIPPED: 'test-geos-integration' label present but GEOS integration is not required"
+            echo "⊘ SKIPPED: '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label present but GEOS integration is not required"
             echo ""
             echo "Your changes only affect:"
             echo "  - Documentation"
             echo "  - Non-integrated packages"
             echo "  - Configuration files"
             echo ""
-            echo "If you want to run GEOS integration tests anyway, use 'force-geos-integration' label to explicitly force testing"
+            echo "If you want to run GEOS integration tests anyway, use '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label to explicitly force testing"
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -353,7 +354,7 @@ jobs:
   geos_integration_test:
     name: GEOS Integration Test
     needs: [geos_ci_dispatch]
-    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped.skipped != 'true' }}
+    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped != 'true' }}
     uses: ./.github/workflows/test_geos_integration.yml
 
   # Final validation - Summarize CI results
@@ -392,7 +393,7 @@ jobs:
           echo "  - hdf5-wrapper, pygeos-tools, geos-ats"
           echo ""
           echo "If you want to run GEOS integration tests anyway,"
-          echo "add the 'test-geos-integration' label to this PR"
+          echo "add the '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label to this PR"
           echo ""
           echo "✓ CI requirements satisfied - PR can be merged"
         fi
