@@ -4,18 +4,16 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
-from typing import Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+    VTKPythonAlgorithmBase, smdomain, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -31,6 +29,7 @@ from geos.utils.PhysicalConstants import (
     WATER_DENSITY,
 )
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = """
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional
@@ -51,8 +50,7 @@ The advanced geomechanics outputs are:
     - fracture index and threshold
     - Critical pore pressure and pressure index
 
-PVGeomechanicsCalculator paraview plugin input mesh is either vtkPointSet or vtkUnstructuredGrid
-and returned mesh is of same type as input.
+PVGeomechanicsCalculator paraview plugin input and output meshes are vtkUnstructuredGrid.
 
 .. Important::
     Please refer to the PVGeosExtractMergeBlockVolume* plugins to provide the correct input.
@@ -61,27 +59,20 @@ To use it:
 
 * Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeomechanicsCalculator
 * Select the mesh you want to compute geomechanics output on
-* Search Filters > 3- Geos Geomechanics > Geos Geomechanics Calculator
+* Search Filters > Filter Category.GEOS_GEOMECHANICS > GEOS Geomechanics Calculator
 * Set physical constants and computeAdvancedOutput if needed
 * Apply
 
 """
 
 
-@smproxy.filter( name="PVGeomechanicsCalculator", label="Geos Geomechanics Calculator" )
-@smhint.xml( """<ShowInMenu category="3- Geos Geomechanics"/>""" )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype( dataTypes=[ "vtkUnstructuredGrid", "vtkPointSet" ], composite_data_supported=True )
+@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
+             decoratedLabel="GEOS Geomechanics Calculator",
+             decoratedType="vtkUnstructuredGrid" )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Paraview plugin to compute additional geomechanical outputs.
-
-        Input is either a vtkUnstructuredGrid or vtkPointSet with Geos
-        geomechanical properties.
-        """
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkPointSet" )
-
+        """Paraview plugin to compute additional geomechanical outputs."""
         self.computeAdvancedOutputs: bool = False
 
         # Defaults physical constants
@@ -224,52 +215,22 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """Organize groups."""
         self.Modified()
 
-    def RequestDataObject(
+    def Filter(
         self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+        inputMesh: vtkUnstructuredGrid,
+        outputMesh: vtkUnstructuredGrid,
+    ) -> None:
+        """Is applying GeomechanicsCalculator to the mesh, computing geomechanics properties from the elastics moduli.
 
         Args:
-            request (vtkInformation): Request.
-            inInfoVec (list[vtkInformationVector]): Input objects.
-            outInfoVec (vtkInformationVector): Output objects.
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            inputMesh (vtkUnstructuredGrid): A mesh to transform.
+            outputMesh :(vtkUnstructuredGrid) A mesh transformed.
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
-
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
-
-        Args:
-            request (vtkInformation): Request.
-            inInfoVec (list[vtkInformationVector]): Input objects.
-            outInfoVec (vtkInformationVector): Output objects.
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inputMesh: Union[ vtkPointSet, vtkUnstructuredGrid ] = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: Union[ vtkPointSet, vtkUnstructuredGrid ] = self.GetOutputData( outInfoVec, 0 )
-        assert inputMesh is not None, "Input server mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
-        filter: GeomechanicsCalculator = GeomechanicsCalculator( inputMesh, self.computeAdvancedOutputs, True )
+        filter: GeomechanicsCalculator = GeomechanicsCalculator(
+            inputMesh,
+            self.computeAdvancedOutputs,
+            True,
+        )
 
         if not filter.logger.hasHandlers():
             filter.setLoggerHandler( VTKHandler() )
@@ -279,8 +240,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         filter.physicalConstants.rockCohesion = self.rockCohesion
         filter.physicalConstants.frictionAngle = self.frictionAngle
 
-        if filter.applyFilter():
-            outputMesh.ShallowCopy( filter.getOutput() )
-            outputMesh.Modified()
+        filter.applyFilter()
+        outputMesh.ShallowCopy( filter.getOutput() )
+        outputMesh.Modified()
 
-        return 1
+        return
