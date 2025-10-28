@@ -28,8 +28,6 @@ class Gantt(HtmlElement):
         )
         self._attr_names += [
             "tasks",
-            "startDate",
-            "endDate"
         ]
         self._event_names += [
             "taskUpdated"
