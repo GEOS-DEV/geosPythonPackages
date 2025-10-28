@@ -13,3 +13,11 @@ geos.processing.post_processing.GeomechanicsCalculator module
    :members:
    :undoc-members:
    :show-inheritance:
+
+geos.mesh.processing.GeosBlockExtractor module
+-----------------------------------------------
+
+.. automodule:: geos.mesh.processing.GeosBlockExtractor
+   :members:
+   :undoc-members:
+   :show-inheritance:
