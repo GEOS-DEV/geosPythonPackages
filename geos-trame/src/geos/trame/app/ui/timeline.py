@@ -25,52 +25,25 @@ class TimelineEditor( vuetify.VCard ):
         self.tree = source
         self.simput_manager = get_simput_manager( id=self.state.sm_id )
 
+        self.state.sdate = datetime(1924,3,28). strftime("%Y-%m-%d")
+
         self.state.tasks = []
-        dtasks = [{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"},
-                       {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 2", "progress": "100", "color": "#151A77"}]
+        # dtasks = [{"id": "1", "name": " Analyse des besoins", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 1", "progress": "100", "color": "#C55C36"},
+                    #    {"id": "2", "name": " Debut production", "start": "2012-12-12", "end":"2012-12-31", "category":"Phase 2", "progress": "100", "color": "#151A77"}]
         # self.state.tasks = list( tasks )
         # self.state.change("tasks")(self._updated_tasks)
         # self.state.tasks = dtasks
 
         self.state.tasks = self.tree.timeline()
 
-        fields = [ {
-            "summary": {
-                "label": "Summary",
-                "component": "gantt-text",
-                "width": 300,
-                "placeholder": "Add a new task...",
-            },
-            "start_date": {
-                "label": "",# "Start",
-                "component": "gantt-date",
-                "width": -1,
-                "placeholder": "Start",
-                "sort": "date",
-            },
-            "end_date": {
-                "label": "",# "End",
-                "component": "gantt-date",
-                "width": -1,
-                "placeholder": "End",
-                "sort": "date",
-            },
-            "duration": {
-                "label": "Days",
-                "component": "gantt-number",
-                "width": 150,
-                "placeholder": "0",
-            },
-        } ]
-
         with self:
-            vuetify.VCardTitle( "Events View" )
+            # vuetify.VCardTitle( "Events View" )
             # vuetify.VDateInput(
             #     label="Select starting simulation date",
             #     prepend_icon="",
             #     prepend_inner_icon="$calendar",
-            #     # placeholder="09/18/2024",
-            #     v_model="sdate"
+            #     placeholder="09/18/2024",
+            #     v_model=("sdate",)
             # )
             vuetify.VDivider()
             with vuetify.VContainer( "Events chart" ):
