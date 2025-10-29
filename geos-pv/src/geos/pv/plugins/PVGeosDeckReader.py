@@ -77,7 +77,6 @@ class PVGeosDeckReader( VTKPythonAlgorithmBase ):
     def __init__( self: Self ) -> None:
         """Constructor of the reader."""
         super().__init__(
-            self,
             nInputPorts=0,
             nOutputPorts=1,
             outputType="vtkPartitionedDataSetCollection",
