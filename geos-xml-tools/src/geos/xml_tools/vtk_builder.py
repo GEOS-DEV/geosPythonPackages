@@ -179,6 +179,7 @@ def create_vtk_deck( xml_filepath: str, cell_attribute: str = "Region" ) -> vtk.
 
 def build_model( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollection, attr: str ) -> int:
     """Populates a VTK data collection from a processed SimulationDeck."""
+    print( "Building VTKDataAssembly...", flush=True )
     assembly = vtk.vtkDataAssembly()
     # Use the original file's name for the root node, not the temporary processed file
     root_name = Path( d.xml_root.get( "name", "Deck" ) ).stem
@@ -186,12 +187,15 @@ def build_model( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollect
     collection.SetDataAssembly( assembly )
 
     # Step 1 - mesh
+    print( "Performing _read_mesh...", flush=True )
     if _read_mesh( d, collection, attr ) < 0:
         return 0
     # Step 2 - wells
+    print( "Performing _read_wells...", flush=True )
     if _read_wells( d, collection ) < 0:
         return 0
     # Step 3 - boxes
+    print( "Performing _read_boxes...", flush=True )
     if _read_boxes( d, collection ) < 0:
         return 0
 
@@ -244,8 +248,11 @@ def _read_wells( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollect
     if not wells:
         return 0
 
+    print( "Found number of wells:", len( wells ), flush=True )
     count: int = collection.GetNumberOfPartitionedDataSets()
+    print( f"Number of partitioned data sets: {count}", flush=True )
     assembly = collection.GetDataAssembly()
+    print( "Got data assembly from collection.", flush=True )
     node = assembly.AddNode( "Wells" )
 
     for well in wells:
@@ -347,6 +354,7 @@ def _read_mesh( d: SimulationDeck, collection: vtk.vtkPartitionedDataSetCollecti
     # Check for InternalMesh (generated grid)
     internal_mesh_node = meshes.find( "InternalMesh" )
     if internal_mesh_node is not None:
+        print( "Performing _generate_grid...", flush=True )
         _generate_grid( internal_mesh_node, collection )
 
     return 1
@@ -503,6 +511,7 @@ def _read_vtk_data_repository( file_path: str, mesh: ElementTree.Element,
 
 def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDataSetCollection ) -> int:
     count: int = collection.GetNumberOfPartitionedDataSets()
+    print( f"Number of partitioned data sets: {count}", flush=True )
     elem_type = mesh.attrib[ "elementTypes" ].strip( "}{ " )
 
     if elem_type == "C3D8":
@@ -513,6 +522,12 @@ def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDat
         ny = literal_eval( mesh.attrib[ "ny" ].translate( tr ) )[ 0 ]
         nz = literal_eval( mesh.attrib[ "nz" ].translate( tr ) )[ 0 ]
 
+        print( f"Generating grid with dimensions: ({nx}, {ny}, {nz})", flush=True )
+        print( f"xcoords_array: {xcoords_array}", flush=True )
+        print( f"ycoords_array: {ycoords_array}", flush=True )
+        print( f"zcoords_array: {zcoords_array}", flush=True )
+
+        print( "Creating VTK Image Data...", flush=True )
         grid = vtk.vtkImageData()
         grid.SetDimensions( nx + 1, ny + 1, nz + 1 )
         grid.SetOrigin( xcoords_array[ 0 ], ycoords_array[ 0 ], zcoords_array[ 0 ] )
@@ -520,6 +535,7 @@ def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDat
                          ( ycoords_array[ 1 ] - ycoords_array[ 0 ] ) / ny,
                          ( zcoords_array[ 1 ] - zcoords_array[ 0 ] ) / nz )
 
+        print( "Creating VTK Image Data...", flush=True )
         p = vtk.vtkPartitionedDataSet()
         p.SetPartition( 0, grid )
         collection.SetPartitionedDataSet( count, p )
@@ -528,20 +544,24 @@ def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDat
         # --- Start of Added Assembly Logic ---
 
         # 1. Get the data assembly from the collection
+        print( "Getting data assembly from collection...", flush=True )
         assembly = collection.GetDataAssembly()
 
         # 2. Add a parent node for this mesh, using its name from the XML
+        print( "Add Mesh node...", flush=True )
         mesh_name = mesh.get( "name", "InternalMesh" )
         id_mesh = assembly.AddNode( "Mesh" )
         assembly.SetAttribute( id_mesh, "label", mesh_name )
         assembly.SetAttribute( id_mesh, "type", TreeViewNodeType.REPRESENTATION )
 
         # 3. Add a "Region" node under the "Mesh" node for the generated grid
+        print( "Add Region node...", flush=True )
         region_name = f"{mesh_name}_Region"
         node = assembly.AddNode( "Region", id_mesh )
         assembly.SetAttribute( node, "label", region_name )
 
         # 4. Associate the new assembly node with the actual dataset index
+        print( "Add Region node...", flush=True )
         assembly.AddDataSetIndex( node, count )
 
         # 5. Set the dataset's name metadata for consistency
