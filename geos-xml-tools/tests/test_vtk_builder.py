@@ -1,13 +1,13 @@
 import pytest
 import vtk
 from pathlib import Path
-from typing import Any, Generator
+from typing import Generator
 from geos.xml_tools import vtk_builder
 from geos.xml_tools import xml_processor  # Make sure this import is at the top
 
 
 @pytest.fixture
-def cleanup_processed_xml( tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> Generator[ Any ]:
+def cleanup_processed_xml( tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> Generator[ None, None, None ]:
     """Fixture to ensure processed XML files are created in a temporary directory that pytest will automatically clean up."""
 
     # We are going to temporarily replace the original function that creates files with the random "prep_..." name

@@ -3,7 +3,7 @@ import os
 import time
 from lxml import etree as ElementTree
 from pathlib import Path
-from typing import Any, Generator
+from typing import Generator
 from geos.xml_tools import xml_processor
 from geos.xml_tools import unit_manager
 
@@ -156,7 +156,7 @@ class TestRegexSubstitution:
 
     # FIX: Properly restore global state after the test.
     @pytest.fixture( autouse=True )
-    def setup_handlers( self ) -> Generator[ Any ]:
+    def setup_handlers( self ) -> Generator[ None, None, None ]:
         """Sets up the regex handlers before each test and restores them after."""
         # Store original state
         original_target = xml_processor.parameterHandler.target
