@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 from enum import Enum
 from typing import Any, Union, cast
 
@@ -22,15 +22,14 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
-import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
-import geos_posp.visu.PVUtils.paraviewTreatments as pvt
+
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import (
@@ -45,11 +44,20 @@ from geos.utils.PhysicalConstants import (
 )
 from geos.mesh.utils.arrayHelpers import getArrayInObject
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
+
+
+# import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
+import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
+# import geos_posp.visu.PVUtils.paraviewTreatments as pvt
+import geos.pv.utils.paraviewTreatments as pvt
+from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
+# from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
-from geos_posp.visu.PVUtils.DisplayOrganizationParaview import (
+# from geos_posp.visu.PVUtils.DisplayOrganizationParaview import (
+from geos.pv.utils.DisplayOrganizationParaview import (
     buildNewLayoutWithPythonView, )
-from geos_posp.visu.PVUtils.matplotlibOptions import (
+# from geos_posp.visu.PVUtils.matplotlibOptions import (
+from geos.pv.pyplotUtils.matplotlibOptions import (
     FontStyleEnum,
     FontWeightEnum,
     LegendLocationEnum,
@@ -84,7 +92,8 @@ To use it:
 
 @smproxy.filter( name="PVMohrCirclePlot", label="Plot Mohr's Circles" )
 @smhint.xml( """
-    <ShowInMenu category="3- Geos Geomechanics"/>
+    # <ShowInMenu category="3- Geos Geomechanics"/>
+    <ShowInMenu category=FilterCategory.GEOS_GEOMECHA/>
     <View type="PythonView"/>
     """ )
 @smproperty.input( name="Input", port_index=0 )

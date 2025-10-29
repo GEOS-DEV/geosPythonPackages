@@ -58,10 +58,6 @@ PVGeomechanicsWorkflowVolumeWell plugin
 .. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
 
 
-PVMohrCirclePlot plugin
----------------------------------
-
-.. automodule:: PVplugins.PVMohrCirclePlot
 
 PVplugins.PVSurfaceGeomechanics module
 --------------------------------------

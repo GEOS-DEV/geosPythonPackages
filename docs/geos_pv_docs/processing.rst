@@ -25,6 +25,12 @@ PVGeomechanicsCalculator plugin
 .. automodule:: geos.pv.plugins.PVGeomechanicsCalculator
 
 
+PVMohrCirclePlot plugin
+---------------------------------
+
+.. automodule:: PVplugins.PVMohrCirclePlot
+
+
 PVSplitMesh
 ----------------------------------
 
