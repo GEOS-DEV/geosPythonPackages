@@ -11,4 +11,3 @@ GEOS Processing tools
     ./geos_processing_docs/pre_processing.rst
 
     ./geos_processing_docs/generic_processing_tools.rst
-

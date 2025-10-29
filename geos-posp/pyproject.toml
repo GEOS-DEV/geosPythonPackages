@@ -39,6 +39,7 @@ dependencies = [
     "geos-geomechanics",
     "geos-utils",
     "geos-mesh",
+    "geos-processing",
     "vtk >= 9.3",
     "numpy >= 2.2",
     "pandas >= 2.2",

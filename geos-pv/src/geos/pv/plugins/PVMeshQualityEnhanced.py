@@ -7,13 +7,10 @@ from pathlib import Path
 from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+    VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-    vtkDataArraySelection,
-)
+    vtkDataArraySelection, )
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, )
 
@@ -44,6 +41,8 @@ from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 
+from geos.pv.utils.details import SISOFilter, FilterCategory
+
 __doc__ = """
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
 
@@ -67,19 +66,13 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVMeshQualityEnhanced", label="Mesh Quality Enhanced" )
-@smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkUnstructuredGrid" ],
-    composite_data_supported=True,
-)
+@SISOFilter( category=FilterCategory.GEOS_QC,
+             decoratedLabel="Mesh Quality Enhanced",
+             decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Merge collocated points."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-
         self._filename: Optional[ str ] = None
         self._saveToFile: bool = True
         self._blockIndex: int = 0
@@ -172,7 +165,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """
         if self._saveToFile != saveToFile:
             self._saveToFile = saveToFile
-            self.Modified()
+            PVMeshQualityEnhanced.Modified( self )
 
     @smproperty.stringvector( name="FilePath", label="File Path" )
     @smdomain.xml( """
@@ -191,7 +184,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         """
         if self._filename != fname:
             self._filename = fname
-            self.Modified()
+            PVMeshQualityEnhanced.Modified( self )
 
     @smproperty.xml( """
                     <PropertyGroup
@@ -207,36 +200,12 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                     """ )
     def b03GroupAdvancedOutputParameters( self: Self ) -> None:
         """Organize groups."""
-        self.Modified()
+        PVMeshQualityEnhanced.Modified( self )
 
     def Modified( self: Self ) -> None:
         """Overload Modified method to reset _blockIndex."""
         self._blockIndex = 0
-        super().Modified()
-
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
-
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )
+        VTKPythonAlgorithmBase.Modified( self )
 
     def _getQualityMetricsToUse( self: Self, selection: vtkDataArraySelection ) -> set[ int ]:
         """Get mesh quality metric indexes from user selection.
@@ -247,27 +216,14 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
+    def Filter( self, inputMesh: vtkUnstructuredGrid, outputMesh: vtkUnstructuredGrid ) -> None:
+        """Is applying MeshQualityEnhanced to the input Mesh.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            inputMesh : A mesh to transform.
+            outputMesh : A mesh transformed.
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inputMesh: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid.GetData( outInfoVec, 0 )
-        assert inputMesh is not None, "Input server mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
         triangleMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
             self._getQualityMetricsToUse( self._triangleQualityMetric ) )
         quadMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
@@ -302,7 +258,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             stats: QualityMetricSummary = filter.GetQualityMetricSummary()
             self.saveFile( stats )
         self._blockIndex += 1
-        return 1
+        return
 
     def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
         """Export mesh quality metric summary file."""

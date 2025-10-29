@@ -7,8 +7,7 @@ from pathlib import Path
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smhint, smproperty, smproxy,
-)
+    VTKPythonAlgorithmBase )
 
 from vtkmodules.vtkCommonDataModel import (
     vtkPointSet, )
@@ -21,7 +20,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.processing.SplitMesh import SplitMesh
-from geos.pv.utils.AbstractPVPluginVtkWrapper import AbstractPVPluginVtkWrapper
+from geos.pv.utils.details import SISOFilter, FilterCategory
 
 __doc__ = """
 Split each cell of input mesh to smaller cells.
@@ -37,32 +36,23 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVSplitMesh", label="Split Mesh" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkPointSet" ],
-    composite_data_supported=True,
-)
-class PVSplitMesh( AbstractPVPluginVtkWrapper ):
+@SISOFilter( category=FilterCategory.GEOS_UTILS,
+             decoratedLabel="Split Mesh", 
+             decoratedType="vtkPointSet" )
+class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Split mesh cells."""
-        super().__init__()
+        pass
 
-    def applyVtkFilter(
-        self: Self,
-        input: vtkPointSet,
-    ) -> vtkPointSet:
+    def Filter( self: Self, inputMesh: vtkPointSet, outputMesh: vtkPointSet ) -> None:
         """Apply vtk filter.
 
         Args:
-            input (vtkPointSet): input mesh
-
-        Returns:
-            vtkPointSet: output mesh
+            inputMesh(vtkPointSet): Input mesh.
+            outputMesh: Output mesh.
         """
         filter: SplitMesh = SplitMesh()
-        filter.SetInputDataObject( input )
+        filter.SetInputDataObject( inputMesh )
         filter.Update()
-        return filter.GetOutputDataObject( 0 )
+        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
