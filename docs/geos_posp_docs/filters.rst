@@ -18,11 +18,3 @@ geos_posp.filters.GeosBlockMerge module
    :members:
    :undoc-members:
    :show-inheritance:
-
-geos_posp.filters.SurfaceGeomechanics module
-------------------------------------------------
-
-.. automodule:: geos_posp.filters.SurfaceGeomechanics
-   :members:
-   :undoc-members:
-   :show-inheritance:

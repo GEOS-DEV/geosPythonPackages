@@ -36,7 +36,7 @@ from geos.utils.PhysicalConstants import (
 from PVplugins.PVExtractMergeBlocksVolumeSurface import (
     PVExtractMergeBlocksVolumeSurface, )
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
-from PVplugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
+from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
 __doc__ = """
 PVGeomechanicsWorkflowVolumeSurface is a Paraview plugin that execute
