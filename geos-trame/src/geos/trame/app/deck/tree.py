@@ -20,7 +20,9 @@ from geos.trame.app.geosTrameException import GeosTrameException
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
 
-
+us_date_fmt = "%Y-%m-%d"
+date_fmt = us_date_fmt
+# date_fmt = "%m/%d/%Y"
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
@@ -34,7 +36,7 @@ class DeckTree( object ):
         self.root = None
         self.input_has_errors = False
         self._sm_id = sm_id
-        self.world_origin_time = datetime(1924,3,28). strftime("%Y-%m-%d")# Total start date !!
+        self.world_origin_time = datetime(1924,3,28).strftime(date_fmt)# Total start date !!
 
     def set_input_file( self, input_filename: str ) -> None:
         """Set a new input file.
@@ -135,11 +137,12 @@ class DeckTree( object ):
         solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
         solver_events = self.input_file.problem.events[0].periodic_event
         for e in solver_events:
+
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "name": e.name,
-                "start": (datetime.strptime(self.world_origin_time,"%Y-%m-%d") + timedelta(seconds=float(e.begin_time))).strftime("%Y-%m-%d"), #,
-                "end": (datetime.strptime(self.world_origin_time,"%Y-%m-%d") + timedelta(seconds=float(e.end_time))).strftime("%Y-%m-%d"),
+                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(us_date_fmt), #,
+                "end": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.end_time))).strftime(us_date_fmt),
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)).days ),
                 "category" : e.target.split('/')[-1],
             }
