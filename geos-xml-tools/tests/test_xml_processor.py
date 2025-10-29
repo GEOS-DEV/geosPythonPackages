@@ -235,7 +235,7 @@ class TestProcessFunction:
             ( False, False, False ),  # Remove both entirely
             ( True, False, True ),  # Keep includes as comments, remove parameters
         ] )
-    def test_process_success_and_cleanup( self, setup_test_files: dict[str, str], monkeypatch: pytest.MonkeyPatch,
+    def test_process_success_and_cleanup( self, setup_test_files: dict[ str, str ], monkeypatch: pytest.MonkeyPatch,
                                           keep_includes: bool, keep_parameters: bool, expect_comments: bool ) -> None:
         """Tests the main success path of the process function, including includes, parameters, overrides, and cleanup flags."""
         # Mock the external formatter to isolate the test

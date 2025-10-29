@@ -9,6 +9,7 @@ from geos.xml_tools import xml_processor  # Make sure this import is at the top
 @pytest.fixture
 def cleanup_processed_xml( tmp_path: Path, monkeypatch: pytest.MonkeyPatch ) -> Generator[ Any ]:
     """Fixture to ensure processed XML files are created in a temporary directory that pytest will automatically clean up."""
+
     # We are going to temporarily replace the original function that creates files with the random "prep_..." name
     # with a function that creates files with a predictable name inside the temp path.
     def temp_name_generator( prefix: str = '', suffix: str = '.xml' ) -> None:
