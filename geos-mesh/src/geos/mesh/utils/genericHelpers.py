@@ -2,10 +2,11 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 import numpy as np
+import logging
 import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union, Tuple
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
     vtkMultiBlockDataSet,
@@ -24,8 +25,10 @@ from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, g
 from geos.utils.algebraFunctions import (
     getAttributeMatrixFromVector,
     getAttributeVectorFromMatrix,
-    getLocalToXYZTransformMatrix,
 )
+from geos.utils.geometryFunctions import ( getChangeOfBasisMatrix, CANONICAL_BASIS_3D )
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
+from geos.utils.Errors import VTKError
 
 __doc__ = """
 Generic VTK utilities.
@@ -287,7 +290,9 @@ def createVertices( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ],
 
 
 def convertAttributeFromLocalToXYZForOneCell(
-        vector: npt.NDArray[ np.float64 ], localBasisVectors: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
+    vector: npt.NDArray[ np.float64 ], localBasisVectors: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
+                                                                 npt.NDArray[ np.float64 ] ]
+) -> npt.NDArray[ np.float64 ]:
     """Convert one cell attribute from local to XYZ basis.
 
     .. Warning::
@@ -296,7 +301,7 @@ def convertAttributeFromLocalToXYZForOneCell(
 
     Args:
         vector (npt.NDArray[np.float64]): The attribute expressed in local basis. The size of the vector must be 3, 9 or 6 (symmetrical case)
-        localBasisVectors (np.NDArray[np.float64]): The local basis vectors expressed in the XYZ basis.
+        localBasisVectors (tuple[ npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]): The local basis vectors expressed in the XYZ basis.
 
     Returns:
         vectorXYZ (npt.NDArray[np.float64]): The attribute expressed in XYZ basis.
@@ -305,7 +310,7 @@ def convertAttributeFromLocalToXYZForOneCell(
     matrix3x3: npt.NDArray[ np.float64 ] = getAttributeMatrixFromVector( vector )
 
     # Get transform matrix
-    transformMatrix: npt.NDArray[ np.float64 ] = getLocalToXYZTransformMatrix( localBasisVectors )
+    transformMatrix: npt.NDArray[ np.float64 ] = getChangeOfBasisMatrix( localBasisVectors, CANONICAL_BASIS_3D )
 
     # Apply transformation
     arrayXYZ: npt.NDArray[ np.float64 ] = transformMatrix @ matrix3x3 @ transformMatrix.T
@@ -327,11 +332,11 @@ def getNormalVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
         npt.NDArray[ np.float64 ]: The normal vectors of the input surface.
     """
     normals: Union[ npt.NDArray[ np.float64 ],
-                    None ] = vtk_to_numpy( surface.GetCellData().GetNormals() )  # type: ignore[no-untyped-call]
+                    None ] = surface.GetCellData().GetNormals()  # type: ignore[no-untyped-call]
     if normals is None:
         raise ValueError( "No normal attribute found in the mesh. Use the computeNormals function beforehand." )
 
-    return normals
+    return vtk_to_numpy( normals )
 
 
 def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ]:
@@ -349,9 +354,11 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
     """
     # Get first tangential component
     tangents1: Union[ npt.NDArray[ np.float64 ],
-                      None ] = vtk_to_numpy( surface.GetCellData().GetTangents() )  # type: ignore[no-untyped-call]
+                      None ] = surface.GetCellData().GetTangents()  # type: ignore[no-untyped-call]
     if tangents1 is None:
         raise ValueError( "No tangential attribute found in the mesh. Use the computeTangents function beforehand." )
+    else:
+        tangents1 = vtk_to_numpy( tangents1 )
 
     # Compute second tangential component
     normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
@@ -374,44 +381,82 @@ def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
     """
     try:
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
+        surfaceWithNormals: vtkPolyData = surface
+    # ValueError raised if no normals found in the mesh
     except ValueError:
-        surfaceWithNormals: vtkPolyData = computeNormals( surface )
+        # In that case, the normals are computed.
+        surfaceWithNormals = computeNormals( surface )
         normals = getNormalVectors( surfaceWithNormals )
 
+    # Tangents require normals to be present in the mesh
     try:
-        tangents: Tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ] ] = getTangentsVectors( surface )
+        tangents: Tuple[ npt.NDArray[ np.float64 ],
+                         npt.NDArray[ np.float64 ] ] = getTangentsVectors( surfaceWithNormals )
+    # If no tangents is present in the mesh, they are computed on that surface
     except ValueError:
-        surfaceWithTangents: vtkPolyData = computeTangents( surface )
+        surfaceWithTangents: vtkPolyData = computeTangents( surfaceWithNormals )
         tangents = getTangentsVectors( surfaceWithTangents )
 
     return np.array( ( normals, *tangents ) )
 
 
-def computeNormals( surface: vtkPolyData ) -> vtkPolyData:
+def computeNormals(
+    surface: vtkPolyData,
+    logger: Union[ Logger, None ] = None,
+) -> vtkPolyData:
     """Compute and set the normals of a given surface.
 
     Args:
         surface (vtkPolyData): The input surface.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         vtkPolyData: The surface with normal attribute.
     """
-    normalFilter: vtkPolyDataNormals = vtkPolyDataNormals()
-    normalFilter.SetInputData( surface )
-    normalFilter.ComputeCellNormalsOn()
-    normalFilter.ComputePointNormalsOff()
-    normalFilter.Update()
+    if logger is None:
+        logger = getLogger( "computeSurfaceNormals" )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
+    vtkErrorLogger.propagate = False
 
-    return normalFilter.GetOutput()
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    vtkErrorLogger.setLevel( logging.DEBUG )
+
+    with VTKCaptureLog() as capturedLog:
+        normalFilter: vtkPolyDataNormals = vtkPolyDataNormals()
+        normalFilter.SetInputData( surface )
+        normalFilter.ComputeCellNormalsOn()
+        normalFilter.ComputePointNormalsOff()
+        normalFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+        vtkErrorLogger.debug( captured.strip() )
+
+    outputSurface = normalFilter.GetOutput()
+
+    if outputSurface.GetCellData().GetNormals() is None:
+        raise VTKError( "Something went wrong with VTK calculation of the normals." )
+
+    return outputSurface
 
 
-def computeTangents( triangulatedSurface: vtkPolyData ) -> vtkPolyData:
+def computeTangents(
+    triangulatedSurface: vtkPolyData,
+    logger: Union[ Logger, None ] = None,
+) -> vtkPolyData:
     """Compute and set the tangents of a given surface.
 
     .. Warning:: The computation of tangents requires a triangulated surface.
 
     Args:
         triangulatedSurface (vtkPolyData): The input surface. It should be triangulated beforehand.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         vtkPolyData: The surface with tangent attribute
@@ -422,18 +467,39 @@ def computeTangents( triangulatedSurface: vtkPolyData ) -> vtkPolyData:
     # TODO: triangulate the surface before computation of the tangents if needed.
 
     # compute tangents
-    tangentFilter: vtkPolyDataTangents = vtkPolyDataTangents()
-    tangentFilter.SetInputData( surface1 )
-    tangentFilter.ComputeCellTangentsOn()
-    tangentFilter.ComputePointTangentsOff()
-    tangentFilter.Update()
-    surfaceOut: vtkPolyData = tangentFilter.GetOutput()
-    assert surfaceOut is not None, "Tangent components calculation failed."
+    if logger is None:
+        logger = getLogger( "computeSurfaceTangents" )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
+    vtkErrorLogger.propagate = False
+
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    vtkErrorLogger.setLevel( logging.DEBUG )
+
+    with VTKCaptureLog() as capturedLog:
+
+        tangentFilter: vtkPolyDataTangents = vtkPolyDataTangents()
+        tangentFilter.SetInputData( surface1 )
+        tangentFilter.ComputeCellTangentsOn()
+        tangentFilter.ComputePointTangentsOff()
+        tangentFilter.Update()
+        surfaceOut: vtkPolyData = tangentFilter.GetOutput()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+        vtkErrorLogger.debug( captured.strip() )
+
+    if surfaceOut is None:
+        raise VTKError( "Something went wrong in VTK calculation." )
 
     # copy tangents attributes into filter input surface because surface attributes
     # are not transferred to the output (bug that should be corrected by Kitware)
     array: vtkDataArray = surfaceOut.GetCellData().GetTangents()
-    assert array is not None, "Attribute Tangents is not in the mesh."
+    if array is None:
+        raise VTKError( "Attribute Tangents is not in the mesh." )
 
     surface1.GetCellData().SetTangents( array )
     surface1.GetCellData().Modified()
@@ -441,19 +507,42 @@ def computeTangents( triangulatedSurface: vtkPolyData ) -> vtkPolyData:
     return surface1
 
 
-def computeSurfaceTextureCoordinates( surface: vtkPolyData ) -> vtkPolyData:
+def computeSurfaceTextureCoordinates(
+    surface: vtkPolyData,
+    logger: Union[ Logger, None ] = None,
+) -> vtkPolyData:
     """Generate the 2D texture coordinates required for tangent computation. The dataset points are mapped onto a plane generated automatically.
 
     Args:
         surface (vtkPolyData): The input surface.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         vtkPolyData: The input surface with generated texture map.
     """
     # Need to compute texture coordinates required for tangent calculation
-    textureFilter: vtkTextureMapToPlane = vtkTextureMapToPlane()
-    textureFilter.SetInputData( surface )
-    textureFilter.AutomaticPlaneGenerationOn()
-    textureFilter.Update()
+    if logger is None:
+        logger = getLogger( "computeSurfaceTextureCoordinates" )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
+    vtkErrorLogger.propagate = False
+
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    vtkErrorLogger.setLevel( logging.DEBUG )
+
+    with VTKCaptureLog() as capturedLog:
+
+        textureFilter: vtkTextureMapToPlane = vtkTextureMapToPlane()
+        textureFilter.SetInputData( surface )
+        textureFilter.AutomaticPlaneGenerationOn()
+        textureFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+        vtkErrorLogger.debug( captured.strip() )
 
     return textureFilter.GetOutput()
