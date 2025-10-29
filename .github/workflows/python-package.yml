@@ -68,7 +68,6 @@ jobs:
           - geos-timehistory
           - geos-trame
           - geos-xml-tools
-          - geos-xml-viewer
           - hdf5-wrapper
           - pygeos-tools
         include:

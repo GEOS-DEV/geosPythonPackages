@@ -5,7 +5,6 @@ python -m pip install --upgrade ./geos-mesh
 python -m pip install --upgrade ./geos-posp
 python -m pip install --upgrade ./geos-processing
 python -m pip install --upgrade ./geos-xml-tools
-python -m pip install --upgrade ./geos-xml-viewer
 python -m pip install --upgrade ./hdf5-wrapper
 python -m pip install --upgrade ./geos-timehistory
 python -m pip install --upgrade ./pygeos-tools
