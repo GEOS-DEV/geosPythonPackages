@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
-from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader, vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
 
 @pytest.fixture

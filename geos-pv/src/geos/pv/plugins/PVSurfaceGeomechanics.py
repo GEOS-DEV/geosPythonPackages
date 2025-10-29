@@ -11,8 +11,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)
+    VTKHandler, )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -29,9 +28,6 @@ from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechan
 from geos.mesh.utils.multiblockHelpers import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
-)
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -63,6 +59,7 @@ To use it:
 * Apply.
 
 """
+
 
 @smproxy.filter( name="PVSurfaceGeomechanics", label="Geos Surface Geomechanics" )
 @smhint.xml( '<ShowInMenu category="3- Geos Geomechanics"/>' )
