@@ -5,7 +5,7 @@
 import numpy as np
 import numpy.typing as npt
 from unittest import TestCase
-from typing.extensions import Self
+from typing_extensions import Self
 
 from geos.utils.algebraFunctions import (
     getAttributeMatrixFromVector,
