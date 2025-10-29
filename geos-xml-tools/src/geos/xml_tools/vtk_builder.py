@@ -515,59 +515,118 @@ def _generate_grid( mesh: ElementTree.Element, collection: vtk.vtkPartitionedDat
     elem_type = mesh.attrib[ "elementTypes" ].strip( "}{ " )
 
     if elem_type == "C3D8":
-        xcoords_array = np.array( literal_eval( mesh.attrib[ "xCoords" ].translate( tr ) ), dtype=np.float64 )
-        ycoords_array = np.array( literal_eval( mesh.attrib[ "yCoords" ].translate( tr ) ), dtype=np.float64 )
-        zcoords_array = np.array( literal_eval( mesh.attrib[ "zCoords" ].translate( tr ) ), dtype=np.float64 )
-        nx = literal_eval( mesh.attrib[ "nx" ].translate( tr ) )[ 0 ]
-        ny = literal_eval( mesh.attrib[ "ny" ].translate( tr ) )[ 0 ]
-        nz = literal_eval( mesh.attrib[ "nz" ].translate( tr ) )[ 0 ]
+        xs = literal_eval( mesh.attrib[ "xCoords" ].translate( tr ) )
+        ys = literal_eval( mesh.attrib[ "yCoords" ].translate( tr ) )
+        zs = literal_eval( mesh.attrib[ "zCoords" ].translate( tr ) )
+        nxs = literal_eval( mesh.attrib[ "nx" ].translate( tr ) )
+        nys = literal_eval( mesh.attrib[ "ny" ].translate( tr ) )
+        nzs = literal_eval( mesh.attrib[ "nz" ].translate( tr ) )
 
-        print( f"Generating grid with dimensions: ({nx}, {ny}, {nz})", flush=True )
-        print( f"xcoords_array: {xcoords_array}", flush=True )
-        print( f"ycoords_array: {ycoords_array}", flush=True )
-        print( f"zcoords_array: {zcoords_array}", flush=True )
+        def buildCoordinates( positions, numElements ):
+            result = []
+            it = zip( zip( positions, positions[ 1: ] ), numElements )
+            for idx, (coords, n) in enumerate( it ):
+                start, stop = coords
+                # For all segments except the last, exclude the endpoint to avoid duplicates
+                # The endpoint of one segment is the start of the next
+                if idx == 0:
+                    # First segment: include all points
+                    tmp = np.linspace( start=start, stop=stop, num=n + 1, endpoint=True )
+                else:
+                    # Subsequent segments: exclude the start point (it's the endpoint of the previous segment)
+                    tmp = np.linspace( start=start, stop=stop, num=n + 1, endpoint=True )[ 1: ]
+                result.append( tmp )
+            return np.concatenate( result )
 
-        print( "Creating VTK Image Data...", flush=True )
-        grid = vtk.vtkImageData()
-        grid.SetDimensions( nx + 1, ny + 1, nz + 1 )
-        grid.SetOrigin( xcoords_array[ 0 ], ycoords_array[ 0 ], zcoords_array[ 0 ] )
-        grid.SetSpacing( ( xcoords_array[ 1 ] - xcoords_array[ 0 ] ) / nx,
-                         ( ycoords_array[ 1 ] - ycoords_array[ 0 ] ) / ny,
-                         ( zcoords_array[ 1 ] - zcoords_array[ 0 ] ) / nz )
+        x_coords = buildCoordinates( xs, nxs )
+        y_coords = buildCoordinates( ys, nys )
+        z_coords = buildCoordinates( zs, nzs )
 
-        print( "Creating VTK Image Data...", flush=True )
-        p = vtk.vtkPartitionedDataSet()
-        p.SetPartition( 0, grid )
-        collection.SetPartitionedDataSet( count, p )
-        # Note: could add assembly info here if needed
+        # Ensure arrays are contiguous and correct type
+        x_coords = np.ascontiguousarray( x_coords, dtype=np.float64 )
+        y_coords = np.ascontiguousarray( y_coords, dtype=np.float64 )
+        z_coords = np.ascontiguousarray( z_coords, dtype=np.float64 )
+
+        # Create an unstructured grid from the rectilinear coordinates
+        print( "Creating VTK Unstructured Grid from coordinates...", flush=True )
+
+        # Generate all grid points
+        nx, ny, nz = len( x_coords ), len( y_coords ), len( z_coords )
+        points = vtk.vtkPoints()
+        points.SetNumberOfPoints( nx * ny * nz )
+
+        idx = 0
+        for k in range( nz ):
+            for j in range( ny ):
+                for i in range( nx ):
+                    points.SetPoint( idx, x_coords[ i ], y_coords[ j ], z_coords[ k ] )
+                    idx += 1
+
+        # Create hexahedral cells
+        ugrid = vtk.vtkUnstructuredGrid()
+        ugrid.SetPoints( points )
+
+        # Number of cells in each direction
+        ncx, ncy, ncz = nx - 1, ny - 1, nz - 1
+        for k in range( ncz ):
+            for j in range( ncy ):
+                for i in range( ncx ):
+                    # Calculate the 8 corner point indices for this hexahedron
+                    # VTK hexahedron ordering: bottom face (CCW), then top face (CCW)
+                    i0 = i + j * nx + k * nx * ny
+                    i1 = ( i + 1 ) + j * nx + k * nx * ny
+                    i2 = ( i + 1 ) + ( j + 1 ) * nx + k * nx * ny
+                    i3 = i + ( j + 1 ) * nx + k * nx * ny
+                    i4 = i + j * nx + ( k + 1 ) * nx * ny
+                    i5 = ( i + 1 ) + j * nx + ( k + 1 ) * nx * ny
+                    i6 = ( i + 1 ) + ( j + 1 ) * nx + ( k + 1 ) * nx * ny
+                    i7 = i + ( j + 1 ) * nx + ( k + 1 ) * nx * ny
+
+                    hex_cell = vtk.vtkHexahedron()
+                    hex_cell.GetPointIds().SetId( 0, i0 )
+                    hex_cell.GetPointIds().SetId( 1, i1 )
+                    hex_cell.GetPointIds().SetId( 2, i2 )
+                    hex_cell.GetPointIds().SetId( 3, i3 )
+                    hex_cell.GetPointIds().SetId( 4, i4 )
+                    hex_cell.GetPointIds().SetId( 5, i5 )
+                    hex_cell.GetPointIds().SetId( 6, i6 )
+                    hex_cell.GetPointIds().SetId( 7, i7 )
+
+                    ugrid.InsertNextCell( hex_cell.GetCellType(), hex_cell.GetPointIds() )
+
+        print( "Unstructured grid created successfully.", flush=True )
 
         # --- Start of Added Assembly Logic ---
-
-        # 1. Get the data assembly from the collection
+        # Get the data assembly from the collection BEFORE creating the partitioned dataset
         print( "Getting data assembly from collection...", flush=True )
         assembly = collection.GetDataAssembly()
 
-        # 2. Add a parent node for this mesh, using its name from the XML
+        # Add a parent node for this mesh, using its name from the XML
         print( "Add Mesh node...", flush=True )
         mesh_name = mesh.get( "name", "InternalMesh" )
         id_mesh = assembly.AddNode( "Mesh" )
         assembly.SetAttribute( id_mesh, "label", mesh_name )
         assembly.SetAttribute( id_mesh, "type", TreeViewNodeType.REPRESENTATION )
 
-        # 3. Add a "Region" node under the "Mesh" node for the generated grid
+        # Add a "Region" node under the "Mesh" node for the generated grid
         print( "Add Region node...", flush=True )
         region_name = f"{mesh_name}_Region"
         node = assembly.AddNode( "Region", id_mesh )
         assembly.SetAttribute( node, "label", region_name )
 
-        # 4. Associate the new assembly node with the actual dataset index
-        print( "Add Region node...", flush=True )
+        # Associate the new assembly node with the actual dataset index
+        print( "Add Dataset index...", flush=True )
         assembly.AddDataSetIndex( node, count )
+        # --- End of Added Assembly Logic ---
 
-        # 5. Set the dataset's name metadata for consistency
+        print( "Creating VTK Partitioned DataSet...", flush=True )
+        p = vtk.vtkPartitionedDataSet()
+        p.SetPartition( 0, ugrid )
+        collection.SetPartitionedDataSet( count, p )
+
+        # Set the dataset's name metadata for consistency
         collection.GetMetaData( count ).Set( vtk.vtkCompositeDataSet.NAME(), region_name )
 
-        # --- End of Added Assembly Logic ---
         return 1
     else:
         raise NotImplementedError( f"\nElement type '{elem_type}' for InternalMesh not handled yet" )
