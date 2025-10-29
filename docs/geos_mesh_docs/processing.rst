@@ -27,7 +27,6 @@ geos.mesh.processing.FillPartialArrays filter
     :undoc-members:
     :show-inheritance:
 
-
 geos.mesh.processing.meshQualityMetricHelpers module
 -----------------------------------------------------
 
@@ -44,6 +43,16 @@ geos.mesh.processing.SplitMesh filter
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+geos.mesh.processing.MergeBlockEnhanced filter
+------------------------------------------------
+
+.. automodule:: geos.mesh.processing.MergeBlockEnhanced
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 geos.mesh.processing.ClipToMainFrame filter
 --------------------------------------------
