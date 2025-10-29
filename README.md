@@ -43,44 +43,52 @@ GEOS Python packages dependency tree (inter-dependency and main external depende
 │   ├── geos-xml-tools
 │   ├── geos-mesh
 │   ├── vtk
-│   ├── h5py
+│   └── h5py
+|
 ├── geos-utils
+|
 ├── geos-geomechanics
-│   ├── geos-utils
+│   └── geos-utils
+|
 ├── geos-mesh
 │   ├── geos-utils
-│   ├── vtk
+│   └── vtk
+|
 ├── hdf5-wrapper
-│   ├── h5py
+│   └── h5py
+|
 ├── geos-xml-tools
 │   ├── geos-utils
-│   ├── lxml
+│   └── lxml
 |
 ├── geos-processing
 │   ├── geos-mesh
-│   ├── geos-geomechanics
+│   └── geos-geomechanics
+|
 ├── xml-vtk
 │   ├── geos-mesh
-|   ├── geos-xml-tools
+|   └── geos-xml-tools
 │
 ├── geos-timehistory
-│   ├── hdf5-wrapper
+│   └── hdf5-wrapper
+|
 ├── mesh-doctor
 │   ├── geos-prep
-│   ├── pyvista
+│   └── pyvista
+|
 ├── geos-trame
 │   ├── geos-xml-tools
 │   ├── geos-mesh
 │   ├── pyvista
-│   ├── trame
+│   └── trame
 │
-├── geos-pv
+└── geos-pv
     ├── geos-processing
     ├── geos-mesh
     ├── geos-geomechanics
     ├── geos-utils
     ├── geos-xml-tools
-    ├── paraview
+    └── paraview
 ```
 
 
@@ -162,7 +170,7 @@ dependencies = [
 ]
 ```
 
-[!IMPORTANT]
+>[!IMPORTANT]
 `geos-pv` dependencies are managed using a `requirements.txt` (together with the `setup.py`) file where all internal (and external if needed) dependencies are present. It ensures that internal dependency paths are correctly set when plugins are manually loaded into Paraview.
 
 Release
