@@ -42,7 +42,6 @@ The basic geomechanics outputs are:
     - Specific gravity
     - Real effective stress ratio
     - Total initial stress, total current stress and total stress ratio
-    - Lithostatic stress (physics to update)
     - Elastic stain
     - Reservoir stress path and reservoir stress path in oedometric condition
 

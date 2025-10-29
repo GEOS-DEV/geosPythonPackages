@@ -32,12 +32,10 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,
-    GRAVITY,
     WATER_DENSITY,
 )
 
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from vtkmodules.vtkFiltersCore import vtkCellCenters
 
 __doc__ = """
 GeomechanicsCalculator module is a vtk filter that allows to compute additional geomechanical properties from existing ones:
@@ -58,7 +56,6 @@ The basic geomechanics outputs are:
     - Specific gravity
     - Real effective stress ratio
     - Total initial stress, total current stress and total stress ratio
-    - Lithostatic stress (physic to update)
     - Elastic stain
     - Real reservoir stress path and reservoir stress path in oedometric condition
 
@@ -316,6 +313,8 @@ class GeomechanicsCalculator:
                 self.poissonRatio = value
             elif name == POISSON_RATIO_T0.attributeName:
                 self.poissonRatioT0 = value
+            else:
+                raise NameError( f"The property { name } is not an elastic modulus." )
 
         def getElasticModulusValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
             """Get the wanted elastic modulus value.
@@ -341,7 +340,7 @@ class GeomechanicsCalculator:
             elif name == POISSON_RATIO_T0.attributeName:
                 return self.poissonRatioT0
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not an elastic modulus." )
 
     @dataclass
     class MandatoryAttributesValue:
@@ -410,6 +409,8 @@ class GeomechanicsCalculator:
                 self._effectiveStress = value
             elif name == STRESS_EFFECTIVE_T0.attributeName:
                 self._effectiveStressT0 = value
+            else:
+                raise NameError( f"The property { name } is not a mandatory property to compute geomechanic outputs." )
 
     @dataclass
     class BasicOutputValue:
@@ -423,6 +424,7 @@ class GeomechanicsCalculator:
         _totalStress: npt.NDArray[ np.float64 ] | None = None
         _totalStressT0: npt.NDArray[ np.float64 ] | None = None
         _totalStressRatioReal: npt.NDArray[ np.float64 ] | None = None
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
         # _lithostaticStress: npt.NDArray[ np.float64 ] | None = None
         _elasticStrain: npt.NDArray[ np.float64 ] | None = None
         _deltaTotalStress: npt.NDArray[ np.float64 ] | None = None
@@ -511,14 +513,15 @@ class GeomechanicsCalculator:
         def totalStressRatioReal( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
             self._totalStressRatioReal = value
 
-        @property
-        def lithostaticStress( self: Self ) -> npt.NDArray[ np.float64 ] | None:
-            """Get the lithostatic stress value."""
-            return self._lithostaticStress
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+        # @property
+        # def lithostaticStress( self: Self ) -> npt.NDArray[ np.float64 ] | None:
+        #     """Get the lithostatic stress value."""
+        #     return self._lithostaticStress
 
-        @lithostaticStress.setter
-        def lithostaticStress( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
-            self._lithostaticStress = value
+        # @lithostaticStress.setter
+        # def lithostaticStress( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
+        #     self._lithostaticStress = value
 
         @property
         def elasticStrain( self: Self ) -> npt.NDArray[ np.float64 ] | None:
@@ -592,8 +595,9 @@ class GeomechanicsCalculator:
                 return self.totalStressT0
             elif name == STRESS_TOTAL_RATIO_REAL.attributeName:
                 return self.totalStressRatioReal
-            elif name == LITHOSTATIC_STRESS.attributeName:
-                return self.lithostaticStress
+            # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+            # elif name == LITHOSTATIC_STRESS.attributeName:
+            #     return self.lithostaticStress
             elif name == STRAIN_ELASTIC.attributeName:
                 return self.elasticStrain
             elif name == STRESS_TOTAL_DELTA.attributeName:
@@ -605,7 +609,7 @@ class GeomechanicsCalculator:
             elif name == STRESS_EFFECTIVE_RATIO_OED.attributeName:
                 return self.effectiveStressRatioOed
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not a basic output." )
 
     @dataclass
     class AdvancedOutputValue:
@@ -669,7 +673,7 @@ class GeomechanicsCalculator:
             elif name == CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName:
                 return self.criticalPorePressureIndex
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not an advanced output." )
 
     physicalConstants: PhysicalConstants
     _elasticModuli: ElasticModuliValue
@@ -747,10 +751,8 @@ class GeomechanicsCalculator:
 
             self.logger.info( "All the geomechanics properties have been added to the mesh." )
             self.logger.info( "The filter succeeded." )
-        except ValueError as ve:
-            self.logger.error( f"The filter failed.\n{ ve }." )
-        except TypeError as te:
-            self.logger.error( f"The filter failed.\n{ te }." )
+        except ( ValueError, TypeError, NameError ) as e:
+            self.logger.error( f"The filter failed.\n{ e }" )
 
         return
 
@@ -868,7 +870,7 @@ class GeomechanicsCalculator:
         self._computeCompressibilityCoefficient()
         self._computeRealEffectiveStressRatio()
         self._computeSpecificGravity()
-        # TODO: deactivate lithostatic stress calculation until right formula
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
         # self._computeLithostaticStress()
         self._computeTotalStresses()
         self._computeElasticStrain()
@@ -1081,86 +1083,87 @@ class GeomechanicsCalculator:
 
         return
 
-    def _computeLithostaticStress( self: Self ) -> None:
-        """Compute the lithostatic stress."""
-        if not isAttributeInObject( self.output, LITHOSTATIC_STRESS.attributeName, LITHOSTATIC_STRESS.isOnPoints ):
-            depth: npt.NDArray[ np.float64 ] = self._doComputeDepthAlongLine(
-            ) if LITHOSTATIC_STRESS.isOnPoints else self._doComputeDepthInMesh()
-            self._basicOutput.lithostaticStress = fcts.lithostaticStress( depth, self._mandatoryAttributes.density,
-                                                                          GRAVITY )
-            self._attributesToCreate.append( LITHOSTATIC_STRESS )
-        else:
-            self._basicOutput.lithostaticStress = getArrayInObject( self.output, LITHOSTATIC_STRESS.attributeName,
-                                                                    LITHOSTATIC_STRESS.isOnPoints )
-            self.logger.warning(
-                f"{ LITHOSTATIC_STRESS.attributeName } is already on the mesh, it has not been computed by the filter."
-            )
+    # TODO: Lithostatic stress calculation is deactivated until the formula is not fixed
+    # def _computeLithostaticStress( self: Self ) -> None:
+    #     """Compute the lithostatic stress."""
+    #     if not isAttributeInObject( self.output, LITHOSTATIC_STRESS.attributeName, LITHOSTATIC_STRESS.isOnPoints ):
+    #         depth: npt.NDArray[ np.float64 ] = self._doComputeDepthAlongLine(
+    #         ) if LITHOSTATIC_STRESS.isOnPoints else self._doComputeDepthInMesh()
+    #         self._basicOutput.lithostaticStress = fcts.lithostaticStress( depth, self._mandatoryAttributes.density,
+    #                                                                       GRAVITY )
+    #         self._attributesToCreate.append( LITHOSTATIC_STRESS )
+    #     else:
+    #         self._basicOutput.lithostaticStress = getArrayInObject( self.output, LITHOSTATIC_STRESS.attributeName,
+    #                                                                 LITHOSTATIC_STRESS.isOnPoints )
+    #         self.logger.warning(
+    #             f"{ LITHOSTATIC_STRESS.attributeName } is already on the mesh, it has not been computed by the filter."
+    #         )
 
-        return
+    #     return
 
-    def _doComputeDepthAlongLine( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Compute depth along a line.
+    # def _doComputeDepthAlongLine( self: Self ) -> npt.NDArray[ np.float64 ]:
+    #     """Compute depth along a line.
 
-        Returns:
-            npt.NDArray[np.float64]: 1D array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( True )
-        assert zCoord is not None, "Depth coordinates cannot be computed."
+    #     Returns:
+    #         npt.NDArray[np.float64]: 1D array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( True )
+    #     assert zCoord is not None, "Depth coordinates cannot be computed."
 
-        # TODO: to find how to compute depth in a general case
-        # GEOS z axis is upward
-        depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
-        return depth
+    #     # TODO: to find how to compute depth in a general case
+    #     # GEOS z axis is upward
+    #     depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
+    #     return depth
 
-    def _doComputeDepthInMesh( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Compute depth of each cell in a mesh.
+    # def _doComputeDepthInMesh( self: Self ) -> npt.NDArray[ np.float64 ]:
+    #     """Compute depth of each cell in a mesh.
 
-        Returns:
-            npt.NDArray[np.float64]: array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( False )
-        assert zCoord is not None, "Depth coordinates cannot be computed."
+    #     Returns:
+    #         npt.NDArray[np.float64]: array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( False )
+    #     assert zCoord is not None, "Depth coordinates cannot be computed."
 
-        # TODO: to find how to compute depth in a general case
-        depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
-        return depth
+    #     # TODO: to find how to compute depth in a general case
+    #     depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
+    #     return depth
 
-    def _getZcoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
-        """Get z coordinates from self.output.
+    # def _getZcoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
+    #     """Get z coordinates from self.output.
 
-        Args:
-            onPoints (bool): True if the attribute is on points, False if it is on cells.
+    #     Args:
+    #         onPoints (bool): True if the attribute is on points, False if it is on cells.
 
-        Returns:
-            npt.NDArray[np.float64]: 1D array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ]
-        pointCoords: npt.NDArray[ np.float64 ] = self._getPointCoordinates( onPoints )
-        assert pointCoords is not None, "Point coordinates are undefined."
-        assert pointCoords.shape[ 1 ] == 2, "Point coordinates are undefined."
-        zCoord = pointCoords[ :, 2 ]
-        return zCoord
+    #     Returns:
+    #         npt.NDArray[np.float64]: 1D array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ]
+    #     pointCoords: npt.NDArray[ np.float64 ] = self._getPointCoordinates( onPoints )
+    #     assert pointCoords is not None, "Point coordinates are undefined."
+    #     assert pointCoords.shape[ 1 ] == 2, "Point coordinates are undefined."
+    #     zCoord = pointCoords[ :, 2 ]
+    #     return zCoord
 
-    def _getPointCoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
-        """Get the coordinates of Points or Cell center.
+    # def _getPointCoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
+    #     """Get the coordinates of Points or Cell center.
 
-        Args:
-            onPoints (bool): True if the attribute is on points, False if it is on cells.
+    #     Args:
+    #         onPoints (bool): True if the attribute is on points, False if it is on cells.
 
-        Returns:
-            npt.NDArray[np.float64]: points/cell center coordinates
-        """
-        if onPoints:
-            return self.output.GetPoints()  # type: ignore[no-any-return]
-        else:
-            # Find cell centers
-            filter = vtkCellCenters()
-            filter.SetInputDataObject( self.output )
-            filter.Update()
-            return filter.GetOutput().GetPoints()  # type: ignore[no-any-return]
+    #     Returns:
+    #         npt.NDArray[np.float64]: points/cell center coordinates
+    #     """
+    #     if onPoints:
+    #         return self.output.GetPoints()  # type: ignore[no-any-return]
+    #     else:
+    #         # Find cell centers
+    #         filter = vtkCellCenters()
+    #         filter.SetInputDataObject( self.output )
+    #         filter.Update()
+    #         return filter.GetOutput().GetPoints()  # type: ignore[no-any-return]
 
     def _computeElasticStrain( self: Self ) -> None:
         """Compute the elastic strain from the effective stress and the elastic modulus."""
