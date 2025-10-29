@@ -42,19 +42,22 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.processing.SplitMesh import SplitMesh
+    from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
-    # filter inputs
-    input :vtkUnstructuredGrid
+    # Filter inputs
+    input: vtkUnstructuredGrid
 
-    # instanciate the filter
-    filter :SplitMesh = SplitMesh()
-    # set input data object
-    filter.SetInputDataObject(input)
-    # do calculations
-    filter.Update()
-    # get output object
-    output :vtkUnstructuredGrid = filter.GetOutputDataObject(0)
+    # Instantiate the filter
+    splitMeshFilter: SplitMesh = SplitMesh()
+
+    # Set input data object
+    splitMeshFilter.SetInputDataObject( input )
+
+    # Do calculations
+    splitMeshFilter.Update()
+
+    # Get output object
+    output :vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
 """
 
 

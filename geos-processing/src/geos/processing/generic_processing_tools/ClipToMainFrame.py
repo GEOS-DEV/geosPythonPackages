@@ -30,7 +30,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+    from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
@@ -38,17 +38,17 @@ To use it:
     speHandler : bool
 
     # Instantiate the filter.
-    filter: ClipToMainFrame = ClipToMainFrame()
-    filter.SetInputData( multiBlockDataSet )
+    clipToMainFrameFilter: ClipToMainFrame = ClipToMainFrame()
+    clipToMainFrameFilter.SetInputData( multiBlockDataSet )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    clipToMainFrameFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.ComputeTransform()
-    filter.Update()
-    output: vtkMultiBlockDataSet = filter.GetOutput()
+    clipToMainFrameFilter.ComputeTransform()
+    clipToMainFrameFilter.Update()
+    output: vtkMultiBlockDataSet = clipToMainFrameFilter.GetOutput()
 
 """
 
@@ -250,7 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
-            self.logger.info( "Processing untructuredGrid" )
+            self.logger.info( "Processing unstructuredGrid" )
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()

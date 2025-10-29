@@ -35,7 +35,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.processing.AttributeMapping import AttributeMapping
+    from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 
     # Filter inputs.
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ]
@@ -46,19 +46,19 @@ To use the filter:
     speHandler: bool  # defaults to False
 
     # Instantiate the filter
-    filter: AttributeMapping = AttributeMapping( meshFrom,
-                                                 meshTo,
-                                                 attributeNames,
-                                                 onPoints,
-                                                 speHandler,
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom,
+                                                                 meshTo,
+                                                                 attributeNames,
+                                                                 onPoints,
+                                                                 speHandler,
     )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    attributeMappingFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.applyFilter()
+    attributeMappingFilter.applyFilter()
 """
 
 loggerTitle: str = "Attribute Mapping"
