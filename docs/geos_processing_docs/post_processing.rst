@@ -13,6 +13,8 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
     Several processing filters require the definition of physical parameters. The following list is non-exhaustive.
 
     Default values:
+    - grainBulkModulus = 38e9 Pa ( quartz value )
+    - specificDensity = 1000.0 kg/m³ ( water value )
     - rock cohesion: 0.0 Pa $( fractured case )
     - friction angle: 10°
 

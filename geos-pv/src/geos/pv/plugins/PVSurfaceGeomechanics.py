@@ -154,19 +154,19 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         for blockIndex in surfaceBlockIndexes:
             surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( output, blockIndex ) )
 
-            filter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
-            filter.SetSurfaceName( f"blockIndex {blockIndex}" )
-            if not filter.logger.hasHandlers():
-                filter.SetLoggerHandler( VTKHandler() )
+            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
+            sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
+            if not sgFilter.logger.hasHandlers():
+                sgFilter.SetLoggerHandler( VTKHandler() )
 
-            filter.SetRockCohesion( self._getRockCohesion() )
-            filter.SetFrictionAngle( self._getFrictionAngle() )
-            filter.applyFilter()
+            sgFilter.SetRockCohesion( self._getRockCohesion() )
+            sgFilter.SetFrictionAngle( self._getFrictionAngle() )
+            sgFilter.applyFilter()
 
-            outputSurface: vtkPolyData = filter.GetOutputMesh()
+            outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
             # add attributes to output surface mesh
-            for attributeName in filter.GetNewAttributeNames():
+            for attributeName in sgFilter.GetNewAttributeNames():
                 attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
                 surfaceBlock.GetCellData().AddArray( attr )
                 surfaceBlock.GetCellData().Modified()

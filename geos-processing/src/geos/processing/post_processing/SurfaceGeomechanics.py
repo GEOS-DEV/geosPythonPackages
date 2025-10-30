@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import logging
 import numpy as np
@@ -86,16 +86,19 @@ To use the filter:
 
 
 .. Note::
+
     By default, conversion of attributes from local to XYZ basis is performed for the following list: { 'displacementJump' }.
     This list can be modified in different ways:
-        - Addition of one or several additional attributes to the set by using the filter function `AddAttributesToConvert`.
-        - Replace the list completely with the function `SetAttributesToConvert`.
+
+    - Addition of one or several additional attributes to the set by using the filter function `AddAttributesToConvert`.
+    - Replace the list completely with the function `SetAttributesToConvert`.
+
     Note that the dimension of the attributes to convert must be equal or greater than 3.
 """
 loggerTitle: str = "Surface Geomechanics"
 
 
-class SurfaceGeomechanics( VTKPythonAlgorithmBase ):
+class SurfaceGeomechanics:
 
     def __init__( self: Self, surfacicMesh: vtkPolyData, speHandler: bool = False ) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.

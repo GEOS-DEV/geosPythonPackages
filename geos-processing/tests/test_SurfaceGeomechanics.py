@@ -67,11 +67,11 @@ def test_SurfaceGeomechanics() -> None:
     """Test SurfaceGeomechanics vtk filter."""
     testCase: TriangulatedSurfaceTestCase = TriangulatedSurfaceTestCase( pointsCoords, triangles, attributes )
 
-    filter: SurfaceGeomechanics = SurfaceGeomechanics( testCase.mesh )
+    sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( testCase.mesh )
 
-    assert filter.applyFilter()
+    assert sgFilter.applyFilter()
 
-    mesh: vtkPolyData = filter.GetOutputMesh()
+    mesh: vtkPolyData = sgFilter.GetOutputMesh()
     assert mesh.GetCellData().HasArray( "SCU" )
     assert mesh.GetCellData().HasArray( "displacementJump_XYZ" )
 
@@ -79,6 +79,6 @@ def test_SurfaceGeomechanics() -> None:
 def test_failingSurfaceGeomechanics() -> None:
     """Test failing of SurfaceGeomechanics due to absence of attributes in the mesh."""
     failingCase: TriangulatedSurfaceTestCase = TriangulatedSurfaceTestCase( pointsCoords, triangles, None )
-    filter: SurfaceGeomechanics = SurfaceGeomechanics( failingCase.mesh )
+    sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( failingCase.mesh )
     with pytest.raises( AssertionError ):
-        assert filter.applyFilter()
+        assert sgFilter.applyFilter()
