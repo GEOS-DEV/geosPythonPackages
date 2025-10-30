@@ -239,23 +239,23 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        filter: MeshQualityEnhanced = MeshQualityEnhanced()
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
 
-        filter.SetInputDataObject( inputMesh )
-        filter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
-                                      quadMetrics=quadMetrics,
-                                      tetraMetrics=tetraMetrics,
-                                      pyramidMetrics=pyrMetrics,
-                                      wedgeMetrics=wedgeMetrics,
-                                      hexaMetrics=hexaMetrics )
-        filter.SetOtherMeshQualityMetrics( otherMetrics )
-        filter.Update()
+        meshQualityEnhancedFilter.SetInputDataObject( inputMesh )
+        meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
+                                                         quadMetrics=quadMetrics,
+                                                         tetraMetrics=tetraMetrics,
+                                                         pyramidMetrics=pyrMetrics,
+                                                         wedgeMetrics=wedgeMetrics,
+                                                         hexaMetrics=hexaMetrics )
+        meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
+        meshQualityEnhancedFilter.Update()
 
-        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        outputMesh.ShallowCopy( meshQualityEnhancedFilter.GetOutputDataObject( 0 ) )
 
         # save to file if asked
         if self._saveToFile:
-            stats: QualityMetricSummary = filter.GetQualityMetricSummary()
+            stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
             self.saveFile( stats )
         self._blockIndex += 1
         return

@@ -137,13 +137,13 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        filter.SetInputDataObject( inputMesh )
-        filter.Update()
-        outputTable.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+        cellTypeCounterEnhancedFilter.SetInputDataObject( inputMesh )
+        cellTypeCounterEnhancedFilter.Update()
+        outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.GetOutputDataObject( 0 ) )
 
         # print counts in Output Messages view
-        counts: CellTypeCounts = filter.GetCellTypeCountsObject()
+        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
         self._countsAll += counts
         # save to file if asked
