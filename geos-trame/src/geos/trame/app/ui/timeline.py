@@ -10,14 +10,11 @@ import logging
 # from trame.widgets import gantt
 from geos.trame.app.gantt_chart.widgets.gantt_chart import Gantt
 from trame.widgets import vuetify3 as vuetify
-from trame.widgets.html import Html,Script
 from trame_simput import get_simput_manager
 
 from geos.trame.app.deck.tree import DeckTree
 
-us_date_fmt = "%Y-%m-%d"
-date_fmt = us_date_fmt
-# date_fmt = "%m/%d/%Y"
+date_fmt = "%Y-%m-%d"
 logger = logging.getLogger("timeline")
 logger.setLevel(logging.ERROR)         
 

@@ -20,9 +20,7 @@ from geos.trame.app.geosTrameException import GeosTrameException
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
 
-us_date_fmt = "%Y-%m-%d"
-date_fmt = us_date_fmt
-# date_fmt = "%m/%d/%Y"
+date_fmt = "%Y-%m-%d"
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
