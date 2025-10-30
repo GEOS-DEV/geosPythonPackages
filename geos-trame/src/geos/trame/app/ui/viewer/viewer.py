@@ -340,7 +340,7 @@ class DeckViewer( vuetify.VCard ):
         cell_id = self.region_engine.input.find_closest_cell( point_offsetted )
         cell = self.region_engine.input.extract_cells( [ cell_id ] )
         cell_actor = self.plotter.add_mesh( cell )
-        saved_perforation.add_extracted_cells( cell_actor )
+        saved_perforation.add_extracted_cell( cell_actor )
 
         self._perforations[ path ] = saved_perforation
 
