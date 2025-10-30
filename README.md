@@ -142,7 +142,7 @@ If you would like to contribute to GEOS Python packages, please respect the foll
   python -m ruff check --fix --config .ruff.toml ./<PACKAGE_NAME>
   python -m yapf -r -i --style .style.yapf ./<PACKAGE_NAME>
   ```
-1. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
+4. Push the branch, open a new PR respecting naming [semantics](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716), and add reviewers
 
 If you do not have the rights to push the code and open new PRs, consider opening a new issue to explain what you want to do and ask for the dev rights.
 
