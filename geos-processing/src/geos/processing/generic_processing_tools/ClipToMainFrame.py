@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
-from typing import Tuple
 import logging
 
 import numpy as np
@@ -303,7 +302,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( multiBlockDataSet )
         while DOIterator.GetCurrentDataObject() is not None:
             dataSet: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
-            bounds: Tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
+            bounds: tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
             #use the furthest bounds corner as reference point in the all negs quadrant
             if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
                 self.logger.info( f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )

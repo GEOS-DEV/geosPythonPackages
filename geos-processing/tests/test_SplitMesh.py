@@ -117,7 +117,7 @@ class TestCase:
     #: expected new point coordinates
     pointsExp: npt.NDArray[ np.float64 ]
     #: expected new cell point ids
-    cellsExp: list[ int ]
+    cellsExp: list[ list[ int ] ]
 
 
 def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:

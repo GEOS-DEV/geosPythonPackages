@@ -25,6 +25,7 @@ class RaiseMergeBlocksEnhanced( TestCase ):
     """Test failure on empty multiBlockDataSet."""
 
     def test_TypeError( self ) -> None:
+        """Test raise of TypeError."""
         multiBlockDataset = vtkMultiBlockDataSet()  # should fail on empty data
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
         if Version( vtk.__version__ ) < Version( "9.5" ):
