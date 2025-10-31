@@ -22,9 +22,9 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
-from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
+from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     getQualityMetricsOther,
     getQualityMeasureNameFromIndex,
     getQualityMeasureIndexFromName,
@@ -41,7 +41,7 @@ from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = """
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.

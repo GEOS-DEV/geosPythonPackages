@@ -11,7 +11,7 @@ from vtkmodules.vtkCommonCore import (
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX )
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
-from geos.mesh.processing.meshQualityMetricHelpers import getAllCellTypes
+from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes
 
 __doc__ = """
 CellTypeCounterEnhanced module is a vtk filter that computes cell type counts.
@@ -22,7 +22,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+    from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 
     # filter inputs
     input :vtkUnstructuredGrid

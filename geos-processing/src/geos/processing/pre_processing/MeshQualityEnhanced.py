@@ -25,11 +25,11 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vt
                                             VTK_POLYHEDRON )
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
 from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
     getQualityMetricFromIndex,
     VtkCellQualityMetricEnum,
@@ -57,7 +57,7 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
+    from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 
     # Filter inputs
     input :vtkUnstructuredGrid

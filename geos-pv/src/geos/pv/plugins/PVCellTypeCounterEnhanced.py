@@ -26,7 +26,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
