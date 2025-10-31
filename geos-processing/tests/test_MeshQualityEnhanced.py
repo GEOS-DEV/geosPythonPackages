@@ -13,9 +13,9 @@ from typing import (
     Optional,
 )
 from geos.mesh.utils.genericHelpers import createMultiCellMesh
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     getAllCellTypesExtended, )
-from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
+from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
