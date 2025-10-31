@@ -93,10 +93,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
     
-    - name: Install OSMesa
+    - name: Install OSMesa and GL
       run: |
         sudo apt-get update
-        sudo apt-get install -y libosmesa6
+        sudo apt-get install -y libosmesa6      
+        sudo apt-get install -y \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxext-dev
 
     - name: Install package
       # working-directory: ./${{ matrix.package-name }}
