@@ -26,6 +26,58 @@ These methods include:
 """
 
 
+def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ int ]:
+    """Get the set of the different cells dimension of a mesh.
+
+    Args:
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input mesh.
+    """
+    if isinstance( mesh, vtkDataSet ):
+        return getCellDimensionDataSet( mesh )
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        return getCellDimensionMultiBlockDataSet( mesh )
+    else:
+        raise TypeError( "The input mesh must be a vtkMultiBlockDataSet or a vtkDataSet." )
+
+
+def getCellDimensionMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a multiBlockDataSet.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input multiBlockDataSet.
+    """
+    cellDim: set[ int ] = set()
+    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for flatIdDataSet in listFlatIdDataSet:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
+        cellDim = cellDim.union( getCellDimensionDataSet( dataSet ) )
+    return cellDim
+
+
+def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a dataSet.
+
+    Args:
+        dataSet (vtkDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input dataSet.
+    """
+    cellDim: set[ int ] = set()
+    cellIter = dataSet.NewCellIterator()
+    cellIter.InitTraversal()
+    while not cellIter.IsDoneWithTraversal():
+        cellDim.add( cellIter.GetCellDimension() )
+        cellIter.GoToNextCell()
+    return cellDim
+
+
 def computeElementMapping(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
