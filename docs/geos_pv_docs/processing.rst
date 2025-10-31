@@ -50,25 +50,25 @@ Geos output pre-processing
 PVExtractMergeBlocksVolume plugin
 -------------------------------------------
 
-.. automodule:: PVplugins.PVExtractMergeBlocksVolume
+.. automodule:: geos.pv.plugins..PVExtractMergeBlocksVolume
 
 
 PVExtractMergeBlocksVolumeSurface plugin
 --------------------------------------------------
 
-.. automodule:: PVplugins.PVExtractMergeBlocksVolumeSurface
+.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurface
 
 
 PVExtractMergeBlocksVolumeSurfaceWell plugin
 ------------------------------------------------------
 
-.. automodule:: PVplugins.PVExtractMergeBlocksVolumeSurfaceWell
+.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurfaceWell
 
 
 PVExtractMergeBlocksVolumeWell plugin
 -----------------------------------------------
 
-.. automodule:: PVplugins.PVExtractMergeBlocksVolumeWell
+.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeWell
 
 
 
@@ -79,25 +79,25 @@ Geomechanics workflows
 PVGeomechanicsWorkflowVolume plugin
 ---------------------------------------------
 
-.. automodule:: PVplugins.PVGeomechanicsWorkflowVolume
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolume
 
 
 PVGeomechanicsWorkflowVolumeSurface plugin
 ----------------------------------------------------
 
-.. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeSurface
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurface
 
 
 PVGeomechanicsWorkflowVolumeSurfaceWell plugin
 --------------------------------------------------------
 
-.. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeSurfaceWell
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurfaceWell
 
 
 PVGeomechanicsWorkflowVolumeWell plugin
 -------------------------------------------------
 
-.. automodule:: PVplugins.PVGeomechanicsWorkflowVolumeWell
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeWell
 
 
 PVGeomechanicsCalculator plugin
