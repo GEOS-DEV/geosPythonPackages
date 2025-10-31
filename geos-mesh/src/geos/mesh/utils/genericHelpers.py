@@ -6,7 +6,7 @@ import logging
 import numpy.typing as npt
 from typing import Iterator, List, Sequence, Any, Union, Tuple
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
-from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger
+from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger, vtkFloatArray
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
     vtkMultiBlockDataSet,
@@ -353,19 +353,19 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
         Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]: The tangents vectors of the input surface.
     """
     # Get first tangential component
-    tangents1: Union[ npt.NDArray[ np.float64 ],
-                      None ] = surface.GetCellData().GetTangents()  # type: ignore[no-untyped-call]
-    if tangents1 is None:
-        raise ValueError( "No tangential attribute found in the mesh. Use the computeTangents function beforehand." )
+    vtkTangents: Union[ vtkFloatArray, None ] = surface.GetCellData().GetTangents()  # type: ignore[no-untyped-call]
+    tangents1: npt.NDArray[ np.float64 ]
+
+    try:
+        tangents1 = vtk_to_numpy( vtkTangents )
+    except AttributeError as err:
+        print( "No tangential attribute found in the mesh. Use the computeTangents function beforehand." )
+        raise VTKError( err ) from err
     else:
-        tangents1 = vtk_to_numpy( tangents1 )
+        # Compute second tangential component
+        normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
 
-    # Compute second tangential component
-    normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
-
-    tangents2: Union[ npt.NDArray[ np.float64 ], None ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
-    if tangents2 is None:
-        raise ValueError( "Local basis third axis was not computed." )
+        tangents2: npt.NDArray[ np.float64 ] = np.cross( normals, tangents1, axis=1 ).astype( np.float64 )
 
     return ( tangents1, tangents2 )
 
