@@ -133,7 +133,7 @@ def vtkUnstructuredGridCellsToDataframe( grid: vtkUnstructuredGrid ) -> pd.DataF
         grid = idFilter.GetOutput()
         cellData = grid.GetCellData()  # Update cellData to point to the new grid's cell data
         cellIdAttributeName = "GlobalCellIds"
-        assert cellData.HasArray(cellIdAttributeName), "Invalid global ids array name selected."
+        assert cellData.HasArray( cellIdAttributeName ), "Invalid global ids array name selected."
 
     numberCells: int = grid.GetNumberOfCells()
     data: dict[ str, Any ] = {}
