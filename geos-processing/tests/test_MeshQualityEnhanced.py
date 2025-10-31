@@ -30,8 +30,7 @@ meshName_all: tuple[ str, ...] = (
 )
 cellTypes_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_TETRA )
 qualityMetrics_all: tuple[ tuple[ int, ...], ...] = (
-    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ),
-      int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
+    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
     ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
@@ -84,8 +83,15 @@ def __get_tetra_dataset() -> vtkUnstructuredGrid:
     return mesh
 
 
-def __get_dataset( meshName ) -> vtkUnstructuredGrid:
-    # Get the dataset from external vtk file
+def __get_dataset( meshName: str ) -> vtkUnstructuredGrid:
+    """Get the dataset from external vtk file.
+
+    Args:
+        meshName (str): The name of the mesh
+
+    Returns:
+        vtkUnstructuredGrid: The dataset.
+    """
     if meshName == "polydata":
         reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
         vtkFilename: str = "data/triangulatedSurface.vtu"
@@ -110,10 +116,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
                                                                                    metricsSummary_all,
                                                                                    strict=True ):
         mesh: vtkUnstructuredGrid
-        if meshName == "tetra_mesh":
-            mesh = __get_tetra_dataset()
-        else:
-            mesh = __get_dataset( meshName )
+        mesh = __get_tetra_dataset() if meshName == "tetra_mesh" else __get_dataset( meshName )
 
         yield TestCase( mesh, cellType, qualityMetrics, cellTypeCounts, metricsSummary )
 
@@ -147,7 +150,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
 
     # test method getComputedMetricsFromCellType
     for i, cellType in enumerate( getAllCellTypesExtended() ):
-        print(cellType)
+        print( cellType )
         metrics: Optional[ set[ int ] ] = meshQualityEnhancedFilter.getComputedMetricsFromCellType( cellType )
         if test_case.cellTypeCounts[ i ] > 0:
             assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."

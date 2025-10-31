@@ -18,10 +18,10 @@ from matplotlib.patches import Patch
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON, VTK_POLYHEDRON )
 from geos.mesh.stats.meshQualityMetricHelpers import ( QUALITY_METRIC_OTHER_START_INDEX, getAllCellTypesExtended,
-                                                            getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
-                                                            MeshQualityMetricEnum, CellQualityMetricEnum,
-                                                            VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,
-                                                            QualityMetricOtherEnum, QualityRange )
+                                                       getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
+                                                       MeshQualityMetricEnum, CellQualityMetricEnum,
+                                                       VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,
+                                                       QualityMetricOtherEnum, QualityRange )
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from packaging.version import Version

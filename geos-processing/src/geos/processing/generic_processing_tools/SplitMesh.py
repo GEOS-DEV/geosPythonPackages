@@ -30,7 +30,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
@@ -190,10 +190,10 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         Returns:
             CellTypeCounts: cell type counts
         """
-        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        filter.SetInputDataObject( self.inData )
-        filter.Update()
-        return filter.GetCellTypeCountsObject()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+        cellTypeCounterEnhancedFilter.SetInputDataObject( self.inData )
+        cellTypeCounterEnhancedFilter.Update()
+        return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.
