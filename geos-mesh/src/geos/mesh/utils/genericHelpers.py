@@ -20,7 +20,7 @@ These methods include:
 """
 
 
-def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
+def toVtkIdList( data: List[ int ] ) -> vtkIdList:
     """Utility function transforming a list of ids into a vtkIdList.
 
     Args:
@@ -36,7 +36,7 @@ def to_vtk_id_list( data: List[ int ] ) -> vtkIdList:
     return result
 
 
-def vtk_iter( vtkContainer: vtkIdList | vtkCellTypes ) -> Iterator[ Any ]:
+def vtkIter( vtkContainer: Union[ vtkIdList, vtkCellTypes ] ) -> Iterator[ Any ]:
     """Utility function transforming a vtk "container" into an iterable.
 
     Args:

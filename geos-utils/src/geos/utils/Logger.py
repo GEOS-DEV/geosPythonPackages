@@ -1,15 +1,118 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 import logging
-from typing import Any, Union
+from typing import Any, Union, Generator
 from typing_extensions import Self
+
+import os
+import re
+import tempfile
+from contextlib import contextmanager
+
+from geos.utils.Errors import VTKError
 
 __doc__ = """
 Logger module manages logging tools.
 
 Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
+
+It also include adaptor strategy to make vtkLogger behave as a logging's logger.
+Indeed, C++ adapted class is based on private Callback assignement which is not compatible
+with logging python's logic.
+
+Usage::
+
+    # near logger definition
+    from vtkmodules.vtkCommonCore import vtkLogger
+
+    vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
+    logger.addFilter(RegexExceptionFilter())
+
+    ...
+
+    # near VTK calls
+    with VTKCaptureLog() as captured_log:
+        vtkcalls..
+        captured_log.seek(0)  # be kind let's just rewind
+        captured = captured_log.read().decode()
+
+    logger.error(captured.strip())
+
 """
+
+
+class RegexExceptionFilter( logging.Filter ):
+    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
+
+    This transforms silent VTK errors into catchable Python exceptions.
+    """
+
+    pattern: str = r'\bERR\|'  # Pattern captured that will raise a vtkError
+
+    def __init__( self ) -> None:
+        """Init filter with class based pattern as this is patch to logging logic."""
+        super().__init__()
+        self.regex = re.compile( self.pattern )
+
+    def filter( self, record: logging.LogRecord ) -> bool:
+        """Filter VTK Error from stdErr.
+
+        Args:
+            record(loggging.LogRecord) : record that logger will provide as evaluated
+
+        Raises:
+            VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
+        """
+        message = record.getMessage()  # Intercepts every log record before it's emitted
+        if self.regex.search( message ):
+            raise VTKError( f"Log message matched forbidden pattern: {message}" )
+        return True  # Allow other messages to pass
+
+
+@contextmanager
+def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
+    """Hard way of adapting C-like vtkLogger to logging class by throwing in stderr and reading back from it.
+
+    Returns:
+        Generator: Buffering os stderr.
+    """
+    # equiv to pyvista's
+    # from pyvista.utilities import VtkErrorCatcher
+    # with VtkErrorCatcher() as err:
+    #     append_filter.Update()
+    #     print(err)
+    # originalStderrFd = sys.stderr.fileno()
+    originalStderrFd = 2  # Standard stderr file descriptor, not dynamic like sys.stderr.fileno()
+    savedStderrFd = os.dup( originalStderrFd )  # Backup original stderr
+
+    # Create a temporary file to capture stderr
+    with tempfile.TemporaryFile( mode='w+b' ) as tmp:
+        os.dup2( tmp.fileno(), originalStderrFd )
+        try:
+            yield tmp
+        finally:
+            # Restore original stderr
+            os.dup2( savedStderrFd, originalStderrFd )
+            os.close( savedStderrFd )
+
+
+class CountWarningHandler( logging.Handler ):
+    """Create an handler to count the warnings logged."""
+
+    def __init__( self: Self ) -> None:
+        """Init the handler."""
+        super().__init__()
+        self.warningCount = 0
+
+    def emit( self: Self, record: logging.LogRecord ) -> None:
+        """Count all the warnings logged.
+
+        Args:
+            record (logging.LogRecord): Record.
+        """
+        if record.levelno == logging.WARNING:
+            self.warningCount += 1
 
 
 # Add the convenience method for the logger
@@ -49,7 +152,7 @@ Logger = logging.Logger  # logger type
 class CustomLoggerFormatter( logging.Formatter ):
     """Custom formatter for the logger.
 
-    .. WARNING:: Colors do not work in the ouput message window of Paraview.
+    .. WARNING:: Colors do not work in the output message window of Paraview.
 
     To use it:
 
@@ -78,7 +181,7 @@ class CustomLoggerFormatter( logging.Formatter ):
     #: format for each logger output type with colors
     FORMATS_COLOR: dict[ int, str ] = {
         DEBUG: grey + format2 + reset,
-        INFO: grey + format1 + reset,
+        INFO: green + format1 + reset,
         WARNING: yellow + format1 + reset,
         ERROR: red + format1 + reset,
         CRITICAL: bold_red + format2 + reset,
@@ -151,7 +254,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
         # module import
         import Logger
 
-        # logger instanciation
+        # logger instantiation
         logger :Logger.Logger = Logger.getLogger("My application")
 
         # logger use
