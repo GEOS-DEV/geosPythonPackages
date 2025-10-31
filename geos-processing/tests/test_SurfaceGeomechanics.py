@@ -14,7 +14,6 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkTriangle, vtkCellArray
 from vtkmodules.vtkCommonCore import vtkPoints, vtkFloatArray
 import vtkmodules.util.numpy_support as vnp
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
-from geos.utils.Errors import VTKError
 
 @dataclass
 class TriangulatedSurfaceTestCase:
