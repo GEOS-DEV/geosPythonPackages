@@ -377,7 +377,7 @@ def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
         surface(vtkPolydata): The input surface.
 
     Returns:
-        Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]: Array with normal, tangential 1 and tangential 2 vectors.
+        npt.NDArray[np.float64]: Array with normal, tangential 1 and tangential 2 vectors.
     """
     try:
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
