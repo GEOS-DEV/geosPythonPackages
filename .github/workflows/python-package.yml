@@ -71,6 +71,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+    
+    - name: Install OSMesa
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libosmesa6-dev libgl1-mesa-glx libglu1-mesa xvfb
+
     - name: Install package
       # working-directory: ./${{ matrix.package-name }}
       run: |
@@ -94,6 +100,8 @@ jobs:
       run: |
         yapf -r --diff ./${{ matrix.package-name }} --style .style.yapf
     - name: Test with pytest
+      env:
+          PYVISTA_OFF_SCREEN: true
       #working-directory: ./${{ matrix.package-name }}
       run:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
