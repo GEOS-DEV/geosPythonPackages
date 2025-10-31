@@ -32,15 +32,15 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_RAD,
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,
-    GRAVITY,
     WATER_DENSITY,
 )
 
-from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
-from vtkmodules.vtkFiltersCore import vtkCellCenters
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 __doc__ = """
-GeomechanicsCalculator module is a vtk filter that allows to compute additional geomechanical properties from existing ones:
+GeomechanicsCalculator module is a vtk filter that allows to compute additional geomechanical properties from existing ones on a vtkUnstructuredGrid.
+
+To compute the geomechanics outputs, the mesh must have the following properties:
     - The Young modulus and the Poisson's ratio named "youngModulus" and "poissonRatio" or bulk and shear moduli named "bulkModulus" and "shearModulus"
     - The initial Young modulus and Poisson's ratio named "youngModulusInitial" and "poissonRatioInitial" or the initial bulk modulus named "bulkModulusInitial"
     - The porosity named "porosity"
@@ -51,26 +51,21 @@ GeomechanicsCalculator module is a vtk filter that allows to compute additional 
     - The initial effective stress named "stressEffectiveInitial"
     - The pressure named "pressure"
 
-The basic geomechanics outputs are:
+The basic geomechanics properties computed on the mesh are:
     - The elastic moduli not present on the mesh
     - Biot coefficient
     - Compressibility, oedometric compressibility and real compressibility coefficient
     - Specific gravity
     - Real effective stress ratio
     - Total initial stress, total current stress and total stress ratio
-    - Lithostatic stress (physic to update)
     - Elastic stain
     - Real reservoir stress path and reservoir stress path in oedometric condition
 
-The advanced geomechanics outputs are:
+The advanced geomechanics properties computed on the mesh are:
     - Fracture index and threshold
     - Critical pore pressure and pressure index
 
-GeomechanicsCalculator filter input mesh is either vtkPointSet or vtkUnstructuredGrid
-and returned mesh is of same type as input.
-
-.. Important::
-     Please refer to the GeosExtractMergeBlockVolume* filters to provide the correct input.
+The input and output meshes are vtkUnstructuredGrid
 
 .. Note::
     - The default physical constants used by the filter are:
@@ -84,42 +79,40 @@ To use the filter:
 .. code-block:: python
 
     import numpy as np
-    from geos.mesh.processing.GeomechanicsCalculator import GeomechanicsCalculator
+    from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 
     # Define filter inputs
-    mesh: Union[ vtkPointSet, vtkUnstructuredGrid ]
-    computeAdvancedOutputs: bool # optional, defaults to False
+    mesh: vtkUnstructuredGrid
+    computeAdvancedProperties: bool # optional, defaults to False
     speHandler: bool # optional, defaults to False
 
     # Instantiate the filter
-    filter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedOutputs, speHandler )
+    geomechanicsCalculatorFilter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedProperties, speHandler )
 
     # Use your own handler (if speHandler is True)
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    geomechanicsCalculatorFilter.setLoggerHandler( yourHandler )
 
     # Change the physical constants if needed
-    ## Basic outputs
+    ## For the basic properties
     grainBulkModulus: float
     specificDensity: float
-    filter.physicalConstants.grainBulkModulus = grainBulkModulus
-    filter.physicalConstants.specificDensity = specificDensity
+    geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = grainBulkModulus
+    geomechanicsCalculatorFilter.physicalConstants.specificDensity = specificDensity
 
-    ## Advanced outputs
+    ## For the advanced properties
     rockCohesion: float
     frictionAngle: float
-    filter.physicalConstants.rockCohesion = rockCohesion
-    filter.physicalConstants.frictionAngle = frictionAngle
+    geomechanicsCalculatorFilter.physicalConstants.rockCohesion = rockCohesion
+    geomechanicsCalculatorFilter.physicalConstants.frictionAngle = frictionAngle
 
     # Do calculations
-    filter.applyFilter()
+    geomechanicsCalculatorFilter.applyFilter()
 
-    # Get the mesh with the geomechanical output as attribute
-    output: Union[vtkPointSet, vtkUnstructuredGrid]
-    output = filter.getOutput()
+    # Get the mesh with the geomechanics properties computed as attribute
+    output: vtkUnstructuredGrid
+    output = geomechanicsCalculatorFilter.getOutput()
 """
-
-loggerTitle: str = "Geomechanical Calculator Filter"
 
 # Elastic Moduli:
 BULK_MODULUS: AttributeEnum = GeosMeshOutputsEnum.BULK_MODULUS
@@ -132,7 +125,7 @@ POISSON_RATIO_T0: AttributeEnum = PostProcessingOutputsEnum.POISSON_RATIO_INITIA
 ELASTIC_MODULI: tuple[ AttributeEnum, ...] = ( BULK_MODULUS, SHEAR_MODULUS, YOUNG_MODULUS, POISSON_RATIO,
                                                BULK_MODULUS_T0, YOUNG_MODULUS_T0, POISSON_RATIO_T0 )
 
-# Mandatory attributes:
+# Mandatory properties:
 POROSITY: AttributeEnum = GeosMeshOutputsEnum.POROSITY
 POROSITY_T0: AttributeEnum = GeosMeshOutputsEnum.POROSITY_INI
 PRESSURE: AttributeEnum = GeosMeshOutputsEnum.PRESSURE
@@ -140,10 +133,10 @@ DELTA_PRESSURE: AttributeEnum = GeosMeshOutputsEnum.DELTA_PRESSURE
 DENSITY: AttributeEnum = GeosMeshOutputsEnum.ROCK_DENSITY
 STRESS_EFFECTIVE: AttributeEnum = GeosMeshOutputsEnum.STRESS_EFFECTIVE
 STRESS_EFFECTIVE_T0: AttributeEnum = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL
-MANDATORY_ATTRIBUTES: tuple[ AttributeEnum, ...] = ( POROSITY, POROSITY_T0, PRESSURE, DELTA_PRESSURE, DENSITY,
+MANDATORY_PROPERTIES: tuple[ AttributeEnum, ...] = ( POROSITY, POROSITY_T0, PRESSURE, DELTA_PRESSURE, DENSITY,
                                                      STRESS_EFFECTIVE, STRESS_EFFECTIVE_T0 )
 
-# Basic outputs:
+# Basic properties:
 BIOT_COEFFICIENT: AttributeEnum = PostProcessingOutputsEnum.BIOT_COEFFICIENT
 COMPRESSIBILITY: AttributeEnum = PostProcessingOutputsEnum.COMPRESSIBILITY
 COMPRESSIBILITY_OED: AttributeEnum = PostProcessingOutputsEnum.COMPRESSIBILITY_OED
@@ -159,19 +152,19 @@ STRESS_TOTAL_DELTA: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL_DELTA
 RSP_REAL: AttributeEnum = PostProcessingOutputsEnum.RSP_REAL
 RSP_OED: AttributeEnum = PostProcessingOutputsEnum.RSP_OED
 STRESS_EFFECTIVE_RATIO_OED: AttributeEnum = PostProcessingOutputsEnum.STRESS_EFFECTIVE_RATIO_OED
-BASIC_OUTPUTS: tuple[ AttributeEnum,
-                      ...] = ( BIOT_COEFFICIENT, COMPRESSIBILITY, COMPRESSIBILITY_OED, COMPRESSIBILITY_REAL,
-                               SPECIFIC_GRAVITY, STRESS_EFFECTIVE_RATIO_REAL, STRESS_TOTAL, STRESS_TOTAL_T0,
-                               STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, STRAIN_ELASTIC, STRESS_TOTAL_DELTA,
-                               RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED )
+BASIC_PROPERTIES: tuple[ AttributeEnum,
+                         ...] = ( BIOT_COEFFICIENT, COMPRESSIBILITY, COMPRESSIBILITY_OED, COMPRESSIBILITY_REAL,
+                                  SPECIFIC_GRAVITY, STRESS_EFFECTIVE_RATIO_REAL, STRESS_TOTAL, STRESS_TOTAL_T0,
+                                  STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, STRAIN_ELASTIC, STRESS_TOTAL_DELTA,
+                                  RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED )
 
-# Advanced outputs:
+# Advanced properties:
 CRITICAL_TOTAL_STRESS_RATIO: AttributeEnum = PostProcessingOutputsEnum.CRITICAL_TOTAL_STRESS_RATIO
 TOTAL_STRESS_RATIO_THRESHOLD: AttributeEnum = PostProcessingOutputsEnum.TOTAL_STRESS_RATIO_THRESHOLD
 CRITICAL_PORE_PRESSURE: AttributeEnum = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE
 CRITICAL_PORE_PRESSURE_THRESHOLD: AttributeEnum = PostProcessingOutputsEnum.CRITICAL_PORE_PRESSURE_THRESHOLD
-ADVANCED_OUTPUTS: tuple[ AttributeEnum, ...] = ( CRITICAL_TOTAL_STRESS_RATIO, TOTAL_STRESS_RATIO_THRESHOLD,
-                                                 CRITICAL_PORE_PRESSURE, CRITICAL_PORE_PRESSURE_THRESHOLD )
+ADVANCED_PROPERTIES: tuple[ AttributeEnum, ...] = ( CRITICAL_TOTAL_STRESS_RATIO, TOTAL_STRESS_RATIO_THRESHOLD,
+                                                    CRITICAL_PORE_PRESSURE, CRITICAL_PORE_PRESSURE_THRESHOLD )
 
 
 class GeomechanicsCalculator:
@@ -179,10 +172,10 @@ class GeomechanicsCalculator:
     @dataclass
     class PhysicalConstants:
         """The dataclass with the  value of the physical constant used to compute geomechanics properties."""
-        ## Basic outputs
+        ## Basic properties
         _grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
         _specificDensity: float = WATER_DENSITY
-        ## Advanced outputs
+        ## Advanced properties
         _rockCohesion: float = DEFAULT_ROCK_COHESION
         _frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
@@ -223,7 +216,7 @@ class GeomechanicsCalculator:
             self._frictionAngle = value
 
     @dataclass
-    class ElasticModuliValue:
+    class ElasticModuli:
         """The dataclass with the value of the elastic moduli."""
         _bulkModulus: npt.NDArray[ np.float64 ] | None = None
         _shearModulus: npt.NDArray[ np.float64 ] | None = None
@@ -317,6 +310,8 @@ class GeomechanicsCalculator:
                 self.poissonRatio = value
             elif name == POISSON_RATIO_T0.attributeName:
                 self.poissonRatioT0 = value
+            else:
+                raise NameError( f"The property { name } is not an elastic modulus." )
 
         def getElasticModulusValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
             """Get the wanted elastic modulus value.
@@ -342,11 +337,11 @@ class GeomechanicsCalculator:
             elif name == POISSON_RATIO_T0.attributeName:
                 return self.poissonRatioT0
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not an elastic modulus." )
 
     @dataclass
-    class MandatoryAttributesValue:
-        """The dataclass with the value of mandatory properties to have to compute other geomechanics properties."""
+    class MandatoryProperties:
+        """The dataclass with the value of mandatory properties to compute the other geomechanics properties."""
         _porosity: npt.NDArray[ np.float64 ] | None = None
         _porosityInitial: npt.NDArray[ np.float64 ] | None = None
         _pressure: npt.NDArray[ np.float64 ] | None = None
@@ -390,7 +385,7 @@ class GeomechanicsCalculator:
             """Get the initial effective stress value."""
             return self._effectiveStressT0
 
-        def setMandatoryAttributeValue( self: Self, name: str, value: npt.NDArray[ np.float64 ] ) -> None:
+        def setMandatoryPropertyValue( self: Self, name: str, value: npt.NDArray[ np.float64 ] ) -> None:
             """Set the value of a mandatory property.
 
             Args:
@@ -411,10 +406,13 @@ class GeomechanicsCalculator:
                 self._effectiveStress = value
             elif name == STRESS_EFFECTIVE_T0.attributeName:
                 self._effectiveStressT0 = value
+            else:
+                raise NameError(
+                    f"The property { name } is not a mandatory property to compute geomechanics property." )
 
     @dataclass
-    class BasicOutputValue:
-        """The dataclass with the value of the basic geomechanics outputs."""
+    class BasicProperties:
+        """The dataclass with the value of the basic geomechanics properties."""
         _biotCoefficient: npt.NDArray[ np.float64 ] | None = None
         _compressibility: npt.NDArray[ np.float64 ] | None = None
         _compressibilityOed: npt.NDArray[ np.float64 ] | None = None
@@ -424,6 +422,7 @@ class GeomechanicsCalculator:
         _totalStress: npt.NDArray[ np.float64 ] | None = None
         _totalStressT0: npt.NDArray[ np.float64 ] | None = None
         _totalStressRatioReal: npt.NDArray[ np.float64 ] | None = None
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
         # _lithostaticStress: npt.NDArray[ np.float64 ] | None = None
         _elasticStrain: npt.NDArray[ np.float64 ] | None = None
         _deltaTotalStress: npt.NDArray[ np.float64 ] | None = None
@@ -512,14 +511,15 @@ class GeomechanicsCalculator:
         def totalStressRatioReal( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
             self._totalStressRatioReal = value
 
-        @property
-        def lithostaticStress( self: Self ) -> npt.NDArray[ np.float64 ] | None:
-            """Get the lithostatic stress value."""
-            return self._lithostaticStress
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+        # @property
+        # def lithostaticStress( self: Self ) -> npt.NDArray[ np.float64 ] | None:
+        #     """Get the lithostatic stress value."""
+        #     return self._lithostaticStress
 
-        @lithostaticStress.setter
-        def lithostaticStress( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
-            self._lithostaticStress = value
+        # @lithostaticStress.setter
+        # def lithostaticStress( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
+        #     self._lithostaticStress = value
 
         @property
         def elasticStrain( self: Self ) -> npt.NDArray[ np.float64 ] | None:
@@ -566,14 +566,14 @@ class GeomechanicsCalculator:
         def effectiveStressRatioOed( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
             self._effectiveStressRatioOed = value
 
-        def getBasicOutputValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
-            """Get the value of the basic output wanted.
+        def getBasicPropertyValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
+            """Get the value of the basic property wanted.
 
             Args:
-                name (str): The name of the basic output.
+                name (str): The name of the basic property.
 
             Returns:
-                npt.NDArray[ np.float64 ]: the value of the basic output.
+                npt.NDArray[ np.float64 ]: the value of the basic property.
             """
             if name == BIOT_COEFFICIENT.attributeName:
                 return self.biotCoefficient
@@ -593,8 +593,9 @@ class GeomechanicsCalculator:
                 return self.totalStressT0
             elif name == STRESS_TOTAL_RATIO_REAL.attributeName:
                 return self.totalStressRatioReal
-            elif name == LITHOSTATIC_STRESS.attributeName:
-                return self.lithostaticStress
+            # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+            # elif name == LITHOSTATIC_STRESS.attributeName:
+            #     return self.lithostaticStress
             elif name == STRAIN_ELASTIC.attributeName:
                 return self.elasticStrain
             elif name == STRESS_TOTAL_DELTA.attributeName:
@@ -606,11 +607,11 @@ class GeomechanicsCalculator:
             elif name == STRESS_EFFECTIVE_RATIO_OED.attributeName:
                 return self.effectiveStressRatioOed
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not a basic property." )
 
     @dataclass
-    class AdvancedOutputValue:
-        """The dataclass with the value of the advanced geomechanics outputs."""
+    class AdvancedProperties:
+        """The dataclass with the value of the advanced geomechanics properties."""
         _criticalTotalStressRatio: npt.NDArray[ np.float64 ] | None = None
         _stressRatioThreshold: npt.NDArray[ np.float64 ] | None = None
         _criticalPorePressure: npt.NDArray[ np.float64 ] | None = None
@@ -652,14 +653,14 @@ class GeomechanicsCalculator:
         def criticalPorePressureIndex( self: Self, value: npt.NDArray[ np.float64 ] ) -> None:
             self._criticalPorePressureIndex = value
 
-        def getAdvancedOutputValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
-            """Get the value of the advanced output wanted.
+        def getAdvancedPropertyValue( self: Self, name: str ) -> npt.NDArray[ np.float64 ] | None:
+            """Get the value of the advanced property wanted.
 
             Args:
-                name (str): The name of the advanced output.
+                name (str): The name of the advanced property.
 
             Returns:
-                npt.NDArray[ np.float64 ]: the value of the advanced output.
+                npt.NDArray[ np.float64 ]: the value of the advanced property.
             """
             if name == CRITICAL_TOTAL_STRESS_RATIO.attributeName:
                 return self.criticalTotalStressRatio
@@ -670,96 +671,97 @@ class GeomechanicsCalculator:
             elif name == CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName:
                 return self.criticalPorePressureIndex
             else:
-                raise NameError
+                raise NameError( f"The property { name } is not an advanced property." )
 
     physicalConstants: PhysicalConstants
-    _elasticModuli: ElasticModuliValue
-    _mandatoryAttributes: MandatoryAttributesValue
-    _basicOutput: BasicOutputValue
-    _advancedOutput: AdvancedOutputValue
+    _elasticModuli: ElasticModuli
+    _mandatoryProperties: MandatoryProperties
+    _basicProperties: BasicProperties
+    _advancedProperties: AdvancedProperties
 
     def __init__(
         self: Self,
-        mesh: Union[ vtkPointSet, vtkUnstructuredGrid ],
-        computeAdvancedOutputs: bool = False,
+        mesh: vtkUnstructuredGrid,
+        computeAdvancedProperties: bool = False,
+        loggerName: str = "Geomechanics Calculator",
         speHandler: bool = False,
     ) -> None:
-        """VTK Filter to perform Geomechanical output computation.
+        """VTK Filter to perform geomechanics properties computation.
 
         Args:
-            mesh (Union[vtkPointsSet, vtkUnstructuredGrid]): Input mesh.
-            computeAdvancedOutputs (bool, optional): True to compute advanced geomechanical parameters, False otherwise.
+            mesh (vtkUnstructuredGrid): Input mesh.
+            computeAdvancedProperties (bool, optional): True to compute advanced geomechanics properties, False otherwise.
                 Defaults to False.
+            loggerName (str, optional): Name of the filter logger.
+                Defaults to "Geomechanics Calculator"
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
-        self.output: Union[ vtkPointSet, vtkUnstructuredGrid ] = mesh.NewInstance()
+        self.output: vtkUnstructuredGrid = mesh.NewInstance()
         self.output.DeepCopy( mesh )
 
-        self.doComputeAdvancedOutputs: bool = computeAdvancedOutputs
+        self.doComputeAdvancedProperties: bool = computeAdvancedProperties
         self.physicalConstants = self.PhysicalConstants()
-        self._elasticModuli = self.ElasticModuliValue()
-        self._mandatoryAttributes = self.MandatoryAttributesValue()
-        self._basicOutput = self.BasicOutputValue()
-        self._advancedOutput = self.AdvancedOutputValue()
+        self._elasticModuli = self.ElasticModuli()
+        self._mandatoryProperties = self.MandatoryProperties()
+        self._basicProperties = self.BasicProperties()
+        self._advancedProperties = self.AdvancedProperties()
 
         self._attributesToCreate: list[ AttributeEnum ] = []
 
         # Logger.
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerName, True )
         else:
-            self.logger = logging.getLogger( loggerTitle )
+            self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
 
-    def applyFilter( self: Self ) -> bool:
-        """Compute the geomechanical outputs of the mesh.
+    def applyFilter( self: Self ) -> None:
+        """Compute the geomechanics properties and create attributes on the mesh."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+
+        try:
+            self._checkMandatoryProperties()
+            self._computeBasicProperties()
+
+            if self.doComputeAdvancedProperties:
+                self._computeAdvancedProperties()
+
+            # Create an attribute on the mesh for each geomechanics properties computed:
+            for attribute in self._attributesToCreate:
+                attributeName: str = attribute.attributeName
+                onPoints: bool = attribute.isOnPoints
+                array: npt.NDArray[ np.float64 ] | None
+                if attribute in ELASTIC_MODULI:
+                    array = self._elasticModuli.getElasticModulusValue( attributeName )
+                elif attribute in BASIC_PROPERTIES:
+                    array = self._basicProperties.getBasicPropertyValue( attributeName )
+                elif attribute in ADVANCED_PROPERTIES:
+                    array = self._advancedProperties.getAdvancedPropertyValue( attributeName )
+                componentNames: tuple[ str, ...] = ()
+                if attribute.nbComponent == 6:
+                    componentNames = ComponentNameEnum.XYZ.value
+
+                createAttribute( self.output,
+                                 array,
+                                 attributeName,
+                                 componentNames=componentNames,
+                                 onPoints=onPoints,
+                                 logger=self.logger )
+
+            self.logger.info( "All the geomechanics properties have been added to the mesh." )
+            self.logger.info( f"The filter { self.logger.name } succeeded." )
+        except ( ValueError, TypeError, NameError ) as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+
+        return
+
+    def getOutput( self: Self ) -> vtkUnstructuredGrid:
+        """Get the mesh with the geomechanics properties computed as attributes.
 
         Returns:
-            Boolean (bool): True if calculation successfully ended, False otherwise.
-        """
-        if not self._checkMandatoryAttributes():
-            return False
-
-        if not self.computeBasicOutputs():
-            return False
-
-        if self.doComputeAdvancedOutputs and not self.computeAdvancedOutputs():
-            return False
-
-        # Create an attribute on the mesh for each geomechanics outputs computed:
-        for attribute in self._attributesToCreate:
-            attributeName: str = attribute.attributeName
-            onPoints: bool = attribute.isOnPoints
-            array: npt.NDArray[ np.float64 ] | None
-            if attribute in ELASTIC_MODULI:
-                array = self._elasticModuli.getElasticModulusValue( attributeName )
-            elif attribute in BASIC_OUTPUTS:
-                array = self._basicOutput.getBasicOutputValue( attributeName )
-            elif attribute in ADVANCED_OUTPUTS:
-                array = self._advancedOutput.getAdvancedOutputValue( attributeName )
-            componentNames: tuple[ str, ...] = ()
-            if attribute.nbComponent == 6:
-                componentNames = ComponentNameEnum.XYZ.value
-
-            if not createAttribute( self.output,
-                                    array,
-                                    attributeName,
-                                    componentNames=componentNames,
-                                    onPoints=onPoints,
-                                    logger=self.logger ):
-                return False
-
-        self.logger.info( "All the geomechanics properties have been added to the mesh." )
-        self.logger.info( "The filter succeeded." )
-        return True
-
-    def getOutput( self: Self ) -> Union[ vtkPointSet, vtkUnstructuredGrid ]:
-        """Get the mesh with the geomechanical outputs as attributes.
-
-        Returns:
-            Union[vtkPointSet, vtkUnstructuredGrid]: The mesh with the geomechanical outputs as attributes.
+            vtkUnstructuredGrid: The mesh with the geomechanics properties computed as attributes.
         """
         return self.output
 
@@ -786,10 +788,10 @@ class GeomechanicsCalculator:
         """
         return self.output.GetClassName()
 
-    def _checkMandatoryAttributes( self: Self ) -> bool:
-        """Check that mandatory attributes are present in the mesh.
+    def _checkMandatoryProperties( self: Self ) -> None:
+        """Check that the mandatory properties are present in the vtu.
 
-        The mesh must contains:
+        The vtu must contains:
             - The Young modulus and the Poisson's ratio named "youngModulus" and "poissonRatio" or bulk and shear moduli named "bulkModulus" and "shearModulus"
             - The initial Young modulus and Poisson's ratio named "youngModulusInitial" and "poissonRatioInitial" or the initial bulk modulus named "bulkModulusInitial"
             - The porosity named "porosity"
@@ -799,10 +801,8 @@ class GeomechanicsCalculator:
             - The density named "density"
             - The effective stress named "stressEffective"
             - The initial effective stress named "stressEffectiveInitial"
-
-        Returns:
-            bool: True if all needed attributes are present, False otherwise
         """
+        mess: str
         for elasticModulus in ELASTIC_MODULI:
             elasticModulusName: str = elasticModulus.attributeName
             elasticModulusOnPoints: bool = elasticModulus.isOnPoints
@@ -823,10 +823,8 @@ class GeomechanicsCalculator:
                 self._attributesToCreate.append( POISSON_RATIO )
                 self.computeYoungPoisson = True
             else:
-                self.logger.error(
-                    f"{ BULK_MODULUS.attributeName } or { SHEAR_MODULUS.attributeName } are missing to compute geomechanical outputs."
-                )
-                return False
+                mess = f"{ BULK_MODULUS.attributeName } or { SHEAR_MODULUS.attributeName } are missing to compute geomechanics properties."
+                raise ValueError( mess )
         elif self._elasticModuli.bulkModulus is None and self._elasticModuli.shearModulus is None:
             if self._elasticModuli.youngModulus is not None and self._elasticModuli.poissonRatio is not None:
                 self._elasticModuli.bulkModulus = fcts.bulkModulus( self._elasticModuli.youngModulus,
@@ -837,15 +835,11 @@ class GeomechanicsCalculator:
                 self._attributesToCreate.append( SHEAR_MODULUS )
                 self.computeYoungPoisson = False
             else:
-                self.logger.error(
-                    f"{ YOUNG_MODULUS.attributeName } or { POISSON_RATIO.attributeName } are missing to compute geomechanical outputs."
-                )
-                return False
+                mess = f"{ YOUNG_MODULUS.attributeName } or { POISSON_RATIO.attributeName } are missing to compute geomechanics properties."
+                raise ValueError( mess )
         else:
-            self.logger.error(
-                f"{ BULK_MODULUS.attributeName } and { SHEAR_MODULUS.attributeName } or { YOUNG_MODULUS.attributeName } and { POISSON_RATIO.attributeName } are mandatory to compute geomechanical outputs."
-            )
-            return False
+            mess = f"{ BULK_MODULUS.attributeName } and { SHEAR_MODULUS.attributeName } or { YOUNG_MODULUS.attributeName } and { POISSON_RATIO.attributeName } are mandatory to compute geomechanics properties."
+            raise ValueError( mess )
 
         # Check the presence of the elastic moduli at the initial time.
         if self._elasticModuli.bulkModulusT0 is None:
@@ -854,585 +848,463 @@ class GeomechanicsCalculator:
                                                                       self._elasticModuli.poissonRatioT0 )
                 self._attributesToCreate.append( BULK_MODULUS_T0 )
             else:
-                self.logger.error(
-                    f"{ BULK_MODULUS_T0.attributeName } or { YOUNG_MODULUS_T0.attributeName } and { POISSON_RATIO_T0.attributeName } are mandatory to compute geomechanical outputs."
-                )
-                return False
+                mess = f"{ BULK_MODULUS_T0.attributeName } or { YOUNG_MODULUS_T0.attributeName } and { POISSON_RATIO_T0.attributeName } are mandatory to compute geomechanics properties."
+                raise ValueError( mess )
 
-        # Check the presence of the other mandatory attributes
-        for mandatoryAttribute in MANDATORY_ATTRIBUTES:
+        # Check the presence of the other mandatory properties
+        for mandatoryAttribute in MANDATORY_PROPERTIES:
             mandatoryAttributeName: str = mandatoryAttribute.attributeName
             mandatoryAttributeOnPoints: bool = mandatoryAttribute.isOnPoints
             if not isAttributeInObject( self.output, mandatoryAttributeName, mandatoryAttributeOnPoints ):
-                self.logger.error(
-                    f"The mandatory attribute { mandatoryAttributeName } is missing to compute geomechanical outputs." )
-                return False
+                mess = f"The mandatory property { mandatoryAttributeName } is missing to compute geomechanical properties."
+                raise ValueError( mess )
             else:
-                self._mandatoryAttributes.setMandatoryAttributeValue(
+                self._mandatoryProperties.setMandatoryPropertyValue(
                     mandatoryAttributeName,
                     getArrayInObject( self.output, mandatoryAttributeName, mandatoryAttributeOnPoints ) )
 
-        return True
+        return
 
-    def computeBasicOutputs( self: Self ) -> bool:
-        """Compute basic geomechanical outputs.
+    def _computeBasicProperties( self: Self ) -> None:
+        """Compute the basic geomechanics properties."""
+        self._computeBiotCoefficient()
+        self._computeCompressibilityCoefficient()
+        self._computeRealEffectiveStressRatio()
+        self._computeSpecificGravity()
+        # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+        # self._computeLithostaticStress()
+        self._computeTotalStresses()
+        self._computeElasticStrain()
+        self._computeEffectiveStressRatioOed()
+        self._computeReservoirStressPathOed()
+        self._computeReservoirStressPathReal()
 
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
-        if not self._computeBiotCoefficient():
-            self.logger.error( "Biot coefficient computation failed." )
-            return False
+        self.logger.info( "All geomechanics basic properties have been successfully computed." )
+        return
 
-        if not self._computeCompressibilityCoefficient():
-            return False
+    def _computeAdvancedProperties( self: Self ) -> None:
+        """Compute the advanced geomechanics properties."""
+        self._computeCriticalTotalStressRatio()
+        self._computeCriticalPorePressure()
 
-        if not self._computeRealEffectiveStressRatio():
-            self.logger.error( "Effective stress ratio computation failed." )
-            return False
+        self.logger.info( "All geomechanics advanced properties have been successfully computed." )
+        return
 
-        if not self._computeSpecificGravity():
-            self.logger.error( "Specific gravity computation failed." )
-            return False
-
-        # TODO: deactivate lithostatic stress calculation until right formula
-        # if not self.computeLithostaticStress():
-        #     self.logger.error( "Lithostatic stress computation failed." )
-        #     return False
-
-        if not self._computeTotalStresses():
-            return False
-
-        if not self._computeElasticStrain():
-            self.logger.error( "Elastic strain computation failed." )
-            return False
-
-        if not self._computeEffectiveStressRatioOed():
-            self.logger.error( "Effective stress ration in oedometric condition computation failed." )
-            return False
-
-        if not self._computeReservoirStressPathOed():
-            self.logger.error( "Reservoir stress path in oedometric condition computation failed." )
-            return False
-
-        if not self._computeReservoirStressPathReal():
-            return False
-
-        self.logger.info( "All geomechanical basic outputs were successfully computed." )
-        return True
-
-    def computeAdvancedOutputs( self: Self ) -> bool:
-        """Compute advanced geomechanical outputs.
-
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
-        if not self._computeCriticalTotalStressRatio():
-            return False
-
-        if not self._computeCriticalPorePressure():
-            return False
-
-        self.logger.info( "All geomechanical advanced outputs were successfully computed." )
-        return True
-
-    def _computeBiotCoefficient( self: Self ) -> bool:
-        """Compute Biot coefficient from default and grain bulk modulus.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
+    def _computeBiotCoefficient( self: Self ) -> None:
+        """Compute the Biot coefficient from default and grain bulk modulus."""
         if not isAttributeInObject( self.output, BIOT_COEFFICIENT.attributeName, BIOT_COEFFICIENT.isOnPoints ):
-            self._basicOutput.biotCoefficient = fcts.biotCoefficient( self.physicalConstants.grainBulkModulus,
-                                                                      self._elasticModuli.bulkModulus )
+            self._basicProperties.biotCoefficient = fcts.biotCoefficient( self.physicalConstants.grainBulkModulus,
+                                                                          self._elasticModuli.bulkModulus )
             self._attributesToCreate.append( BIOT_COEFFICIENT )
         else:
-            self._basicOutput.biotCoefficient = getArrayInObject( self.output, BIOT_COEFFICIENT.attributeName,
-                                                                  BIOT_COEFFICIENT.isOnPoints )
+            self._basicProperties.biotCoefficient = getArrayInObject( self.output, BIOT_COEFFICIENT.attributeName,
+                                                                      BIOT_COEFFICIENT.isOnPoints )
             self.logger.warning(
                 f"{ BIOT_COEFFICIENT.attributeName } is already on the mesh, it has not been computed by the filter." )
 
-        return True
+        return
 
-    def _computeCompressibilityCoefficient( self: Self ) -> bool:
-        """Compute compressibility coefficient from simulation outputs.
-
-        Compressibility coefficient is computed from Poisson's ratio, bulk
-        modulus, Biot coefficient and Porosity.
-
-        Returns:
-            bool: True if the attribute is correctly created, False otherwise.
-        """
+    def _computeCompressibilityCoefficient( self: Self ) -> None:
+        """Compute the normal, the oedometric and the real compressibility coefficient from Poisson's ratio, bulk modulus, Biot coefficient and Porosity."""
+        # normal compressibility
         if not isAttributeInObject( self.output, COMPRESSIBILITY.attributeName, COMPRESSIBILITY.isOnPoints ):
-            self._basicOutput.compressibility = fcts.compressibility( self._elasticModuli.poissonRatio,
-                                                                      self._elasticModuli.bulkModulus,
-                                                                      self._basicOutput.biotCoefficient,
-                                                                      self._mandatoryAttributes.porosity )
+            self._basicProperties.compressibility = fcts.compressibility( self._elasticModuli.poissonRatio,
+                                                                          self._elasticModuli.bulkModulus,
+                                                                          self._basicProperties.biotCoefficient,
+                                                                          self._mandatoryProperties.porosity )
             self._attributesToCreate.append( COMPRESSIBILITY )
         else:
-            self._basicOutput.compressibility = getArrayInObject( self.output, COMPRESSIBILITY.attributeName,
-                                                                  COMPRESSIBILITY.isOnPoints )
+            self._basicProperties.compressibility = getArrayInObject( self.output, COMPRESSIBILITY.attributeName,
+                                                                      COMPRESSIBILITY.isOnPoints )
             self.logger.warning(
                 f"{ COMPRESSIBILITY.attributeName } is already on the mesh, it has not been computed by the filter." )
 
         # oedometric compressibility
         if not isAttributeInObject( self.output, COMPRESSIBILITY_OED.attributeName, COMPRESSIBILITY_OED.isOnPoints ):
-            self._basicOutput.compressibilityOed = fcts.compressibilityOed( self._elasticModuli.shearModulus,
-                                                                            self._elasticModuli.bulkModulus,
-                                                                            self._mandatoryAttributes.porosity )
+            self._basicProperties.compressibilityOed = fcts.compressibilityOed( self._elasticModuli.shearModulus,
+                                                                                self._elasticModuli.bulkModulus,
+                                                                                self._mandatoryProperties.porosity )
             self._attributesToCreate.append( COMPRESSIBILITY_OED )
         else:
-            self._basicOutput.compressibilityOed = getArrayInObject( self.output, COMPRESSIBILITY_OED.attributeName,
-                                                                     COMPRESSIBILITY_OED.isOnPoints )
+            self._basicProperties.compressibilityOed = getArrayInObject( self.output, COMPRESSIBILITY_OED.attributeName,
+                                                                         COMPRESSIBILITY_OED.isOnPoints )
             self.logger.warning(
                 f"{ COMPRESSIBILITY_OED.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
         # real compressibility
         if not isAttributeInObject( self.output, COMPRESSIBILITY_REAL.attributeName, COMPRESSIBILITY_REAL.isOnPoints ):
-            self._basicOutput.compressibilityReal = fcts.compressibilityReal(
-                self._mandatoryAttributes.deltaPressure, self._mandatoryAttributes.porosity,
-                self._mandatoryAttributes.porosityInitial )
+            self._basicProperties.compressibilityReal = fcts.compressibilityReal(
+                self._mandatoryProperties.deltaPressure, self._mandatoryProperties.porosity,
+                self._mandatoryProperties.porosityInitial )
             self._attributesToCreate.append( COMPRESSIBILITY_REAL )
         else:
-            self._basicOutput.compressibilityReal = getArrayInObject( self.output, COMPRESSIBILITY_REAL.attributeName,
-                                                                      COMPRESSIBILITY_REAL.isOnPoints )
+            self._basicProperties.compressibilityReal = getArrayInObject( self.output,
+                                                                          COMPRESSIBILITY_REAL.attributeName,
+                                                                          COMPRESSIBILITY_REAL.isOnPoints )
             self.logger.warning(
                 f"{ COMPRESSIBILITY_REAL.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
-        return True
+        return
 
-    def _computeSpecificGravity( self: Self ) -> bool:
-        """Create Specific gravity attribute.
-
-        Specific gravity is computed from rock density attribute and specific
-        density input.
-
-        Returns:
-            bool: True if the attribute is correctly created, False otherwise.
-        """
+    def _computeSpecificGravity( self: Self ) -> None:
+        """Compute the specific gravity from rock density and specific density."""
         if not isAttributeInObject( self.output, SPECIFIC_GRAVITY.attributeName, SPECIFIC_GRAVITY.isOnPoints ):
-            self._basicOutput.specificGravity = fcts.specificGravity( self._mandatoryAttributes.density,
-                                                                      self.physicalConstants.specificDensity )
+            self._basicProperties.specificGravity = fcts.specificGravity( self._mandatoryProperties.density,
+                                                                          self.physicalConstants.specificDensity )
             self._attributesToCreate.append( SPECIFIC_GRAVITY )
         else:
-            self._basicOutput.specificGravity = getArrayInObject( self.output, SPECIFIC_GRAVITY.attributeName,
-                                                                  SPECIFIC_GRAVITY.isOnPoints )
+            self._basicProperties.specificGravity = getArrayInObject( self.output, SPECIFIC_GRAVITY.attributeName,
+                                                                      SPECIFIC_GRAVITY.isOnPoints )
             self.logger.warning(
                 f"{ SPECIFIC_GRAVITY.attributeName } is already on the mesh, it has not been computed by the filter." )
 
-        return True
+        return
 
-    def _doComputeStressRatioReal( self: Self, stress: npt.NDArray[ np.float64 ],
-                                   basicOutput: AttributeEnum ) -> npt.NDArray[ np.float64 ]:
-        """Compute the ratio between horizontal and vertical effective stress.
+    def _doComputeRatio(
+        self: Self,
+        array: npt.NDArray[ np.float64 ],
+        geomechanicProperty: AttributeEnum,
+    ) -> npt.NDArray[ np.float64 ]:
+        """Compute the ratio between horizontal and vertical value of an array.
+
+        Args:
+            array (npt.NDArray[np.float64]): The array with the ratio to compute.
+            geomechanicProperty (AttributeEnum): The geomechanic property link to the computed ratio.
 
         Returns:
-            bool: return True if calculation successfully ended, False otherwise.
+            npt.NDArray[np.float64]: The computed ratio.
         """
-        verticalStress: npt.NDArray[ np.float64 ] = stress[ :, 2 ]
+        verticalStress: npt.NDArray[ np.float64 ] = array[ :, 2 ]
         # keep the minimum of the 2 horizontal components
-        horizontalStress: npt.NDArray[ np.float64 ] = np.min( stress[ :, :2 ], axis=1 )
+        horizontalStress: npt.NDArray[ np.float64 ] = np.min( array[ :, :2 ], axis=1 )
 
-        stressRatioReal: npt.NDArray[ np.float64 ]
-        if not isAttributeInObject( self.output, basicOutput.attributeName, basicOutput.isOnPoints ):
-            stressRatioReal = fcts.stressRatio( horizontalStress, verticalStress )
-            self._attributesToCreate.append( basicOutput )
+        ratio: npt.NDArray[ np.float64 ]
+        if not isAttributeInObject( self.output, geomechanicProperty.attributeName, geomechanicProperty.isOnPoints ):
+            ratio = fcts.stressRatio( horizontalStress, verticalStress )
+            self._attributesToCreate.append( geomechanicProperty )
         else:
-            stressRatioReal = getArrayInObject( self.output, basicOutput.attributeName, basicOutput.isOnPoints )
+            ratio = getArrayInObject( self.output, geomechanicProperty.attributeName, geomechanicProperty.isOnPoints )
             self.logger.warning(
-                f"{ basicOutput.attributeName } is already on the mesh, it has not been computed by the filter." )
-
-        return stressRatioReal
-
-    def _computeRealEffectiveStressRatio( self: Self ) -> bool:
-        """Compute effective stress ratio.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
-        if self._mandatoryAttributes.effectiveStress is not None:
-            self._basicOutput.effectiveStressRatioReal = self._doComputeStressRatioReal(
-                self._mandatoryAttributes.effectiveStress, STRESS_EFFECTIVE_RATIO_REAL )
-            return True
-        else:
-            self.logger.error(
-                f"{ STRESS_EFFECTIVE_RATIO_REAL.attributeName } has not been computed, mandatory attribute { STRESS_EFFECTIVE.attributeName } is missing."
+                f"{ geomechanicProperty.attributeName } is already on the mesh, it has not been computed by the filter."
             )
-            return False
+
+        return ratio
+
+    def _computeRealEffectiveStressRatio( self: Self ) -> None:
+        """Compute the real effective stress ratio from the effective stress."""
+        if self._mandatoryProperties.effectiveStress is not None:
+            self._basicProperties.effectiveStressRatioReal = self._doComputeRatio(
+                self._mandatoryProperties.effectiveStress, STRESS_EFFECTIVE_RATIO_REAL )
+
+        return
 
     def _doComputeTotalStress(
         self: Self,
         effectiveStress: npt.NDArray[ np.float64 ],
         pressure: Union[ npt.NDArray[ np.float64 ], None ],
         biotCoefficient: npt.NDArray[ np.float64 ],
+        geomechanicProperty: AttributeEnum,
     ) -> npt.NDArray[ np.float64 ]:
-        """Compute total stress from effective stress and pressure.
+        """Compute the total stress from the effective stress, the Biot coefficient and the pressure.
 
         Args:
-            effectiveStress (npt.NDArray[np.float64]): Effective stress.
-            pressure (npt.NDArray[np.float64] | None): Pressure.
-            biotCoefficient (npt.NDArray[np.float64]): Biot coefficient.
+            effectiveStress (npt.NDArray[np.float64]): The array with the effective stress.
+            pressure (npt.NDArray[np.float64] | None): The array with the Pressure.
+            biotCoefficient (npt.NDArray[np.float64]): The array with the Biot coefficient.
+            geomechanicProperty (AttributeEnum): The geomechanic property link to the total stress computed.
 
         Returns:
-            npt.NDArray[ np.float64 ]: TotalStress.
+            npt.NDArray[ np.float64 ]: The array with the totalStress computed.
         """
         totalStress: npt.NDArray[ np.float64 ]
-        if pressure is None:
-            totalStress = np.copy( effectiveStress )
-            self.logger.warning( "Pressure attribute is undefined, total stress will be equal to effective stress." )
-        else:
-            if np.isnan( pressure ).any():
-                self.logger.warning( "Some cells do not have pressure data, for those cells, pressure is set to 0." )
-                pressure[ np.isnan( pressure ) ] = 0.0
+        if not isAttributeInObject( self.output, geomechanicProperty.attributeName, geomechanicProperty.isOnPoints ):
+            if pressure is None:
+                totalStress = np.copy( effectiveStress )
+                self.logger.warning( "There is no pressure, the total stress is equal to the effective stress." )
+            else:
+                if np.isnan( pressure ).any():
+                    self.logger.warning(
+                        "Some cells do not have pressure data, for those cells, pressure is set to 0." )
+                    pressure[ np.isnan( pressure ) ] = 0.0
 
-            totalStress = fcts.totalStress( effectiveStress, biotCoefficient, pressure )
+                totalStress = fcts.totalStress( effectiveStress, biotCoefficient, pressure )
+            self._attributesToCreate.append( geomechanicProperty )
+        else:
+            totalStress = getArrayInObject( self.output, geomechanicProperty.attributeName,
+                                            geomechanicProperty.isOnPoints )
+            self.logger.warning(
+                f"{ geomechanicProperty.attributeName } is already on the mesh, it has not been computed by the filter."
+            )
 
         return totalStress
 
-    def _computeTotalStressInitial( self: Self ) -> bool:
-        """Compute total stress at initial time step.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
-        # Compute Biot at initial time step.
+    def _doComputeTotalStressInitial( self: Self ) -> None:
+        """Compute the total stress at the initial time step from the initial effective stress, the initial Biot coefficient and the initial pressure."""
+        # Compute the Biot coefficient at the initial time step.
         biotCoefficientT0: npt.NDArray[ np.float64 ] = fcts.biotCoefficient( self.physicalConstants.grainBulkModulus,
                                                                              self._elasticModuli.bulkModulusT0 )
 
+        # Compute the pressure at the initial time step.
         pressureT0: npt.NDArray[ np.float64 ] | None = None
-        # Case pressureT0 is None, total stress = effective stress
-        # (managed by doComputeTotalStress function)
-        if self._mandatoryAttributes.pressure is not None:
-            if self._mandatoryAttributes.deltaPressure is not None:
-                pressureT0 = self._mandatoryAttributes.pressure - self._mandatoryAttributes.deltaPressure
-            else:
-                self.logger.error( f"Mandatory attribute { DELTA_PRESSURE.attributeName } is missing." )
-                return False
+        if self._mandatoryProperties.pressure is not None and self._mandatoryProperties.deltaPressure is not None:
+            pressureT0 = self._mandatoryProperties.pressure - self._mandatoryProperties.deltaPressure
 
-        if not isAttributeInObject( self.output, STRESS_TOTAL_T0.attributeName, STRESS_TOTAL_T0.isOnPoints ):
-            if self._mandatoryAttributes.effectiveStressT0 is not None:
-                self._basicOutput.totalStressT0 = self._doComputeTotalStress(
-                    self._mandatoryAttributes.effectiveStressT0, pressureT0, biotCoefficientT0 )
-                self._attributesToCreate.append( STRESS_TOTAL_T0 )
-            else:
-                self.logger.error(
-                    f"{ STRESS_TOTAL_T0.attributeName } has not been computed, mandatory attribute { STRESS_EFFECTIVE_T0.attributeName } is missing."
-                )
-                return False
-        else:
-            self._basicOutput.totalStressT0 = getArrayInObject( self.output, STRESS_TOTAL_T0.attributeName,
-                                                                STRESS_TOTAL_T0.isOnPoints )
-            self.logger.warning(
-                f"{ STRESS_TOTAL_T0.attributeName } is already on the mesh, it has not been computed by the filter." )
+        if self._mandatoryProperties.effectiveStressT0 is not None:
+            self._basicProperties.totalStressT0 = self._doComputeTotalStress(
+                self._mandatoryProperties.effectiveStressT0, pressureT0, biotCoefficientT0, STRESS_TOTAL_T0 )
 
-        return True
+        return
 
-    def _computeTotalStresses( self: Self ) -> bool:
-        """Compute total stress total stress ratio.
+    def _computeTotalStresses( self: Self ) -> None:
+        """Compute total stress and the total stress ratio from the effective stress, the Biot coefficient and the pressure.
 
         Total stress is computed at the initial and current time steps.
         Total stress ratio is computed at current time step only.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
         """
-        # Compute total stress at initial time step.
-        if not self._computeTotalStressInitial():
-            self.logger.error( "Total stress at initial time step computation failed." )
-            return False
+        # Compute the total stress at the initial time step.
+        self._doComputeTotalStressInitial()
 
-        # Compute total stress at current time step.
-        if not isAttributeInObject( self.output, STRESS_TOTAL.attributeName, STRESS_TOTAL.isOnPoints ):
-            if self._mandatoryAttributes.effectiveStress is not None and self._basicOutput.biotCoefficient is not None:
-                self._basicOutput.totalStress = self._doComputeTotalStress( self._mandatoryAttributes.effectiveStress,
-                                                                            self._mandatoryAttributes.pressure,
-                                                                            self._basicOutput.biotCoefficient )
-                self._attributesToCreate.append( STRESS_TOTAL )
-            else:
-                self.logger.error(
-                    f"{ STRESS_TOTAL.attributeName } has not been computed, mandatory attributes { STRESS_EFFECTIVE.attributeName } or { BIOT_COEFFICIENT.attributeName } are missing."
-                )
-                return False
+        mess: str
+        # Compute the total stress at the current time step.
+        if self._mandatoryProperties.effectiveStress is not None and self._basicProperties.biotCoefficient is not None:
+            self._basicProperties.totalStress = self._doComputeTotalStress( self._mandatoryProperties.effectiveStress,
+                                                                            self._mandatoryProperties.pressure,
+                                                                            self._basicProperties.biotCoefficient,
+                                                                            STRESS_TOTAL )
         else:
-            self._basicOutput.totalStress = getArrayInObject( self.output, STRESS_TOTAL.attributeName,
-                                                              STRESS_TOTAL.isOnPoints )
-            self.logger.warning(
-                f"{ STRESS_TOTAL.attributeName } is already on the mesh, it has not been computed by the filter." )
+            mess = f"{ STRESS_TOTAL.attributeName } has not been computed, geomechanics property { STRESS_EFFECTIVE.attributeName } or { BIOT_COEFFICIENT.attributeName } are missing."
+            raise ValueError( mess )
 
-        # Compute total stress ratio.
-        if self._basicOutput.totalStress is not None:
-            self._basicOutput.totalStressRatioReal = self._doComputeStressRatioReal( self._basicOutput.totalStress,
-                                                                                     STRESS_TOTAL_RATIO_REAL )
-        else:
-            self.logger.error(
-                f"{ STRESS_TOTAL_RATIO_REAL.attributeName } has not been computed, Mandatory attribute { BIOT_COEFFICIENT.attributeName } is missing."
-            )
-            return False
+        # Compute the total stress ratio.
+        if self._basicProperties.totalStress is not None:
+            self._basicProperties.totalStressRatioReal = self._doComputeRatio( self._basicProperties.totalStress,
+                                                                               STRESS_TOTAL_RATIO_REAL )
 
-        return True
+        return
 
-    def computeLithostaticStress( self: Self ) -> bool:
-        """Compute lithostatic stress.
+    # TODO: Lithostatic stress calculation is deactivated until the formula is not fixed
+    # def _computeLithostaticStress( self: Self ) -> None:
+    #     """Compute the lithostatic stress."""
+    #     if not isAttributeInObject( self.output, LITHOSTATIC_STRESS.attributeName, LITHOSTATIC_STRESS.isOnPoints ):
+    #         depth: npt.NDArray[ np.float64 ] = self._doComputeDepthAlongLine(
+    #         ) if LITHOSTATIC_STRESS.isOnPoints else self._doComputeDepthInMesh()
+    #         self._basicProperties.lithostaticStress = fcts.lithostaticStress( depth, self._mandatoryProperties.density,
+    #                                                                       GRAVITY )
+    #         self._attributesToCreate.append( LITHOSTATIC_STRESS )
+    #     else:
+    #         self._basicProperties.lithostaticStress = getArrayInObject( self.output, LITHOSTATIC_STRESS.attributeName,
+    #                                                                 LITHOSTATIC_STRESS.isOnPoints )
+    #         self.logger.warning(
+    #             f"{ LITHOSTATIC_STRESS.attributeName } is already on the mesh, it has not been computed by the filter."
+    #         )
 
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
-        if not isAttributeInObject( self.output, LITHOSTATIC_STRESS.attributeName, LITHOSTATIC_STRESS.isOnPoints ):
-            depth: npt.NDArray[ np.float64 ] = self._doComputeDepthAlongLine(
-            ) if LITHOSTATIC_STRESS.isOnPoints else self._doComputeDepthInMesh()
-            self._basicOutput.lithostaticStress = fcts.lithostaticStress( depth, self._mandatoryAttributes.density,
-                                                                          GRAVITY )
-            self._attributesToCreate.append( LITHOSTATIC_STRESS )
-        else:
-            self._basicOutput.lithostaticStress = getArrayInObject( self.output, LITHOSTATIC_STRESS.attributeName,
-                                                                    LITHOSTATIC_STRESS.isOnPoints )
-            self.logger.warning(
-                f"{ LITHOSTATIC_STRESS.attributeName } is already on the mesh, it has not been computed by the filter."
-            )
+    #     return
 
-        return True
+    # def _doComputeDepthAlongLine( self: Self ) -> npt.NDArray[ np.float64 ]:
+    #     """Compute depth along a line.
 
-    def _doComputeDepthAlongLine( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Compute depth along a line.
+    #     Returns:
+    #         npt.NDArray[np.float64]: 1D array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( True )
+    #     assert zCoord is not None, "Depth coordinates cannot be computed."
 
-        Returns:
-            npt.NDArray[np.float64]: 1D array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( True )
-        assert zCoord is not None, "Depth coordinates cannot be computed."
+    #     # TODO: to find how to compute depth in a general case
+    #     # GEOS z axis is upward
+    #     depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
+    #     return depth
 
-        # TODO: to find how to compute depth in a general case
-        # GEOS z axis is upward
-        depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
-        return depth
+    # def _doComputeDepthInMesh( self: Self ) -> npt.NDArray[ np.float64 ]:
+    #     """Compute depth of each cell in a mesh.
 
-    def _doComputeDepthInMesh( self: Self ) -> npt.NDArray[ np.float64 ]:
-        """Compute depth of each cell in a mesh.
+    #     Returns:
+    #         npt.NDArray[np.float64]: array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( False )
+    #     assert zCoord is not None, "Depth coordinates cannot be computed."
 
-        Returns:
-            npt.NDArray[np.float64]: array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ] = self._getZcoordinates( False )
-        assert zCoord is not None, "Depth coordinates cannot be computed."
+    #     # TODO: to find how to compute depth in a general case
+    #     depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
+    #     return depth
 
-        # TODO: to find how to compute depth in a general case
-        depth: npt.NDArray[ np.float64 ] = -1.0 * zCoord
-        return depth
+    # def _getZcoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
+    #     """Get z coordinates from self.output.
 
-    def _getZcoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
-        """Get z coordinates from self.output.
+    #     Args:
+    #         onPoints (bool): True if the attribute is on points, False if it is on cells.
 
-        Args:
-            onPoints (bool): True if the attribute is on points, False if it is on cells.
+    #     Returns:
+    #         npt.NDArray[np.float64]: 1D array with depth property
+    #     """
+    #     # get z coordinate
+    #     zCoord: npt.NDArray[ np.float64 ]
+    #     pointCoords: npt.NDArray[ np.float64 ] = self._getPointCoordinates( onPoints )
+    #     assert pointCoords is not None, "Point coordinates are undefined."
+    #     assert pointCoords.shape[ 1 ] == 2, "Point coordinates are undefined."
+    #     zCoord = pointCoords[ :, 2 ]
+    #     return zCoord
 
-        Returns:
-            npt.NDArray[np.float64]: 1D array with depth property
-        """
-        # get z coordinate
-        zCoord: npt.NDArray[ np.float64 ]
-        pointCoords: npt.NDArray[ np.float64 ] = self._getPointCoordinates( onPoints )
-        assert pointCoords is not None, "Point coordinates are undefined."
-        assert pointCoords.shape[ 1 ] == 2, "Point coordinates are undefined."
-        zCoord = pointCoords[ :, 2 ]
-        return zCoord
+    # def _getPointCoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
+    #     """Get the coordinates of Points or Cell center.
 
-    def _getPointCoordinates( self: Self, onPoints: bool ) -> npt.NDArray[ np.float64 ]:
-        """Get the coordinates of Points or Cell center.
+    #     Args:
+    #         onPoints (bool): True if the attribute is on points, False if it is on cells.
 
-        Args:
-            onPoints (bool): True if the attribute is on points, False if it is on cells.
+    #     Returns:
+    #         npt.NDArray[np.float64]: points/cell center coordinates
+    #     """
+    #     if onPoints:
+    #         return self.output.GetPoints()  # type: ignore[no-any-return]
+    #     else:
+    #         # Find cell centers
+    #         filter = vtkCellCenters()
+    #         filter.SetInputDataObject( self.output )
+    #         filter.Update()
+    #         return filter.GetOutput().GetPoints()  # type: ignore[no-any-return]
 
-        Returns:
-            npt.NDArray[np.float64]: points/cell center coordinates
-        """
-        if onPoints:
-            return self.output.GetPoints()  # type: ignore[no-any-return]
-        else:
-            # Find cell centers
-            filter = vtkCellCenters()
-            filter.SetInputDataObject( self.output )
-            filter.Update()
-            return filter.GetOutput().GetPoints()  # type: ignore[no-any-return]
-
-    def _computeElasticStrain( self: Self ) -> bool:
-        """Compute elastic strain from effective stress and elastic modulus.
-
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
-        if self._mandatoryAttributes.effectiveStress is not None and self._mandatoryAttributes.effectiveStressT0 is not None:
-            deltaEffectiveStress = self._mandatoryAttributes.effectiveStress - self._mandatoryAttributes.effectiveStressT0
+    def _computeElasticStrain( self: Self ) -> None:
+        """Compute the elastic strain from the effective stress and the elastic modulus."""
+        if self._mandatoryProperties.effectiveStress is not None and self._mandatoryProperties.effectiveStressT0 is not None:
+            deltaEffectiveStress = self._mandatoryProperties.effectiveStress - self._mandatoryProperties.effectiveStressT0
 
             if not isAttributeInObject( self.output, STRAIN_ELASTIC.attributeName, STRAIN_ELASTIC.isOnPoints ):
                 if self.computeYoungPoisson:
-                    self._basicOutput.elasticStrain = fcts.elasticStrainFromBulkShear(
+                    self._basicProperties.elasticStrain = fcts.elasticStrainFromBulkShear(
                         deltaEffectiveStress, self._elasticModuli.bulkModulus, self._elasticModuli.shearModulus )
                 else:
-                    self._basicOutput.elasticStrain = fcts.elasticStrainFromYoungPoisson(
+                    self._basicProperties.elasticStrain = fcts.elasticStrainFromYoungPoisson(
                         deltaEffectiveStress, self._elasticModuli.youngModulus, self._elasticModuli.poissonRatio )
                 self._attributesToCreate.append( STRAIN_ELASTIC )
             else:
-                self._basicOutput.totalStressT0 = getArrayInObject( self.output, STRAIN_ELASTIC.attributeName,
-                                                                    STRAIN_ELASTIC.isOnPoints )
+                self._basicProperties.totalStressT0 = getArrayInObject( self.output, STRAIN_ELASTIC.attributeName,
+                                                                        STRAIN_ELASTIC.isOnPoints )
                 self.logger.warning(
                     f"{ STRAIN_ELASTIC.attributeName } is already on the mesh, it has not been computed by the filter."
                 )
 
-            return True
+        return
 
-        else:
-            self.logger.error(
-                f"{ STRAIN_ELASTIC.attributeName } has not been computed, mandatory attributes { STRESS_EFFECTIVE.attributeName } or { STRESS_EFFECTIVE_T0.attributeName } are missing."
-            )
-            return False
-
-    def _computeReservoirStressPathReal( self: Self ) -> bool:
-        """Compute reservoir stress paths.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
+    def _computeReservoirStressPathReal( self: Self ) -> None:
+        """Compute reservoir stress paths."""
         # create delta stress attribute for QC
         if not isAttributeInObject( self.output, STRESS_TOTAL_DELTA.attributeName, STRESS_TOTAL_DELTA.isOnPoints ):
-            if self._basicOutput.totalStress is not None and self._basicOutput.totalStressT0 is not None:
-                self._basicOutput.deltaTotalStress = self._basicOutput.totalStress - self._basicOutput.totalStressT0
+            if self._basicProperties.totalStress is not None and self._basicProperties.totalStressT0 is not None:
+                self._basicProperties.deltaTotalStress = self._basicProperties.totalStress - self._basicProperties.totalStressT0
                 self._attributesToCreate.append( STRESS_TOTAL_DELTA )
             else:
-                self.logger.error(
-                    f"{ STRESS_TOTAL_DELTA.attributeName } has not been computed, mandatory attributes { STRESS_TOTAL.attributeName } or { STRESS_TOTAL_T0.attributeName } are missing."
-                )
-                return False
+                mess: str = f"{ STRESS_TOTAL_DELTA.attributeName } has not been computed, geomechanics properties { STRESS_TOTAL.attributeName } or { STRESS_TOTAL_T0.attributeName } are missing."
+                raise ValueError( mess )
         else:
-            self._basicOutput.deltaTotalStress = getArrayInObject( self.output, STRESS_TOTAL_DELTA.attributeName,
-                                                                   STRESS_TOTAL_DELTA.isOnPoints )
+            self._basicProperties.deltaTotalStress = getArrayInObject( self.output, STRESS_TOTAL_DELTA.attributeName,
+                                                                       STRESS_TOTAL_DELTA.isOnPoints )
             self.logger.warning(
                 f"{ STRESS_TOTAL_DELTA.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
         if not isAttributeInObject( self.output, RSP_REAL.attributeName, RSP_REAL.isOnPoints ):
-            self._basicOutput.rspReal = fcts.reservoirStressPathReal( self._basicOutput.deltaTotalStress,
-                                                                      self._mandatoryAttributes.deltaPressure )
+            self._basicProperties.rspReal = fcts.reservoirStressPathReal( self._basicProperties.deltaTotalStress,
+                                                                          self._mandatoryProperties.deltaPressure )
             self._attributesToCreate.append( RSP_REAL )
         else:
-            self._basicOutput.rspReal = getArrayInObject( self.output, RSP_REAL.attributeName, RSP_REAL.isOnPoints )
+            self._basicProperties.rspReal = getArrayInObject( self.output, RSP_REAL.attributeName, RSP_REAL.isOnPoints )
             self.logger.warning(
                 f"{ RSP_REAL.attributeName } is already on the mesh, it has not been computed by the filter." )
 
-        return True
+        return
 
-    def _computeReservoirStressPathOed( self: Self ) -> bool:
-        """Compute Reservoir Stress Path in oedometric conditions.
-
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
+    def _computeReservoirStressPathOed( self: Self ) -> None:
+        """Compute Reservoir Stress Path in oedometric conditions."""
         if not isAttributeInObject( self.output, RSP_OED.attributeName, RSP_OED.isOnPoints ):
-            self._basicOutput.rspOed = fcts.reservoirStressPathOed( self._basicOutput.biotCoefficient,
-                                                                    self._elasticModuli.poissonRatio )
+            self._basicProperties.rspOed = fcts.reservoirStressPathOed( self._basicProperties.biotCoefficient,
+                                                                        self._elasticModuli.poissonRatio )
             self._attributesToCreate.append( RSP_OED )
         else:
-            self._basicOutput.rspOed = getArrayInObject( self.output, RSP_OED.attributeName, RSP_OED.isOnPoints )
+            self._basicProperties.rspOed = getArrayInObject( self.output, RSP_OED.attributeName, RSP_OED.isOnPoints )
             self.logger.warning(
                 f"{ RSP_OED.attributeName } is already on the mesh, it has not been computed by the filter." )
 
-        return True
+        return
 
-    def _computeEffectiveStressRatioOed( self: Self ) -> bool:
-        """Compute the effective stress ratio in oedometric conditions.
-
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
-        """
+    def _computeEffectiveStressRatioOed( self: Self ) -> None:
+        """Compute the effective stress ratio in oedometric conditions."""
         if not isAttributeInObject( self.output, STRESS_EFFECTIVE_RATIO_OED.attributeName,
                                     STRESS_EFFECTIVE_RATIO_OED.isOnPoints ):
-            self._basicOutput.effectiveStressRatioOed = fcts.deviatoricStressPathOed( self._elasticModuli.poissonRatio )
+            self._basicProperties.effectiveStressRatioOed = fcts.deviatoricStressPathOed(
+                self._elasticModuli.poissonRatio )
             self._attributesToCreate.append( STRESS_EFFECTIVE_RATIO_OED )
         else:
-            self._basicOutput.effectiveStressRatioOed = getArrayInObject( self.output,
-                                                                          STRESS_EFFECTIVE_RATIO_OED.attributeName,
-                                                                          STRESS_EFFECTIVE_RATIO_OED.isOnPoints )
+            self._basicProperties.effectiveStressRatioOed = getArrayInObject( self.output,
+                                                                              STRESS_EFFECTIVE_RATIO_OED.attributeName,
+                                                                              STRESS_EFFECTIVE_RATIO_OED.isOnPoints )
             self.logger.warning(
                 f"{ STRESS_EFFECTIVE_RATIO_OED.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
-        return True
+        return
 
-    def _computeCriticalTotalStressRatio( self: Self ) -> bool:
-        """Compute fracture index and fracture threshold.
-
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
+    def _computeCriticalTotalStressRatio( self: Self ) -> None:
+        """Compute fracture index and fracture threshold."""
+        mess: str
         if not isAttributeInObject( self.output, CRITICAL_TOTAL_STRESS_RATIO.attributeName,
                                     CRITICAL_TOTAL_STRESS_RATIO.isOnPoints ):
-            if self._basicOutput.totalStress is not None:
-                verticalStress: npt.NDArray[ np.float64 ] = self._basicOutput.totalStress[ :, 2 ]
-                self._advancedOutput.criticalTotalStressRatio = fcts.criticalTotalStressRatio(
-                    self._mandatoryAttributes.pressure, verticalStress )
+            if self._basicProperties.totalStress is not None:
+                verticalStress: npt.NDArray[ np.float64 ] = self._basicProperties.totalStress[ :, 2 ]
+                self._advancedProperties.criticalTotalStressRatio = fcts.criticalTotalStressRatio(
+                    self._mandatoryProperties.pressure, verticalStress )
                 self._attributesToCreate.append( CRITICAL_TOTAL_STRESS_RATIO )
             else:
-                self.logger.error(
-                    f"{ CRITICAL_TOTAL_STRESS_RATIO.attributeName } has not been computed, mandatory attribute { STRESS_TOTAL.attributeName } is missing."
-                )
-                return False
+                mess = f"{ CRITICAL_TOTAL_STRESS_RATIO.attributeName } has not been computed, geomechanics property { STRESS_TOTAL.attributeName } is missing."
+                raise ValueError( mess )
         else:
-            self._advancedOutput.criticalTotalStressRatio = getArrayInObject( self.output,
-                                                                              CRITICAL_TOTAL_STRESS_RATIO.attributeName,
-                                                                              CRITICAL_TOTAL_STRESS_RATIO.isOnPoints )
+            self._advancedProperties.criticalTotalStressRatio = getArrayInObject(
+                self.output, CRITICAL_TOTAL_STRESS_RATIO.attributeName, CRITICAL_TOTAL_STRESS_RATIO.isOnPoints )
             self.logger.warning(
                 f"{ CRITICAL_TOTAL_STRESS_RATIO.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
         if not isAttributeInObject( self.output, TOTAL_STRESS_RATIO_THRESHOLD.attributeName,
                                     TOTAL_STRESS_RATIO_THRESHOLD.isOnPoints ):
-            if self._basicOutput.totalStress is not None:
-                mask: npt.NDArray[ np.bool_ ] = np.argmin( np.abs( self._basicOutput.totalStress[ :, :2 ] ), axis=1 )
-                horizontalStress: npt.NDArray[ np.float64 ] = self._basicOutput.totalStress[ :, :2 ][
-                    np.arange( self._basicOutput.totalStress[ :, :2 ].shape[ 0 ] ), mask ]
-                self._advancedOutput.stressRatioThreshold = fcts.totalStressRatioThreshold(
-                    self._mandatoryAttributes.pressure, horizontalStress )
+            if self._basicProperties.totalStress is not None:
+                mask: npt.NDArray[ np.bool_ ] = np.argmin( np.abs( self._basicProperties.totalStress[ :, :2 ] ),
+                                                           axis=1 )
+                horizontalStress: npt.NDArray[ np.float64 ] = self._basicProperties.totalStress[ :, :2 ][
+                    np.arange( self._basicProperties.totalStress[ :, :2 ].shape[ 0 ] ), mask ]
+                self._advancedProperties.stressRatioThreshold = fcts.totalStressRatioThreshold(
+                    self._mandatoryProperties.pressure, horizontalStress )
                 self._attributesToCreate.append( TOTAL_STRESS_RATIO_THRESHOLD )
             else:
-                self.logger.error(
-                    f"{ TOTAL_STRESS_RATIO_THRESHOLD.attributeName } has not been computed, mandatory attribute { STRESS_TOTAL.attributeName } is missing."
-                )
-                return False
+                mess = f"{ TOTAL_STRESS_RATIO_THRESHOLD.attributeName } has not been computed, geomechanics property { STRESS_TOTAL.attributeName } is missing."
+                raise ValueError( mess )
         else:
-            self._advancedOutput.stressRatioThreshold = getArrayInObject( self.output,
-                                                                          TOTAL_STRESS_RATIO_THRESHOLD.attributeName,
-                                                                          TOTAL_STRESS_RATIO_THRESHOLD.isOnPoints )
+            self._advancedProperties.stressRatioThreshold = getArrayInObject(
+                self.output, TOTAL_STRESS_RATIO_THRESHOLD.attributeName, TOTAL_STRESS_RATIO_THRESHOLD.isOnPoints )
             self.logger.warning(
                 f"{ TOTAL_STRESS_RATIO_THRESHOLD.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
-        return True
+        return
 
-    def _computeCriticalPorePressure( self: Self ) -> bool:
-        """Compute the critical pore pressure and the pressure index.
-
-        Returns:
-            bool: return True if calculation successfully ended, False otherwise.
-        """
+    def _computeCriticalPorePressure( self: Self ) -> None:
+        """Compute the critical pore pressure and the pressure index."""
         if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE.attributeName,
                                     CRITICAL_PORE_PRESSURE.isOnPoints ):
-            if self._basicOutput.totalStress is not None:
-                self._advancedOutput.criticalPorePressure = fcts.criticalPorePressure(
-                    -1.0 * self._basicOutput.totalStress, self.physicalConstants.rockCohesion,
+            if self._basicProperties.totalStress is not None:
+                self._advancedProperties.criticalPorePressure = fcts.criticalPorePressure(
+                    -1.0 * self._basicProperties.totalStress, self.physicalConstants.rockCohesion,
                     self.physicalConstants.frictionAngle )
                 self._attributesToCreate.append( CRITICAL_PORE_PRESSURE )
             else:
-                self.logger.error(
-                    f"{ CRITICAL_PORE_PRESSURE.attributeName } has not been computed, mandatory attribute { STRESS_TOTAL.attributeName } is missing."
-                )
-                return False
+                mess: str
+                mess = f"{ CRITICAL_PORE_PRESSURE.attributeName } has not been computed, geomechanics property { STRESS_TOTAL.attributeName } is missing."
+                raise ValueError( mess )
         else:
-            self._advancedOutput.criticalPorePressure = getArrayInObject( self.output,
-                                                                          CRITICAL_PORE_PRESSURE.attributeName,
-                                                                          CRITICAL_PORE_PRESSURE.isOnPoints )
+            self._advancedProperties.criticalPorePressure = getArrayInObject( self.output,
+                                                                              CRITICAL_PORE_PRESSURE.attributeName,
+                                                                              CRITICAL_PORE_PRESSURE.isOnPoints )
             self.logger.warning(
                 f"{ CRITICAL_PORE_PRESSURE.attributeName } is already on the mesh, it has not been computed by the filter."
             )
@@ -1440,15 +1312,15 @@ class GeomechanicsCalculator:
         # Add critical pore pressure index (i.e., ratio between pressure and criticalPorePressure)
         if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName,
                                     CRITICAL_PORE_PRESSURE_THRESHOLD.isOnPoints ):
-            self._advancedOutput.criticalPorePressureIndex = fcts.criticalPorePressureThreshold(
-                self._mandatoryAttributes.pressure, self._advancedOutput.criticalPorePressure )
+            self._advancedProperties.criticalPorePressureIndex = fcts.criticalPorePressureThreshold(
+                self._mandatoryProperties.pressure, self._advancedProperties.criticalPorePressure )
             self._attributesToCreate.append( CRITICAL_PORE_PRESSURE_THRESHOLD )
         else:
-            self._advancedOutput.criticalPorePressureIndex = getArrayInObject(
+            self._advancedProperties.criticalPorePressureIndex = getArrayInObject(
                 self.output, CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName,
                 CRITICAL_PORE_PRESSURE_THRESHOLD.isOnPoints )
             self.logger.warning(
                 f"{ CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName } is already on the mesh, it has not been computed by the filter."
             )
 
-        return True
+        return
