@@ -8,7 +8,7 @@ import numpy as np
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+    VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler, )
@@ -17,6 +17,7 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 update_paths()
 
@@ -30,10 +31,7 @@ from geos.mesh.utils.multiblockHelpers import (
     getBlockFromFlatIndex,
 )
 from vtkmodules.vtkCommonCore import (
-    vtkDataArray,
-    vtkInformation,
-    vtkInformationVector,
-)
+    vtkDataArray, )
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkPolyData,
@@ -61,24 +59,16 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVSurfaceGeomechanics", label="Geos Surface Geomechanics" )
-@smhint.xml( '<ShowInMenu category="3- Geos Geomechanics"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
+@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
+             decoratedLabel="Geos Surface Geomechanics",
+             decoratedType="vtkMultiBlockDataSet" )
 class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Compute additional geomechanical surface outputs.
 
-        Input is a vtkMultiBlockDataSet that contains surfaces with
-        Normals and Tangential attributes.
+        Input is a vtkMultiBlockDataSet containing surfaces.
         """
-        super().__init__(
-            nInputPorts=1,
-            nOutputPorts=1,
-            inputType="vtkMultiBlockDataSet",
-            outputType="vtkMultiBlockDataSet",
-        )
         # rock cohesion (Pa)
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         # friction angle (°)
@@ -118,7 +108,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                     </Documentation>
                   """ )
     def a02SetFrictionAngle( self: Self, value: float ) -> None:
-        """Set frition angle.
+        """Set friction angle.
 
         Args:
             value (float): friction angle (°)
@@ -126,33 +116,18 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.frictionAngle = value
         self.Modified()
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
+    def Filter( self: Self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
+        """Apply SurfaceGeomechanics filter to the mesh.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            inputMesh (vtkMultiBlockDataSet): The input multiblock mesh with surfaces.
+            outputMesh (vtkMultiBlockDataSet): The output multiblock mesh with converted attributes and SCU.
         """
-        inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
-        output: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
-
-        assert inputMesh is not None, "Input surface is null."
-        assert output is not None, "Output pipeline is null."
-
-        output.ShallowCopy( inputMesh )
+        outputMesh.ShallowCopy( inputMesh )
 
         surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( inputMesh )
         for blockIndex in surfaceBlockIndexes:
-            surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( output, blockIndex ) )
+            surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( outputMesh, blockIndex ) )
 
             sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
             sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
@@ -172,8 +147,8 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                 surfaceBlock.GetCellData().Modified()
             surfaceBlock.Modified()
 
-        output.Modified()
-        return 1
+        outputMesh.Modified()
+        return
 
     def _getFrictionAngle( self: Self ) -> float:
         """Get friction angle in radian.

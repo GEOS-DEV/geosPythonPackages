@@ -111,7 +111,6 @@ class SurfaceGeomechanics:
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkPolyData" )  # type: ignore[no-untyped-call]
 
         # Logger
         self.logger: Logger
