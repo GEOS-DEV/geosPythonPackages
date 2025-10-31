@@ -62,9 +62,3 @@ PVMohrCirclePlot plugin
 ---------------------------------
 
 .. automodule:: PVplugins.PVMohrCirclePlot
-
-PVplugins.PVSurfaceGeomechanics module
---------------------------------------
-
-.. automodule:: PVplugins.PVSurfaceGeomechanics
-
