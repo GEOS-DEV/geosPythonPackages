@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 
 import numpy as np
 from typing_extensions import Self
@@ -11,12 +11,12 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -33,7 +33,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
-from PVplugins.PVExtractMergeBlocksVolumeSurface import (
+from geos.pv.plugins.PVExtractMergeBlocksVolumeSurface import (
     PVExtractMergeBlocksVolumeSurface, )
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
