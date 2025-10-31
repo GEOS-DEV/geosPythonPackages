@@ -254,7 +254,7 @@ def test_failingComputeNormals( emptySurface: vtkPolyData ) -> None:
 
 def test_failingGetTangents( emptySurface: vtkPolyData ) -> None:
     """Test error raising when getting the surface tangents."""
-    with pytest.raises( ValueError ):
+    with pytest.raises( VTKError ):
         getTangentsVectors( emptySurface )
 
 

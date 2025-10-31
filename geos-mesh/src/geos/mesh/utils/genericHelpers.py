@@ -393,7 +393,7 @@ def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
         tangents: Tuple[ npt.NDArray[ np.float64 ],
                          npt.NDArray[ np.float64 ] ] = getTangentsVectors( surfaceWithNormals )
     # If no tangents is present in the mesh, they are computed on that surface
-    except ValueError:
+    except VTKError:
         surfaceWithTangents: vtkPolyData = computeTangents( surfaceWithNormals )
         tangents = getTangentsVectors( surfaceWithTangents )
 
