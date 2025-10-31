@@ -7,6 +7,7 @@
 import pytest
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
+from geos.mesh.utils.multiblockHelpers import getBlockNameFromIndex
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 
 
@@ -32,9 +33,14 @@ def test_GeosExtractBlock(
     extractedWell: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.well
 
     assert extractedVolume.GetNumberOfBlocks() == 2
+    assert getBlockNameFromIndex( extractedVolume, 1 ) == "domain"
+    assert getBlockNameFromIndex( extractedVolume, 2 ) == "emptyDomain"
 
     if extractFault:
         assert extractedFault.GetNumberOfBlocks() == 2
+        assert getBlockNameFromIndex( extractedFault, 1 ) == "fracture"
+        assert getBlockNameFromIndex( extractedFault, 2 ) == "emptyFracture"
 
     if extractWell:
         assert extractedWell.GetNumberOfBlocks() == 1
+        assert getBlockNameFromIndex( extractedWell, 1 ) == "well"
