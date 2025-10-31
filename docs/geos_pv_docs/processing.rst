@@ -50,7 +50,7 @@ Geos output pre-processing
 PVExtractMergeBlocksVolume plugin
 -------------------------------------------
 
-.. automodule:: geos.pv.plugins..PVExtractMergeBlocksVolume
+.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolume
 
 
 PVExtractMergeBlocksVolumeSurface plugin
