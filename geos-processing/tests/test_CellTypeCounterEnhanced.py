@@ -71,10 +71,10 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    filter.SetInputDataObject( test_case.mesh )
-    filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
+    cellTypeCounterEnhancedFilter.Update()
+    countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
@@ -130,10 +130,10 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    filter.SetInputDataObject( test_case.mesh )
-    filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
+    cellTypeCounterEnhancedFilter.Update()
+    countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(

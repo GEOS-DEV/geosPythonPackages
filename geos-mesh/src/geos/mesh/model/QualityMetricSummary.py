@@ -17,7 +17,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON, VTK_POLYHEDRON )
-from geos.mesh.processing.meshQualityMetricHelpers import ( QUALITY_METRIC_OTHER_START_INDEX, getAllCellTypesExtended,
+from geos.mesh.stats.meshQualityMetricHelpers import ( QUALITY_METRIC_OTHER_START_INDEX, getAllCellTypesExtended,
                                                             getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
                                                             MeshQualityMetricEnum, CellQualityMetricEnum,
                                                             VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,

@@ -24,17 +24,20 @@ To use the filter:
 
     from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 
-    # filter inputs
-    input :vtkUnstructuredGrid
+    # Filter inputs
+    input: vtkUnstructuredGrid
 
-    # instantiate the filter
-    filter :CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    # set input data object
-    filter.SetInputDataObject(input)
-    # do calculations
-    filter.Update()
-    # get counts
-    counts :CellTypeCounts = filter.GetCellTypeCountsObject()
+    # Instantiate the filter
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+
+    # Set input data object
+    cellTypeCounterEnhancedFilter.SetInputDataObject(input)
+
+    # Do calculations
+    cellTypeCounterEnhancedFilter.Update()
+
+    # Get counts
+    counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 """
 
 
