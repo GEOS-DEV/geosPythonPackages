@@ -5,7 +5,7 @@
 import pytest
 from typing import Union, Any
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
-from geos.mesh.processing.AttributeMapping import AttributeMapping
+from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 
@@ -29,5 +29,5 @@ def test_AttributeMapping(
     if isinstance( meshFrom, vtkMultiBlockDataSet ):
         fillAllPartialAttributes( meshFrom )
 
-    filter = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
-    assert filter.applyFilter()
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
+    assert attributeMappingFilter.applyFilter()

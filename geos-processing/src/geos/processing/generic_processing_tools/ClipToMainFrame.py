@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
-from typing import Tuple
 import logging
 
 import numpy as np
@@ -30,7 +29,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+    from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
@@ -38,17 +37,17 @@ To use it:
     speHandler : bool
 
     # Instantiate the filter.
-    filter: ClipToMainFrame = ClipToMainFrame()
-    filter.SetInputData( multiBlockDataSet )
+    clipToMainFrameFilter: ClipToMainFrame = ClipToMainFrame()
+    clipToMainFrameFilter.SetInputData( multiBlockDataSet )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    clipToMainFrameFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.ComputeTransform()
-    filter.Update()
-    output: vtkMultiBlockDataSet = filter.GetOutput()
+    clipToMainFrameFilter.ComputeTransform()
+    clipToMainFrameFilter.Update()
+    output: vtkMultiBlockDataSet = clipToMainFrameFilter.GetOutput()
 
 """
 
@@ -250,7 +249,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
-            self.logger.info( "Processing untructuredGrid" )
+            self.logger.info( "Processing unstructuredGrid" )
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()
@@ -303,7 +302,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( multiBlockDataSet )
         while DOIterator.GetCurrentDataObject() is not None:
             dataSet: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
-            bounds: Tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
+            bounds: tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
             #use the furthest bounds corner as reference point in the all negs quadrant
             if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
                 self.logger.info( f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )

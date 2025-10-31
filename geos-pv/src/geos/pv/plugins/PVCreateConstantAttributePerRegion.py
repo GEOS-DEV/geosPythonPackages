@@ -25,7 +25,7 @@ from vtkmodules.vtkCommonDataModel import (
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 
-from geos.mesh.processing.CreateConstantAttributePerRegion import ( CreateConstantAttributePerRegion )
+from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
@@ -280,7 +280,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             inputMesh : A mesh to transform
             outputMesh : A mesh transformed.
         """
-        filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+        createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
             outputMesh,
             self.regionName,
             self.dictRegionValues,
@@ -291,10 +291,10 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
+        if not createConstantAttributePerRegionFilter.logger.hasHandlers():
+            createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
-        filter.applyFilter()
+        createConstantAttributePerRegionFilter.applyFilter()
 
         self.clearDictRegion = True
 

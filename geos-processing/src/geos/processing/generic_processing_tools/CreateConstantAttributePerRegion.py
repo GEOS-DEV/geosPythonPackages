@@ -37,7 +37,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+    from geo.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
     # Filter inputs.
     mesh: Union[vtkMultiBlockDataSet, vtkDataSet]
@@ -52,22 +52,22 @@ To use it:
     speHandler: bool
 
     # Instantiate the filter
-    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( mesh,
-                                                                                 regionName,
-                                                                                 dictRegionValues,
-                                                                                 newAttributeName,
-                                                                                 valueNpType,
-                                                                                 nbComponents,
-                                                                                 componentNames,
-                                                                                 speHandler,
-                                                                                )
+    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( mesh,
+                                                                                                                 regionName,
+                                                                                                                 dictRegionValues,
+                                                                                                                 newAttributeName,
+                                                                                                                 valueNpType,
+                                                                                                                 nbComponents,
+                                                                                                                 componentNames,
+                                                                                                                 speHandler,
+                                                                                                                 )
 
     # Set your handler (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.addLoggerHandler( yourHandler )
+    createConstantAttributePerRegionFilter.addLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.applyFilter()
+    createConstantAttributePerRegionFilter.applyFilter()
 """
 
 loggerTitle: str = "Create Constant Attribute Per Region"

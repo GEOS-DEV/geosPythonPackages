@@ -30,7 +30,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
@@ -42,19 +42,22 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.processing.SplitMesh import SplitMesh
+    from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
-    # filter inputs
-    input :vtkUnstructuredGrid
+    # Filter inputs
+    input: vtkUnstructuredGrid
 
-    # instanciate the filter
-    filter :SplitMesh = SplitMesh()
-    # set input data object
-    filter.SetInputDataObject(input)
-    # do calculations
-    filter.Update()
-    # get output object
-    output :vtkUnstructuredGrid = filter.GetOutputDataObject(0)
+    # Instantiate the filter
+    splitMeshFilter: SplitMesh = SplitMesh()
+
+    # Set input data object
+    splitMeshFilter.SetInputDataObject( input )
+
+    # Do calculations
+    splitMeshFilter.Update()
+
+    # Get output object
+    output :vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
 """
 
 
@@ -187,10 +190,10 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         Returns:
             CellTypeCounts: cell type counts
         """
-        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        filter.SetInputDataObject( self.inData )
-        filter.Update()
-        return filter.GetCellTypeCountsObject()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+        cellTypeCounterEnhancedFilter.SetInputDataObject( self.inData )
+        cellTypeCounterEnhancedFilter.Update()
+        return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.

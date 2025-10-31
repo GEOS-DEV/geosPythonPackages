@@ -14,7 +14,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing.AttributeMapping import AttributeMapping
+from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -188,12 +188,13 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
         outData.ShallowCopy( meshTo )
 
-        filter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ), self.onPoints,
-                                                     True )
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
+        attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
+                                                                     self.onPoints, True )
 
-        filter.applyFilter()
+        if not attributeMappingFilter.logger.hasHandlers():
+            attributeMappingFilter.setLoggerHandler( VTKHandler() )
+
+        attributeMappingFilter.applyFilter()
         self.clearAttributeNames = True
 
         return 1

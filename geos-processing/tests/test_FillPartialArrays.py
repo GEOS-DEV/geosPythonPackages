@@ -9,7 +9,7 @@ import pytest
 from typing import Any
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from geos.mesh.processing.FillPartialArrays import FillPartialArrays
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
 
 @pytest.mark.parametrize( "dictAttributesValues", [
@@ -49,5 +49,5 @@ def test_FillPartialArrays(
     """Test FillPartialArrays vtk filter."""
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
 
-    filter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
-    assert filter.applyFilter()
+    fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
+    assert fillPartialArraysFilter.applyFilter()

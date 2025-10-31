@@ -29,7 +29,22 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
-        if datasetType == "meshGeosExtractBlockTmp":
+        if datasetType == "multiblock":
+            vtkFilename = "data/displacedFault.vtm"
+        elif datasetType == "emptymultiblock":
+            vtkFilename = "data/displacedFaultempty.vtm"
+        elif datasetType == "multiblockGeosOutput":
+            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
+            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
+        elif datasetType == "fracture":
+            vtkFilename = "data/fracture_res5_id.vtu"
+        elif datasetType == "emptyFracture":
+            vtkFilename = "data/fracture_res5_id_empty.vtu"
+        elif datasetType == "dataset":
+            vtkFilename = "data/domain_res5_id.vtu"
+        elif datasetType == "emptydataset":
+            vtkFilename = "data/domain_res5_id_empty.vtu"
+        elif datasetType == "meshGeosExtractBlockTmp":
             vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
 
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )

@@ -22,8 +22,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.pv.utils.details import SISOFilter, FilterCategory
-from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
 __doc__ = """
 Clip the input mesh to the main frame applying the correct LandmarkTransform

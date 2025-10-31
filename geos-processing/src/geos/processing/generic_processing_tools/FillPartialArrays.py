@@ -29,7 +29,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.FillPartialArrays import FillPartialArrays
+    from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
@@ -38,14 +38,14 @@ To use it:
     speHandler: bool
 
     # Instantiate the filter.
-    filter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues, speHandler )
+    fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues, speHandler )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    fillPartialArraysFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.applyFilter()
+    fillPartialArraysFilter.applyFilter()
 """
 
 loggerTitle: str = "Fill Partial Attribute"

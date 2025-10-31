@@ -13,9 +13,9 @@ from typing import (
     Optional,
 )
 from geos.mesh.utils.genericHelpers import createMultiCellMesh
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     getAllCellTypesExtended, )
-from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
+from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
@@ -28,8 +28,8 @@ meshName_all: tuple[ str, ...] = (
     "polydata",
     "tetra_mesh",
 )
-cellTypes_all: set[ int ] = ( VTK_TRIANGLE, VTK_TETRA )
-qualityMetrics_all: tuple[ set[ int ], ...] = (
+cellTypes_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_TETRA )
+qualityMetrics_all: tuple[ tuple[ int, ...], ...] = (
     ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
     ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
@@ -41,7 +41,7 @@ cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = (
     ( 26324, 0, 0, 0, 0, 0, 26324, 0, ),
     ( 0, 0, 8, 0, 0, 0, 0, 8,)
 )
-metricsSummary_all: tuple[ tuple[ float, ...], ...] = (
+metricsSummary_all: tuple[ tuple[ tuple[ float, ...], ...], ...] = (
     ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67, 26324.0 ) ),
     ( ( -0.28, 0.09, -0.49, -0.22, 8.0 ), ( 0.7, 0.1, 0.47, 0.79, 8.0 ), ( 0.8, 0.12, 0.58, 0.95, 8.0 ) ),
 )
@@ -54,10 +54,10 @@ class TestCase:
     __test__ = False
     #: mesh
     mesh: vtkUnstructuredGrid
-    cellType: vtkCellTypes
-    qualityMetrics: set[ int ]
-    cellTypeCounts: tuple[ int ]
-    metricsSummary: tuple[ float ]
+    cellType: int
+    qualityMetrics: tuple[ int, ...]
+    cellTypeCounts: tuple[ int, ...]
+    metricsSummary: tuple[ tuple[ float, ...], ...]
 
 
 def __get_tetra_dataset() -> vtkUnstructuredGrid:
@@ -83,8 +83,15 @@ def __get_tetra_dataset() -> vtkUnstructuredGrid:
     return mesh
 
 
-def __get_dataset( meshName ) -> vtkUnstructuredGrid:
-    # Get the dataset from external vtk file
+def __get_dataset( meshName: str ) -> vtkUnstructuredGrid:
+    """Get the dataset from external vtk file.
+
+    Args:
+        meshName (str): The name of the mesh
+
+    Returns:
+        vtkUnstructuredGrid: The dataset.
+    """
     if meshName == "polydata":
         reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
         vtkFilename: str = "data/triangulatedSurface.vtu"
@@ -109,10 +116,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
                                                                                    metricsSummary_all,
                                                                                    strict=True ):
         mesh: vtkUnstructuredGrid
-        if meshName == "tetra_mesh":
-            mesh = __get_tetra_dataset()
-        else:
-            mesh = __get_dataset( meshName )
+        mesh = __get_tetra_dataset() if meshName == "tetra_mesh" else __get_dataset( meshName )
 
         yield TestCase( mesh, cellType, qualityMetrics, cellTypeCounts, metricsSummary )
 
@@ -128,30 +132,31 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
         test_case (TestCase): Test case
     """
     mesh = test_case.mesh
-    filter: MeshQualityEnhanced = MeshQualityEnhanced()
-    filter.SetInputDataObject( mesh )
+    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
+    meshQualityEnhancedFilter.SetInputDataObject( mesh )
     if test_case.cellType == VTK_TRIANGLE:
-        filter.SetTriangleMetrics( test_case.qualityMetrics )
+        meshQualityEnhancedFilter.SetTriangleMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_QUAD:
-        filter.SetQuadMetrics( test_case.qualityMetrics )
+        meshQualityEnhancedFilter.SetQuadMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_TETRA:
-        filter.SetTetraMetrics( test_case.qualityMetrics )
+        meshQualityEnhancedFilter.SetTetraMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_PYRAMID:
-        filter.SetPyramidMetrics( test_case.qualityMetrics )
+        meshQualityEnhancedFilter.SetPyramidMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_WEDGE:
-        filter.SetWedgeMetrics( test_case.qualityMetrics )
+        meshQualityEnhancedFilter.SetWedgeMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_HEXAHEDRON:
-        filter.SetHexaMetrics( test_case.qualityMetrics )
-    filter.Update()
+        meshQualityEnhancedFilter.SetHexaMetrics( test_case.qualityMetrics )
+    meshQualityEnhancedFilter.Update()
 
     # test method getComputedMetricsFromCellType
     for i, cellType in enumerate( getAllCellTypesExtended() ):
-        metrics: Optional[ set[ int ] ] = filter.getComputedMetricsFromCellType( cellType )
+        print( cellType )
+        metrics: Optional[ set[ int ] ] = meshQualityEnhancedFilter.getComputedMetricsFromCellType( cellType )
         if test_case.cellTypeCounts[ i ] > 0:
             assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."
 
     # test attributes
-    outputMesh: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
+    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.GetOutputDataObject( 0 )
     cellData: vtkCellData = outputMesh.GetCellData()
     assert cellData is not None, "Cell data is undefined."
 
@@ -172,7 +177,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     assert fieldData.GetNumberOfArrays(
     ) == nbFieldArrayExp, f"Number of field data arrays is expected to be {nbFieldArrayExp}."
 
-    stats: QualityMetricSummary = filter.GetQualityMetricSummary()
+    stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
     for i, cellType in enumerate( getAllCellTypesExtended() ):
         # test Counts
         assert stats.getCellTypeCountsOfCellType( cellType ) == test_case.cellTypeCounts[

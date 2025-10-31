@@ -10,7 +10,7 @@ from typing import (
     Iterator, )
 
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.mesh.processing.SplitMesh import SplitMesh
+from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
@@ -117,7 +117,7 @@ class TestCase:
     #: expected new point coordinates
     pointsExp: npt.NDArray[ np.float64 ]
     #: expected new cell point ids
-    cellsExp: list[ int ]
+    cellsExp: list[ list[ int ] ]
 
 
 def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
@@ -149,10 +149,10 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         test_case (TestCase): test case
     """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
-    filter: SplitMesh = SplitMesh()
-    filter.SetInputDataObject( test_case.mesh )
-    filter.Update()
-    output: vtkUnstructuredGrid = filter.GetOutputDataObject( 0 )
+    splitMeshFilter: SplitMesh = SplitMesh()
+    splitMeshFilter.SetInputDataObject( test_case.mesh )
+    splitMeshFilter.Update()
+    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
     assert output is not None, "Output mesh is undefined."
     pointsOut: vtkPoints = output.GetPoints()
     assert pointsOut is not None, "Points from output mesh are undefined."

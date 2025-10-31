@@ -19,7 +19,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing.SplitMesh import SplitMesh
+from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
 __doc__ = """
@@ -37,7 +37,7 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decoratedLabel="Split Mesh", 
+             decoratedLabel="Split Mesh",
              decoratedType="vtkPointSet" )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
@@ -52,7 +52,9 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             inputMesh(vtkPointSet): Input mesh.
             outputMesh: Output mesh.
         """
-        filter: SplitMesh = SplitMesh()
-        filter.SetInputDataObject( inputMesh )
-        filter.Update()
-        outputMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
+        splitMeshFilter: SplitMesh = SplitMesh()
+        splitMeshFilter.SetInputDataObject( inputMesh )
+        splitMeshFilter.Update()
+        outputMesh.ShallowCopy( splitMeshFilter.GetOutputDataObject( 0 ) )
+
+        return
