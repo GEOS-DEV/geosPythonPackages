@@ -69,65 +69,24 @@ To use the filter:
 """
 
 
-class GeosBlockMerge( VTKPythonAlgorithmBase ):
+class GeosBlockMerge():
 
-    def __init__( self: Self ) -> None:
+    def __init__( self: Self, inputMesh: vtkMultiBlockDataSet ) -> None:
         """VTK Filter that perform GEOS rank merge.
 
         The filter returns a multiblock mesh composed of elementary blocks.
 
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1,
-                          outputType="vtkMultiBlockDataSet" )  # type: ignore[no-untyped-call]
 
-        self.m_input: vtkMultiBlockDataSet
-        self.m_output: vtkMultiBlockDataSet
+        self.m_input: vtkMultiBlockDataSet = inputMesh
+        self.m_output: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
 
         self.m_convertFaultToSurface: bool = True
 
         # set logger
         self.m_logger: Logger = getLogger( "Geos Block Merge Filter" )
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet" )
-        return 1
-
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
-        return 1
-
-    def RequestData(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
+    def applyFilter( self: Self ) -> int:
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
@@ -139,11 +98,6 @@ class GeosBlockMerge( VTKPythonAlgorithmBase ):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         try:
-            self.m_input = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
-
-            # initialize output objects -- TODO: separate it as soon as we are sure not to alter behavior
-            self.m_output = self.GetOutputData( outInfoVec, 0 )  # type: ignore[no-untyped-call]
-
             self.doMerge()
         except ( ValueError, TypeError, RuntimeError ) as e:
             self.m_logger.critical( "Geos block merge failed due to:" )
