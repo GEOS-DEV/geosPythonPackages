@@ -8,7 +8,6 @@ import numpy as np
 from typing_extensions import Self, Union
 import numpy.typing as npt
 
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 
@@ -111,7 +110,6 @@ class SurfaceGeomechanics:
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
-
         # Logger
         self.logger: Logger
         if not speHandler:
