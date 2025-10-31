@@ -15,6 +15,7 @@ from vtkmodules.vtkCommonCore import vtkPoints, vtkFloatArray
 import vtkmodules.util.numpy_support as vnp
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 
+
 @dataclass
 class TriangulatedSurfaceTestCase:
     pointsCoords: npt.NDArray[ np.float64 ]
