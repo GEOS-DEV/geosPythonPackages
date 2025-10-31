@@ -23,7 +23,7 @@ from geos.utils.GeosOutputsConstants import (
     getAttributeToTransferFromInitialTime,
 )
 from geos.utils.Logger import ERROR, INFO, Logger, getLogger
-from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
+from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
@@ -292,15 +292,12 @@ class PVExtractMergeBlocksVolumeSurface( VTKPythonAlgorithmBase ):
             bool: True if extraction and merge successfully eneded, False otherwise
         """
         # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor()
-        blockExtractor.SetLogger( self.m_logger )
-        blockExtractor.SetInputDataObject( input )
-        blockExtractor.ExtractFaultsOn()
-        blockExtractor.Update()
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFault=True )
+        blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputVolume()
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputFaults()
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
+        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
 
         # rename attributes and merge blocks
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
