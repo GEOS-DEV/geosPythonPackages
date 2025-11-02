@@ -50,6 +50,7 @@ class DeckViewer( vuetify.VCard ):
         self._cell_data_array_names: list[ str ] = []
         self._source = source
         self._pl = pv.Plotter()
+        self._pl.iren.initialize()
         self._mesh_actor: vtkActor | None = None
 
         self.CUT_PLANE = "on_cut_plane_visibility_change"
