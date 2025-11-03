@@ -59,18 +59,18 @@ jobs:
       matrix:
         python-version: ["3.12"]
         package-name: 
-          # - geos-ats
-          # - geos-utils
-          # - geos-geomechanics
-          # - geos-mesh
-          # - geos-posp
-          # - geos-processing
-          # - geos-timehistory
+          - geos-ats
+          - geos-utils
+          - geos-geomechanics
+          - geos-mesh
+          - geos-posp
+          - geos-processing
+          - geos-timehistory
           - geos-trame
-          # - geos-xml-tools
-          # - geos-xml-viewer
-          # - hdf5-wrapper
-          # - pygeos-tools
+          - geos-xml-tools
+          - geos-xml-viewer
+          - hdf5-wrapper
+          - pygeos-tools
         include:
           - package-name: geos-geomechanics
             dependencies: "geos-utils"
