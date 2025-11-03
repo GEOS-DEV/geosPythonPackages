@@ -15,7 +15,8 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
+Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset
+while keeping partial attributes.
 
 Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
 
@@ -100,9 +101,8 @@ class MergeBlockEnhanced:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
 
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.

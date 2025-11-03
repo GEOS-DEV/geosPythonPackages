@@ -4,7 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
-from typing import Union, Any
+from typing import Any, Optional, Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -75,12 +75,12 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             </Hints>
         </StringVectorProperty>
     """ )
-    def setDictAttributesValues( self: Self, attributeName: str | None, values: str | None ) -> None:
+    def setDictAttributesValues( self: Self, attributeName: Optional[ str ], values: Optional[ str ] ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
-            attributeName (str|None): Name of the attribute to consider.
-            values (str|None): List of the filing values. If multiple components use a comma between the value of each component.
+            attributeName (Optional[str]): Name of the attribute to consider.
+            values (Optional[str]): List of the filing values. If multiple components use a comma between the value of each component.
         """
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}

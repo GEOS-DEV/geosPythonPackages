@@ -133,20 +133,21 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         assert self.inData is not None, "Input mesh is undefined."
         assert output is not None, "Output mesh is undefined."
 
-        nb_cells: int = self.inData.GetNumberOfCells()
-        counts: CellTypeCounts = self._get_cell_counts()
-        nb_tet: int = counts.getTypeCount( VTK_TETRA )
-        nb_pyr: int = counts.getTypeCount( VTK_PYRAMID )
-        nb_hex: int = counts.getTypeCount( VTK_HEXAHEDRON )
-        nb_triangles: int = counts.getTypeCount( VTK_TRIANGLE )
-        nb_quad: int = counts.getTypeCount( VTK_QUAD )
-        nb_polygon = counts.getTypeCount( VTK_POLYGON )
-        nb_polyhedra = counts.getTypeCount( VTK_POLYHEDRON )
+        nbCells: int = self.inData.GetNumberOfCells()
+        counts: CellTypeCounts = self._getCellCounts()
+        nbTet: int = counts.getTypeCount( VTK_TETRA )
+        nbPyr: int = counts.getTypeCount( VTK_PYRAMID )
+        nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )
+        nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )
+        nbQuad: int = counts.getTypeCount( VTK_QUAD )
+        nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
+        nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
         assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
-        assert nb_polyhedra * nb_polygon == 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
+        assert nbPolyhedra * nbPolygon == 0, ( "Input mesh is composed of both polygons and polyhedra,"
+                                               " but it must contains only one of the two." )
         nbNewPoints: int = 0
-        nbNewPoints = nb_hex * 19 + nb_tet * 6 + nb_pyr * 9 if nb_polyhedra > 0 else nb_triangles * 3 + nb_quad * 5
-        nbNewCells: int = nb_hex * 8 + nb_tet * 8 + nb_pyr * 10 * nb_triangles * 4 + nb_quad * 4
+        nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
+        nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 * nbTriangles * 4 + nbQuad * 4
 
         self.points = vtkPoints()
         self.points.DeepCopy( self.inData.GetPoints() )
@@ -158,19 +159,19 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self.originalId.SetName( "OriginalID" )
         self.originalId.Allocate( nbNewCells )
         self.cellTypes = []
-        for c in range( nb_cells ):
+        for c in range( nbCells ):
             cell: vtkCell = self.inData.GetCell( c )
             cellType: int = cell.GetCellType()
             if cellType == VTK_HEXAHEDRON:
-                self._split_hexahedron( cell, c )
+                self._splitHexahedron( cell, c )
             elif cellType == VTK_TETRA:
-                self._split_tetrahedron( cell, c )
+                self._splitTetrahedron( cell, c )
             elif cellType == VTK_PYRAMID:
-                self._split_pyramid( cell, c )
+                self._splitPyramid( cell, c )
             elif cellType == VTK_TRIANGLE:
-                self._split_triangle( cell, c )
+                self._splitTriangle( cell, c )
             elif cellType == VTK_QUAD:
-                self._split_quad( cell, c )
+                self._splitQuad( cell, c )
             else:
                 raise TypeError( f"Cell type {vtkCellTypes.GetClassNameFromTypeId(cellType)} is not supported." )
         # add points and cells
@@ -184,7 +185,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self._transferCellArrays( output )
         return 1
 
-    def _get_cell_counts( self: Self ) -> CellTypeCounts:
+    def _getCellCounts( self: Self ) -> CellTypeCounts:
         """Get the number of cells of each type.
 
         Returns:
@@ -210,7 +211,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         center: npt.NDArray[ np.float64 ] = ( ptACoor + ptBCoor ) / 2.
         return self.points.InsertNextPoint( center[ 0 ], center[ 1 ], center[ 2 ] )
 
-    def _split_tetrahedron( self: Self, cell: vtkCell, index: int ) -> None:
+    def _splitTetrahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a tetrahedron.
 
         Let's suppose an input tetrahedron composed of nodes (0, 1, 2, 3),
@@ -256,7 +257,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_TETRA ] * 8 )
 
-    def _split_pyramid( self: Self, cell: vtkCell, index: int ) -> None:
+    def _splitPyramid( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a pyramid.
 
         Let's suppose an input pyramid composed of nodes (0, 1, 2, 3, 4),
@@ -311,7 +312,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_PYRAMID ] * 8 )
 
-    def _split_hexahedron( self: Self, cell: vtkCell, index: int ) -> None:
+    def _splitHexahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a hexahedron.
 
         Let's suppose an input hexahedron composed of nodes (0, 1, 2, 3, 4, 5, 6, 7),
@@ -373,7 +374,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_HEXAHEDRON ] * 8 )
 
-    def _split_triangle( self: Self, cell: vtkCell, index: int ) -> None:
+    def _splitTriangle( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a triangle.
 
         Let's suppose an input triangle composed of nodes (0, 1, 2),
@@ -406,7 +407,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_TRIANGLE ] * 4 )
 
-    def _split_quad( self: Self, cell: vtkCell, index: int ) -> None:
+    def _splitQuad( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a quad.
 
         Let's suppose an input quad composed of nodes (0, 1, 2, 3),

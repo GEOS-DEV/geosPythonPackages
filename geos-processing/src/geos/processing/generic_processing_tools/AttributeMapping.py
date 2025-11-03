@@ -5,31 +5,29 @@
 import numpy as np
 import numpy.typing as npt
 import logging
-
-from geos.utils.Logger import ( Logger, getLogger )
 from typing_extensions import Self, Union
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet,
-    vtkMultiBlockDataSet,
-)
-
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
+from geos.utils.Logger import ( Logger, getLogger )
 
 __doc__ = """
-AttributeMapping is a vtk filter that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates. The final mesh is updated directly, without creation of a copy.
+AttributeMapping is a vtk filter that transfers global attributes from a source mesh to a final mesh with same
+point/cell coordinates. The final mesh is updated directly, without creation of a copy.
 
 Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 .. Warning::
-    For one application of the filter, the attributes to transfer should all be located on the same piece (all on points or all on cells).
+    For one application of the filter, the attributes to transfer should all be located on the same piece
+    (all on points or all on cells).
 
 .. Note::
     For cell, the coordinates of the points in the cell are compared.
-    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
+    If one of the two meshes is a surface and the other a volume,
+    all the points of the surface must be points of the volume.
 
-To use a logger handler of yours, set the variable 'speHandler' to True and add it using the member function setLoggerHandler.
+To use a logger handler of yours, set the variable 'speHandler' to True
+and add it using the member function setLoggerHandler.
 
 To use the filter:
 
@@ -40,17 +38,18 @@ To use the filter:
     # Filter inputs.
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ]
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ]
-    attributeNames: Set[ str ]
+    attributeNames: set[ str ]
     # Optional inputs.
     onPoints: bool  # defaults to False
     speHandler: bool  # defaults to False
 
     # Instantiate the filter
-    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom,
-                                                                 meshTo,
-                                                                 attributeNames,
-                                                                 onPoints,
-                                                                 speHandler,
+    attributeMappingFilter: AttributeMapping = AttributeMapping(
+        meshFrom,
+        meshTo,
+        attributeNames,
+        onPoints,
+        speHandler,
     )
 
     # Set the handler of yours (only if speHandler is True).
@@ -74,7 +73,8 @@ class AttributeMapping:
         onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """Transfer global attributes from a source mesh to a final mesh, mapping the piece of the attributes to transfer.
+        """Transfer global attributes from a source mesh to a final mesh,
+        mapping the piece of the attributes to transfer.
 
         Args:
             meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with attributes to transfer.
@@ -89,7 +89,7 @@ class AttributeMapping:
         self.meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshTo
         self.attributeNames: set[ str ] = attributeNames
         self.onPoints: bool = onPoints
-        #TODO/refact (@RomainBaville) make it an enum
+        # TODO/refact (@RomainBaville) make it an enum
         self.piece: str = "points" if self.onPoints else "cells"
 
         # cell map
@@ -106,7 +106,8 @@ class AttributeMapping:
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
 
         Args:
             handler (logging.Handler): The handler to add.
@@ -114,9 +115,8 @@ class AttributeMapping:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
+                                 " to True during the filter initialization." )
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.
@@ -129,7 +129,8 @@ class AttributeMapping:
         return self.ElementMap
 
     def applyFilter( self: Self ) -> bool:
-        """Transfer global attributes from a source mesh to a final mesh, mapping the piece of the attributes to transfer.
+        """Transfer global attributes from a source mesh to a final mesh,
+        mapping the piece of the attributes to transfer.
 
         Returns:
             boolean (bool): True if calculation successfully ended, False otherwise.
@@ -194,6 +195,5 @@ class AttributeMapping:
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
         self.logger.info( f"The filter { self.logger.name } succeeded." )
-        self.logger.info(
-            f"The { self.piece } attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece } mapping."
-        )
+        self.logger.info( f"The { self.piece } attributes { self.attributeNames } have been transferred from the source"
+                          " mesh to the final mesh with the { self.piece } mapping." )

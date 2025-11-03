@@ -28,7 +28,8 @@ with constant values per components for each chosen indexes of a reference/regio
 If other region indexes exist values are set to nan for float type, -1 for int type or 0 for uint type.
 
 Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
-The relation index/values is given by a dictionary. Its keys are the indexes and its items are the list of values for each component.
+The relation index/values is given by a dictionary.
+Its keys are the indexes and its items are the list of values for each component.
 To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
 
 By default, the value type is set to float32, their is one component and no name and the logger use an intern handler.
@@ -37,7 +38,7 @@ To use it:
 
 .. code-block:: python
 
-    from geo.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+    from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 
     # Filter inputs.
     mesh: Union[vtkMultiBlockDataSet, vtkDataSet]
@@ -52,15 +53,16 @@ To use it:
     speHandler: bool
 
     # Instantiate the filter
-    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( mesh,
-                                                                                                                 regionName,
-                                                                                                                 dictRegionValues,
-                                                                                                                 newAttributeName,
-                                                                                                                 valueNpType,
-                                                                                                                 nbComponents,
-                                                                                                                 componentNames,
-                                                                                                                 speHandler,
-                                                                                                                 )
+    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+        mesh,
+        regionName,
+        dictRegionValues,
+        newAttributeName,
+        valueNpType,
+        nbComponents,
+        componentNames,
+        speHandler,
+    )
 
     # Set your handler (only if speHandler is True).
     yourHandler: logging.Handler
@@ -89,15 +91,16 @@ class CreateConstantAttributePerRegion:
         """Create an attribute with constant value per region.
 
         Args:
-            mesh (Union[ vtkDataSet, vtkMultiBlockDataSet ]): The mesh where to create the constant attribute per region.
-            regionName (str): The name of the attribute with the region indexes.
-            dictRegionValues (dict[ Any, Any ]): The dictionary with the region indexes as keys and the list of values as items.
-            newAttributeName (str): The name of the new attribute to create.
-            valueNpType (type, optional): The numpy scalar type for values.
+            mesh (Union[ vtkDataSet, vtkMultiBlockDataSet ]): Mesh where to create the constant attribute per region.
+            regionName (str): Name of the attribute with the region indexes.
+            dictRegionValues (dict[ Any, Any ]): Dictionary with the region ids as keys and the list of values as items.
+            newAttributeName (str): Name of the new attribute to create.
+            valueNpType (type, optional): Numpy scalar type for values.
                 Defaults to numpy.float32.
             nbComponents (int, optional): Number of components for the new attribute.
                 Defaults to 1.
-            componentNames (tuple[str,...], optional): Name of the components for vectorial attributes. If one component, gives an empty tuple.
+            componentNames (tuple[str,...], optional): Name of the components for vectorial attributes.
+                If one component, gives an empty tuple.
                 Defaults to an empty tuple.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
@@ -117,7 +120,8 @@ class CreateConstantAttributePerRegion:
         self.onBoth: bool
         self.onPoints, self.onBoth = getAttributePieceInfo( self.mesh, self.regionName )
 
-        self.useDefaultValue: bool = False  # Check if the new component have default values (information for the output message).
+        # Check if the new component have default values (information for the output message).
+        self.useDefaultValue: bool = False
 
         # Warnings counter.
         self.counter: CountWarningHandler = CountWarningHandler()
@@ -144,9 +148,8 @@ class CreateConstantAttributePerRegion:
             self.logger.addHandler( handler )
         else:
             # This warning does not count for the number of warning created during the application of the filter.
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
 
     def applyFilter( self: Self ) -> bool:
         """Create a constant attribute per region in the mesh.
@@ -167,9 +170,8 @@ class CreateConstantAttributePerRegion:
             return False
 
         if self.onBoth:
-            self.logger.error(
-                f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
-            )
+            self.logger.error( f"There are two attributes named { self.regionName }, one on points"
+                               "and the other on cells. The region attribute must be unique." )
             self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
             self.logger.error( f"The filter { self.logger.name } failed." )
             return False
@@ -185,9 +187,8 @@ class CreateConstantAttributePerRegion:
         # Check if the number of components and number of values for the region indexes are coherent.
         for index in self.dictRegionValues:
             if len( self.dictRegionValues[ index ] ) != self.nbComponents:
-                self.logger.error(
-                    f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
-                )
+                self.logger.error( f"The number of value given for the region index { index } is not correct."
+                                   f" You must set a value for each component, in this case { self.nbComponents }." )
                 return False
 
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
@@ -303,21 +304,23 @@ class CreateConstantAttributePerRegion:
 
         # Set the list of default value for each component depending of the type.
         self.defaultValue: list[ Any ]
-        ## Default value for float types is nan.
+        # Default value for float types is nan.
         if self.valueNpType in ( np.float32, np.float64 ):
             self.defaultValue = [ self.valueNpType( np.nan ) for _ in range( self.nbComponents ) ]
-        ## Default value for int types is -1.
+        # Default value for int types is -1.
         elif self.valueNpType in ( np.int8, np.int16, np.int32, np.int64 ):
             self.defaultValue = [ self.valueNpType( -1 ) for _ in range( self.nbComponents ) ]
-        ## Default value for uint types is 0.
+        # Default value for uint types is 0.
         elif self.valueNpType in ( np.uint8, np.uint16, np.uint32, np.uint64 ):
             self.defaultValue = [ self.valueNpType( 0 ) for _ in range( self.nbComponents ) ]
 
     def _createArrayFromRegionArrayWithValueMap( self: Self, regionArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
-        """Create the array from the regionArray and the valueMap (self.valueMap) giving the relation between the values of the regionArray and the new one.
+        """Create the array from the regionArray and the valueMap (self.valueMap)
+        giving the relation between the values of the regionArray and the new one.
 
         For each element (idElement) of the regionArray:
-            - If the value (regionArray[idElement]) is mapped (a keys of the valueMap), valueArray[idElement] = self.valueMap[value].
+            - If the value (regionArray[idElement]) is mapped (a keys of the valueMap),
+                 valueArray[idElement] = self.valueMap[value].
             - If not, valueArray[idElement] = self.defaultValue.
 
         Args:
@@ -360,44 +363,48 @@ class CreateConstantAttributePerRegion:
         self.logger.info( f"The filter { self.logger.name } succeeded." )
 
         # Info about the created attribute.
-        ## The piece where the attribute is created.
+        # The piece where the attribute is created.
         piece: str = "points" if self.onPoints else "cells"
         self.logger.info( f"The new attribute { self.newAttributeName } is created on { piece }." )
 
-        ## The number of component and they names if multiple.
+        # The number of component and they names if multiple.
         componentNamesCreated: tuple[ str, ...] = getComponentNames( self.mesh, self.newAttributeName, self.onPoints )
         if self.nbComponents > 1:
-            messComponent: str = f"The new attribute { self.newAttributeName } has { self.nbComponents } components named { componentNamesCreated }."
+            messComponent: str = ( f"The new attribute { self.newAttributeName } has { self.nbComponents } components"
+                                   f" named { componentNamesCreated }." )
             if componentNamesCreated != self.componentNames:
-                ### Warn the user because other component names than those given have been used.
+                # Warn the user because other component names than those given have been used.
                 self.logger.warning( messComponent )
             else:
                 self.logger.info( messComponent )
 
-        ## The values of the attribute.
+        # The values of the attribute.
         messValue: str = f"The new attribute { self.newAttributeName } is constant"
         if len( trueIndexes ) == 0:
-            ### Create the message to have the value of each component.
+            # Create the message to have the value of each component.
             messValue = f"{ messValue } with"
             if self.nbComponents > 1:
                 for idComponent in range( self.nbComponents ):
-                    messValue = f"{ messValue } the value { self.defaultValue[ idComponent ] } for the component { componentNamesCreated[ idComponent ] },"
+                    messValue = ( f"{ messValue } the value { self.defaultValue[ idComponent ] } for the component"
+                                  f" { componentNamesCreated[ idComponent ] }," )
                 messValue = f"{ messValue[:-1] }."
             else:
                 messValue = f"{ messValue } the value { self.defaultValue[ 0 ] }."
-            ### Warn the user because no region index has been used.
+            # Warn the user because no region index has been used.
             self.logger.warning( messValue )
 
         else:
-            ### Create the message to have for each component the value of the region index.
+            # Create the message to have for each component the value of the region index.
             messValue = f"{ messValue } per region indexes with:\n"
             for index in trueIndexes:
                 messValue = f"{ messValue }\tThe value { self.dictRegionValues[ index ][ 0 ] } for the"
                 if self.nbComponents > 1:
                     messValue = f"{ messValue } component { componentNamesCreated[ 0 ] },"
                     for idComponent in range( 1, self.nbComponents - 1 ):
-                        messValue = f"{ messValue } the value { self.dictRegionValues[ index ][ idComponent ] } for the component { componentNamesCreated[ idComponent ] },"
-                    messValue = f"{ messValue[ : -1 ] } and the value { self.dictRegionValues[ index ][ -1 ] } for the component { componentNamesCreated[ -1 ] } for the index { index }.\n"
+                        messValue = ( f"{ messValue } the value { self.dictRegionValues[ index ][ idComponent ] }"
+                                      f" for the component { componentNamesCreated[ idComponent ] }," )
+                    messValue = ( f"{ messValue[ : -1 ] } and the value { self.dictRegionValues[ index ][ -1 ] }"
+                                  f" for the component { componentNamesCreated[ -1 ] } for the index { index }.\n" )
                 else:
                     messValue = f"{ messValue } index { index }.\n"
 
@@ -406,15 +413,17 @@ class CreateConstantAttributePerRegion:
                 if self.nbComponents > 1:
                     messValue = f"{ messValue } component { componentNamesCreated[ 0 ] },"
                     for idComponent in range( 1, self.nbComponents - 1 ):
-                        messValue = f"{ messValue } the value { self.defaultValue[ idComponent ] } for the component { componentNamesCreated[ idComponent ] },"
-                    messValue = f"{ messValue[ : -1 ] } and the value { self.defaultValue[ -1 ] } for the component { componentNamesCreated[ -1 ] } for the other indexes."
+                        messValue = ( f"{ messValue } the value { self.defaultValue[ idComponent ] }"
+                                      f" for the component { componentNamesCreated[ idComponent ] }," )
+                    messValue = ( f"{ messValue[ : -1 ] } and the value { self.defaultValue[ -1 ] }"
+                                  f" for the component { componentNamesCreated[ -1 ] } for the other indexes." )
                 else:
                     messValue = f"{ messValue } other indexes."
-                ### Warn the user because a default value has been used.
+                # Warn the user because a default value has been used.
                 self.logger.warning( messValue )
             else:
                 if self.counter.warningCount > 0:
-                    ### Warn the user because other component names than those given have been used.
+                    # Warn the user because other component names than those given have been used.
                     self.logger.warning( messValue )
                 else:
                     self.logger.info( messValue )

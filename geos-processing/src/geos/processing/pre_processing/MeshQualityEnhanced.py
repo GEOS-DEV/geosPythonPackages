@@ -395,7 +395,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
             assert output is not None, "Output mesh from mesh quality calculation is undefined."
             # Transfer output cell array to input mesh
-            # TODO: to test if Shallow copy of vtkMeshQualityFilter result and rename "Quality" array is more efficient than what is done here
+            # TODO: to test if Shallow copy of vtkMeshQualityFilter result
+            # and rename "Quality" array is more efficient than what is done here
             self._transferCellAttribute( output, QUALITY_ARRAY_NAME, arrayName, metric )
 
     def _applyMeshQualityFilter( self: Self, metric: int, cellTypes: list[ int ] ) -> vtkUnstructuredGrid:

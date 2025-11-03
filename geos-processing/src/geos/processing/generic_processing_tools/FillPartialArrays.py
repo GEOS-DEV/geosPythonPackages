@@ -19,7 +19,7 @@ Input mesh is vtkMultiBlockDataSet and attributes to fill must be partial.
 The list of filling values per attribute is given by a dictionary.
 Its keys are the attribute names and its items are the list of filling values for each component.
 
-If the list of filling value is None, attributes are filled with the same constant value for each component;
+If the list of filling value is None, attributes are filled with the same constant value for each component:
 0 for uint data, -1 for int data and nan for float data.
 
 To use a handler of yours for the logger, set the variable 'speHandler' to True and add it to the filter
@@ -38,7 +38,11 @@ To use it:
     speHandler: bool
 
     # Instantiate the filter.
-    fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues, speHandler )
+    fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
+        multiBlockDataSet,
+        dictAttributesValues,
+        speHandler
+    )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
@@ -61,14 +65,17 @@ class FillPartialArrays:
     ) -> None:
         """Fill partial attributes with constant value per component.
 
-        If the list of filling values for an attribute is None, it will filled with the default value for each component:
-            0 for uint data.
-            -1 for int data.
-            nan for float data.
+        If the list of filling values for an attribute is None,
+        it will be filled with the default value for each component:
+
+        - 0 for uint data.
+        - -1 for int data.
+        - nan for float data.
 
         Args:
             multiBlockDataSet (vtkMultiBlockDataSet): The mesh where to fill the attribute.
-            dictAttributesValues (dict[str, Any]): The dictionary with the attribute to fill as keys and the list of filling values as items.
+            dictAttributesValues (dict[str, Any]): The dictionary with the attribute to fill as keys
+                                                   and the list of filling values as values.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
@@ -86,7 +93,8 @@ class FillPartialArrays:
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
 
         Args:
             handler (logging.Handler): The handler to add.
@@ -94,9 +102,8 @@ class FillPartialArrays:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
 
     def applyFilter( self: Self ) -> bool:
         """Create a constant attribute per region in the mesh.
@@ -117,9 +124,8 @@ class FillPartialArrays:
                 return False
 
             if onBoth:
-                self.logger.error(
-                    f"Their is two attribute named { attributeName }, one on points and the other on cells. The attribute must be unique."
-                )
+                self.logger.error( f"There is two attribute named { attributeName },"
+                                   " one on points and the other on cells. The attribute must be unique.")
                 self.logger.error( f"The attribute { attributeName } has not been filled." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False
