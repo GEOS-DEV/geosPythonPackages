@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 
 import numpy as np
 from typing_extensions import Self
@@ -11,19 +11,12 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
-
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+update_paths()
 
 from geos.utils.Logger import Logger, getLogger
 from geos.utils.PhysicalConstants import (
@@ -33,64 +26,57 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
+from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+)
 
-from PVplugins.PVExtractMergeBlocksVolumeWell import (
-    PVExtractMergeBlocksVolumeWell, )
-from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.pv.plugins.PVExtractMergeBlocksVolume import PVExtractMergeBlocksVolume
+from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 
 __doc__ = """
-PVGeomechanicsWorkflowVolumeWell is a Paraview plugin that execute
-multiple filters to clean GEOS outputs and compute additional geomechanical
-outputs on volume and wells.
+PVGeomechanicsWorkflowVolume is a Paraview plugin that execute multiple filters
+to clean GEOS outputs and compute additional geomechanical outputs on volume.
 
 Input and output types are vtkMultiBlockDataSet.
 
-This filter results in 2 output pipelines:
-
-* first pipeline contains the volume mesh. If multiple regions were defined in
-    the volume mesh, they are preserved as distinct blocks.
-* second pipeline contains wells. If multiple wells were used, they are preserved
-    as distinct blocks.
+This filter results in the volume mesh. If multiple regions were defined in
+the volume mesh, they are preserved as distinct blocks.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsWorkflowVolumeWell.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsWorkflowVolume.
 * Select the Geos output .pvd file loaded in Paraview.
-* Search and Apply PVGeomechanicsWorkflowVolumeWell Filter.
+* Search and Apply PVGeomechanicsWorkflowVolume Filter.
 
 """
 
 
 @smproxy.filter(
-    name="PVGeomechanicsWorkflowVolumeWell",
-    label="Geos Geomechanics Workflow - Volume/Well",
+    name="PVGeomechanicsWorkflowVolume",
+    label="Geos Geomechanics Workflow - Volume only",
 )
 @smhint.xml( """
     <ShowInMenu category="1- Geos Post-Processing Workflows"/>
     <OutputPort index="0" name="VolumeMesh"/>
-    <OutputPort index="1" name="Wells"/>
     """ )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
-class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
+class PVGeomechanicsWorkflowVolume( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Paraview plugin to clean and add new outputs Geos output mesh.
 
-        To apply in the case of output ".pvd" file contains Volume and
-        Well elements.
+        To apply in the case of output ".pvd" file contains only Volume element.
         """
         super().__init__(
             nInputPorts=1,
-            nOutputPorts=2,
+            nOutputPorts=1,
             inputType="vtkMultiBlockDataSet",
             outputType="vtkMultiBlockDataSet",
         )
 
         #: ouput volume mesh
         self.m_volumeMesh: vtkMultiBlockDataSet
-        #: output wells
-        self.m_wells: vtkMultiBlockDataSet
 
         self.m_computeAdvancedOutputs: bool = False
         self.m_grainBulkModulus: float = DEFAULT_GRAIN_BULK_MODULUS
@@ -337,13 +323,11 @@ class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
         try:
             input: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
             self.m_volumeMesh = self.GetOutputData( outInfoVec, 0 )
-            self.m_wells = self.GetOutputData( outInfoVec, 1 )
 
             assert input is not None, "Input MultiBlockDataSet is null."
             assert self.m_volumeMesh is not None, "Output volume mesh is null."
-            assert self.m_wells is not None, "Output well mesh is null."
 
-            # 1. extract volume/wells
+            # 1. extract volume
             self.doExtractAndMerge()
             # 2. compute Geomechanical outputs in volume mesh
             self.computeAdditionalOutputsVolume()
@@ -369,16 +353,14 @@ class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if extraction and merge successfully eneded, False otherwise
         """
-        filter: PVExtractMergeBlocksVolumeWell = PVExtractMergeBlocksVolumeWell()
+        filter: PVExtractMergeBlocksVolume = PVExtractMergeBlocksVolume()
         filter.SetInputConnection( self.GetInputConnection( 0, 0 ) )
         filter.SetLogger( self.m_logger )
         filter.Update()
 
-        # recover output objects from PVExtractMergeBlocksVolumeWell
+        # recover output objects from PVExtractMergeBlocksVolume
         self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
-        self.m_wells.ShallowCopy( filter.GetOutputDataObject( 1 ) )
         self.m_volumeMesh.Modified()
-        self.m_wells.Modified()
         return True
 
     def computeAdditionalOutputsVolume( self: Self ) -> bool:
@@ -387,16 +369,14 @@ class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if calculation successfully eneded, False otherwise.
         """
-        filter = GeomechanicsCalculator( self.m_volumeMesh,
-                                         computeAdvancedOutputs=self.getComputeAdvancedOutputs(),
-                                         speHandler=True )
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
-        filter.physicalConstants.grainBulkModulus = self.grainBulkModulus
-        filter.physicalConstants.specificDensity = self.specificDensity
-        filter.physicalConstants.rockCohesion = self.rockCohesion
-        filter.physicalConstants.frictionAngle = self.frictionAngle
-        filter.applyFilter()
-        self.m_volumeMesh.ShallowCopy( filter.getOutput() )
+        filter = PVGeomechanicsCalculator()
+        filter.SetInputDataObject( self.m_volumeMesh ),
+        filter.setComputeAdvancedProperties( self.getComputeAdvancedOutputs() )
+        filter.setGrainBulkModulus( self.m_grainBulkModulus )
+        filter.setSpecificDensity = ( self.m_specificDensity )
+        filter.setRockCohesion = ( self.m_rockCohesion )
+        filter.setFrictionAngle = ( self.m_frictionAngle )
+        filter.Update()
+        self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_volumeMesh.Modified()
         return True
