@@ -59,17 +59,20 @@ class TimelineEditor( vuetify.VCard ):
         self.state.tasks = tasks
         # self.tree.input_file.problem.events[0].periodic_event.clear()
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
-        # # pev = dpath.util.get(self.tree.input_file.pb_dict, 'Problem/Events/0/PeriodicEvent')
-        # pev = self.tree.input_file.problem.events[0].periodic_event
-        # # pev = dpath.util.get(ev[0],'PeriodicEvent')
-        # for i,t in enumerate(self.state.tasks):
-        #     event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
-        #              "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
-        #              "name": t["name"]}
+        # pev = dpath.util.get(self.tree.input_file.pb_dict, 'Problem/Events/0/PeriodicEvent')
+        pev = self.tree.input_file.problem.events[0].periodic_event
+        # pev = dpath.util.get(ev[0],'PeriodicEvent')
+        for i,t in enumerate(self.state.tasks):
+            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
+                     "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
+                     "name": t["name"]}
             
-        #     pev[i] = PeriodicEvent(begin_time=event["begin_time"], end_time=event["end_time"], name=event["name"])
+            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','begin_time', event['begin_time'])
+            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','end_time', event['end_time'])
+            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','name', event['name'])
+     
 
-        # self.tree.input_file.pb_dict = dict(self.tree.input_file.problem)
+        # self.tree._apply_changed_properties(self.tree.input_file.problem)
         return
 
 
