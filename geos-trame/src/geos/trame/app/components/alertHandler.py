@@ -5,6 +5,19 @@ import asyncio
 
 from trame.widgets import vuetify3
 
+from enum import Enum
+
+
+class AlertType( str, Enum ):
+    """Enum representing the type of VAlert.
+
+    For more information, see the uetify documentation:
+    https://vuetifyjs.com/en/api/VAlert/#props-type
+    """
+    SUCCESS = 'success'
+    WARNING = 'warning'
+    ERROR = 'error'
+
 
 class AlertHandler( vuetify3.VContainer ):
     """Vuetify component used to display an alert status.
@@ -26,8 +39,9 @@ class AlertHandler( vuetify3.VContainer ):
 
         self.state.alerts = []
 
-        self.ctrl.on_add_error.add_task( self.add_error )
-        self.ctrl.on_add_warning.add_task( self.add_warning )
+        self.server.controller.on_add_success.add_task( self.add_success )
+        self.server.controller.on_add_warning.add_task( self.add_warning )
+        self.server.controller.on_add_error.add_task( self.add_error )
 
         self.generate_alert_ui()
 
@@ -75,7 +89,7 @@ class AlertHandler( vuetify3.VContainer ):
         self.state.dirty( "alerts" )
         self.state.flush()
 
-        if type == "warning":
+        if type == AlertType.WARNING:
             asyncio.get_event_loop().call_later( self.__lifetime_of_alert, self.on_close, alert_id )
 
     async def add_warning( self, title: str, message: str ) -> None:
@@ -85,6 +99,10 @@ class AlertHandler( vuetify3.VContainer ):
     async def add_error( self, title: str, message: str ) -> None:
         """Add an alert of type 'error'."""
         self.add_alert( "error", title, message )
+
+    async def add_success( self, title: str, message: str ) -> None:
+        """Add an alert of type 'success'."""
+        self.add_alert( AlertType.SUCCESS, title, message )
 
     def on_close( self, alert_id: int ) -> None:
         """Remove in the state the alert associated to the given id."""
