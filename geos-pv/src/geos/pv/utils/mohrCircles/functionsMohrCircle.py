@@ -9,7 +9,7 @@ import numpy.typing as npt
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
 
-from geos_posp.visu.mohrCircles import (
+from geos.pv.utils.mohrCircles import (
     MOHR_CIRCLE_ANALYSIS_MAIN,
     MOHR_CIRCLE_PATH,
 )

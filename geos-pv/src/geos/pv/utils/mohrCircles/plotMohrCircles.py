@@ -15,8 +15,8 @@ from matplotlib.axes import Axes  # type: ignore[import-untyped]
 from matplotlib.figure import Figure  # type: ignore[import-untyped]
 from matplotlib.lines import Line2D  # type: ignore[import-untyped]
 
-import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
-from geos_posp.visu.PVUtils.matplotlibOptions import (
+import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
+from geos.pv.pyplotUtils.matplotlibOptions import (
     FontStyleEnum,
     FontWeightEnum,
     LegendLocationEnum,

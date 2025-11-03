@@ -7,8 +7,8 @@ try:
     import matplotlib.pyplot as plt
     from paraview import python_view
 
-    import geos_posp.visu.mohrCircles.functionsMohrCircle as mcf
-    import geos_posp.visu.mohrCircles.plotMohrCircles as pmc
+    import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
+    import geos.pv.utils.mohrCircles.plotMohrCircles as pmc
 
     plt.close()
 
