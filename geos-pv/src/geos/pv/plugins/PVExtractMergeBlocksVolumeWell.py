@@ -27,7 +27,7 @@ from geos.utils.GeosOutputsConstants import (
 )
 from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
-from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
+from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
     createCellCenterAttribute,
