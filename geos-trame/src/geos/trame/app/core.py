@@ -61,7 +61,7 @@ class GeosTrame:
         self.ctrl.simput_reload_data = self.simput_widget.reload_data
 
         # Tree
-        self.tree = DeckTree( self.state.sm_id )
+        self.tree = DeckTree( self.state.sm_id, self.ctrl )
 
         # Viewers
         self.region_viewer = RegionViewer()

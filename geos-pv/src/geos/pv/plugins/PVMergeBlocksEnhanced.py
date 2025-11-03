@@ -29,7 +29,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
+from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a Paraview plugin filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
@@ -117,17 +117,17 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        filter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
+        mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
+        if not mergeBlockEnhancedFilter.logger.hasHandlers():
+            mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
 
         try:
-            filter.applyFilter()
+            mergeBlockEnhancedFilter.applyFilter()
         except ( ValueError, TypeError, RuntimeError ) as e:
-            filter.logger.error( f"MergeBlock failed due to {e}", exc_info=True )
+            mergeBlockEnhancedFilter.logger.error( f"MergeBlock failed due to {e}", exc_info=True )
             return 0
         else:
-            outputMesh.ShallowCopy( filter.getOutput() )
+            outputMesh.ShallowCopy( mergeBlockEnhancedFilter.getOutput() )
             outputMesh.Modified()
             return 1
