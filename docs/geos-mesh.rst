@@ -15,8 +15,6 @@ GEOS Mesh tools
 
       ./geos_mesh_docs/model
 
-      ./geos_mesh_docs/processing
-
       ./geos_mesh_docs/stats
 
       ./geos_mesh_docs/utils

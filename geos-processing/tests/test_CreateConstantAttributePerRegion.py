@@ -8,7 +8,7 @@ import pytest
 from typing import Union, Any
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
 
-from geos.mesh.processing.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 import numpy as np
 
 
@@ -110,7 +110,7 @@ def test_CreateConstantAttributePerRegion(
     if nbComponents == 0:  # If the attribute has one component, the component has no name.
         nbComponents += 1
 
-    filter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+    createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
         mesh,
         regionName,
         dictRegionValues,
@@ -120,4 +120,4 @@ def test_CreateConstantAttributePerRegion(
         componentNames=componentNames,
     )
 
-    assert filter.applyFilter() == succeed
+    assert createConstantAttributePerRegionFilter.applyFilter() == succeed

@@ -15,7 +15,8 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 __doc__ = """
-Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
+Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset
+while keeping partial attributes.
 
 Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
 
@@ -31,7 +32,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.MergeBlockEnhanced import MergeBlockEnhanced
+    from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
     import logging
     from geos.utils.Errors import VTKError
 
@@ -40,20 +41,20 @@ To use it:
     speHandler: bool # optional
 
     # Instantiate the filter
-    filter: MergeBlockEnhanced = MergeBlockEnhanced( multiblockdataset, speHandler )
+    mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiblockdataset, speHandler )
 
     # Use your own handler (if speHandler is True)
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    mergeBlockEnhancedFilter.setLoggerHandler( yourHandler )
 
     # Do calculations
     try:
-        filter.applyFilter()
+        mergeBlockEnhancedFilter.applyFilter()
     except VTKError:
         logging.error("Something went wrong in VTK")
 
     # Get the merged mesh
-    filter.getOutput()
+    mergeBlockEnhancedFilter.getOutput()
 """
 
 loggerTitle: str = "Merge Block Enhanced"
@@ -100,9 +101,8 @@ class MergeBlockEnhanced:
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
 
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.

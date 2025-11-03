@@ -4,7 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
-from typing import Union, Any
+from typing import Any, Optional, Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
@@ -25,7 +25,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
-from geos.mesh.processing.FillPartialArrays import FillPartialArrays
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
 __doc__ = """
 Fill partial arrays of input mesh.
@@ -75,12 +75,12 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             </Hints>
         </StringVectorProperty>
     """ )
-    def setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
+    def setDictAttributesValues( self: Self, attributeName: Optional[ str ], values: Optional[ str ] ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
-            attributeName (str): Name of the attribute to consider.
-            values (str): List of the filing values. If multiple components use a comma between the value of each component.
+            attributeName (Optional[str]): Name of the attribute to consider.
+            values (Optional[str]): List of the filing values. If multiple components use a comma between the value of each component.
         """
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}
@@ -90,28 +90,28 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             if values is not None:
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
-                self.dictAttributesValues[ attributeName ] = None  #ignore : type[unreachable]
+                self.dictAttributesValues[ attributeName ] = None
 
         self.Modified()
 
     def Filter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
-        """Is applying FillPartialArrays to the mesh and return with the class's dictionnary for attributes values.
+        """Is applying FillPartialArrays to the mesh and return with the class's dictionary for attributes values.
 
         Args:
             inputMesh : A mesh to transform.
             outputMesh : A mesh transformed.
 
         """
-        filter: FillPartialArrays = FillPartialArrays(
+        fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
             outputMesh,
             self.dictAttributesValues,
             speHandler=True,
         )
 
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
+        if not fillPartialArraysFilter.logger.hasHandlers():
+            fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
 
-        filter.applyFilter()
+        fillPartialArraysFilter.applyFilter()
 
         self.clearDictAttributesValues = True
 

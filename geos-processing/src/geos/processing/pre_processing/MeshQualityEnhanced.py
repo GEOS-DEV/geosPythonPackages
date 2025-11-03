@@ -25,11 +25,11 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vt
                                             VTK_POLYHEDRON )
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
 from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
     getQualityMetricFromIndex,
     VtkCellQualityMetricEnum,
@@ -57,28 +57,32 @@ To use the filter:
 
 .. code-block:: python
 
-    from geos.mesh.stats.MeshQualityEnhanced import MeshQualityEnhanced
+    from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 
     # Filter inputs
-    input :vtkUnstructuredGrid
+    input: vtkUnstructuredGrid
 
-    # Instanciate the filter
-    filter :MeshQualityEnhanced = MeshQualityEnhanced()
+    # Instantiate the filter
+    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
+
     # Set input data object
-    filter.SetInputDataObject(input)
+    meshQualityEnhancedFilter.SetInputDataObject(input)
+
     # Set metrics to use
-    filter.SetTriangleMetrics(triangleQualityMetrics)
-    filter.SetQuadMetrics(quadQualityMetrics)
-    filter.SetTetraMetrics(tetraQualityMetrics)
-    filter.SetPyramidMetrics(pyramidQualityMetrics)
-    filter.SetWedgeMetrics(wedgeQualityMetrics)
-    filter.SetHexaMetrics(hexaQualityMetrics)
-    filter.SetOtherMeshQualityMetrics(otherQualityMetrics)
+    meshQualityEnhancedFilter.SetTriangleMetrics(triangleQualityMetrics)
+    meshQualityEnhancedFilter.SetQuadMetrics(quadQualityMetrics)
+    meshQualityEnhancedFilter.SetTetraMetrics(tetraQualityMetrics)
+    meshQualityEnhancedFilter.SetPyramidMetrics(pyramidQualityMetrics)
+    meshQualityEnhancedFilter.SetWedgeMetrics(wedgeQualityMetrics)
+    meshQualityEnhancedFilter.SetHexaMetrics(hexaQualityMetrics)
+    meshQualityEnhancedFilter.SetOtherMeshQualityMetrics(otherQualityMetrics)
+
     # Do calculations
-    filter.Update()
+    meshQualityEnhancedFilter.Update()
+
     # Get output mesh quality report
-    outputMesh: vtkUnstructuredGrid = filter.GetOutputDataObject(0)
-    outputStats: QualityMetricSummary = filter.GetQualityMetricSummary()
+    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.GetOutputDataObject(0)
+    outputStats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
 """
 
 #: name of output quality array from vtkMeshQuality filter
@@ -329,10 +333,10 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def _computeCellTypeCounts( self: Self ) -> None:
         """Compute cell type counts."""
-        filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        filter.SetInputDataObject( self._outputMesh )
-        filter.Update()
-        counts: CellTypeCounts = filter.GetCellTypeCountsObject()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+        cellTypeCounterEnhancedFilter.SetInputDataObject( self._outputMesh )
+        cellTypeCounterEnhancedFilter.Update()
+        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         assert counts is not None, "CellTypeCounts is undefined"
         self._qualityMetricSummary.setCellTypeCounts( counts )
 
@@ -391,7 +395,8 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
             assert output is not None, "Output mesh from mesh quality calculation is undefined."
             # Transfer output cell array to input mesh
-            # TODO: to test if Shallow copy of vtkMeshQualityFilter result and rename "Quality" array is more efficient than what is done here
+            # TODO: to test if Shallow copy of vtkMeshQualityFilter result
+            # and rename "Quality" array is more efficient than what is done here
             self._transferCellAttribute( output, QUALITY_ARRAY_NAME, arrayName, metric )
 
     def _applyMeshQualityFilter( self: Self, metric: int, cellTypes: list[ int ] ) -> vtkUnstructuredGrid:
