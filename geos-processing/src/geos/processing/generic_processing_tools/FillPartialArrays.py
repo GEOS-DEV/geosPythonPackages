@@ -125,7 +125,7 @@ class FillPartialArrays:
 
             if onBoth:
                 self.logger.error( f"There is two attribute named { attributeName },"
-                                   " one on points and the other on cells. The attribute must be unique.")
+                                   " one on points and the other on cells. The attribute must be unique." )
                 self.logger.error( f"The attribute { attributeName } has not been filled." )
                 self.logger.error( f"The filter { self.logger.name } failed." )
                 return False

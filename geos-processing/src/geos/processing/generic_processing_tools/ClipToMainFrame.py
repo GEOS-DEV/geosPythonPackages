@@ -256,8 +256,10 @@ class ClipToMainFrame( vtkTransformFilter ):
         self.SetTransform( clip )
 
     def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger. In this filter 4 log levels are use, .info, .error, .warning
-        and .critical, be sure to have at least the same 4 levels.
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
 
         Args:
             handler (logging.Handler): The handler to add.

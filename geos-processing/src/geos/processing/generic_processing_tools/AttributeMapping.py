@@ -73,8 +73,9 @@ class AttributeMapping:
         onPoints: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """Transfer global attributes from a source mesh to a final mesh,
-        mapping the piece of the attributes to transfer.
+        """Transfer global attributes from a source mesh to a final mesh.
+
+        Mapping the piece of the attributes to transfer.
 
         Args:
             meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with attributes to transfer.
@@ -129,8 +130,9 @@ class AttributeMapping:
         return self.ElementMap
 
     def applyFilter( self: Self ) -> bool:
-        """Transfer global attributes from a source mesh to a final mesh,
-        mapping the piece of the attributes to transfer.
+        """Transfer global attributes from a source mesh to a final mesh.
+
+        Mapping the piece of the attributes to transfer.
 
         Returns:
             boolean (bool): True if calculation successfully ended, False otherwise.

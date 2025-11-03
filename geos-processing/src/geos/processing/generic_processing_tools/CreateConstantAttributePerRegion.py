@@ -315,8 +315,9 @@ class CreateConstantAttributePerRegion:
             self.defaultValue = [ self.valueNpType( 0 ) for _ in range( self.nbComponents ) ]
 
     def _createArrayFromRegionArrayWithValueMap( self: Self, regionArray: npt.NDArray[ Any ] ) -> npt.NDArray[ Any ]:
-        """Create the array from the regionArray and the valueMap (self.valueMap)
-        giving the relation between the values of the regionArray and the new one.
+        """Create the array from the regionArray and the valueMap (self.valueMap).
+
+        Giving the relation between the values of the regionArray and the new one.
 
         For each element (idElement) of the regionArray:
             - If the value (regionArray[idElement]) is mapped (a keys of the valueMap),
