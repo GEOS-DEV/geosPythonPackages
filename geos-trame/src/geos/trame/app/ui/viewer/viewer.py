@@ -11,10 +11,11 @@ from trame.widgets import vuetify3 as vuetify
 from vtkmodules.vtkRenderingCore import vtkActor
 
 from geos.trame.app.deck.tree import DeckTree
+from geos.trame.app.ui.viewer.boxViewer import BoxViewer
 from geos.trame.app.ui.viewer.perforationViewer import PerforationViewer
 from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
-from geos.trame.schema_generated.schema_mod import Vtkmesh, Vtkwell, InternalWell, Perforation
+from geos.trame.schema_generated.schema_mod import Box, Vtkmesh, Vtkwell, InternalWell, Perforation
 
 pv.OFF_SCREEN = True
 
@@ -35,6 +36,7 @@ class DeckViewer( vuetify.VCard ):
          - Vtkwell,
          - Perforation,
          - InternalWell
+         - Box
 
         Everything is handle in the method 'update_viewer()' which is trigger when the
         'state.object_state' changed (see DeckTree).
@@ -48,6 +50,7 @@ class DeckViewer( vuetify.VCard ):
         self._cell_data_array_names: list[ str ] = []
         self._source = source
         self._pl = pv.Plotter()
+        self._pl.iren.initialize()
         self._mesh_actor: vtkActor | None = None
 
         self.CUT_PLANE = "on_cut_plane_visibility_change"
@@ -59,6 +62,7 @@ class DeckViewer( vuetify.VCard ):
         self.SELECTED_DATA_ARRAY = "viewer_selected_data_array"
         self.state.change( self.SELECTED_DATA_ARRAY )( self._update_actor_array )
 
+        self.box_engine: BoxViewer | None = None
         self.region_engine = region_viewer
         self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer ] = {}
@@ -122,7 +126,7 @@ class DeckViewer( vuetify.VCard ):
     def update_viewer( self, active_block: BaseModel, path: str, show_obj: bool ) -> None:
         """Add from path the dataset given by the user.
 
-        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation.
+        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation, Box.
 
         object_state  : array used to store path to the data and if we want to show it or not.
         """
@@ -137,6 +141,13 @@ class DeckViewer( vuetify.VCard ):
 
         if isinstance( active_block, Perforation ):
             self._update_perforation( active_block, show_obj, path )
+
+        if isinstance( active_block, Box ):
+            self._update_box( active_block, show_obj )
+
+        # when data is added in the pv.Plotter, we need to refresh the scene to update
+        # the actor to avoid LUT issue.
+        self.plotter.update()
 
     def _on_clip_visibility_change( self, **kwargs: Any ) -> None:
         """Toggle cut plane visibility for all actors.
@@ -215,6 +226,7 @@ class DeckViewer( vuetify.VCard ):
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )  # type: ignore
+            self.well_engine.remove_actor( path )
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
@@ -229,6 +241,7 @@ class DeckViewer( vuetify.VCard ):
         """
         if not show:
             self.plotter.remove_actor( self.well_engine.get_actor( path ) )  # type: ignore
+            self.well_engine.remove_actor( path )
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
@@ -331,3 +344,33 @@ class DeckViewer( vuetify.VCard ):
         saved_perforation.add_extracted_cell( cell_actor )
 
         self._perforations[ path ] = saved_perforation
+
+    def _update_box( self, active_block: Box, show_obj: bool ) -> None:
+        """Generate and display a Box and inner cell(s) from the mesh."""
+        if self.region_engine.input.number_of_cells == 0 and show_obj:
+            self.ctrl.on_add_warning(
+                "Can't display " + active_block.name,
+                "Please display the mesh before creating a well",
+            )
+            return
+
+        if self.box_engine is not None:
+            box_polydata_actor: pv.Actor = self.box_engine.get_box_polydata_actor()
+            extracted_cell_actor: pv.Actor = self.box_engine.get_extracted_cells_actor()
+            self.plotter.remove_actor( box_polydata_actor )
+            self.plotter.remove_actor( extracted_cell_actor )
+
+        if not show_obj:
+            return
+
+        box: Box = active_block
+        self.box_engine = BoxViewer( self.region_engine.input, box )
+
+        box_polydata: pv.PolyData = self.box_engine.get_box_polydata()
+        extracted_cell: pv.UnstructuredGrid = self.box_engine.get_extracted_cells()
+
+        if box_polydata is not None and extracted_cell is not None:
+            _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
+            _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
+            self.box_engine.set_box_polydata_actor( _box_polydata_actor )
+            self.box_engine.set_extracted_cells_actor( _extracted_cells_actor )
