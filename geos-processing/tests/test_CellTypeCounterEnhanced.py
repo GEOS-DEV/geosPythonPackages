@@ -10,7 +10,7 @@ from typing import (
     Iterator, )
 
 from geos.mesh.utils.genericHelpers import createSingleCellMesh, createMultiCellMesh
-from geos.mesh.stats.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 from vtkmodules.vtkCommonDataModel import (
@@ -36,7 +36,7 @@ cellType_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMI
 
 filename_all2: tuple[ str, ...] = ( "tetra_mesh.csv", "hexa_mesh.csv" )
 cellType_all2: tuple[ int, ...] = ( VTK_TETRA, VTK_HEXAHEDRON )
-nbPtsCell_all2: tuple[ int ] = ( 4, 8 )
+nbPtsCell_all2: tuple[ int, ...] = ( 4, 8 )
 
 
 @dataclass( frozen=True )
@@ -71,18 +71,18 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    filter.SetInputDataObject( test_case.mesh )
-    filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
+    cellTypeCounterEnhancedFilter.Update()
+    countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
     ), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 
     # compute counts for each type of cell
-    elementTypes: tuple[ int ] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
-    counts: npt.NDArray[ np.int64 ] = np.zeros( len( elementTypes ) )
+    elementTypes: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
+    counts: npt.NDArray[ np.int64 ] = np.zeros( len( elementTypes ), dtype=np.int64 )
     for i in range( test_case.mesh.GetNumberOfCells() ):
         cell: vtkCell = test_case.mesh.GetCell( i )
         index: int = elementTypes.index( cell.GetCellType() )
@@ -94,7 +94,7 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
         ) == counts[ i ], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[ 0 ] + counts[ 1 ]
-    nbPolyhedra: int = np.sum( counts[ 2: ] )
+    nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )
     assert int( countsObs.getTypeCount( VTK_POLYGON ) ) == nbPolygon, f"The number of faces should be {nbPolygon}."
     assert int(
         countsObs.getTypeCount( VTK_POLYHEDRON ) ) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."
@@ -130,17 +130,17 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    filter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    filter.SetInputDataObject( test_case.mesh )
-    filter.Update()
-    countsObs: CellTypeCounts = filter.GetCellTypeCountsObject()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
+    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
+    cellTypeCounterEnhancedFilter.Update()
+    countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
     assert countsObs.getTypeCount( VTK_VERTEX ) == test_case.mesh.GetNumberOfPoints(
     ), f"Number of vertices should be {test_case.mesh.GetNumberOfPoints()}"
 
     # compute counts for each type of cell
-    elementTypes: tuple[ int ] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
+    elementTypes: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
     counts: npt.NDArray[ np.int64 ] = np.zeros( len( elementTypes ), dtype=int )
     for i in range( test_case.mesh.GetNumberOfCells() ):
         cell: vtkCell = test_case.mesh.GetCell( i )
@@ -153,7 +153,7 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
         ) == counts[ i ], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[ 0 ] + counts[ 1 ]
-    nbPolyhedra: int = np.sum( counts[ 2: ] )
+    nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )
     assert int( countsObs.getTypeCount( VTK_POLYGON ) ) == nbPolygon, f"The number of faces should be {nbPolygon}."
     assert int(
         countsObs.getTypeCount( VTK_POLYHEDRON ) ) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."

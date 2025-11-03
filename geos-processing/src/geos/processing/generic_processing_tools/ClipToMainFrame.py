@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
-from typing import Tuple
 import logging
 
 import numpy as np
@@ -12,7 +11,8 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkFiltersGeneral import vtkOBBTree
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkDataObjectTreeIterator, vtkPolyData
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkDataObjectTreeIterator,
+                                            vtkPolyData )
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
@@ -30,7 +30,7 @@ To use it:
 
 .. code-block:: python
 
-    from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+    from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
     # Filter inputs.
     multiBlockDataSet: vtkMultiBlockDataSet
@@ -38,17 +38,17 @@ To use it:
     speHandler : bool
 
     # Instantiate the filter.
-    filter: ClipToMainFrame = ClipToMainFrame()
-    filter.SetInputData( multiBlockDataSet )
+    clipToMainFrameFilter: ClipToMainFrame = ClipToMainFrame()
+    clipToMainFrameFilter.SetInputData( multiBlockDataSet )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
-    filter.setLoggerHandler( yourHandler )
+    clipToMainFrameFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    filter.ComputeTransform()
-    filter.Update()
-    output: vtkMultiBlockDataSet = filter.GetOutput()
+    clipToMainFrameFilter.ComputeTransform()
+    clipToMainFrameFilter.Update()
+    output: vtkMultiBlockDataSet = clipToMainFrameFilter.GetOutput()
 
 """
 
@@ -79,9 +79,9 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
     def __str__( self ) -> str:
         """String representation of the transformation."""
         return super().__str__() + f"\nSource points: {self.sourcePts}" \
-                  + f"\nTarget points: {self.targetPts}" \
-                  + f"\nAngle-Axis: {self.__getAngleAxis()}" \
-                  + f"\nTranslation: {self.__getTranslation()}"
+            + f"\nTarget points: {self.targetPts}" \
+            + f"\nAngle-Axis: {self.__getAngleAxis()}" \
+            + f"\nTranslation: {self.__getTranslation()}"
 
     def __getAngleAxis( self ) -> tuple[ float, npt.NDArray[ np.double ] ]:
         """Get the angle and axis of the rotation.
@@ -163,7 +163,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
             tuple[vtkPoints, vtkPoints]: Source and target points for the transformation.
         """
         pts: npt.NDArray[ np.double ] = dsa.numpy_support.vtk_to_numpy( vpts.GetData() )
-        #translate pts so they always lie on the -z,-y,-x quadrant
+        # translate pts so they always lie on the -z,-y,-x quadrant
         off: npt.NDArray[ np.double ] = np.asarray( [
             -2 * np.amax( np.abs( pts[ :, 0 ] ) ), -2 * np.amax( np.abs( pts[ :, 1 ] ) ),
             -2 * np.amax( np.abs( pts[ :, 2 ] ) )
@@ -190,7 +190,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         v3: npt.NDArray[ np.double ] = np.cross( v1, v2 )
         v3 /= np.linalg.norm( v3 )
 
-        #reorder axis if v3 points downward
+        # reorder axis if v3 points downward
         if v3[ 2 ] < 0:
             v3 = -v3
             v1, v2 = v2, v1
@@ -239,10 +239,9 @@ class ClipToMainFrame( vtkTransformFilter ):
         """Update the transformation."""
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
-            #locate reference point
-            self.logger.info(
-                "Processing MultiblockDataSet.\n Please make sure your MultiblockDataSet is owning a vtkUnstructured grid as a leaf."
-            )
+            # locate reference point
+            self.logger.info( "Processing MultiblockDataSet.\n Please make sure your MultiblockDataSet is owning"
+                              " a vtkUnstructured grid as a leaf." )
             try:
                 idBlock = self.__locate_reference_point( self.GetInput() )
             except IndexError:
@@ -250,14 +249,17 @@ class ClipToMainFrame( vtkTransformFilter ):
 
             clip = ClipToMainFrameElement( self.GetInput().GetDataSet( idBlock ) )
         else:
-            self.logger.info( "Processing untructuredGrid" )
+            self.logger.info( "Processing unstructuredGrid" )
             clip = ClipToMainFrameElement( self.GetInput() )
 
         clip.Update()
         self.SetTransform( clip )
 
     def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger. In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
 
         Args:
             handler (logging.Handler): The handler to add.
@@ -265,9 +267,8 @@ class ClipToMainFrame( vtkTransformFilter ):
         if not self.logger.hasHandlers():
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.
@@ -303,8 +304,8 @@ class ClipToMainFrame( vtkTransformFilter ):
         xmin, _, ymin, _, zmin, _ = getMultiBlockBounds( multiBlockDataSet )
         while DOIterator.GetCurrentDataObject() is not None:
             dataSet: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast( DOIterator.GetCurrentDataObject() )
-            bounds: Tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
-            #use the furthest bounds corner as reference point in the all negs quadrant
+            bounds: tuple[ float, float, float, float, float, float ] = dataSet.GetBounds()
+            # use the furthest bounds corner as reference point in the all negs quadrant
             if __inside( np.asarray( [ xmin, ymin, zmin ] ), bounds ):
                 self.logger.info( f"Using block {DOIterator.GetCurrentFlatIndex()} as reference for transformation" )
                 return DOIterator.GetCurrentFlatIndex()

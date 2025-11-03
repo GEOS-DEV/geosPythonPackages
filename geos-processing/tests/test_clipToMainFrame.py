@@ -14,7 +14,7 @@ import numpy as np
 import numpy.typing as npt
 from vtkmodules.util.vtkConstants import VTK_HEXAHEDRON
 
-from geos.mesh.processing.ClipToMainFrame import ClipToMainFrame
+from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
 Lx, Ly, Lz = 5, 2, 8
 nx, ny, nz = 10, 10, 10
@@ -102,11 +102,11 @@ def __build_test_mesh( mxx: Tuple[ int, ...] ) -> Generator[ Expected, None, Non
     "expected", [ item for t in list( itertools.product( [ -1, 1 ], repeat=3 ) ) for item in __build_test_mesh( t ) ] )
 def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
     """Test the ClipToMainFrameFilter on a rotated and translated box hexa mesh."""
-    filter = ClipToMainFrame()
-    filter.SetInputData( expected.mesh )
-    filter.ComputeTransform()
-    filter.Update()
-    output_mesh: vtkUnstructuredGrid = filter.GetOutput()
+    clipToMainFrameFilter = ClipToMainFrame()
+    clipToMainFrameFilter.SetInputData( expected.mesh )
+    clipToMainFrameFilter.ComputeTransform()
+    clipToMainFrameFilter.Update()
+    output_mesh: vtkUnstructuredGrid = clipToMainFrameFilter.GetOutput()
     assert output_mesh.GetNumberOfPoints() == expected.mesh.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == expected.mesh.GetNumberOfCells()
 
@@ -133,12 +133,12 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
 def test_clipToMainFrame_generic( dataSetTest: vtkMultiBlockDataSet ) -> None:
     """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    filter = ClipToMainFrame()
-    filter.SetInputData( multiBlockDataSet )
-    filter.ComputeTransform()
-    filter.Update()
-    print( filter.GetTransform() )
-    output_mesh: vtkMultiBlockDataSet = filter.GetOutputDataObject( 0 )
+    clipToMainFrameFilter = ClipToMainFrame()
+    clipToMainFrameFilter.SetInputData( multiBlockDataSet )
+    clipToMainFrameFilter.ComputeTransform()
+    clipToMainFrameFilter.Update()
+    print( clipToMainFrameFilter.GetTransform() )
+    output_mesh: vtkMultiBlockDataSet = clipToMainFrameFilter.GetOutputDataObject( 0 )
     assert output_mesh.GetNumberOfPoints() == multiBlockDataSet.GetNumberOfPoints()
     assert output_mesh.GetNumberOfCells() == multiBlockDataSet.GetNumberOfCells()
     assert output_mesh.IsA( 'vtkMultiBlockDataSet' )
