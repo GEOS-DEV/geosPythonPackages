@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -11,25 +11,25 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-dir_path = os.path.dirname( os.path.realpath( __file__ ) )
-parent_dir_path = os.path.dirname( dir_path )
-if parent_dir_path not in sys.path:
-    sys.path.append( parent_dir_path )
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
 
-import PVplugins  # noqa: F401
+update_paths()
 
 from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
     getAttributeToTransferFromInitialTime,
 )
 from geos.utils.Logger import ERROR, INFO, Logger, getLogger
-from geos_posp.filters.GeosBlockExtractor import GeosBlockExtractor
+from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
     createCellCenterAttribute,
 )
-from geos_posp.visu.PVUtils.paraviewTreatments import getTimeStepIndex
+from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -292,15 +292,12 @@ class PVExtractMergeBlocksVolumeSurface( VTKPythonAlgorithmBase ):
             bool: True if extraction and merge successfully eneded, False otherwise
         """
         # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor()
-        blockExtractor.SetLogger( self.m_logger )
-        blockExtractor.SetInputDataObject( input )
-        blockExtractor.ExtractFaultsOn()
-        blockExtractor.Update()
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFault=True )
+        blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter
-        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputVolume()
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.getOutputFaults()
+        volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
+        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
 
         # rename attributes and merge blocks
         assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
