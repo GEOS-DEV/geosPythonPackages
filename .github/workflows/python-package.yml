@@ -130,16 +130,7 @@ jobs:
       run:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
       # wrap pytest to avoid error when no tests in the package
-      # sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret
-        sh -c 'python -m pytest ./${{ matrix.package-name }};'
-
-    - name: ssh
-      uses: lhotari/action-upterm@v1
-      with:
-# limits ssh access and adds the ssh public key for the user which triggered the workflow
-        limit-access-to-actor: false
-# limits ssh access and adds the ssh public keys of the listed GitHub users
-        # limit-access-to-users: GitHubLogin
+        sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
 
   # check if GEOS has label for testing GEOS integration
   check_integration_label:
