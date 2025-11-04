@@ -139,11 +139,13 @@ class DeckTree( object ):
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "name": e.name,
-                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(date_fmt), #,
+                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(date_fmt),
                 "end": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.end_time))).strftime(date_fmt),
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)).days ),
                 "category" : e.target.split('/')[-1],
             }
+            if(int(e.cycle_frequency)!=1):
+                item["freq"] = int(e.cycle_frequency)
             timeline.append( item )
             global_id = global_id + 1
 
