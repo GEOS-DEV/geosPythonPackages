@@ -5,8 +5,8 @@
 import logging
 from typing_extensions import Self
 
-from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid,
-                                            vtkCellTypes, vtkTriangle )
+from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData,
+                                            vtkUnstructuredGrid )
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
 from geos.utils.Logger import ( Logger, getLogger )
