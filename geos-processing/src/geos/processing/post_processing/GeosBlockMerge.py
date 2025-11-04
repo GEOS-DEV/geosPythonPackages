@@ -2,7 +2,7 @@
 # # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-
+import logging
 from geos.utils.GeosOutputsConstants import (
     PHASE_SEP,
     PhaseTypeEnum,
@@ -17,6 +17,8 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkPolyData,
     vtkUnstructuredGrid,
+    vtkCellTypes,
+    vtkTriangle,
 )
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
@@ -60,92 +62,111 @@ To use the filter:
     output :vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject(0)
 """
 
+loggerTitle: str = "GEOS Block Merge"
+
 
 class GeosBlockMerge():
 
-    def __init__( self: Self, inputMesh: vtkMultiBlockDataSet ) -> None:
+    def __init__(
+        self: Self,
+        inputMesh: vtkMultiBlockDataSet,
+        convertFaultToSurface: bool = False,
+        speHandler: bool = False,
+    ) -> None:
         """VTK Filter that perform GEOS rank merge.
 
-        The filter returns a multiblock mesh composed of elementary blocks.
+        Args:
+            inputMesh (vtkMultiBlockDataSet): The mesh with the blocks to merge.
+            convertFaultToSurface (bool, optional): True if the merged block need to be convert to vtp, False otherwise.
+                Defaults to False.
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
 
         """
-        self.m_inputMesh: vtkMultiBlockDataSet = inputMesh
-        self.m_outputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+        self.inputMesh: vtkMultiBlockDataSet = inputMesh
+        self.convertFaultToSurface: bool = convertFaultToSurface
 
-        self.m_convertFaultToSurface: bool = False
+        self.outputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         self.phaseNameDict: dict[ str, set[ str ] ] = {
             PhaseTypeEnum.ROCK.type: set(),
             PhaseTypeEnum.FLUID.type: set(),
         }
 
-        # set logger
-        self.m_logger: Logger = getLogger( "Geos Block Merge Filter" )
+        # Logger.
+        self.logger: Logger
+        if not speHandler:
+            self.logger = getLogger( loggerTitle, True )
+        else:
+            self.logger = logging.getLogger( loggerTitle )
+            self.logger.setLevel( logging.INFO )
 
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set the logger.
+    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
 
         Args:
-            logger (Logger): logger
+            handler (logging.Handler): The handler to add.
         """
-        self.m_logger = logger
-
-    def ConvertSurfaceMeshOn( self: Self ) -> None:
-        """Activate surface conversion from vtkUnstructuredGrid to vtkPolyData."""
-        self.m_convertFaultToSurface = True
-
-    def ConvertSurfaceMeshOff( self: Self ) -> None:
-        """Deactivate surface conversion from vtkUnstructuredGrid to vtkPolyData."""
-        self.m_convertFaultToSurface = False
+        if not self.logger.hasHandlers():
+            self.logger.addHandler( handler )
+        else:
+            self.logger.warning(
+                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
+            )
 
     def getOutput ( self: Self ) -> vtkMultiBlockDataSet:
         """Get the mesh with the composite blocks merged."""
-        return self.m_outputMesh
+        return self.outputMesh
 
     def applyFilter( self: Self ) -> None:
         """Merge all elementary node that belong to a same parent node."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+
         try:
             # Display phase names
             self.commutePhaseNames()
             for phase, phaseNames in self.phaseNameDict.items():
                 if len( phaseNames ) > 0:
-                    self.m_logger.info( f"Identified { phase } phase(s) are: { phaseNames }." )
+                    self.logger.info( f"Identified { phase } phase(s) are: { phaseNames }." )
                 else:
-                    self.m_logger.info( f"No { phase } phase has been identified." )
+                    self.logger.info( f"No { phase } phase has been identified." )
 
-            # Merge all the composite blocks
-            compositeBlockIndexesToMerge: dict[ str, int ] = getElementaryCompositeBlockIndexes( self.m_inputMesh )
+            # Parse all the composite blocks
+            compositeBlockIndexesToMerge: dict[ str, int ] = getElementaryCompositeBlockIndexes( self.inputMesh )
             nbBlocks: int = len( compositeBlockIndexesToMerge )
-            self.m_outputMesh.SetNumberOfBlocks( nbBlocks )
+            self.outputMesh.SetNumberOfBlocks( nbBlocks )
             for newIndex, ( blockName, blockIndex ) in enumerate( compositeBlockIndexesToMerge.items() ):
-                # Set the name of the merged block
-                self.m_outputMesh.GetMetaData( newIndex ).Set( vtkCompositeDataSet.NAME(), blockName )
+                # Set the name of the composite block
+                self.outputMesh.GetMetaData( newIndex ).Set( vtkCompositeDataSet.NAME(), blockName )
 
                 # Merge blocks
-                blockToMerge: vtkMultiBlockDataSet = extractBlock( self.m_inputMesh, blockIndex )
-                volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge, keepPartialAttributes=True, logger=self.m_logger )
+                blockToMerge: vtkMultiBlockDataSet = extractBlock( self.inputMesh, blockIndex )
+                volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge, keepPartialAttributes=True, logger=self.logger )
 
                 # Create index attribute keeping the index in initial mesh
-                if not createConstantAttribute( volumeMesh, [ blockIndex ], PostProcessingOutputsEnum.BLOCK_INDEX.attributeName, onPoints=False, logger=self.m_logger ):
-                    self.m_logger.warning( "BlockIndex attribute was not created." )
+                if not createConstantAttribute( volumeMesh, [ blockIndex ], PostProcessingOutputsEnum.BLOCK_INDEX.attributeName, onPoints=False, logger=self.logger ):
+                    self.logger.warning( "BlockIndex attribute was not created." )
 
                 # Rename attributes
                 self.renameAttributes( volumeMesh )
 
                 # Convert the volume mesh to a surface mesh
-                if self.m_convertFaultToSurface:
+                if self.convertFaultToSurface:
                     surfaceMesh: vtkPolyData = self.convertBlockToSurface( volumeMesh )
                     assert surfaceMesh is not None, "Surface extraction from block failed."
-                    surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.m_logger ) )
+                    surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
                     assert surfaceMesh is not None, "Normal calculation failed."
-                    surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.m_logger ) )
+                    surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
                     assert surfaceMesh is not None, "Tangent calculation failed."
-                # Add the merged block to the output
-                    self.m_outputMesh.SetBlock( newIndex, surfaceMesh )
+                # Add the merged block to the output mesh
+                    self.outputMesh.SetBlock( newIndex, surfaceMesh )
                 else:
-                    self.m_outputMesh.SetBlock( newIndex, volumeMesh )
+                    self.outputMesh.SetBlock( newIndex, volumeMesh )
+
+            self.logger.info( "The filter succeeded." )
         except ( ValueError, TypeError, RuntimeError ) as e:
-            self.m_logger.critical( "Geos block merge failed due to:" )
-            self.m_logger.critical( e, exc_info=True )
+            self.logger.critical( f"The filter failed.\n{ e }" )
 
         return
 
@@ -153,31 +174,33 @@ class GeosBlockMerge():
         self: Self,
         mesh: vtkUnstructuredGrid,
     ) -> None:
-        """Rename attributes to harmonize throughout the mesh.
+        """Rename attributes to harmonize GEOS output, see more geos.utils.OutputsConstants.py.
 
         Args:
-            mesh (vtkMultiBlockDataSet): input mesh
-            phaseClassification (dict[str, PhaseTypeEnum]): phase classification
-                detected from attributes
+            mesh (vtkUnstructuredGrid): The mesh with the attribute to rename.
         """
+        # All the attributes to rename are on cells
         for attributeName in getAttributeSet( mesh, False ):
             for suffix, newName in getRockSuffixRenaming().items():
                 if suffix in attributeName:
+                    # Fluid and Rock density attribute have the same suffix, only the rock density need to be renamed
                     if suffix == "_density":
                         for phaseName in self.phaseNameDict[ PhaseTypeEnum.ROCK.type ]:
                             if phaseName in attributeName:
                                 renameAttribute( mesh, attributeName, newName, False )
-                    elif suffix != "_density":
+                    else:
                         renameAttribute( mesh, attributeName, newName, False )
 
     def commutePhaseNames( self: Self ) -> None:
         """Get the names of the phases in the mesh from Cell attributes."""
-        for name in getAttributeSet( self.m_inputMesh, False ):
+        # All the phase attributes are on cells
+        for name in getAttributeSet( self.inputMesh, False ):
             if PHASE_SEP in name:
-                index = name.rindex( PHASE_SEP )
-                phaseName: str = name[ :index ]
-                suffixName: str = name[ index: ]
-                if suffixName == "_density":
+                phaseName: str
+                suffixName: str
+                phaseName, suffixName = name.split( PHASE_SEP )
+                # Fluid and Rock density attribute have the same suffix, common fluid name are used to separated the two phases
+                if suffixName == "density":
                     if any( phaseName in fluidPrefix.value for fluidPrefix in list( FluidPrefixEnum ) ):
                         self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )
                     else:
@@ -203,6 +226,9 @@ class GeosBlockMerge():
         Returns:
             vtkPolyData: extracted surface
         """
+        cellTypes: list[ vtkCellTypes ] = block.GetDistinctCellTypesArray()
+        assert [ vtkTriangle ] == cellTypes, "The surface mesh must be a triangulated surface only."
+
         extractSurfaceFilter: vtkDataSetSurfaceFilter = vtkDataSetSurfaceFilter()
         extractSurfaceFilter.SetInputData( block )
         # fast mode should be used for rendering only
