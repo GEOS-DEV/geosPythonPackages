@@ -121,7 +121,7 @@ class GeosBlockMerge():
 
         try:
             # Display phase names
-            self.commutePhaseNames()
+            self.computePhaseNames()
             for phase, phaseNames in self.phaseNameDict.items():
                 if len( phaseNames ) > 0:
                     self.logger.info( f"Identified { phase } phase(s) are: { phaseNames }." )
@@ -192,7 +192,7 @@ class GeosBlockMerge():
                     else:
                         renameAttribute( mesh, attributeName, newName, False )
 
-    def commutePhaseNames( self: Self ) -> None:
+    def computePhaseNames( self: Self ) -> None:
         """Get the names of the phases in the mesh from Cell attributes."""
         # All the phase attributes are on cells
         for name in getAttributeSet( self.inputMesh, False ):
@@ -201,14 +201,14 @@ class GeosBlockMerge():
                 suffixName: str
                 phaseName, suffixName = name.split( PHASE_SEP )
                 # Fluid and Rock density attribute have the same suffix, common fluid name are used to separated the two phases
-                if suffixName == "density":
+                if f"{ PHASE_SEP }{ suffixName }" == "_density":
                     if any( phaseName in fluidPrefix.value for fluidPrefix in list( FluidPrefixEnum ) ):
                         self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )
                     else:
                         self.phaseNameDict[ PhaseTypeEnum.ROCK.type ].add( phaseName )
-                elif suffixName in PhaseTypeEnum.ROCK.attributes:
+                elif f"{ PHASE_SEP }{ suffixName }" in PhaseTypeEnum.ROCK.attributes:
                     self.phaseNameDict[ PhaseTypeEnum.ROCK.type ].add( phaseName )
-                elif suffixName in PhaseTypeEnum.FLUID.attributes:
+                elif f"{ PHASE_SEP }{ suffixName }" in PhaseTypeEnum.FLUID.attributes:
                     self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )
 
         return
