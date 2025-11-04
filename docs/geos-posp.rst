@@ -8,5 +8,3 @@ GEOS Post-Processing tools
    ./geos_posp_docs/home.rst
 
    ./geos_posp_docs/modules.rst
-
-   ./geos_posp_docs/visualization.rst
