@@ -67,9 +67,9 @@ class TimelineEditor( vuetify.VCard ):
                      "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
                      "name": t["name"]}
             
-            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','begin_time', event['begin_time'])
-            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','end_time', event['end_time'])
-            self.tree.update(f'Problems/Events/0/PeriodicEvent/{i}','name', event['name'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
      
 
         # self.tree._apply_changed_properties(self.tree.input_file.problem)
