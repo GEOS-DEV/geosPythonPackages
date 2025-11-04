@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from trame.widgets import vuetify3 as vuetify, html
 from trame_simput import get_simput_manager
 
+from xsdata.utils import text
+
 from geos.trame.app.data_types.field_status import FieldStatus
 from geos.trame.app.data_types.renderable import Renderable
 from geos.trame.app.data_types.tree_node import TreeNode
@@ -61,9 +63,9 @@ class DeckInspector( vuetify.VTreeview ):
             if ids is not None and topic == "changed":
                 for obj_id in ids:
                     proxy = self.simput_manager.proxymanager.get( obj_id )
-                    self.tree.decode( obj_id )
+                    #self.tree.decode( obj_id ) # if const function and return not used why ?? to decode context ??
                     for prop in proxy.edited_property_names:
-                        self.tree.update( obj_id, prop, proxy.get_property( prop ) )
+                        self.tree.update( obj_id, text.camel_case(prop), proxy.get_property( prop ) )
 
         self.simput_manager.proxymanager.on( _on_change )
 
