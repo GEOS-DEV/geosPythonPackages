@@ -3,63 +3,54 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import logging
-from geos.utils.GeosOutputsConstants import (
-    PHASE_SEP,
-    PhaseTypeEnum,
-    FluidPrefixEnum,
-    PostProcessingOutputsEnum,
-    getRockSuffixRenaming,
-)
-from geos.utils.Logger import Logger, getLogger
 from typing_extensions import Self
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkMultiBlockDataSet,
-    vtkPolyData,
-    vtkUnstructuredGrid,
-    vtkCellTypes,
-    vtkTriangle,
-)
+
+from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid,
+                                            vtkCellTypes, vtkTriangle )
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
-from geos.mesh.utils.multiblockHelpers import getElementaryCompositeBlockIndexes, extractBlock
+from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
+                                              getRockSuffixRenaming )
 from geos.mesh.utils.arrayHelpers import getAttributeSet
-from geos.mesh.utils.arrayModifiers import createConstantAttribute, renameAttribute
+from geos.mesh.utils.arrayModifiers import ( createConstantAttribute, renameAttribute )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
-from geos.mesh.utils.genericHelpers import (
-    computeNormals,
-    computeTangents,
-)
+from geos.mesh.utils.multiblockHelpers import ( getElementaryCompositeBlockIndexes, extractBlock )
+from geos.mesh.utils.genericHelpers import ( computeNormals, computeTangents )
 
 __doc__ = """
-GeosBlockMerge module is a vtk filter that allows to merge Geos ranks, rename
-stress and porosity attributes, and identify fluids and rock phases.
+GeosBlockMerge is a vtk filter that allows to merge for a GEOS domain the ranks per region, identify "Fluids" and "Rock" phases and rename "Rock" attributes.
 
 Filter input and output types are vtkMultiBlockDataSet.
+
+.. Important::
+    This filter deals with the domain mesh of GEOS. This domain needs to be extracted before.
+    See geos-processing/src/geos/processing/post_processing/GeosBlockExtractor.py to see the type of input requires by this filter.
 
 To use the filter:
 
 .. code-block:: python
 
-    from filters.GeosBlockMerge import GeosBlockMerge
+    from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
 
-    # filter inputs
-    logger :Logger
-    input :vtkMultiBlockDataSet
+    # Filter inputs.
+    inputMesh: vtkMultiBlockDataSet
+    # Optional inputs.
+    convertFaultToSurface: bool # Defaults to False
+    speHandler: bool # Defaults to False
 
-    # instantiate the filter
-    mergeBlockFilter :GeosBlockMerge = GeosBlockMerge()
-    # set the logger
-    mergeBlockFilter.SetLogger(logger)
-    # set input data object
-    mergeBlockFilter.SetInputDataObject(input)
-    # ConvertSurfaceMeshOff or ConvertSurfaceMeshOn to (de)activate the conversion
-    # of vtkUnstructuredGrid to surface withNormals and Tangents calculation.
-    mergeBlockFilter.ConvertSurfaceMeshOff()
-    # do calculations
-    mergeBlockFilter.Update()
-    # get output object
-    output :vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject(0)
+    # Instantiate the filter
+    mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( inputMesh, convertFaultToSurface, speHandler )
+
+    # Set the handler of yours (only if speHandler is True).
+    yourHandler: logging.Handler
+    mergeBlockFilter.setLoggerHandler( yourHandler )
+
+    # Do calculations
+    mergeBlockFilter.applyFilter()
+
+    # Get the multiBlockDataSet with one dataSet per region
+    outputMesh: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
 """
 
 loggerTitle: str = "GEOS Block Merge"
@@ -73,7 +64,12 @@ class GeosBlockMerge():
         convertFaultToSurface: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """VTK Filter that perform GEOS rank merge.
+        """VTK Filter that merge ranks of GEOS output mesh.
+
+        for all the composite blocks of the input mesh:
+            - Ranks are merged
+            - "Rock" attributes are renamed
+            - Volume mesh are convert to surface if needed
 
         Args:
             inputMesh (vtkMultiBlockDataSet): The mesh with the blocks to merge.
@@ -115,12 +111,12 @@ class GeosBlockMerge():
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def getOutput ( self: Self ) -> vtkMultiBlockDataSet:
+    def getOutput( self: Self ) -> vtkMultiBlockDataSet:
         """Get the mesh with the composite blocks merged."""
         return self.outputMesh
 
     def applyFilter( self: Self ) -> None:
-        """Merge all elementary node that belong to a same parent node."""
+        """Apply the filter on the mesh."""
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -142,10 +138,15 @@ class GeosBlockMerge():
 
                 # Merge blocks
                 blockToMerge: vtkMultiBlockDataSet = extractBlock( self.inputMesh, blockIndex )
-                volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge, keepPartialAttributes=True, logger=self.logger )
+                volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge,
+                                                               keepPartialAttributes=True,
+                                                               logger=self.logger )
 
                 # Create index attribute keeping the index in initial mesh
-                if not createConstantAttribute( volumeMesh, [ blockIndex ], PostProcessingOutputsEnum.BLOCK_INDEX.attributeName, onPoints=False, logger=self.logger ):
+                if not createConstantAttribute( volumeMesh, [ blockIndex ],
+                                                PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
+                                                onPoints=False,
+                                                logger=self.logger ):
                     self.logger.warning( "BlockIndex attribute was not created." )
 
                 # Rename attributes
@@ -159,13 +160,13 @@ class GeosBlockMerge():
                     assert surfaceMesh is not None, "Normal calculation failed."
                     surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
                     assert surfaceMesh is not None, "Tangent calculation failed."
-                # Add the merged block to the output mesh
+                    # Add the merged block to the output mesh
                     self.outputMesh.SetBlock( newIndex, surfaceMesh )
                 else:
                     self.outputMesh.SetBlock( newIndex, volumeMesh )
 
             self.logger.info( "The filter succeeded." )
-        except ( ValueError, TypeError, RuntimeError ) as e:
+        except ( ValueError, TypeError, RuntimeError, AssertionError ) as e:
             self.logger.critical( f"The filter failed.\n{ e }" )
 
         return
@@ -218,7 +219,6 @@ class GeosBlockMerge():
         .. WARNING:: work only with triangulated surfaces
 
         .. TODO:: need to convert quadrangular to triangulated surfaces first
-
 
         Args:
             block (vtkUnstructuredGrid): block from which to extract the surface
