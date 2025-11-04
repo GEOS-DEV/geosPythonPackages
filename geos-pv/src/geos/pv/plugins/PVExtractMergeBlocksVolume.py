@@ -32,6 +32,9 @@ from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 __doc__ = """
 PVExtractMergeBlocksVolume is a Paraview plugin that allows to merge ranks
@@ -303,10 +306,9 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
         Returns:
             vtkMultiBlockDataSet: Multiblock mesh composed of internal merged blocks.
         """
-        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( input )
-        mergeBlockFilter.SetLogger( self.m_logger )
-        if convertSurfaces:
-            mergeBlockFilter.ConvertSurfaceMeshOn()
+        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( input, convertSurfaces, True )
+        if not mergeBlockFilter.logger.hasHandlers():
+            mergeBlockFilter.setLoggerHandler( VTKHandler() )
         mergeBlockFilter.applyFilter()
         mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
         assert mergedBlocks is not None, "Final merged MultiBlockDataSet is null."
