@@ -77,7 +77,7 @@ class DeckTree( object ):
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         new_path.append( key )
         assert self.input_file is not None and self.input_file.pb_dict is not None
-        funcy.set_in( self.input_file.pb_dict, new_path, value )
+        self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
     def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
