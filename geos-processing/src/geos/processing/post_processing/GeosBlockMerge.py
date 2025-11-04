@@ -226,9 +226,6 @@ class GeosBlockMerge():
         Returns:
             vtkPolyData: extracted surface
         """
-        cellTypes: list[ vtkCellTypes ] = block.GetDistinctCellTypesArray()
-        assert [ vtkTriangle ] == cellTypes, "The surface mesh must be a triangulated surface only."
-
         extractSurfaceFilter: vtkDataSetSurfaceFilter = vtkDataSetSurfaceFilter()
         extractSurfaceFilter.SetInputData( block )
         # fast mode should be used for rendering only
