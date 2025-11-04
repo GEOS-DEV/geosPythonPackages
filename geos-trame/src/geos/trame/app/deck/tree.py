@@ -10,6 +10,7 @@ import dpath
 import funcy
 from pydantic import BaseModel
 from trame_simput import get_simput_manager
+from trame_simput.core.proxy import ProxyManager, Proxy
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
@@ -172,6 +173,8 @@ class DeckTree( object ):
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
                 DeckTree._append_include_file( model_with_changes, includeName )
 
+            proxy = get_simput_manager( id=self._sm_id )
+            DeckTree._discard_default(model_with_changes, proxy)
             model_as_xml: str = DeckTree.to_xml( model_with_changes )
 
             basename = os.path.basename( filepath )
@@ -181,6 +184,15 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
+
+    @staticmethod
+    def _discard_default( model: Problem, proxy_mg : ProxyManager | Any) -> None:
+        for obj_id in model:
+            proxy = proxy_mg.proxymanager.get( obj_id )
+            for prop in proxy.property_names:
+                if (obj_id[prop] == proxy.getproperty(prop) ) :
+                    del obj_id[prop]
+        
 
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:
