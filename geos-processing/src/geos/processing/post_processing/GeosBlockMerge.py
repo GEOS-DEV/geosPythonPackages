@@ -6,6 +6,7 @@
 from geos.utils.GeosOutputsConstants import (
     PHASE_SEP,
     PhaseTypeEnum,
+    FluidPrefixEnum,
     PostProcessingOutputsEnum,
     getRockSuffixRenaming,
 )
@@ -19,7 +20,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
-from geos.mesh.utils.multiblockHelpers import getElementaryCompositeBlockIndexes
+from geos.mesh.utils.multiblockHelpers import getElementaryCompositeBlockIndexes, extractBlock
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import createConstantAttribute, renameAttribute
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
@@ -73,8 +74,8 @@ class GeosBlockMerge():
 
         self.m_convertFaultToSurface: bool = False
         self.phaseNameDict: dict[ str, set[ str ] ] = {
-            PhaseTypeEnum.ROCK.type: {},
-            PhaseTypeEnum.FLUID.type: {},
+            PhaseTypeEnum.ROCK.type: set(),
+            PhaseTypeEnum.FLUID.type: set(),
         }
 
         # set logger
@@ -96,6 +97,10 @@ class GeosBlockMerge():
         """Deactivate surface conversion from vtkUnstructuredGrid to vtkPolyData."""
         self.m_convertFaultToSurface = False
 
+    def getOutput ( self: Self ) -> vtkMultiBlockDataSet:
+        """Get the mesh with the composite blocks merged."""
+        return self.m_outputMesh
+
     def applyFilter( self: Self ) -> None:
         """Merge all elementary node that belong to a same parent node."""
         try:
@@ -116,7 +121,7 @@ class GeosBlockMerge():
                 self.m_outputMesh.GetMetaData( newIndex ).Set( vtkCompositeDataSet.NAME(), blockName )
 
                 # Merge blocks
-                blockToMerge: vtkMultiBlockDataSet = vtkMultiBlockDataSet.SafeDownCast( self.m_inputMesh.GetBlock( blockIndex ) )
+                blockToMerge: vtkMultiBlockDataSet = extractBlock( self.m_inputMesh, blockIndex )
                 volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge, keepPartialAttributes=True, logger=self.m_logger )
 
                 # Create index attribute keeping the index in initial mesh
@@ -158,7 +163,12 @@ class GeosBlockMerge():
         for attributeName in getAttributeSet( mesh, False ):
             for suffix, newName in getRockSuffixRenaming().items():
                 if suffix in attributeName:
-                    renameAttribute( mesh, attributeName, newName, False )
+                    if suffix == "_density":
+                        for phaseName in self.phaseNameDict[ PhaseTypeEnum.ROCK.type ]:
+                            if phaseName in attributeName:
+                                renameAttribute( mesh, attributeName, newName, False )
+                    elif suffix != "_density":
+                        renameAttribute( mesh, attributeName, newName, False )
 
     def commutePhaseNames( self: Self ) -> None:
         """Get the names of the phases in the mesh from Cell attributes."""
@@ -167,7 +177,12 @@ class GeosBlockMerge():
                 index = name.rindex( PHASE_SEP )
                 phaseName: str = name[ :index ]
                 suffixName: str = name[ index: ]
-                if suffixName in PhaseTypeEnum.ROCK.attributes:
+                if suffixName == "_density":
+                    if any( phaseName in fluidPrefix.value for fluidPrefix in list( FluidPrefixEnum ) ):
+                        self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )
+                    else:
+                        self.phaseNameDict[ PhaseTypeEnum.ROCK.type ].add( phaseName )
+                elif suffixName in PhaseTypeEnum.ROCK.attributes:
                     self.phaseNameDict[ PhaseTypeEnum.ROCK.type ].add( phaseName )
                 elif suffixName in PhaseTypeEnum.FLUID.attributes:
                     self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )

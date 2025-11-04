@@ -274,7 +274,7 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
             output (vtkMultiBlockDataSet): output volume mesh
 
         Returns:
-            bool: True if extraction and merge successfully eneded, False otherwise
+            bool: True if extraction and merge successfully ended, False otherwise
         """
         # extract blocks
         blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input )
@@ -303,14 +303,11 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
         Returns:
             vtkMultiBlockDataSet: Multiblock mesh composed of internal merged blocks.
         """
-        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge()
+        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( input )
         mergeBlockFilter.SetLogger( self.m_logger )
-        mergeBlockFilter.SetInputDataObject( input )
         if convertSurfaces:
             mergeBlockFilter.ConvertSurfaceMeshOn()
-        else:
-            mergeBlockFilter.ConvertSurfaceMeshOff()
-        mergeBlockFilter.Update()
-        mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject( 0 )
+        mergeBlockFilter.applyFilter()
+        mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
         assert mergedBlocks is not None, "Final merged MultiBlockDataSet is null."
         return mergedBlocks
