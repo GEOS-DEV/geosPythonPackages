@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import logging
 import numpy.typing as npt
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
@@ -20,15 +21,17 @@ update_paths()
 
 from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
+    GeosDomainNameEnum,
     getAttributeToTransferFromInitialTime,
 )
-from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
+from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
     createCellCenterAttribute,
 )
+from geos.mesh.utils.multiblockHelpers import getBlockNames
 from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
@@ -38,7 +41,7 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 __doc__ = """
-PVExtractMergeBlocksVolumeSurfaceWell is a Paraview plugin that allows to merge
+PVGeosBlockExtractAndMerge is a Paraview plugin that allows to merge
 ranks of a Geos output objects containing a volumic mesh, surfaces, and wells.
 
 Input and output types are vtkMultiBlockDataSet.
@@ -54,26 +57,32 @@ This filter results in 3 output pipelines:
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVExtractMergeBlocksVolumeSurfaceWell.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeosBlockExtractAndMerge.
 * Select the Geos output .pvd file loaded in Paraview.
-* Search and Apply PVExtractMergeBlocksVolumeSurfaceWell Filter.
-
+* Search and Apply PVGeosBlockExtractAndMerge Filter.
 """
+
+loggerTitle: str = "Extract & Merge GEOS Block"
 
 
 @smproxy.filter(
-    name="PVExtractMergeBlocksVolumeSurfaceWell",
-    label="Geos Extract And Merge Blocks - Volume/Surface/Well",
+    name="PVGeosBlockExtractAndMerge",
+    label="Geos Extract And Merge Blocks",
 )
-@smhint.xml( """
-    <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+@smproperty.xml( """
     <OutputPort index="0" name="VolumeMesh"/>
-    <OutputPort index="1" name="Surfaces"/>
+    <OutputPort index="1" name="Faults"/>
     <OutputPort index="2" name="Wells"/>
+    <Hints>
+        <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+        <View type="RenderView" port="0"/>
+        <View type="None" port="1"/>
+        <View type="None" port="2"/>
+    </Hints>
     """ )
-@smproperty.input( name="Input", port_index=0 )
+@smproperty.input( name="GEOSpvd", port_index=0, label="GEOS pvd" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
-class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
+class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Paraview plugin to extract and merge ranks from Geos output Mesh.
@@ -88,6 +97,9 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
             outputType="vtkMultiBlockDataSet",
         )
 
+        self.extractFault: bool = False
+        self.extractWell: bool = False
+
         #: all time steps from input
         self.m_timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
         #: displayed time step in the IHM
@@ -97,53 +109,9 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         #: request data processing step - incremented each time RequestUpdateExtent is called
         self.m_requestDataStep: int = -1
 
-        # saved object at initial time step
-        self.m_outputT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-
-        # set logger
-        self.m_logger: Logger = getLogger( "Extract and merge block Filter" )
-
-    def SetLogger( self: Self, logger: Logger ) -> None:
-        """Set filter logger.
-
-        Args:
-            logger (Logger): logger
-        """
-        self.m_logger = logger
-
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet" )
-        return 1
-
-    def RequestInformation(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
-
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        executive = self.GetExecutive()  # noqa: F841
-        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
-        return 1
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( VTKHandler() )
 
     def RequestDataObject(
         self: Self,
@@ -209,7 +177,6 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         inInfo = inInfoVec[ 0 ]
         # get displayed time step info before updating time
         if self.m_requestDataStep == -1:
-            self.m_logger.info( f"Apply filter {__name__}" )
             self.m_timeSteps = inInfo.GetInformationObject( 0 ).Get( executive.TIME_STEPS()  # type: ignore
                                                                     )
             self.m_currentTime = inInfo.GetInformationObject( 0 ).Get( executive.UPDATE_TIME_STEP()  # type: ignore
@@ -248,118 +215,109 @@ class PVExtractMergeBlocksVolumeSurfaceWell( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
         try:
-            input: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
+            inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
+            outputCellsT0: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
             outputCells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
             outputFaults: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 1 )
             outputWells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 2 )
 
-            assert input is not None, "Input MultiBlockDataSet is null."
-            assert outputCells is not None, "Output volum mesh is null."
+            assert inputMesh is not None, "Input MultiBlockDataSet is null."
+            assert outputCells is not None, "Output volume mesh is null."
             assert outputFaults is not None, "Output surface mesh is null."
             assert outputWells is not None, "Output well mesh is null."
 
-            # time controller
+            blockNames: list[ str ]  = getBlockNames( inputMesh )
+            if GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
+                self.extractFault = True
+            if GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
+                self.extractWell = True
+
+            # Time controller, only the first and the current time step are computed
             executive = self.GetExecutive()
             if self.m_requestDataStep == 0:
-                # first time step
-                # do extraction and merge (do not display phase info)
-                self.m_logger.setLevel( ERROR )
-                outputFaults0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-                outputWells0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-                self.doExtractAndMerge( input, outputCells, outputFaults0, outputWells0 )
-                self.m_logger.setLevel( INFO )
-                # save input mesh to copy later
-                self.m_outputT0.ShallowCopy( outputCells )
-                request.Set( executive.CONTINUE_EXECUTING(), 1 )  # type: ignore
-            if self.m_requestDataStep >= self.m_currentTimeStepIndex:
-                # displayed time step, no need to go further
-                request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore
-                # reinitialize requestDataStep if filter is recalled later
-                self.m_requestDataStep = -1
-                # do extraction and merge
-                self.doExtractAndMerge( input, outputCells, outputFaults, outputWells )
-                # copy attributes from initial time step
-                for (
-                        attributeName,
-                        attributeNewName,
-                ) in getAttributeToTransferFromInitialTime().items():
-                    copyAttribute( self.m_outputT0, outputCells, attributeName, attributeNewName )
-                # create elementCenter attribute in the volume mesh if needed
-                cellCenterAttributeName: str = ( GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName )
+                self.doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells )
+                outputCellsT0.ShallowCopy( outputCells )
+                request.Set( executive.CONTINUE_EXECUTING(), 1 ) # type: ignore
+            if self.m_requestDataStep == self.m_currentTimeStepIndex:
+                self.doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells )
+                # Copy attributes from the initial time step
+                meshAttributes: set[ str ] = getAttributeSet( outputCellsT0, False )
+                for ( attributeName, attributeNewName ) in getAttributeToTransferFromInitialTime().items():
+                    if attributeName in meshAttributes:
+                        copyAttribute( outputCellsT0, outputCells, attributeName, attributeNewName )
+                # Create elementCenter attribute in the volume mesh if needed
+                cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
                 createCellCenterAttribute( outputCells, cellCenterAttributeName )
+
+                # Stop the computation
+                request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore
+                self.m_requestDataStep = -1
         except AssertionError as e:
-            mess: str = "Block extraction and merge failed due to:"
-            self.m_logger.error( mess )
-            self.m_logger.error( str( e ) )
+            self.logger.error( f"The plugin failed.\n{e}" )
             return 0
         except Exception as e:
             mess1: str = "Block extraction and merge failed due to:"
-            self.m_logger.critical( mess1 )
-            self.m_logger.critical( e, exc_info=True )
+            self.logger.critical( mess1 )
+            self.logger.critical( e, exc_info=True )
             return 0
         return 1
 
     def doExtractAndMerge(
         self: Self,
-        input: vtkMultiBlockDataSet,
+        mesh: vtkMultiBlockDataSet,
         outputCells: vtkMultiBlockDataSet,
         outputFaults: vtkMultiBlockDataSet,
         outputWells: vtkMultiBlockDataSet,
-    ) -> bool:
+    ) -> None:
         """Apply block extraction and merge.
 
         Args:
-            input (vtkMultiBlockDataSet): input multi block
-            outputCells (vtkMultiBlockDataSet): output volume mesh
-            outputFaults (vtkMultiBlockDataSet): output surface mesh
-            outputWells (vtkMultiBlockDataSet): output well mesh
-
-        Returns:
-            bool: True if extraction and merge successfully eneded, False otherwise
+            mesh (vtkMultiBlockDataSet): Mesh to process.
+            outputCells (vtkMultiBlockDataSet): Output volume mesh.
+            outputFaults (vtkMultiBlockDataSet): Output surface mesh.
+            outputWells (vtkMultiBlockDataSet): Output well mesh.
         """
-        # extract blocks
-        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input, extractFaults=True, extractWells=True )
+        # Extract blocks
+        blockExtractor: GeosBlockExtractor = GeosBlockExtractor( mesh, extractFault=self.extractFault, extractWell=self.extractWell, speHandler=True )
+        if not blockExtractor.logger.hasHandlers():
+            blockExtractor.setLoggerHandler( VTKHandler() )
         blockExtractor.applyFilter()
 
         # recover output objects from GeosBlockExtractor filter and merge internal blocks
         volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
-        assert volumeBlockExtracted is not None, "Extracted Volume mesh is null."
         outputCells.ShallowCopy( self.mergeBlocksFilter( volumeBlockExtracted, False ) )
-
-        faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
-        assert faultBlockExtracted is not None, "Extracted Fault mesh is null."
-        outputFaults.ShallowCopy( self.mergeBlocksFilter( faultBlockExtracted, True ) )
-
-        wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.well
-        assert wellBlockExtracted is not None, "Extracted Well mesh is null."
-        outputWells.ShallowCopy( self.mergeBlocksFilter( wellBlockExtracted, False ) )
-
         outputCells.Modified()
-        outputFaults.Modified()
-        outputWells.Modified()
 
-        self.m_logger.info( "Volume blocks were successfully splitted from surfaces" +
-                            " and wells, and ranks were merged together." )
-        return True
+        if self.extractFault:
+            faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
+            outputFaults.ShallowCopy( self.mergeBlocksFilter( faultBlockExtracted, True ) )
+            outputFaults.Modified()
+
+        if self.extractWell:
+            wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.well
+            outputWells.ShallowCopy( self.mergeBlocksFilter( wellBlockExtracted, False ) )
+            outputWells.Modified()
+
+        return
 
     def mergeBlocksFilter( self: Self,
-                           input: vtkMultiBlockDataSet,
+                           mesh: vtkMultiBlockDataSet,
                            convertSurfaces: bool = False ) -> vtkMultiBlockDataSet:
         """Apply vtk merge block filter on input multi block mesh.
 
         Args:
-            input (vtkMultiBlockDataSet): multiblock mesh to merge
-            convertSurfaces (bool, optional): True to convert surface from vtkUnstructuredGrid to
-                vtkPolyData. Defaults to False.
+            mesh (vtkMultiBlockDataSet): Mesh to merge.
+            convertSurfaces (bool, optional): True to convert surface from vtkUnstructuredGrid to vtkPolyData.
+                Defaults to False.
 
         Returns:
-            vtkMultiBlockDataSet: Multiblock mesh composed of internal merged blocks.
+            vtkMultiBlockDataSet: Mesh composed of internal merged blocks.
         """
-        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( input, convertSurfaces, True )
+        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True )
         if not mergeBlockFilter.logger.hasHandlers():
             mergeBlockFilter.setLoggerHandler( VTKHandler() )
         mergeBlockFilter.applyFilter()
         mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
-        assert mergedBlocks is not None, "Final merged MultiBlockDataSet is null."
         return mergedBlocks
