@@ -96,7 +96,7 @@ class TestCase( object ):
         # Setup labels
         if labels is None:
             labels = []
-        else:
+        if label is not None:
             labels = labels + [ label ]
         self.labels = labels
 
