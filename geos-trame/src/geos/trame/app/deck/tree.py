@@ -10,6 +10,7 @@ import dpath
 import funcy
 from pydantic import BaseModel
 from trame_simput import get_simput_manager
+from trame_simput.core.proxy import ProxyManager, Proxy
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
@@ -76,7 +77,7 @@ class DeckTree( object ):
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         new_path.append( key )
         assert self.input_file is not None and self.input_file.pb_dict is not None
-        funcy.set_in( self.input_file.pb_dict, new_path, value )
+        self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
     def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
@@ -139,11 +140,13 @@ class DeckTree( object ):
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "name": e.name,
-                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(date_fmt), #,
+                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(date_fmt),
                 "end": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.end_time))).strftime(date_fmt),
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)).days ),
                 "category" : e.target.split('/')[-1],
             }
+            if(int(e.cycle_frequency)!=1):
+                item["freq"] = int(e.cycle_frequency)
             timeline.append( item )
             global_id = global_id + 1
 
@@ -170,6 +173,8 @@ class DeckTree( object ):
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
                 DeckTree._append_include_file( model_with_changes, includeName )
 
+            proxy = get_simput_manager( id=self._sm_id )
+            DeckTree._discard_default(model_with_changes, proxy)
             model_as_xml: str = DeckTree.to_xml( model_with_changes )
 
             basename = os.path.basename( filepath )
@@ -179,6 +184,15 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
+
+    @staticmethod
+    def _discard_default( model: Problem, proxy_mg : ProxyManager | Any) -> None:
+        for obj_id in model:
+            proxy = proxy_mg.proxymanager.get( obj_id )
+            for prop in proxy.property_names:
+                if (obj_id[prop] == proxy.getproperty(prop) ) :
+                    del obj_id[prop]
+        
 
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:
@@ -289,6 +303,9 @@ class DeckTree( object ):
 
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_copy ):
                 models.append( ( proxy_name, model_copy ) )
+                if is_list:
+                    proxy_name = int(proxy_name)
+                #won't work if is_list # TO DO IMMEDIATELY -- review proxy strat
                 model_copy = model_copy[ proxy_name ]
                 continue
 

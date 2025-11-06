@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Lionel Untereiner
+# SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from typing import Any
 from datetime import datetime, timedelta
 from pandas import Timestamp
 import pytz
 import logging
+import dpath.util
+
 
 # from trame.widgets import gantt
 from geos.trame.app.gantt_chart.widgets.gantt_chart import Gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
+from geos.trame.schema_generated.schema_mod import PeriodicEvent
 
 from geos.trame.app.deck.tree import DeckTree
 
@@ -54,6 +57,24 @@ class TimelineEditor( vuetify.VCard ):
             print('None values')
         logger.info(f"new tasks {tasks}")
         self.state.tasks = tasks
+        # self.tree.input_file.problem.events[0].periodic_event.clear()
+        former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
+        # pev = dpath.util.get(self.tree.input_file.pb_dict, 'Problem/Events/0/PeriodicEvent')
+        pev = self.tree.input_file.problem.events[0].periodic_event
+        # pev = dpath.util.get(ev[0],'PeriodicEvent')
+        for i,t in enumerate(self.state.tasks):
+            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
+                     "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
+                     "name": t["name"]}
+            
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
+     
+
+        # self.tree._apply_changed_properties(self.tree.input_file.problem)
+        return
+
 
     def _updated_sdate(self, sdate: str, **_: Any) -> None:
         #sdate seems to be a panda Timestamp
