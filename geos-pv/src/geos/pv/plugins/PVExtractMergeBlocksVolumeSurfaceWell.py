@@ -282,7 +282,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 meshAttributes: set[ str ] = getAttributeSet( self.outputCellsT0, False )
                 for ( attributeName, attributeNewName ) in getAttributeToTransferFromInitialTime().items():
                     if attributeName in meshAttributes:
-                        copyAttribute( self.outputCellsT0, outputCells, attributeName, attributeNewName )
+                        copyAttribute( self.outputCellsT0, outputCells, attributeName, attributeNewName, False, self.logger )
                 # Create elementCenter attribute in the volume mesh if needed
                 cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
                 createCellCenterAttribute( outputCells, cellCenterAttributeName )
