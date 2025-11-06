@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
@@ -109,9 +109,45 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         #: request data processing step - incremented each time RequestUpdateExtent is called
         self.m_requestDataStep: int = -1
 
+        self.outputCellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
         self.logger.addHandler( VTKHandler() )
+
+    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+
+        Args:
+            port (int): input port
+            info (vtkInformationVector): info
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        if port == 0:
+            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet" )
+        return 1
+
+    def RequestInformation(
+        self: Self,
+        request: vtkInformation,  # noqa: F841
+        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
+        outInfoVec: vtkInformationVector,
+    ) -> int:
+        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+
+        Args:
+            request (vtkInformation): request
+            inInfoVec (list[vtkInformationVector]): input objects
+            outInfoVec (vtkInformationVector): output objects
+
+        Returns:
+            int: 1 if calculation successfully ended, 0 otherwise.
+        """
+        executive = self.GetExecutive()  # noqa: F841
+        outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
+        return 1
 
     def RequestDataObject(
         self: Self,
@@ -216,9 +252,9 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         self.logger.info( f"Apply plugin { self.logger.name }." )
+        print(self.m_requestDataStep)
         try:
             inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
-            outputCellsT0: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
             outputCells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
             outputFaults: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 1 )
             outputWells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 2 )
@@ -228,25 +264,25 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             assert outputFaults is not None, "Output surface mesh is null."
             assert outputWells is not None, "Output well mesh is null."
 
-            blockNames: list[ str ]  = getBlockNames( inputMesh )
-            if GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
-                self.extractFault = True
-            if GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
-                self.extractWell = True
-
             # Time controller, only the first and the current time step are computed
             executive = self.GetExecutive()
             if self.m_requestDataStep == 0:
-                self.doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells )
-                outputCellsT0.ShallowCopy( outputCells )
+                blockNames: list[ str ]  = getBlockNames( inputMesh )
+                if GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
+                    self.extractFault = True
+                if GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
+                    self.extractWell = True
+                outputFaultsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+                outputWellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+                self.doExtractAndMerge( inputMesh, self.outputCellsT0, outputFaultsT0, outputWellsT0 )
                 request.Set( executive.CONTINUE_EXECUTING(), 1 ) # type: ignore
             if self.m_requestDataStep == self.m_currentTimeStepIndex:
                 self.doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells )
                 # Copy attributes from the initial time step
-                meshAttributes: set[ str ] = getAttributeSet( outputCellsT0, False )
+                meshAttributes: set[ str ] = getAttributeSet( self.outputCellsT0, False )
                 for ( attributeName, attributeNewName ) in getAttributeToTransferFromInitialTime().items():
                     if attributeName in meshAttributes:
-                        copyAttribute( outputCellsT0, outputCells, attributeName, attributeNewName )
+                        copyAttribute( self.outputCellsT0, outputCells, attributeName, attributeNewName )
                 # Create elementCenter attribute in the volume mesh if needed
                 cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
                 createCellCenterAttribute( outputCells, cellCenterAttributeName )
@@ -319,5 +355,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         if not mergeBlockFilter.logger.hasHandlers():
             mergeBlockFilter.setLoggerHandler( VTKHandler() )
         mergeBlockFilter.applyFilter()
-        mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
+        mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+        mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )
         return mergedBlocks
