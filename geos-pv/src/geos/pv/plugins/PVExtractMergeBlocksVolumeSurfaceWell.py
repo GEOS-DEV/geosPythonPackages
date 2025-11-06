@@ -264,12 +264,9 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 blockNames: list[ str ]  = getBlockNames( inputMesh )
                 if not GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
                     self.extractFault = False
-                    outInfoVec.GetInformationObject( 1 ).Remove( vtkMultiBlockDataSet.DATA_OBJECT() )
-                    self.wellId = 1
 
                 if not GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
                     self.extractWell = False
-                    outInfoVec.GetInformationObject( self.wellId ).Remove( vtkMultiBlockDataSet.DATA_OBJECT() )
 
                 outputFaultsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
                 outputWellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
