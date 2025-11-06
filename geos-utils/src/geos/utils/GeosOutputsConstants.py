@@ -95,17 +95,34 @@ class GeosMeshSuffixEnum( Enum ):
     STRAIN_SUFFIX = "strain"
     PERMEABILITY_SUFFIX = "_permeability"
     POROSITY_SUFFIX = "_porosity"
+    POROSITY_INIT_SUFFIX = "_initialPorosity"
     POROSITY_REF_SUFFIX = "_referencePorosity"
     BULK_MODULUS_SUFFIX = "_bulkModulus"
     SHEAR_MODULUS_SUFFIX = "_shearModulus"
     GRAIN_BULK_MODULUS_SUFFIX = "_grainBulkModulus"
     BIOT_COEFFICIENT_SUFFIX = "_biotCoefficient"
 
-    # fluid attributes suffix
-    PHASE_DENSITY_SUFFIX = "_density"
-    PHASE_MASS_DENSITY_SUFFIX = "_phaseMassDensity"
-    PHASE_VISCOSITY_SUFFIX = "_viscosity"
+    # fluid attributes suffix multiPhases
+    TOTAL_FLUID_DENSITY_SUFFIX = "_totalDensity"
+    PHASE_DENSITY_SUFFIX = "_phaseDensity"
     PHASE_FRACTION_SUFFIX = "_phaseFraction"
+    PHASE_MASS_DENSITY_SUFFIX = "_phaseMassDensity"
+    PHASE_VISCOSITY_SUFFIX = "_phaseViscosity"
+    PHASE_INTERNAL_ENERGY_SUFFIX = "_phaseInternalEnergy"
+    PHASE_COMP_FRACTION_SUFFIX = "_phaseCompFraction"
+    PHASE_REAL_PERM_SUFFIX = "_phaseRelPerm"
+    PHASE_TRAP_VOL_FRACTION_SUFFIX = "_phaseTrappedVolFraction"
+
+    # fluid attributes suffix singlePhase
+    FLUID_DENSITY_SUFFIX = "_density"
+    FLUID_VISCOSITY_SUFFIX = "_viscosity"
+    FLUID_DENSITY_DERIVATE_SUFFIX = "_dDensity"
+    FLUID_VISCOSITY_DERIVATE_SUFFIX = "_dViscosity"
+    FLUID_INTERNAL_ENERGY_SUFFIX = "_internalEnergy"
+    FLUID_INTERNAL_ENERGY_DERIVATE_SUFFIX = "_dInternalEnergy"
+    FLUID_ENTHALPY_SUFFIX = "_enthalpy"
+    FLUID_ENTHALPY_DERIVATE_SUFFIX = "_dEnthalpy"
+
 
     # surface attribute transfer suffix
     SURFACE_PLUS_SUFFIX = "_Plus"
