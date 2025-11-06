@@ -196,7 +196,7 @@ class GeosBlockMerge():
         """Get the names of the phases in the mesh from Cell attributes."""
         # All the phase attributes are on cells
         for name in getAttributeSet( self.inputMesh, False ):
-            if PHASE_SEP in name:
+            if PHASE_SEP in name and "dofIndex" not in name:
                 phaseName: str
                 suffixName: str
                 phaseName, suffixName = name.split( PHASE_SEP )
