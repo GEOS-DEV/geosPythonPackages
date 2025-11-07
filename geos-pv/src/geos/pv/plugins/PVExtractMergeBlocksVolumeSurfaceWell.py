@@ -3,14 +3,12 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
-from pathlib import Path
-
-import numpy as np
 import logging
+import numpy as np
 import numpy.typing as npt
+
+from pathlib import Path
 from typing_extensions import Self
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -19,41 +17,58 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.GeosOutputsConstants import (
-    GeosMeshOutputsEnum,
-    GeosDomainNameEnum,
-    getAttributeToTransferFromInitialTime,
-)
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
+
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
-    createCellCenterAttribute,
+    createCellCenterAttribute
 )
 from geos.mesh.utils.multiblockHelpers import getBlockNames
+
+from geos.utils.GeosOutputsConstants import (
+    GeosMeshOutputsEnum,
+    GeosDomainNameEnum,
+    getAttributeToTransferFromInitialTime
+)
+
 from geos.pv.utils.paraviewTreatments import getTimeStepIndex
+
+from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+    VTKPythonAlgorithmBase, smdomain, smproperty, smproxy
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
+    VTKHandler
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 __doc__ = """
-PVGeosBlockExtractAndMerge is a Paraview plugin that allows to merge
-ranks of a Geos output objects containing a volumic mesh, surfaces, and wells.
+PVGeosBlockExtractAndMerge is a Paraview plugin that:
+    Allows to extract domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
+    Acts on each region of a GEOS output domain (volume, fault, wells) to:
+        Merge Ranks
+        Identify "Fluids" and "Rock" phases
+        Rename "Rock" attributes depending on the phase they refer to for more clarity
+        Convert volume meshes to surface if needed
+        Copy "geomechanics" attributes from the initial timestep to the current one if their exist
 
-Input and output types are vtkMultiBlockDataSet.
+This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
+    "Volume" contains the volume domain
+    "Fault" contains the fault domain if it exist
+    "Well" contains the well domain if it exist
 
-This filter results in 3 output pipelines:
+Input and output meshes are vtkMultiBlockDataSet.
 
-* first pipeline contains the volume mesh. If multiple regions were defined in
-    the volume mesh, they are preserved as distinct blocks.
-* second pipeline contains surfaces. If multiple surfaces were used, they are
-    preserved as distinct blocks.
-* third pipeline contains wells. If multiple wells were used, they are preserved
-    as distinct blocks.
+.. Important::
+    The input mesh must be an output of a GEOS simulation or contain at least three blocks labeled with the same domain names:
+        "CellElementRegion" for volume domain
+        "SurfaceElementRegion" for fault domain if the input contains fault
+        "WellElementRegion" for well domain if the input contains well
+        See more https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html?_sm_au_=iVVT5rrr5fN00R8sQ0WpHK6H8sjL6#xml-element-elementregions
+    The filter detected automatically the three domains. If one of them if not in the input mesh, the associated output pipeline will be empty
 
 To use it:
 
@@ -67,12 +82,12 @@ loggerTitle: str = "Extract & Merge GEOS Block"
 
 @smproxy.filter(
     name="PVGeosBlockExtractAndMerge",
-    label="Geos Extract And Merge Blocks",
+    label="Geos Extract and Merge Blocks",
 )
 @smproperty.xml( """
-    <OutputPort index="0" name="Volumes"/>
-    <OutputPort index="1" name="Faults"/>
-    <OutputPort index="2" name="Wells"/>
+    <OutputPort index="0" name="Volume"/>
+    <OutputPort index="1" name="Fault"/>
+    <OutputPort index="2" name="Well"/>
     <Hints>
         <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
         <View type="RenderView" port="0"/>
@@ -80,7 +95,7 @@ loggerTitle: str = "Extract & Merge GEOS Block"
         <View type="None" port="2"/>
     </Hints>
     """ )
-@smproperty.input( name="GEOSpvd", port_index=0, label="GEOS pvd" )
+@smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
 class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
@@ -97,9 +112,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             outputType="vtkMultiBlockDataSet",
         )
 
-        self.extractFault: bool = True
-        self.extractWell: bool = True
-        self.wellId: int = 2
+        self.extractFault: bool = False
+        self.extractWell: bool = False
 
         #: all time steps from input
         self.m_timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
@@ -168,6 +182,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         """
         inData = self.GetInputData( inInfoVec, 0, 0 )
         outDataCells = self.GetOutputData( outInfoVec, 0 )
+        outDataFaults = self.GetOutputData( outInfoVec, 1 )
+        outDataWells = self.GetOutputData( outInfoVec, 2 )
         assert inData is not None
         if outDataCells is None or ( not outDataCells.IsA( "vtkMultiBlockDataSet" ) ):
             outDataCells = vtkMultiBlockDataSet()
@@ -176,22 +192,19 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 outDataCells  # type: ignore
             )
 
-        if self.extractFault:
-            outDataFaults = self.GetOutputData( outInfoVec, 1 )
-            if outDataFaults is None or ( not outDataFaults.IsA( "vtkMultiBlockDataSet" ) ):
-                outDataFaults = vtkMultiBlockDataSet()
-                outInfoVec.GetInformationObject( 1 ).Set(
-                    outDataFaults.DATA_OBJECT(),
-                    outDataFaults  # type: ignore
-                )
-        if self.extractWell:
-            outDataWells = self.GetOutputData( outInfoVec, self.wellId )
-            if outDataWells is None or ( not outDataWells.IsA( "vtkMultiBlockDataSet" ) ):
-                outDataWells = vtkMultiBlockDataSet()
-                outInfoVec.GetInformationObject( 2 ).Set(
-                    outDataWells.DATA_OBJECT(),
-                    outDataWells  # type: ignore
-                )
+        if outDataFaults is None or ( not outDataFaults.IsA( "vtkMultiBlockDataSet" ) ):
+            outDataFaults = vtkMultiBlockDataSet()
+            outInfoVec.GetInformationObject( 1 ).Set(
+                outDataFaults.DATA_OBJECT(),
+                outDataFaults  # type: ignore
+            )
+
+        if outDataWells is None or ( not outDataWells.IsA( "vtkMultiBlockDataSet" ) ):
+            outDataWells = vtkMultiBlockDataSet()
+            outInfoVec.GetInformationObject( 2 ).Set(
+                outDataWells.DATA_OBJECT(),
+                outDataWells  # type: ignore
+            )
 
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
@@ -262,11 +275,11 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             executive = self.GetExecutive()
             if self.m_requestDataStep == 0:
                 blockNames: list[ str ]  = getBlockNames( inputMesh )
-                if not GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
-                    self.extractFault = False
+                if GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
+                    self.extractFault = True
 
-                if not GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
-                    self.extractWell = False
+                if GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
+                    self.extractWell = True
 
                 outputFaultsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
                 outputWellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
@@ -280,10 +293,13 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                     outputFaults = self.GetOutputData( outInfoVec, 1 )
                 else:
                     outputFaults = vtkMultiBlockDataSet()
+                    outInfoVec.GetInformationObject( 1 ).Remove( vtkMultiBlockDataSet().DATA_OBJECT() )
+
                 if self.extractWell:
-                    outputWells = self.GetOutputData( outInfoVec, self.wellId )
+                    outputWells = self.GetOutputData( outInfoVec, 2 )
                 else:
                     outputWells = vtkMultiBlockDataSet()
+                    outInfoVec.GetInformationObject( 2 ).Remove( vtkMultiBlockDataSet().DATA_OBJECT() )
 
                 self.doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells )
                 # Copy attributes from the initial time step
@@ -294,7 +310,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 # Create elementCenter attribute in the volume mesh if needed
                 cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
                 createCellCenterAttribute( outputCells, cellCenterAttributeName )
-
                 # Stop the computation
                 request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore
                 self.m_requestDataStep = -1
