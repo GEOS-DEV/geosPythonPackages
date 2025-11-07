@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import logging
@@ -7,25 +7,31 @@ from typing_extensions import Self
 
 from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData,
                                             vtkUnstructuredGrid )
-from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
+from geos.utils.Errors import VTKError
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
                                               getRockSuffixRenaming )
+
 from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import ( createConstantAttribute, renameAttribute )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos.mesh.utils.multiblockHelpers import ( getElementaryCompositeBlockIndexes, extractBlock )
-from geos.mesh.utils.genericHelpers import ( computeNormals, computeTangents )
+from geos.mesh.utils.genericHelpers import ( computeNormals, computeTangents, convertTriangulateBlockToSurface,
+                                             triangulateMesh, isTriangulate )
 
 __doc__ = """
-GeosBlockMerge is a vtk filter that allows to merge for a GEOS domain the ranks per region, identify "Fluids" and "Rock" phases and rename "Rock" attributes.
+GeosBlockMerge is a vtk filter that acts on each region of a GEOS output domain (volume, fault, wells):
+    - Ranks are merged.
+    - "Fluids" and "Rock" phases are identified.
+    - "Rock" attributes are renamed depending on the phase they refer to for more clarity.
+    - Volume meshes are converted to surface if needed.
 
 Filter input and output types are vtkMultiBlockDataSet.
 
 .. Important::
-    This filter deals with the domain mesh of GEOS. This domain needs to be extracted before.
-    See geos-processing/src/geos/processing/post_processing/GeosBlockExtractor.py to see the type of input requires by this filter.
+    This filter cannot be used directly on GEOS output. The domain needs to be extracted with the help of `GeosBlockExtractor` filter.
+    Please refer to the `documentation <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/geos_processing_docs/post_processing.html>`_ for more information.
 
 To use the filter:
 
@@ -66,14 +72,14 @@ class GeosBlockMerge():
     ) -> None:
         """VTK Filter that merge ranks of GEOS output mesh.
 
-        for all the composite blocks of the input mesh:
-            - Ranks are merged
-            - "Rock" attributes are renamed
-            - Volume mesh are convert to surface if needed
+        For each composite block of the input mesh:
+            - Ranks are merged.
+            - "Rock" attributes are renamed.
+            - Volume meshes are converted to surface if requested.
 
         Args:
             inputMesh (vtkMultiBlockDataSet): The mesh with the blocks to merge.
-            convertFaultToSurface (bool, optional): True if the merged block need to be convert to vtp, False otherwise.
+            convertFaultToSurface (bool, optional): If True, merged blocks are converted to surface (vtp), False otherwise.
                 Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
@@ -154,19 +160,18 @@ class GeosBlockMerge():
 
                 # Convert the volume mesh to a surface mesh
                 if self.convertFaultToSurface:
-                    surfaceMesh: vtkPolyData = self.convertBlockToSurface( volumeMesh )
-                    assert surfaceMesh is not None, "Surface extraction from block failed."
+                    if not isTriangulate( volumeMesh ):
+                        volumeMesh.ShallowCopy( triangulateMesh( volumeMesh ) )
+                    surfaceMesh: vtkPolyData = convertTriangulateBlockToSurface( volumeMesh )
                     surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
-                    assert surfaceMesh is not None, "Normal calculation failed."
                     surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
-                    assert surfaceMesh is not None, "Tangent calculation failed."
                     # Add the merged block to the output mesh
                     self.outputMesh.SetBlock( newIndex, surfaceMesh )
                 else:
                     self.outputMesh.SetBlock( newIndex, volumeMesh )
 
             self.logger.info( "The filter succeeded." )
-        except ( ValueError, TypeError, RuntimeError, AssertionError ) as e:
+        except ( ValueError, TypeError, RuntimeError, AssertionError, VTKError ) as e:
             self.logger.critical( f"The filter failed.\n{ e }" )
 
         return
@@ -212,27 +217,3 @@ class GeosBlockMerge():
                     self.phaseNameDict[ PhaseTypeEnum.FLUID.type ].add( phaseName )
 
         return
-
-    def convertBlockToSurface( self: Self, block: vtkUnstructuredGrid ) -> vtkPolyData:
-        """Convert vtkUnstructuredGrid to a surface vtkPolyData.
-
-        .. WARNING:: work only with triangulated surfaces
-
-        .. TODO:: need to convert quadrangular to triangulated surfaces first
-
-        Args:
-            block (vtkUnstructuredGrid): block from which to extract the surface
-
-        Returns:
-            vtkPolyData: extracted surface
-        """
-        extractSurfaceFilter: vtkDataSetSurfaceFilter = vtkDataSetSurfaceFilter()
-        extractSurfaceFilter.SetInputData( block )
-        # fast mode should be used for rendering only
-        extractSurfaceFilter.FastModeOff()
-        # Delegation activated allow to accelerate the processing with unstructured mesh
-        # see https://vtk.org/doc/nightly/html/classvtkDataSetSurfaceFilter.html
-        extractSurfaceFilter.DelegationOn()
-        extractSurfaceFilter.Update()
-        output: vtkPolyData = extractSurfaceFilter.GetOutput()
-        return output
