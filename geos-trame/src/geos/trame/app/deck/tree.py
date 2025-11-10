@@ -21,7 +21,10 @@ from geos.trame.app.geosTrameException import GeosTrameException
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
 
+import logging
 date_fmt = "%Y-%m-%d"
+logger = logging.getLogger("tree")
+logger.setLevel(logging.ERROR)         
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
@@ -173,9 +176,9 @@ class DeckTree( object ):
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
                 DeckTree._append_include_file( model_with_changes, includeName )
 
-            proxy = get_simput_manager( id=self._sm_id )
-            DeckTree._discard_default(model_with_changes, proxy)
-            model_as_xml: str = DeckTree.to_xml( model_with_changes )
+            proxy = get_simput_manager( id=self._sm_id ) # UI proxy
+            model_cleaned = DeckTree._discard_default(model_with_changes, proxy.proxymanager)
+            model_as_xml: str = DeckTree.to_xml( model_cleaned )
 
             basename = os.path.basename( filepath )
             assert self.input_folder is not None
@@ -185,13 +188,36 @@ class DeckTree( object ):
                 file.write( model_as_xml )
                 file.close()
 
+    
     @staticmethod
-    def _discard_default( model: Problem, proxy_mg : ProxyManager | Any) -> None:
-        for obj_id in model:
-            proxy = proxy_mg.proxymanager.get( obj_id )
-            for prop in proxy.property_names:
-                if (obj_id[prop] == proxy.getproperty(prop) ) :
-                    del obj_id[prop]
+    def _discard_default( model : Problem| None, proxy : ProxyManager | None) -> Problem:
+        """Discard values from model if set at their default.""" 
+        model_dict : dict = dict(model)
+
+        for id in proxy._id_map:
+            import re
+            if re.search(r"VTK",id) or re.search(r"Solvers", id) or re.search(r"CO2Brine", id): #TODO ???
+                continue
+            node = DeckTree._get_base_model_from_path( model_dict, id)
+            from pydantic_core import PydanticUndefined
+            for k,v in node.__pydantic_fields__.items():
+                if v.default is not PydanticUndefined and node.__getattribute__(k) == v.default:
+                    logger.info(f"disable {id} : {k}")
+                    delattr(node, k)
+
+        return DeckTree._get_base_model_from_path(model_dict, '/Problem')
+
+        # for obj in dict(model):
+        #     proxy = proxy.get(obj)
+            
+            # for prop in proxy._properties:
+            # if ( proxy[prop] == proxy.getproperty(prop) ) :
+            #     
+
+            # _get_base_model_from_path( model: dict, proxy_id: str ) -> dict:
+            # proxy.getproperty(prop)
+            # PeriodicEvent.__pydantic_fields__['begin_time'].default
+
         
 
     @staticmethod
