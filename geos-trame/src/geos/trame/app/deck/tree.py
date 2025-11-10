@@ -149,8 +149,8 @@ class DeckTree( object ):
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)).days ),
                 "category" : e.target.split('/')[-1],
             }
-            if(int(e.cycle_frequency)!=1):
-                item["freq"] = int(e.cycle_frequency)
+            if(int(e.time_frequency)!=1):
+                item["freq"] = timedelta(seconds=int(e.time_frequency)).days
             timeline.append( item )
             global_id = global_id + 1
 
