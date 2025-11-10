@@ -57,11 +57,7 @@ class TimelineEditor( vuetify.VCard ):
             print('None values')
         logger.info(f"new tasks {tasks}")
         self.state.tasks = tasks
-        # self.tree.input_file.problem.events[0].periodic_event.clear()
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
-        # pev = dpath.util.get(self.tree.input_file.pb_dict, 'Problem/Events/0/PeriodicEvent')
-        pev = self.tree.input_file.problem.events[0].periodic_event
-        # pev = dpath.util.get(ev[0],'PeriodicEvent')
         for i,t in enumerate(self.state.tasks):
             event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
                      "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
@@ -70,9 +66,7 @@ class TimelineEditor( vuetify.VCard ):
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
-     
 
-        # self.tree._apply_changed_properties(self.tree.input_file.problem)
         return
 
 
@@ -81,8 +75,6 @@ class TimelineEditor( vuetify.VCard ):
         if sdate is None:
             return
 
-        logger.info(f"new origin of time {sdate.to_datetime()}")
-        # return
         former_origin_time: str = min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start")
         time_delta : timedelta =  sdate.to_datetime() - pytz.utc.localize(datetime.strptime(former_origin_time,date_fmt)) 
         self.state.tasks = list(map(lambda d: {**d, "start":(datetime.strptime(d["start"],date_fmt) + time_delta ).strftime(date_fmt), 
