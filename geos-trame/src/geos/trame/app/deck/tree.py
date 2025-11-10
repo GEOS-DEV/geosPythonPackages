@@ -205,7 +205,7 @@ class DeckTree( object ):
                     logger.info(f"disable {id} : {k}")
                     delattr(node, k)
 
-        return DeckTree._get_base_model_from_path(model_dict, '/Problem')
+        return DeckTree.decode_data(model_dict)
 
         # for obj in dict(model):
         #     proxy = proxy.get(obj)
