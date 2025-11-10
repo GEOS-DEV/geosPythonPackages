@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Geos Simulation Modeler"
 authors = [{name = "GEOS Contributors" }]
 maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
-               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
                {name = "Jacques Franc", email= "jacques.franc@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
@@ -31,6 +31,7 @@ keywords = [
 
 dependencies = [
     "typing-extensions==4.12.2",
+    "pandas",
     "trame==3.6.5",
     "trame-vuetify==2.7.1",
     "trame-code==1.0.1",
