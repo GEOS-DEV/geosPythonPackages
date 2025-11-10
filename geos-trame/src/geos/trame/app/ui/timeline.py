@@ -33,6 +33,7 @@ class TimelineEditor( vuetify.VCard ):
         self.state.sdate = None #Timestamp(self.tree.world_origin_time)
         self.state.change("sdate")(self._updated_sdate)
         self.state.tasks = self.tree.timeline()
+        self.state.regList = list(self.tree.registered_targets.keys())
 
         with self:
             with vuetify.VContainer( "Events chart" ):
@@ -46,6 +47,7 @@ class TimelineEditor( vuetify.VCard ):
                 vuetify.VDivider()
                 Gantt(
                         tasks=("tasks",),
+                        availableCategoriesList=("regList",),
                         taskUpdated=(self._updated_tasks,"$event"),
                         classes="fill_height",
                         )
@@ -61,11 +63,13 @@ class TimelineEditor( vuetify.VCard ):
         for i,t in enumerate(self.state.tasks):
             event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
                      "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
-                     "name": t["name"]}
+                     "name": t["name"],
+                     "category": t["category"]}
             
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','target', self.tree.registered_targets[event['category']])
 
         return
 

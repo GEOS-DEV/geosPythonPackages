@@ -28,6 +28,7 @@ class Gantt(HtmlElement):
         )
         self._attr_names += [
             "tasks",
+            "availableCategoriesList"
         ]
         self._event_names += [
             "taskUpdated"

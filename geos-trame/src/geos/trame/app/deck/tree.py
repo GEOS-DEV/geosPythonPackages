@@ -39,6 +39,7 @@ class DeckTree( object ):
         self.input_has_errors = False
         self._sm_id = sm_id
         self.world_origin_time = datetime(1924,3,28).strftime(date_fmt)# Total start date !!
+        self.registered_targets : dict = {}
 
     def set_input_file( self, input_filename: str ) -> None:
         """Set a new input file.
@@ -136,10 +137,10 @@ class DeckTree( object ):
         timeline = []
         # list root events
         global_id = 0
-        solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
+        # solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
         solver_events = self.input_file.problem.events[0].periodic_event
         for e in solver_events:
-
+            self.registered_targets[e.target.split('/')[-1]] = e.target            
             item: dict[ str, str | int ] = {
                 "id": global_id,
                 "name": e.name,
