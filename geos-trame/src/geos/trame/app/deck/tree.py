@@ -176,9 +176,7 @@ class DeckTree( object ):
                 includeName: str = self.input_file.xml_parser.get_relative_path_of_file( filepath )
                 DeckTree._append_include_file( model_with_changes, includeName )
 
-            proxy = get_simput_manager( id=self._sm_id ) # UI proxy
-            model_cleaned = DeckTree._discard_default(model_with_changes, proxy.proxymanager)
-            model_as_xml: str = DeckTree.to_xml( model_cleaned )
+            model_as_xml: str = DeckTree.to_xml( model_with_changes )
 
             basename = os.path.basename( filepath )
             assert self.input_folder is not None
@@ -187,37 +185,6 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
-
-    
-    @staticmethod
-    def _discard_default( model : Problem| None, proxy : ProxyManager | None) -> Problem:
-        """Discard values from model if set at their default.""" 
-        model_dict : dict = dict(model)
-
-        for id in proxy._id_map:
-            import re
-            if re.search(r"VTK",id) or re.search(r"Solvers", id) or re.search(r"CO2Brine", id): #TODO ???
-                continue
-            node = DeckTree._get_base_model_from_path( model_dict, id)
-            from pydantic_core import PydanticUndefined
-            for k,v in node.__pydantic_fields__.items():
-                if v.default is not PydanticUndefined and node.__getattribute__(k) == v.default:
-                    logger.info(f"disable {id} : {k}")
-                    delattr(node, k)
-
-        return DeckTree.decode_data(model_dict)
-
-        # for obj in dict(model):
-        #     proxy = proxy.get(obj)
-            
-            # for prop in proxy._properties:
-            # if ( proxy[prop] == proxy.getproperty(prop) ) :
-            #     
-
-            # _get_base_model_from_path( model: dict, proxy_id: str ) -> dict:
-            # proxy.getproperty(prop)
-            # PeriodicEvent.__pydantic_fields__['begin_time'].default
-
         
 
     @staticmethod
