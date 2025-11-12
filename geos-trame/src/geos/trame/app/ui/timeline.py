@@ -74,16 +74,26 @@ class TimelineEditor( vuetify.VCard ):
             if not self.tree._search(f'Problem/Events/0/PeriodicEvent/{t["id"]}'):
                 self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( self.tree.encode_data(PeriodicEvent(name="test")) )
 
+            #TODO test if tasks/events added
+            proxy = self.simput_manager.proxymanager.get(f'Problem/Events/0/PeriodicEvent/{t["id"]}')
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','beginTime', event['begin_time'])
+            proxy.set_property("begin_time",event['begin_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','endTime', event['end_time'])
+            proxy.set_property("end_time",event['end_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','name', event['name'])
+            proxy.set_property("name",event['name'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','target', self.tree.registered_targets[event['category']])
+            proxy.set_property("target", self.tree.registered_targets[event['category']] )
             
             if "freq" in t and t["freq"] is not None:
                 self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).total_seconds())
+                proxy.set_property("time_frequency", timedelta(days=int(t["freq"])).total_seconds())
+            
+            proxy.commit()
+            
         
-        rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
         #remove lost indexes
+        rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
         for i in rm_list:
             self.tree.drop(f'Problem/Events/0/PeriodicEvent/{i}')
 
