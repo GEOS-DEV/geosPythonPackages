@@ -92,6 +92,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         To apply in the case of output ".pvd" file contains Volume, Fault and
         Well elements.
         """
+        print( "init")
         super().__init__(
             nInputPorts=1,
             nOutputPorts=3,
@@ -147,6 +148,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        print("RequestInformation")
         executive = self.GetExecutive()  # noqa: F841
         outInfo = outInfoVec.GetInformationObject( 0 )  # noqa: F841
         return 1
@@ -167,11 +169,11 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        print("RequestDataObject")
         inData = self.GetInputData( inInfoVec, 0, 0 )
-        outDataCells = self.GetOutputData( outInfoVec, 0 )
-        outDataFaults = self.GetOutputData( outInfoVec, 1 )
-        outDataWells = self.GetOutputData( outInfoVec, 2 )
         assert inData is not None
+
+        outDataCells = self.GetOutputData( outInfoVec, 0 )
         if outDataCells is None or ( not outDataCells.IsA( "vtkMultiBlockDataSet" ) ):
             outDataCells = vtkMultiBlockDataSet()
             outInfoVec.GetInformationObject( 0 ).Set(
@@ -179,6 +181,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 outDataCells  # type: ignore
             )
 
+        outDataFaults = self.GetOutputData( outInfoVec, 1 )
         if outDataFaults is None or ( not outDataFaults.IsA( "vtkMultiBlockDataSet" ) ):
             outDataFaults = vtkMultiBlockDataSet()
             outInfoVec.GetInformationObject( 1 ).Set(
@@ -186,6 +189,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 outDataFaults  # type: ignore
             )
 
+        outDataWells = self.GetOutputData( outInfoVec, 2 )
         if outDataWells is None or ( not outDataWells.IsA( "vtkMultiBlockDataSet" ) ):
             outDataWells = vtkMultiBlockDataSet()
             outInfoVec.GetInformationObject( 2 ).Set(
@@ -211,6 +215,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        print("RequestUpdateExtent")
         executive = self.GetExecutive()
         inInfo = inInfoVec[ 0 ]
         # get displayed time step info before updating time
@@ -253,6 +258,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        print("RequestData")
         self.logger.info( f"Apply plugin { self.logger.name }." )
         try:
             inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
@@ -261,9 +267,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             executive = self.GetExecutive()
             if self.m_requestDataStep == 0:
                 blockNames: list[ str ]  = getBlockNames( inputMesh )
-                if not GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value in blockNames:
+                if not GeosDomainNameEnum.FAULT_DOMAIN_NAME.value in blockNames:
                     self.extractFault = False
-
                 if not GeosDomainNameEnum.WELL_DOMAIN_NAME.value in blockNames:
                     self.extractWell = False
 
@@ -277,13 +282,9 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 outputWells: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
                 if self.extractFault:
                     outputFaults = self.GetOutputData( outInfoVec, 1 )
-                else:
-                    outInfoVec.GetInformationObject( 1 ).Remove( vtkMultiBlockDataSet().DATA_OBJECT() )
 
                 if self.extractWell:
                     outputWells = self.GetOutputData( outInfoVec, 2 )
-                else:
-                    outInfoVec.GetInformationObject( 2 ).Remove( vtkMultiBlockDataSet().DATA_OBJECT() )
 
                 doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells, self.extractFault, self.extractWell )
                 # Copy attributes from the initial time step

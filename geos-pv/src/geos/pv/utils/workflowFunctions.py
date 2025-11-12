@@ -41,7 +41,7 @@ def doExtractAndMerge(
 
     if extractFault:
         faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
-        outputFaults.ShallowCopy( mergeBlocksFilter( faultBlockExtracted, False ) )
+        outputFaults.ShallowCopy( mergeBlocksFilter( faultBlockExtracted, True ) )
         outputFaults.Modified()
 
     if extractWell:
