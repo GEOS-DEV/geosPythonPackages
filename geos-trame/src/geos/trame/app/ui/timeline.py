@@ -72,7 +72,7 @@ class TimelineEditor( vuetify.VCard ):
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','target', self.tree.registered_targets[event['category']])
             
             if t["freq"] is not None:
-                self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','time_frequency', t["freq"])
+                self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','timeFrequency', t["freq"])
 
         return
 
