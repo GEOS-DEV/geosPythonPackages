@@ -30,8 +30,7 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
 )
-from geos.pv.plugins.PVExtractMergeBlocksVolumeSurface import (
-    PVExtractMergeBlocksVolumeSurface, )
+from geos.pv.plugins.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
 from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
@@ -352,12 +351,12 @@ class PVGeomechanicsWorkflowVolumeSurface( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if extraction and merge successfully eneded, False otherwise
         """
-        filter: PVExtractMergeBlocksVolumeSurface = PVExtractMergeBlocksVolumeSurface()
+        filter: PVGeosBlockExtractAndMerge = PVGeosBlockExtractAndMerge()
         filter.SetInputConnection( self.GetInputConnection( 0, 0 ) )
         filter.SetLogger( self.m_logger )
         filter.Update()
 
-        # recover output objects from PVExtractMergeBlocksVolumeSurface
+        # recover output objects from PVGeosBlockExtractAndMerge
         self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_surfaceMesh.ShallowCopy( filter.GetOutputDataObject( 1 ) )
         self.m_volumeMesh.Modified()

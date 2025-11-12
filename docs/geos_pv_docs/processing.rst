@@ -47,28 +47,10 @@ PVClipToMainFrame
 Geos output pre-processing
 +++++++++++++++++++++++++++++
 
-PVExtractMergeBlocksVolume plugin
--------------------------------------------
+PVGeosBlockExtractAndMerge plugin
+----------------------------------
 
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolume
-
-
-PVExtractMergeBlocksVolumeSurface plugin
---------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurface
-
-
-PVExtractMergeBlocksVolumeSurfaceWell plugin
-------------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurfaceWell
-
-
-PVExtractMergeBlocksVolumeWell plugin
------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeWell
+.. automodule:: geos.pv.plugins.PVGeosBlockExtractAndMerge
 
 
 
