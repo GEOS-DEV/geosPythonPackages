@@ -83,6 +83,12 @@ class DeckTree( object ):
         assert self.input_file is not None and self.input_file.pb_dict is not None
         self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
+    def drop(self, path:str ) -> None:
+        """Remove in the tree."""
+        new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
+        assert self.input_file is not None and self.input_file.pb_dict is not None
+        self.input_file.pb_dict = funcy.del_in( self.input_file.pb_dict, new_path )
+
     def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
         if self.input_file is None:
@@ -113,8 +119,6 @@ class DeckTree( object ):
         encoder = DictEncoder( context=context, config=SerializerConfig(indent="  ") )
         nodeDict : dict = encoder.encode( data )
         return nodeDict 
-
-
 
     @staticmethod
     def decode_data( data: dict ) -> Problem:

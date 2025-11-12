@@ -61,26 +61,31 @@ class TimelineEditor( vuetify.VCard ):
         self.state.tasks = tasks
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
         #update and erase
+        rm_list = []
         for i,t in enumerate(self.state.tasks):
+            if i != t["id"]:
+                rm_list.append(i)
             event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) ,
                      "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
                      "name": t["name"],
                      "category": t["category"]}
-            
-            import funcy
-            from copy import copy
-            #if added Event then 
-            if not self.tree._search(f'Problem/Events/0/PeriodicEvent/{i}'):
-                self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( self.tree.encode_data(PeriodicEvent(name="test")) )
-                # self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( copy(self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'][0]) )
 
-            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
-            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
-            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
-            self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','target', self.tree.registered_targets[event['category']])
+            #if added Event then 
+            if not self.tree._search(f'Problem/Events/0/PeriodicEvent/{t["id"]}'):
+                self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( self.tree.encode_data(PeriodicEvent(name="test")) )
+
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','beginTime', event['begin_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','endTime', event['end_time'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','name', event['name'])
+            self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','target', self.tree.registered_targets[event['category']])
             
             if "freq" in t.keys():
-                self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','timeFrequency', timedelta(days=int(t["freq"])).days)
+                self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).days)
+        
+        rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
+        #remove lost indexes
+        for i in rm_list:
+            self.tree.drop(f'Problem/Events/0/PeriodicEvent/{i}')
 
         return
 
