@@ -65,8 +65,8 @@ class TimelineEditor( vuetify.VCard ):
         for i,t in enumerate(self.state.tasks):
             if i != t["id"]:
                 rm_list.append(i)
-            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) ,
-                     "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
+            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).total_seconds()),
+                     "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).total_seconds()),
                      "name": t["name"],
                      "category": t["category"]}
 
@@ -80,7 +80,7 @@ class TimelineEditor( vuetify.VCard ):
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','target', self.tree.registered_targets[event['category']])
             
             if "freq" in t.keys():
-                self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).days)
+                self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).total_seconds())
         
         rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
         #remove lost indexes
