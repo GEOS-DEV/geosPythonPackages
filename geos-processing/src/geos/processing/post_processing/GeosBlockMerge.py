@@ -17,7 +17,7 @@ from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import ( createConstantAttribute, renameAttribute )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 from geos.mesh.utils.multiblockHelpers import ( getElementaryCompositeBlockIndexes, extractBlock )
-from geos.mesh.utils.genericHelpers import ( computeNormals, computeTangents, convertTriangulateBlockToSurface,
+from geos.mesh.utils.genericHelpers import ( computeNormals, computeTangents, convertUnstructuredGridToPolyData,
                                              triangulateMesh, isTriangulate )
 
 __doc__ = """
@@ -162,7 +162,7 @@ class GeosBlockMerge():
                 if self.convertFaultToSurface:
                     if not isTriangulate( volumeMesh ):
                         volumeMesh.ShallowCopy( triangulateMesh( volumeMesh ) )
-                    surfaceMesh: vtkPolyData = convertTriangulateBlockToSurface( volumeMesh )
+                    surfaceMesh: vtkPolyData = convertUnstructuredGridToPolyData( volumeMesh )
                     surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
                     surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
                     # Add the merged block to the output mesh
