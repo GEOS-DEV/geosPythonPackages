@@ -1,31 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
-import numpy as np
 import logging
+import numpy as np
 import numpy.typing as npt
-from typing import Iterator, List, Sequence, Any, Union, Tuple
+from typing import ( Iterator, List, Sequence, Any, Union, Tuple )
+
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger, vtkFloatArray
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkMultiBlockDataSet,
-    vtkPolyData,
-    vtkDataSet,
-    vtkDataObject,
-    vtkPlane,
-    vtkCellTypes,
-    vtkIncrementalOctreePointLocator,
-)
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
+                                            vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
+                                            VTK_TRIANGLE )
 from vtkmodules.vtkFiltersCore import ( vtk3DLinearGridPlaneCutter, vtkPolyDataNormals, vtkPolyDataTangents )
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
+from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
+from vtkmodules.vtkFiltersGeneral import vtkDataSetTriangleFilter
 
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
-from geos.utils.algebraFunctions import (
-    getAttributeMatrixFromVector,
-    getAttributeVectorFromMatrix,
-)
+from geos.utils.algebraFunctions import ( getAttributeMatrixFromVector, getAttributeVectorFromMatrix )
 from geos.utils.geometryFunctions import ( getChangeOfBasisMatrix, CANONICAL_BASIS_3D )
 from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 from geos.utils.Errors import VTKError
@@ -38,6 +31,114 @@ These methods include:
     - conversion from a list to vtkIdList
     - conversion of vtk container into iterable
 """
+
+
+def isTriangulate( dataSet: vtkUnstructuredGrid ) -> bool:
+    """Check if the mesh is triangulate only.
+
+    Args:
+        dataSet (vtkUnstructuredGrid): The mesh to check
+
+    Returns:
+        bool: True if the mesh is triangulate only, False otherwise.
+    """
+    cellTypes: vtkCellTypes = vtkCellTypes()
+    dataSet.GetCellTypes( cellTypes )
+
+    return all( cellTypes.GetCellType( cell ) == VTK_TRIANGLE for cell in range( cellTypes.GetNumberOfTypes() ) )
+
+
+def triangulateMesh(
+    dataSet: vtkUnstructuredGrid,
+    logger: Union[ Logger, None ] = None,
+) -> vtkUnstructuredGrid:
+    """Triangulate any type of dataset.
+
+    Args:
+        dataSet (vtkUnstructuredGrid): The mesh to triangulate
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
+
+    Returns:
+        vtkUnstructuredGrid: Triangulated mesh
+    """
+    if logger is None:
+        logger = getLogger( "Triangulate", True )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger", True )
+    vtkErrorLogger.propagate = False
+
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    vtkErrorLogger.setLevel( logging.DEBUG )
+
+    with VTKCaptureLog() as capturedLog:
+        triangulateMeshFilter: vtkDataSetTriangleFilter = vtkDataSetTriangleFilter()
+        triangulateMeshFilter.SetInputData( dataSet )
+        triangulateMeshFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+        vtkErrorLogger.debug( captured.strip() )
+
+    triangulatedMesh: vtkUnstructuredGrid = triangulateMeshFilter.GetOutput()
+
+    if triangulatedMesh.GetCellData() is None:
+        raise VTKError( "Something went wrong with VTK triangulation of the mesh." )
+
+    return triangulatedMesh
+
+
+def convertUnstructuredGridToPolyData(
+    dataSet: vtkUnstructuredGrid,
+    logger: Union[ Logger, None ] = None,
+) -> vtkPolyData:
+    """Convert vtkUnstructuredGrid to vtkPolyData.
+
+    ..Warning:: Work only with triangulated mesh
+
+    Args:
+        dataSet (vtkUnstructuredGrid): Input mesh block
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
+
+    Returns:
+        vtkPolyData: Extracted surface
+    """
+    if logger is None:
+        logger = getLogger( "ConvertVtkUnstructuredGridToVtkPolyData.", True )
+    # Creation of a child logger to deal with VTKErrors without polluting parent logger
+    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger", True )
+    vtkErrorLogger.propagate = False
+
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    vtkErrorLogger.setLevel( logging.DEBUG )
+
+    with VTKCaptureLog() as capturedLog:
+        extractSurfaceFilter: vtkDataSetSurfaceFilter = vtkDataSetSurfaceFilter()
+        extractSurfaceFilter.SetInputData( dataSet )
+        # fast mode should be used for rendering only
+        extractSurfaceFilter.FastModeOff()
+        # Delegation activated allow to accelerate the processing with unstructured mesh
+        # see https://vtk.org/doc/nightly/html/classvtkDataSetSurfaceFilter.html
+        extractSurfaceFilter.DelegationOn()
+        extractSurfaceFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+        vtkErrorLogger.debug( captured.strip() )
+
+    extractedSurface: vtkPolyData = extractSurfaceFilter.GetOutput()
+
+    if extractedSurface is None:
+        raise VTKError( "Something went wrong with VTK convert vtu to vtp." )
+
+    return extractedSurface
 
 
 def toVtkIdList( data: List[ int ] ) -> vtkIdList:
