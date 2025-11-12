@@ -14,7 +14,7 @@ from trame_simput.core.proxy import ProxyManager, Proxy
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
-from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
+from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer, DictEncoder
 
 from geos.trame.app.deck.file import DeckFile
 from geos.trame.app.geosTrameException import GeosTrameException
@@ -104,6 +104,19 @@ class DeckTree( object ):
         return decoder.decode( data[ 0 ] )
 
     @staticmethod
+    def encode_data( data: BaseModel ) -> dict:
+        """Convert a data to a xml serializable file."""
+        context = XmlContext(
+            element_name_generator=text.pascal_case,
+            attribute_name_generator=text.camel_case,
+        )
+        encoder = DictEncoder( context=context, config=SerializerConfig(indent="  ") )
+        nodeDict : dict = encoder.encode( data )
+        return nodeDict 
+
+
+
+    @staticmethod
     def decode_data( data: dict ) -> Problem:
         """Convert a data to a xml serializable file."""
         context = XmlContext(
@@ -149,8 +162,8 @@ class DeckTree( object ):
                 "duration" : str( timedelta(seconds=float(e.end_time) - float(e.begin_time)).days ),
                 "category" : e.target.split('/')[-1],
             }
-            if(int(e.time_frequency)!=1):
-                item["freq"] = timedelta(seconds=int(e.time_frequency)).days
+            if(int(e.time_frequency)>0): 
+                item["freq"] = timedelta(seconds=int(e.time_frequency)).days #TODO deal with Days-Hours-Seconds
             timeline.append( item )
             global_id = global_id + 1
 

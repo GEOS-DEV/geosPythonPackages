@@ -60,19 +60,27 @@ class TimelineEditor( vuetify.VCard ):
         logger.info(f"new tasks {tasks}")
         self.state.tasks = tasks
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
+        #update and erase
         for i,t in enumerate(self.state.tasks):
-            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) , #should be seconds / days for debug
+            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).days) ,
                      "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).days),
                      "name": t["name"],
                      "category": t["category"]}
             
+            import funcy
+            from copy import copy
+            #if added Event then 
+            if not self.tree._search(f'Problem/Events/0/PeriodicEvent/{i}'):
+                self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( self.tree.encode_data(PeriodicEvent(name="test")) )
+                # self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( copy(self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'][0]) )
+
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','beginTime', event['begin_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','endTime', event['end_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','name', event['name'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','target', self.tree.registered_targets[event['category']])
             
-            if t["freq"] is not None:
-                self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','timeFrequency', t["freq"])
+            if "freq" in t.keys():
+                self.tree.update(f'Problem/Events/0/PeriodicEvent/{i}','timeFrequency', timedelta(days=int(t["freq"])).days)
 
         return
 
