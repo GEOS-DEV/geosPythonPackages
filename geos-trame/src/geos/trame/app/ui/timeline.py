@@ -79,7 +79,7 @@ class TimelineEditor( vuetify.VCard ):
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','name', event['name'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','target', self.tree.registered_targets[event['category']])
             
-            if "freq" in t.keys():
+            if "freq" in t and t["freq"] is not None:
                 self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).total_seconds())
         
         rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
