@@ -11,13 +11,6 @@ import pandas as pd  # type: ignore[import-untyped]
 
 from packaging.version import Version
 
-# TODO: remove this condition when all codes are adapted for Paraview 6.0
-import vtk
-if Version( vtk.__version__ ) >= Version( "9.5" ):
-    from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
-else:
-    from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
-        vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
@@ -43,6 +36,7 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
 # TODO: need to be consolidated
@@ -485,7 +479,7 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
+    mesh2: vtkUnstructuredGrid = mergeBlocks( mesh )
     attributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     data: vtkCellData = mesh2.GetCellData()
     assert data is not None, "Cell Data are undefined."
@@ -556,7 +550,7 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
     source = FindSource( sourceName )
     dataset: vtkDataObject = servermanager.Fetch( source )
     assert dataset is not None, "Dataset is undefined."
-    dataset2: vtkUnstructuredGrid = mergeFilterPV( dataset )
+    dataset2: vtkUnstructuredGrid = mergeBlocks( dataset )
     time: str = str( animationScene.TimeKeeper.Time )
     dfPerTimestep: dict[ str, pd.DataFrame ] = { time: vtkToDataframe( dataset2 ) }
     # then we iterate on the other timesteps of the source
@@ -564,7 +558,8 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
         animationScene.GoToNext()
         source = FindSource( sourceName )
         dataset = servermanager.Fetch( source )
-        dataset2 = mergeFilterPV( dataset )
+        # dataset2 = mergeFilterPV( dataset )
+        dataset2 = mergeBlocks( dataset )
         time = str( animationScene.TimeKeeper.Time )
         dfPerTimestep[ time ] = vtkToDataframe( dataset2 )
     return dfPerTimestep
@@ -583,20 +578,3 @@ def getTimeStepIndex( time: float, timeSteps: npt.NDArray[ np.float64 ] ) -> int
     indexes: npt.NDArray[ np.int64 ] = np.where( np.isclose( timeSteps, time ) )[ 0 ]
     assert ( indexes.size > 0 ), f"Current time {time} does not exist in the selected object."
     return int( indexes[ 0 ] )
-
-
-def mergeFilterPV( input: vtkDataObject, ) -> vtkUnstructuredGrid:
-    """Apply Paraview merge block filter.
-
-    Args:
-        input (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): composite
-            object to merge blocks
-
-    Returns:
-        vtkUnstructuredGrid: merged block object
-
-    """
-    mergeFilter: vtkMergeBlocks = vtkMergeBlocks()
-    mergeFilter.SetInputData( input )
-    mergeFilter.Update()
-    return mergeFilter.GetOutputDataObject( 0 )

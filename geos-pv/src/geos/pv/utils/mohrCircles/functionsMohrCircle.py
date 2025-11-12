@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Alexandre Benedicto
 import os
 from typing import Any
-
+from enum import Enum
 import numpy as np
 import numpy.typing as npt
 from geos.geomechanics.model.MohrCircle import MohrCircle
@@ -18,6 +18,16 @@ __doc__ = """
 functionsMohrCircle module provides a set of utilities to instanciate Mohr's
 circles and Mohr-Coulomb failure envelope.
 """
+
+class StressConventionEnum( Enum ):
+    """Utility Enum to define the effective stress convention used for compression.
+
+    The usual convention considers the compression as positive.
+    With GEOS convention, the compression is considered negative.
+    """
+    GEOS_STRESS_CONVENTION = - 1.0
+    COMMON_STRESS_CONVENTION = 1.0
+
 
 
 def buildPythonViewScript(
@@ -34,14 +44,11 @@ def buildPythonViewScript(
 
     Args:
         dir_path (str): directory path
-
         mohrCircles (list[MohrCircle]): list of MohrCircle objects
-
         rockCohesion (float): rock cohesion (Pa)
-
         frictionAngle (float): friction angle (rad)
-
         userChoices (dict[str, Any]): dictionnary of user plot parameters
+
     Returns:
         str: Complete Python View script.
     """
@@ -67,14 +74,13 @@ def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ flo
 
     Args:
         mohrCircle (MohrCircle): input Mohr's circle
-
         maxTau (float): max shear stress
 
     Returns:
         tuple[str, str, tuple[float, float], tuple[float, float]]: labels and
         location of labels.
     """
-    p3, p2, p1 = mohrCircle.getPrincipalComponents()
+    p3, _, p1 = mohrCircle.getPrincipalComponents()
     xMaxDisplay: str = f"{p1:.2E}"
     xMinDisplay: str = f"{p3:.2E}"
     yPosition: float = 0.0
@@ -101,7 +107,7 @@ def createMohrCircleAtTimeStep(
     stressArray: npt.NDArray[ np.float64 ],
     cellIds: list[ str ],
     timeStep: str,
-    convention: bool,
+    convention: StressConventionEnum,
 ) -> list[ MohrCircle ]:
     """Create MohrCircle object(s) at a given time step for all cell ids.
 
@@ -121,11 +127,10 @@ def createMohrCircleAtTimeStep(
     """
     assert stressArray.shape[ 1 ] == 6, "Stress vector must be of size 6."
     mohrCircles: list[ MohrCircle ] = []
-    sign: float = 1.0 if convention else -1.0
     for i, cellId in enumerate( cellIds ):
         ide: str = getMohrCircleId( cellId, timeStep )
         mohrCircle: MohrCircle = MohrCircle( ide )
-        mohrCircle.computePrincipalComponents( stressArray[ i ] * sign )
+        mohrCircle.computePrincipalComponents( stressArray[ i ] * convention.value )
         mohrCircles.append( mohrCircle )
     return mohrCircles
 
