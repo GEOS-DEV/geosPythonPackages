@@ -12,7 +12,6 @@ names, domain names, phase types, and the lists of attribute names to process.
 .. WARNING::
     Names may need to be updated when modifications occur in the GEOS code.
 
-
 .. todo::
 
     If possible, link GEOS names directly with GEOS code instead of redefining
@@ -122,7 +121,6 @@ class GeosMeshSuffixEnum( Enum ):
     FLUID_INTERNAL_ENERGY_DERIVATE_SUFFIX = "_dInternalEnergy"
     FLUID_ENTHALPY_SUFFIX = "_enthalpy"
     FLUID_ENTHALPY_DERIVATE_SUFFIX = "_dEnthalpy"
-
 
     # surface attribute transfer suffix
     SURFACE_PLUS_SUFFIX = "_Plus"
