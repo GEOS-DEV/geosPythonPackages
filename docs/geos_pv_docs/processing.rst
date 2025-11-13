@@ -53,33 +53,14 @@ PVGeosBlockExtractAndMerge plugin
 .. automodule:: geos.pv.plugins.PVGeosBlockExtractAndMerge
 
 
-
 Geomechanics workflows
 ++++++++++++++++++++++++
-
-
-PVGeomechanicsWorkflowVolume plugin
----------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolume
-
-
-PVGeomechanicsWorkflowVolumeSurface plugin
-----------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurface
 
 
 PVGeomechanicsWorkflow plugin
 ------------------------------
 
 .. automodule:: geos.pv.plugins.PVGeomechanicsWorkflow
-
-
-PVGeomechanicsWorkflowVolumeWell plugin
--------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeWell
 
 
 PVGeomechanicsCalculator plugin
