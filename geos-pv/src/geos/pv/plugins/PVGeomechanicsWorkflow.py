@@ -35,39 +35,71 @@ from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
 __doc__ = """
-PVGeomechanicsWorkflowVolumeSurfaceWell is a Paraview plugin that execute
-multiple filters to clean GEOS outputs and compute additional geomechanical
-outputs on volume, surface and wells.
+PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:
+    - First PVGeosBlockExtractAndMerge
+    - Secondly PVGeomechanicsCalculator
+    - Thirdly PVSurfaceGeomechanics (if the input mesh contains faults)
 
-Input and output types are vtkMultiBlockDataSet.
+PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
+    - First extracts domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
+    - Second Acts on each region of a GEOS output domain (volume, fault, wells) to:
+        * Merge Ranks
+        * Identify "Fluids" and "Rock" phases
+        * Rename "Rock" attributes depending on the phase they refer to for more clarity
+        * Convert volume meshes to surface if needed
+        * Copy "geomechanics" attributes from the initial timestep to the current one if their exist
 
-This filter results in 3 output pipelines:
+PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is donne on each block of the volume mesh.
 
-* first pipeline contains the volume mesh. If multiple regions were defined in
-    the volume mesh, they are preserved as distinct blocks.
-* second pipeline contains surfaces. If multiple surfaces were used, they are
-    preserved as distinct blocks.
-* third pipeline contains wells. If multiple wells were used, they are preserved
-    as distinct blocks.
+The basic geomechanics properties computed on the mesh are:
+    - The elastic moduli not present on the mesh
+    - Biot coefficient
+    - Compressibility, oedometric compressibility and real compressibility coefficient
+    - Specific gravity
+    - Real effective stress ratio
+    - Total initial stress, total current stress and total stress ratio
+    - Elastic stain
+    - Real reservoir stress path and reservoir stress path in oedometric condition
+
+The advanced geomechanics properties computed on the mesh are:
+    - Fracture index and threshold
+    - Critical pore pressure and pressure index
+
+PVSurfaceGeomechanics is a Paraview plugin that allows to compute additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU). This is donne on each block of the fault mesh.
+
+This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
+    - "Volume" contains the volume domain
+    - "Fault" contains the fault domain if it exist
+    - "Well" contains the well domain if it exist
+
+Input and output meshes are vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsWorkflowVolumeSurfaceWell.
+* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsWorkflow.
 * Select the Geos output .pvd file loaded in Paraview.
-* Search and Apply PVGeomechanicsWorkflowVolumeSurfaceWell Filter.
+* Select Filters > 3- Geos Geomechanics > Geos Geomechanics Workflow.
+* Change the physical constants if needed
+* Select computeAdvancedProperties to compute the advanced properties on volume mesh
+* Apply PVGeomechanicsWorkflow
 
 """
 
 
 @smproxy.filter(
-    name="PVGeomechanicsWorkflowVolumeSurfaceWell",
-    label="Geos Geomechanics Workflow - Volume/Surface/Well",
+    name="PVGeomechanicsWorkflow",
+    label="Geos Geomechanics Workflow",
 )
-@smhint.xml( """
-    <ShowInMenu category="1- Geos Post-Processing Workflows"/>
-    <OutputPort index="0" name="VolumeMesh"/>
-    <OutputPort index="1" name="Surfaces"/>
-    <OutputPort index="2" name="Wells"/>
+@smproperty.xml( """
+    <OutputPort index="0" name="Volume"/>
+    <OutputPort index="1" name="Fault"/>
+    <OutputPort index="2" name="Well"/>
+    <Hints>
+        <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+        <View type="RenderView" port="0"/>
+        <View type="None" port="1"/>
+        <View type="None" port="2"/>
+    </Hints>
     """ )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )

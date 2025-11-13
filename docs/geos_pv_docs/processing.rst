@@ -70,10 +70,10 @@ PVGeomechanicsWorkflowVolumeSurface plugin
 .. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurface
 
 
-PVGeomechanicsWorkflowVolumeSurfaceWell plugin
---------------------------------------------------------
+PVGeomechanicsWorkflow plugin
+------------------------------
 
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurfaceWell
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflow
 
 
 PVGeomechanicsWorkflowVolumeWell plugin
