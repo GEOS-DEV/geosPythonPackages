@@ -36,18 +36,18 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 
 __doc__ = """
 PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:
-    - First PVGeosBlockExtractAndMerge
-    - Secondly PVGeomechanicsCalculator
-    - Thirdly PVSurfaceGeomechanics (if the input mesh contains faults)
+    1. PVGeosBlockExtractAndMerge
+    2. PVGeomechanicsCalculator
+    3. PVSurfaceGeomechanics (if the input mesh contains faults)
 
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
-    - First extracts domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
-    - Second Acts on each region of a GEOS output domain (volume, fault, wells) to:
+    1. Extraction of domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
+    2. Actions on each region of a GEOS output domain (volume, fault, wells) to:
         * Merge Ranks
         * Identify "Fluids" and "Rock" phases
         * Rename "Rock" attributes depending on the phase they refer to for more clarity
         * Convert volume meshes to surface if needed
-        * Copy "geomechanics" attributes from the initial timestep to the current one if their exist
+        * Copy "geomechanics" attributes from the initial timestep to the current one if they exist
 
 PVGeomechanicsCalculator is a paraview plugin that allows to compute basic and advanced geomechanics properties from existing ones in the mesh. This is donne on each block of the volume mesh.
 
