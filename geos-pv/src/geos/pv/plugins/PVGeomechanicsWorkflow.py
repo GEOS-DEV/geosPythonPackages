@@ -108,10 +108,12 @@ loggerTitle: str = "GEOS Geomechanics Workflow"
 class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Paraview plugin to clean and add new outputs Geos output mesh.
+        """Paraview plugin to compute geomechanics properties on volume and on surface directly from the GEOS simulation output mesh.
 
-        To apply in the case of output ".pvd" file contains Volume, Fault or
-        Well elements.
+        This plugin is the combination of three other:
+            - First PVGeosBlockExtractAndMerge
+            - Secondly PVGeomechanicsCalculator
+            - Thirdly PVSurfaceGeomechanics (if the input mesh contains faults)
         """
         super().__init__(
             nInputPorts=1,
@@ -140,6 +142,8 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
         self.logger.addHandler( VTKHandler() )
+
+        self.logger.info( f"Apply plugin { self.logger.name }." )
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -223,7 +227,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
     @smdomain.xml( """
         <Documentation>
             Reference friction angle to compute critical pore pressure.
-            The unit is °. Default is no friction case (i.e., 0.°).
+            The unit is °. Default is an average friction angle (i.e., 10°).
         </Documentation>
     """ )
     def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
@@ -320,7 +324,6 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.logger.info( f"Apply plugin { self.logger.name }." )
         try:
             self.volumeMesh = self.GetOutputData( outInfoVec, 0 )
             self.faultMesh = self.GetOutputData( outInfoVec, 1 )
