@@ -27,3 +27,11 @@ geos.pv.utils.paraviewTreatments module
    :members:
    :undoc-members:
    :show-inheritance:
+
+geos.pv.utils.workflowFunctions module
+---------------------------------------
+
+.. automodule:: geos.pv.utils.workflowFunctions
+   :members:
+   :undoc-members:
+   :show-inheritance:
