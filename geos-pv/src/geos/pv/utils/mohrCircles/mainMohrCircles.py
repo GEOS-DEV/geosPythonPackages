@@ -30,9 +30,11 @@ try:
     )
 
     def setup_data( view ) -> None:  # noqa
+        """Setup data."""
         pass
 
     def render( view, width: int, height: int ):  # noqa
+        """Render method."""
         fig.set_size_inches( float( width ) / 100.0, float( height ) / 100.0 )
         return python_view.figure_to_image( fig )
 

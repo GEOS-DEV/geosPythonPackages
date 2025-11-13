@@ -19,15 +19,15 @@ functionsMohrCircle module provides a set of utilities to instanciate Mohr's
 circles and Mohr-Coulomb failure envelope.
 """
 
+
 class StressConventionEnum( Enum ):
     """Utility Enum to define the effective stress convention used for compression.
 
     The usual convention considers the compression as positive.
     With GEOS convention, the compression is considered negative.
     """
-    GEOS_STRESS_CONVENTION = - 1.0
+    GEOS_STRESS_CONVENTION = -1.0
     COMMON_STRESS_CONVENTION = 1.0
-
 
 
 def buildPythonViewScript(
@@ -73,11 +73,11 @@ def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ flo
     """Get the values and location of min and max normal stress or Mohr's circle.
 
     Args:
-        mohrCircle (MohrCircle): input Mohr's circle
-        maxTau (float): max shear stress
+        mohrCircle (MohrCircle): Mohr's circle to consider.
+        maxTau (float): Max shear stress
 
     Returns:
-        tuple[str, str, tuple[float, float], tuple[float, float]]: labels and
+        tuple[str, str, tuple[float, float], tuple[float, float]]: Labels and
         location of labels.
     """
     p3, _, p1 = mohrCircle.getPrincipalComponents()
@@ -93,9 +93,8 @@ def getMohrCircleId( cellId: str, timeStep: str ) -> str:
     """Get Mohr's circle ID from cell id and time step.
 
     Args:
-        cellId (str): cell ID
-
-        timeStep (str): time step.
+        cellId (str): Cell ID
+        timeStep (str): Time step.
 
     Returns:
         str: Mohr's circle ID
@@ -108,30 +107,32 @@ def createMohrCircleAtTimeStep(
     cellIds: list[ str ],
     timeStep: str,
     convention: StressConventionEnum,
-) -> list[ MohrCircle ]:
+) -> set[ MohrCircle ]:
     """Create MohrCircle object(s) at a given time step for all cell ids.
 
     Args:
-        stressArray (npt.NDArray[np.float64]): stress numpy array
+        stressArray (npt.NDArray[np.float64]): Stress numpy array
+        cellIds (list[str]): List of cell ids
+        timeStep (str): Time step
+        convention (StressConventionEnum): Convention used for compression.
 
-        cellIds (list[str]): list of cell ids
-
-        timeStep (str): time step
-
-        convention (bool): convention used for compression.
-        * False is Geos convention (compression is negative)
-        * True is usual convention (compression is positive)
+    Raises:
+        ValueError: Stress array must consists of 6 components.
 
     Returns:
-        list[MohrCircle]: list of MohrCircle objects.
+        set[MohrCircle]: Set of MohrCircle objects.
     """
-    assert stressArray.shape[ 1 ] == 6, "Stress vector must be of size 6."
-    mohrCircles: list[ MohrCircle ] = []
+    if stressArray.shape[ 1 ] == 6:
+        raise ValueError( "Expected 6 components for stress array, not {stressArray.shape[ 1 ]}.\n \
+        Cannot proceed with the creation of Mohr circles." )
+
+    mohrCircles: set[ MohrCircle ] = set()
     for i, cellId in enumerate( cellIds ):
         ide: str = getMohrCircleId( cellId, timeStep )
         mohrCircle: MohrCircle = MohrCircle( ide )
         mohrCircle.computePrincipalComponents( stressArray[ i ] * convention.value )
-        mohrCircles.append( mohrCircle )
+        mohrCircles.add( mohrCircle )
+
     return mohrCircles
 
 
@@ -140,11 +141,10 @@ def createMohrCirclesFromPrincipalComponents(
     """Create Mohr's circle objects from principal components.
 
     Args:
-        mohrCircleParams (list[tuple[str, float, float, float]]): list of Mohr's
-        circle parameters
+        mohrCircleParams (list[tuple[str, float, float, float]]): List of Mohr's circle parameters
 
     Returns:
-        list[MohrCircle]: list of Mohr's circle objects.
+        list[MohrCircle]: List of Mohr's circle objects.
     """
     mohrCircles: list[ MohrCircle ] = []
     for circleId, p3, p2, p1 in mohrCircleParams:
@@ -158,9 +158,8 @@ def createMohrCoulombEnvelope( rockCohesion: float, frictionAngle: float ) -> Mo
     """Create MohrCoulomb object from user parameters.
 
     Args:
-        rockCohesion (float): rock cohesion (Pa).
-
-        frictionAngle (float): friction angle in radian.
+        rockCohesion (float): Rock cohesion (Pa).
+        frictionAngle (float): Friction angle in radian.
 
     Returns:
         MohrCoulomb: MohrCoulomb object.
