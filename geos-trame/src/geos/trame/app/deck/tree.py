@@ -286,10 +286,7 @@ class DeckTree( object ):
 
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_copy ):
                 models.append( ( proxy_name, model_copy ) )
-                if is_list:
-                    proxy_name = int(proxy_name)
-                #won't work if is_list # TO DO IMMEDIATELY -- review proxy strat
-                model_copy = model_copy[ proxy_name ]
+                model_copy = model_copy[ int(proxy_name) if is_list else proxy_name ]
                 continue
 
             if proxy_name in model_copy:
