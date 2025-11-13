@@ -37,13 +37,13 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 
 __doc__ = """
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
-    - First extracts domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
-    - Second Acts on each region of a GEOS output domain (volume, fault, wells) to:
+    1. Extraction of domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
+    2. Actions on each region of a GEOS output domain (volume, fault, wells) to:
         * Merge Ranks
         * Identify "Fluids" and "Rock" phases
         * Rename "Rock" attributes depending on the phase they refer to for more clarity
         * Convert volume meshes to surface if needed
-        * Copy "geomechanics" attributes from the initial timestep to the current one if their exist
+        * Copy "geomechanics" attributes from the initial timestep to the current one if they exist
 
 This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
     - "Volume" contains the volume domain
