@@ -102,9 +102,9 @@ class GeosMeshSuffixEnum( Enum ):
     BIOT_COEFFICIENT_SUFFIX = "_biotCoefficient"
 
     # fluid attributes suffix
-    PHASE_DENSITY_SUFFIX = "_phaseDensity"
+    PHASE_DENSITY_SUFFIX = "_density"
     PHASE_MASS_DENSITY_SUFFIX = "_phaseMassDensity"
-    PHASE_VISCOSITY_SUFFIX = "_phaseViscosity"
+    PHASE_VISCOSITY_SUFFIX = "_viscosity"
     PHASE_FRACTION_SUFFIX = "_phaseFraction"
 
     # surface attribute transfer suffix
