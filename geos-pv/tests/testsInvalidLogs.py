@@ -15,10 +15,10 @@ parent_dir_path = os.path.join( os.path.dirname( dir_path ), "src" )
 if parent_dir_path not in sys.path:
     sys.path.append( parent_dir_path )
 
-from geos_posp.readers.GeosLogReaderAquifers import GeosLogReaderAquifers
-from geos_posp.readers.GeosLogReaderConvergence import GeosLogReaderConvergence
-from geos_posp.readers.GeosLogReaderFlow import GeosLogReaderFlow
-from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
+from geos.pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
+from geos.pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
+from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
+from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.UnitRepository import Unit, UnitRepository
 
 unitsObjSI: UnitRepository = UnitRepository()

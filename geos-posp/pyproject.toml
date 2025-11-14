@@ -7,7 +7,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["geos_posp*", "PVplugins*"]
+include = ["geos_posp*"]
 exclude = ['tests*']
 
 [project]
@@ -90,5 +90,4 @@ source = ["geos-posp"]
 omit = [
     "*/pyvistaUtils/*",
     "*/visu/*",
-    "*/PVplugins/*",
 ]

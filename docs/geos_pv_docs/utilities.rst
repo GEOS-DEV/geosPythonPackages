@@ -11,3 +11,5 @@ Utilities
    pythonViewUtils
 
    utils
+
+   mohrCircles

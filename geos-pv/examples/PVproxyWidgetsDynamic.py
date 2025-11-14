@@ -16,7 +16,7 @@ update_paths()
 
 from geos.pv.utils.paraviewTreatments import ( strListToEnumerationDomainXml, strEnumToEnumerationDomainXml,
                                                getArrayChoices )
-from geos_posp.visu.PVUtils.checkboxFunction import (  # type: ignore[attr-defined]
+from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
     createModifiedCallback, )
 
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
