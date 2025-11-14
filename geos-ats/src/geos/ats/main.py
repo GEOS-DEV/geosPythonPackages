@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import shutil
 import signal
@@ -116,7 +116,7 @@ def getLogDirBaseName():
 
 def create_log_directory( options ):
     """
-    When the action will run tests (e.g. "run", "rerun", "check", "continue", then the
+    When the action will run tests (e.g. "run", "rerun", "check", "continue"), then the
     LogDir is numbered, and saved.  When the action does not run
     tests, the LogDir is temporary, and only sticks around if geos_ats
     exited abnormally.
@@ -150,10 +150,8 @@ def create_log_directory( options ):
                 logger.error( "unable to name a symlink to to logdir" )
 
         else:
-            if options.action in test_actions:
-                options.logs = "%s.%s" % ( getLogDirBaseName(), options.action )
-            elif options.info:
-                options.logs = "%s.info" % ( getLogDirBaseName() )
+            # For non-test actions (list, report, etc.)
+            options.logs = "%s.%s" % ( getLogDirBaseName(), options.action )
     else:
         if not os.path.join( options.logs ):
             os.mkdir( options.logs )

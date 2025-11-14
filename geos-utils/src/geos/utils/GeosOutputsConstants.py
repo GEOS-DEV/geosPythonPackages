@@ -102,9 +102,9 @@ class GeosMeshSuffixEnum( Enum ):
     BIOT_COEFFICIENT_SUFFIX = "_biotCoefficient"
 
     # fluid attributes suffix
-    PHASE_DENSITY_SUFFIX = "_phaseDensity"
+    PHASE_DENSITY_SUFFIX = "_density"
     PHASE_MASS_DENSITY_SUFFIX = "_phaseMassDensity"
-    PHASE_VISCOSITY_SUFFIX = "_phaseViscosity"
+    PHASE_VISCOSITY_SUFFIX = "_viscosity"
     PHASE_FRACTION_SUFFIX = "_phaseFraction"
 
     # surface attribute transfer suffix
@@ -299,15 +299,4 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
         PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName,
         PostProcessingOutputsEnum.POISSON_RATIO.attributeName:
         PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName,
-    }
-
-
-def getAttributeToConvertFromLocalToXYZ() -> set[ str ]:
-    """Get the list of attribute names to convert from local to xyz basis.
-
-    Returns:
-        list[str]: list of attributes to convert
-    """
-    return {
-        GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName,
     }

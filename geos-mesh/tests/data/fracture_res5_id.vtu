@@ -3,7 +3,7 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="212" NumberOfCells="156">
       <PointData GlobalIds="GLOBAL_IDS_POINTS">
-        <DataArray type="Int64" IdType="1" Name="collocatedNodes" NumberOfComponents="2" format="binary" RangeMin="3905.8931116967346" RangeMax="5326.462428291407">
+        <DataArray type="Int64" IdType="1" Name="collocated_nodes" NumberOfComponents="2" format="binary" RangeMin="3905.8931116967346" RangeMax="5326.462428291407">
           AQAAAACAAABADQAABgMAAA==eJwtyMVSFgAAhVFduHDh+Ah2d2GD2I0NdnchJnZiYmCLgYmtKHZid3djgo0dG2f8z918c27B7Jn+LyVzoIX4BBfmk1yET3FRPs3F+AwX57N8Tkv4S+p5fym+wKX5IpfhS1yWL3M5vsJBfJWvaXl/Bb3ur8g3uBLf5Mp8i6vwba7KdziY7/I9DfFX0/v+UH7A1fkh1+BHXJMfcy1+wrX5KT/TOv66muqvx8+5Pr/gBvySG/IrbsSvuTG/4TQN8zfRdH9TfsvN+B035/fcgj9wS/7IrfgTf9Zwf4Rm+FvzF27DX7ktf+N2/J1nZgm0vX8Wd+BY7siddLa/M8/hudrFP4+7chx34/ncnRdwD17IPbmXLvL35sW8RPv4l3JfXsb9OJ7783IewCt4IEfqSv8gXsUJGuVfzYN5DQ/htTyU1/EwXs/DeYRu8EdzIm/Ukf5NPIo382jewmN4K4/lbTyOx+t2/wTewTt1oj+JJ/Eunsy7eQoncwzv4ak8Tff6p/M+3q8z/Ad4Jh/kWXyIY/kwz+YjPIfn6lH/PD7Gcdwya6DzuRUv4HCO0IX+1ryI2/BiXqJt/Uu5HS/j9hzPHXg5d+ROusLfmVdyF17FCdrVv5q78Rruzmu5B6/jntxL1/t78wbuw4m8Ufv6N3E/3sz9eQsP4K08kCN1m38Qb+co3sE7dbA/iYfwLh7Ku3kYJ/NwHqF7/NG8l0fyPt6vo/wHeDQf5DF8iMfyYR7H4/WIfwIf5Yl8jI/rJH8KT+YTPIVPcgyf4qk8TU/7p/MZPqs5sgWaU8/5c/F5vqC5/Xn0ov+S5vVf5nx8hfPzVS7ABfWavxBf5xta2F9Eb/pvaVH/bS7Gd7g43+USXFLv+UvxfX6gpf1l9KH/kZb1P+Zy/ISD+CmX5wr6zF+RU7kSP+fK/IJfahX/K67KrzmY33AIV9M0fyinc3V+yzX4Hb/Xmv4PXIs/cm3+xHW4rn721+MMrs9fuAF/5W/a0P+dG/EPbsw/OYyb6C9/U/7NzfgPN+e//A+qS/z/
           <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
             <Value index="0">

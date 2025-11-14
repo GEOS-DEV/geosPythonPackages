@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Paloma Martinez
+# SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
-from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader, vtkXMLMultiBlockDataReader
+from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
 
 @pytest.fixture
@@ -178,6 +178,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/fracture_res5_id.vtp"
         elif datasetType == "emptypolydata":
             vtkFilename = "data/fracture_res5_id_empty.vtp"
+        elif datasetType == "meshGeosExtractBlockTmp":
+            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
+        elif datasetType == "well":
+            vtkFilename = "data/well.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()
