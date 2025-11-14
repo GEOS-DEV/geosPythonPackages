@@ -139,7 +139,7 @@ class DeckTree( object ):
             attribute_name_generator=text.camel_case,
         )
 
-        config = SerializerConfig( indent="  ", xml_declaration=False )
+        config = SerializerConfig( indent="  ", xml_declaration=False, ignore_default_attributes=True )
         serializer = XmlSerializer( context=context, config=config )
 
         return format_xml( serializer.render( obj ) )
