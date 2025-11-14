@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay
-from typing import Optional, Union, cast
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -16,9 +16,8 @@ from geos.mesh.utils.genericHelpers import extractSurfaceFromElevation
 from geos.mesh.utils.arrayHelpers import ( getAttributeValuesAsDF, computeCellCenterCoordinates )
 from geos.mesh.utils.arrayModifiers import transferPointDataToCellData
 
-__doc__ = r"""
+__doc__ = """
 This module contains utilities to process meshes using pyvista.
-
 """
 
 
@@ -31,14 +30,14 @@ def loadDataSet(
     """Load the data using pyvista and extract properties from horizontal slice.
 
     Args:
-        reader (pv.PVDReader): pyvista pvd reader
-        timeStepIndexes (list[int]): list of time step indexes to load.
-        elevation (float): elevation (m) of horizontal slice
-        properties (tuple[str]): list of properties to extract
+        reader (pv.PVDReader): Pyvista pvd reader.
+        timeStepIndexes (list[int]): List of time step indexes to load.
+        elevation (float): Elevation (m) of horizontal slice.
+        properties (tuple[str]): List of properties to extract.
 
     Returns:
-        tuple[dict[str, pd.DataFrame], npt.NDArray[np.float64]]: tuple containing
-            a dictionnary with times as keys and dataframe with properties as
+        tuple[dict[str, pd.DataFrame], npt.NDArray[np.float64]]: Tuple containing
+            a dictionary with times as keys and dataframe with properties as
             values, and an array with cell center coordinates of the slice.
 
     """
@@ -46,7 +45,8 @@ def loadDataSet(
     surface: vtkPolyData
     timeValues: list[ float ] = reader.time_values
     for index in timeStepIndexes:
-        assert index < len( timeValues ), "Time step index is out of range."
+        if index >= len( timeValues ):
+            raise IndexError( "Time step index is out of range." )
 
         time: float = timeValues[ index ]
         reader.set_active_time_value( time )
@@ -54,23 +54,27 @@ def loadDataSet(
 
         volMesh: Optional[ Union[ pv.MultiBlock, pv.UnstructuredGrid ] ] = getBlockByName(
             inputMesh, GeosDomainNameEnum.VOLUME_DOMAIN_NAME.value )
-        assert volMesh is not None, "Volumic mesh was not found."
+        if not volMesh:
+            raise AttributeError( "Volumic mesh was not found." )
 
         # Merge volume block
         mergedMesh: pv.UnstructuredGrid = volMesh.combine(
             merge_points=True ) if isinstance( volMesh, pv.MultiBlock ) else volMesh
-        assert mergedMesh is not None, "Merged mesh is undefined."
+        if not mergedMesh:
+            raise ValueError( "Merged mesh is undefined." )
 
-        # extract data
+        # Extract data
         surface = extractSurfaceFromElevation( mergedMesh, elevation )
-        # transfer point data to cell center
-        surface = cast( vtkPolyData, transferPointDataToCellData( surface ) )
+        # Transfer point data to cell center
+        surface = vtkPolyData.SafeDownCast( transferPointDataToCellData( surface ) )
         timeToPropertyMap[ str( time ) ] = getAttributeValuesAsDF( surface, properties )
 
-    # get cell center coordinates
-    assert surface is not None, "Surface are undefined."
+    # Get cell center coordinates
+    if not surface:
+        raise ValueError( "Surface are undefined." )
     pointsCoords: vtkDataArray = computeCellCenterCoordinates( surface )
-    assert pointsCoords is not None, "Cell center are undefined."
+    if not pointsCoords:
+        raise ValueError( "Cell center are undefined." )
     pointsCoordsNp: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( pointsCoords )
     return ( timeToPropertyMap, pointsCoordsNp )
 
@@ -93,14 +97,14 @@ def getBlockByName( multiBlockMesh: Union[ pv.MultiBlock, pv.UnstructuredGrid ],
 
     mesh: Optional[ Union[ pv.MultiBlock, pv.UnstructuredGrid ] ]
     for i, mbMesh in enumerate( multiBlockMesh ):
-        # if one of the block of multiBlockMesh is the volumic mesh,
+        # If one of the block of multiBlockMesh is the volumic mesh,
         # then save the mesh and break
         if multiBlockMesh.get_block_name( i ) == blockName:
             mesh = mbMesh
             break
-        # else look at its internal mesh(es)
+        # Else look at its internal mesh(es)
         mesh = getBlockByName( mbMesh, blockName )
-        # if mesh is not None, it is the searched one
+        # If mesh is not None, it is the searched one
         if mesh is not None:
             break
     return mesh
