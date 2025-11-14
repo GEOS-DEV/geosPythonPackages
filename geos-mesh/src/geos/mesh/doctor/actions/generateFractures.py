@@ -521,7 +521,8 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
         for j, val in enumerate( bucket ):
             collocatedNodes[ i, j ] = val
     array = numpy_to_vtk( collocatedNodes, array_type=VTK_ID_TYPE )
-    array.SetName( "collocatedNodes" )
+    array.SetName( "collocated_nodes" )  # Following the hardcoded naming convention used in GEOS for now:
+    # src/coreComponents/mesh/generators/CollocatedNodes.cpp:  string const COLLOCATED_NODES = "collocated_nodes";
 
     fractureMesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's not supported by GEOS for now.
     fractureMesh.SetPoints( points )

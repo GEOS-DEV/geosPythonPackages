@@ -23,7 +23,7 @@ from geos.utils.GeosOutputsConstants import (
 )
 from geos.utils.Logger import ERROR, INFO, Logger, getLogger
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
-from geos_posp.filters.GeosBlockMerge import GeosBlockMerge
+from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
 from geos.mesh.utils.arrayModifiers import (
     copyAttribute,
     createCellCenterAttribute,
@@ -32,6 +32,9 @@ from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 __doc__ = """
 PVExtractMergeBlocksVolume is a Paraview plugin that allows to merge ranks
@@ -274,7 +277,7 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
             output (vtkMultiBlockDataSet): output volume mesh
 
         Returns:
-            bool: True if extraction and merge successfully eneded, False otherwise
+            bool: True if extraction and merge successfully ended, False otherwise
         """
         # extract blocks
         blockExtractor: GeosBlockExtractor = GeosBlockExtractor( input )
@@ -303,14 +306,10 @@ class PVExtractMergeBlocksVolume( VTKPythonAlgorithmBase ):
         Returns:
             vtkMultiBlockDataSet: Multiblock mesh composed of internal merged blocks.
         """
-        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge()
-        mergeBlockFilter.SetLogger( self.m_logger )
-        mergeBlockFilter.SetInputDataObject( input )
-        if convertSurfaces:
-            mergeBlockFilter.ConvertSurfaceMeshOn()
-        else:
-            mergeBlockFilter.ConvertSurfaceMeshOff()
-        mergeBlockFilter.Update()
-        mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.GetOutputDataObject( 0 )
+        mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( input, convertSurfaces, True )
+        if not mergeBlockFilter.logger.hasHandlers():
+            mergeBlockFilter.setLoggerHandler( VTKHandler() )
+        mergeBlockFilter.applyFilter()
+        mergedBlocks: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
         assert mergedBlocks is not None, "Final merged MultiBlockDataSet is null."
         return mergedBlocks
