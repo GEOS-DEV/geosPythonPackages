@@ -91,11 +91,14 @@ class DeckEditor( vuetify.VCard ):
         #TODO (Q1) why the return is not used ??
         # sim_item = self.simput_manager.proxymanager.get_instances_of_type( simput_type )
         #update proxy with decoded data
-        proxy = self.simput_manager.proxymanager.get(active_id)
-        if not proxy:
-            return
-        for k,v in dict(active_block).items():
-            proxy.set_property(k,v)
+
+        self.simput_manager.proxymanager.commit_all()
+        # proxy = self.simput_manager.proxymanager.get(active_id)
+        # if not proxy:
+        #     return
+        # for k,v in dict(active_block).items():
+        #     proxy.set_property(k,v)
+        # proxy.commit()
 
         self.state.active_id = active_id
         self.state.active_ids = [ active_id ]
