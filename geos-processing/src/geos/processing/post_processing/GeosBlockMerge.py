@@ -89,6 +89,7 @@ class GeosBlockMerge():
         """
         self.inputMesh: vtkMultiBlockDataSet = inputMesh
         self.convertFaultToSurface: bool = convertFaultToSurface
+        self.handler: None | logging.Handler = None
 
         self.outputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         self.phaseNameDict: dict[ str, set[ str ] ] = {
@@ -103,6 +104,7 @@ class GeosBlockMerge():
         else:
             self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -113,6 +115,7 @@ class GeosBlockMerge():
             handler (logging.Handler): The handler to add.
         """
         if not self.logger.hasHandlers():
+            self.handler = handler
             self.logger.addHandler( handler )
         else:
             self.logger.warning(

@@ -117,6 +117,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
         self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
 
         self.logger.info( f"Apply plugin { self.logger.name }." )
 
