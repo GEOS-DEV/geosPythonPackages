@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
+# SPDX-FileContributor: Alexandre Benedicto, Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 import logging
@@ -22,16 +22,14 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-)
+    vtkUnstructuredGrid, )
 
-# update sys.path to load all GEOS Python Package dependencies
+# Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
 update_paths()
-
 
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
@@ -46,8 +44,6 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_ROCK_COHESION,
 )
 from geos.mesh.utils.arrayHelpers import getArrayInObject
-# from geos.mesh.utils.multiblockModifiers import mergeBlocks
-
 
 import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
 import geos.pv.utils.paraviewTreatments as pvt
@@ -67,7 +63,7 @@ from geos.pv.pyplotUtils.matplotlibOptions import (
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
 
 __doc__ = """
-PVMohrCirclePlot is a Paraview plugin that allows to compute and plot
+PVMohrCirclePlot is a ParaView plugin that allows to compute and plot
 Mohr's circles of selected cells and times from effective stress attribute.
 
 Input is a vtkMultiBlockDataSet or vtkUnstructuredGrid.
@@ -79,17 +75,18 @@ To use it:
 
 This plugin requires the presence of a `stressEffective` attribute in the mesh. Moreover, several timesteps should also be detected.
 
-Please be aware that the number of cells and timesteps should be limited, or Paraview may crash due to overload.
+.. Warning::
+    The whole ParaView pipeline will be executed for all timesteps present in the initial PVD file. Please be aware that the number of pipeline filters and timesteps should be as limited as possible. Otherwise, please consider going to get a cup of coffee.
 
-* Load the module in Paraview: Tools > Manage Plugins.... > Load new > PVMohrCirclePlot
+* Load the module in ParaView: Tools > Manage Plugins.... > Load new > PVMohrCirclePlot
 
 If you start from a raw GEOS output, execute the following steps before moving on.
 - First, consider removing some unnecessary timesteps manually from the PVD file in order to reduce the calculation time and resources used in the following steps.
-- Load the data into Paraview, then apply the `PVGeosExtractMergeBlock*` plugin on it.
+- Load the data into ParaView, then apply the `PVGeosExtractMergeBlock*` plugin on it.
 - Select the filter output that you want to consider for the Mohr's circle plot.
 
 
-* Extract a few number of cells with the `ExtractSelection` Paraview Filter, then use the `MergeBlocks` Paraview Filter.
+* Extract a few number of cells with the `ExtractSelection` ParaView Filter, then use the `MergeBlocks` ParaView Filter.
 * Select the resulting mesh in the pipeline.
 * Select Filters > 3- Geos Geomechanics > Plot Mohr's Circle.
 * Select the cell Ids and time steps you want
@@ -97,8 +94,11 @@ If you start from a raw GEOS output, execute the following steps before moving o
 * Apply.
 
 
-.. WARNING::
-    After first application of the Mohr circle filter, display properties, such as line colors, title, ticks, ... However the time steps and cell Ids cannot be calculated a second time.
+
+.. Note::
+    After a first application, select again cells and time steps to display, then
+        * Apply again
+        * Click on `Refresh Data` (you may have to click twice to refresh the Python view correctly).
 """
 
 
@@ -115,40 +115,44 @@ If you start from a raw GEOS output, execute the following steps before moving o
 class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """Paraview plugin to plot Mohr's Circles of selected cells and times.
+        """ParaView plugin to plot Mohr's Circles of selected cells and times.
 
         Mohr's circles are plotted using a Python View.
         """
         super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataObject" )
 
-        # create a new PythonView
+        # Create a new PythonView
         self.pythonView: Any = buildNewLayoutWithPythonView()
 
-        #: list of all cell ids
+        # List of all cell ids in the mesh
         self.cellIds: list[ str ] = []
 
-        #: cell selection object
+        # List of all time steps
+        self.timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
+
+        # Cell selection object
         self.cellIdsDAS: vtkDAS = vtkDAS()
         self.cellIdsDAS.AddObserver( 0, createModifiedCallback( self ) )
 
-        #: list of all time steps
-        self.timeSteps: npt.NDArray[ np.float64 ] = np.array( [] )
-
-        #: time steps selection object
+        # Time steps selection object
         self.timeStepsDAS: vtkDAS = vtkDAS()
         self.timeStepsDAS.AddObserver( 0, createModifiedCallback( self ) )
 
-        #: list of all mohr circles
-        self.mohrCircles: list[ MohrCircle ] = []
+        # Requested cell ids and time steps
+        self.requestedCellIds: list[ str ] = []
+        self.requestedTimeStepsIndexes: list[ int ] = []
 
-        #: failure envelop parameters
+        # List of mohr circles
+        self.mohrCircles: set[ MohrCircle ] = set()
+
+        # Failure envelop parameters
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
 
-        #: stress convention (Geos: negative compression, Usual: positive)
+        # Stress convention (Geos: negative compression, Usual: positive)
         self.useGeosStressConvention: bool = True
 
-        #: curve aspect options - the same variables are set for each selected curve
+        # Curve aspect options - the same variables are set for each selected curve
         self.circleIdUsed: str = ""
         self.color: tuple[ float, float, float ] = ( 0.0, 0.0, 0.0 )
         self.lineStyle: str = LineStyleEnum.SOLID.optionValue
@@ -156,7 +160,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         self.markerStyle: str = MarkerStyleEnum.NONE.optionValue
         self.markerSize: float = 1.0
 
-        #: figure user choices
+        # Figure user choices
         self.userChoices: dict[ str, Any ] = {
             "xAxis": "Normal stress",
             "yAxis": "Shear stress",
@@ -179,15 +183,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             "limMaxY": None,
         }
 
-        self.requestedCellIds: list[ str ] = []
-        self.requestedTimeStepsIndexes: list[ int ] = []
-
-        #: request data processing step - incremented each time RequestUpdateExtent is called
+        # Request data processing step - incremented each time RequestUpdateExtent is called
         self.requestDataStep: int = -1
 
-        #: logger
-
-        self.logger = logging.getLogger( "MohrCircle" )
+        # Logger
+        self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
         self.logger.setLevel( logging.INFO )
         if not self.logger.hasHandlers():
             handler = VTKHandler()
@@ -195,47 +195,18 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
             self.logger.addHandler( handler )
 
-    def _getUserChoices( self: Self ) -> dict[ str, Any ]:
-        """Access the m_userChoices attribute.
-
-        Returns:
-            dict[str] : the user choices for the figure.
-        """
-        return self.userChoices
-
-    def _getCircleIds( self: Self ) -> list[ str ]:
-        """Get circle ids to plot.
-
-        Returns:
-            list[str]: list of circle ids to plot.
-        """
-        cellIds: list[ str ] = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
-        timeSteps: list[ str ] = pvt.getArrayChoices( self.a02GetTimestepsToPlot() )
-
-        return [ mcf.getMohrCircleId( cellId, timeStep ) for timeStep in timeSteps for cellId in cellIds ]
-
-    def _defineCurvesAspect( self: Self ) -> None:
-        """Add curve aspect parameters according to user choices."""
-        self.userChoices[ "curvesAspect" ][ self.circleIdUsed ] = {
-            "color": self.color,
-            "linestyle": self.lineStyle,
-            "linewidth": self.lineWidth,
-            "marker": self.markerStyle,
-            "markersize": self.markerSize,
-        }
-
     @smproperty.xml( """
         <Property name="Refresh Data"
                   command="a00RefreshData"
                   panel_widget="command_button"/>
         <Documentation>
-            Recompute all the Mohr's circles at all time steps and display
-            selected ones.
+            Recompute Mohr's circles for requested time steps and cell ids.
         </Documentation>
         """ )
     def a00RefreshData( self: Self ) -> None:
         """Reset self.requestDataStep to reload data from all time steps."""
         self.requestDataStep = -1
+        self.logger.info( "Recomputing data for selected time steps and cell ids." )
         self.Modified()
 
     @smproperty.dataarrayselection( name="CellIdToPlot" )
@@ -243,7 +214,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Get selected cell ids to plot.
 
         Returns:
-            vtkDataArraySelection: selected cell ids.
+            vtkDataArraySelection: Selected cell ids.
         """
         return self.cellIdsDAS
 
@@ -252,7 +223,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Get selected time steps to plot.
 
         Returns:
-            vtkDataArraySelection: selected time steps.
+            vtkDataArraySelection: Selected time steps.
         """
         return self.timeStepsDAS
 
@@ -274,7 +245,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set rock cohesion.
 
         Args:
-            value (float): rock cohesion (Pa)
+            value (float): Rock cohesion (Pa).
         """
         self.rockCohesion = value
         self.Modified()
@@ -288,7 +259,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set friction angle.
 
         Args:
-            value (float): friction angle (°).
+            value (float): Friction angle (°).
         """
         self.frictionAngle = value * np.pi / 180.0
         self.Modified()
@@ -308,7 +279,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set stress unit.
 
         Args:
-            choice (int): stress unit index in Pressure enum.
+            choice (int): Stress unit index in Pressure enum.
         """
         self.userChoices[ "stressUnit" ] = choice
         self.Modified()
@@ -323,8 +294,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set stress compression convention in plots.
 
         Args:
-            useGeosConvention (bool): True is Geos convention, False is usual
-            geomechanical convention.
+            useGeosConvention (bool): True is Geos convention, False is usual geomechanical convention.
         """
         # Specify if data is from GEOS
         self.useGeosStressConvention = useGeosConvention
@@ -336,7 +306,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set option to add annotatations to circles.
 
         Args:
-            boolean (bool): user choce.
+            boolean (bool): True to annotate circles, False otherwise.
+                                Default is True.
         """
         self.userChoices[ "annotateCircles" ] = boolean
         self.Modified()
@@ -347,7 +318,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set option to display minor ticks.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): True to display the minor ticks, False otherwise.
+                                Defaults is False.
         """
         self.userChoices[ "minorticks" ] = boolean
         self.Modified()
@@ -369,7 +341,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set option to modify legend and title.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): True to modify the title and legend, False otherwise.
+                                Defaults is False.
         """
         self.userChoices[ "displayTitle" ] = boolean
         self.modifyTitleAndLegend = boolean
@@ -379,7 +352,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set title.
 
         Args:
-            title (str): title.
+            title (str): Requested title. Defaults is "Mohr's circle".
         """
         self.userChoices[ "title" ] = title
         self.Modified()
@@ -390,7 +363,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set title font style.
 
         Args:
-            value (int): title font style index in FontStyleEnum.
+            value (int): Title font style index in FontStyleEnum.
         """
         choice = list( FontStyleEnum )[ value ]
         self.userChoices[ "titleStyle" ] = choice.optionValue
@@ -402,7 +375,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set title font weight.
 
         Args:
-            value (int): title font weight index in FontWeightEnum.
+            value (int): Title font weight index in FontWeightEnum.
         """
         choice = list( FontWeightEnum )[ value ]
         self.userChoices[ "titleWeight" ] = choice.optionValue
@@ -414,7 +387,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set title font size.
 
         Args:
-            size (float): title font size between 1 and 50.
+            size (float): Title font size between 1 and 50.
         """
         self.userChoices[ "titleSize" ] = size
         self.Modified()
@@ -438,7 +411,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set legend position.
 
         Args:
-            value (int): legend position index in LegendLocationEnum.
+            value (int): Legend position index in LegendLocationEnum.
         """
         choice = list( LegendLocationEnum )[ value ]
         self.userChoices[ "legendPosition" ] = choice.optionValue
@@ -450,7 +423,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set legend font size.
 
         Args:
-            size (float): legend font size between 1 and 50.
+            size (float): Legend font size between 1 and 50.
         """
         self.userChoices[ "legendSize" ] = size
         self.Modified()
@@ -472,7 +445,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set option to define axis limits.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): True to define manually the axis limits, False otherwise.
+                                Defaults is False.
         """
         self.userChoices[ "customAxisLim" ] = boolean
         self.Modified()
@@ -548,7 +522,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set option to modify curve aspect.
 
         Args:
-            boolean (bool): user choice.
+            boolean (bool): True to modify curve aspect, False otherwise.
+                                Defaults is False.
         """
         self.modifyCurvesAspect = boolean
 
@@ -557,7 +532,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Get curves to modify.
 
         Returns:
-            list[str]: curves to modify
+            list[str]: Curves to modify
         """
         circleIds: list[ str ] = self._getCircleIds()
         return [ FAILURE_ENVELOPE ] + circleIds
@@ -572,7 +547,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set circle ids to use.
 
         Args:
-            value (str): circle ids.
+            value (str): Circle ids.
         """
         self.circleIdUsed = value
         self.Modified()
@@ -583,7 +558,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set line style.
 
         Args:
-           value (int): line style index in LineStyleEnum
+           value (int): Line style index in LineStyleEnum.
         """
         choice = list( LineStyleEnum )[ value ]
         self.lineStyle = choice.optionValue
@@ -595,7 +570,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set line width.
 
         Args:
-           value (float): line width between 1 and 10.
+           value (float): Line width between 1 and 10.
         """
         self.lineWidth = value
         self.Modified()
@@ -606,7 +581,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set marker style.
 
         Args:
-           value (int): Marker style index in MarkerStyleEnum
+           value (int): Marker style index in MarkerStyleEnum.
         """
         choice = list( MarkerStyleEnum )[ value ]
         self.markerStyle = choice.optionValue
@@ -618,7 +593,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Set marker size.
 
         Args:
-           value (float): size of markers between 1 and 30.
+           value (float): Size of markers between 1 and 30.
         """
         self.markerSize = value
         self.Modified()
@@ -671,9 +646,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestInformation.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -685,7 +660,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         if self.requestDataStep < 0:
             # Get cell ids
             inData = self.GetInputData( inInfoVec, 0, 0 )
-            self.cellIds = pvt.getVtkOriginalCellIds( inData )
+            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger)
 
             # Update vtkDAS
             for circleId in self.cellIds:
@@ -709,9 +684,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestUpdateExtent.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request
+            inInfoVec (list[vtkInformationVector]): Input objects
+            outInfoVec (vtkInformationVector): Output objects
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -719,14 +694,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         executive = self.GetExecutive()
         inInfo = inInfoVec[ 0 ]
 
-        if self.requestDataStep < 0:
-            self.mohrCircles.clear()
-
-        # update requestDataStep
+        # Update requestDataStep
         self.requestDataStep += 1
-        # update time according to requestDataStep iterator
+        # Update time according to requestDataStep iterator
         if self.requestDataStep == 0:
-            self._defineRequestedTimeSteps()
+            self._updateRequestedTimeSteps()
 
         if self.requestDataStep < len( self.timeSteps ):
             inInfo.GetInformationObject( 0 ).Set(
@@ -742,7 +714,6 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             self.Modified()
         return 1
 
-
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
@@ -752,9 +723,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
@@ -768,7 +739,6 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
-
     def RequestData(
             self: Self,
             request: vtkInformation,  # noqa: F841
@@ -778,19 +748,19 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """Inherited from VTKPythonAlgorithmBase::RequestData.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            request (vtkInformation): Request.
+            inInfoVec (list[vtkInformationVector]): Input objects.
+            outInfoVec (vtkInformationVector): Output objects.
 
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
         try:
-            # input: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet ] = self.GetInputData( inInfoVec, 0, 0 )
-            input: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
-            assert input is not None, "Input data is undefined"
-
+            inputMesh: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
             executive = self.GetExecutive()
+
+            if self.requestDataStep == 1:
+                self.logger.info( "Computing Mohr circles for requested time steps and cell Ids." )
 
             if self.requestDataStep < len( self.timeSteps ):
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )  # type: ignore[no-any-return]
@@ -800,30 +770,26 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 )
 
                 if self.requestDataStep in self.requestedTimeStepsIndexes:
-                    self.mohrCircles.extend( self._createMohrCirclesAtTimeStep( input, currentTimeStep ) )
+                    self.mohrCircles.update( self._createMohrCirclesAtTimeStep( inputMesh, currentTimeStep ) )
 
             # Plot mohr circles
             else:
+                self.logger.info( "Displaying Mohr's Circles" )
                 # Displayed time step, no need to go further
                 request.Remove( executive.CONTINUE_EXECUTING() )  # type: ignore[no-any-return]
 
                 assert self.pythonView is not None, "No Python View was found."
                 self._defineCurvesAspect()
-                # mohrCircles: list[ MohrCircle ] = self._filterMohrCircles()
+                mohrCircles: list[ MohrCircle ] = self._filterMohrCircles()
 
                 self.pythonView.Script = mcf.buildPythonViewScript(
                     geos_pv_path,
-                    self.mohrCircles,
+                    mohrCircles,
                     self.rockCohesion,
                     self.frictionAngle,
                     self._getUserChoices(),
                 )
                 Render()
-
-        except ( ValueError, TypeError ) as e:
-            self.logger.error( f"MergeBlock failed due to {e}",
-                                 exc_info=True )  #no critical as there is no reason to crash here
-            return 0
 
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
@@ -833,10 +799,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
     def _createMohrCirclesAtTimeStep(
         self: Self,
-        # mesh: Union[ vtkUnstructuredGrid, vtkMultiBlockDataSet ],
         mesh: vtkUnstructuredGrid,
         currentTimeStep: float,
-    ) -> list[ MohrCircle ]:
+    ) -> set[ MohrCircle ]:
         """Create mohr circles of all cells at the current time step.
 
         Args:
@@ -854,11 +819,10 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         stressConvention = StressConventionEnum.GEOS_STRESS_CONVENTION if self.useGeosStressConvention else StressConventionEnum.COMMON_STRESS_CONVENTION
 
         # Get the cell IDs requested by the user
-        self._defineRequestedCellIds()
+        self._updateRequestedCellIds()
 
-        return mcf.createMohrCircleAtTimeStep( stressArray, self.requestedCellIds , str( currentTimeStep ),
+        return mcf.createMohrCircleAtTimeStep( stressArray, self.requestedCellIds, str( currentTimeStep ),
                                                stressConvention )
-
 
     def _filterMohrCircles( self: Self ) -> list[ MohrCircle ]:
         """Filter the list of all MohrCircle to get those to plot.
@@ -870,15 +834,43 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         circleIds: list[ str ] = self._getCircleIds()
         return [ mohrCircle for mohrCircle in self.mohrCircles if mohrCircle.getCircleId() in circleIds ]
 
-
-    def _defineRequestedTimeSteps( self: Self ):
+    def _updateRequestedTimeSteps( self: Self ) -> None:
+        """Update the requestedTimeStepsIndexes attribute from user choice."""
         requestedTimeSteps: list[ str ] = pvt.getArrayChoices( self.a02GetTimestepsToPlot() )
 
-        requestedTimeStepsIndexes = [ pvt.getTimeStepIndex( float( ts ), self.timeSteps ) for ts in requestedTimeSteps ]
+        self.requestedTimeStepsIndexes = [
+            pvt.getTimeStepIndex( float( ts ), self.timeSteps ) for ts in requestedTimeSteps
+        ]
 
-        self.requestedTimeStepsIndexes: list[ int ]  = requestedTimeStepsIndexes
+    def _updateRequestedCellIds( self: Self ) -> None:
+        """Update the requestedCellIds attribute from user choice."""
+        self.requestedCellIds = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
 
+    def _getUserChoices( self: Self ) -> dict[ str, Any ]:
+        """Access the userChoices attribute.
 
-    def _defineRequestedCellIds( self: Self ):
-        self.requestedCellIds: list[ str ] = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
+        Returns:
+            dict[str, Any] : the user choices for the figure.
+        """
+        return self.userChoices
 
+    def _getCircleIds( self: Self ) -> list[ str ]:
+        """Get circle ids to plot.
+
+        Returns:
+            list[str]: list of circle ids to plot.
+        """
+        cellIds: list[ str ] = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
+        timeSteps: list[ str ] = pvt.getArrayChoices( self.a02GetTimestepsToPlot() )
+
+        return [ mcf.getMohrCircleId( cellId, timeStep ) for timeStep in timeSteps for cellId in cellIds ]
+
+    def _defineCurvesAspect( self: Self ) -> None:
+        """Add curve aspect parameters according to user choices."""
+        self.userChoices[ "curvesAspect" ][ self.circleIdUsed ] = {
+            "color": self.color,
+            "linestyle": self.lineStyle,
+            "linewidth": self.lineWidth,
+            "marker": self.markerStyle,
+            "markersize": self.markerSize,
+        }

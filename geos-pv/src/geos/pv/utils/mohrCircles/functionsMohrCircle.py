@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Alexandre Benedicto
+# SPDX-FileContributor: Alexandre Benedicto, Paloma Martinez
 import os
 from typing import Any
 from enum import Enum
@@ -15,7 +15,7 @@ from geos.pv.utils.mohrCircles import (
 )
 
 __doc__ = """
-functionsMohrCircle module provides a set of utilities to instanciate Mohr's
+The functionsMohrCircle module provides a set of utilities to instantiate Mohr's
 circles and Mohr-Coulomb failure envelope.
 """
 
@@ -31,7 +31,7 @@ class StressConventionEnum( Enum ):
 
 
 def buildPythonViewScript(
-    dir_path: str,
+    dirpath: str,
     mohrCircles: list[ MohrCircle ],
     rockCohesion: float,
     frictionAngle: float,
@@ -39,20 +39,19 @@ def buildPythonViewScript(
 ) -> str:
     """Builds the Python script used to launch the Python View.
 
-    The script is returned as a string to be then injected in the Python
-    View.
+    The script is returned as a string to be then injected in the Python View.
 
     Args:
-        dir_path (str): directory path
-        mohrCircles (list[MohrCircle]): list of MohrCircle objects
-        rockCohesion (float): rock cohesion (Pa)
-        frictionAngle (float): friction angle (rad)
-        userChoices (dict[str, Any]): dictionnary of user plot parameters
+        dirpath (str): Root directory path for the script creation.
+        mohrCircles (list[MohrCircle]): List of MohrCircle objects.
+        rockCohesion (float): Rock cohesion (Pa).
+        frictionAngle (float): Friction angle (rad).
+        userChoices (dict[str, Any]): Dictionary of user plot parameters.
 
     Returns:
         str: Complete Python View script.
     """
-    pathPythonViewScript: str = os.path.join( dir_path, MOHR_CIRCLE_PATH, MOHR_CIRCLE_ANALYSIS_MAIN )
+    pathPythonViewScript: str = os.path.join( dirpath, MOHR_CIRCLE_PATH, MOHR_CIRCLE_ANALYSIS_MAIN )
 
     mohrCircleParams: list[ tuple[ str, float, float,
                                    float ] ] = [ ( mohrCircle.getCircleId(), *( mohrCircle.getPrincipalComponents() ) )
@@ -74,11 +73,11 @@ def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ flo
 
     Args:
         mohrCircle (MohrCircle): Mohr's circle to consider.
-        maxTau (float): Max shear stress
+        maxTau (float): Max shear stress.
 
     Returns:
         tuple[str, str, tuple[float, float], tuple[float, float]]: Labels and
-        location of labels.
+            location of labels.
     """
     p3, _, p1 = mohrCircle.getPrincipalComponents()
     xMaxDisplay: str = f"{p1:.2E}"
@@ -90,14 +89,14 @@ def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ flo
 
 
 def getMohrCircleId( cellId: str, timeStep: str ) -> str:
-    """Get Mohr's circle ID from cell id and time step.
+    """Get Mohr's circle ID from cell ID and time step.
 
     Args:
-        cellId (str): Cell ID
+        cellId (str): Cell ID.
         timeStep (str): Time step.
 
     Returns:
-        str: Mohr's circle ID
+        str: Mohr's circle ID.
     """
     return f"Cell_{cellId}@{timeStep}"
 
@@ -122,7 +121,7 @@ def createMohrCircleAtTimeStep(
     Returns:
         set[MohrCircle]: Set of MohrCircle objects.
     """
-    if stressArray.shape[ 1 ] == 6:
+    if stressArray.shape[ 1 ] != 6:
         raise ValueError( "Expected 6 components for stress array, not {stressArray.shape[ 1 ]}.\n \
         Cannot proceed with the creation of Mohr circles." )
 

@@ -123,7 +123,7 @@ class MohrCircle:
         Raises:
             ValueError: Expected p3 <= p2 <= p1.
         """
-        if ( p3 <= p2 ) and ( p2 <= p1 ):
+        if not ( ( p3 <= p2 ) and ( p2 <= p1 ) ):
             raise ValueError( "Component order is wrong. Expected p3 <= p2 <= p1." )
         self.p3 = p3
         self.p2 = p2

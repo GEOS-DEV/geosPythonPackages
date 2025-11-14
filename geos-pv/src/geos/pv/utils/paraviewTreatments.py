@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
 from enum import Enum
 from typing import Any, Union
 
@@ -9,11 +10,11 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 
-from packaging.version import Version
-
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler, )
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -36,6 +37,7 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
+from geos.utils.Logger import ( CustomLoggerFormatter )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
@@ -455,7 +457,7 @@ def integrateSourceNames( sourceNames: set[ str ], arrayChoices: set[ str ] ) ->
 
     Args:
         sourceNames (set[str]): Name of sources found in ParaView pipeline.
-        arrayChoices (set[str]): Column names of the vtkdataarrayselection.
+        arrayChoices (set[str]): Column names of the vtkDataArraySelection.
 
     Returns:
         set[str]: [sourceName1__choice1, sourceName1__choice2,
@@ -469,19 +471,31 @@ def integrateSourceNames( sourceNames: set[ str ], arrayChoices: set[ str ] ) ->
     return completeNames
 
 
-def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ] ) -> list[ str ]:
+def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                           logger: Union[ logging.Logger, None ] = None ) -> list[ str ]:
     """Get vtkOriginalCellIds from a vtkUnstructuredGrid object.
 
     Args:
-        mesh (vtkMultiBlockDataSet|vtkCompositeDataSet|vtkDataObject): input mesh.
+        mesh (vtkMultiBlockDataSet|vtkCompositeDataSet|vtkDataObject): Input mesh.
+        logger(Union[logging.Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         list[str]: ids of the cells.
     """
-    # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeBlocks( mesh )
+    if logger is None:
+        logger = logging.getLogger( "getVtkOriginalCellIds" )
+
+    if not logger.hasHandlers():
+        handler = VTKHandler()
+        handler.setFormatter( CustomLoggerFormatter( False ) )
+        logger.addHandler( handler )
+
+    # Merge blocks for vtkCompositeDataSet
+    mesh2: vtkUnstructuredGrid = mergeBlocks( mesh, logger=logger )
     attributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     data: vtkCellData = mesh2.GetCellData()
+
     assert data is not None, "Cell Data are undefined."
     assert bool( data.HasArray( attributeName ) ), f"Attribute {attributeName} is not in the mesh"
 

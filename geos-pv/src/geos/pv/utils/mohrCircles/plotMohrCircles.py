@@ -172,7 +172,7 @@ def _updateAxis( ax: Axes, userChoices: dict[ str, Any ] ) -> None:
     """
     # Update axis labels
     xlabel: str = userChoices.get( "xAxis", "Normal stress" )
-    ylabel: str = userChoices.get( "xAyAxisxis", "Shear stress" )
+    ylabel: str = userChoices.get( "yAxis", "Shear stress" )
 
     # Get unit
     unitChoice: int = userChoices.get( "stressUnit", 0 )
