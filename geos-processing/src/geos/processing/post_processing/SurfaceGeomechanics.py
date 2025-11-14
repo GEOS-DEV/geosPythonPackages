@@ -351,7 +351,7 @@ class SurfaceGeomechanics:
         attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
         # Get all local basis vectors
-        localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh )
+        localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh, self.logger )
 
         for i, cellAttribute in enumerate( attrArray ):
             if len( cellAttribute ) not in ( 3, 6, 9 ):
