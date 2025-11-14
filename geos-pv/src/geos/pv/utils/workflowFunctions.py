@@ -26,8 +26,8 @@ def doExtractAndMerge(
         outputCells (vtkMultiBlockDataSet): Output volume mesh
         outputFaults (vtkMultiBlockDataSet): Output surface mesh
         outputWells (vtkMultiBlockDataSet): Output well mesh
-        extractFault (bool, Optional): True if SurfaceElementRegion needs to be extracted, False otherwise.
-        extractWell (bool, Optional): True if WellElementRegion needs to be extracted, False otherwise.
+        extractFault (bool): True if SurfaceElementRegion needs to be extracted, False otherwise.
+        extractWell (bool): True if WellElementRegion needs to be extracted, False otherwise.
     """
     # Extract blocks
     blockExtractor: GeosBlockExtractor = GeosBlockExtractor( mesh,
