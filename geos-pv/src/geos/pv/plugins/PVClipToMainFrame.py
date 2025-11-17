@@ -44,7 +44,7 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame( speHandler=True )
-        if not self._realFilter.logger.hasHandlers():
+        if len( self._realFilter.logger.handlers ) == 0:
             self._realFilter.SetLoggerHandler( VTKHandler() )
 
     def Filter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:

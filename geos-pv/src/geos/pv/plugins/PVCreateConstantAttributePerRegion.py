@@ -291,7 +291,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if not createConstantAttributePerRegionFilter.logger.hasHandlers():
+        if len( createConstantAttributePerRegionFilter.logger.handlers ) == 0:
             createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
         createConstantAttributePerRegionFilter.applyFilter()

@@ -154,7 +154,7 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
             try:
                 with open( self._filename, 'w' ) as fout:
                     fout.write( self._countsAll.print() )
-                    print( f"File {self._filename} was successfully written." )
+                    cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
             except Exception as e:
-                print( f"Error while exporting the file due to:\n{ e }" )
+                cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
         return 1

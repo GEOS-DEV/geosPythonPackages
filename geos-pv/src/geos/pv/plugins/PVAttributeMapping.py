@@ -191,7 +191,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
                                                                      self.onPoints, True )
 
-        if not attributeMappingFilter.logger.hasHandlers():
+        if len( attributeMappingFilter.logger.handlers ) == 0:
             attributeMappingFilter.setLoggerHandler( VTKHandler() )
 
         attributeMappingFilter.applyFilter()

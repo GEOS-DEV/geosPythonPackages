@@ -230,7 +230,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._triangleQualityMetric ) )
         quadMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
             self._getQualityMetricsToUse( self._quadsQualityMetric ) )
-
         tetraMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellVolumeQualityMetric ).union(
             self._getQualityMetricsToUse( self._tetQualityMetric ) )
         pyrMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellVolumeQualityMetric ).union(
@@ -241,42 +240,40 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
-        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
-            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
-        meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
+        self.meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
+        if len( self.meshQualityEnhancedFilter.logger.handlers ) == 0:
+            self.meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
+        self.meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,
                                                          pyramidMetrics=pyrMetrics,
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
-        meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        meshQualityEnhancedFilter.applyFilter()
+        self.meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
+        self.meshQualityEnhancedFilter.applyFilter()
 
-        outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
+        outputMesh.ShallowCopy( self.meshQualityEnhancedFilter.getOutput() )
 
         # save to file if asked
         if self._saveToFile:
-            stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
+            stats: QualityMetricSummary = self.meshQualityEnhancedFilter.GetQualityMetricSummary()
             self.saveFile( stats )
         self._blockIndex += 1
         return
 
-    def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
+    def saveFile( self: Self, stats: QualityMetricSummary,  ) -> None:
         """Export mesh quality metric summary file."""
         try:
-            if self._filename is None:
-                print( "Mesh quality summary report file path is undefined." )
-                return
+            assert self._filename is not None, "Mesh quality summary report file path is undefined."
+
             # add index for multiblock meshes
             index: int = self._filename.rfind( '.' )
             filename: str = self._filename[ :index ] + f"_{self._blockIndex}" + self._filename[ index: ]
             fig = stats.plotSummaryFigure()
             fig.savefig( filename, dpi=150 )
-            print( f"File {filename} was successfully written." )
+            self.meshQualityEnhancedFilter.logger.info( f"File {filename} was successfully written." )
         except Exception as e:
-            print( "Error while exporting the file due to:" )
-            print( str( e ) )
+            self.meshQualityEnhancedFilter.logger.error( f"Error while exporting the file due to:\n{ e }" )
 
     def __initVolumeQualityMetricSelection( self: Self ) -> None:
         """Initialize the volumic metrics selection."""

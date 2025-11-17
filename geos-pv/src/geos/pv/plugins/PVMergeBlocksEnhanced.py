@@ -119,15 +119,15 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if not mergeBlockEnhancedFilter.logger.hasHandlers():
+        if len( mergeBlockEnhancedFilter.logger.handlers ) == 0:
             mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
 
         try:
             mergeBlockEnhancedFilter.applyFilter()
+            outputMesh.ShallowCopy( mergeBlockEnhancedFilter.getOutput() )
+            outputMesh.Modified()
         except ( ValueError, TypeError, RuntimeError ) as e:
             mergeBlockEnhancedFilter.logger.error( f"MergeBlock failed due to {e}", exc_info=True )
             return 0
-        else:
-            outputMesh.ShallowCopy( mergeBlockEnhancedFilter.getOutput() )
-            outputMesh.Modified()
-            return 1
+
+        return 1

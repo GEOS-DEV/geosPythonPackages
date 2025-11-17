@@ -199,7 +199,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
     @smdomain.xml( """
         <Documentation>
             Reference friction angle to compute critical pore pressure.
-            The unit is °. Default is no friction case (i.e., 0.°).
+            The unit is °. Default is no friction case (i.e., 10.°).
         </Documentation>
     """ )
     def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
@@ -247,7 +247,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 speHandler=True,
             )
 
-            if not geomechanicsCalculatorFilter.logger.hasHandlers():
+            if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
                 geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
@@ -272,7 +272,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     True,
                 )
 
-                if not geomechanicsCalculatorFilter.logger.hasHandlers():
+                if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
                     geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
 
                 geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus

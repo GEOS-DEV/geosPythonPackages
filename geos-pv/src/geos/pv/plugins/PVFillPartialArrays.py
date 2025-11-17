@@ -108,7 +108,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             speHandler=True,
         )
 
-        if not fillPartialArraysFilter.logger.hasHandlers():
+        if len( fillPartialArraysFilter.logger.handlers ) == 0:
             fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
 
         fillPartialArraysFilter.applyFilter()

@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import sys
+import logging
 from pathlib import Path
 from enum import Enum
 from typing import Union, cast
@@ -24,6 +25,9 @@ import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
 from vtkmodules.vtkCommonCore import (
@@ -163,6 +167,13 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         propsSolvers: list[ str ] = [ "NewtonIter", "LinearIter" ]
         for prop in propsSolvers:
             self.m_convergence.AddArray( prop )
+
+        self.logger: logging.Logger = logging.getLogger( "Geos Log Reader" )
+        self.logger.setLevel( logging.INFO )
+        if len( self.logger.handlers ) == 0:
+            self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
+        self.logger.info( f"Apply plugin { self.logger.name }." )
 
     @smproperty.stringvector( name="DataFilepath", default_values="Enter a filepath to your data" )
     @smdomain.filelist()
@@ -587,8 +598,8 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                                                             array_type=VTK_DOUBLE )  # type: ignore[no-untyped-call]
                 newAttr.SetName( column )
                 output.AddColumn( newAttr )
+            self.logger.info( f"The plugin { self.logger.name } succeeded.")
         except Exception as e:
-            print( "Error while reading Geos log file:" )
-            print( str( e ) )
+            self.logger.error( f"The plugin { self.logger.name } failed.\n{ e }" )
             return 0
         return 1

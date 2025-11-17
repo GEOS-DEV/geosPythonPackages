@@ -131,7 +131,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
             sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
-            if not sgFilter.logger.hasHandlers():
+            if len( sgFilter.logger.handlers ) == 0:
                 sgFilter.SetLoggerHandler( VTKHandler() )
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
