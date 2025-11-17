@@ -9,6 +9,8 @@ from typing import Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -137,10 +139,11 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        cellTypeCounterEnhancedFilter.SetInputDataObject( inputMesh )
-        cellTypeCounterEnhancedFilter.Update()
-        outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.GetOutputDataObject( 0 ) )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
+        if len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+            cellTypeCounterEnhancedFilter.setLoggerHandler( VTKHandler() )
+        cellTypeCounterEnhancedFilter.applyFilter()
+        outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
 
         # print counts in Output Messages view
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
@@ -153,6 +156,5 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
                     fout.write( self._countsAll.print() )
                     print( f"File {self._filename} was successfully written." )
             except Exception as e:
-                print( "Error while exporting the file due to:" )
-                print( str( e ) )
+                print( f"Error while exporting the file due to:\n{ e }" )
         return 1
