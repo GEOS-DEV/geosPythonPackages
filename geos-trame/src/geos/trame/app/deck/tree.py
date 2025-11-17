@@ -77,7 +77,7 @@ class DeckTree( object ):
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         new_path.append( key )
         assert self.input_file is not None and self.input_file.pb_dict is not None
-        funcy.set_in( self.input_file.pb_dict, new_path, value )
+        self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
     def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
@@ -118,7 +118,7 @@ class DeckTree( object ):
             attribute_name_generator=text.camel_case,
         )
 
-        config = SerializerConfig( indent="  ", xml_declaration=False )
+        config = SerializerConfig( indent="  ", xml_declaration=False, ignore_default_attributes=True )
         serializer = XmlSerializer( context=context, config=config )
 
         return format_xml( serializer.render( obj ) )
@@ -286,7 +286,7 @@ class DeckTree( object ):
 
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_copy ):
                 models.append( ( proxy_name, model_copy ) )
-                model_copy = model_copy[ proxy_name ]
+                model_copy = model_copy[ int( proxy_name ) if is_list else proxy_name ]
                 continue
 
             if proxy_name in model_copy:

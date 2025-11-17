@@ -34,7 +34,7 @@ These methods include:
 
 
 def isTriangulate( dataSet: vtkUnstructuredGrid ) -> bool:
-    """Check if the mesh is triangulate only.
+    """Check if the mesh is fully triangulated.
 
     Args:
         dataSet (vtkUnstructuredGrid): The mesh to check

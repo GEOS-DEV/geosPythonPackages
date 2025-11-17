@@ -70,7 +70,7 @@ class GeosBlockMerge():
         speHandler: bool = False,
         loggerName: str = "GEOS Block Merge",
     ) -> None:
-        """VTK Filter that merge ranks of GEOS output mesh.
+        """VTK Filter that merges ranks of GEOS output mesh.
 
         For each composite block of the input mesh:
             - Ranks are merged.

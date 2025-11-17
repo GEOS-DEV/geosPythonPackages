@@ -93,6 +93,13 @@ class TestCase( object ):
             logger.debug( e )
             raise Exception()
 
+        # Setup labels
+        if labels is None:
+            labels = []
+        if label is not None:
+            labels = labels + [ label ]
+        self.labels = labels
+
         # Setup other parameters
         self.dictionary = {}
         self.dictionary.update( kw )
