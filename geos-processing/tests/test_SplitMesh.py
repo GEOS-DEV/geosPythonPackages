@@ -149,10 +149,9 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         test_case (TestCase): test case
     """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
-    splitMeshFilter: SplitMesh = SplitMesh()
-    splitMeshFilter.SetInputDataObject( test_case.mesh )
-    splitMeshFilter.Update()
-    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    splitMeshFilter: SplitMesh = SplitMesh( test_case.mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh is undefined."
     pointsOut: vtkPoints = output.GetPoints()
     assert pointsOut is not None, "Points from output mesh are undefined."

@@ -8,6 +8,8 @@ from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkPointSet, )
@@ -52,9 +54,10 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             inputMesh(vtkPointSet): Input mesh.
             outputMesh: Output mesh.
         """
-        splitMeshFilter: SplitMesh = SplitMesh()
-        splitMeshFilter.SetInputDataObject( inputMesh )
-        splitMeshFilter.Update()
-        outputMesh.ShallowCopy( splitMeshFilter.GetOutputDataObject( 0 ) )
+        splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
+        if len( splitMeshFilter.logger.handlers ) == 0:
+            splitMeshFilter.setLoggerHandler( VTKHandler() )
+        splitMeshFilter.applyFilter()
+        outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
 
         return
