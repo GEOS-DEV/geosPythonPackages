@@ -273,7 +273,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         """Group the widgets to set the settings of the new attribute."""
         self.Modified()
 
-    def Filter( self, inputMesh: vtkDataSet, outputMesh: vtkDataSet ) -> None:
+    def ApplyFilter( self, inputMesh: vtkDataSet, outputMesh: vtkDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
 
         Args:

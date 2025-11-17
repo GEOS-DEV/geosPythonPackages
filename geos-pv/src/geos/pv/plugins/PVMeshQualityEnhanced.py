@@ -218,7 +218,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         metricsNames: set[ str ] = getArrayChoices( selection )
         return { getQualityMeasureIndexFromName( name ) for name in metricsNames }
 
-    def Filter( self, inputMesh: vtkUnstructuredGrid, outputMesh: vtkUnstructuredGrid ) -> None:
+    def ApplyFilter( self, inputMesh: vtkUnstructuredGrid, outputMesh: vtkUnstructuredGrid ) -> None:
         """Is applying MeshQualityEnhanced to the input Mesh.
 
         Args:

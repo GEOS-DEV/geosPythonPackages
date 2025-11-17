@@ -5,7 +5,7 @@ The plugins include:
 * A reader that parse GEOS output log file;
 * 3D mesh cleanning plugins;
 * Processing plugins to compute additional geomechanical properties;
-* Visualization plugins to plot Mohr's circles (currently in `geos_posp`) and cross plots using Paraview Python View.
+* Visualization plugins to plot Mohr's circles and cross plots using Paraview Python View.
 
 
 PVAttributeMapping
@@ -67,3 +67,9 @@ PVGeomechanicsCalculator plugin
 ---------------------------------------
 
 .. automodule:: geos.pv.plugins.PVGeomechanicsCalculator
+
+
+PVMohrCirclePlot plugin
+---------------------------------
+
+.. automodule:: geos.pv.plugins.PVMohrCirclePlot

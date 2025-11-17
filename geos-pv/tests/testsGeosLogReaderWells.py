@@ -17,7 +17,7 @@ if parent_dir_path not in sys.path:
 
 import pandas as pd  # type: ignore[import-untyped]
 
-from geos_posp.readers.GeosLogReaderWells import GeosLogReaderWells
+from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.UnitRepository import Unit, UnitRepository
 
 unitsObjSI = UnitRepository()

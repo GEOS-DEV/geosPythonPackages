@@ -94,7 +94,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
         self.Modified()
 
-    def Filter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
+    def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying FillPartialArrays to the mesh and return with the class's dictionary for attributes values.
 
         Args:

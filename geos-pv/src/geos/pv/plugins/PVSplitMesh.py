@@ -38,16 +38,14 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
-             decoratedLabel="Split Mesh",
-             decoratedType="vtkPointSet" )
+@SISOFilter( category=FilterCategory.GEOS_UTILS, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Split mesh cells."""
         pass
 
-    def Filter( self: Self, inputMesh: vtkPointSet, outputMesh: vtkPointSet ) -> None:
+    def ApplyFilter( self: Self, inputMesh: vtkPointSet, outputMesh: vtkPointSet ) -> None:
         """Apply vtk filter.
 
         Args:
