@@ -717,6 +717,7 @@ class GeomechanicsCalculator:
         else:
             self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh."""
@@ -774,7 +775,7 @@ class GeomechanicsCalculator:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(

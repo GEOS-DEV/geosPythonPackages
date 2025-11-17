@@ -179,6 +179,7 @@ class GeosBlockExtractor:
         else:
             self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -188,7 +189,7 @@ class GeosBlockExtractor:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(

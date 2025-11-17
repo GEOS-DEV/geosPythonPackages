@@ -114,7 +114,7 @@ class GeosBlockMerge():
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.handler = handler
             self.logger.addHandler( handler )
         else:

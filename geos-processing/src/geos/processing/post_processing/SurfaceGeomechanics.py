@@ -117,6 +117,7 @@ class SurfaceGeomechanics:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
         # Input surfacic mesh
         if not surfacicMesh.IsA( "vtkPolyData" ):
@@ -149,7 +150,7 @@ class SurfaceGeomechanics:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(
