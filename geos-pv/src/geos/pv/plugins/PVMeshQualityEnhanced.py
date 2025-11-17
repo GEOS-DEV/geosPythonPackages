@@ -9,6 +9,8 @@ from typing_extensions import Self, Optional
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 from vtkmodules.vtkCommonCore import (
     vtkDataArraySelection, )
 from vtkmodules.vtkCommonDataModel import (
@@ -239,9 +241,9 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
-
-        meshQualityEnhancedFilter.SetInputDataObject( inputMesh )
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
+        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
+            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,
@@ -249,9 +251,9 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        meshQualityEnhancedFilter.Update()
+        meshQualityEnhancedFilter.applyFilter()
 
-        outputMesh.ShallowCopy( meshQualityEnhancedFilter.GetOutputDataObject( 0 ) )
+        outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
 
         # save to file if asked
         if self._saveToFile:

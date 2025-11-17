@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay, Paloma Martinez
+import logging
 import numpy as np
 import numpy.typing as npt
 from typing import Optional, cast
 from typing_extensions import Self
 from vtkmodules.vtkFiltersCore import vtkExtractEdges
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
     vtkIdList,
     vtkPoints,
     vtkDataArray,
@@ -23,11 +21,11 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vt
                                             vtkCell, vtkCell3D, vtkTetra, vtkCellTypes, vtkPolygon, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON,
                                             VTK_POLYHEDRON )
-from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+from vtkmodules.util.numpy_support import ( vtk_to_numpy, numpy_to_vtk )
 
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
-from geos.mesh.model.QualityMetricSummary import QualityMetricSummary, StatTypes
+from geos.mesh.model.QualityMetricSummary import ( QualityMetricSummary, StatTypes )
 from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
 from geos.mesh.stats.meshQualityMetricHelpers import (
     getQualityMeasureNameFromIndex,
@@ -45,6 +43,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import (
 )
 
 import geos.utils.geometryFunctions as geom
+from geos.utils.Logger import ( Logger, getLogger )
 
 __doc__ = """
 MeshQualityEnhanced module is a vtk filter that computes mesh quality stats.
@@ -60,13 +59,15 @@ To use the filter:
     from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 
     # Filter inputs
-    input: vtkUnstructuredGrid
+    inputMesh: vtkUnstructuredGrid
+    speHandler: bool # optional
 
     # Instantiate the filter
-    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
+    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, speHandler )
 
-    # Set input data object
-    meshQualityEnhancedFilter.SetInputDataObject(input)
+    # Use your own handler (if speHandler is True)
+    yourHandler: logging.Handler
+    meshQualityEnhancedFilter.setLoggerHandler( yourHandler )
 
     # Set metrics to use
     meshQualityEnhancedFilter.SetTriangleMetrics(triangleQualityMetrics)
@@ -78,10 +79,10 @@ To use the filter:
     meshQualityEnhancedFilter.SetOtherMeshQualityMetrics(otherQualityMetrics)
 
     # Do calculations
-    meshQualityEnhancedFilter.Update()
+    meshQualityEnhancedFilter.applyFilter()
 
     # Get output mesh quality report
-    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.GetOutputDataObject(0)
+    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
     outputStats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
 """
 
@@ -100,13 +101,21 @@ def getQualityMetricArrayName( metric: int ) -> str:
     """
     return QUALITY_ARRAY_NAME + "_" + "".join( getQualityMeasureNameFromIndex( metric ).split( " " ) )
 
+loggerTitle: str = "Mesh Quality Enhanced"
 
-class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
-    def __init__( self: Self ) -> None:
-        """Enhanced vtkMeshQuality filter."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
-        self._outputMesh: vtkUnstructuredGrid
+class MeshQualityEnhanced():
+
+    def __init__( self: Self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False, ) -> None:
+        """Enhanced vtkMeshQuality filter.
+
+        Args:
+            inputMesh (vtkUnstructuredGrid): Input mesh
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
+        """
+        self.inputMesh: vtkUnstructuredGrid = inputMesh
+        self._outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
         self._cellCounts: CellTypeCounts
         self._qualityMetricSummary: QualityMetricSummary = QualityMetricSummary()
 
@@ -126,43 +135,32 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
         self._allCellTypesExtended: tuple[ int, ...] = getAllCellTypesExtended()
         self._allCellTypes: tuple[ int, ...] = getAllCellTypes()
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+        # Logger.
+        self.speHandler: bool = speHandler
+        self.handler: None | logging.Handler = None
+        self.logger: Logger
+        if not speHandler:
+            self.logger = getLogger( loggerTitle, True )
+        else:
+            self.logger = logging.getLogger( loggerTitle )
+            self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
+
+    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
+
+        In this filter 4 log levels are use, .info, .error, .warning and .critical,
+        be sure to have at least the same 4 levels.
 
         Args:
-            port (int): Input port
-            info (vtkInformationVector): Info
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            handler (logging.Handler): The handler to add.
         """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
-        return 1
-
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
-
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
+        self.handler = handler
+        if len( self.logger.handlers ) == 0:
+            self.logger.addHandler( handler )
+        else:
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
+                                 " to True during the filter initialization." )
 
     def GetQualityMetricSummary( self: Self ) -> QualityMetricSummary:
         """Get QualityMetricSummary object.
@@ -294,48 +292,41 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
             metrics = metrics.intersection( computedMetrics )
         return metrics if commonComputedMetricsExists else None
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
+    def applyFilter( self: Self ) -> None:
+        """Apply MeshQualityEnhanced filter."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+        try:
+            self._outputMesh.ShallowCopy( self.inputMesh )
+            # Compute cell type counts
+            self._computeCellTypeCounts()
 
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            # Compute metrics and associated attributes
+            self._evaluateMeshQualityAll()
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inData: vtkUnstructuredGrid = self.GetInputData( inInfoVec, 0, 0 )
-        self._outputMesh = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None, "Input mesh is undefined."
-        assert self._outputMesh is not None, "Output pipeline is undefined."
-        self._outputMesh.ShallowCopy( inData )
+            # Compute stats summary
+            self._updateStatsSummary()
 
-        # Compute cell type counts
-        self._computeCellTypeCounts()
+            # Create field data
+            self._createFieldDataStatsSummary()
 
-        # Compute metrics and associated attributes
-        self._evaluateMeshQualityAll()
+            self._outputMesh.Modified()
 
-        # Compute stats summary
-        self._updateStatsSummary()
+            self.logger.info( f"The filter { self.logger.name } succeeded." )
+        except Exception as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
 
-        # Create field data
-        self._createFieldDataStatsSummary()
+        return
 
-        self._outputMesh.Modified()
-        return 1
+    def getOutput( self: Self ) -> vtkUnstructuredGrid:
+        """Get the mesh computed with the stats."""
+        return self._outputMesh
 
     def _computeCellTypeCounts( self: Self ) -> None:
         """Compute cell type counts."""
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        cellTypeCounterEnhancedFilter.SetInputDataObject( self._outputMesh )
-        cellTypeCounterEnhancedFilter.Update()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self._outputMesh, self.speHandler )
+        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
+        cellTypeCounterEnhancedFilter.applyFilter()
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         assert counts is not None, "CellTypeCounts is undefined"
         self._qualityMetricSummary.setCellTypeCounts( counts )
@@ -426,7 +417,7 @@ class MeshQualityEnhanced( VTKPythonAlgorithmBase ):
             elif cellType == VTK_HEXAHEDRON:
                 meshQualityFilter.SetHexQualityMeasure( metric )
             else:
-                print( "Cell type is not supported." )
+                raise TypeError( "Cell type is not supported." )
 
         meshQualityFilter.Update()
         return meshQualityFilter.GetOutputDataObject( 0 )

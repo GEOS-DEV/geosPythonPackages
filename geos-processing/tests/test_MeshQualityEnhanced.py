@@ -126,14 +126,13 @@ ids: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in meshName_all ]
 
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
 def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
-    """Test of CellTypeCounterEnhanced filter.
+    """Test of MeshQualityEnhanced filter.
 
     Args:
         test_case (TestCase): Test case
     """
     mesh = test_case.mesh
-    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
-    meshQualityEnhancedFilter.SetInputDataObject( mesh )
+    meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( mesh )
     if test_case.cellType == VTK_TRIANGLE:
         meshQualityEnhancedFilter.SetTriangleMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_QUAD:
@@ -146,7 +145,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
         meshQualityEnhancedFilter.SetWedgeMetrics( test_case.qualityMetrics )
     elif test_case.cellType == VTK_HEXAHEDRON:
         meshQualityEnhancedFilter.SetHexaMetrics( test_case.qualityMetrics )
-    meshQualityEnhancedFilter.Update()
+    meshQualityEnhancedFilter.applyFilter()
 
     # test method getComputedMetricsFromCellType
     for i, cellType in enumerate( getAllCellTypesExtended() ):
@@ -156,7 +155,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
             assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."
 
     # test attributes
-    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.GetOutputDataObject( 0 )
+    outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
     cellData: vtkCellData = outputMesh.GetCellData()
     assert cellData is not None, "Cell data is undefined."
 
