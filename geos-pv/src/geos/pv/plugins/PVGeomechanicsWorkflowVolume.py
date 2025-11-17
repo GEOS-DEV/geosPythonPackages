@@ -30,7 +30,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
 
-from geos.pv.plugins.PVExtractMergeBlocksVolume import PVExtractMergeBlocksVolume
+from geos.pv.plugins.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
 from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 
 __doc__ = """
@@ -353,12 +353,12 @@ class PVGeomechanicsWorkflowVolume( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if extraction and merge successfully eneded, False otherwise
         """
-        filter: PVExtractMergeBlocksVolume = PVExtractMergeBlocksVolume()
+        filter: PVGeosBlockExtractAndMerge = PVGeosBlockExtractAndMerge()
         filter.SetInputConnection( self.GetInputConnection( 0, 0 ) )
         filter.SetLogger( self.m_logger )
         filter.Update()
 
-        # recover output objects from PVExtractMergeBlocksVolume
+        # recover output objects from PVGeosBlockExtractAndMerge
         self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_volumeMesh.Modified()
         return True

@@ -31,8 +31,7 @@ from geos.utils.PhysicalConstants import (
     WATER_DENSITY,
 )
 
-from geos.pv.plugins.PVExtractMergeBlocksVolumeWell import (
-    PVExtractMergeBlocksVolumeWell, )
+from geos.pv.plugins.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
 from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 
 __doc__ = """
@@ -366,12 +365,12 @@ class PVGeomechanicsWorkflowVolumeWell( VTKPythonAlgorithmBase ):
         Returns:
             bool: True if extraction and merge successfully eneded, False otherwise
         """
-        filter: PVExtractMergeBlocksVolumeWell = PVExtractMergeBlocksVolumeWell()
+        filter: PVGeosBlockExtractAndMerge = PVGeosBlockExtractAndMerge()
         filter.SetInputConnection( self.GetInputConnection( 0, 0 ) )
         filter.SetLogger( self.m_logger )
         filter.Update()
 
-        # recover output objects from PVExtractMergeBlocksVolumeWell
+        # recover output objects from PVGeosBlockExtractAndMerge
         self.m_volumeMesh.ShallowCopy( filter.GetOutputDataObject( 0 ) )
         self.m_wells.ShallowCopy( filter.GetOutputDataObject( 1 ) )
         self.m_volumeMesh.Modified()
