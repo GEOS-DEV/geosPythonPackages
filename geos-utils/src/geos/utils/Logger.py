@@ -275,7 +275,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     """
     logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
-    if not logger.hasHandlers():  # More Pythonic way to check if logger.handlers is empty
+    if len( logger.handlers ) == 0:
         logger.setLevel( INFO )  # Set the desired default level for this logger
         # Create and add the stream handler
         ch = logging.StreamHandler()

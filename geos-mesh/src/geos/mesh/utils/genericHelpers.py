@@ -62,16 +62,17 @@ def triangulateMesh(
     Returns:
         vtkUnstructuredGrid: Triangulated mesh
     """
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "Triangulate", True )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger", True )
-    vtkErrorLogger.propagate = False
+        vtkErrorLogger = getLogger( "Triangulate Mesh vtkError Logger", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    vtkErrorLogger.setLevel( logging.DEBUG )
 
     with VTKCaptureLog() as capturedLog:
         triangulateMeshFilter: vtkDataSetTriangleFilter = vtkDataSetTriangleFilter()
@@ -81,7 +82,8 @@ def triangulateMesh(
         capturedLog.seek( 0 )
         captured = capturedLog.read().decode()
 
-        vtkErrorLogger.debug( captured.strip() )
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
 
     triangulatedMesh: vtkUnstructuredGrid = triangulateMeshFilter.GetOutput()
 
@@ -107,16 +109,17 @@ def convertUnstructuredGridToPolyData(
     Returns:
         vtkPolyData: Extracted surface
     """
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "ConvertVtkUnstructuredGridToVtkPolyData.", True )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger", True )
-    vtkErrorLogger.propagate = False
+        vtkErrorLogger = getLogger( "Convert vtkUnstructuredGrid To vtkPolyData vtkError Logger", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    vtkErrorLogger.setLevel( logging.DEBUG )
 
     with VTKCaptureLog() as capturedLog:
         extractSurfaceFilter: vtkDataSetSurfaceFilter = vtkDataSetSurfaceFilter()
@@ -131,7 +134,8 @@ def convertUnstructuredGridToPolyData(
         capturedLog.seek( 0 )
         captured = capturedLog.read().decode()
 
-        vtkErrorLogger.debug( captured.strip() )
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
 
     extractedSurface: vtkPolyData = extractSurfaceFilter.GetOutput()
 
@@ -460,8 +464,8 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
     try:
         tangents1 = vtk_to_numpy( vtkTangents )
     except AttributeError as err:
-        print( "No tangential attribute found in the mesh. Use the computeTangents function beforehand." )
-        raise VTKError( err ) from err
+        context: str = f"No tangential attribute found in the mesh. Use the computeTangents function beforehand.\n{ err }"
+        raise VTKError( context ) from err
     else:
         # Compute second tangential component
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
@@ -471,22 +475,30 @@ def getTangentsVectors( surface: vtkPolyData ) -> Tuple[ npt.NDArray[ np.float64
     return ( tangents1, tangents2 )
 
 
-def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
+def getLocalBasisVectors(
+    surface: vtkPolyData,
+    logger: Union[ Logger, None ] = None,
+) -> npt.NDArray[ np.float64 ]:
     """Return the local basis vectors for all cells of the input surface.
 
     Args:
         surface(vtkPolydata): The input surface.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         npt.NDArray[np.float64]: Array with normal, tangential 1 and tangential 2 vectors.
     """
+    if logger is None:
+        logger = getLogger( "getLocalBasisVectors", True )
+
     try:
         normals: npt.NDArray[ np.float64 ] = getNormalVectors( surface )
         surfaceWithNormals: vtkPolyData = surface
     # ValueError raised if no normals found in the mesh
     except ValueError:
         # In that case, the normals are computed.
-        surfaceWithNormals = computeNormals( surface )
+        surfaceWithNormals = computeNormals( surface, logger )
         normals = getNormalVectors( surfaceWithNormals )
 
     # Tangents require normals to be present in the mesh
@@ -495,7 +507,7 @@ def getLocalBasisVectors( surface: vtkPolyData ) -> npt.NDArray[ np.float64 ]:
                          npt.NDArray[ np.float64 ] ] = getTangentsVectors( surfaceWithNormals )
     # If no tangents is present in the mesh, they are computed on that surface
     except VTKError:
-        surfaceWithTangents: vtkPolyData = computeTangents( surfaceWithNormals )
+        surfaceWithTangents: vtkPolyData = computeTangents( surfaceWithNormals, logger )
         tangents = getTangentsVectors( surfaceWithTangents )
 
     return np.array( ( normals, *tangents ) )
@@ -515,16 +527,17 @@ def computeNormals(
     Returns:
         vtkPolyData: The surface with normal attribute.
     """
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "computeSurfaceNormals" )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
-    vtkErrorLogger.propagate = False
+        vtkErrorLogger = getLogger( "Compute Surface Normals vtkError Logger", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    vtkErrorLogger.setLevel( logging.DEBUG )
 
     with VTKCaptureLog() as capturedLog:
         normalFilter: vtkPolyDataNormals = vtkPolyDataNormals()
@@ -536,7 +549,8 @@ def computeNormals(
         capturedLog.seek( 0 )
         captured = capturedLog.read().decode()
 
-        vtkErrorLogger.debug( captured.strip() )
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
 
     outputSurface = normalFilter.GetOutput()
 
@@ -562,22 +576,23 @@ def computeTangents(
     Returns:
         vtkPolyData: The surface with tangent attribute
     """
-    # need to compute texture coordinates required for tangent calculation
-    surface1: vtkPolyData = computeSurfaceTextureCoordinates( triangulatedSurface )
+    # Need to compute texture coordinates required for tangent calculation
+    surface1: vtkPolyData = computeSurfaceTextureCoordinates( triangulatedSurface, logger )
 
     # TODO: triangulate the surface before computation of the tangents if needed.
 
-    # compute tangents
+    # Compute tangents
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "computeSurfaceTangents" )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
-    vtkErrorLogger.propagate = False
+        vtkErrorLogger = getLogger( "Compute Surface Tangents vtkError Logger", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    vtkErrorLogger.setLevel( logging.DEBUG )
 
     with VTKCaptureLog() as capturedLog:
 
@@ -591,7 +606,8 @@ def computeTangents(
         capturedLog.seek( 0 )
         captured = capturedLog.read().decode()
 
-        vtkErrorLogger.debug( captured.strip() )
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
 
     if surfaceOut is None:
         raise VTKError( "Something went wrong in VTK calculation." )
@@ -623,16 +639,17 @@ def computeSurfaceTextureCoordinates(
         vtkPolyData: The input surface with generated texture map.
     """
     # Need to compute texture coordinates required for tangent calculation
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "computeSurfaceTextureCoordinates" )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    vtkErrorLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
-    vtkErrorLogger.propagate = False
+        vtkErrorLogger = getLogger( "Compute Surface Texture Coordinates vtkError Logger", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    vtkErrorLogger.setLevel( logging.DEBUG )
 
     with VTKCaptureLog() as capturedLog:
 
@@ -644,6 +661,7 @@ def computeSurfaceTextureCoordinates(
         capturedLog.seek( 0 )
         captured = capturedLog.read().decode()
 
-        vtkErrorLogger.debug( captured.strip() )
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
 
     return textureFilter.GetOutput()

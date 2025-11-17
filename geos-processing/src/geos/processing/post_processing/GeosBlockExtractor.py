@@ -38,6 +38,7 @@ To use the filter:
     extractFault: bool # Defaults to False
     extractWell: bool # Defaults to False
     speHandler: bool # Defaults to False
+    loggerName: str # Defaults to "Geos Block Extractor"
 
     # Instantiate the filter
     geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( geosMesh, extractFault, extractWell, speHandler )
@@ -55,8 +56,6 @@ To use the filter:
     geosDomainExtracted = geosBlockExtractor.extractedGeosDomain.fault # For fault domain
     geosDomainExtracted = geosBlockExtractor.extractedGeosDomain.well # For well domain
 """
-
-loggerTitle: str = "Geos Block Extractor"
 
 
 class GeosExtractDomainBlock( vtkExtractBlock ):
@@ -149,6 +148,7 @@ class GeosBlockExtractor:
         extractFault: bool = False,
         extractWell: bool = False,
         speHandler: bool = False,
+        loggerName: str = "Geos Block Extractor",
     ) -> None:
         """Blocks from the ElementRegions from a GEOS output multiBlockDataset mesh.
 
@@ -160,6 +160,8 @@ class GeosBlockExtractor:
                 Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
+            loggerName (str, optional): Name of the filter logger.
+                Defaults to "Geos Block Extractor".
         """
         self.geosMesh: vtkMultiBlockDataSet = geosMesh
         self.extractedGeosDomain = self.ExtractedGeosDomain()
@@ -173,9 +175,9 @@ class GeosBlockExtractor:
         # Logger.
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerName, True )
         else:
-            self.logger = logging.getLogger( loggerTitle )
+            self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
@@ -201,15 +203,18 @@ class GeosBlockExtractor:
             extractGeosDomain: GeosExtractDomainBlock = GeosExtractDomainBlock()
             extractGeosDomain.SetInputData( self.geosMesh )
 
+            domainNames: list = []
             for domain in self.domainToExtract:
                 extractGeosDomain.RemoveAllIndices()
                 extractGeosDomain.AddGeosDomainName( domain )
                 extractGeosDomain.Update()
                 self.extractedGeosDomain.setExtractedDomain( domain, extractGeosDomain.GetOutput() )
+                domainNames.append( domain.value )
 
-            self.logger.info( "The filter succeeded." )
+            self.logger.info( f"The GEOS domain { domainNames } have been extracted." )
+            self.logger.info( f"The filter { self.logger.name } succeeded." )
 
-        except ValueError as ve:
-            self.logger.error( f"The filter failed.\n{ ve }." )
-        except TypeError as te:
-            self.logger.error( f"The filter failed.\n{ te }." )
+        except ( ValueError, TypeError ) as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }." )
+
+        return
