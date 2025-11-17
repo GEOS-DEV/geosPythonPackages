@@ -117,6 +117,9 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
         self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
+
+        self.logger.info( f"Apply plugin { self.logger.name }." )
 
     def RequestDataObject(
         self: Self,
@@ -170,8 +173,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        self.logger.info( f"Apply plugin { self.logger.name }." )
-
         executive = self.GetExecutive()
         inInfo = inInfoVec[ 0 ]
         self.timeSteps = inInfo.GetInformationObject( 0 ).Get( executive.TIME_STEPS() )

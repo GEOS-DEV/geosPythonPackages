@@ -44,9 +44,10 @@ To use the filter:
     # Optional inputs.
     convertFaultToSurface: bool # Defaults to False
     speHandler: bool # Defaults to False
+    loggerName: str # Defaults to "GEOS Block Merge"
 
     # Instantiate the filter
-    mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( inputMesh, convertFaultToSurface, speHandler )
+    mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( inputMesh, convertFaultToSurface, speHandler, loggerName )
 
     # Set the handler of yours (only if speHandler is True).
     yourHandler: logging.Handler
@@ -59,8 +60,6 @@ To use the filter:
     outputMesh: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
 """
 
-loggerTitle: str = "GEOS Block Merge"
-
 
 class GeosBlockMerge():
 
@@ -69,6 +68,7 @@ class GeosBlockMerge():
         inputMesh: vtkMultiBlockDataSet,
         convertFaultToSurface: bool = False,
         speHandler: bool = False,
+        loggerName: str = "GEOS Block Merge",
     ) -> None:
         """VTK Filter that merges ranks of GEOS output mesh.
 
@@ -83,10 +83,13 @@ class GeosBlockMerge():
                 Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
+            loggerName (str, optional): Name of the filter logger.
+                Defaults to "GEOS Block Merge".
 
         """
         self.inputMesh: vtkMultiBlockDataSet = inputMesh
         self.convertFaultToSurface: bool = convertFaultToSurface
+        self.handler: None | logging.Handler = None
 
         self.outputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         self.phaseNameDict: dict[ str, set[ str ] ] = {
@@ -94,13 +97,14 @@ class GeosBlockMerge():
             PhaseTypeEnum.FLUID.type: set(),
         }
 
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerName, True )
         else:
-            self.logger = logging.getLogger( loggerTitle )
+            self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -111,6 +115,7 @@ class GeosBlockMerge():
             handler (logging.Handler): The handler to add.
         """
         if not self.logger.hasHandlers():
+            self.handler = handler
             self.logger.addHandler( handler )
         else:
             self.logger.warning(
@@ -161,8 +166,8 @@ class GeosBlockMerge():
                 # Convert the volume mesh to a surface mesh
                 if self.convertFaultToSurface:
                     if not isTriangulate( volumeMesh ):
-                        volumeMesh.ShallowCopy( triangulateMesh( volumeMesh ) )
-                    surfaceMesh: vtkPolyData = convertUnstructuredGridToPolyData( volumeMesh )
+                        volumeMesh.ShallowCopy( triangulateMesh( volumeMesh, self.logger ) )
+                    surfaceMesh: vtkPolyData = convertUnstructuredGridToPolyData( volumeMesh, self.logger )
                     surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
                     surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
                     # Add the merged block to the output mesh
@@ -170,9 +175,9 @@ class GeosBlockMerge():
                 else:
                     self.outputMesh.SetBlock( newIndex, volumeMesh )
 
-            self.logger.info( "The filter succeeded." )
+            self.logger.info( f"The filter { self.logger.name } succeeded." )
         except ( ValueError, TypeError, RuntimeError, AssertionError, VTKError ) as e:
-            self.logger.critical( f"The filter failed.\n{ e }" )
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
 
         return
 
@@ -196,6 +201,8 @@ class GeosBlockMerge():
                                 renameAttribute( mesh, attributeName, newName, False )
                     else:
                         renameAttribute( mesh, attributeName, newName, False )
+
+        return
 
     def computePhaseNames( self: Self ) -> None:
         """Get the names of the phases in the mesh from Cell attributes."""
