@@ -116,7 +116,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.frictionAngle = value
         self.Modified()
 
-    def Filter( self: Self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
+    def ApplyFilter( self: Self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Apply SurfaceGeomechanics filter to the mesh.
 
         Args:
