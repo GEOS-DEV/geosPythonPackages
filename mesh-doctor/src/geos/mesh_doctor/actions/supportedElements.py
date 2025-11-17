@@ -137,11 +137,6 @@ class IsPolyhedronConvertible:
 def __action( vtkInputFile: str, options: Options ) -> Result:
     # Main process loads the mesh for its own use
     mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
-    if mesh is None:
-        setupLogger.error( f"Main process failed to load mesh from {vtkInputFile}. Aborting." )
-        # Return an empty/error result or raise an exception
-        return Result( unsupportedStdElementsTypes=frozenset(), unsupportedPolyhedronElements=frozenset() )
-
     if hasattr( mesh, "GetDistinctCellTypesArray" ):
         cellTypesNumpy = vtk_to_numpy( mesh.GetDistinctCellTypesArray() )
         cellTypes = set( cellTypesNumpy.tolist() )

@@ -170,26 +170,26 @@ def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatib
     edgesToFaceIndices: dict[ frozenset[ int ], list[ int ] ] = defaultdict( list )
     for faceIndex, faceNodes in enumerate( faceStream.faceNodes ):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
-        faceIndices: tuple[ int, int ]
-        for faceIndices in zip( faceNodes, faceNodes[ 1: ] + ( faceNodes[ 0 ], ) ):
-            edgesToFaceIndices[ frozenset( faceIndices ) ].append( faceIndex )
+        faceNodesTuple = tuple( faceNodes )
+        for edgeNodes in zip( faceNodesTuple, faceNodesTuple[ 1: ] + ( faceNodesTuple[ 0 ], ) ):
+            edgesToFaceIndices[ frozenset( edgeNodes ) ].append( faceIndex )
     # We are doing here some small validations w.r.t. the connections of the faces
     # which may only make sense in the context of numerical simulations.
     # As such, an error will be thrown in case the polyhedron is not closed.
     # So there may be a lack of absolute genericity, and the code may evolve if needed.
-    for faceIndices in edgesToFaceIndices.values():
-        assert len( faceIndices ) == 2
+    for connectedFaces in edgesToFaceIndices.values():
+        assert len( connectedFaces ) == 2
     # Computing the graph degree for validation
     degrees: dict[ int, int ] = defaultdict( int )
-    for faceIndices in edgesToFaceIndices.values():
-        for faceIndex in faceIndices:
+    for connectedFaces in edgesToFaceIndices.values():
+        for faceIndex in connectedFaces:
             degrees[ faceIndex ] += 1
     for faceIndex, degree in degrees.items():
         assert len( faceStream[ faceIndex ] ) == degree
     # Validation that there is one unique edge connecting two faces.
     faceIndicesToEdgeIndex = defaultdict( list )
-    for edgeIndex, faceIndices in edgesToFaceIndices.items():
-        faceIndicesToEdgeIndex[ frozenset( faceIndices ) ].append( edgeIndex )
+    for edgeIndex, connectedFaces in edgesToFaceIndices.items():
+        faceIndicesToEdgeIndex[ frozenset( connectedFaces ) ].append( edgeIndex )
     for edgeIndices in faceIndicesToEdgeIndex.values():
         assert len( edgeIndices ) == 1
     # Connecting the faces. Neighbor faces with consistent normals (i.e. facing both inward or outward)
@@ -198,10 +198,10 @@ def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatib
     # will consistently point outward.
     graph = networkx.Graph()
     graph.add_nodes_from( range( faceStream.numFaces ) )
-    for edge, faceIndices in edgesToFaceIndices.items():
-        faceIndex0, faceIndex1 = faceIndices
-        faceNodes0 = faceStream[ faceIndex0 ] + ( faceStream[ faceIndex0 ][ 0 ], )
-        faceNodes1 = faceStream[ faceIndex1 ] + ( faceStream[ faceIndex1 ][ 0 ], )
+    for edge, connectedFaces in edgesToFaceIndices.items():
+        faceIndex0, faceIndex1 = connectedFaces
+        faceNodes0 = tuple( faceStream[ faceIndex0 ] ) + ( faceStream[ faceIndex0 ][ 0 ], )
+        faceNodes1 = tuple( faceStream[ faceIndex1 ] ) + ( faceStream[ faceIndex1 ][ 0 ], )
         node0, node1 = edge
         order0 = 1 if faceNodes0[ faceNodes0.index( node0 ) + 1 ] == node1 else -1
         order1 = 1 if faceNodes1[ faceNodes1.index( node0 ) + 1 ] == node1 else -1

@@ -67,7 +67,7 @@ def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.
     # Step 3: compute t1 for point on line 1 closest to point at t0.
     t1: float = __divClamp( t0 * R - S1, D1 )  # Eq (10, right)
     sol1: numpy.ndarray = x1 + t1 * d1  # Eq (3)
-    t0: float = __divClamp( t1 * R + S0, D0 )  # Eq (10, left)
+    t0 = __divClamp( t1 * R + S0, D0 )  # Eq (10, left)
     sol0: numpy.ndarray = x0 + t0 * d0  # Eq (4)
 
     return sol0, sol1
@@ -105,9 +105,9 @@ def __computeNodesToTriangleDistance(
         # If so, let's take the closest point.
         point: int = -1
         if numpy.all( tri1Proj > 0 ):
-            point = numpy.argmin( tri1Proj )
+            point = int( numpy.argmin( tri1Proj ) )
         elif numpy.all( tri1Proj < 0 ):
-            point = numpy.argmax( tri1Proj )
+            point = int( numpy.argmax( tri1Proj ) )
 
         # So if `tri1` is actually "on one side",
         # point `tri1[point]` is candidate to be the closest point.
@@ -120,7 +120,7 @@ def __computeNodesToTriangleDistance(
                         # It is!
                         sol0 = tri1[ point ]
                         sol1 = tri1[ point ] + ( tri1Proj[ point ] / tri0NormalNorm ) * tri0Normal
-                        return norm( sol1 - sol0 ), sol0, sol1, areDisjoint
+                        return float( norm( sol1 - sol0 ) ), sol0, sol1, areDisjoint
     return None, None, None, areDisjoint
 
 
@@ -183,12 +183,12 @@ def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
                 areDisjoint = True
     # No edge pair contained the closest points.
     # Checking the node/face situation.
-    distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri0, edges0, tri1 )
+    distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri0, edges0, tri1 )  # type: ignore[ assignment ]
     if distance:
         return distance, sol0, sol1
     areDisjoint = areDisjoint or areDisjointTmp
 
-    distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri1, edges1, tri0 )
+    distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri1, edges1, tri0 )  # type: ignore[ assignment ]
     if distance:
         return distance, sol0, sol1
     areDisjoint = areDisjoint or areDisjointTmp

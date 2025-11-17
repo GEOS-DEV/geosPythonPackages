@@ -50,6 +50,6 @@ def displayResults( options: Options, result: Result ):
     nonConformalCells: list[ int ] = []
     for i, j in result.nonConformalCells:
         nonConformalCells += i, j
-    nonConformalCells: frozenset[ int ] = frozenset( nonConformalCells )
-    setupLogger.results( f"You have {len( nonConformalCells )} non conformal cells." )
-    setupLogger.results( f"{', '.join( map( str, sorted( nonConformalCells ) ) )}" )
+    nonConformalCellsUnique: frozenset[ int ] = frozenset( nonConformalCells )
+    setupLogger.results( f"You have {len( nonConformalCellsUnique )} non conformal cells." )
+    setupLogger.results( f"{', '.join( map( str, sorted( nonConformalCellsUnique ) ) )}" )

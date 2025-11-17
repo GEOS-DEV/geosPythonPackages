@@ -87,7 +87,7 @@ def test_fillSubparser( checkFeaturesConfig, orderedCheckNames ):
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertDefaultChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
     assert len( options.checksOptions ) == 2
@@ -97,7 +97,7 @@ def test_convertDefaultChecks( mockLogger, checkFeaturesConfig, orderedCheckName
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertSpecificChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "check1", PARAMETERS_ARG: "" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "check1", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == [ "check1" ]
     assert len( options.checksOptions ) == 1
@@ -107,7 +107,7 @@ def test_convertSpecificChecks( mockLogger, checkFeaturesConfig, orderedCheckNam
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertWithParameters( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:10.5,param2:20.5" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:10.5,param2:20.5" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
     assert options.checksOptions[ "check1" ].param1 == 10.5
@@ -118,7 +118,7 @@ def test_convertWithParameters( mockLogger, checkFeaturesConfig, orderedCheckNam
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertWithInvalidParameters( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:invalid,param2:20.5" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:invalid,param2:20.5" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid parameter should be skipped, but the valid one applied
     assert options.checksOptions[ "check1" ].param1 == 1.0  # Default maintained
@@ -127,7 +127,7 @@ def test_convertWithInvalidParameters( mockLogger, checkFeaturesConfig, orderedC
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertWithInvalidCheck( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "invalid_check,check1", PARAMETERS_ARG: "" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check,check1", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid check should be skipped
     assert options.checksToPerform == [ "check1" ]
@@ -137,7 +137,7 @@ def test_convertWithInvalidCheck( mockLogger, checkFeaturesConfig, orderedCheckN
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertWithAllInvalidChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
-    parsedArgs = { CHECKS_TO_DO_ARG: "invalid_check1,invalid_check2", PARAMETERS_ARG: "" }
+    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check1,invalid_check2", PARAMETERS_ARG: "" } )
     # Should raise ValueError since no valid checks were selected
     with pytest.raises( ValueError, match="No valid checks were selected" ):
         convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )

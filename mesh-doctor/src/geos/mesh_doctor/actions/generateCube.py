@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 import numpy
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Union
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.vtkCommonCore import vtkPoints
-from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
-                                            VTK_HEXAHEDRON )
+from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkCellData, vtkHexahedron, vtkPointData, vtkRectilinearGrid,
+                                            vtkUnstructuredGrid, VTK_HEXAHEDRON )
 from geos.mesh_doctor.actions.generateGlobalIds import __buildGlobalIds
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput, writeMesh
@@ -94,12 +94,15 @@ def buildRectilinearBlocksMesh( xyzs: Iterable[ XYZ ] ) -> vtkUnstructuredGrid:
 
 def __addFields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtkUnstructuredGrid:
     for fieldInfo in fields:
+        data: Union[ vtkPointData, vtkCellData ]
         if fieldInfo.support == "CELLS":
             data = mesh.GetCellData()
             n = mesh.GetNumberOfCells()
         elif fieldInfo.support == "POINTS":
             data = mesh.GetPointData()
             n = mesh.GetNumberOfPoints()
+        else:
+            raise ValueError( f"Unsupported field support: {fieldInfo.support}" )
         array = numpy.ones( ( n, fieldInfo.dimension ), dtype=float )
         vtkArray = numpy_to_vtk( array )
         vtkArray.SetName( fieldInfo.name )

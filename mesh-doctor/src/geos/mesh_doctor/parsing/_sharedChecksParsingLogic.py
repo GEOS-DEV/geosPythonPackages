@@ -7,7 +7,6 @@ from geos.mesh_doctor.actions.allChecks import Result as AllChecksResult
 from geos.mesh_doctor.parsing.cliParsing import parseCommaSeparatedString, setupLogger
 
 
-# --- Data Structure for Check Features ---
 @dataclass( frozen=True )
 class CheckFeature:
     """A container for a check's configuration and associated classes."""
@@ -18,7 +17,6 @@ class CheckFeature:
     display: Type[ Any ]
 
 
-# --- Argument Parser Constants ---
 CHECKS_TO_DO_ARG = "checksToPerform"
 PARAMETERS_ARG = "setParameters"
 
@@ -34,23 +32,23 @@ def _generateParametersHelp( orderedCheckNames: list[ str ], checkFeaturesConfig
     return helpText
 
 
-def getOptionsUsedMessage( optionsUsed: dataclass ) -> str:
+def getOptionsUsedMessage( optionsUsed: object ) -> str:
     """Dynamically generates the description of every parameter used when loaching a check.
 
     Args:
-        optionsUsed (dataclass)
+        optionsUsed (dataclass object): The options dataclass used for a specific check.
 
     Returns:
         str: A message like "Parameters used: ( param1:value1 param2:value2 )" for as many paramters found.
     """
     optionsMsg: str = "Parameters used: ("
-    for attrName in optionsUsed.__dataclass_fields__:
-        attrValue = getattr( optionsUsed, attrName )
-        optionsMsg += f" {attrName} = {attrValue}"
+    if hasattr(optionsUsed, "__dataclass_fields__"):
+        for attrName in optionsUsed.__dataclass_fields__:
+            attrValue = getattr( optionsUsed, attrName )
+            optionsMsg += f" {attrName} = {attrValue}"
     return optionsMsg + " )."
 
 
-# --- Generic Argument Parser Setup ---
 def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, helpMessage: str,
                    orderedCheckNames: list[ str ], checkFeaturesConfig: dict[ str, CheckFeature ] ) -> None:
     """
@@ -92,18 +90,18 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
     Converts parsed command-line arguments into an AllChecksOptions object based on the provided configuration.
     """
     # 1. Determine which checks to perform
-    if not parsedArgs[ CHECKS_TO_DO_ARG ]:  # handles default and if user explicitly provides --checksToPerform ""
-        finalSelectedCheckNames: list[ str ] = deepcopy( orderedCheckNames )
-        setupLogger.info( "All configured checks will be performed by default." )
+    checksToDo = getattr( parsedArgs, CHECKS_TO_DO_ARG )
+    if not checksToDo:
+        finalSelectedCheckNames: list[str] = deepcopy( orderedCheckNames )
+        setupLogger.info("All configured checks will be performed by default.")
     else:
-        userChecks = parseCommaSeparatedString( parsedArgs[ CHECKS_TO_DO_ARG ] )
-        finalSelectedCheckNames = list()
+        userChecks = parseCommaSeparatedString( checksToDo )
+        finalSelectedCheckNames = []
         for name in userChecks:
             if name not in checkFeaturesConfig:
                 setupLogger.warning( f"Check '{name}' does not exist. Choose from: {orderedCheckNames}." )
             elif name not in finalSelectedCheckNames:
                 finalSelectedCheckNames.append( name )
-
         if not finalSelectedCheckNames:
             raise ValueError( "No valid checks were selected. No operations will be configured." )
 
@@ -111,10 +109,11 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
     defaultParams = { name: feature.defaultParams.copy() for name, feature in checkFeaturesConfig.items() }
     finalCheckParams = { name: defaultParams[ name ] for name in finalSelectedCheckNames }
 
-    if not parsedArgs[ PARAMETERS_ARG ]:  # handles default and if user explicitly provides --setParameters ""
+    parametersArg = getattr( parsedArgs, PARAMETERS_ARG )
+    if not parametersArg:
         setupLogger.info( "Default configuration of parameters adopted for every check to perform." )
     else:
-        setParameters = parseCommaSeparatedString( parsedArgs[ PARAMETERS_ARG ] )
+        setParameters = parseCommaSeparatedString( parametersArg )
         for param in setParameters:
             if ':' not in param:
                 setupLogger.warning( f"Parameter '{param}' is not in 'name:value' format. Skipping." )

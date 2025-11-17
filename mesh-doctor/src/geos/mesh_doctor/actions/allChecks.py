@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh_doctor.register import __loadModuleAction
 
@@ -6,17 +7,17 @@ from geos.mesh_doctor.register import __loadModuleAction
 @dataclass( frozen=True )
 class Options:
     checksToPerform: list[ str ]
-    checksOptions: dict[ str, any ]
-    checkDisplays: dict[ str, any ]
+    checksOptions: dict[ str, Any ]
+    checkDisplays: dict[ str, Any ]
 
 
 @dataclass( frozen=True )
 class Result:
-    checkResults: dict[ str, any ]
+    checkResults: dict[ str, Any ]
 
 
-def action( vtkInputFile: str, options: Options ) -> list[ Result ]:
-    checkResults: dict[ str, any ] = dict()
+def action( vtkInputFile: str, options: Options ) -> Result:
+    checkResults: dict[ str, Any ] = dict()
     for checkName in options.checksToPerform:
         checkAction = __loadModuleAction( checkName )
         setupLogger.info( f"Performing check '{checkName}'." )

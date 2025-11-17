@@ -54,7 +54,7 @@ def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
     tmpBarycenter = numpy.empty( ( faceStream.numSupportPoints, 3 ), dtype=float )
     for i, pointId in enumerate( faceStream.supportPointIds ):
         tmpBarycenter[ i, : ] = meshPoints.GetPoint( pointId )
-    barycenter = tmpBarycenter[ :, 0 ].mean(), tmpBarycenter[ :, 1 ].mean(), tmpBarycenter[ :, 2 ].mean()
+    barycenter = [ tmpBarycenter[ :, 0 ].mean(), tmpBarycenter[ :, 1 ].mean(), tmpBarycenter[ :, 2 ].mean() ]
     # Looping on all the triangles of the envelope of the polyhedron, creating the matching tetra.
     # Then the volume of all the tetra are added to get the final polyhedron volume.
     cellVolume = 0.

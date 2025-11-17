@@ -29,9 +29,9 @@ def displayResults( options: Options, result: Result ):
     for bucket in result.nodesBuckets:
         for node in bucket:
             allCollocatedNodes.append( node )
-    allCollocatedNodes: frozenset[ int ] = frozenset( allCollocatedNodes )  # Surely useless
-    if allCollocatedNodes:
-        setupLogger.results( f"You have {len( allCollocatedNodes )} collocated nodes." )
+    allCollocatedNodesUnique: frozenset[ int ] = frozenset( allCollocatedNodes )  # Surely useless
+    if allCollocatedNodesUnique:
+        setupLogger.results( f"You have {len( allCollocatedNodesUnique )} collocated nodes." )
         setupLogger.results( "Here are all the buckets of collocated nodes." )
         tmp: list[ str ] = []
         for bucket in result.nodesBuckets:
@@ -41,8 +41,8 @@ def displayResults( options: Options, result: Result ):
         setupLogger.results( "You have no collocated node." )
 
     if result.wrongSupportElements:
-        tmp: str = ", ".join( map( str, result.wrongSupportElements ) )
+        wsElements: str = ", ".join( map( str, result.wrongSupportElements ) )
         setupLogger.results( f"You have {len(result.wrongSupportElements)} elements with duplicated support nodes.\n" +
-                             tmp )
+                             wsElements )
     else:
         setupLogger.results( "You have no element with duplicated support nodes." )

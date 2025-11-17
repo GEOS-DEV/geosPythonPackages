@@ -1,5 +1,6 @@
-import numpy
 from dataclasses import dataclass
+import numpy as np
+import numpy.typing as npt
 from tqdm import tqdm
 from typing import Collection, Iterable, Sequence
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
@@ -52,22 +53,22 @@ def formatCollocatedNodes( fractureMesh: vtkUnstructuredGrid ) -> Sequence[ Iter
     Returns:
         Sequence[ Iterable[ int ] ]: An iterable over all the buckets of collocated nodes.
     """
-    collocatedNodes: numpy.ndarray = vtk_to_numpy( fractureMesh.GetPointData().GetArray( "collocatedNodes" ) )
+    collocatedNodes: npt.NDArray = vtk_to_numpy( fractureMesh.GetPointData().GetArray( "collocatedNodes" ) )
     if len( collocatedNodes.shape ) == 1:
-        collocatedNodes: numpy.ndarray = collocatedNodes.reshape( ( collocatedNodes.shape[ 0 ], 1 ) )
+        collocatedNodes = collocatedNodes.reshape( ( collocatedNodes.shape[ 0 ], 1 ) )
     generator = ( tuple( sorted( bucket[ bucket > -1 ] ) ) for bucket in collocatedNodes )
     return tuple( generator )
 
 
 def __checkCollocatedNodesPositions(
-    matrixPoints: Sequence[ Coordinates3D ], fracturePoints: Sequence[ Coordinates3D ], g2l: Sequence[ int ],
+    matrixPoints: npt.NDArray, fracturePoints: npt.NDArray, g2l: npt.NDArray[ np.int64 ],
     collocatedNodes: Iterable[ Iterable[ int ] ]
 ) -> Collection[ tuple[ int, Iterable[ int ], Iterable[ Coordinates3D ] ] ]:
     issues = []
     for li, bucket in enumerate( collocatedNodes ):
         matrix_nodes = ( fracturePoints[ li ], ) + tuple( map( lambda gi: matrixPoints[ g2l[ gi ] ], bucket ) )
-        m = numpy.array( matrix_nodes )
-        rank: int = numpy.linalg.matrix_rank( m )
+        m = np.array( matrix_nodes )
+        rank: int = np.linalg.matrix_rank( m )
         if rank > 1:
             issues.append( ( li, bucket, tuple( map( lambda gi: matrixPoints[ g2l[ gi ] ], bucket ) ) ) )
     return issues
@@ -83,7 +84,7 @@ def myIter( ccc ):
             yield ( i, )
 
 
-def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, g2l: Sequence[ int ],
+def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, g2l: npt.NDArray[ np.int64 ],
                       collocatedNodes: Sequence[ Iterable[ int ] ] ):
     fractureNodes: set[ int ] = set()
     for bucket in collocatedNodes:
@@ -102,8 +103,8 @@ def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid
                 fractureFaces.add( pointIds )
     # Finding the cells
     for c in tqdm( range( fracture.GetNumberOfCells() ), desc="Finding neighbor cell pairs" ):
-        cell: vtkCell = fracture.GetCell( c )
-        cns: set[ frozenset[ int ] ] = set()  # subset of collocatedNodes
+        cell = fracture.GetCell( c )
+        cns: set[ frozenset[ npt.NDArray[ np.int64 ] ] ] = set()  # subset of collocatedNodes
         pointIds = frozenset( vtkIter( cell.GetPointIds() ) )
         for pointId in pointIds:
             bucket = collocatedNodes[ pointId ]
@@ -112,8 +113,8 @@ def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid
         found = 0
         tmp = tuple( map( tuple, cns ) )
         for nodeCombinations in myIter( tmp ):
-            f = frozenset( nodeCombinations )
-            if f in fractureFaces:
+            faceCombination = frozenset( nodeCombinations )
+            if faceCombination in fractureFaces:
                 found += 1
         if found != 2:
             setupLogger.warning( "Something went wrong since we should have found 2 fractures faces (we found" +
@@ -130,7 +131,7 @@ def __action( vtkInputFile: str, options: Options ) -> Result:
            fracture.GetPointData().GetGlobalIds() and fracture.GetCellData().GetGlobalIds()
 
     pointIds = vtk_to_numpy( matrix.GetPointData().GetGlobalIds() )
-    g2l = numpy.ones( len( pointIds ), dtype=int ) * -1
+    g2l: npt.NDArray[ np.int64 ] = np.ones( len( pointIds ), dtype=np.int64 ) * -1
     for loc, glo in enumerate( pointIds ):
         g2l[ glo ] = loc
     g2l.flags.writeable = False
@@ -146,7 +147,7 @@ def __action( vtkInputFile: str, options: Options ) -> Result:
         for duplicate in filter( lambda i: i > -1, duplicates ):
             p0 = matrixPoints.GetPoint( g2l[ duplicate ] )
             p1 = fracturePoints.GetPoint( i )
-            if numpy.linalg.norm( numpy.array( p1 ) - numpy.array( p0 ) ) > options.tolerance:
+            if np.linalg.norm( np.array( p1 ) - np.array( p0 ) ) > options.tolerance:
                 errors.append( ( i, g2l[ duplicate ], duplicate ) )
     return Result( errors=errors )
 

@@ -23,7 +23,7 @@ https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20
 
 IDMapping = Mapping[ int, int ]
 CellsPointsCoords = dict[ int, list[ tuple[ float ] ] ]
-Coordinates3D = tuple[ float ]
+Coordinates3D = tuple[ float, float, float ]
 
 
 class FracturePolicy( Enum ):
@@ -54,7 +54,7 @@ class FractureInfo:
 
 
 def buildNodeToCells( mesh: vtkUnstructuredGrid,
-                      faceNodes: Iterable[ Iterable[ int ] ] ) -> dict[ int, Iterable[ int ] ]:
+                      faceNodes: Iterable[ Iterable[ int ] ] ) -> Mapping[ int, Iterable[ int ] ]:
     # TODO normally, just a list and not a set should be enough.
     nodeToCells: dict[ int, set[ int ] ] = defaultdict( set )
 
@@ -103,7 +103,7 @@ def __buildFractureInfoFromFields( mesh: vtkUnstructuredGrid, f: Sequence[ int ]
             if fnh not in faceNodesHashes:
                 faceNodesHashes.add( fnh )
                 faceNodes.append( fn )
-    nodeToCells: dict[ int, Iterable[ int ] ] = buildNodeToCells( mesh, faceNodes )
+    nodeToCells: Mapping[ int, Iterable[ int ] ] = buildNodeToCells( mesh, faceNodes )
     faceCellId: list = list()  # no cell of the mesh corresponds to that face when fracture policy is 'field'
 
     return FractureInfo( nodeToCells=nodeToCells, faceNodes=faceNodes, faceCellId=faceCellId )
@@ -202,16 +202,16 @@ def buildCellToCellGraph( mesh: vtkUnstructuredGrid, fracture: FractureInfo ) ->
 
 
 def _identifySplit( numPoints: int, cellToCell: networkx.Graph,
-                    nodeToCells: dict[ int, Iterable[ int ] ] ) -> dict[ int, IDMapping ]:
+                    nodeToCells: Mapping[ int, Iterable[ int ] ] ) -> Mapping[ int, IDMapping ]:
     """For each cell, compute the node indices replacements.
 
     Args:
         numPoints (int): The number of points in the whole mesh (not the fracture).
         cellToCell (networkx.Graph): The cell to cell graph (connection through common faces).
-        nodeToCells (dict[ int, Iterable[ int ] ]): Maps the nodes of the fracture to the cells relying on this node.
+        nodeToCells (Mapping[ int, Iterable[ int ] ]): Maps the nodes of the fracture to the cells relying on this node.
 
     Returns:
-        dict[ int, IDMapping ]: For each cell (first key), returns a mapping from the current index
+        Mapping[ int, IDMapping ]: For each cell (first key), returns a mapping from the current index
                                 and the new index that should replace the current index.
     Note that the current index and the new index can be identical: no replacement should be done then.
     """
@@ -236,7 +236,7 @@ def _identifySplit( numPoints: int, cellToCell: networkx.Graph,
                 return index
 
     buildNewIndex = NewIndex( numPoints )
-    result: dict[ int, IDMapping ] = defaultdict( dict )
+    result: dict[ int, dict[ int, int ] ] = defaultdict( dict )
     # Iteration over `sorted` nodes to have a predictable result for tests.
     for node, cells in tqdm( sorted( nodeToCells.items() ), desc="Identifying the node splits" ):
         for connectedCells in networkx.connected_components( cellToCell.subgraph( cells ) ):
@@ -249,14 +249,14 @@ def _identifySplit( numPoints: int, cellToCell: networkx.Graph,
 
 
 def __copyFieldsSplitMesh( oldMesh: vtkUnstructuredGrid, splitMesh: vtkUnstructuredGrid,
-                           addedPointsWithOldId: list[ tuple[ int ] ] ) -> None:
+                           addedPointsWithOldId: list[ tuple[ int, int ] ] ) -> None:
     """Copies the fields from the old mesh to the new one.
     Point data will be duplicated for collocated nodes.
 
     Args:
         oldMesh (vtkUnstructuredGrid): The mesh before the split._
         splitMesh (vtkUnstructuredGrid): The mesh after the split. Will receive the fields in place.
-        addedPointsWithOldId (list[ tuple[ int ] ]): _description_
+        addedPointsWithOldId (list[ tuple[ int, int ] ]): _description_
     """
     # Copying the cell data. The cells are the same, just their nodes support have changed.
     inputCellData = oldMesh.GetCellData()
@@ -369,7 +369,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
         vtkUnstructuredGrid: The main 3d mesh split at the fracture location.
     """
     addedPoints: set[ int ] = set()
-    addedPointsWithOldId: list[ tuple[ int ] ] = list()
+    addedPointsWithOldId: list[ tuple[ int, int ] ] = list()
     for nodeMapping in cellToNodeMapping.values():
         for i, o in nodeMapping.items():
             if i != o:
@@ -387,8 +387,8 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
         newPoints.SetPoint( p, oldPoints.GetPoint( p ) )
         collocatedNodes[ p ] = p
     # Creating the new collocated/duplicated points based on the old points positions.
-    for nodeMapping in cellToNodeMapping.values():
-        for i, o in nodeMapping.items():
+    for nodeMappingDup in cellToNodeMapping.values():
+        for i, o in nodeMappingDup.items():
             if i != o:
                 newPoints.SetPoint( o, oldPoints.GetPoint( i ) )
                 collocatedNodes[ o ] = i
@@ -407,7 +407,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     newMesh.Allocate( oldMesh.GetNumberOfCells() )
 
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
-        nodeMapping: IDMapping = cellToNodeMapping.get( c, {} )
+        cellNodeMapping: IDMapping = cellToNodeMapping.get( c, {} )
         cell: vtkCell = oldMesh.GetCell( c )
         cellType: int = cell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
@@ -418,7 +418,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
             for faceNodes in FaceStream.buildFromVtkIdList( faceStream ).faceNodes:
                 newPointIds = list()
                 for currentPointId in faceNodes:
-                    newPointId: int = nodeMapping.get( currentPointId, currentPointId )
+                    newPointId: int = cellNodeMapping.get( currentPointId, currentPointId )
                     newPointIds.append( newPointId )
                 newFaceNodes.append( newPointIds )
             newMesh.InsertNextCell( cellType, toVtkIdList( FaceStream( newFaceNodes ).dump() ) )
@@ -427,9 +427,9 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
             # Then the values will be (potentially) overwritten in place, before being sent back into the cell.
             cellPointIds: vtkIdList = cell.GetPointIds()
             for i in range( cellPointIds.GetNumberOfIds() ):
-                currentPointId: int = cellPointIds.GetId( i )
-                newPointId: int = nodeMapping.get( currentPointId, currentPointId )
-                cellPointIds.SetId( i, newPointId )
+                currentPtId: int = cellPointIds.GetId( i )
+                newPtId: int = cellNodeMapping.get( currentPtId, currentPtId )
+                cellPointIds.SetId( i, newPtId )
             newMesh.InsertNextCell( cellType, cellPointIds )
 
     __copyFieldsSplitMesh( oldMesh, newMesh, addedPointsWithOldId )
@@ -491,7 +491,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     numPoints: int = len( fractureNodes )
     points = vtkPoints()
     points.SetNumberOfPoints( numPoints )
-    node3dToNode2d: IDMapping = dict()  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
+    node3dToNode2d: dict[ int, int ] = dict()  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate( fractureNodes ):
         coords: Coordinates3D = meshPoints.GetPoint( n )
         points.SetPoint( i, coords )
@@ -508,8 +508,8 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
         polygons.InsertNextCell( polygon )
 
     buckets: dict[ int, set[ int ] ] = defaultdict( set )
-    for nodeMapping in cellToNodeMapping.values():
-        for i, o in nodeMapping.items():
+    for nodeMappingBucket in cellToNodeMapping.values():
+        for i, o in nodeMappingBucket.items():
             k: Optional[ int ] = node3dToNode2d.get( min( i, o ) )
             if k is not None:
                 buckets[ k ].update( ( i, o ) )

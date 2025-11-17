@@ -93,8 +93,9 @@ def convert( parsedOptions ) -> Options:
     ]
     fractureNames: list[ str ] = [ "fracture_" + frac.replace( ",", "_" ) + ".vtu" for frac in perFracture ]
     fracturesOutputDir: str = parsedOptions[ __FRACTURES_OUTPUT_DIR ]
-    fracturesDataMode: str = parsedOptions[ __FRACTURES_DATA_MODE ] == __FRACTURES_DATA_MODE_DEFAULT
-    allFracturesVtkOutput: list[ VtkOutput ] = buildAllFracturesVtkOutput( fracturesOutputDir, fracturesDataMode,
+    fracturesDataMode: str = parsedOptions[ __FRACTURES_DATA_MODE ]
+    fracturesDataModeResult: bool = fracturesDataMode == __FRACTURES_DATA_MODE_DEFAULT
+    allFracturesVtkOutput: list[ VtkOutput ] = buildAllFracturesVtkOutput( fracturesOutputDir, fracturesDataModeResult,
                                                                            meshVtkOutput, fractureNames )
     return Options( policy=policy,
                     field=field,

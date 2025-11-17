@@ -20,7 +20,7 @@ class Result:
 
 
 def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
-    points = mesh.GetPoints()
+    points: vtkPoints = mesh.GetPoints()
 
     locator = vtkIncrementalOctreePointLocator()
     locator.SetTolerance( options.tolerance )
@@ -33,19 +33,21 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     rejectedPoints = defaultdict( list )
     pointId = reference( 0 )
     for i in range( points.GetNumberOfPoints() ):
-        isInserted = locator.InsertUniquePoint( points.GetPoint( i ), pointId )
+        isInserted = locator.InsertUniquePoint( points.GetPoint( i ), pointId )  # type: ignore[arg-type]
         if not isInserted:
             # If it's not inserted, `pointId` contains the node that was already at that location.
             # But in that case, `pointId` is the new numbering in the destination points array.
             # It's more useful for the user to get the old index in the original mesh so he can look for it in his data.
-            setupLogger.debug( f"Point {i} at {points.GetPoint(i)} has been rejected, "
-                               f"point {filteredToOriginal[pointId.get()]} is already inserted." )
-            rejectedPoints[ pointId.get() ].append( i )
+            setupLogger.debug(
+                f"Point {i} at {points.GetPoint(i)} has been rejected, " +
+                f"point {filteredToOriginal[pointId.get()]} is already inserted.",  # type: ignore[misc, call-overload]
+            )
+            rejectedPoints[ pointId.get() ].append( i )  # type: ignore[misc]
         else:
             # If it's inserted, `pointId` contains the new index in the destination array.
             # We store this information to be able to connect the source and destination arrays.
             # originalToFiltered[i] = pointId.get()
-            filteredToOriginal[ pointId.get() ] = i
+            filteredToOriginal[ pointId.get() ] = i  # type: ignore[misc, call-overload]
 
     tmp = []
     for n, ns in rejectedPoints.items():
@@ -59,7 +61,7 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
         if len( { cell.GetPointId( i ) for i in range( numPointsPerCell ) } ) != numPointsPerCell:
             wrongSupportElements.append( c )
 
-    return Result( nodesBuckets=tmp, wrongSupportElements=wrongSupportElements )
+    return Result( nodesBuckets=tmp, wrongSupportElements=wrongSupportElements )  # type: ignore[arg-type]
 
 
 def action( vtkInputFile: str, options: Options ) -> Result:
