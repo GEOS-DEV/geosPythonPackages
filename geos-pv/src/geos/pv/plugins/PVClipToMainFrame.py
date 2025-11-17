@@ -47,7 +47,7 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         if not self._realFilter.logger.hasHandlers():
             self._realFilter.SetLoggerHandler( VTKHandler() )
 
-    def Filter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
+    def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
 
         Args:

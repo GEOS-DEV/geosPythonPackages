@@ -225,7 +225,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """Organize groups."""
         self.Modified()
 
-    def Filter(
+    def ApplyFilter(
         self: Self,
         inputMesh: vtkUnstructuredGrid | vtkMultiBlockDataSet,
         outputMesh: vtkUnstructuredGrid | vtkMultiBlockDataSet,

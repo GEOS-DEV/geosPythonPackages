@@ -65,7 +65,7 @@ class IsSISOFilter( Protocol[ U ] ):
     """Protocol to ensure that the wrapped filter defines the correct Filter core function."""
 
     @abstractmethod
-    def Filter(
+    def ApplyFilter(
         self,
         inputMesh: U,
         outputMesh: U,
@@ -160,7 +160,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
 
                 outputMesh.ShallowCopy( inputMesh )
 
-                cls.Filter( self, inputMesh, outputMesh )
+                cls.ApplyFilter( self, inputMesh, outputMesh )
                 return 1
 
         # Copy all methods and attributes from cls, including decorator metadata
