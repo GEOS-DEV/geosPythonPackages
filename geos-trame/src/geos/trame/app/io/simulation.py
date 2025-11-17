@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from dataclasses import dataclass, field, fields
 from enum import Enum, unique
-from geos.trame.app.ui.simulationStatusView import SimulationStatus
-from typing import Callable, Optional
+from geos.trame.app.ui.simulation_status_view import SimulationStatus
+from typing import Callable, Optional, Union
 import datetime
 from trame_server.core import Server
 from trame_server.state import State
+from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
 #TODO move outside
 #TODO use Jinja on real launcher
@@ -230,20 +231,20 @@ class Simulation:
         if self._job_status_watcher:
             self._job_status_watcher.set_period_ms(period_ms)
 
-    def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
-        newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
-        if not newer_file:
-            return
+    # def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
+    #     newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
+    #     if not newer_file:
+    #         return
 
-        f_name = Path(newer_file).name
-        if not f_name:
-            return
+    #     f_name = Path(newer_file).name
+    #     if not f_name:
+    #         return
 
-        self._server.state.active_screenshot_folder_path = str(screenshots_folder_path)
-        self._server.state.dirty("active_screenshot_folder_path")
-        self._server.state.active_screenshot_relative_path = f_name
-        self._server.state.dirty("active_screenshot_relative_path")
-        self._server.state.flush()
+    #     self._server.state.active_screenshot_folder_path = str(screenshots_folder_path)
+    #     self._server.state.dirty("active_screenshot_folder_path")
+    #     self._server.state.active_screenshot_relative_path = f_name
+    #     self._server.state.dirty("active_screenshot_relative_path")
+    #     self._server.state.flush()
 
     def _update_job_status(self) -> None:
         sim_info = self.get_last_user_simulation_info()
@@ -317,3 +318,25 @@ class Simulation:
 
         sim_info.user_igg = self._sim_runner.get_user_igg()
         write_simulation_information_to_repo(sim_info, self._sim_info_dir)
+
+
+def path_to_string(p: Union[str, Path]) -> str:
+    return Path(p).as_posix()
+
+def write_simulation_information_to_repo(info: SimulationInformation, sim_info_path: Path) -> Optional[Path]:
+    return write_file(
+        sim_info_path.as_posix(),
+        get_simulation_output_file_name(info.timestamp, info.user_igg),
+        json.dumps(info.to_dict()),  # type: ignore
+    )
+
+def write_file(folder_path: str, filename: str, file_content: str) -> Optional[Path]:
+    try:
+        Path(folder_path).mkdir(exist_ok=True)
+        file_path = Path(f"{folder_path}/{filename}")
+        with open(file_path, "w") as f:
+            f.write(file_content)
+        return file_path.absolute()
+    except Exception as e:
+        print("error occurred when copying file to", folder_path, e)
+    return None

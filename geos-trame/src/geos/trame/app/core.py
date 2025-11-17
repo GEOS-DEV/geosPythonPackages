@@ -23,6 +23,7 @@ from geos.trame.app.ui.plotting import DeckPlotting
 from geos.trame.app.ui.timeline import TimelineEditor
 from geos.trame.app.ui.viewer.viewer import DeckViewer
 from geos.trame.app.components.alertHandler import AlertHandler
+from geos.trame.app.io.simulation import Simulation, SimRunner
 
 import sys
 
@@ -38,6 +39,7 @@ class GeosTrame:
         self.deckEditor: DeckEditor | None = None
         self.timelineEditor: TimelineEditor | None = None
         self.deckInspector: DeckInspector | None = None
+        self.simulationLauncher : Simulation | None = None 
         self.server = server
         server.enable_module( module )
 
@@ -66,6 +68,10 @@ class GeosTrame:
         # Viewers
         self.region_viewer = RegionViewer()
         self.well_viewer = WellViewer( 5, 5 )
+
+        # Simulation runner
+        self.sim_runner : SimRunner = SimRunner(self.state.user_id)
+        self.simulationLauncher = Simulation(self.sim_runner, server=server)
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
