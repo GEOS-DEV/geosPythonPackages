@@ -187,7 +187,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
         )( WrappingClass )
         WrappingClass = smproperty.input( name="Input", port_index=0 )( WrappingClass )
         # Use enum value for category
-        WrappingClass = smhint.xml( f'<ShowInMenu category="{category}"/>' )( WrappingClass )
+        WrappingClass = smhint.xml( f'<ShowInMenu category="{category.value}"/>' )( WrappingClass )
         WrappingClass = smproxy.filter( name=getattr( cls, '__name__', str( cls ) ),
                                         label=decoratedLabel )( WrappingClass )
         return WrappingClass
