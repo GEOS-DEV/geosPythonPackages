@@ -96,7 +96,7 @@ class MergeBlockEnhanced:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"

@@ -142,7 +142,7 @@ class CreateConstantAttributePerRegion:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             # This warning does not count for the number of warning created during the application of the filter.
