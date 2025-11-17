@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import logging
 from typing_extensions import Self, Union
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 from geos.utils.Logger import ( Logger, getLogger )
@@ -103,6 +103,7 @@ class AttributeMapping:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.

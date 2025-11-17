@@ -6,13 +6,10 @@ import logging
 
 from typing_extensions import Self
 
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
-)
+from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkUnstructuredGrid )
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset
@@ -89,6 +86,7 @@ class MergeBlockEnhanced:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -118,6 +116,8 @@ class MergeBlockEnhanced:
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
         self.outputMesh = outputMesh
+
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

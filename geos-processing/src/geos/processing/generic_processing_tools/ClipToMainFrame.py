@@ -234,6 +234,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
