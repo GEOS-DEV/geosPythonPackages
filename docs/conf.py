@@ -17,7 +17,7 @@ import sys
 
 # Add python modules to be documented
 python_root = '..'
-python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-posp', 'geos-processing', 'geos-pv', 'geos-timehistory',
+python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-processing', 'geos-pv', 'geos-timehistory',
                    'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'pygeos-tools' )
 
 

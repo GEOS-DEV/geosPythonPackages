@@ -86,8 +86,6 @@ Packages
 
     geos-mesh
 
-    geos-posp
-
     geos-processing
 
     geos-pv
