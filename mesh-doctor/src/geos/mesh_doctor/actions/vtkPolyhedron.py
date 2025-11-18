@@ -17,8 +17,9 @@ class Result:
 
 
 def parseFaceStream( ids: vtkIdList ) -> Sequence[ Sequence[ int ] ]:
-    """Parses the face stream raw information and converts it into a tuple of tuple of integers,
-    each tuple of integer being the nodes of a face.
+    """Parses the face stream raw information and converts it into a tuple of tuple of integers.
+
+    Each tuple of integer corresponds to the nodes of a face.
 
     Args:
         ids (vtkIdList): The raw vtk face stream.
@@ -33,7 +34,7 @@ def parseFaceStream( ids: vtkIdList ) -> Sequence[ Sequence[ int ] ]:
         while True:
             numNodes = next( it )
             tmp = []
-            for i in range( numNodes ):
+            for _ in range( numNodes ):
                 tmp.append( next( it ) )
             result.append( tuple( tmp ) )
     except StopIteration:
@@ -45,18 +46,17 @@ def parseFaceStream( ids: vtkIdList ) -> Sequence[ Sequence[ int ] ]:
 
 
 class FaceStream:
-    """
-    Helper class to manipulate the vtk face streams.
-    """
+    """Helper class to manipulate the vtk face streams."""
 
-    def __init__( self, data: Sequence[ Sequence[ int ] ] ):
+    def __init__( self, data: Sequence[ Sequence[ int ] ] ) -> None:
+        """Initializes the FaceStream instance."""
         # self.__data contains the list of faces nodes, like it appears in vtk face streams.
         # Except that the additional size information is removed
         # in favor of the __len__ of the containers.
         self.__data: Sequence[ Sequence[ int ] ] = data
 
     @staticmethod
-    def buildFromVtkIdList( ids: vtkIdList ):
+    def buildFromVtkIdList( ids: vtkIdList ) -> "FaceStream":
         """Builds a FaceStream from the raw vtk face stream.
 
         Args:
@@ -78,7 +78,7 @@ class FaceStream:
 
     @property
     def numFaces( self ) -> int:
-        """Number of faces in the face stream
+        """Number of faces in the face stream.
 
         Returns:
             int: The number of faces.
@@ -133,6 +133,7 @@ class FaceStream:
 
     def dump( self ) -> Sequence[ int ]:
         """Returns the face stream awaited by vtk, but in a python container.
+
         The content can be used, once converted to a vtkIdList, to define another polyhedron in vtk.
 
         Returns:
@@ -144,7 +145,8 @@ class FaceStream:
             result += faceNodes
         return tuple( result )
 
-    def __repr__( self ):
+    def __repr__( self ) -> str:
+        """String representation of the face stream."""
         result = [ str( len( self.__data ) ) ]
         for faceNodes in self.__data:
             result.append( str( len( faceNodes ) ) )
@@ -152,8 +154,9 @@ class FaceStream:
         return ",\n".join( result )
 
 
-def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatibility=False ) -> networkx.Graph:
+def buildFaceToFaceConnectivityThroughEdges( faceStream: FaceStream, addCompatibility: bool = False ) -> networkx.Graph:
     """Given a face stream/polyhedron, builds the connections between the faces.
+
     Those connections happen when two faces share an edge.
 
     Args:

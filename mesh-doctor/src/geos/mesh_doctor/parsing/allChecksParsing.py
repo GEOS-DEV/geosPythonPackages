@@ -2,7 +2,7 @@ import argparse
 from copy import deepcopy
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
-                                                                 as sharedFillSubparser, displayResults )
+                                                                 as sharedFillSubparser, displayResults )  # noqa: F401
 from geos.mesh_doctor.parsing import (
     ALL_CHECKS,
     COLLOCATES_NODES,

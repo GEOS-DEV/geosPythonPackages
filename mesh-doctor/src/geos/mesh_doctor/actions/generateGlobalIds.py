@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput, readUnstructuredGrid, writeMesh
+from geos.mesh_doctor.parsing.cliParsing import setupLogger
 
 
 @dataclass( frozen=True )
@@ -17,7 +17,7 @@ class Result:
     info: str
 
 
-def __buildGlobalIds( mesh: vtkUnstructuredGrid, generateCellsGlobalIds: bool, generatePointsGlobalIds: bool ) -> None:
+def buildGlobalIds( mesh: vtkUnstructuredGrid, generateCellsGlobalIds: bool, generatePointsGlobalIds: bool ) -> None:
     """Adds the global ids for cells and points in place into the mesh instance.
 
     Args:
@@ -48,16 +48,30 @@ def __buildGlobalIds( mesh: vtkUnstructuredGrid, generateCellsGlobalIds: bool, g
         mesh.GetCellData().SetGlobalIds( cellsGlobalIds )
 
 
-def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
-    __buildGlobalIds( mesh, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
+def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    """Performs the addition of global ids on a vtkUnstructuredGrid if options given to do so.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh to add global ids.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the global ids addition.
+    """
+    buildGlobalIds( mesh, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
     writeMesh( mesh, options.vtkOutput )
     return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 
-def action( vtkInputFile: str, options: Options ) -> Result:
-    try:
-        mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
-        return __action( mesh, options )
-    except BaseException as e:
-        setupLogger.error( e )
-        return Result( info="Something went wrong." )
+def action( vtuInputFile: str, options: Options ) -> Result:
+    """Reads a vtkUnstructuredGrid and adds global ids as per options.
+
+    Args:
+        vtuInputFile (str): The path to the input VTU file.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the global ids addition.
+    """
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtuInputFile )
+    return meshAction( mesh, options )

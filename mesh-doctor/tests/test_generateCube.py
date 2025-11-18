@@ -1,4 +1,4 @@
-from geos.mesh_doctor.actions.generateCube import __build, Options, FieldInfo
+from geos.mesh_doctor.actions.generateCube import Options, FieldInfo, buildCube
 
 
 def test_generateCube():
@@ -12,7 +12,7 @@ def test_generateCube():
                        nys=( 1, 1 ),
                        nzs=( 1, ),
                        fields=( FieldInfo( name="test", dimension=2, support="CELLS" ), ) )
-    output = __build( options )
+    output = buildCube( options )
     assert output.GetNumberOfCells() == 14
     assert output.GetNumberOfPoints() == 48
     assert output.GetCellData().GetArray( "test" ).GetNumberOfComponents() == 2

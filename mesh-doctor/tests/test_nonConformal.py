@@ -1,6 +1,6 @@
 import numpy
 from geos.mesh_doctor.actions.generateCube import buildRectilinearBlocksMesh, XYZ
-from geos.mesh_doctor.actions.nonConformal import Options, __action
+from geos.mesh_doctor.actions.nonConformal import Options, meshAction
 
 
 def test_twoCloseHexs():
@@ -12,13 +12,13 @@ def test_twoCloseHexs():
 
     # Close enough, but points tolerance is too strict to consider the faces matching.
     options = Options( angleTolerance=1., pointTolerance=delta / 2, faceTolerance=delta * 2 )
-    results = __action( mesh, options )
+    results = meshAction( mesh, options )
     assert len( results.nonConformalCells ) == 1
     assert set( results.nonConformalCells[ 0 ] ) == { 0, 1 }
 
     # Close enough, and points tolerance is loose enough to consider the faces matching.
     options = Options( angleTolerance=1., pointTolerance=delta * 2, faceTolerance=delta * 2 )
-    results = __action( mesh, options )
+    results = meshAction( mesh, options )
     assert len( results.nonConformalCells ) == 0
 
 
@@ -31,7 +31,7 @@ def test_twoDistantHexs():
 
     options = Options( angleTolerance=1., pointTolerance=delta / 2., faceTolerance=delta / 2. )
 
-    results = __action( mesh, options )
+    results = meshAction( mesh, options )
     assert len( results.nonConformalCells ) == 0
 
 
@@ -44,7 +44,7 @@ def test_twoCloseShiftedHexs():
 
     options = Options( angleTolerance=1., pointTolerance=deltaX * 2, faceTolerance=deltaX * 2 )
 
-    results = __action( mesh, options )
+    results = meshAction( mesh, options )
     assert len( results.nonConformalCells ) == 1
     assert set( results.nonConformalCells[ 0 ] ) == { 0, 1 }
 
@@ -58,6 +58,6 @@ def test_bigElemNextToSmallElem():
 
     options = Options( angleTolerance=1., pointTolerance=delta * 2, faceTolerance=delta * 2 )
 
-    results = __action( mesh, options )
+    results = meshAction( mesh, options )
     assert len( results.nonConformalCells ) == 1
     assert set( results.nonConformalCells[ 0 ] ) == { 0, 1 }

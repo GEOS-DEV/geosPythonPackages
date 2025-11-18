@@ -1,3 +1,5 @@
+from argparse import _SubParsersAction
+from typing import Any
 from geos.mesh_doctor.actions.collocatedNodes import Options, Result
 from geos.mesh_doctor.parsing import COLLOCATES_NODES
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
@@ -9,11 +11,24 @@ __TOLERANCE_DEFAULT = 0.
 __COLLOCATED_NODES_DEFAULT = { __TOLERANCE: __TOLERANCE_DEFAULT }
 
 
-def convert( parsedOptions ) -> Options:
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
     return Options( parsedOptions[ __TOLERANCE ] )
 
 
-def fillSubparser( subparsers ) -> None:
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
     p = subparsers.add_parser( COLLOCATES_NODES, help="Checks if nodes are collocated." )
     p.add_argument( '--' + __TOLERANCE,
                     type=float,
@@ -23,26 +38,47 @@ def fillSubparser( subparsers ) -> None:
                     help="[float]: The absolute distance between two nodes for them to be considered collocated." )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the collocated nodes check.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the collocated nodes check.
+    """
     setupLogger.results( getOptionsUsedMessage( options ) )
+    loggerResults( setupLogger, result.nodesBuckets, result.wrongSupportElements )
+
+
+def loggerResults( logger: Any, nodesBuckets: list[ tuple[ int ] ], wrongSupportElements: list[ int ] ) -> None:
+    """Log the results of the collocated nodes check.
+
+    Args:
+        logger: Logger instance for output.
+        nodesBuckets (list[ tuple[ int ] ]): List of collocated nodes buckets.
+        wrongSupportElements (list[ int ]): List of elements with wrong support nodes.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    logMethod = logger.info
+    if hasattr( logger, 'results' ):
+        logMethod = logger.results
+
     allCollocatedNodes: list[ int ] = []
-    for bucket in result.nodesBuckets:
+    for bucket in nodesBuckets:
         for node in bucket:
             allCollocatedNodes.append( node )
-    allCollocatedNodesUnique: frozenset[ int ] = frozenset( allCollocatedNodes )  # Surely useless
+    allCollocatedNodesUnique = list( set( allCollocatedNodes ) )
     if allCollocatedNodesUnique:
-        setupLogger.results( f"You have {len( allCollocatedNodesUnique )} collocated nodes." )
-        setupLogger.results( "Here are all the buckets of collocated nodes." )
+        logMethod( f"You have {len( allCollocatedNodesUnique )} collocated nodes." )
+        logMethod( "Here are all the buckets of collocated nodes." )
         tmp: list[ str ] = []
-        for bucket in result.nodesBuckets:
-            tmp.append( f"({', '.join(map(str, bucket))})" )
-        setupLogger.results( f"({', '.join(tmp)})" )
+        for bucket in nodesBuckets:
+            tmp.append( f"({', '.join( map( str, bucket ) )})" )
+        logMethod( f"({', '.join( tmp )})" )
     else:
-        setupLogger.results( "You have no collocated node." )
+        logMethod( "You have no collocated node." )
 
-    if result.wrongSupportElements:
-        wsElements: str = ", ".join( map( str, result.wrongSupportElements ) )
-        setupLogger.results( f"You have {len(result.wrongSupportElements)} elements with duplicated support nodes.\n" +
-                             wsElements )
+    if wrongSupportElements:
+        wsElements: str = ", ".join( map( str, wrongSupportElements ) )
+        logMethod( f"You have {len( wrongSupportElements )} elements with duplicated support nodes.\n" + wsElements )
     else:
-        setupLogger.results( "You have no element with duplicated support nodes." )
+        logMethod( "You have no element with duplicated support nodes." )

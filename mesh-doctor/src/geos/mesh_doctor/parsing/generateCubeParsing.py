@@ -1,3 +1,5 @@
+from argparse import _SubParsersAction
+from typing import Any
 from geos.mesh_doctor.actions.generateCube import Options, Result, FieldInfo
 from geos.mesh_doctor.parsing import vtkOutputParsing, generateGlobalIdsParsing, GENERATE_CUBE
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
@@ -7,9 +9,16 @@ __X, __Y, __Z, __NX, __NY, __NZ = "x", "y", "z", "nx", "ny", "nz"
 __FIELDS = "fields"
 
 
-def convert( parsedOptions ) -> Options:
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+    """Convert parsed command-line options to Options object.
 
-    def checkDiscretizations( x, nx, title ):
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
+    def checkDiscretizations( x: tuple[ float, ... ], nx: tuple[ int, ... ], title: str ) -> None:
         if len( x ) != len( nx ) + 1:
             raise ValueError( f"{title} information (\"{x}\" and \"{nx}\") does not have consistent size." )
 
@@ -17,18 +26,18 @@ def convert( parsedOptions ) -> Options:
     checkDiscretizations( parsedOptions[ __Y ], parsedOptions[ __NY ], __Y )
     checkDiscretizations( parsedOptions[ __Z ], parsedOptions[ __NZ ], __Z )
 
-    def parseFields( s ):
+    def parseFields( s: str ) -> FieldInfo:
         name, support, dim = s.split( ":" )
         if support not in ( "CELLS", "POINTS" ):
             raise ValueError( f"Support {support} for field \"{name}\" must be one of \"CELLS\" or \"POINTS\"." )
         try:
-            dim = int( dim )
-            assert dim > 0
-        except ValueError:
-            raise ValueError( f"Dimension {dim} cannot be converted to an integer." )
-        except AssertionError:
-            raise ValueError( f"Dimension {dim} must be a positive integer" )
-        return FieldInfo( name=name, support=support, dimension=dim )
+            dimension = int( dim )
+            assert dimension > 0
+        except ValueError as e:
+            raise ValueError( f"Dimension {dimension} cannot be converted to an integer." ) from e
+        except AssertionError as e:
+            raise ValueError( f"Dimension {dimension} must be a positive integer" ) from e
+        return FieldInfo( name=name, support=support, dimension=dimension )
 
     gids: GlobalIdsInfo = generateGlobalIdsParsing.convertGlobalIds( parsedOptions )
 
@@ -44,7 +53,12 @@ def convert( parsedOptions ) -> Options:
                     fields=tuple( map( parseFields, parsedOptions[ __FIELDS ] ) ) )
 
 
-def fillSubparser( subparsers ) -> None:
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
     p = subparsers.add_parser( GENERATE_CUBE, help="Generate a cube and its fields." )
     p.add_argument( '--' + __X,
                     type=lambda s: tuple( map( float, s.split( ":" ) ) ),
@@ -81,5 +95,11 @@ def fillSubparser( subparsers ) -> None:
     vtkOutputParsing.fillVtkOutputSubparser( p )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the generate cube feature.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the generate cube feature.
+    """
     setupLogger.info( result.info )

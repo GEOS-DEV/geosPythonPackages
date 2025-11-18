@@ -16,12 +16,19 @@ setupLogger.propagate = False
 def parseCommaSeparatedString( value: str ) -> list[ str ]:
     """Helper to parse comma-separated strings, stripping whitespace and removing empty items."""
     if not value or not value.strip():
-        return list()
+        return []
     return [ item.strip() for item in value.split( ',' ) if item.strip() ]
 
 
 def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
     """Parse the verbosity flag only and set the root logger's level accordingly.
+
+    The verbosity is controlled via -v and -q flags:
+        No flags: WARNING level
+        -v: INFO level
+        -vv or more: DEBUG level
+        -q: ERROR level
+        -qq or more: CRITICAL level
     Messages from loggers created with `get_custom_logger` will inherit this level
     if their own level is set to NOTSET.
 
@@ -72,13 +79,17 @@ def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
 
 
 def initParser() -> argparse.ArgumentParser:
+    """Initialize the main argument parser for mesh-doctor."""
     vtkInputFileKey = "vtkInputFile"
     epilogMsg = f"""\
         Note that checks are dynamically loaded.
         An option may be missing because of an unloaded module.
         Increase verbosity (-{__VERBOSITY_FLAG}, -{__VERBOSITY_FLAG * 2}) to get full information.
         """
-    formatter = lambda prog: argparse.RawTextHelpFormatter( prog, max_help_position=8 )
+
+    def formatter( prog: str ) -> argparse.RawTextHelpFormatter:
+        return argparse.RawTextHelpFormatter( prog, max_help_position=8 )
+
     parser = argparse.ArgumentParser( description='Inspects meshes for GEOS.',
                                       epilog=textwrap.dedent( epilogMsg ),
                                       formatter_class=formatter )

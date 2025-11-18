@@ -1,6 +1,6 @@
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkUnstructuredGrid, VTK_HEXAHEDRON
-from geos.mesh_doctor.actions.selfIntersectingElements import Options, __action
+from geos.mesh_doctor.actions.selfIntersectingElements import Options, meshAction
 
 
 def test_jumbledHex():
@@ -35,7 +35,7 @@ def test_jumbledHex():
     mesh.SetPoints( points )
     mesh.SetCells( cellTypes, cells )
 
-    result = __action( mesh, Options( minDistance=0. ) )
+    result = meshAction( mesh, Options( minDistance=0. ) )
 
-    assert len( result.intersectingFacesElements ) == 1
-    assert result.intersectingFacesElements[ 0 ] == 0
+    assert len( result.invalidCellIds[ "intersectingFacesElements" ] ) == 1
+    assert result.invalidCellIds[ "intersectingFacesElements" ][ 0 ] == 0

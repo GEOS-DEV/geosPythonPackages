@@ -1,4 +1,6 @@
+from argparse import _SubParsersAction
 from dataclasses import dataclass
+from typing import Any
 from geos.mesh_doctor.actions.generateGlobalIds import Options, Result
 from geos.mesh_doctor.parsing import vtkOutputParsing, GENERATE_GLOBAL_IDS
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
@@ -12,18 +14,28 @@ class GlobalIdsInfo:
     points: bool
 
 
-def convertGlobalIds( parsedOptions ) -> GlobalIdsInfo:
-    return GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+    """Convert parsed command-line options to Options object.
 
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
 
-def convert( parsedOptions ) -> Options:
-    gids: GlobalIdsInfo = convertGlobalIds( parsedOptions )
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
+    gids: GlobalIdsInfo = GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
     return Options( vtkOutput=vtkOutputParsing.convert( parsedOptions ),
                     generateCellsGlobalIds=gids.cells,
                     generatePointsGlobalIds=gids.points )
 
 
-def fillGenerateGlobalIdsSubparser( p ):
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
+    p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
     p.add_argument( '--' + __CELLS,
                     action="store_true",
                     help="[bool]: Generate global ids for cells. Defaults to true." )
@@ -40,13 +52,14 @@ def fillGenerateGlobalIdsSubparser( p ):
                     dest=__POINTS,
                     help="[bool]: Don't generate global ids for points." )
     p.set_defaults( **{ __POINTS: True } )
-
-
-def fillSubparser( subparsers ) -> None:
-    p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
-    fillGenerateGlobalIdsSubparser( p )
     vtkOutputParsing.fillVtkOutputSubparser( p )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the generate global ids feature.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the generate global ids feature.
+    """
     setupLogger.info( result.info )

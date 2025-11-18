@@ -2,7 +2,7 @@
 import pytest
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
-# from geos.mesh_doctor.actions.supportedElements import Options, action, __action
+# from geos.mesh_doctor.actions.supportedElements import Options, action, meshAction
 from geos.mesh_doctor.actions.vtkPolyhedron import parseFaceStream, FaceStream
 from geos.mesh.utils.genericHelpers import toVtkIdList
 

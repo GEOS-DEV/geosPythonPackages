@@ -51,8 +51,7 @@ def getOptionsUsedMessage( optionsUsed: object ) -> str:
 
 def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, helpMessage: str,
                    orderedCheckNames: list[ str ], checkFeaturesConfig: dict[ str, CheckFeature ] ) -> None:
-    """
-    Fills a subparser with arguments for performing a set of checks.
+    """Fills a subparser with arguments for performing a set of checks.
 
     Args:
         subparsers: The subparsers action from argparse.
@@ -86,8 +85,18 @@ def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, h
 
 def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
              checkFeaturesConfig: dict[ str, CheckFeature ] ) -> AllChecksOptions:
-    """
-    Converts parsed command-line arguments into an AllChecksOptions object based on the provided configuration.
+    """Converts parsed command-line arguments into an AllChecksOptions object based on the provided configuration.
+
+    Args:
+        parsedArgs (argparse.Namespace): Parsed command-line arguments.
+        orderedCheckNames (list[ str ]): Ordered list of check names.
+        checkFeaturesConfig (dict[ str, CheckFeature ]): Configuration dictionary for check features.
+
+    Raises:
+        ValueError: If no valid checks are selected.
+
+    Returns:
+        AllChecksOptions: The options for all checks to be performed.
     """
     # 1. Determine which checks to perform
     checksToDo = getattr( parsedArgs, CHECKS_TO_DO_ARG )
@@ -139,8 +148,8 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
                     finalCheckParams[ checkNameKey ][ name ] = valueFloat
 
     # 3. Instantiate Options objects for the selected checks
-    individualCheckOptions: dict[ str, Any ] = dict()
-    individualCheckDisplay: dict[ str, Any ] = dict()
+    individualCheckOptions: dict[ str, Any ] = {}
+    individualCheckDisplay: dict[ str, Any ] = {}
 
     for checkName in list( finalCheckParams.keys() ):
         params = finalCheckParams[ checkName ]
@@ -159,7 +168,12 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
 
 # Generic display of Results
 def displayResults( options: AllChecksOptions, result: AllChecksResult ) -> None:
-    """Displays the results of all the checks that have been performed."""
+    """Displays the results of all the checks that have been performed.
+
+    Args:
+        options (AllChecksOptions): The options used for the checks.
+        result (AllChecksResult): The result of the checks.
+    """
     if not options.checksToPerform:
         setupLogger.results( "No checks were performed or all failed during configuration." )
         return

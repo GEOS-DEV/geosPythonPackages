@@ -1,3 +1,5 @@
+from argparse import _SubParsersAction
+from typing import Any
 from geos.mesh_doctor.actions.nonConformal import Options, Result
 from geos.mesh_doctor.parsing import NON_CONFORMAL
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
@@ -18,13 +20,26 @@ __NON_CONFORMAL_DEFAULT = {
 }
 
 
-def convert( parsedOptions ) -> Options:
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
     return Options( angleTolerance=parsedOptions[ __ANGLE_TOLERANCE ],
                     pointTolerance=parsedOptions[ __POINT_TOLERANCE ],
                     faceTolerance=parsedOptions[ __FACE_TOLERANCE ] )
 
 
-def fillSubparser( subparsers ) -> None:
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
     p = subparsers.add_parser( NON_CONFORMAL, help="Detects non conformal elements. [EXPERIMENTAL]" )
     p.add_argument( '--' + __ANGLE_TOLERANCE,
                     type=float,
@@ -45,11 +60,32 @@ def fillSubparser( subparsers ) -> None:
         help=f"[float]: tolerance for two faces to be considered \"touching\". Defaults to {__FACE_TOLERANCE_DEFAULT}" )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the non conformal elements check.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the non conformal elements check.
+    """
     setupLogger.results( getOptionsUsedMessage( options ) )
-    nonConformalCells: list[ int ] = []
-    for i, j in result.nonConformalCells:
-        nonConformalCells += i, j
-    nonConformalCellsUnique: frozenset[ int ] = frozenset( nonConformalCells )
-    setupLogger.results( f"You have {len( nonConformalCellsUnique )} non conformal cells." )
-    setupLogger.results( f"{', '.join( map( str, sorted( nonConformalCellsUnique ) ) )}" )
+    loggerResults( setupLogger, result.nonConformalCells )
+
+
+def loggerResults( logger: Any, nonConformalCells: list[ tuple[ int, int ] ] ) -> None:
+    """Log the results of the non-conformal cells check.
+
+    Args:
+        logger: Logger instance for output.
+        nonConformalCells (list[ tuple[ int, int ] ]): List of non-conformal cells.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    logMethod = logger.info
+    if hasattr( logger, 'results' ):
+        logMethod = logger.results
+
+    cells: list[ int ] = []
+    for i, j in nonConformalCells:
+        cells += i, j
+    uniqueCells: frozenset[ int ] = frozenset( cells )
+    logMethod( f"You have {len( uniqueCells )} non conformal cells." )
+    logMethod( f"{', '.join( map( str, sorted( uniqueCells ) ) )}" )

@@ -2,7 +2,7 @@ import pytest
 from typing import Iterator, Tuple
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkTetra, vtkUnstructuredGrid, VTK_TETRA
-from geos.mesh_doctor.actions.collocatedNodes import Options, __action
+from geos.mesh_doctor.actions.collocatedNodes import Options, meshAction
 
 
 def getPoints() -> Iterator[ Tuple[ vtkPoints, int ] ]:
@@ -27,7 +27,7 @@ def test_simpleCollocatedPoints( data: Tuple[ vtkPoints, int ] ):
     mesh = vtkUnstructuredGrid()
     mesh.SetPoints( points )
 
-    result = __action( mesh, Options( tolerance=1.e-12 ) )
+    result = meshAction( mesh, Options( tolerance=1.e-12 ) )
 
     assert len( result.wrongSupportElements ) == 0
     assert len( result.nodesBuckets ) == numNodesBucket
@@ -58,7 +58,7 @@ def test_wrongSupportElements():
     mesh.SetPoints( points )
     mesh.SetCells( cellTypes, cells )
 
-    result = __action( mesh, Options( tolerance=1.e-12 ) )
+    result = meshAction( mesh, Options( tolerance=1.e-12 ) )
 
     assert len( result.nodesBuckets ) == 0
     assert len( result.wrongSupportElements ) == 1

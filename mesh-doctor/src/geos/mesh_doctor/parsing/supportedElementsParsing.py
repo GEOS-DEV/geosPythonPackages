@@ -1,4 +1,6 @@
 import multiprocessing
+from argparse import _SubParsersAction
+from typing import Any
 from geos.mesh_doctor.actions.supportedElements import Options, Result
 from geos.mesh_doctor.parsing import SUPPORTED_ELEMENTS
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
@@ -13,11 +15,24 @@ __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
 __SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC: __NUM_PROC_DEFAULT }
 
 
-def convert( parsedOptions ) -> Options:
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
     return Options( chunkSize=parsedOptions[ __CHUNK_SIZE ], nproc=parsedOptions[ __NUM_PROC ] )
 
 
-def fillSubparser( subparsers ) -> None:
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
     p = subparsers.add_parser( SUPPORTED_ELEMENTS,
                                help="Check that all the elements of the mesh are supported by GEOSX." )
     p.add_argument( '--' + __CHUNK_SIZE,
@@ -36,17 +51,39 @@ def fillSubparser( subparsers ) -> None:
     )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the supported elements check.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the supported elements check.
+    """
     setupLogger.results( getOptionsUsedMessage( options ) )
-    if result.unsupportedPolyhedronElements:
-        setupLogger.results( f"There is/are {len(result.unsupportedPolyhedronElements)} polyhedra that may not be "
-                             f"converted to supported elements." )
-        setupLogger.results(
-            f"The list of the unsupported polyhedra is\n{tuple(sorted(result.unsupportedPolyhedronElements))}." )
+    loggerResults( setupLogger, result.unsupportedPolyhedronElements, result.unsupportedStdElementsTypes )
+
+
+def loggerResults( logger: Any, unsupportedPolyhedronElements: frozenset[ int ],
+                   unsupportedStdElementsTypes: list[ str ] ) -> None:
+    """Log the results of the supported elements check.
+
+    Args:
+        logger: Logger instance for output.
+        unsupportedPolyhedronElements (frozenset[ int ]): List of unsupported polyhedron elements.
+        unsupportedStdElementsTypes (list[ str ]): List of unsupported standard element types.
+    """
+    # Accounts for external logging object that would not contain 'results' attribute
+    logMethod: Any = logger.info
+    if hasattr( logger, 'results' ):
+        logMethod = logger.results
+
+    if unsupportedPolyhedronElements:
+        logMethod( f"There is/are {len(unsupportedPolyhedronElements)} polyhedra that may not be converted to"
+                   " supported elements." )
+        logMethod( f"The list of the unsupported polyhedra is\n{tuple( sorted( unsupportedPolyhedronElements ) )}." )
     else:
-        setupLogger.results( "All the polyhedra (if any) can be converted to supported elements." )
-    if result.unsupportedStdElementsTypes:
-        setupLogger.results( f"There are unsupported vtk standard element types. The list of those vtk types is "
-                             f"{tuple(sorted(result.unsupportedStdElementsTypes))}." )
+        logMethod( "All the polyhedra (if any) can be converted to supported elements." )
+    if unsupportedStdElementsTypes:
+        logMethod( "There are unsupported vtk standard element types. The list of those vtk types is"
+                   f" {tuple( sorted( unsupportedStdElementsTypes ) )}." )
     else:
-        setupLogger.results( "All the standard vtk element types (if any) are supported." )
+        logMethod( "All the standard vtk element types (if any) are supported." )

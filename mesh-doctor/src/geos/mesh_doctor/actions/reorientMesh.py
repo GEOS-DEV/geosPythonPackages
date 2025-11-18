@@ -68,8 +68,7 @@ def __computeVolume( meshPoints: vtkPoints, faceStream: FaceStream ) -> float:
 
 def __selectAndFlipFaces( meshPoints: vtkPoints, colors: dict[ frozenset[ int ], int ],
                           faceStream: FaceStream ) -> FaceStream:
-    """Given a polyhedra, given that we were able to paint the faces in two colors,
-    we now need to select which faces/color to flip such that the volume of the element is positive.
+    """Given a polyhedra, given that we were able to paint the faces in two colors, we now need to select which faces/color to flip such that the volume of the element is positive.
 
     Args:
         meshPoints (vtkPoints): The mesh points, needed to compute the volume.

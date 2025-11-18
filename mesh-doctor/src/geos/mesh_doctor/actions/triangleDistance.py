@@ -7,6 +7,7 @@ from typing import Union
 
 def __divClamp( num: float, den: float ) -> float:
     """Computes the division `num / den`. and clamps the result between 0 and 1.
+
     If `den` is zero, the result of the division is set to 0.
 
     Args:
@@ -74,7 +75,7 @@ def distanceBetweenTwoSegments( x0: numpy.ndarray, d0: numpy.ndarray, x1: numpy.
 
 
 def __computeNodesToTriangleDistance(
-    tri0: numpy.ndarray, edges0, tri1: numpy.ndarray
+    tri0: numpy.ndarray, edges0: numpy.ndarray, tri1: numpy.ndarray
 ) -> tuple[ Union[ float, None ], Union[ numpy.ndarray, None ], Union[ numpy.ndarray, None ], bool ]:
     """Computes the distance from nodes of `tri1` points onto `tri0`.
 
@@ -114,19 +115,20 @@ def __computeNodesToTriangleDistance(
         if point > -1:
             areDisjoint = True
             # But we must check that its projection is inside `tri0`.
-            if numpy.dot( tri1[ point ] - tri0[ 0 ], numpy.cross( tri0Normal, edges0[ 0 ] ) ) > 0:
-                if numpy.dot( tri1[ point ] - tri0[ 1 ], numpy.cross( tri0Normal, edges0[ 1 ] ) ) > 0:
-                    if numpy.dot( tri1[ point ] - tri0[ 2 ], numpy.cross( tri0Normal, edges0[ 2 ] ) ) > 0:
-                        # It is!
-                        sol0 = tri1[ point ]
-                        sol1 = tri1[ point ] + ( tri1Proj[ point ] / tri0NormalNorm ) * tri0Normal
-                        return float( norm( sol1 - sol0 ) ), sol0, sol1, areDisjoint
+            if numpy.dot( tri1[ point ] - tri0[ 0 ], numpy.cross( tri0Normal, edges0[ 0 ] ) ) > 0 and \
+               numpy.dot( tri1[ point ] - tri0[ 1 ], numpy.cross( tri0Normal, edges0[ 1 ] ) ) > 0 and \
+               numpy.dot( tri1[ point ] - tri0[ 2 ], numpy.cross( tri0Normal, edges0[ 2 ] ) ) > 0:
+                # It is!
+                sol0 = tri1[ point ]
+                sol1 = tri1[ point ] + ( tri1Proj[ point ] / tri0NormalNorm ) * tri0Normal
+                return float( norm( sol1 - sol0 ) ), sol0, sol1, areDisjoint
     return None, None, None, areDisjoint
 
 
 def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
                                  tri1: numpy.ndarray ) -> tuple[ float, numpy.ndarray, numpy.ndarray ]:
     """Returns the minimum distance between two triangles, and the two points where this minimum occurs.
+
     If the two triangles touch, then distance is exactly 0.
     But the two points are dummy and cannot be used as contact points (they are still though).
 

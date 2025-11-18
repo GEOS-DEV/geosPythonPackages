@@ -5,8 +5,8 @@ import geos.mesh_doctor.parsing as parsing
 from geos.mesh_doctor.parsing import ActionHelper, cliParsing
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 
-__HELPERS: dict[ str, str ] = dict()
-__ACTIONS: dict[ str, str ] = dict()
+__HELPERS: dict[ str, str ] = {}
+__ACTIONS: dict[ str, str ] = {}
 
 
 def __loadModuleAction( moduleName: str, actionFct: str = "action" ) -> Callable[ [ str, Any ], Any ]:
@@ -23,13 +23,14 @@ def __loadModuleActionHelper( moduleName: str, parsingFctSuffix: str = "Parsing"
 
 def __loadActions() -> dict[ str, Callable[ [ str, Any ], Any ] ]:
     """Loads all the actions.
+
     This function acts like a protection layer if a module fails to load.
     A action that fails to load won't stop the process.
 
     Returns:
         dict[ str, Callable[ [ str, Any ], Any ] ]: The actions.
     """
-    loadedActions: dict[ str, Callable[ [ str, Any ], Any ] ] = dict()
+    loadedActions: dict[ str, Callable[ [ str, Any ], Any ] ] = {}
     for actionName, moduleName in __ACTIONS.items():
         try:
             loadedActions[ actionName ] = __loadModuleAction( moduleName )
@@ -59,8 +60,8 @@ def registerParsingActions(
         __ACTIONS[ actionName ] = actionName
 
     loadedActions: dict[ str, Callable[ [ str, Any ], Any ] ] = __loadActions()
-    loadedActionsHelpers: dict[ str, ActionHelper ] = dict()
-    for actionName in loadedActions.keys():
+    loadedActionsHelpers: dict[ str, ActionHelper ] = {}
+    for actionName in loadedActions:
         moduleName = __HELPERS[ actionName ]
         try:
             h = __loadModuleActionHelper( moduleName )

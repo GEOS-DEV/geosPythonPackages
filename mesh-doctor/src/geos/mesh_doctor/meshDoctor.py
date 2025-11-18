@@ -4,7 +4,8 @@ from geos.mesh_doctor.parsing.cliParsing import parseAndSetVerbosity, setupLogge
 from geos.mesh_doctor.register import registerParsingActions
 
 
-def main():
+def main() -> None:
+    """Main function for mesh-doctor CLI."""
     parseAndSetVerbosity( sys.argv )
     mainParser, allActions, allActionsHelpers = registerParsingActions()
     args = mainParser.parse_args( sys.argv[ 1: ] )

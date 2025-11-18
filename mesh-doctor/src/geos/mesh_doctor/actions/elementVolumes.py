@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 import uuid
+import numpy as np
+from numpy.typing import NDArray
+from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA, VTK_WEDGE
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter, vtkMeshQuality
 from vtkmodules.util.numpy_support import vtk_to_numpy
@@ -17,23 +20,19 @@ class Result:
     elementVolumes: list[ tuple[ int, float ] ]
 
 
-def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
-    cs = vtkCellSizeFilter()
+SUPPORTED_TYPES = [ VTK_HEXAHEDRON, VTK_TETRA ]
 
-    cs.ComputeAreaOff()
-    cs.ComputeLengthOff()
-    cs.ComputeSumOff()
-    cs.ComputeVertexCountOff()
-    cs.ComputeVolumeOn()
-    volumeArrayName = "__MESH_DOCTOR_VOLUME-" + str( uuid.uuid4() )  # Making the name unique
-    cs.SetVolumeArrayName( volumeArrayName )
 
-    cs.SetInputData( mesh )
-    cs.Update()
+def getMeshQuality( mesh: vtkUnstructuredGrid ) -> vtkDoubleArray:
+    """Get the quality of the mesh.
 
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh.
+
+    Returns:
+        vtkDoubleArray: The array containing the quality of each cell.
+    """
     mq = vtkMeshQuality()
-    SUPPORTED_TYPES = [ VTK_HEXAHEDRON, VTK_TETRA ]
-
     mq.SetTetQualityMeasureToVolume()
     mq.SetHexQualityMeasureToVolume()
     if hasattr( mq, "SetPyramidQualityMeasureToVolume" ):  # This feature is quite recent
@@ -42,22 +41,62 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
         mq.SetWedgeQualityMeasureToVolume()
         SUPPORTED_TYPES.append( VTK_WEDGE )
     else:
-        setupLogger.warning(
-            "Your \"pyvtk\" version does not bring pyramid nor wedge support with vtkMeshQuality. Using the fallback solution."
-        )
-
+        setupLogger.warning( "Your \"pyvtk\" version does not bring pyramid nor wedge support with vtkMeshQuality."
+                             " Using the fallback solution." )
     mq.SetInputData( mesh )
     mq.Update()
 
-    volume = cs.GetOutput().GetCellData().GetArray( volumeArrayName )
-    quality = mq.GetOutput().GetCellData().GetArray( "Quality" )  # Name is imposed by vtk.
+    return mq.GetOutput().GetCellData().GetArray( "Quality" )  # Name is imposed by vtk.
 
-    assert volume is not None
-    assert quality is not None
-    volume = vtk_to_numpy( volume )
-    quality = vtk_to_numpy( quality )
+
+def getMeshVolume( mesh: vtkUnstructuredGrid ) -> vtkDoubleArray:
+    """Get the volume of the mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh.
+
+    Returns:
+        vtkDataArray: The array containing the volume of each cell.
+    """
+    cs = vtkCellSizeFilter()
+    cs.ComputeAreaOff()
+    cs.ComputeLengthOff()
+    cs.ComputeSumOff()
+    cs.ComputeVertexCountOff()
+    cs.ComputeVolumeOn()
+
+    volumeArrayName: str = "__MESH_DOCTOR_VOLUME-" + str( uuid.uuid4() )  # Making the name unique
+    cs.SetVolumeArrayName( volumeArrayName )
+    cs.SetInputData( mesh )
+    cs.Update()
+
+    return cs.GetOutput().GetCellData().GetArray( volumeArrayName )
+
+
+def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    """Performs the supported elements check on a vtkUnstructuredGrid.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh to analyze.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the supported elements check.
+    """
+    volume: vtkDoubleArray = getMeshVolume( mesh )
+    if not volume:
+        setupLogger.error( "Volume computation failed." )
+        raise RuntimeError( "Volume computation failed." )
+
+    quality: vtkDoubleArray = getMeshQuality( mesh )
+    if not quality:
+        setupLogger.error( "Quality computation failed." )
+        raise RuntimeError( "Quality computation failed." )
+
+    volumeArray: NDArray[ np.floating ] = vtk_to_numpy( volume )
+    qualityArray: NDArray[ np.floating ] = vtk_to_numpy( quality )
     smallVolumes: list[ tuple[ int, float ] ] = []
-    for i, pack in enumerate( zip( volume, quality ) ):
+    for i, pack in enumerate( zip( volumeArray, qualityArray ) ):
         v, q = pack
         vol = q if mesh.GetCellType( i ) in SUPPORTED_TYPES else v
         if vol < options.minVolume:
@@ -65,6 +104,15 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     return Result( elementVolumes=smallVolumes )
 
 
-def action( vtkInputFile: str, options: Options ) -> Result:
-    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
-    return __action( mesh, options )
+def action( vtuInputFile: str, options: Options ) -> Result:
+    """Reads a vtu file and performs the element volumes check on it.
+
+    Args:
+        vtuInputFile (str): The path to the input VTU file.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the element volumes check.
+    """
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtuInputFile )
+    return meshAction( mesh, options )

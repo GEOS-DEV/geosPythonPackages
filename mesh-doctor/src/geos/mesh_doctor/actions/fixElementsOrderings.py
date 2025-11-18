@@ -17,7 +17,16 @@ class Result:
     unchangedCellTypes: frozenset[ int ]
 
 
-def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
+    """Performs the fix elements orderings on a vtkUnstructuredGrid.
+
+    Args:
+        mesh (vtkUnstructuredGrid): The input mesh to reorder.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the fix elements orderings.
+    """
     # The vtk cell type is an int and will be the key of the following mapping,
     # that will point to the relevant permutation.
     cellTypeToOrdering: dict[ int, list[ int ] ] = options.cellTypeToOrdering
@@ -38,8 +47,8 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
             supportPointIds = vtkIdList()
             cells.GetCellAtId( cellIdx, supportPointIds )
             newSupportPointIds = []
-            for i, v in enumerate( newOrdering ):
-                newSupportPointIds.append( supportPointIds.GetId( newOrdering[ i ] ) )
+            for orderingId in newOrdering:
+                newSupportPointIds.append( supportPointIds.GetId( orderingId ) )
             cells.ReplaceCellAtId( cellIdx, toVtkIdList( newSupportPointIds ) )
         else:
             unchangedCellTypes.add( cellType )
@@ -48,6 +57,15 @@ def __action( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
                    unchangedCellTypes=frozenset( unchangedCellTypes ) )
 
 
-def action( vtkInputFile: str, options: Options ) -> Result:
-    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtkInputFile )
-    return __action( mesh, options )
+def action( vtuInputFile: str, options: Options ) -> Result:
+    """Reads a vtu file and performs the fix elements orderings on it.
+
+    Args:
+        vtuInputFile (str): The path to the input VTU file.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the fix elements orderings.
+    """
+    mesh: vtkUnstructuredGrid = readUnstructuredGrid( vtuInputFile )
+    return meshAction( mesh, options )

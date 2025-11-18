@@ -3,13 +3,13 @@ import numpy as np
 import numpy.typing as npt
 from tqdm import tqdm
 from typing import Collection, Iterable, Sequence
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell
+from vtkmodules.vtkCommonDataModel import vtkCell, vtkMultiBlockDataSet, vtkUnstructuredGrid
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader
 from vtkmodules.util.numpy_support import vtk_to_numpy
+from geos.mesh.utils.genericHelpers import vtkIter
 from geos.mesh_doctor.actions.generateFractures import Coordinates3D
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
-from geos.mesh.utils.genericHelpers import vtkIter
 
 
 @dataclass( frozen=True )
@@ -28,18 +28,28 @@ class Result:
     errors: Sequence[ tuple[ int, int, int ] ]
 
 
-def __readMultiblock( vtkInputFile: str, matrixName: str,
+def __readMultiblock( vtuInputFile: str, matrixName: str,
                       fractureName: str ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]:
+    """Reads a multiblock VTU file and extracts the matrix and fracture meshes.
+
+    Args:
+        vtuInputFile (str): The input VTU file path.
+        matrixName (str): The name of the matrix mesh block.
+        fractureName (str): The name of the fracture mesh block.
+
+    Returns:
+        tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid ]: The matrix and fracture meshes.
+    """
     reader = vtkXMLMultiBlockDataReader()
-    reader.SetFileName( vtkInputFile )
+    reader.SetFileName( vtuInputFile )
     reader.Update()
-    multiBlock = reader.GetOutput()
+    multiBlock: vtkMultiBlockDataSet = reader.GetOutput()
     for b in range( multiBlock.GetNumberOfBlocks() ):
         blockName: str = multiBlock.GetMetaData( b ).Get( multiBlock.NAME() )
         if blockName == matrixName:
-            matrix: vtkUnstructuredGrid = multiBlock.GetBlock( b )
+            matrix = vtkUnstructuredGrid.SafeDownCast( multiBlock.GetBlock( b ) )
         if blockName == fractureName:
-            fracture: vtkUnstructuredGrid = multiBlock.GetBlock( b )
+            fracture = vtkUnstructuredGrid.SafeDownCast( multiBlock.GetBlock( b ) )
     assert matrix and fracture
     return matrix, fracture
 
@@ -64,17 +74,36 @@ def __checkCollocatedNodesPositions(
     matrixPoints: npt.NDArray, fracturePoints: npt.NDArray, g2l: npt.NDArray[ np.int64 ],
     collocatedNodes: Iterable[ Iterable[ int ] ]
 ) -> Collection[ tuple[ int, Iterable[ int ], Iterable[ Coordinates3D ] ] ]:
+    """Check that the collocated nodes are indeed collocated in space.
+
+    Args:
+        matrixPoints (npt.NDArray): The points of the matrix mesh.
+        fracturePoints (npt.NDArray): The points of the fracture mesh.
+        g2l (npt.NDArray[ np.int64 ]): Mapping from global to local indices in the matrix mesh.
+        collocatedNodes (Iterable[ Iterable[ int ] ]): The collocated nodes information.
+
+    Returns:
+        Collection[ tuple[ int, Iterable[ int ], Iterable[ Coordinates3D ] ] ]: A collection of issues found.
+    """
     issues = []
     for li, bucket in enumerate( collocatedNodes ):
-        matrix_nodes = ( fracturePoints[ li ], ) + tuple( map( lambda gi: matrixPoints[ g2l[ gi ] ], bucket ) )
+        matrix_nodes = ( fracturePoints[ li ], ) + tuple( matrixPoints[ g2l[ gi ] ] for gi in bucket )
         m = np.array( matrix_nodes )
         rank: int = np.linalg.matrix_rank( m )
         if rank > 1:
-            issues.append( ( li, bucket, tuple( map( lambda gi: matrixPoints[ g2l[ gi ] ], bucket ) ) ) )
+            issues.append( ( li, bucket, tuple( matrixPoints[ g2l[ gi ] ] for gi in bucket ) ) )
     return issues
 
 
-def myIter( ccc ):
+def myIter( ccc: tuple ) -> Iterable[ tuple ]:
+    """Recursively generates all combinations from nested sequences.
+
+    Args:
+        ccc (tuple): A tuple of sequences to generate combinations from.
+
+    Yields:
+        Iterable[ tuple ]: All possible combinations, one element from each sequence.
+    """
     car, cdr = ccc[ 0 ], ccc[ 1: ]
     for i in car:
         if cdr:
@@ -85,7 +114,15 @@ def myIter( ccc ):
 
 
 def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, g2l: npt.NDArray[ np.int64 ],
-                      collocatedNodes: Sequence[ Iterable[ int ] ] ):
+                      collocatedNodes: Sequence[ Iterable[ int ] ] ) -> None:
+    """Check that for each pair of collocated nodes, the corresponding fracture faces have exactly two neighbor cells.
+
+    Args:
+        matrix (vtkUnstructuredGrid): The matrix mesh.
+        fracture (vtkUnstructuredGrid): The fracture mesh.
+        g2l (npt.NDArray[ np.int64 ]): Mapping from global to local indices in the matrix mesh.
+        collocatedNodes (Sequence[ Iterable[ int ] ]): The collocated nodes information.
+    """
     fractureNodes: set[ int ] = set()
     for bucket in collocatedNodes:
         for gi in bucket:
@@ -121,8 +158,17 @@ def __checkNeighbors( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid
                                  f" {found}) for collocated nodes {cns}." )
 
 
-def __action( vtkInputFile: str, options: Options ) -> Result:
-    matrix, fracture = __readMultiblock( vtkInputFile, options.matrixName, options.fractureName )
+def meshAction( matrix: vtkUnstructuredGrid, fracture: vtkUnstructuredGrid, options: Options ) -> Result:
+    """Performs the check of the fractures and collocated nodes generated.
+
+    Args:
+        matrix (vtkUnstructuredGrid): The matrix mesh.
+        fracture (vtkUnstructuredGrid): The fracture mesh.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the self intersecting elements check.
+    """
     matrixPoints: vtkPoints = matrix.GetPoints()
     fracturePoints: vtkPoints = fracture.GetPoints()
 
@@ -152,9 +198,15 @@ def __action( vtkInputFile: str, options: Options ) -> Result:
     return Result( errors=errors )
 
 
-def action( vtkInputFile: str, options: Options ) -> Result:
-    try:
-        return __action( vtkInputFile, options )
-    except BaseException as e:
-        setupLogger.error( e )
-        return Result( errors=() )
+def action( vtkMultiBlockInputFile: str, options: Options ) -> Result:
+    """Reads a vtkMultiblock and performs the check of the fractures and collocated nodes generated.
+
+    Args:
+        vtkMultiBlockInputFile (str): The path to the input vtkMultiBlock file.
+        options (Options): The options for processing.
+
+    Returns:
+        Result: The result of the check of the fractures and collocated nodes generated.
+    """
+    matrix, fracture = __readMultiblock( vtkMultiBlockInputFile, options.matrixName, options.fractureName )
+    return meshAction( matrix, fracture, options )

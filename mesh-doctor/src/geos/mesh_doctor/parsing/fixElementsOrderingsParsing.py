@@ -1,3 +1,4 @@
+from argparse import _SubParsersAction
 import random
 from vtkmodules.vtkCommonDataModel import (
     VTK_HEXAGONAL_PRISM,
@@ -8,6 +9,7 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_VOXEL,
     VTK_WEDGE,
 )
+from typing import Any
 from geos.mesh_doctor.actions.fixElementsOrderings import Options, Result
 from geos.mesh_doctor.parsing import vtkOutputParsing, FIX_ELEMENTS_ORDERINGS
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
@@ -33,7 +35,12 @@ __CELL_TYPE_SUPPORT_SIZE = {
 }
 
 
-def fillSubparser( subparsers ) -> None:
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
+
+    Args:
+        subparsers: The subparsers action to add the parser to.
+    """
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
     for key, vtkKey in __CELL_TYPE_MAPPING.items():
         tmp = list( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) )
@@ -47,7 +54,7 @@ def fillSubparser( subparsers ) -> None:
     vtkOutputParsing.fillVtkOutputSubparser( p )
 
 
-def convert( parsedOptions ) -> Options:
+def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     """From the parsed cli options, return the converted options for self intersecting elements check.
 
     Args:
@@ -64,7 +71,7 @@ def convert( parsedOptions ) -> Options:
         rawMapping = parsedOptions[ key ]
         if rawMapping:
             tmp = tuple( map( int, rawMapping.split( "," ) ) )
-            if not set( tmp ) == set( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) ):
+            if set( tmp ) != set( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) ):
                 errMsg = f"Permutation {rawMapping} for type {key} is not valid."
                 setupLogger.error( errMsg )
                 raise ValueError( errMsg )
@@ -73,7 +80,13 @@ def convert( parsedOptions ) -> Options:
     return Options( vtkOutput=vtkOutput, cellTypeToOrdering=cellTypeToOrdering )
 
 
-def displayResults( options: Options, result: Result ):
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the fix elements orderings feature.
+
+    Args:
+        options: The options used for the fix.
+        result: The result of the fix elements orderings feature.
+    """
     if result.output:
         setupLogger.info( f"New mesh was written to file '{result.output}'" )
         if result.unchangedCellTypes:
