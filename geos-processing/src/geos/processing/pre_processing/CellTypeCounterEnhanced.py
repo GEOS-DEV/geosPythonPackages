@@ -46,7 +46,11 @@ loggerTitle: str = "Cell Type Counter Enhanced"
 
 class CellTypeCounterEnhanced():
 
-    def __init__( self: Self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False, ) -> None:
+    def __init__(
+        self: Self,
+        inputMesh: vtkUnstructuredGrid,
+        speHandler: bool = False,
+    ) -> None:
         """CellTypeCounterEnhanced filter computes mesh stats.
 
         Args:

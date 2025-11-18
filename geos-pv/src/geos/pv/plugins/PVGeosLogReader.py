@@ -598,7 +598,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                                                             array_type=VTK_DOUBLE )  # type: ignore[no-untyped-call]
                 newAttr.SetName( column )
                 output.AddColumn( newAttr )
-            self.logger.info( f"The plugin { self.logger.name } succeeded.")
+            self.logger.info( f"The plugin { self.logger.name } succeeded." )
         except Exception as e:
             self.logger.error( f"The plugin { self.logger.name } failed.\n{ e }" )
             return 0

@@ -10,7 +10,8 @@ from typing import Optional
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+    VTKHandler
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,

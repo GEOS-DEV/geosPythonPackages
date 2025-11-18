@@ -9,7 +9,8 @@ from typing_extensions import Self
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+    VTKHandler
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkPointSet, )

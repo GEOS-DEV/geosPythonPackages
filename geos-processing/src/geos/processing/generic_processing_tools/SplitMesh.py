@@ -8,7 +8,9 @@ from typing_extensions import Self
 
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import ( vtkPoints, vtkIdTypeArray, vtkDataArray )
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE, VTK_POLYHEDRON, VTK_POLYGON )
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes,
+                                            VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE,
+                                            VTK_POLYHEDRON, VTK_POLYGON )
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 
 from geos.utils.Logger import ( Logger, getLogger )
@@ -105,7 +107,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
             assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
             assert nbPolyhedra * nbPolygon == 0, ( "Input mesh is composed of both polygons and polyhedra,"
-                                                " but it must contains only one of the two." )
+                                                   " but it must contains only one of the two." )
             nbNewPoints: int = 0
             nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
             nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 * nbTriangles * 4 + nbQuad * 4
@@ -146,7 +148,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self._transferCellArrays( self.outputMesh )
             self.logger.info( f"The filter { self.logger.name } succeeded." )
         except Exception as e:
-            self.logger.error( f"The filter {self.logger.name } failed.\n{ e }")
+            self.logger.error( f"The filter {self.logger.name } failed.\n{ e }" )
 
         return
 
@@ -160,7 +162,8 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         Returns:
             CellTypeCounts: cell type counts
         """
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self.inputMesh, self.speHandler )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
+            self.inputMesh, self.speHandler )
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
         cellTypeCounterEnhancedFilter.applyFilter()

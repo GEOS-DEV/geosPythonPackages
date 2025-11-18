@@ -101,12 +101,17 @@ def getQualityMetricArrayName( metric: int ) -> str:
     """
     return QUALITY_ARRAY_NAME + "_" + "".join( getQualityMeasureNameFromIndex( metric ).split( " " ) )
 
+
 loggerTitle: str = "Mesh Quality Enhanced"
 
 
 class MeshQualityEnhanced():
 
-    def __init__( self: Self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False, ) -> None:
+    def __init__(
+        self: Self,
+        inputMesh: vtkUnstructuredGrid,
+        speHandler: bool = False,
+    ) -> None:
         """Enhanced vtkMeshQuality filter.
 
         Args:
@@ -323,7 +328,8 @@ class MeshQualityEnhanced():
 
     def _computeCellTypeCounts( self: Self ) -> None:
         """Compute cell type counts."""
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self._outputMesh, self.speHandler )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
+            self._outputMesh, self.speHandler )
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
         cellTypeCounterEnhancedFilter.applyFilter()

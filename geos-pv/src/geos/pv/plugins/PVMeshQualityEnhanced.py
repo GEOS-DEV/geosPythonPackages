@@ -10,7 +10,8 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+    VTKHandler
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 from vtkmodules.vtkCommonCore import (
     vtkDataArraySelection, )
 from vtkmodules.vtkCommonDataModel import (
@@ -244,11 +245,11 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         if len( self.meshQualityEnhancedFilter.logger.handlers ) == 0:
             self.meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         self.meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
-                                                         quadMetrics=quadMetrics,
-                                                         tetraMetrics=tetraMetrics,
-                                                         pyramidMetrics=pyrMetrics,
-                                                         wedgeMetrics=wedgeMetrics,
-                                                         hexaMetrics=hexaMetrics )
+                                                              quadMetrics=quadMetrics,
+                                                              tetraMetrics=tetraMetrics,
+                                                              pyramidMetrics=pyrMetrics,
+                                                              wedgeMetrics=wedgeMetrics,
+                                                              hexaMetrics=hexaMetrics )
         self.meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
         self.meshQualityEnhancedFilter.applyFilter()
 
@@ -261,7 +262,10 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         self._blockIndex += 1
         return
 
-    def saveFile( self: Self, stats: QualityMetricSummary,  ) -> None:
+    def saveFile(
+        self: Self,
+        stats: QualityMetricSummary,
+    ) -> None:
         """Export mesh quality metric summary file."""
         try:
             assert self._filename is not None, "Mesh quality summary report file path is undefined."
