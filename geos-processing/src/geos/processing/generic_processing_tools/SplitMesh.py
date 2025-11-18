@@ -6,7 +6,6 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonCore import ( vtkPoints, vtkIdTypeArray, vtkDataArray )
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes,
                                             VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE,
@@ -49,7 +48,7 @@ To use the filter:
 loggerTitle: str = "Split Mesh"
 
 
-class SplitMesh( VTKPythonAlgorithmBase ):
+class SplitMesh():
 
     def __init__( self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False ) -> None:
         """SplitMesh filter splits each cell using edge centers.
