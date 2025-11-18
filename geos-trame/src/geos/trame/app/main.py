@@ -7,6 +7,9 @@ from typing import Any
 from trame.app import get_server  # type: ignore
 from trame_server import Server
 
+import sys
+sys.path.insert(0,"/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-trame/src")
+
 from geos.trame.app.core import GeosTrame
 
 

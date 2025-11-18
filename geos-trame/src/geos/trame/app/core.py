@@ -23,7 +23,12 @@ from geos.trame.app.ui.plotting import DeckPlotting
 from geos.trame.app.ui.timeline import TimelineEditor
 from geos.trame.app.ui.viewer.viewer import DeckViewer
 from geos.trame.app.components.alertHandler import AlertHandler
+
+
 from geos.trame.app.io.simulation import Simulation, SimRunner
+from geos.trame.app.ui.simulation_view import define_simulation_view
+
+
 
 import sys
 
@@ -44,6 +49,7 @@ class GeosTrame:
         server.enable_module( module )
 
         self.state.input_file = file_name
+        self.state.user_id = None
 
         # TODO handle hot_reload
 
@@ -69,9 +75,9 @@ class GeosTrame:
         self.region_viewer = RegionViewer()
         self.well_viewer = WellViewer( 5, 5 )
 
-        # Simulation runner
+        ######## Simulation runner
         self.sim_runner : SimRunner = SimRunner(self.state.user_id)
-        self.simulationLauncher = Simulation(self.sim_runner, server=server)
+        self.simulation = Simulation(self.sim_runner, server=server)
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
@@ -183,23 +189,23 @@ class GeosTrame:
                     ):
                         vuetify.VIcon( "mdi-content-save-outline" )
 
-                    with html.Div(
-                            style=
-                            "height: 100%; width: 300px; display: flex; align-items: center; justify-content: space-between;",
-                            v_if=( "tab_idx == 1", ),
-                    ):
-                        vuetify.VBtn(
-                            "Run",
-                            style="z-index: 1;",
-                        )
-                        vuetify.VBtn(
-                            "Kill",
-                            style="z-index: 1;",
-                        )
-                        vuetify.VBtn(
-                            "Clear",
-                            style="z-index: 1;",
-                        )
+                    # with html.Div(
+                    #         style=
+                    #         "height: 100%; width: 300px; display: flex; align-items: center; justify-content: space-between;",
+                    #         v_if=( "tab_idx == 1", ),
+                    # ):
+                    #     vuetify.VBtn(
+                    #         "Run",
+                    #         style="z-index: 1;",
+                    #     )
+                    #     vuetify.VBtn(
+                    #         "Kill",
+                    #         style="z-index: 1;",
+                    #     )
+                    #     vuetify.VBtn(
+                    #         "Clear",
+                    #         style="z-index: 1;",
+                    #     )
 
             # input file editor
             with vuetify.VCol( v_show=( "tab_idx == 0", ), classes="flex-grow-1 pa-0 ma-0" ):
@@ -212,5 +218,18 @@ class GeosTrame:
                     )
                     print(
                         "The file " + self.state.input_file + " cannot be parsed.",
+                        file=sys.stderr,
+                    )
+            
+            with vuetify.VCol( v_show=( "tab_idx == 1"), classes="flex-grow-1 pa-0 ma-0") :
+                if self.simulation is not None:
+                    define_simulation_view(self.server)
+                else:
+                    self.ctrl.on_add_error(
+                        "Error",
+                        "The execution context " + self.state.exec_context + " is not consistent.",
+                    )
+                    print(
+                        "The execution context " + self.state.exec_context + " is not consistent.",
                         file=sys.stderr,
                     )

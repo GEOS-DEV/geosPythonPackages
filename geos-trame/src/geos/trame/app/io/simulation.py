@@ -10,13 +10,46 @@ from trame_server.core import Server
 from trame_server.state import State
 from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
+import jinja2 
+import paramiko 
+
 #TODO move outside
 #TODO use Jinja on real launcher
 
 @dataclass(frozen=True)
 class SimulationConstant:
-    SIMULATION_GEOS_PATH = "/some/path/"
-    SIMULATION_MACHINE_NAME = "p4log01"  # Only run on P4 machine
+    SIMULATION_GEOS_PATH = "/workrd/users/"
+    HOST = "p4log01"  # Only run on P4 machine
+    PORT = 22
+    SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/user"
+    SIMULATION_DEFAULT_FILE_NAME="geosDeck.xml"
+
+class Authentificator:#namespacing more than anything eler
+
+    @staticmethod
+    def get_key(login:str, passphrase = "trameisrunning"):
+
+        try:
+            PRIVATE_KEY = paramiko.RSAKey.from_private_key_file("~/.ssh/id_trame")
+        except paramiko.SSHException as e:
+            print(f"Error loading private key: {e}\n")
+        except FileNotFoundError as e:
+            print(f"Private key not found: {e}\n Generating key ...")
+            PRIVATE_KEY = Authentificator.gen_key(login, SimulationConstant.HOST, passphrase)
+            return PRIVATE_KEY
+
+        return PRIVATE_KEY
+
+    @staticmethod
+    def gen_key(login:str, host: str, passphrase: str):
+        file_path = "~/.ssh/id_trame"
+        cmd = f"ssh-keygen -t rsa -b 4096 -C {login}@{host} -f {file_path} -N \"{passphrase}\" "
+        import subprocess 
+        print(f"Running: {''.join(cmd)}")
+        subprocess.run(cmd, shell=True)
+        print(f"SSH key generated at: {file_path}")
+        print(f"Public key: {file_path}.pub")
+    SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
 
 @unique
 class SlurmJobStatus(Enum):
@@ -183,25 +216,170 @@ class ISimRunner(ABC):
     Abstract interface for sim runner.
     Provides methods to trigger simulation, get simulation output path and knowing if simulation is done or not.
     """
+    pass
+    # @abstractmethod
+    # def launch_simulation(self, launcher_params: LauncherParams) -> tuple[Path, SimulationInformation]:
+    #     pass
 
-    @abstractmethod
-    def launch_simulation(self, launcher_params: LauncherParams) -> tuple[Path, SimulationInformation]:
-        pass
+    # @abstractmethod
+    # def get_user_igg(self) -> str:
+    #     pass
 
-    @abstractmethod
-    def get_user_igg(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_running_user_jobs(self) -> list[tuple[str, SlurmJobStatus]]:
-        pass
+    # @abstractmethod
+    # def get_running_user_jobs(self) -> list[tuple[str, SlurmJobStatus]]:
+    #     pass
 
 
 class SimRunner(ISimRunner):
     """
-    Runs sim on HPC
+    Runs sim on HPC. Wrap paramiko use
     """
-    pass
+
+    def __init__(self, user):
+        super().__init__()
+
+        ssh_client = self._create_ssh_client(SimulationConstant.HOST, SimulationConstant.PORT, username=user, key=Authentificator.get_key(user))
+        print(ssh_client)
+
+        # early test
+        self.local_upload_file = "test_upload.txt"
+        import time
+        with open(self.local_upload_file, "w") as f:
+            f.write(f"This file was uploaded at {time.ctime()}\n")
+        print(f"Created local file: {self.local_upload_file}")
+
+    @staticmethod
+    def _create_ssh_client( host, port, username, password=None, key=None):
+        """
+        Initializes and returns an SSH client connection.
+        Uses context manager for automatic cleanup.
+        """
+        client = paramiko.SSHClient()
+        # Automatically adds the hostname and new host keys to the host files (~/.ssh/known_hosts)
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            if key:
+               print(f"Connecting to {host} using key-based authentication...")
+               client.connect(host, port, username, pkey=key, timeout=10)
+            else:
+                raise paramiko.SSHException("No Key Found")
+
+            return client
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Check your credentials or key.")
+            return None
+        except paramiko.SSHException as e:
+            print(f"Could not establish SSH connection: {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
+
+
+    @staticmethod
+    def _execute_remote_command(client, command):
+        """
+        Executes a single command on the remote server and prints the output.
+        """
+        if not client:
+            return
+
+        print(f"\n--- Executing Command: '{command}' ---")
+        try:
+            # Executes the command. stdin, stdout, and stderr are file-like objects.
+            # Ensure command ends with a newline character for some shell environments.
+            stdin, stdout, stderr = client.exec_command(command)
+
+            # Wait for the command to finish and read the output
+            exit_status = stdout.channel.recv_exit_status()
+
+            # Print standard output
+            stdout_data = stdout.read().decode().strip()
+            if stdout_data:
+                print("STDOUT:")
+                print(stdout_data)
+
+            # Print standard error (if any)
+            stderr_data = stderr.read().decode().strip()
+            if stderr_data:
+                print("STDERR:")
+                print(stderr_data)
+
+            print(f"Command exited with status: {exit_status}")
+            return exit_status
+        
+        except Exception as e:
+            print(f"Error executing command: {e}")
+            return -1
+
+    @staticmethod
+    def _transfer_file_sftp(client, local_path, remote_path, direction="put"):
+        """
+        Transfers a file using SFTP (Secure File Transfer Protocol).
+        Direction can be 'put' (upload) or 'get' (download).
+        """
+        if not client:
+            return
+
+        print(f"\n--- Starting SFTP Transfer ({direction.upper()}) ---")
+        
+        try:
+            # Establish an SFTP connection session
+            sftp = client.open_sftp()
+
+            if direction == "put":
+                print(f"Uploading '{local_path}' to '{remote_path}'...")
+                sftp.put(local_path, remote_path)
+                print("Upload complete.")
+            elif direction == "get":
+                print(f"Downloading '{remote_path}' to '{local_path}'...")
+                sftp.get(remote_path, local_path)
+                print("Download complete.")
+            else:
+                print("Invalid transfer direction. Use 'put' or 'get'.")
+
+            sftp.close()
+            return True
+        
+        except FileNotFoundError:
+            print(f"Error: Local file '{local_path}' not found.")
+            return False
+        except IOError as e:
+            print(f"Error accessing remote file or path: {e}")
+            return False
+        except Exception as e:
+            print(f"An error occurred during SFTP: {e}")
+            return False
+
+
+    def launch_simulation(self):
+
+        if self.ssh_client:
+            try:
+                # --- 3. Execute a Remote Command ---
+                self._execute_remote_command(self.ssh_client, "ls -l /tmp")
+                
+                # --- 4. Upload a File (PUT) ---
+                remote_path_upload = f"/tmp/{self.local_upload_file}"
+                self._transfer_file_sftp(self.ssh_client, self.local_upload_file, remote_path_upload, direction="put")
+
+                # --- 5. Verify Upload by Listing Remote Directory ---
+                self._execute_remote_command(self.ssh_client, f"ls -l /tmp")
+
+                # --- 6. Download a File (GET) ---
+                remote_download_file = f"/workrd/{self.local_upload_file}" # Use a known remote file
+                local_download_file = "downloaded_hostname.txt"
+                self._transfer_file_sftp(self.ssh_client, local_download_file, remote_download_file, direction="get")
+                
+                # --- 7. Clean up the uploaded file (Optional) ---
+                self._execute_remote_command(self.ssh_client, f"rm {remote_path_upload}")
+                
+            finally:
+                # --- 8. Close the connection ---
+                self.ssh_client.close()
+                print("\nSSH Connection closed.")
+
 
 class Simulation:
     """
@@ -216,7 +394,7 @@ class Simulation:
     def __init__(self, sim_runner: ISimRunner, server: Server, sim_info_dir: Optional[Path] = None) -> None:
         self._server = server
         self._sim_runner = sim_runner
-        self._sim_info_dir = sim_info_dir or SIMULATIONS_INFORMATION_FOLDER_PATH
+        self._sim_info_dir = sim_info_dir or SimulationConstant.SIMULATIONS_INFORMATION_FOLDER_PATH
 
         self._job_status_watcher: Optional[AsyncPeriodicRunner] = None
         self._job_status_watcher_period_ms = 2000
@@ -231,6 +409,10 @@ class Simulation:
         if self._job_status_watcher:
             self._job_status_watcher.set_period_ms(period_ms)
 
+    # def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
+    #     newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
+    #     if not newer_file:
+    #         return
     # def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
     #     newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
     #     if not newer_file:
@@ -279,11 +461,12 @@ class Simulation:
             self._job_status_watcher.stop()
 
     def start_result_streams(self) -> None:
-        self.stop_result_streams()
+        pass
+        # self.stop_result_streams()
 
-        self._job_status_watcher = AsyncPeriodicRunner(
-            self._update_job_status, period_ms=self._job_status_watcher_period_ms
-        )
+        # self._job_status_watcher = AsyncPeriodicRunner(
+        #     self._update_job_status, period_ms=self._job_status_watcher_period_ms
+        # )
 
     def start_simulation(self) -> None:
         state = self._server.state
