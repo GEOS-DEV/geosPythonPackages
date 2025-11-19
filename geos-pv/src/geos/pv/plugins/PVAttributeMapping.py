@@ -16,21 +16,11 @@ update_paths()
 
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkDataSet,
-    vtkMultiBlockDataSet,
-)
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkDataSet, vtkMultiBlockDataSet
 
 __doc__ = """
 AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.

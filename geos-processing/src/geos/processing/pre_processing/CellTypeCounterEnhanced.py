@@ -5,7 +5,7 @@ import logging
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkIntArray
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX )
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes

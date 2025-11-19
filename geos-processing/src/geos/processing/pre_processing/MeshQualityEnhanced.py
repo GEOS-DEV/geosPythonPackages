@@ -8,39 +8,24 @@ from typing import Optional, cast
 from typing_extensions import Self
 from vtkmodules.vtkFiltersCore import vtkExtractEdges
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
-from vtkmodules.vtkCommonCore import (
-    vtkIdList,
-    vtkPoints,
-    vtkDataArray,
-    vtkIntArray,
-    vtkDoubleArray,
-    vtkIdTypeArray,
-    vtkMath,
-)
+from vtkmodules.vtkCommonCore import ( vtkIdList, vtkPoints, vtkDataArray, vtkIntArray, vtkDoubleArray, vtkIdTypeArray,
+                                       vtkMath )
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vtkCellData, vtkPointData, vtkFieldData,
                                             vtkCell, vtkCell3D, vtkTetra, vtkCellTypes, vtkPolygon, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON,
                                             VTK_POLYHEDRON )
-from vtkmodules.util.numpy_support import ( vtk_to_numpy, numpy_to_vtk )
+from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import ( QualityMetricSummary, StatTypes )
 from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
-from geos.mesh.stats.meshQualityMetricHelpers import (
-    getQualityMeasureNameFromIndex,
-    getQualityMetricFromIndex,
-    VtkCellQualityMetricEnum,
-    CellQualityMetricAdditionalEnum,
-    QualityMetricOtherEnum,
-    MeshQualityMetricEnum,
-    getAllCellTypesExtended,
-    getAllCellTypes,
-    getPolygonCellTypes,
-    getPolyhedronCellTypes,
-    getCellQualityMeasureFromCellType,
-    getChildrenCellTypes,
-)
+from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
+                                                       VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,
+                                                       QualityMetricOtherEnum, MeshQualityMetricEnum,
+                                                       getAllCellTypesExtended, getAllCellTypes, getPolygonCellTypes,
+                                                       getPolyhedronCellTypes, getCellQualityMeasureFromCellType,
+                                                       getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
 from geos.utils.Logger import ( Logger, getLogger )

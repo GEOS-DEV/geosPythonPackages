@@ -9,7 +9,7 @@ from typing_extensions import Self
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
-from vtkmodules.vtkCommonDataModel import ( vtkMultiBlockDataSet, vtkUnstructuredGrid )
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset

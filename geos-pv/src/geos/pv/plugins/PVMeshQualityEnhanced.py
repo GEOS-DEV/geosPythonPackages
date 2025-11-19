@@ -232,11 +232,11 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
             meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
-                                                              quadMetrics=quadMetrics,
-                                                              tetraMetrics=tetraMetrics,
-                                                              pyramidMetrics=pyrMetrics,
-                                                              wedgeMetrics=wedgeMetrics,
-                                                              hexaMetrics=hexaMetrics )
+                                                         quadMetrics=quadMetrics,
+                                                         tetraMetrics=tetraMetrics,
+                                                         pyramidMetrics=pyrMetrics,
+                                                         wedgeMetrics=wedgeMetrics,
+                                                         hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
         meshQualityEnhancedFilter.applyFilter()
 

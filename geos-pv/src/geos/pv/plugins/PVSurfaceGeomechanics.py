@@ -7,11 +7,8 @@ from pathlib import Path
 import numpy as np
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -21,21 +18,12 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 update_paths()
 
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_ROCK_COHESION,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
-from geos.mesh.utils.multiblockHelpers import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArray, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkPolyData,
-)
+from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
+
+from vtkmodules.vtkCommonCore import vtkDataArray
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData
 
 __doc__ = """
 PVSurfaceGeomechanics is a Paraview plugin that allows to compute

@@ -15,24 +15,19 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_GRAIN_BULK_MODULUS,
-    DEFAULT_ROCK_COHESION,
-    WATER_DENSITY,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
+                                           DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
 from geos.pv.plugins.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
 from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
 
-from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty, smproxy )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 
 __doc__ = """
 PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:

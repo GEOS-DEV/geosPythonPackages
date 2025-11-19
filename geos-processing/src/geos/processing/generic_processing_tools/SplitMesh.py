@@ -6,11 +6,11 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
-from vtkmodules.vtkCommonCore import ( vtkPoints, vtkIdTypeArray, vtkDataArray )
+from vtkmodules.vtkCommonCore import vtkPoints, vtkIdTypeArray, vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes,
                                             VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE,
                                             VTK_POLYHEDRON, VTK_POLYGON )
-from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced

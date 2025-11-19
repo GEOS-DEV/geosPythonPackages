@@ -6,14 +6,11 @@ import sys
 from pathlib import Path
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet, )
+from vtkmodules.vtkCommonDataModel import vtkPointSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -23,7 +20,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = """
 Split each cell of input mesh to smaller cells.

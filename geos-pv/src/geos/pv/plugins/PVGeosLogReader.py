@@ -23,45 +23,23 @@ update_paths()
 
 import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
-from vtkmodules.vtkCommonCore import (
-    vtkDoubleArray,
-    vtkInformation,
-    vtkInformationVector,
-)
+from vtkmodules.vtkCommonCore import vtkDoubleArray, vtkInformation, vtkInformationVector, VTK_DOUBLE
 from vtkmodules.vtkCommonDataModel import vtkTable
 
-from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import (
-    identifyProperties,
-    transformUserChoiceToListPhases,
-)
-
+from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import ( identifyProperties, transformUserChoiceToListPhases )
 from geos.pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
 from geos.pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
-from geos.utils.enumUnits import (
-    Mass,
-    MassRate,
-    Pressure,
-    Time,
-    Unit,
-    Volume,
-    VolumetricRate,
-    enumerationDomainUnit,
-)
-
+from geos.utils.enumUnits import ( Mass, MassRate, Pressure, Time, Unit, Volume, VolumetricRate, enumerationDomainUnit )
 from geos.utils.UnitRepository import UnitRepository
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos.pv.utils.paraviewTreatments import (
-    strListToEnumerationDomainXml, )
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
+from geos.pv.utils.paraviewTreatments import strListToEnumerationDomainXml
 
 __doc__ = """
 ``PVGeosLogReader`` is a Paraview plugin that allows to read Geos output log.

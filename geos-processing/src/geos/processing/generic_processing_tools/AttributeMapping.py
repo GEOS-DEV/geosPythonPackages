@@ -5,8 +5,8 @@
 import numpy as np
 import numpy.typing as npt
 import logging
-from typing_extensions import ( Self, Union )
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet )
+from typing_extensions import Self, Union
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 from geos.utils.Logger import ( Logger, getLogger )

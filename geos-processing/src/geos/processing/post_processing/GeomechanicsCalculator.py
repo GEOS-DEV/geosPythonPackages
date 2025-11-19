@@ -13,27 +13,13 @@ import numpy.typing as npt
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 
 from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.arrayHelpers import (
-    getArrayInObject,
-    isAttributeInObject,
-)
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
-from geos.utils.Logger import (
-    Logger,
-    getLogger,
-)
-from geos.utils.GeosOutputsConstants import (
-    AttributeEnum,
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-)
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_GRAIN_BULK_MODULUS,
-    DEFAULT_ROCK_COHESION,
-    WATER_DENSITY,
-)
+from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
+                                              PostProcessingOutputsEnum )
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
+                                           DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
