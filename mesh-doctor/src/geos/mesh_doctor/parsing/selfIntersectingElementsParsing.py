@@ -1,3 +1,4 @@
+from __future__ import annotations
 from argparse import _SubParsersAction
 import numpy
 from typing import Any

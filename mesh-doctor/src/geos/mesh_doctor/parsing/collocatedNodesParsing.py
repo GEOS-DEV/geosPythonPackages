@@ -1,3 +1,4 @@
+from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.collocatedNodes import Options, Result

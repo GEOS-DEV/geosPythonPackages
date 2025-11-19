@@ -1,3 +1,4 @@
+from __future__ import annotations
 import argparse
 from copy import deepcopy
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions

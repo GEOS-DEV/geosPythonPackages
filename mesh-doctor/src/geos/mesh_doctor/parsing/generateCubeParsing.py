@@ -1,3 +1,4 @@
+from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.generateCube import Options, Result, FieldInfo
@@ -40,7 +41,7 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
             raise ValueError( f"Dimension {dimension} must be a positive integer" ) from e
         return FieldInfo( name=name, support=support, dimension=dimension )
 
-    gids: GlobalIdsInfo = generateGlobalIdsParsing.convertGlobalIds( parsedOptions )
+    gids: GlobalIdsInfo = generateGlobalIdsParsing.convert( parsedOptions )
 
     return Options( vtkOutput=vtkOutputParsing.convert( parsedOptions ),
                     generateCellsGlobalIds=gids.cells,
@@ -92,7 +93,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     required=False,
                     default=(),
                     help="Create fields on CELLS or POINTS, with given dimension (typically 1 or 3)." )
-    generateGlobalIdsParsing.fillGenerateGlobalIdsSubparser( p )
+    generateGlobalIdsParsing.addArguments( p )
     vtkOutputParsing.fillVtkOutputSubparser( p )
 
 

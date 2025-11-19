@@ -1,3 +1,4 @@
+from __future__ import annotations
 import multiprocessing
 from argparse import _SubParsersAction
 from typing import Any

@@ -9,8 +9,8 @@ from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
                                             VTK_LINE, VTK_PENTAGONAL_PRISM, VTK_POLYGON, VTK_POLYHEDRON, VTK_PYRAMID,
                                             VTK_QUAD, VTK_TETRA, VTK_TRIANGLE, VTK_VERTEX, VTK_VOXEL, VTK_WEDGE )
-from geos.mesh.doctor.actions.vtkPolyhedron import buildFaceToFaceConnectivityThroughEdges, FaceStream
-from geos.mesh.doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.actions.vtkPolyhedron import buildFaceToFaceConnectivityThroughEdges, FaceStream
+from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import readUnstructuredGrid
 from geos.mesh.utils.genericHelpers import vtkIter
 
