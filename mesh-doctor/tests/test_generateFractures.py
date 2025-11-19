@@ -11,8 +11,8 @@ from geos.mesh_doctor.actions.generateCube import buildRectilinearBlocksMesh, XY
 from geos.mesh_doctor.actions.generateFractures import ( __splitMeshOnFractures, Options, FracturePolicy, Coordinates3D,
                                                          IDMapping )
 
-BorderFacesNodesCoords: TypeAlias = tuple[ tuple[ Coordinates3D, ... ], ... ]
-FaceNodesCoords: TypeAlias = tuple[ Coordinates3D, ... ]
+BorderFacesNodesCoords: TypeAlias = tuple[ tuple[ Coordinates3D, ...], ...]
+FaceNodesCoords: TypeAlias = tuple[ Coordinates3D, ...]
 IDMatrix: TypeAlias = Sequence[ Sequence[ int ] ]
 
 
@@ -256,8 +256,8 @@ def findBordersFacesRectilinearGrid( mesh: vtkUnstructuredGrid ) -> BorderFacesN
         BorderFacesNodesCoords: For a rectilinear grid, returns a tuple of 6 faces nodeset.
     """
     meshBounds: tuple[ float, float, float, float, float, float ] = mesh.GetBounds()
-    minBound: tuple[ float, ... ] = tuple( [ meshBounds[ i ] for i in range( len( meshBounds ) ) if i % 2 == 0 ] )
-    maxBound: tuple[ float, ... ] = tuple( [ meshBounds[ i ] for i in range( len( meshBounds ) ) if i % 2 == 1 ] )
+    minBound: tuple[ float, ...] = tuple( [ meshBounds[ i ] for i in range( len( meshBounds ) ) if i % 2 == 0 ] )
+    maxBound: tuple[ float, ...] = tuple( [ meshBounds[ i ] for i in range( len( meshBounds ) ) if i % 2 == 1 ] )
     center: Coordinates3D = mesh.GetCenter()
     faceDiag: Coordinates3D = ( ( maxBound[ 0 ] - minBound[ 0 ] ) / 2, ( maxBound[ 1 ] - minBound[ 1 ] ) / 2,
                                 ( maxBound[ 2 ] - minBound[ 2 ] ) / 2 )
@@ -270,8 +270,8 @@ def findBordersFacesRectilinearGrid( mesh: vtkUnstructuredGrid ) -> BorderFacesN
     node6: Coordinates3D = ( center[ 0 ] - faceDiag[ 0 ], center[ 1 ] + faceDiag[ 1 ], center[ 2 ] + faceDiag[ 2 ] )
     node7: Coordinates3D = ( center[ 0 ] + faceDiag[ 0 ], center[ 1 ] + faceDiag[ 1 ], center[ 2 ] + faceDiag[ 2 ] )
     faces: BorderFacesNodesCoords = ( ( node0, node1, node3, node2 ), ( node4, node5, node7, node6 ),
-                                    ( node0, node2, node6, node4 ), ( node1, node3, node7, node5 ),
-                                    ( node0, node1, node5, node4 ), ( node2, node3, node7, node6 ) )
+                                      ( node0, node2, node6, node4 ), ( node1, node3, node7, node5 ),
+                                      ( node0, node1, node5, node4 ), ( node2, node3, node7, node6 ) )
     return faces
 
 

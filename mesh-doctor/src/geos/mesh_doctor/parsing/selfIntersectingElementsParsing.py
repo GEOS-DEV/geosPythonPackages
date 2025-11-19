@@ -26,10 +26,8 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     """
     minDistance = parsedOptions[ __MIN_DISTANCE ]
     if minDistance == 0:
-        setupLogger.warning(
-            "Having minimum distance set to 0 can induce lots of false positive results "
-            "(adjacent faces may be considered intersecting)."
-        )
+        setupLogger.warning( "Having minimum distance set to 0 can induce lots of false positive results "
+                             "(adjacent faces may be considered intersecting)." )
     elif minDistance < 0:
         raise ValueError(
             f"Negative minimum distance ({minDistance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
@@ -44,18 +42,14 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     """
     p = subparsers.add_parser( SELF_INTERSECTING_ELEMENTS,
                                help="Checks if the faces of the elements are self intersecting." )
-    help_text = (
-        "[float]: The minimum distance in the computation. "
-        f"Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}."
-    )
-    p.add_argument(
-        '--' + __MIN_DISTANCE,
-        type=float,
-        required=False,
-        metavar=__MIN_DISTANCE_DEFAULT,
-        default=__MIN_DISTANCE_DEFAULT,
-        help=help_text
-    )
+    help_text = ( "[float]: The minimum distance in the computation. "
+                  f"Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." )
+    p.add_argument( '--' + __MIN_DISTANCE,
+                    type=float,
+                    required=False,
+                    metavar=__MIN_DISTANCE_DEFAULT,
+                    default=__MIN_DISTANCE_DEFAULT,
+                    help=help_text )
 
 
 def displayResults( options: Options, result: Result ) -> None:

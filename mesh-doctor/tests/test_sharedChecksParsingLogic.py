@@ -35,13 +35,19 @@ def checkFeaturesConfig() -> dict[ str, CheckFeature ]:
         CheckFeature( name="check1",
                       optionsCls=MockOptions,
                       resultCls=MockResult,
-                      defaultParams={ "param1": 1.0, "param2": 2.0 },
+                      defaultParams={
+                          "param1": 1.0,
+                          "param2": 2.0
+                      },
                       display=mockDisplayFunc ),
         "check2":
         CheckFeature( name="check2",
                       optionsCls=MockOptions,
                       resultCls=MockResult,
-                      defaultParams={ "param1": 3.0, "param2": 4.0 },
+                      defaultParams={
+                          "param1": 3.0,
+                          "param2": 4.0
+                      },
                       display=mockDisplayFunc )
     }
 
@@ -161,8 +167,14 @@ def test_displayResultsWithChecks( mockLogger: MagicMock, checkFeaturesConfig: d
                                    orderedCheckNames: list[ str ] ) -> None:
     """Tests displayResults when checks were performed."""
     options = AllChecksOptions( checksToPerform=[ "check1", "check2" ],
-                                checksOptions={ "check1": MockOptions(), "check2": MockOptions() },
-                                checkDisplays={ "check1": mockDisplayFunc, "check2": mockDisplayFunc } )
+                                checksOptions={
+                                    "check1": MockOptions(),
+                                    "check2": MockOptions()
+                                },
+                                checkDisplays={
+                                    "check1": mockDisplayFunc,
+                                    "check2": mockDisplayFunc
+                                } )
     result = AllChecksResult( checkResults={
         "check1": MockResult( value="result1" ),
         "check2": MockResult( value="result2" )

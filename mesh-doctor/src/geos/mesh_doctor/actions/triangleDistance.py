@@ -185,12 +185,14 @@ def distanceBetweenTwoTriangles( tri0: numpy.ndarray,
                 areDisjoint = True
     # No edge pair contained the closest points.
     # Checking the node/face situation.
+    # yapf: disable
     distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri0, edges0, tri1 )  # type: ignore[ assignment ]
     if distance:
         return distance, sol0, sol1
     areDisjoint = areDisjoint or areDisjointTmp
 
     distance, sol0, sol1, areDisjointTmp = __computeNodesToTriangleDistance( tri1, edges1, tri0 )  # type: ignore[ assignment ]
+    # yapf: enable
     if distance:
         return distance, sol0, sol1
     areDisjoint = areDisjoint or areDisjointTmp

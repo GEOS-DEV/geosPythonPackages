@@ -110,7 +110,7 @@ class ExpectedTri:
     p1: npt.NDArray[ numpy.float64 ]
 
     @classmethod
-    def fromTuples( cls, t0: tuple[ tuple[ float, float, float ], ... ], t1: tuple[ tuple[ float, float, float ], ... ],
+    def fromTuples( cls, t0: tuple[ tuple[ float, float, float ], ...], t1: tuple[ tuple[ float, float, float ], ...],
                     d: float, p0: tuple[ float, float, float ], p1: tuple[ float, float, float ] ) -> "ExpectedTri":
         """Creates an ExpectedTri from tuples."""
         return cls( numpy.array( t0 ), numpy.array( t1 ), float( d ), numpy.array( p0 ), numpy.array( p1 ) )

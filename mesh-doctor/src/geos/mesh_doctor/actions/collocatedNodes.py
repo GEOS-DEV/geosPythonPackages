@@ -19,7 +19,7 @@ class Result:
     wrongSupportElements: Collection[ int ]  # Element indices with support node indices appearing more than once.
 
 
-def findCollocatedNodesBuckets( mesh: vtkUnstructuredGrid, tolerance: float ) -> list[ tuple[ int, ... ] ]:
+def findCollocatedNodesBuckets( mesh: vtkUnstructuredGrid, tolerance: float ) -> list[ tuple[ int, ...] ]:
     """Check all the nodes of a mesh and returns every bucket of nodes that are collocated within a tolerance.
 
     Args:
@@ -57,7 +57,7 @@ def findCollocatedNodesBuckets( mesh: vtkUnstructuredGrid, tolerance: float ) ->
             # originalToFiltered[i] = pointId.get()
             filteredToOriginal[ pointId.get() ] = i  # type: ignore[misc, call-overload]
 
-    collocatedNodesBuckets: list[ tuple[ int, ... ] ] = []
+    collocatedNodesBuckets: list[ tuple[ int, ...] ] = []
     for n, ns in rejectedPoints.items():
         collocatedNodesBuckets.append( ( n, *ns ) )
     return collocatedNodesBuckets

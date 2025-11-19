@@ -42,7 +42,7 @@ def getOptionsUsedMessage( optionsUsed: object ) -> str:
         str: A message like "Parameters used: ( param1:value1 param2:value2 )" for as many paramters found.
     """
     optionsMsg: str = "Parameters used: ("
-    if hasattr(optionsUsed, "__dataclass_fields__"):
+    if hasattr( optionsUsed, "__dataclass_fields__" ):
         for attrName in optionsUsed.__dataclass_fields__:
             attrValue = getattr( optionsUsed, attrName )
             optionsMsg += f" {attrName} = {attrValue}"
@@ -101,8 +101,8 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
     # 1. Determine which checks to perform
     checksToDo = getattr( parsedArgs, CHECKS_TO_DO_ARG )
     if not checksToDo:
-        finalSelectedCheckNames: list[str] = deepcopy( orderedCheckNames )
-        setupLogger.info("All configured checks will be performed by default.")
+        finalSelectedCheckNames: list[ str ] = deepcopy( orderedCheckNames )
+        setupLogger.info( "All configured checks will be performed by default." )
     else:
         userChecks = parseCommaSeparatedString( checksToDo )
         finalSelectedCheckNames = []

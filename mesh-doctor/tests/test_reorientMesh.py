@@ -43,7 +43,7 @@ def __buildTestMeshes() -> Generator[ Expected, None, None ]:
         points.InsertNextPoint( coords )
 
     # Creating the polyhedron with faces all directed outward.
-    faces: list[ tuple[ int, ... ] ] = []
+    faces: list[ tuple[ int, ...] ] = []
     # Creating the side faces
     for i in range( n ):
         faces.append( ( i % n + n, ( i + 1 ) % n + n, ( i + 1 ) % n, i % n ) )

@@ -50,9 +50,9 @@ class BoundaryMesh:
         boundaryMesh, __normals, self.__originalCells = BoundaryMesh.__buildBoundaryMesh( mesh )
         cellsToReorient: filter[ int ] = filter(
             lambda c: mesh.GetCell( c ).GetCellType() == VTK_POLYHEDRON,  # type: ignore[arg-type]
-            map( self.__originalCells.GetValue,  # type: ignore[attr-defined]
-                 range( self.__originalCells.GetNumberOfValues() ) )
-        )
+            map(
+                self.__originalCells.GetValue,  # type: ignore[attr-defined]
+                range( self.__originalCells.GetNumberOfValues() ) ) )
         reorientedMesh = reorientMesh.reorientMesh( mesh, cellsToReorient )
         self.reBoundaryMesh, reNormals, _ = BoundaryMesh.__buildBoundaryMesh( reorientedMesh, consistency=False )
         numCells = boundaryMesh.GetNumberOfCells()
@@ -348,12 +348,12 @@ def areFacesConformalUsingDistances( i: int, j: int, boundaryMesh: vtkUnstructur
     cpJ: vtkCell = boundaryMesh.GetCell( j ).NewInstance()
     cpJ.DeepCopy( boundaryMesh.GetCell( j ) )
 
-    def triangulate( cell: vtkCell ) -> tuple[ tuple[ int, ... ], vtkPoints ]:
+    def triangulate( cell: vtkCell ) -> tuple[ tuple[ int, ...], vtkPoints ]:
         assert cell.GetCellDimension() == 2
         _pointsIdsList = vtkIdList()
         _points = vtkPoints()
         cell.Triangulate( 0, _pointsIdsList, _points )
-        _pointsIds: tuple[ int, ... ] = tuple( vtkIter( _pointsIdsList ) )
+        _pointsIds: tuple[ int, ...] = tuple( vtkIter( _pointsIdsList ) )
         assert len( _pointsIds ) % 3 == 0
         assert _points.GetNumberOfPoints() % 3 == 0
         return _pointsIds, _points
@@ -361,7 +361,7 @@ def areFacesConformalUsingDistances( i: int, j: int, boundaryMesh: vtkUnstructur
     pointsIdsI, pointsI = triangulate( cpI )
     pointsIdsJ, pointsJ = triangulate( cpJ )
 
-    def buildNumpyTriangles( pointsIds: tuple[ int, ... ] ) -> list[ npt.NDArray[ np.float64 ] ]:
+    def buildNumpyTriangles( pointsIds: tuple[ int, ...] ) -> list[ npt.NDArray[ np.float64 ] ]:
         __triangles = []
         for __i in range( 0, len( pointsIds ), 3 ):
             __t = []
@@ -492,8 +492,8 @@ def findNonConformalCells( mesh: vtkUnstructuredGrid, options: Options ) -> list
     # Extracting the original 3d element index (and not the index of the boundary mesh).
     nonConformalCells: list[ tuple[ int, int ] ] = []
     for i, j in nonConformalCellsBoundaryId:
-        nonConformalCells.append( ( boundaryMesh.originalCells.GetValue( i ),
-                                    boundaryMesh.originalCells.GetValue( j ) ) )
+        nonConformalCells.append(
+            ( boundaryMesh.originalCells.GetValue( i ), boundaryMesh.originalCells.GetValue( j ) ) )
     return nonConformalCells
 
 

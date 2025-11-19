@@ -17,7 +17,6 @@ from geos.mesh.io.vtkIO import VtkOutput, readUnstructuredGrid, writeMesh
 from geos.mesh.utils.arrayHelpers import hasArray
 from geos.mesh.utils.genericHelpers import toVtkIdList, vtkIter
 
-
 IDMapping: TypeAlias = Mapping[ int, int ]
 CellsPointsCoords: TypeAlias = dict[ int, list[ tuple[ float ] ] ]
 Coordinates3D: TypeAlias = tuple[ float, float, float ]

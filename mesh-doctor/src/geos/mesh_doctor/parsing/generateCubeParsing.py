@@ -18,7 +18,8 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     Returns:
         Options: Configuration options for supported elements check.
     """
-    def checkDiscretizations( x: tuple[ float, ... ], nx: tuple[ int, ... ], title: str ) -> None:
+
+    def checkDiscretizations( x: tuple[ float, ...], nx: tuple[ int, ...], title: str ) -> None:
         if len( x ) != len( nx ) + 1:
             raise ValueError( f"{title} information (\"{x}\" and \"{nx}\") does not have consistent size." )
 

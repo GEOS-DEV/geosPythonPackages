@@ -17,12 +17,10 @@ def getVtkOutputHelp() -> str:
     Returns:
         str: Formatted help text describing output file and data mode options.
     """
-    msg = (
-        f"{__OUTPUT_FILE} [string]: The vtk output file destination.\n"
-        f"    {__OUTPUT_BINARY_MODE} [string]: For \".vtu\" output format, "
-        f"the data mode can be {' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. "
-        f"Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}."
-    )
+    msg = ( f"{__OUTPUT_FILE} [string]: The vtk output file destination.\n"
+            f"    {__OUTPUT_BINARY_MODE} [string]: For \".vtu\" output format, "
+            f"the data mode can be {' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. "
+            f"Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}." )
     return textwrap.dedent( msg )
 
 
@@ -50,17 +48,13 @@ def fillVtkOutputSubparser( parser: ArgumentParser | _ArgumentGroup, prefix: str
                          type=str,
                          required=True,
                          help="[string]: The vtk output file destination." )
-    help_text = (
-        f"[string]: For \".vtu\" output format, the data mode can be "
-        f"{' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}."
-    )
-    parser.add_argument(
-        '--' + __buildArg( prefix, __OUTPUT_BINARY_MODE ),
-        type=str,
-        metavar=", ".join( __OUTPUT_BINARY_MODE_VALUES ),
-        default=__OUTPUT_BINARY_MODE_DEFAULT,
-        help=help_text
-    )
+    help_text = ( f"[string]: For \".vtu\" output format, the data mode can be "
+                  f"{' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}." )
+    parser.add_argument( '--' + __buildArg( prefix, __OUTPUT_BINARY_MODE ),
+                         type=str,
+                         metavar=", ".join( __OUTPUT_BINARY_MODE_VALUES ),
+                         default=__OUTPUT_BINARY_MODE_DEFAULT,
+                         help=help_text )
 
 
 def convert( parsedOptions: dict[ str, Any ], prefix: str = "" ) -> VtkOutput:
