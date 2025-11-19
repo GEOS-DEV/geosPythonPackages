@@ -9,6 +9,10 @@ from geos.utils.PhysicalConstants import EPSILON
 
 __doc__ = """Functions to permform geometry calculations."""
 
+CANONICAL_BASIS_3D: tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
+                           npt.NDArray[ np.float64 ] ] = ( np.array( [ 1.0, 0.0, 0.0 ] ), np.array( [ 0.0, 1.0, 0.0 ] ),
+                                                           np.array( [ 0.0, 0.0, 1.0 ] ) )
+
 
 def getChangeOfBasisMatrix(
     basisFrom: tuple[ npt.NDArray[ np.floating[ Any ] ], npt.NDArray[ np.floating[ Any ] ],

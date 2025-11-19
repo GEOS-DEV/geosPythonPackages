@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Paloma Martinez
+# SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
@@ -163,6 +163,9 @@ def dataSetTest() -> Any:
             vtkFilename = "data/displacedFault.vtm"
         elif datasetType == "emptymultiblock":
             vtkFilename = "data/displacedFaultempty.vtm"
+        elif datasetType == "multiblockGeosOutput":
+            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
+            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
         elif datasetType == "fracture":
             vtkFilename = "data/fracture_res5_id.vtu"
         elif datasetType == "emptyFracture":
@@ -175,6 +178,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/fracture_res5_id.vtp"
         elif datasetType == "emptypolydata":
             vtkFilename = "data/fracture_res5_id_empty.vtp"
+        elif datasetType == "meshGeosExtractBlockTmp":
+            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
+        elif datasetType == "well":
+            vtkFilename = "data/well.vtu"
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()

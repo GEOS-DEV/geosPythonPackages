@@ -37,6 +37,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkTable,
     vtkUnstructuredGrid,
 )
+from vtkmodules.vtkFiltersParallelDIY2 import vtkGenerateGlobalIds
 
 from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
@@ -122,8 +123,18 @@ def vtkUnstructuredGridCellsToDataframe( grid: vtkUnstructuredGrid ) -> pd.DataF
     Returns:
         pd.DataFrame: Pandas dataframe.
     """
-    cellIdAttributeName = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
+    cellIdAttributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     cellData = grid.GetCellData()
+    if not cellData.HasArray( GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName ):
+        print( "We have to create global ids." )
+        idFilter = vtkGenerateGlobalIds()
+        idFilter.SetInputData( grid )
+        idFilter.Update()
+        grid = idFilter.GetOutput()
+        cellData = grid.GetCellData()  # Update cellData to point to the new grid's cell data
+        cellIdAttributeName = "GlobalCellIds"
+        assert cellData.HasArray( cellIdAttributeName ), "Invalid global ids array name selected."
+
     numberCells: int = grid.GetNumberOfCells()
     data: dict[ str, Any ] = {}
     for i in range( cellData.GetNumberOfArrays() ):

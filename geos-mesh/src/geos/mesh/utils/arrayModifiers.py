@@ -762,13 +762,13 @@ def transferAttributeToDataSetWithElementMap(
 
     for idElementTo in range( nbElementsTo ):
         valueToTransfer: Any = defaultValue
-        idElementFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ]
+        idElementFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ] )
         if idElementFrom != -1:
             dataFrom: Union[ vtkPointData, vtkCellData ]
             if isinstance( meshFrom, vtkDataSet ):
                 dataFrom = meshFrom.GetPointData() if onPoints else meshFrom.GetCellData()
             elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-                flatIdDataSetFrom: int = elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ]
+                flatIdDataSetFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ] )
                 dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
                 dataFrom = dataSetFrom.GetPointData() if onPoints else dataSetFrom.GetCellData()
 

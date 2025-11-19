@@ -6,7 +6,7 @@ from enum import Enum
 from typing_extensions import Self
 
 __doc__ = """
-GeosOutputsConstants module defines usefull constant names such as attribute
+GeosOutputsConstants module defines useful constant names such as attribute
 names, domain names, phase types, and the lists of attribute names to process.
 
 .. WARNING::
@@ -28,7 +28,7 @@ FAILURE_ENVELOPE: str = "FailureEnvelope"
 class AttributeEnum( Enum ):
 
     def __init__( self: Self, attributeName: str, nbComponent: int, onPoints: bool ) -> None:
-        """Define the enumeration to store attrbute properties.
+        """Define the enumeration to store attribute properties.
 
         Args:
             attributeName (str): name of the attribute
@@ -134,7 +134,7 @@ class GeosMeshOutputsEnum( AttributeEnum ):
     DELTA_PRESSURE = ( "deltaPressure", 1, False )
     MASS = ( "mass", 1, False )
 
-    # geomechanic attributes
+    # geomechanics attributes
     ROCK_DENSITY = ( "density", 1, False )
     PERMEABILITY = ( "permeability", 1, False )
     POROSITY = ( "porosity", 1, False )
@@ -182,11 +182,11 @@ class PostProcessingOutputsEnum( AttributeEnum ):
     SPECIFIC_GRAVITY = ( "specificGravity", 1, False )
     LITHOSTATIC_STRESS = ( "stressLithostatic", 1, False )
     STRESS_EFFECTIVE_INITIAL = ( "stressEffectiveInitial", 6, False )
-    STRESS_EFFECTIVE_RATIO_REAL = ( "stressEffectiveRatio_real", 6, False )
-    STRESS_EFFECTIVE_RATIO_OED = ( "stressEffectiveRatio_oed", 6, False )
+    STRESS_EFFECTIVE_RATIO_REAL = ( "stressEffectiveRatio_real", 1, False )
+    STRESS_EFFECTIVE_RATIO_OED = ( "stressEffectiveRatio_oed", 1, False )
     STRESS_TOTAL = ( "stressTotal", 6, False )
     STRESS_TOTAL_INITIAL = ( "stressTotalInitial", 6, False )
-    STRESS_TOTAL_RATIO_REAL = ( "stressTotalRatio_real", 6, False )
+    STRESS_TOTAL_RATIO_REAL = ( "stressTotalRatio_real", 1, False )
     STRESS_TOTAL_DELTA = ( "deltaStressTotal", 6, False )
     STRAIN_ELASTIC = ( "strainElastic", 6, False )
     RSP_OED = ( "rsp_oed", 1, False )
@@ -299,15 +299,4 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
         PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName,
         PostProcessingOutputsEnum.POISSON_RATIO.attributeName:
         PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName,
-    }
-
-
-def getAttributeToConvertFromLocalToXYZ() -> set[ str ]:
-    """Get the list of attribute names to convert from local to xyz basis.
-
-    Returns:
-        list[str]: list of attributes to convert
-    """
-    return {
-        GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName,
     }

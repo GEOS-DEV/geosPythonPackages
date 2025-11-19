@@ -125,8 +125,8 @@
     <Geometry>
         <Box
         name="box_1"
-        xMin="{ 1130, 650, 50 }"
-        xMax="{ 1200, 900, 145 }"/>
+        xMin="{ 3509, 4117, -596 }"
+        xMax="{ 4482, 5041, -500 }"/>
     </Geometry>
     <!-- End Block to comment to deactivate box definition -->
 

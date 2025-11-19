@@ -10,7 +10,7 @@ from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonDataModel import ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON,
                                             VTK_POLYGON, VTK_POLYHEDRON )
 
-from geos.mesh.processing.meshQualityMetricHelpers import (
+from geos.mesh.stats.meshQualityMetricHelpers import (
     VtkCellQualityMetricEnum,
     CellQualityMetricAdditionalEnum,
     QualityRange,

@@ -9,17 +9,20 @@ from datetime import timedelta, datetime
 import dpath
 import funcy
 from pydantic import BaseModel
-from trame_simput import get_simput_manager
+
 from trame_simput.core.proxy import ProxyManager, Proxy
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer, DictEncoder
 
+from trame_server.controller import Controller
+from trame_simput import get_simput_manager
+
 from geos.trame.app.deck.file import DeckFile
 from geos.trame.app.geosTrameException import GeosTrameException
-from geos.trame.app.utils.file_utils import normalize_path, format_xml
 from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
+from geos.trame.app.utils.file_utils import normalize_path, format_xml
 
 import logging
 date_fmt = "%Y-%m-%d"
@@ -28,7 +31,7 @@ logger.setLevel(logging.ERROR)
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
-    def __init__( self, sm_id: str | None = None, **kwargs: Any ) -> None:
+    def __init__( self, sm_id: str | None = None, ctrl: Controller = None, **kwargs: Any ) -> None:
         """Constructor."""
         super( DeckTree, self ).__init__( **kwargs )
 
@@ -38,6 +41,7 @@ class DeckTree( object ):
         self.root = None
         self.input_has_errors = False
         self._sm_id = sm_id
+        self._ctrl = ctrl
         self.world_origin_time = datetime(1924,3,28).strftime(date_fmt)# Total start date !!
         self.registered_targets : dict = {}
 
@@ -203,7 +207,10 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
-        
+
+            self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
+
+            self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
 
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:

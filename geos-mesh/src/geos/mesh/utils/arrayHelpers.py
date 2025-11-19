@@ -26,6 +26,58 @@ These methods include:
 """
 
 
+def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ int ]:
+    """Get the set of the different cells dimension of a mesh.
+
+    Args:
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input mesh.
+    """
+    if isinstance( mesh, vtkDataSet ):
+        return getCellDimensionDataSet( mesh )
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        return getCellDimensionMultiBlockDataSet( mesh )
+    else:
+        raise TypeError( "The input mesh must be a vtkMultiBlockDataSet or a vtkDataSet." )
+
+
+def getCellDimensionMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a multiBlockDataSet.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input multiBlockDataSet.
+    """
+    cellDim: set[ int ] = set()
+    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for flatIdDataSet in listFlatIdDataSet:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
+        cellDim = cellDim.union( getCellDimensionDataSet( dataSet ) )
+    return cellDim
+
+
+def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a dataSet.
+
+    Args:
+        dataSet (vtkDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input dataSet.
+    """
+    cellDim: set[ int ] = set()
+    cellIter = dataSet.NewCellIterator()
+    cellIter.InitTraversal()
+    while not cellIter.IsDoneWithTraversal():
+        cellDim.add( cellIter.GetCellDimension() )
+        cellIter.GoToNextCell()
+    return cellDim
+
+
 def computeElementMapping(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
@@ -269,12 +321,12 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                 idElementFrom += 1
 
 
-def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
+def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
     """Checks if input mesh contains at least one of input data arrays.
 
     Args:
         mesh (vtkUnstructuredGrid): An unstructured mesh.
-        array_names (list[str]): List of array names.
+        arrayNames (list[str]): List of array names.
 
     Returns:
         bool: True if at least one array is found, else False.
@@ -284,7 +336,7 @@ def has_array( mesh: vtkUnstructuredGrid, array_names: list[ str ] ) -> bool:
     for data in ( mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData() ):
         if data is None:
             continue  # type: ignore[unreachable]
-        for arrayName in array_names:
+        for arrayName in arrayNames:
             if data.HasArray( arrayName ):
                 logging.error( f"The mesh contains the array named '{arrayName}'." )
                 return True
@@ -677,7 +729,6 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
             return False
-
     return True
 
 
