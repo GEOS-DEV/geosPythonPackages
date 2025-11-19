@@ -100,4 +100,6 @@ Packages
 
     geos-xml-viewer
 
+    mesh-doctor
+
     pygeos-tools
