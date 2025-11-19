@@ -70,14 +70,6 @@ def define_simulation_view(server) -> None:
                     clearable=True,
                     disabled=("!access_granted")
                 )
-            # with vuetify.VCol(cols=1):
-            #     vuetify.VFileInput(
-            #         v_model=("cmd_file", None),
-            #         prepend_icon="mdi-file-upload-outline",
-            #         hide_input=True,
-            #         style="padding: 0;",
-            #         disabled=("!simulation_files_path",),
-            #     )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
@@ -114,6 +106,10 @@ def define_simulation_view(server) -> None:
                 clearable=True,
                 disabled=("!access_granted")
             )
+
+
+        vuetify.VDivider(thickness=5, classes="my-4")
+      
         with vuetify.VRow():
             vuetify.VSpacer()
             with vuetify.VCol(cols=1):
@@ -121,7 +117,6 @@ def define_simulation_view(server) -> None:
             with vuetify.VCol(cols=1):
                 vuetify.VBtn("Kill", click="trigger('kill_simulation')"),  # type: ignore
                 
-        vuetify.VDivider(thickness=5, classes="my-4")
 
         with vuetify.VRow():
             with vuetify.VCol(cols=2):
