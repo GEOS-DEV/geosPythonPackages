@@ -15,7 +15,6 @@ from geos.mesh.io.vtkIO import readUnstructuredGrid
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
-
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
 ###############################################################
