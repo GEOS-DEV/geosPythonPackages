@@ -34,6 +34,7 @@ def define_simulation_view(server) -> None:
                     )
         
         #        
+            access_granted = False # link to login button callback run_try_logging results
             items = hint_config()
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
@@ -67,6 +68,7 @@ def define_simulation_view(server) -> None:
                     dense=True,
                     hide_details=True,
                     clearable=True,
+                    disabled=("!access_granted")
                 )
             # with vuetify.VCol(cols=1):
             #     vuetify.VFileInput(
@@ -88,27 +90,18 @@ def define_simulation_view(server) -> None:
                 dense=True,
                 hide_details=True,
                 clearable=True,
+                disabled=("!access_granted")
             # TODO callback validation of path
             )
 
         with vuetify.VRow(), vuetify.VCol():
-            # must_be_greater_than_0 = (
-            #     "[value => Number.isInteger(Number(value)) && value > 0 || 'Must be an integer greater than 0']"
-            # )
-            # vuetify.VTextField(
-            #     v_model=("simulation_nb_process", 1),
-            #     label="Processes number",
-            #     dense=True,
-            #     hide_details=True,
-            #     clearable=True,
-            #     rules=(must_be_greater_than_0,),
-            # )
             vuetify.VTextField(
                 v_model=("simulation_dl_path",),
                 label="Simulation download path",
                 dense=True,
                 clearable=True,
                 prepend_icon="mdi-download",
+                disabled=("!access_granted")
             # TODO callback validation of path
             )
 
@@ -119,6 +112,7 @@ def define_simulation_view(server) -> None:
                 dense=True,
                 hide_details=True,
                 clearable=True,
+                disabled=("!access_granted")
             )
         with vuetify.VRow():
             vuetify.VSpacer()
@@ -126,16 +120,12 @@ def define_simulation_view(server) -> None:
                 vuetify.VBtn("Run", click="trigger('run_simulation')"),  # type: ignore
             with vuetify.VCol(cols=1):
                 vuetify.VBtn("Kill", click="trigger('kill_simulation')"),  # type: ignore
-            # with vuetify.VCol(cols=1):
-                # vuetify.VBtn("Clear", click="trigger('clear_simulation')"),  # type: ignore
                 
         vuetify.VDivider(thickness=5, classes="my-4")
 
         with vuetify.VRow():
             with vuetify.VCol(cols=2):
                 SimulationStatusView(server=server)
-
-
 
         with vuetify.VRow(v_if="simulation_error"):
             html.Div("An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;")
