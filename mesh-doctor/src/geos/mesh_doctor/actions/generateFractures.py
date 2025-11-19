@@ -4,7 +4,7 @@ from enum import Enum
 import networkx
 from numpy import empty, ones, zeros
 from tqdm import tqdm
-from typing import Collection, Iterable, Mapping, Optional, Sequence
+from typing import Collection, Iterable, Mapping, Optional, Sequence, TypeAlias
 from vtk import vtkDataArray
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCell, vtkCellArray, vtkPolygon, vtkUnstructuredGrid, VTK_POLYGON,
@@ -16,14 +16,11 @@ from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput, readUnstructuredGrid, writeMesh
 from geos.mesh.utils.arrayHelpers import hasArray
 from geos.mesh.utils.genericHelpers import toVtkIdList, vtkIter
-"""
-TypeAliases cannot be used with Python 3.9. A simple assignment like described there will be used:
-https://docs.python.org/3/library/typing.html#typing.TypeAlias:~:text=through%20simple%20assignment%3A-,Vector%20%3D%20list%5Bfloat%5D,-Or%20marked%20with
-"""
 
-IDMapping = Mapping[ int, int ]
-CellsPointsCoords = dict[ int, list[ tuple[ float ] ] ]
-Coordinates3D = tuple[ float, float, float ]
+
+IDMapping: TypeAlias = Mapping[ int, int ]
+CellsPointsCoords: TypeAlias = dict[ int, list[ tuple[ float ] ] ]
+Coordinates3D: TypeAlias = tuple[ float, float, float ]
 
 
 class FracturePolicy( Enum ):

@@ -1,7 +1,8 @@
 from geos.mesh_doctor.actions.generateCube import Options, FieldInfo, buildCube
 
 
-def test_generateCube():
+def test_generateCube() -> None:
+    """Tests the generation of a cube mesh with specific options."""
     options = Options( vtkOutput=None,
                        generateCellsGlobalIds=True,
                        generatePointsGlobalIds=False,

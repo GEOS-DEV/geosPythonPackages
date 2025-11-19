@@ -3,7 +3,8 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkUnstru
 from geos.mesh_doctor.actions.selfIntersectingElements import Options, meshAction
 
 
-def test_jumbledHex():
+def test_jumbledHex() -> None:
+    """Tests that a hexahedron with intersecting faces is detected."""
     # creating a simple hexahedron
     points = vtkPoints()
     points.SetNumberOfPoints( 8 )

@@ -1,26 +1,32 @@
 from dataclasses import dataclass
 import numpy
+import numpy.typing as npt
 from numpy.linalg import norm
 import pytest
+from typing import Iterable
 from geos.mesh_doctor.actions.triangleDistance import distanceBetweenTwoSegments, distanceBetweenTwoTriangles
 
 
 @dataclass( frozen=True )
 class ExpectedSeg:
-    p0: numpy.array
-    u0: numpy.array
-    p1: numpy.array
-    u1: numpy.array
-    x: numpy.array
-    y: numpy.array
+    p0: npt.NDArray[ numpy.float64 ]
+    u0: npt.NDArray[ numpy.float64 ]
+    p1: npt.NDArray[ numpy.float64 ]
+    u1: npt.NDArray[ numpy.float64 ]
+    x: npt.NDArray[ numpy.float64 ]
+    y: npt.NDArray[ numpy.float64 ]
 
     @classmethod
-    def fromTuples( cls, p0, u0, p1, u1, x, y ):
+    def fromTuples( cls, p0: tuple[ float, float, float ], u0: tuple[ float, float, float ],
+                    p1: tuple[ float, float, float ], u1: tuple[ float, float, float ], x: tuple[ float, float, float ],
+                    y: tuple[ float, float, float ] ) -> "ExpectedSeg":
+        """Creates an ExpectedSeg from tuples."""
         return cls( numpy.array( p0 ), numpy.array( u0 ), numpy.array( p1 ), numpy.array( u1 ), numpy.array( x ),
                     numpy.array( y ) )
 
 
-def __getSegmentsReferences():
+def __getSegmentsReferences() -> Iterable[ ExpectedSeg ]:
+    """Provides reference segments for testing."""
     # Node to node configuration.
     yield ExpectedSeg.fromTuples(
         p0=( 0., 0., 0. ),
@@ -80,7 +86,12 @@ def __getSegmentsReferences():
 
 
 @pytest.mark.parametrize( "expected", __getSegmentsReferences() )
-def test_segments( expected: ExpectedSeg ):
+def test_segments( expected: ExpectedSeg ) -> None:
+    """Tests the distance between two segments.
+
+    Args:
+        expected (ExpectedSeg): The expected segment data.
+    """
     eps = numpy.finfo( float ).eps
     x, y = distanceBetweenTwoSegments( expected.p0, expected.u0, expected.p1, expected.u1 )
     if norm( expected.x - expected.y ) == 0:
@@ -92,18 +103,21 @@ def test_segments( expected: ExpectedSeg ):
 
 @dataclass( frozen=True )
 class ExpectedTri:
-    t0: numpy.array
-    t1: numpy.array
+    t0: npt.NDArray[ numpy.float64 ]
+    t1: npt.NDArray[ numpy.float64 ]
     d: float
-    p0: numpy.array
-    p1: numpy.array
+    p0: npt.NDArray[ numpy.float64 ]
+    p1: npt.NDArray[ numpy.float64 ]
 
     @classmethod
-    def fromTuples( cls, t0, t1, d, p0, p1 ):
+    def fromTuples( cls, t0: tuple[ tuple[ float, float, float ], ... ], t1: tuple[ tuple[ float, float, float ], ... ],
+                    d: float, p0: tuple[ float, float, float ], p1: tuple[ float, float, float ] ) -> "ExpectedTri":
+        """Creates an ExpectedTri from tuples."""
         return cls( numpy.array( t0 ), numpy.array( t1 ), float( d ), numpy.array( p0 ), numpy.array( p1 ) )
 
 
-def __getTrianglesReferences():
+def __getTrianglesReferences() -> Iterable[ ExpectedTri ]:
+    """Provides reference triangles for testing."""
     # Node to node configuration.
     yield ExpectedTri.fromTuples( t0=( ( 0., 0., 0. ), ( 1., 0., 0. ), ( 0., 1., 1. ) ),
                                   t1=( ( 2., 0., 0. ), ( 3., 0., 0. ), ( 2., 1., 1. ) ),
@@ -143,7 +157,12 @@ def __getTrianglesReferences():
 
 
 @pytest.mark.parametrize( "expected", __getTrianglesReferences() )
-def test_triangles( expected: ExpectedTri ):
+def test_triangles( expected: ExpectedTri ) -> None:
+    """Tests the distance between two triangles.
+
+    Args:
+        expected (ExpectedTri): The expected triangle data.
+    """
     eps = numpy.finfo( float ).eps
     d, p0, p1 = distanceBetweenTwoTriangles( expected.t0, expected.t1 )
     assert abs( d - expected.d ) < eps

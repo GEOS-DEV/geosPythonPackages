@@ -35,9 +35,8 @@ def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
         yield TestCase( cliArgs, options, exception )
 
 
-def __parseAndValidateOptions( testCase: TestCase ):
-    """
-    Parse CLI arguments and validate that the resulting options match expected values.
+def __parseAndValidateOptions( testCase: TestCase ) -> None:
+    """Parse CLI arguments and validate that the resulting options match expected values.
 
     This helper function simulates the CLI parsing process by:
     1. Creating an argument parser with the generateFractures subparser
@@ -61,17 +60,19 @@ def __parseAndValidateOptions( testCase: TestCase ):
     assert options.fieldValuesCombined == testCase.options.fieldValuesCombined
 
 
-def test_displayResults():
+def test_displayResults() -> None:
+    """Test displayResults function for code coverage."""
     # Dummy test for code coverage only. Shame on me!
     displayResults( None, None )
 
 
 @pytest.mark.parametrize( "testCase", __generateGenerateFracturesParsingTestData() )
-def test( testCase: TestCase ):
+def test( testCase: TestCase ) -> None:
+    """Test CLI parsing for generateFractures action."""
     if testCase.exception:
         with pytest.raises( SystemExit ):
             pytest.skip( "Test to be fixed" )
-            __parseAndValidateOptions( testCase )
+            # __parseAndValidateOptions( testCase )
     else:
         pytest.skip( "Test to be fixed" )
-        __parseAndValidateOptions( testCase )
+        # __parseAndValidateOptions( testCase )

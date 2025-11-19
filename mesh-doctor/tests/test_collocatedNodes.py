@@ -7,9 +7,11 @@ from geos.mesh_doctor.actions.collocatedNodes import Options, meshAction
 
 def getPoints() -> Iterator[ Tuple[ vtkPoints, int ] ]:
     """Generates the data for the cases.
-    One case has two nodes at the exact same position.
-    The other has two differente nodes
-    :return: Generator to (vtk points, number of expected duplicated locations)
+
+    One case has two nodes at the exact same position. The other has two different nodes.
+
+    Returns:
+        Iterator[ Tuple[ vtkPoints, int ] ]: The points and the expected number of buckets of collocated nodes.
     """
     for p0, p1 in ( ( 0, 0, 0 ), ( 1, 1, 1 ) ), ( ( 0, 0, 0 ), ( 0, 0, 0 ) ):
         points = vtkPoints()
@@ -21,7 +23,8 @@ def getPoints() -> Iterator[ Tuple[ vtkPoints, int ] ]:
 
 
 @pytest.mark.parametrize( "data", getPoints() )
-def test_simpleCollocatedPoints( data: Tuple[ vtkPoints, int ] ):
+def test_simpleCollocatedPoints( data: Tuple[ vtkPoints, int ] ) -> None:
+    """Tests the detection of collocated nodes for a simple case."""
     points, numNodesBucket = data
 
     mesh = vtkUnstructuredGrid()
@@ -35,7 +38,8 @@ def test_simpleCollocatedPoints( data: Tuple[ vtkPoints, int ] ):
         assert len( result.nodesBuckets[ 0 ] ) == points.GetNumberOfPoints()
 
 
-def test_wrongSupportElements():
+def test_wrongSupportElements() -> None:
+    """Tests that a tetrahedron with two nodes at the same location is detected."""
     points = vtkPoints()
     points.SetNumberOfPoints( 4 )
     points.SetPoint( 0, ( 0, 0, 0 ) )

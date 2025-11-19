@@ -1,7 +1,7 @@
 import argparse
 from dataclasses import dataclass
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 # Import the module to test
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh_doctor.actions.allChecks import Result as AllChecksResult
@@ -22,46 +22,46 @@ class MockResult:
     value: str = "testResult"
 
 
-def mockDisplayFunc( options, result ):
+def mockDisplayFunc( options: MockOptions, result: MockResult ) -> None:
+    """Mock display function for testing."""
     pass
 
 
 @pytest.fixture
-def checkFeaturesConfig():
+def checkFeaturesConfig() -> dict[ str, CheckFeature ]:
+    """Provides a mock check features configuration for testing."""
     return {
         "check1":
         CheckFeature( name="check1",
                       optionsCls=MockOptions,
                       resultCls=MockResult,
-                      defaultParams={
-                          "param1": 1.0,
-                          "param2": 2.0
-                      },
+                      defaultParams={ "param1": 1.0, "param2": 2.0 },
                       display=mockDisplayFunc ),
         "check2":
         CheckFeature( name="check2",
                       optionsCls=MockOptions,
                       resultCls=MockResult,
-                      defaultParams={
-                          "param1": 3.0,
-                          "param2": 4.0
-                      },
+                      defaultParams={ "param1": 3.0, "param2": 4.0 },
                       display=mockDisplayFunc )
     }
 
 
 @pytest.fixture
-def orderedCheckNames():
+def orderedCheckNames() -> list[ str ]:
+    """Provides an ordered list of check names for testing."""
     return [ "check1", "check2" ]
 
 
-def test_generateParametersHelp( checkFeaturesConfig, orderedCheckNames ):
+def test_generateParametersHelp( checkFeaturesConfig: dict[ str, CheckFeature ],
+                                 orderedCheckNames: list[ str ] ) -> None:
+    """Tests _generateParametersHelp functionality."""
     helpText = _generateParametersHelp( orderedCheckNames, checkFeaturesConfig )
     assert "For check1: param1:1.0, param2:2.0" in helpText
     assert "For check2: param1:3.0, param2:4.0" in helpText
 
 
-def test_getOptionsUsedMessage():
+def test_getOptionsUsedMessage() -> None:
+    """Tests getOptionsUsedMessage functionality."""
     options = MockOptions( param1=10.0, param2=20.0 )
     message = getOptionsUsedMessage( options )
     assert "Parameters used: (" in message
@@ -70,7 +70,8 @@ def test_getOptionsUsedMessage():
     assert ")." in message
 
 
-def test_fillSubparser( checkFeaturesConfig, orderedCheckNames ):
+def test_fillSubparser( checkFeaturesConfig: dict[ str, CheckFeature ], orderedCheckNames: list[ str ] ) -> None:
+    """Tests fillSubparser functionality."""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers( dest="command" )
     fillSubparser( subparsers, "test-command", "Test help message", orderedCheckNames, checkFeaturesConfig )
@@ -86,7 +87,9 @@ def test_fillSubparser( checkFeaturesConfig, orderedCheckNames ):
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertDefaultChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertDefaultChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                               orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when no specific checks or parameters are specified."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
@@ -96,7 +99,9 @@ def test_convertDefaultChecks( mockLogger, checkFeaturesConfig, orderedCheckName
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertSpecificChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertSpecificChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when specific checks are specified."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "check1", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == [ "check1" ]
@@ -106,7 +111,9 @@ def test_convertSpecificChecks( mockLogger, checkFeaturesConfig, orderedCheckNam
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertWithParameters( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertWithParameters( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when parameters are specified."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:10.5,param2:20.5" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
@@ -117,7 +124,9 @@ def test_convertWithParameters( mockLogger, checkFeaturesConfig, orderedCheckNam
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertWithInvalidParameters( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertWithInvalidParameters( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                       orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when some invalid parameters are specified."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:invalid,param2:20.5" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid parameter should be skipped, but the valid one applied
@@ -126,7 +135,9 @@ def test_convertWithInvalidParameters( mockLogger, checkFeaturesConfig, orderedC
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertWithInvalidCheck( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertWithInvalidCheck( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                  orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when an invalid check is specified."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check,check1", PARAMETERS_ARG: "" } )
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid check should be skipped
@@ -136,7 +147,9 @@ def test_convertWithInvalidCheck( mockLogger, checkFeaturesConfig, orderedCheckN
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_convertWithAllInvalidChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_convertWithAllInvalidChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                      orderedCheckNames: list[ str ] ) -> None:
+    """Tests convert when all checks are invalid."""
     parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check1,invalid_check2", PARAMETERS_ARG: "" } )
     # Should raise ValueError since no valid checks were selected
     with pytest.raises( ValueError, match="No valid checks were selected" ):
@@ -144,16 +157,12 @@ def test_convertWithAllInvalidChecks( mockLogger, checkFeaturesConfig, orderedCh
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_displayResultsWithChecks( mockLogger, checkFeaturesConfig, orderedCheckNames ):
+def test_displayResultsWithChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
+                                   orderedCheckNames: list[ str ] ) -> None:
+    """Tests displayResults when checks were performed."""
     options = AllChecksOptions( checksToPerform=[ "check1", "check2" ],
-                                checksOptions={
-                                    "check1": MockOptions(),
-                                    "check2": MockOptions()
-                                },
-                                checkDisplays={
-                                    "check1": mockDisplayFunc,
-                                    "check2": mockDisplayFunc
-                                } )
+                                checksOptions={ "check1": MockOptions(), "check2": MockOptions() },
+                                checkDisplays={ "check1": mockDisplayFunc, "check2": mockDisplayFunc } )
     result = AllChecksResult( checkResults={
         "check1": MockResult( value="result1" ),
         "check2": MockResult( value="result2" )
@@ -164,7 +173,8 @@ def test_displayResultsWithChecks( mockLogger, checkFeaturesConfig, orderedCheck
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
-def test_displayResultsNoChecks( mockLogger ):
+def test_displayResultsNoChecks( mockLogger: MagicMock ) -> None:
+    """Tests displayResults when no checks were performed."""
     options = AllChecksOptions( checksToPerform=[], checksOptions={}, checkDisplays={} )
     result = AllChecksResult( checkResults={} )
     displayResults( options, result )

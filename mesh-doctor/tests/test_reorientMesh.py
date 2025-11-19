@@ -16,6 +16,7 @@ class Expected:
 
 
 def __buildTestMeshes() -> Generator[ Expected, None, None ]:
+    """Builds test meshes for reorientMesh testing."""
     # Creating the support nodes for the polyhedron.
     # It has a C shape and is actually non-convex, non star-shaped.
     frontNodes = numpy.array( (
@@ -42,7 +43,7 @@ def __buildTestMeshes() -> Generator[ Expected, None, None ]:
         points.InsertNextPoint( coords )
 
     # Creating the polyhedron with faces all directed outward.
-    faces = []
+    faces: list[ tuple[ int, ... ] ] = []
     # Creating the side faces
     for i in range( n ):
         faces.append( ( i % n + n, ( i + 1 ) % n + n, ( i + 1 ) % n, i % n ) )
@@ -76,7 +77,8 @@ def __buildTestMeshes() -> Generator[ Expected, None, None ]:
 
 
 @pytest.mark.parametrize( "expected", __buildTestMeshes() )
-def test_reorientPolyhedron( expected: Expected ):
+def test_reorientPolyhedron( expected: Expected ) -> None:
+    """Tests reorientMesh on polyhedron elements."""
     outputMesh = reorientMesh( expected.mesh, range( expected.mesh.GetNumberOfCells() ) )
     assert outputMesh.GetNumberOfCells() == 1
     assert outputMesh.GetCell( 0 ).GetCellType() == VTK_POLYHEDRON

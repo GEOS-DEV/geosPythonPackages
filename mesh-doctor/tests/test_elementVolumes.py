@@ -4,7 +4,8 @@ from vtkmodules.vtkCommonDataModel import VTK_TETRA, vtkCellArray, vtkTetra, vtk
 from geos.mesh_doctor.actions.elementVolumes import Options, meshAction
 
 
-def test_simpleTet():
+def test_simpleTet() -> None:
+    """Tests the calculation of element volumes for a simple tetrahedron."""
     # creating a simple tetrahedron
     points = vtkPoints()
     points.SetNumberOfPoints( 4 )

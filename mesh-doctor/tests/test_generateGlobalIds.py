@@ -3,7 +3,8 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkUnstructuredGrid, vtk
 from geos.mesh_doctor.actions.generateGlobalIds import buildGlobalIds
 
 
-def test_generateGlobalIds():
+def test_generateGlobalIds() -> None:
+    """Tests the generation of global IDs for a simple mesh with one vertex."""
     points = vtkPoints()
     points.InsertNextPoint( 0, 0, 0 )
 

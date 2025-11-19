@@ -3,7 +3,8 @@ from geos.mesh_doctor.actions.generateCube import buildRectilinearBlocksMesh, XY
 from geos.mesh_doctor.actions.nonConformal import Options, meshAction
 
 
-def test_twoCloseHexs():
+def test_twoCloseHexs() -> None:
+    """Tests two close hexahedrons for non-conformality detection."""
     delta = 1.e-6
     tmp = numpy.arange( 2, dtype=float )
     xyz0 = XYZ( tmp, tmp, tmp )
@@ -22,7 +23,8 @@ def test_twoCloseHexs():
     assert len( results.nonConformalCells ) == 0
 
 
-def test_twoDistantHexs():
+def test_twoDistantHexs() -> None:
+    """Tests two distant hexahedrons for non-conformality detection."""
     delta = 1
     tmp = numpy.arange( 2, dtype=float )
     xyz0 = XYZ( tmp, tmp, tmp )
@@ -35,7 +37,8 @@ def test_twoDistantHexs():
     assert len( results.nonConformalCells ) == 0
 
 
-def test_twoCloseShiftedHexs():
+def test_twoCloseShiftedHexs() -> None:
+    """Tests two close but shifted hexahedrons for non-conformality detection."""
     deltaX, deltaY = 1.e-6, 0.5
     tmp = numpy.arange( 2, dtype=float )
     xyz0 = XYZ( tmp, tmp, tmp )
@@ -49,7 +52,8 @@ def test_twoCloseShiftedHexs():
     assert set( results.nonConformalCells[ 0 ] ) == { 0, 1 }
 
 
-def test_bigElemNextToSmallElem():
+def test_bigElemNextToSmallElem() -> None:
+    """Tests a big element next to a small element for non-conformality detection."""
     delta = 1.e-6
     tmp = numpy.arange( 2, dtype=float )
     xyz0 = XYZ( tmp, tmp + 1, tmp + 1 )

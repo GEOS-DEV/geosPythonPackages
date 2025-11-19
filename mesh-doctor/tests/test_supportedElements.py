@@ -26,8 +26,11 @@ def test_supportedElements( baseName: str ) -> None:
 
 def makeDodecahedron() -> tuple[ vtkPoints, vtkIdList ]:
     """Returns the points and faces for a dodecahedron.
+
     This code was adapted from an official vtk example.
-    :return: The tuple of points and faces (as vtk instances).
+
+    Returns:
+        The tuple of points and faces (as vtk instances).
     """
     # yapf: disable
     points = (
@@ -80,8 +83,7 @@ def makeDodecahedron() -> tuple[ vtkPoints, vtkIdList ]:
 
 # TODO make this test work
 def test_dodecahedron() -> None:
-    """Tests whether a dodecahedron is support by GEOS or not.
-    """
+    """Tests whether a dodecahedron is supported by GEOS or not."""
     points, faces = makeDodecahedron()
     mesh = vtkUnstructuredGrid()
     mesh.Allocate( 1 )
@@ -95,6 +97,7 @@ def test_dodecahedron() -> None:
 
 
 def test_parseFaceStream() -> None:
+    """Tests the parsing of a face stream for a dodecahedron."""
     _, faces = makeDodecahedron()
     result = parseFaceStream( faces )
     # yapf: disable
