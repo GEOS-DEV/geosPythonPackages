@@ -21,10 +21,10 @@ class SimulationConstant:
     SIMULATION_GEOS_PATH = "/workrd/users/"
     HOST = "p4log01"  # Only run on P4 machine
     PORT = 22
-    SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/user"
+    SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/users/"
     SIMULATION_DEFAULT_FILE_NAME="geosDeck.xml"
 
-class Authentificator:#namespacing more than anything eler
+class Authentificator:#namespacing more than anything else
 
     @staticmethod
     def get_key(login:str, passphrase = "trameisrunning"):

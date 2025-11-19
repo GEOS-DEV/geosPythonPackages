@@ -6,19 +6,9 @@
       "geos_version_default": "daily_rhel",
       "simulation_information_default_path": "/www",
       "simulation_default_filename": "geosDeck.xml",
-      "n_nodes": 20,
-      "cpu": { "types": ["Intel Xeon"], "per_node": 64 },
-      "gpu": { "types": ["NVIDIA A100"], "per_node": 8 }
-    },
-    {
-      "name": "elba",
-      "n_nodes": 10,
-      "simulation_default_path": "/www",
-      "geos_version_default": "daily_rhel",
-      "simulation_information_default_path": "/www",
-      "simulation_default_filename": "geosDeck.xml",
-      "cpu": { "types": ["AMD EPYC"], "per_node": 32 },
-      "gpu": { "types": ["NVIDIA V100"],"per_node": 4 }
+      "n_nodes": 212,
+      "cpu": { "types": ["AMD EPYC 4th gen"], "per_node": 192 },
+      "mem_per_node": 768
     }
   ]
 }
