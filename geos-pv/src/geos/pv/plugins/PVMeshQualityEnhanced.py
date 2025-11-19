@@ -2,20 +2,17 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
 import sys
 from pathlib import Path
 from typing_extensions import Self, Optional
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
+from vtkmodules.vtkCommonCore import vtkDataArraySelection
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -26,24 +23,14 @@ update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
-
-from geos.mesh.stats.meshQualityMetricHelpers import (
-    getQualityMetricsOther,
-    getQualityMeasureNameFromIndex,
-    getQualityMeasureIndexFromName,
-    getQuadQualityMeasure,
-    getTriangleQualityMeasure,
-    getCommonPolygonQualityMeasure,
-    getTetQualityMeasure,
-    getPyramidQualityMeasure,
-    getWedgeQualityMeasure,
-    getHexQualityMeasure,
-    getCommonPolyhedraQualityMeasure,
-)
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
+from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, getQualityMeasureNameFromIndex,
+                                                       getQualityMeasureIndexFromName, getQuadQualityMeasure,
+                                                       getTriangleQualityMeasure, getCommonPolygonQualityMeasure,
+                                                       getTetQualityMeasure, getPyramidQualityMeasure,
+                                                       getWedgeQualityMeasure, getHexQualityMeasure,
+                                                       getCommonPolyhedraQualityMeasure )
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
-
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = """
@@ -241,30 +228,32 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        self.meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
-        if len( self.meshQualityEnhancedFilter.logger.handlers ) == 0:
-            self.meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
-        self.meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
+        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
+            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
+        meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                               quadMetrics=quadMetrics,
                                                               tetraMetrics=tetraMetrics,
                                                               pyramidMetrics=pyrMetrics,
                                                               wedgeMetrics=wedgeMetrics,
                                                               hexaMetrics=hexaMetrics )
-        self.meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        self.meshQualityEnhancedFilter.applyFilter()
+        meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
+        meshQualityEnhancedFilter.applyFilter()
 
-        outputMesh.ShallowCopy( self.meshQualityEnhancedFilter.getOutput() )
+        outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
 
         # save to file if asked
         if self._saveToFile:
-            stats: QualityMetricSummary = self.meshQualityEnhancedFilter.GetQualityMetricSummary()
-            self.saveFile( stats )
+            stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
+            logger: logging.Logger = meshQualityEnhancedFilter.logger
+            self.saveFile( stats, logger )
         self._blockIndex += 1
         return
 
     def saveFile(
         self: Self,
         stats: QualityMetricSummary,
+        logger: logging.Logger,
     ) -> None:
         """Export mesh quality metric summary file."""
         try:
@@ -275,9 +264,9 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             filename: str = self._filename[ :index ] + f"_{self._blockIndex}" + self._filename[ index: ]
             fig = stats.plotSummaryFigure()
             fig.savefig( filename, dpi=150 )
-            self.meshQualityEnhancedFilter.logger.info( f"File {filename} was successfully written." )
+            logger.info( f"File {filename} was successfully written." )
         except Exception as e:
-            self.meshQualityEnhancedFilter.logger.error( f"Error while exporting the file due to:\n{ e }" )
+            logger.error( f"Error while exporting the file due to:\n{ e }" )
 
     def __initVolumeQualityMetricSelection( self: Self ) -> None:
         """Initialize the volumic metrics selection."""
