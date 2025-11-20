@@ -140,7 +140,8 @@ class SplitMesh():
                 if splitMethod is not None:
                     splitMethod( cell, c )
                 else:
-                    raise TypeError( f"Cell type { vtkCellTypes.GetClassNameFromTypeId( cellType ) } is not supported." )
+                    raise TypeError(
+                        f"Cell type { vtkCellTypes.GetClassNameFromTypeId( cellType ) } is not supported." )
             # add points and cells
             self.outputMesh.SetPoints( self.points )
             self.outputMesh.SetCells( self.cellTypes, self.cells )
