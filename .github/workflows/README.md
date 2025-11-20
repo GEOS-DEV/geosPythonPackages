@@ -22,7 +22,7 @@ Tests each Python package independently to ensure:
 - `geos-ats` - Automated Testing System for GEOS
 - `geos-geomechanics` - Geomechanics analysis tools
 - `geos-mesh` - Mesh conversion and validation tools
-- `geos-posp` - Post-processing utilities
+- `geos-processing` - Post-processing utilities
 - `geos-timehistory` - Time history analysis
 - `geos-trame` - Trame-based visualization
 - `geos-utils` - Utility functions
@@ -62,7 +62,7 @@ build:
 ```yaml
 check_integration_label:
   - Checks for 'test-geos-integration' label
-  
+
 check_force_integration_label:
   - Checks for 'force-geos-integration' label
 ```
@@ -141,7 +141,7 @@ Tests that geosPythonPackages integrates correctly with GEOS by:
   - Patches script to search `/usr/local/bin/` for pip-installed tools
   - Installs Python packages via the GEOS setup script
   - Creates symlinks to tools in `bin_direct/`
-- **Validates**: 
+- **Validates**:
   - ✅ Python packages install correctly
   - ✅ Scripts are findable and linkable
   - ✅ All required tools are available
@@ -262,7 +262,7 @@ Tests are automatically skipped when changes only affect:
 
 #### Non-Integrated Packages
 - `geos-geomechanics/` - Standalone geomechanics tools
-- `geos-posp/` - Post-processing utilities
+- `geos-processing/` - Post-processing utilities
 - `geos-pv/` - ParaView utilities
 - `geos-timehistory/` - Time history analysis
 - `geos-trame/` - Trame visualization

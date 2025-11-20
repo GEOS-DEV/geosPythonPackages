@@ -44,3 +44,12 @@ geos.processing.post_processing.GeosBlockExtractor module
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+geos.processing.post_processing.GeosBlockMerge module
+-----------------------------------------------------
+
+.. automodule:: geos.processing.post_processing.GeosBlockMerge
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -817,7 +817,7 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
             info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject" )
         return 1
 
-    def Filter( self, inputMesh: vtkDataObject, outputMesh: vtkDataObject ) -> None:
+    def ApplyFilter( self, inputMesh: vtkDataObject, outputMesh: vtkDataObject ) -> None:
         """Dummy interface for plugin to fit decorator reqs.
 
         Args:

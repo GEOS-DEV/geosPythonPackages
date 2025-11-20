@@ -65,7 +65,7 @@ class IsSISOFilter( Protocol[ U ] ):
     """Protocol to ensure that the wrapped filter defines the correct Filter core function."""
 
     @abstractmethod
-    def Filter(
+    def ApplyFilter(
         self,
         inputMesh: U,
         outputMesh: U,
@@ -160,7 +160,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
 
                 outputMesh.ShallowCopy( inputMesh )
 
-                cls.Filter( self, inputMesh, outputMesh )
+                cls.ApplyFilter( self, inputMesh, outputMesh )
                 return 1
 
         # Copy all methods and attributes from cls, including decorator metadata
@@ -187,7 +187,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
         )( WrappingClass )
         WrappingClass = smproperty.input( name="Input", port_index=0 )( WrappingClass )
         # Use enum value for category
-        WrappingClass = smhint.xml( f'<ShowInMenu category="{category}"/>' )( WrappingClass )
+        WrappingClass = smhint.xml( f'<ShowInMenu category="{category.value}"/>' )( WrappingClass )
         WrappingClass = smproxy.filter( name=getattr( cls, '__name__', str( cls ) ),
                                         label=decoratedLabel )( WrappingClass )
         return WrappingClass

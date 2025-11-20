@@ -3,17 +3,19 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import numpy as np
+
 from pathlib import Path
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
+    VTKPythonAlgorithmBase, smdomain, smproperty
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
+    VTKHandler
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet )
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -23,7 +25,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
+    DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_GRAIN_BULK_MODULUS,
     DEFAULT_ROCK_COHESION,
     WATER_DENSITY,
@@ -91,7 +93,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.specificDensity: float = WATER_DENSITY
         ## For advanced properties
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
-        self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
+        self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -190,23 +192,23 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
     @smproperty.doublevector(
         name="FrictionAngle",
-        label="Friction Angle (rad)",
-        default_values=DEFAULT_FRICTION_ANGLE_RAD,
+        label="Friction Angle (°)",
+        default_values=DEFAULT_FRICTION_ANGLE_DEG,
         panel_visibility="default",
     )
     @smdomain.xml( """
         <Documentation>
             Reference friction angle to compute critical pore pressure.
-            The unit is rad. Default is 10.0 / 180.0 * np.pi rad.
+            The unit is °. Default is no friction case (i.e., 0.°).
         </Documentation>
     """ )
     def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
         """Set friction angle.
 
         Args:
-            frictionAngle (float): Friction angle (rad).
+            frictionAngle (float): Friction angle (°).
         """
-        self.frictionAngle = frictionAngle
+        self.frictionAngle = frictionAngle * np.pi / 180
         self.Modified()
 
     @smproperty.xml( """
@@ -225,7 +227,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """Organize groups."""
         self.Modified()
 
-    def Filter(
+    def ApplyFilter(
         self: Self,
         inputMesh: vtkUnstructuredGrid | vtkMultiBlockDataSet,
         outputMesh: vtkUnstructuredGrid | vtkMultiBlockDataSet,

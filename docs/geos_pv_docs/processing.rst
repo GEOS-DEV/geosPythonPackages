@@ -5,7 +5,7 @@ The plugins include:
 * A reader that parse GEOS output log file;
 * 3D mesh cleanning plugins;
 * Processing plugins to compute additional geomechanical properties;
-* Visualization plugins to plot Mohr's circles (currently in `geos_posp`) and cross plots using Paraview Python View.
+* Visualization plugins to plot Mohr's circles and cross plots using Paraview Python View.
 
 
 PVAttributeMapping
@@ -47,60 +47,29 @@ PVClipToMainFrame
 Geos output pre-processing
 +++++++++++++++++++++++++++++
 
-PVExtractMergeBlocksVolume plugin
--------------------------------------------
+PVGeosBlockExtractAndMerge plugin
+----------------------------------
 
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolume
-
-
-PVExtractMergeBlocksVolumeSurface plugin
---------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurface
-
-
-PVExtractMergeBlocksVolumeSurfaceWell plugin
-------------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeSurfaceWell
-
-
-PVExtractMergeBlocksVolumeWell plugin
------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVExtractMergeBlocksVolumeWell
-
+.. automodule:: geos.pv.plugins.PVGeosBlockExtractAndMerge
 
 
 Geomechanics workflows
 ++++++++++++++++++++++++
 
 
-PVGeomechanicsWorkflowVolume plugin
----------------------------------------------
+PVGeomechanicsWorkflow plugin
+------------------------------
 
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolume
-
-
-PVGeomechanicsWorkflowVolumeSurface plugin
-----------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurface
-
-
-PVGeomechanicsWorkflowVolumeSurfaceWell plugin
---------------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeSurfaceWell
-
-
-PVGeomechanicsWorkflowVolumeWell plugin
--------------------------------------------------
-
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflowVolumeWell
+.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflow
 
 
 PVGeomechanicsCalculator plugin
 ---------------------------------------
 
 .. automodule:: geos.pv.plugins.PVGeomechanicsCalculator
+
+
+PVMohrCirclePlot plugin
+---------------------------------
+
+.. automodule:: geos.pv.plugins.PVMohrCirclePlot

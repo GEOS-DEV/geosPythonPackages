@@ -63,7 +63,7 @@ def formatCollocatedNodes( fractureMesh: vtkUnstructuredGrid ) -> Sequence[ Iter
     Returns:
         Sequence[ Iterable[ int ] ]: An iterable over all the buckets of collocated nodes.
     """
-    collocatedNodes: npt.NDArray = vtk_to_numpy( fractureMesh.GetPointData().GetArray( "collocatedNodes" ) )
+    collocatedNodes: npt.NDArray = vtk_to_numpy( fractureMesh.GetPointData().GetArray( "collocated_nodes" ) )
     if len( collocatedNodes.shape ) == 1:
         collocatedNodes = collocatedNodes.reshape( ( collocatedNodes.shape[ 0 ], 1 ) )
     generator = ( tuple( sorted( bucket[ bucket > -1 ] ) ) for bucket in collocatedNodes )

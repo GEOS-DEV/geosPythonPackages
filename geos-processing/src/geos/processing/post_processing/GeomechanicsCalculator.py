@@ -85,6 +85,7 @@ To use the filter:
     mesh: vtkUnstructuredGrid
     computeAdvancedProperties: bool # optional, defaults to False
     speHandler: bool # optional, defaults to False
+    loggerName: str # Defaults to "Geomechanics Calculator"
 
     # Instantiate the filter
     geomechanicsCalculatorFilter: GeomechanicsCalculator = GeomechanicsCalculator( mesh, computeAdvancedProperties, speHandler )
@@ -693,7 +694,7 @@ class GeomechanicsCalculator:
             computeAdvancedProperties (bool, optional): True to compute advanced geomechanics properties, False otherwise.
                 Defaults to False.
             loggerName (str, optional): Name of the filter logger.
-                Defaults to "Geomechanics Calculator"
+                Defaults to "Geomechanics Calculator".
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
