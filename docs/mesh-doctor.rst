@@ -26,11 +26,17 @@ To list all the modules available through ``mesh-doctor``, you can simply use th
 .. command-output:: mesh-doctor --help
    :shell:
 
-Then, if you are interested in a specific module, you can ask for its documentation using the ``mesh-doctor -i random.vtu module_name --help`` pattern.
+Then, if you are interested in a specific module, you can ask for its documentation using the ``mesh-doctor module_name --help`` pattern.
 For example
 
-.. command-output:: mesh-doctor -i random.vtu collocatedNodes --help
+.. command-output:: mesh-doctor collocatedNodes --help
    :shell:
+
+Finally, to execute a specific module, you can use the following pattern:
+
+.. code-block:: bash
+
+    mesh-doctor module_name -i /path/to/input.vtu --output /path/to/output.vtu [module_options] 
 
 ``mesh-doctor`` loads its module dynamically.
 If a module can't be loaded, ``mesh-doctor`` will proceed and try to load other modules.
@@ -62,7 +68,7 @@ that can quickly highlight some issues to deal with before investigating the oth
 Both ``allChecks`` and ``mainChecks`` have the same keywords and can be operated in the same way. The example below shows
 the case of ``allChecks``, but it can be swapped for ``mainChecks``.
 
-.. command-output:: mesh-doctor -i random.vtu allChecks --help
+.. command-output:: mesh-doctor allChecks --help
    :shell:
 
 ``collocatedNodes``
@@ -71,7 +77,7 @@ the case of ``allChecks``, but it can be swapped for ``mainChecks``.
 Displays the neighboring nodes that are closer to each other than a prescribed threshold.
 It is not uncommon to define multiple nodes for the exact same position, which will typically be an issue for ``geos`` and should be fixed.
 
-.. command-output:: mesh-doctor -i random.vtu collocatedNodes --help
+.. command-output:: mesh-doctor collocatedNodes --help
    :shell:
 
 ``elementVolumes``
@@ -80,7 +86,7 @@ It is not uncommon to define multiple nodes for the exact same position, which w
 Computes the volumes of all the cells and displays the ones that are below a prescribed threshold.
 Cells with negative volumes will typically be an issue for ``geos`` and should be fixed.
 
-.. command-output:: mesh-doctor -i random.vtu elementVolumes --help
+.. command-output:: mesh-doctor elementVolumes --help
    :shell:
 
 ``fixElementsOrderings``
@@ -90,7 +96,7 @@ It sometimes happens that an exported mesh does not abide by the ``vtk`` orderin
 The ``fixElementsOrderings`` module can rearrange the nodes of given types of elements.
 This can be convenient if you cannot regenerate the mesh.
 
-.. command-output:: mesh-doctor -i random.vtu fixElementsOrderings --help
+.. command-output:: mesh-doctor fixElementsOrderings --help
    :shell:
 
 ``generateCube``
@@ -100,8 +106,15 @@ This module conveniently generates cubic meshes in ``vtk``.
 It can also generate fields with simple values.
 This tool can also be useful to generate a trial mesh that will later be refined or customized.
 
-.. command-output:: mesh-doctor -i random.vtu generateCube --help
+.. command-output:: mesh-doctor generateCube --help
    :shell:
+
+Exceptionally, this module does not require an input ``vtk`` mesh because its purpose is to generate a new one.
+The command to use would be something like:
+
+.. code-block:: bash
+
+    mesh-doctor generateCube --output cube.vtu --x 0:10 --y 0:10 --z 0:10 --nx 10 --ny 15 --nz 20 --cells --nopoints
 
 ``generateFractures``
 """""""""""""""""""""
@@ -109,7 +122,7 @@ This tool can also be useful to generate a trial mesh that will later be refined
 For a conformal fracture to be defined in a mesh, ``geos`` requires the mesh to be split at the faces where the fracture gets across the mesh.
 The ``generateFractures`` module will split the mesh and generate the multi-block ``vtk`` files.
 
-.. command-output:: mesh-doctor -i random.vtu generateFractures --help
+.. command-output:: mesh-doctor generateFractures --help
    :shell:
 
 ``generateGlobalIds``
@@ -118,7 +131,7 @@ The ``generateFractures`` module will split the mesh and generate the multi-bloc
 When running ``geos`` in parallel, `global ids` can be used to refer to data across multiple ranks.
 The ``generateGlobalIds`` can generate `global ids` for the imported ``vtk`` mesh.
 
-.. command-output:: mesh-doctor -i random.vtu generateGlobalIds --help
+.. command-output:: mesh-doctor generateGlobalIds --help
    :shell:
 
 ``nonConformal``
@@ -129,7 +142,7 @@ This module will detect elements which are close enough (there's a user defined 
 The angle between two faces can also be precribed.
 This module can be a bit time consuming.
 
-.. command-output:: mesh-doctor -i random.vtu nonConformal --help
+.. command-output:: mesh-doctor nonConformal --help
    :shell:
 
 ``selfIntersectingElements``
@@ -138,7 +151,7 @@ This module can be a bit time consuming.
 Some meshes can have cells that auto-intersect.
 This module will display the elements that have faces intersecting.
 
-.. command-output:: mesh-doctor -i random.vtu selfIntersectingElements --help
+.. command-output:: mesh-doctor selfIntersectingElements --help
    :shell:
 
 ``supportedElements``
@@ -152,7 +165,7 @@ But also prismes up to 11 faces.
 The ``supportedElements`` check will validate that no unsupported element is included in the input mesh.
 It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get converted into a supported type of element.
 
-.. command-output:: mesh-doctor -i random.vtu supportedElements --help
+.. command-output:: mesh-doctor supportedElements --help
    :shell:
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import argparse
 from copy import deepcopy
+from typing import Any
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
                                                                  as sharedFillSubparser, displayResults )  # noqa: F401
@@ -71,7 +72,7 @@ def fillSubparser( subparsers: argparse._SubParsersAction ) -> None:
                          checkFeaturesConfig=CHECK_FEATURES_CONFIG )
 
 
-def convert( parsedArgs: argparse.Namespace ) -> AllChecksOptions:
+def convert( parsedArgs: dict[ str, Any ] ) -> AllChecksOptions:
     """Converts arguments by calling the shared logic with the 'allChecks' configuration."""
     return sharedConvert( parsedArgs=parsedArgs,
                           orderedCheckNames=ORDERED_CHECK_NAMES,

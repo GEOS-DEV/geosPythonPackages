@@ -5,7 +5,7 @@ from typing import Any
 from geos.mesh_doctor.actions.supportedElements import Options, Result
 from geos.mesh_doctor.parsing import SUPPORTED_ELEMENTS
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __CHUNK_SIZE = "chunkSize"
 __NUM_PROC = "nproc"
@@ -36,6 +36,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     """
     p = subparsers.add_parser( SUPPORTED_ELEMENTS,
                                help="Check that all the elements of the mesh are supported by GEOSX." )
+    addVtuInputFileArgument( p )
     p.add_argument( '--' + __CHUNK_SIZE,
                     type=int,
                     required=False,

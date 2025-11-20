@@ -4,7 +4,7 @@ from typing import Any
 from geos.mesh_doctor.actions.collocatedNodes import Options, Result
 from geos.mesh_doctor.parsing import COLLOCATES_NODES
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __TOLERANCE = "tolerance"
 __TOLERANCE_DEFAULT = 0.
@@ -31,6 +31,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( COLLOCATES_NODES, help="Checks if nodes are collocated." )
+    addVtuInputFileArgument( p )
     p.add_argument( '--' + __TOLERANCE,
                     type=float,
                     metavar=__TOLERANCE_DEFAULT,

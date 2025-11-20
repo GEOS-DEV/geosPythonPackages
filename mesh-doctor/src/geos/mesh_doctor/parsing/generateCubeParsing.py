@@ -3,8 +3,8 @@ from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.generateCube import Options, Result, FieldInfo
 from geos.mesh_doctor.parsing import vtkOutputParsing, generateGlobalIdsParsing, GENERATE_CUBE
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
-from geos.mesh_doctor.parsing.generateGlobalIdsParsing import GlobalIdsInfo
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
+from geos.mesh_doctor.parsing.generateGlobalIdsParsing import GlobalIdsInfo, convertToGlobalIdsInfo
 
 __X, __Y, __Z, __NX, __NY, __NZ = "x", "y", "z", "nx", "ny", "nz"
 __FIELDS = "fields"
@@ -41,7 +41,7 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
             raise ValueError( f"Dimension {dimension} must be a positive integer" ) from e
         return FieldInfo( name=name, support=support, dimension=dimension )
 
-    gids: GlobalIdsInfo = generateGlobalIdsParsing.convert( parsedOptions )
+    gids: GlobalIdsInfo = convertToGlobalIdsInfo( parsedOptions )
 
     return Options( vtkOutput=vtkOutputParsing.convert( parsedOptions ),
                     generateCellsGlobalIds=gids.cells,
@@ -62,6 +62,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( GENERATE_CUBE, help="Generate a cube and its fields." )
+    addVtuInputFileArgument( p, required=False )
     p.add_argument( '--' + __X,
                     type=lambda s: tuple( map( float, s.split( ":" ) ) ),
                     metavar="0:1.5:3",

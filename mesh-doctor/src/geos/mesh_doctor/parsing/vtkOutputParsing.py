@@ -1,9 +1,7 @@
 from __future__ import annotations
-import os.path
 import textwrap
 from argparse import ArgumentParser, _ArgumentGroup
 from typing import Any
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh.io.vtkIO import VtkOutput
 
 __OUTPUT_FILE = "output"
@@ -71,7 +69,5 @@ def convert( parsedOptions: dict[ str, Any ], prefix: str = "" ) -> VtkOutput:
     outputKey = __buildArg( prefix, __OUTPUT_FILE ).replace( "-", "_" )
     binaryModeKey = __buildArg( prefix, __OUTPUT_BINARY_MODE ).replace( "-", "_" )
     output = parsedOptions[ outputKey ]
-    if parsedOptions[ binaryModeKey ] and os.path.splitext( output )[ -1 ] == ".vtk":
-        setupLogger.info( "VTK data mode will be ignored for legacy file format \"vtk\"." )
     isDataModeBinary: bool = parsedOptions[ binaryModeKey ] == __OUTPUT_BINARY_MODE_DEFAULT
     return VtkOutput( output=output, isDataModeBinary=isDataModeBinary )

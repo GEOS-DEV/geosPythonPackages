@@ -4,7 +4,7 @@ from typing import Any
 from geos.mesh_doctor.actions.nonConformal import Options, Result
 from geos.mesh_doctor.parsing import NON_CONFORMAL
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __ANGLE_TOLERANCE = "angleTolerance"
 __POINT_TOLERANCE = "pointTolerance"
@@ -42,6 +42,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( NON_CONFORMAL, help="Detects non conformal elements. [EXPERIMENTAL]" )
+    addVtuInputFileArgument( p )
     p.add_argument( '--' + __ANGLE_TOLERANCE,
                     type=float,
                     metavar=__ANGLE_TOLERANCE_DEFAULT,

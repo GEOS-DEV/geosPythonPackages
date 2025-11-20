@@ -13,7 +13,7 @@ from vtkmodules.vtkCommonDataModel import (
 from typing import Any
 from geos.mesh_doctor.actions.fixElementsOrderings import Options, Result
 from geos.mesh_doctor.parsing import vtkOutputParsing, FIX_ELEMENTS_ORDERINGS
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __CELL_TYPE_MAPPING = {
     "Hexahedron": VTK_HEXAHEDRON,
@@ -43,6 +43,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( FIX_ELEMENTS_ORDERINGS, help="Reorders the support nodes for the given cell types." )
+    addVtuInputFileArgument( p )
     for key, vtkKey in __CELL_TYPE_MAPPING.items():
         tmp = list( range( __CELL_TYPE_SUPPORT_SIZE[ vtkKey ] ) )
         random.Random( 4 ).shuffle( tmp )

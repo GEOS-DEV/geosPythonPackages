@@ -9,7 +9,12 @@ def main() -> None:
     parseAndSetVerbosity( sys.argv )
     mainParser, allActions, allActionsHelpers = registerParsingActions()
     args = mainParser.parse_args( sys.argv[ 1: ] )
-    setupLogger.info( f"Working on mesh \"{args.vtkInputFile}\"." )
+
+    # Extract vtuInputFile from parsed arguments
+    vtuInputFile = getattr( args, 'vtuInputFile', None )
+    if vtuInputFile:
+        setupLogger.info( f"Working on mesh \"{vtuInputFile}\"." )
+
     actionOptions = allActionsHelpers[ args.subparsers ].convert( vars( args ) )
     try:
         action = allActions[ args.subparsers ]
@@ -17,7 +22,7 @@ def main() -> None:
         setupLogger.error( f"Action {args.subparsers} is not a valid action." )
         sys.exit( 1 )
     helper: ActionHelper = allActionsHelpers[ args.subparsers ]
-    result = action( args.vtkInputFile, actionOptions )
+    result = action( vtuInputFile, actionOptions )
     helper.displayResults( actionOptions, result )
 
 

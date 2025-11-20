@@ -20,6 +20,22 @@ def parseCommaSeparatedString( value: str ) -> list[ str ]:
     return [ item.strip() for item in value.split( ',' ) if item.strip() ]
 
 
+def addVtuInputFileArgument( parser: argparse.ArgumentParser, required: bool = True ) -> None:
+    """Add the VTU input file argument to a parser.
+
+    Args:
+        parser: The argument parser to add the input file argument to.
+        required: Whether the input file argument is required. Defaults to True.
+    """
+    parser.add_argument( '-i',
+                         '--vtu-input-file',
+                         metavar='VTU_MESH_FILE',
+                         type=str,
+                         required=required,
+                         dest='vtuInputFile',
+                         help="[string]: The VTU mesh file to process." + ( "" if required else " (optional)" ) )
+
+
 def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
     """Parse the verbosity flag only and set the root logger's level accordingly.
 
@@ -80,7 +96,6 @@ def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
 
 def initParser() -> argparse.ArgumentParser:
     """Initialize the main argument parser for mesh-doctor."""
-    vtkInputFileKey = "vtkInputFile"
     epilogMsg = f"""\
         Note that checks are dynamically loaded.
         An option may be missing because of an unloaded module.
@@ -107,10 +122,4 @@ def initParser() -> argparse.ArgumentParser:
                          default=0,
                          dest=__QUIET_KEY,
                          help=f"Use -{__QUIET_FLAG} to reduce the verbosity of the output." )
-    parser.add_argument( '-i',
-                         '--vtk-input-file',
-                         metavar='VTK_MESH_FILE',
-                         type=str,
-                         required=True,
-                         dest=vtkInputFileKey )
     return parser

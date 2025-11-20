@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 from geos.mesh_doctor.actions.generateGlobalIds import Options, Result
 from geos.mesh_doctor.parsing import vtkOutputParsing, GENERATE_GLOBAL_IDS
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __CELLS, __POINTS = "cells", "points"
 
@@ -13,6 +13,18 @@ __CELLS, __POINTS = "cells", "points"
 class GlobalIdsInfo:
     cells: bool
     points: bool
+
+
+def convertToGlobalIdsInfo( parsedOptions: dict[ str, Any ] ) -> GlobalIdsInfo:
+    """Extract GlobalIdsInfo from parsed options.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        GlobalIdsInfo: The global IDs configuration.
+    """
+    return GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
 
 
 def convert( parsedOptions: dict[ str, Any ] ) -> Options:
@@ -24,7 +36,7 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     Returns:
         Options: Configuration options for supported elements check.
     """
-    gids: GlobalIdsInfo = GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
+    gids: GlobalIdsInfo = convertToGlobalIdsInfo( parsedOptions )
     return Options( vtkOutput=vtkOutputParsing.convert( parsedOptions ),
                     generateCellsGlobalIds=gids.cells,
                     generatePointsGlobalIds=gids.points )
@@ -61,6 +73,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
+    addVtuInputFileArgument( p )
     addArguments( p )
     vtkOutputParsing.fillVtkOutputSubparser( p )
 

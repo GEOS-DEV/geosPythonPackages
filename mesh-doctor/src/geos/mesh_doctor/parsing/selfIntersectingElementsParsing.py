@@ -5,7 +5,7 @@ from typing import Any
 from geos.mesh_doctor.actions.selfIntersectingElements import Options, Result
 from geos.mesh_doctor.parsing import SELF_INTERSECTING_ELEMENTS
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __MIN_DISTANCE = "minDistance"
 __MIN_DISTANCE_DEFAULT = numpy.finfo( float ).eps
@@ -43,6 +43,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     """
     p = subparsers.add_parser( SELF_INTERSECTING_ELEMENTS,
                                help="Checks if the faces of the elements are self intersecting." )
+    addVtuInputFileArgument( p )
     help_text = ( "[float]: The minimum distance in the computation. "
                   f"Defaults to your machine precision {__MIN_DISTANCE_DEFAULT}." )
     p.add_argument( '--' + __MIN_DISTANCE,

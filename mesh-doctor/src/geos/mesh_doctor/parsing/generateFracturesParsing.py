@@ -4,6 +4,7 @@ import os
 from typing import Any
 from geos.mesh_doctor.actions.generateFractures import Options, Result, FracturePolicy
 from geos.mesh_doctor.parsing import vtkOutputParsing, GENERATE_FRACTURES
+from geos.mesh_doctor.parsing.cliParsing import addVtuInputFileArgument
 from geos.mesh.io.vtkIO import VtkOutput
 
 __POLICY = "policy"
@@ -48,6 +49,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         subparsers: The subparsers action to add the parser to.
     """
     p = subparsers.add_parser( GENERATE_FRACTURES, help="Splits the mesh to generate the faults and fractures." )
+    addVtuInputFileArgument( p )
     p.add_argument( '--' + __POLICY,
                     type=convertToFracturePolicy,
                     metavar=", ".join( __POLICIES ),

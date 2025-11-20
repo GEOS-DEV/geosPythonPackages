@@ -2,10 +2,10 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Type, Any
+from typing import Any, Type, Union
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh_doctor.actions.allChecks import Result as AllChecksResult
-from geos.mesh_doctor.parsing.cliParsing import parseCommaSeparatedString, setupLogger
+from geos.mesh_doctor.parsing.cliParsing import parseCommaSeparatedString, setupLogger, addVtuInputFileArgument
 
 
 @dataclass( frozen=True )
@@ -64,7 +64,7 @@ def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, h
     parser = subparsers.add_parser( subparserName,
                                     help=helpMessage,
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter )
-
+    addVtuInputFileArgument( parser )
     parametersHelp: str = _generateParametersHelp( orderedCheckNames, checkFeaturesConfig )
 
     parser.add_argument( f"--{CHECKS_TO_DO_ARG}",
@@ -84,12 +84,12 @@ def fillSubparser( subparsers: argparse._SubParsersAction, subparserName: str, h
                                 f"Example: --{PARAMETERS_ARG} parameter_name:10.5,other_param:25" ) )
 
 
-def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
+def convert( parsedArgs: Union[ dict[ str, Any ], argparse.Namespace ], orderedCheckNames: list[ str ],
              checkFeaturesConfig: dict[ str, CheckFeature ] ) -> AllChecksOptions:
     """Converts parsed command-line arguments into an AllChecksOptions object based on the provided configuration.
 
     Args:
-        parsedArgs (argparse.Namespace): Parsed command-line arguments.
+        parsedArgs: Parsed command-line arguments (dict or Namespace).
         orderedCheckNames (list[ str ]): Ordered list of check names.
         checkFeaturesConfig (dict[ str, CheckFeature ]): Configuration dictionary for check features.
 
@@ -100,7 +100,11 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
         AllChecksOptions: The options for all checks to be performed.
     """
     # 1. Determine which checks to perform
-    checksToDo = getattr( parsedArgs, CHECKS_TO_DO_ARG )
+    # Support both dict and Namespace
+    if isinstance( parsedArgs, dict ):
+        checksToDo = parsedArgs.get( CHECKS_TO_DO_ARG, "" )
+    else:
+        checksToDo = getattr( parsedArgs, CHECKS_TO_DO_ARG )
     if not checksToDo:
         finalSelectedCheckNames: list[ str ] = deepcopy( orderedCheckNames )
         setupLogger.info( "All configured checks will be performed by default." )
@@ -119,7 +123,11 @@ def convert( parsedArgs: argparse.Namespace, orderedCheckNames: list[ str ],
     defaultParams = { name: feature.defaultParams.copy() for name, feature in checkFeaturesConfig.items() }
     finalCheckParams = { name: defaultParams[ name ] for name in finalSelectedCheckNames }
 
-    parametersArg = getattr( parsedArgs, PARAMETERS_ARG )
+    # Support both dict and Namespace
+    if isinstance( parsedArgs, dict ):
+        parametersArg = parsedArgs.get( PARAMETERS_ARG, "" )
+    else:
+        parametersArg = getattr( parsedArgs, PARAMETERS_ARG )
     if not parametersArg:
         setupLogger.info( "Default configuration of parameters adopted for every check to perform." )
     else:

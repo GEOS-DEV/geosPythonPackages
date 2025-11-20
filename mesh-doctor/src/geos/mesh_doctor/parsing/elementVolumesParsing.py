@@ -4,7 +4,7 @@ from typing import Any
 from geos.mesh_doctor.actions.elementVolumes import Options, Result
 from geos.mesh_doctor.parsing import ELEMENT_VOLUMES
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
-from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __MIN_VOLUME = "minVolume"
 __MIN_VOLUME_DEFAULT = 0.
@@ -20,6 +20,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     """
     p = subparsers.add_parser( ELEMENT_VOLUMES,
                                help=f"Checks if the volumes of the elements are greater than \"{__MIN_VOLUME}\"." )
+    addVtuInputFileArgument( p )
     p.add_argument( '--' + __MIN_VOLUME,
                     type=float,
                     metavar=__MIN_VOLUME_DEFAULT,
