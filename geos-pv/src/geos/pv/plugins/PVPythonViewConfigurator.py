@@ -27,6 +27,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from paraview.simple import (  # type: ignore[import-not-found]
     GetActiveSource, GetActiveView, Render, Show, servermanager )
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
 from vtkmodules.vtkCommonCore import vtkDataArraySelection, vtkInformation
 from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkMultiBlockDataSet
