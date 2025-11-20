@@ -17,7 +17,9 @@ from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCount
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-SplitMesh module is a vtk filter that split cells of a mesh composed of Tetrahedra, pyramids, and hexahedra.
+SplitMesh module is a vtk filter that splits cells of a mesh composed of tetrahedra, pyramids, hexahedra, triangles, and quads.
+
+Warning: Current implementation only supports meshes composed of either polygons or polyhedra, not both together.
 
 Filter input and output types are vtkUnstructuredGrid.
 
@@ -95,21 +97,23 @@ class SplitMesh():
         """Apply the filter SplitMesh."""
         self.logger.info( f"Applying filter { self.logger.name }." )
         try:
+            # Count the number of cells before splitting. Then we will be able to know how many new cells and points
+            # to allocate because each cell type is splitted in a known number of new cells and points.
             nbCells: int = self.inputMesh.GetNumberOfCells()
             counts: CellTypeCounts = self._getCellCounts()
-            nbTet: int = counts.getTypeCount( VTK_TETRA )
-            nbPyr: int = counts.getTypeCount( VTK_PYRAMID )
-            nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )
-            nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )
-            nbQuad: int = counts.getTypeCount( VTK_QUAD )
+            nbTet: int = counts.getTypeCount( VTK_TETRA )  # will divide into 8 tets
+            nbPyr: int = counts.getTypeCount( VTK_PYRAMID )  # will divide into 6 pyramids and 4 tets so 10 new cells
+            nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )  # will divide into 8 hexes
+            nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )  # will divide into 4 triangles
+            nbQuad: int = counts.getTypeCount( VTK_QUAD )  # will divide into 4 quads
             nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
             nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
             assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
-            assert nbPolyhedra * nbPolygon == 0, ( "Input mesh is composed of both polygons and polyhedra,"
-                                                   " but it must contains only one of the two." )
+            # Current implementation only supports meshes composed of either polygons or polyhedra
+            assert nbPolyhedra * nbPolygon == 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
             nbNewPoints: int = 0
             nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
-            nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 * nbTriangles * 4 + nbQuad * 4
+            nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 + nbTriangles * 4 + nbQuad * 4
 
             self.points = vtkPoints()
             self.points.DeepCopy( self.inputMesh.GetPoints() )
@@ -121,21 +125,22 @@ class SplitMesh():
             self.originalId.SetName( "OriginalID" )
             self.originalId.Allocate( nbNewCells )
             self.cellTypes = []
+            # Define cell type to splitting method mapping
+            splitMethods = {
+                VTK_HEXAHEDRON: self._splitHexahedron,
+                VTK_TETRA: self._splitTetrahedron,
+                VTK_PYRAMID: self._splitPyramid,
+                VTK_TRIANGLE: self._splitTriangle,
+                VTK_QUAD: self._splitQuad,
+            }
             for c in range( nbCells ):
                 cell: vtkCell = self.inputMesh.GetCell( c )
                 cellType: int = cell.GetCellType()
-                if cellType == VTK_HEXAHEDRON:
-                    self._splitHexahedron( cell, c )
-                elif cellType == VTK_TETRA:
-                    self._splitTetrahedron( cell, c )
-                elif cellType == VTK_PYRAMID:
-                    self._splitPyramid( cell, c )
-                elif cellType == VTK_TRIANGLE:
-                    self._splitTriangle( cell, c )
-                elif cellType == VTK_QUAD:
-                    self._splitQuad( cell, c )
+                splitMethod = splitMethods.get( cellType )
+                if splitMethod is not None:
+                    splitMethod( cell, c )
                 else:
-                    raise TypeError( f"Cell type {vtkCellTypes.GetClassNameFromTypeId(cellType)} is not supported." )
+                    raise TypeError( f"Cell type { vtkCellTypes.GetClassNameFromTypeId( cellType ) } is not supported." )
             # add points and cells
             self.outputMesh.SetPoints( self.points )
             self.outputMesh.SetCells( self.cellTypes, self.cells )
@@ -233,7 +238,7 @@ class SplitMesh():
         r"""Split a pyramid.
 
         Let's suppose an input pyramid composed of nodes (0, 1, 2, 3, 4),
-        the cell is splitted in 8 pyramids using edge centers.
+        the cell is split into 6 pyramids and 4 tetrahedra using edge centers.
 
                        4
                      ,/|\
@@ -282,7 +287,8 @@ class SplitMesh():
         self.cells.InsertNextCell( 4, [ pt12, pt7, pt6, pt13 ] )
         for _ in range( 10 ):
             self.originalId.InsertNextValue( index )
-        self.cellTypes.extend( [ VTK_PYRAMID ] * 8 )
+        self.cellTypes.extend( [ VTK_PYRAMID ] * 6 )
+        self.cellTypes.extend( [ VTK_TETRA ] * 4 )
 
     def _splitHexahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a hexahedron.
@@ -350,7 +356,7 @@ class SplitMesh():
         r"""Split a triangle.
 
         Let's suppose an input triangle composed of nodes (0, 1, 2),
-        the cell is splitted in 3 triangles using edge centers.
+        the cell is split into 4 triangles using edge centers.
 
         2
         |\
