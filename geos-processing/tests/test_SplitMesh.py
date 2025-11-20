@@ -6,8 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import pytest
-from typing import (
-    Iterator, )
+from typing import Iterator
 
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
@@ -17,11 +16,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCellTypes, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 
-from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-    vtkIdList,
-    vtkDataArray,
-)
+from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList, vtkDataArray
 
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
@@ -149,10 +144,9 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         test_case (TestCase): test case
     """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
-    splitMeshFilter: SplitMesh = SplitMesh()
-    splitMeshFilter.SetInputDataObject( test_case.mesh )
-    splitMeshFilter.Update()
-    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    splitMeshFilter: SplitMesh = SplitMesh( test_case.mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh is undefined."
     pointsOut: vtkPoints = output.GetPoints()
     assert pointsOut is not None, "Points from output mesh are undefined."
