@@ -12,6 +12,7 @@ from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
 import jinja2 
 import paramiko 
+import os
 
 #TODO move outside
 #TODO use Jinja on real launcher
@@ -22,12 +23,11 @@ class SimulationConstant:
     HOST = "p4log01"  # Only run on P4 machine
     PORT = 22
     SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/users/"
-    SIMULATION_DEFAULT_FILE_NAME="geosDeck.xml"
-
+    SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
 class Authentificator:#namespacing more than anything else
 
     @staticmethod
-    def get_key(login:str, passphrase = "trameisrunning"):
+    def get_key():
 
         try:
             PRIVATE_KEY = paramiko.RSAKey.from_private_key_file("~/.ssh/id_trame")
@@ -35,21 +35,25 @@ class Authentificator:#namespacing more than anything else
             print(f"Error loading private key: {e}\n")
         except FileNotFoundError as e:
             print(f"Private key not found: {e}\n Generating key ...")
-            PRIVATE_KEY = Authentificator.gen_key(login, SimulationConstant.HOST, passphrase)
+            PRIVATE_KEY = Authentificator.gen_key()
             return PRIVATE_KEY
 
         return PRIVATE_KEY
 
     @staticmethod
-    def gen_key(login:str, host: str, passphrase: str):
+    def gen_key():  
         file_path = "~/.ssh/id_trame"
-        cmd = f"ssh-keygen -t rsa -b 4096 -C {login}@{host} -f {file_path} -N \"{passphrase}\" "
-        import subprocess 
-        print(f"Running: {''.join(cmd)}")
-        subprocess.run(cmd, shell=True)
-        print(f"SSH key generated at: {file_path}")
-        print(f"Public key: {file_path}.pub")
-    SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
+        key = paramiko.RSAKey.generate(bits=4096)
+        
+        # Get public key in OpenSSH format
+        public_key = f"{key.get_name()} {key.get_base64()}"
+        with open(file_path, "w") as pub_file:
+            pub_file.write(public_key)
+
+        print("SSH key pair generated: id_trame (private), id_trame.pub (public)")
+    
+
+
 
 @unique
 class SlurmJobStatus(Enum):
@@ -71,7 +75,6 @@ class SlurmJobStatus(Enum):
 # @dataclass_json
 @dataclass
 class SimulationInformation:
-    pass
 
     def get_simulation_status(
         self,

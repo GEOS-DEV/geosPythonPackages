@@ -73,7 +73,13 @@ def hint_config(cluster_name, n_unknowns, job_type = 'cpu'):
 
 
     return [ f"{selected_cluster['name']}: {sd['nodes']} x {sd['ranks_per_node']}", f"{selected_cluster['name']}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}" ]
-   
+
+
+class Login:
+
+    @controller.trigger("run_try_login")
+    def try_logging():
+        pass
 
 
 def define_simulation_view(server) -> None:
