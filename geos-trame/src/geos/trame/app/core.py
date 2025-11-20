@@ -121,7 +121,7 @@ class GeosTrame:
                         self.deckEditor = DeckEditor(
                             source=self.tree,
                             classes="ma-2",
-                            style="flex: 1; height: 100%;",
+                            style="flex: 1; height: 100vh;",
                         )
 
                     with vuetify.VCol(
