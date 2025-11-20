@@ -189,23 +189,6 @@ class GeosTrame:
                     ):
                         vuetify.VIcon( "mdi-content-save-outline" )
 
-                    # with html.Div(
-                    #         style=
-                    #         "height: 100%; width: 300px; display: flex; align-items: center; justify-content: space-between;",
-                    #         v_if=( "tab_idx == 1", ),
-                    # ):
-                    #     vuetify.VBtn(
-                    #         "Run",
-                    #         style="z-index: 1;",
-                    #     )
-                    #     vuetify.VBtn(
-                    #         "Kill",
-                    #         style="z-index: 1;",
-                    #     )
-                    #     vuetify.VBtn(
-                    #         "Clear",
-                    #         style="z-index: 1;",
-                    #     )
 
             # input file editor
             with vuetify.VCol( v_show=( "tab_idx == 0", ), classes="flex-grow-1 pa-0 ma-0" ):

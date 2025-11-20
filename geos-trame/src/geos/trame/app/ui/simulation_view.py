@@ -75,12 +75,6 @@ def hint_config(cluster_name, n_unknowns, job_type = 'cpu'):
     return [ f"{selected_cluster['name']}: {sd['nodes']} x {sd['ranks_per_node']}", f"{selected_cluster['name']}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}" ]
 
 
-class Login:
-
-    @controller.trigger("run_try_login")
-    def try_logging():
-        pass
-
 
 def define_simulation_view(server) -> None:
     with vuetify.VContainer():
@@ -127,7 +121,7 @@ def define_simulation_view(server) -> None:
                 #
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
-                vuetify.VBtn("Log in", click="trigger('run_try_logging')"),  # type: ignore
+                vuetify.VBtn("Log in", click="trigger('run_try_login')"),  # type: ignore
 
                 
         vuetify.VDivider(thickness=5, classes="my-4")

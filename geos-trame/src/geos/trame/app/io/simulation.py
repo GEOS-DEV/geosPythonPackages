@@ -24,13 +24,18 @@ class SimulationConstant:
     PORT = 22
     SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/users/"
     SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
+
+
+
+
+
 class Authentificator:#namespacing more than anything else
 
     @staticmethod
-    def get_key():
+    def get_key(id=os.environ.get("USER")):
 
         try:
-            PRIVATE_KEY = paramiko.RSAKey.from_private_key_file("~/.ssh/id_trame")
+            PRIVATE_KEY = paramiko.RSAKey.from_private_key_file(f"/users/{id}/.ssh/id_trame")
         except paramiko.SSHException as e:
             print(f"Error loading private key: {e}\n")
         except FileNotFoundError as e:
@@ -41,8 +46,8 @@ class Authentificator:#namespacing more than anything else
         return PRIVATE_KEY
 
     @staticmethod
-    def gen_key():  
-        file_path = "~/.ssh/id_trame"
+    def gen_key(id=os.environ.get("USER")):  
+        file_path = f"/users/{id}/.ssh/id_trame"
         key = paramiko.RSAKey.generate(bits=4096)
         
         # Get public key in OpenSSH format
@@ -241,7 +246,7 @@ class SimRunner(ISimRunner):
     def __init__(self, user):
         super().__init__()
 
-        ssh_client = self._create_ssh_client(SimulationConstant.HOST, SimulationConstant.PORT, username=user, key=Authentificator.get_key(user))
+        ssh_client = self._create_ssh_client(SimulationConstant.HOST, SimulationConstant.PORT, username=user, key=Authentificator.get_key())
         print(ssh_client)
 
         # early test
@@ -396,6 +401,7 @@ class Simulation:
 
     def __init__(self, sim_runner: ISimRunner, server: Server, sim_info_dir: Optional[Path] = None) -> None:
         self._server = server
+        controller = server.controller
         self._sim_runner = sim_runner
         self._sim_info_dir = sim_info_dir or SimulationConstant.SIMULATIONS_INFORMATION_FOLDER_PATH
 
@@ -403,6 +409,19 @@ class Simulation:
         self._job_status_watcher_period_ms = 2000
 
         self.start_result_streams()
+    
+        #define triggers
+        @controller.trigger("run_try_login")
+        def run_try_login() -> None:
+            print("login login login")
+
+        @controller.trigger("run_simulation")
+        def run_simulation()-> None:
+            pass
+
+        @controller.trigger("kill_simulation")
+        def kill_simulation(pid)->None:
+            pass
 
     def __del__(self):
         self.stop_result_streams()
