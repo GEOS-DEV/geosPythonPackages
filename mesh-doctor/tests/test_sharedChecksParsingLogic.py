@@ -81,22 +81,24 @@ def test_fillSubparser( checkFeaturesConfig: dict[ str, CheckFeature ], orderedC
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers( dest="command" )
     fillSubparser( subparsers, "test-command", "Test help message", orderedCheckNames, checkFeaturesConfig )
-    # Parse with no args should use defaults
-    args = parser.parse_args( [ "test-command" ] )
+    # Parse with no args (except required vtu-input-file) should use defaults
+    args = parser.parse_args( [ "test-command", "-i", "test.vtu" ] )
     assert getattr( args, CHECKS_TO_DO_ARG ) == ""
     assert getattr( args, PARAMETERS_ARG ) == ""
+    assert args.vtuInputFile == "test.vtu"
     # Parse with specified args
     args = parser.parse_args(
-        [ "test-command", f"--{CHECKS_TO_DO_ARG}", "check1", f"--{PARAMETERS_ARG}", "param1:10.5" ] )
+        [ "test-command", "-i", "test.vtu", f"--{CHECKS_TO_DO_ARG}", "check1", f"--{PARAMETERS_ARG}", "param1:10.5" ] )
     assert getattr( args, CHECKS_TO_DO_ARG ) == "check1"
     assert getattr( args, PARAMETERS_ARG ) == "param1:10.5"
+    assert args.vtuInputFile == "test.vtu"
 
 
 @patch( 'geos.mesh_doctor.parsing._sharedChecksParsingLogic.setupLogger' )
 def test_convertDefaultChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when no specific checks or parameters are specified."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "" }
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
     assert len( options.checksOptions ) == 2
@@ -108,7 +110,7 @@ def test_convertDefaultChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[
 def test_convertSpecificChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                 orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when specific checks are specified."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "check1", PARAMETERS_ARG: "" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "check1", PARAMETERS_ARG: "" }
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == [ "check1" ]
     assert len( options.checksOptions ) == 1
@@ -120,7 +122,7 @@ def test_convertSpecificChecks( mockLogger: MagicMock, checkFeaturesConfig: dict
 def test_convertWithParameters( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                 orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when parameters are specified."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:10.5,param2:20.5" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:10.5,param2:20.5" }
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     assert options.checksToPerform == orderedCheckNames
     assert options.checksOptions[ "check1" ].param1 == 10.5
@@ -133,7 +135,7 @@ def test_convertWithParameters( mockLogger: MagicMock, checkFeaturesConfig: dict
 def test_convertWithInvalidParameters( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                        orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when some invalid parameters are specified."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:invalid,param2:20.5" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "", PARAMETERS_ARG: "param1:invalid,param2:20.5" }
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid parameter should be skipped, but the valid one applied
     assert options.checksOptions[ "check1" ].param1 == 1.0  # Default maintained
@@ -144,7 +146,7 @@ def test_convertWithInvalidParameters( mockLogger: MagicMock, checkFeaturesConfi
 def test_convertWithInvalidCheck( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                   orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when an invalid check is specified."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check,check1", PARAMETERS_ARG: "" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "invalid_check,check1", PARAMETERS_ARG: "" }
     options = convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
     # The invalid check should be skipped
     assert options.checksToPerform == [ "check1" ]
@@ -156,7 +158,7 @@ def test_convertWithInvalidCheck( mockLogger: MagicMock, checkFeaturesConfig: di
 def test_convertWithAllInvalidChecks( mockLogger: MagicMock, checkFeaturesConfig: dict[ str, CheckFeature ],
                                       orderedCheckNames: list[ str ] ) -> None:
     """Tests convert when all checks are invalid."""
-    parsedArgs = argparse.Namespace( **{ CHECKS_TO_DO_ARG: "invalid_check1,invalid_check2", PARAMETERS_ARG: "" } )
+    parsedArgs = { CHECKS_TO_DO_ARG: "invalid_check1,invalid_check2", PARAMETERS_ARG: "" }
     # Should raise ValueError since no valid checks were selected
     with pytest.raises( ValueError, match="No valid checks were selected" ):
         convert( parsedArgs, orderedCheckNames, checkFeaturesConfig )
