@@ -5,8 +5,7 @@
 import logging
 from typing_extensions import Self
 
-from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData,
-                                            vtkUnstructuredGrid )
+from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid
 
 from geos.utils.Errors import VTKError
 from geos.utils.Logger import ( Logger, getLogger )
@@ -114,7 +113,7 @@ class GeosBlockMerge():
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.handler = handler
             self.logger.addHandler( handler )
         else:
@@ -126,8 +125,12 @@ class GeosBlockMerge():
         """Get the mesh with the composite blocks merged."""
         return self.outputMesh
 
-    def applyFilter( self: Self ) -> None:
-        """Apply the filter on the mesh."""
+    def applyFilter( self: Self ) -> bool:
+        """Apply the filter on the mesh.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -178,8 +181,13 @@ class GeosBlockMerge():
             self.logger.info( f"The filter { self.logger.name } succeeded." )
         except ( ValueError, TypeError, RuntimeError, AssertionError, VTKError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def renameAttributes(
         self: Self,

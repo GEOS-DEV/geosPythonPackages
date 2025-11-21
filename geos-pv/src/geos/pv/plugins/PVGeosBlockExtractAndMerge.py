@@ -27,13 +27,14 @@ from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNam
 from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from geos.pv.utils.workflowFunctions import doExtractAndMerge
 
-from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty, smproxy )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 __doc__ = """
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
