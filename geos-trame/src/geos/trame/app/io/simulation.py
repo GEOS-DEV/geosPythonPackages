@@ -486,10 +486,11 @@ class Simulation:
                 if Authentificator.ssh_client:
                     Authentificator._transfer_file_sftp(Authentificator.ssh_client,
                                                         local_path='job.slurm',
-                                                        remote_path=server.state.simulation_remote_path)
+                                                        remote_path=f'{server.state.simulation_remote_path}/job.slurm',
+                                                        direction="put")
                     Authentificator._transfer_file_sftp(Authentificator.ssh_client,
-                                                        remote_path=server.state.simulation_remote_path+'/job.slurm',
-                                                        local_path=server.state.simulation_dl_path+'/dl.test',
+                                                        remote_path=f'{server.state.simulation_remote_path}/job.slurm',
+                                                        local_path=f'{server.state.simulation_dl_path}/dl.test',
                                                         direction="get")
                 else:
                     raise paramiko.SSHException

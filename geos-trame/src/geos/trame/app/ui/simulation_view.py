@@ -114,7 +114,7 @@ def define_simulation_view(server) -> None:
                     )
         
         #        
-            server.state.access_granted = False# link to login button callback run_try_logging results
+            server.state.access_granted = False
             server.state.simulation_xml_filename = "geosDeck.xml" 
             server.state.sd = SuggestDecomposition('p4', 12e6)
             items = server.state.sd.to_list()
