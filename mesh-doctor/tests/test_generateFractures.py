@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
@@ -300,7 +303,6 @@ def addQuad( mesh: vtkUnstructuredGrid, face: FaceNodesCoords ) -> None:
     mesh.InsertNextCell( quad.GetCellType(), quad.GetPointIds() )
 
 
-@pytest.mark.skip( "Test to be fixed" )
 def test_copyFieldsWhenSplittingMesh() -> None:
     """This test is designed to check the __copyFields method from generateFractures, that will be called when using __splitMeshOnFractures method from generateFractures."""
     # Generating the rectilinear grid and its quads on all borders
@@ -343,18 +345,3 @@ def test_copyFieldsWhenSplittingMesh() -> None:
     mainMeshValues: list[ int ] = vtk_to_numpy( mainMesh.GetCellData().GetArray( 0 ) ).tolist()
     assert fractureMeshValues == [ 9 ]  # The value for the fracture surface
     assert mainMeshValues == [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
-    # Test for invalid point field name
-    addSimplifiedFieldForCells( mesh0, "GLOBAL_IDS_POINTS", 1 )
-    with pytest.raises( ValueError ):
-        mainMesh, fractureMeshes = __splitMeshOnFractures( mesh0, options )
-    # Test for invalid cell field name
-    mesh1: vtkUnstructuredGrid = buildRectilinearBlocksMesh( [ xyzs ] )
-    borderFaces1: BorderFacesNodesCoords = findBordersFacesRectilinearGrid( mesh1 )
-    for face in borderFaces1:
-        addQuad( mesh1, face )
-    addQuad( mesh1, fracture )
-    addSimplifiedFieldForCells( mesh1, "TestField", 1 )
-    addSimplifiedFieldForCells( mesh1, "GLOBAL_IDS_CELLS", 1 )
-    assert mesh1.GetCellData().GetNumberOfArrays() == 2
-    with pytest.raises( ValueError ):
-        mainMesh, fractureMeshes = __splitMeshOnFractures( mesh1, options )

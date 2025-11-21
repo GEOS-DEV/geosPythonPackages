@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 import argparse
 from dataclasses import dataclass
 import pytest
@@ -17,10 +20,13 @@ class TestCase:
 
 def __generateGenerateFracturesParsingTestData() -> Iterator[ TestCase ]:
     field: str = "attribute"
+    inputMesh: str = "input.vtu"
     mainMesh: str = "output.vtu"
     fractureMesh: str = "fracture.vtu"
 
-    cliGen: str = f"generateFractures --policy {{}} --name {field} --values 0,1 --output {mainMesh} --fracturesOutputDir ."
+    cliBase: str = f"generateFractures -i {inputMesh} --policy {{}} --name {field} --values 0,1"
+    cliEnd: str = f"--output {mainMesh} --fracturesOutputDir ."
+    cliGen: str = f"{cliBase} {cliEnd}"
     allCliArgs = cliGen.format( "field" ).split(), cliGen.format( "internalSurfaces" ).split(), cliGen.format(
         "dummy" ).split()
     policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
@@ -71,8 +77,6 @@ def test( testCase: TestCase ) -> None:
     """Test CLI parsing for generateFractures action."""
     if testCase.exception:
         with pytest.raises( SystemExit ):
-            pytest.skip( "Test to be fixed" )
-            # __parseAndValidateOptions( testCase )
+            __parseAndValidateOptions( testCase )
     else:
-        pytest.skip( "Test to be fixed" )
-        # __parseAndValidateOptions( testCase )
+        __parseAndValidateOptions( testCase )

@@ -1,27 +1,28 @@
-# import os
-import pytest
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+import os
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, VTK_POLYHEDRON
-# from geos.mesh_doctor.actions.supportedElements import Options, action, meshAction
-from geos.mesh_doctor.actions.vtkPolyhedron import parseFaceStream, FaceStream
 from geos.mesh.utils.genericHelpers import toVtkIdList
+from geos.mesh_doctor.actions.supportedElements import Options, action, meshAction
+from geos.mesh_doctor.actions.vtkPolyhedron import FaceStream, parseFaceStream
 
 
-# TODO Update this test to have access to another meshTests file
-@pytest.mark.parametrize( "baseName", ( "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" ) )
-def test_supportedElements( baseName: str ) -> None:
+dataRoot: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
+supportElementsFile: str = os.path.join( dataRoot, "supportedElements.vtu" )
+
+
+def test_supportedElements() -> None:
     """Testing that the supported elements are properly detected as supported!
 
     Args:
         baseName (str): Supported elements are provided as standard elements or polyhedron elements.
     """
-    ...
-    # directory = os.path.dirname( os.path.realpath( __file__ ) )
-    # supportedElementsFileName = os.path.join( directory, "../../../../unitTests/meshTests", baseName )
-    # options = Options( chunkSize=1, numProc=4 )
-    # result = check( supportedElementsFileName, options )
-    # assert not result.unsupportedStdElementsTypes
-    # assert not result.unsupportedPolyhedronElements
+    options = Options( chunkSize=1, nproc=4 )
+    result = action( supportElementsFile, options )
+    assert not result.unsupportedStdElementsTypes
+    assert not result.unsupportedPolyhedronElements
 
 
 def makeDodecahedron() -> tuple[ vtkPoints, vtkIdList ]:
@@ -81,19 +82,24 @@ def makeDodecahedron() -> tuple[ vtkPoints, vtkIdList ]:
     return p, f
 
 
-# TODO make this test work
 def test_dodecahedron() -> None:
-    """Tests whether a dodecahedron is supported by GEOS or not."""
+    """Tests whether a dodecahedron is supported by GEOS or not.
+
+    A dodecahedron has 12 pentagonal faces and is not supported by GEOS,
+    which only supports hexahedra, tetrahedra, pyramids, wedges, and polygons.
+    """
     points, faces = makeDodecahedron()
     mesh = vtkUnstructuredGrid()
     mesh.Allocate( 1 )
     mesh.SetPoints( points )
     mesh.InsertNextCell( VTK_POLYHEDRON, faces )
 
-    # TODO Why does __check triggers an assertion error with 'assert MESH is not None' ?
-    # result = __check( mesh, Options( num_proc=1, chunk_size=1 ) )
-    # assert set( result.unsupported_polyhedron_elements ) == { 0 }
-    # assert not result.unsupported_std_elements_types
+    # Test using meshAction directly instead of the internal __check function
+    options = Options( nproc=1, chunkSize=1 )
+    result = meshAction( mesh, options )
+    # Dodecahedron (12 pentagonal faces) is not supported by GEOS
+    assert set( result.unsupportedPolyhedronElements ) == { 0 }
+    assert not result.unsupportedStdElementsTypes
 
 
 def test_parseFaceStream() -> None:
@@ -117,6 +123,6 @@ def test_parseFaceStream() -> None:
     )
     # yapf: enable
     assert result == expected
-    face_stream = FaceStream.buildFromVtkIdList( faces )
-    assert face_stream.numFaces == 12
-    assert face_stream.numSupportPoints == 20
+    faceStream = FaceStream.buildFromVtkIdList( faces )
+    assert faceStream.numFaces == 12
+    assert faceStream.numSupportPoints == 20
