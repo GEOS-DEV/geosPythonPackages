@@ -143,7 +143,7 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
     splitMeshFilter: SplitMesh = SplitMesh( test_case.mesh )
-    splitMeshFilter.applyFilter()
+    assert splitMeshFilter.applyFilter()
     output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh is undefined."
     pointsOut: vtkPoints = output.GetPoints()
@@ -234,7 +234,7 @@ def test_multi_cells_mesh_split() -> None:
 
     # Apply the split filter
     splitMeshFilter = SplitMesh( input_mesh )
-    splitMeshFilter.applyFilter()
+    assert splitMeshFilter.applyFilter()
     output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh should be defined"
 
@@ -296,7 +296,7 @@ def test_multi_polygon_mesh_split() -> None:
 
     # Apply the split filter
     splitMeshFilter = SplitMesh( input_mesh )
-    splitMeshFilter.applyFilter()
+    assert splitMeshFilter.applyFilter()
     output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh should be defined"
 

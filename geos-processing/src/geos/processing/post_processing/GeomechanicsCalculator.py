@@ -705,8 +705,12 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-    def applyFilter( self: Self ) -> None:
-        """Compute the geomechanics properties and create attributes on the mesh."""
+    def applyFilter( self: Self ) -> bool:
+        """Compute the geomechanics properties and create attributes on the mesh.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -742,8 +746,13 @@ class GeomechanicsCalculator:
             self.logger.info( f"The filter { self.logger.name } succeeded." )
         except ( ValueError, TypeError, NameError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh with the geomechanics properties computed as attributes.

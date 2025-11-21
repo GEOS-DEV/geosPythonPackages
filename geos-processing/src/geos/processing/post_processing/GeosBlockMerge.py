@@ -125,8 +125,12 @@ class GeosBlockMerge():
         """Get the mesh with the composite blocks merged."""
         return self.outputMesh
 
-    def applyFilter( self: Self ) -> None:
-        """Apply the filter on the mesh."""
+    def applyFilter( self: Self ) -> bool:
+        """Apply the filter on the mesh.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -177,8 +181,13 @@ class GeosBlockMerge():
             self.logger.info( f"The filter { self.logger.name } succeeded." )
         except ( ValueError, TypeError, RuntimeError, AssertionError, VTKError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def renameAttributes(
         self: Self,

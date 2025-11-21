@@ -249,8 +249,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
             geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-            geomechanicsCalculatorFilter.applyFilter()
-            outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+            if geomechanicsCalculatorFilter.applyFilter():
+                outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
             for blockIndex in volumeBlockIndexes:
@@ -274,9 +274,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
                 geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-                geomechanicsCalculatorFilter.applyFilter()
-                volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
-                volumeBlock.Modified()
+                if geomechanicsCalculatorFilter.applyFilter():
+                    volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+                    volumeBlock.Modified()
 
         outputMesh.Modified()
 

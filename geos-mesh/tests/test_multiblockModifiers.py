@@ -9,6 +9,12 @@ import pytest
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 from geos.mesh.utils import multiblockModifiers
 
+from unittest import TestCase
+from geos.utils.Errors import VTKError
+
+import vtk
+from packaging.version import Version
+
 
 @pytest.mark.parametrize( "keepPartialAttributes, nbPointAttributes, nbCellAttributes, nbFieldAttributes", [
     ( False, 0, 16, 1 ),
@@ -35,3 +41,13 @@ def test_mergeBlocks(
 
     assert dataset.GetFieldData().GetNumberOfArrays(
     ) == nbFieldAttributes, f"Expected {nbFieldAttributes} field attributes after the merge, not {dataset.GetFieldData().GetNumberOfArrays()}."
+
+class RaiseMergeBlocks( TestCase ):
+    """Test failure on empty multiBlockDataSet."""
+
+    def test_TypeError( self ) -> None:
+        """Test raise of TypeError."""
+        multiBlockDataset = vtkMultiBlockDataSet()  # should fail on empty data
+        if Version( vtk.__version__ ) < Version( "9.5" ):
+            with pytest.raises( VTKError ):
+                multiblockModifiers.mergeBlocks( multiBlockDataset, True )

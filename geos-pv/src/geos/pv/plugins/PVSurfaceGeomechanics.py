@@ -126,16 +126,16 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
-            sgFilter.applyFilter()
+            if sgFilter.applyFilter():
 
-            outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
+                outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
-            # add attributes to output surface mesh
-            for attributeName in sgFilter.GetNewAttributeNames():
-                attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
-                surfaceBlock.GetCellData().AddArray( attr )
-                surfaceBlock.GetCellData().Modified()
-            surfaceBlock.Modified()
+                # add attributes to output surface mesh
+                for attributeName in sgFilter.GetNewAttributeNames():
+                    attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
+                    surfaceBlock.GetCellData().AddArray( attr )
+                    surfaceBlock.GetCellData().Modified()
+                surfaceBlock.Modified()
 
         outputMesh.Modified()
         return

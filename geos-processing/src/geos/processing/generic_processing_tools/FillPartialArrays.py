@@ -113,32 +113,31 @@ class FillPartialArrays:
             boolean (bool): True if calculation successfully ended, False otherwise.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        try:
+            onPoints: Union[ None, bool ]
+            onBoth: bool
+            for attributeName in self.dictAttributesValues:
+                onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
+                if onPoints is None:
+                    raise ValueError( f"{ attributeName } is not in the mesh." )
 
-        onPoints: Union[ None, bool ]
-        onBoth: bool
-        for attributeName in self.dictAttributesValues:
-            onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
-            if onPoints is None:
-                self.logger.error( f"{ attributeName } is not in the mesh." )
-                self.logger.error( f"The attribute { attributeName } has not been filled." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                if onBoth:
+                    raise ValueError( f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique." )
 
-            if onBoth:
-                self.logger.error( f"There is two attribute named { attributeName },"
-                                   " one on points and the other on cells. The attribute must be unique." )
-                self.logger.error( f"The attribute { attributeName } has not been filled." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                if not fillPartialAttributes( self.multiBlockDataSet,
+                                            attributeName,
+                                            onPoints=onPoints,
+                                            listValues=self.dictAttributesValues[ attributeName ],
+                                            logger=self.logger ):
+                    raise
 
-            if not fillPartialAttributes( self.multiBlockDataSet,
-                                          attributeName,
-                                          onPoints=onPoints,
-                                          listValues=self.dictAttributesValues[ attributeName ],
-                                          logger=self.logger ):
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
-
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+            self.logger.info( f"The filter { self.logger.name } succeed." )
+        except ( ValueError, AttributeError ) as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
         return True
