@@ -16,7 +16,7 @@ jobs:
       max-parallel: 3
       matrix:
         # add packages to check typing
-        package-name: ["geos-geomechanics", "geos-processing", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper"]
+        package-name: ["geos-geomechanics", "geos-processing", "geos-timehistory", "geos-utils", "geos-trame", "geos-xml-tools", "hdf5-wrapper", "mesh-doctor"]
 
     steps:
     - uses: actions/checkout@v4

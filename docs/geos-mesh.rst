@@ -7,8 +7,6 @@ GEOS Mesh tools
       :maxdepth: 1
       :caption: Contents:
 
-      ./geos_mesh_docs/doctor
-
       ./geos_mesh_docs/converter
 
       ./geos_mesh_docs/io

@@ -73,8 +73,8 @@ GEOS Python packages dependency tree (inter-dependency and main external depende
 │   └── hdf5-wrapper
 |
 ├── mesh-doctor
-│   ├── geos-prep
-│   └── pyvista
+│   ├── geos-utils
+│   └── geos-mesh
 |
 ├── geos-trame
 │   ├── geos-xml-tools

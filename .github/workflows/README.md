@@ -29,6 +29,7 @@ Tests each Python package independently to ensure:
 - `geos-xml-tools` - XML preprocessing and formatting
 - `geos-xml-viewer` - XML viewing tools
 - `hdf5-wrapper` - HDF5 file handling wrapper
+- `mesh-doctor` - Tools to perform checks on vtkUnstructuredGrids
 - `pygeos-tools` - GEOS Python tools
 
 ### Jobs
@@ -240,9 +241,10 @@ GEOS integration tests are **automatically triggered** when changes affect:
 
 #### GEOS-Integrated Packages
 - `geos-utils/` - Core utilities used of goesPythonPackages
-- `geos-mesh/` - Mesh conversion (`convert_abaqus`, `mesh-doctor`)
+- `geos-mesh/` - Mesh conversion (`convert_abaqus`)
 - `geos-xml-tools/` - XML preprocessing (`preprocess_xml`, `format_xml`)
 - `hdf5-wrapper/` - HDF5 I/O wrapper
+- `mesh-doctor/` - Checks of vtkUnstructuredGrid before using in GEOS
 - `pygeos-tools/` - Python tools for GEOS
 - `geos-ats/` - Automated testing framework
 
@@ -305,7 +307,6 @@ The CI uses the following decision matrix:
 ✅ **Tests Will Run (Required + Label)**
 ```
 Changes:
-  - geos-mesh/src/mesh_converter.py
   - geos-xml-tools/src/preprocessor.py
 Labels: test-geos-integration
 Result: GEOS integration will run (changes affect integrated packages)
@@ -374,6 +375,7 @@ Result: GEOS integration forced (tests will run regardless of changes)
 │    pip install geos-mesh                    │
 │    pip install geos-xml-tools               │
 │    pip install hdf5-wrapper                 │
+│    pip install mesh-doctor                  │
 │    pip install pygeos-tools                 │
 │    pip install geos-ats                     │
 └─────────────────────────────────────────────┘
@@ -402,9 +404,10 @@ Result: GEOS integration forced (tests will run regardless of changes)
 |       Package      |                        Tools                        |                               Purpose                               |
 |--------------------|-----------------------------------------------------|---------------------------------------------------------------------|
 | **geos-xml-tools** | `preprocess_xml`;`format_xml`                       | Preprocess XML input files;Format XML for readability               |
-| **geos-mesh**      | `convert_abaqus`;`mesh-doctor`                      | Convert Abaqus meshes to VTU/GMSH;Validate and fix mesh quality     |
+| **geos-mesh**      | `convert_abaqus`;`mesh-doctor`                      | Convert Abaqus meshes to VTU/GMSH                                   |
 | **geos-ats**       | `run_geos_ats`;`setup_ats_environment`;`geos_ats_*` | Run automated test suite;Setup test environment;Various test checks |
 | **hdf5-wrapper**   | Python API                                          | HDF5 file I/O operations                                            |
+| **mesh-doctor**    | `mesh-doctor`                                       | Validate and fix mesh quality                                       |
 | **pygeos-tools**   | Python API                                          | GEOS workflow utilities                                             |
 | **geos-utils**     | Python API                                          | Common utility functions                                            |
 

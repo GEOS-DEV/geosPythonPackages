@@ -7,19 +7,18 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["geos.mesh*"]
+include = ["geos.mesh_doctor*"]
 exclude = ['tests*']
 
 [project]
-name = "geos-mesh"
-version = "0.0.1"
-description = "GEOS mesh tools"
+name = "mesh-doctor"
+version = "0.1.0"
+description = "GEOS mesh-doctor"
 authors = [{name = "GEOS Contributors" }]
 maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
                {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
-               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
-               {name = "Christopher Sherman", email = "sherman27@llnl.gov"}]
-license = {text = "LGPL-2.1"}
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
+license = {text = "Apache-2.0"}
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
@@ -28,18 +27,13 @@ classifiers = [
 requires-python = ">=3.10"
 
 dependencies = [
-    "vtk >= 9.3",
-    "networkx >= 2.4",
-    "tqdm >= 4.67",
-    "numpy >= 2.2",
-    "pandas >= 2.2",
-    "meshio >= 5.3",
-    "typing_extensions >= 4.12",
     "geos-utils",
+    "geos-mesh",
 ]
 
 [project.scripts]
-    convert_abaqus = "geos.mesh.conversion.main:main"
+    mesh-doctor = "geos.mesh_doctor.meshDoctor:main"
+    meshDoctor = "geos.mesh_doctor.meshDoctor:main"
     
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
