@@ -11,7 +11,7 @@
 			numComponents="5"
             numSolidComponents="1"
 			numPhases="2"
-			transMultExp="4">
+			enablePermPoro="1">
 		<NonlinearSolverParameters
 			lineSearchAction="None"
 			timeStepDecreaseFactor="0.5"
@@ -80,7 +80,7 @@
 			compressibility="1e-20"/>
  		<ConstantPermeability
 			name="rockPerm"
-			permeabilityComponents="{1.233625e-11, 1.233625e-11, 1.233625e-11}"/>
+			permeabilityComponents="{1.5227867e-09, 1.5227867e-09, 1.5227867e-09}"/>
 		<OBLFluid
 			name="fluid"
 			interpolatorMode="adaptive"
@@ -257,8 +257,8 @@
 		<TableFunction 
 			name="calciteFunc"
 			inputVarNames="{elementCenter}"
-			coordinateFiles="{xlin.geos, ylin.geos, zlin.geos}"
-			voxelFile="calcite_2D.txt"
+			coordinateFiles="{xlin_100.geos, ylin_100.geos, zlin_100.geos}"
+			voxelFile="calcite_2D_100.txt"
 			interpolation="linear" />
 	</Functions>
 	<Outputs>

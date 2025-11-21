@@ -9,8 +9,7 @@
 			enableEnergyBalance="0"
 			maxCompFractionChange="1"
 			numComponents="3"
-			numPhases="2"
-			transMultExp="1">
+			numPhases="2">
 		<NonlinearSolverParameters
 			timeStepDecreaseFactor="0.5"
 			newtonTol="0.0001"

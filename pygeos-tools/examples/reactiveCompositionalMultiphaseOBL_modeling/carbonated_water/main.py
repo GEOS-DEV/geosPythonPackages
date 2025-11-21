@@ -102,7 +102,7 @@ def run_darts_model( domain: str,
 
 
 # To run use the following command:
-# nohup mpiexec -n 96 python -m mpi4py main.py -x 8 -y 12 -output 2D_np_96_nx_1600 -t runtime-report,max_column_width=200 > 2D_np_96_nx_1600.txt 2>&1 &
+# nohup mpiexec -n 96 python -m mpi4py main.py -x 8 -y 12 -o 2D_np_96_nx_1600 -t runtime-report,max_column_width=200 > 2D_np_96_nx_1600.txt 2>&1 &
 
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     darts_model = Model()
     # Use 2D when running with -x 4 -y 4
     run_darts_model( domain='1D', xml_name="1d_setup.xml", darts_model=darts_model )
-    # run_darts_model( domain='2D', xml_name="2d_setup.xml", darts_model=darts_model )
+    # run_darts_model( domain='2D', xml_name="2d_setup.xml", darts_model=darts_model, dt_multiplier = 0.5 )
     # run_darts_model( domain='2D', xml_name="2d_setup_800.xml", dt_multiplier= 1.0 / 6.0, darts_model=darts_model )
     # run_darts_model( domain='2D', xml_name="2d_setup_1600.xml", dt_multiplier= 1.0 / 10.0, darts_model=darts_model )
 

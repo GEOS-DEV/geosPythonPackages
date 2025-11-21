@@ -11,7 +11,7 @@
 			numComponents="5"
             numSolidComponents="1"
 			numPhases="2"
-			transMultExp="4">
+			enablePermPoro="1">
 		<NonlinearSolverParameters
 			lineSearchAction="None"
 			timeStepDecreaseFactor="0.5"
