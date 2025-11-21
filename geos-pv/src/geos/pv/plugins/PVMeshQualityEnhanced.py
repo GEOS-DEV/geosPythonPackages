@@ -128,7 +128,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     @smproperty.dataarrayselection( name="HexahedronSpecificQualityMetric" )
     def a08sSetHexMetrics( self: Self ) -> vtkDataArraySelection:
-        """Set Hexahdron quality metrics selection."""
+        """Set Hexahedron quality metrics selection."""
         return self._HexQualityMetric
 
     @smproperty.dataarrayselection( name="OtherMeshQualityMetric" )
@@ -239,16 +239,16 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        meshQualityEnhancedFilter.applyFilter()
+        if meshQualityEnhancedFilter.applyFilter():
 
-        outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
+            outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
 
-        # save to file if asked
-        if self._saveToFile:
-            stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
-            logger: logging.Logger = meshQualityEnhancedFilter.logger
-            self.saveFile( stats, logger )
-        self._blockIndex += 1
+            # save to file if asked
+            if self._saveToFile:
+                stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
+                logger: logging.Logger = meshQualityEnhancedFilter.logger
+                self.saveFile( stats, logger )
+            self._blockIndex += 1
         return
 
     def saveFile(
@@ -258,14 +258,15 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
     ) -> None:
         """Export mesh quality metric summary file."""
         try:
-            assert self._filename is not None, "Mesh quality summary report file path is undefined."
+            if self._filename is None:
+                raise AttributeError( "Mesh quality summary report file path is undefined." )
 
             # add index for multiblock meshes
             index: int = self._filename.rfind( '.' )
-            filename: str = self._filename[ :index ] + f"_{self._blockIndex}" + self._filename[ index: ]
+            filename: str = self._filename[ :index ] + f"{ self._blockIndex }" + self._filename[ index: ]
             fig = stats.plotSummaryFigure()
             fig.savefig( filename, dpi=150 )
-            logger.info( f"File {filename} was successfully written." )
+            logger.info( f"File { filename } was successfully written." )
         except Exception as e:
             logger.error( f"Error while exporting the file due to:\n{ e }" )
 

@@ -7,16 +7,13 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 from typing import Iterator
-
-from geos.mesh.utils.genericHelpers import createSingleCellMesh
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
-
 from vtkmodules.util.numpy_support import vtk_to_numpy
-
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCellTypes, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
-
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList, vtkDataArray
+from geos.mesh.io.vtkIO import readUnstructuredGrid
+from geos.mesh.utils.genericHelpers import createSingleCellMesh
+from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
@@ -93,7 +90,8 @@ quad_cells_out: list[ list[ int ] ] = [ [ 0, 4, 8, 7 ], [ 4, 1, 5, 8 ], [ 8, 5, 
 ###############################################################
 #                   create multi cell mesh                    #
 ###############################################################
-# TODO: add tests cases composed of multi-cell meshes of various types
+multi_polygon_types_mesh_path = "quads2_tris4.vtu"
+multi_polyhedron_types_mesh_path = "hexs3_tets36_pyrs18.vtu"
 
 data_filename_all = ( tetra_path, hexa_path, pyramid_path, triangle_path, quad_path )
 cell_types_all = ( tetra_cell_type, hexa_cell_type, pyramid_cell_type, triangle_cell_type, quad_cell_type )
@@ -153,12 +151,9 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     assert pointsOut.GetNumberOfPoints(
     ) == test_case.pointsExp.shape[ 0 ], f"Number of points is expected to be {test_case.pointsExp.shape[0]}."
     pointCoords: npt.NDArray[ np.float64 ] = vtk_to_numpy( pointsOut.GetData() )
-    print( "Points coords: ", cellTypeName, pointCoords.tolist() )
     assert np.array_equal( pointCoords.ravel(), test_case.pointsExp.ravel() ), "Points coordinates mesh are wrong."
 
     cellsOut: vtkCellArray = output.GetCells()
-    typesArray0: npt.NDArray[ np.int64 ] = vtk_to_numpy( output.GetDistinctCellTypesArray() )
-    print( "typesArray0", cellTypeName, typesArray0 )
 
     assert cellsOut is not None, "Cells from output mesh are undefined."
     assert cellsOut.GetNumberOfCells() == len(
@@ -169,19 +164,32 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
 
-    print( "typesArray", cellTypeName, typesArray )
-    assert ( typesArray.size == 1 ) and ( typesArray[ 0 ] == test_case.cellType ), f"All cells must be {cellTypeName}"
+    # Pyramid splitting produces both pyramids (first 6 cells) and tetrahedra (last 4 cells)
+    if test_case.cellType == VTK_PYRAMID:
+        assert typesArray.size == 2, "Pyramid splitting should produce 2 distinct cell types"
+        assert VTK_PYRAMID in typesArray, "Pyramid splitting should produce pyramids"
+        assert VTK_TETRA in typesArray, "Pyramid splitting should produce tetrahedra"
+    else:
+        assert ( typesArray.size == 1 ) and ( typesArray[ 0 ] == test_case.cellType ), \
+            f"All cells must be {cellTypeName}"
 
     for i in range( cellsOut.GetNumberOfCells() ):
         ptIds = vtkIdList()
         cellsOut.GetCellAtId( i, ptIds )
         cellsOutObs: list[ int ] = [ ptIds.GetId( j ) for j in range( ptIds.GetNumberOfIds() ) ]
         nbPtsExp: int = len( test_case.cellsExp[ i ] )
-        print( "cell type", cellTypeName, i, vtkCellTypes.GetClassNameFromTypeId( types.GetCellType( i ) ) )
-        print( "cellsOutObs: ", cellTypeName, i, cellsOutObs )
+        actualCellType: int = output.GetCellType( i )
         assert ptIds is not None, "Point ids must be defined"
         assert ptIds.GetNumberOfIds() == nbPtsExp, f"Cells must be defined by {nbPtsExp} points."
         assert cellsOutObs == test_case.cellsExp[ i ], "Cell point ids are wrong."
+        # For pyramids, first 6 cells should be pyramids, last 4 should be tetrahedra
+        if test_case.cellType == VTK_PYRAMID:
+            if i < 6:
+                assert actualCellType == VTK_PYRAMID, f"Cell {i} should be a pyramid"
+            else:
+                assert actualCellType == VTK_TETRA, f"Cell {i} should be a tetrahedron"
+        else:
+            assert actualCellType == test_case.cellType, f"Cell {i} should be {cellTypeName}"
 
     # test originalId array was created
     cellData: vtkCellData = output.GetCellData()
@@ -196,4 +204,126 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     nbArraySplited: int = cellData.GetNumberOfArrays()
     assert nbArraySplited == nbArrayInput + 1, f"Number of arrays should be {nbArrayInput + 1}"
 
-    #assert False
+
+def test_multi_cells_mesh_split() -> None:
+    """Test splitting a mesh with multiple cell types (3 hexahedra, 36 tetrahedra, 18 pyramids).
+
+    This test verifies that the total number of cells generated matches the expected formula:
+    nbNewCells = nbHex * 8 + nbTet * 8 + nbPyr * 10
+    """
+    # Load the multi-cell mesh
+    input_mesh = readUnstructuredGrid( os.path.join( data_root, multi_polyhedron_types_mesh_path ) )
+    assert input_mesh is not None, "Input mesh should be loaded successfully"
+
+    # Count cells by type in input mesh
+    nbHex = 0
+    nbTet = 0
+    nbPyr = 0
+    for i in range( input_mesh.GetNumberOfCells() ):
+        cellType = input_mesh.GetCellType( i )
+        if cellType == VTK_HEXAHEDRON:
+            nbHex += 1
+        elif cellType == VTK_TETRA:
+            nbTet += 1
+        elif cellType == VTK_PYRAMID:
+            nbPyr += 1
+
+    assert nbHex == 3, "Expected 3 hexahedra in input mesh"
+    assert nbTet == 36, "Expected 36 tetrahedra in input mesh"
+    assert nbPyr == 18, "Expected 18 pyramids in input mesh"
+
+    # Apply the split filter
+    splitMeshFilter = SplitMesh( input_mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
+    assert output is not None, "Output mesh should be defined"
+
+    # Calculate expected number of cells using the formula
+    # 1 hex -> 8 hexes, 1 tet -> 8 tets, 1 pyramid -> 6 pyramids + 4 tets = 10 cells
+    expectedNbCells = nbHex * 8 + nbTet * 8 + nbPyr * 10
+    assert output.GetNumberOfCells() == expectedNbCells, \
+        f"Expected {expectedNbCells} cells, got {output.GetNumberOfCells()}"
+
+    # Verify cell type distribution in output
+    nbHexOut = 0
+    nbTetOut = 0
+    nbPyrOut = 0
+    for i in range( output.GetNumberOfCells() ):
+        cellType = output.GetCellType( i )
+        if cellType == VTK_HEXAHEDRON:
+            nbHexOut += 1
+        elif cellType == VTK_TETRA:
+            nbTetOut += 1
+        elif cellType == VTK_PYRAMID:
+            nbPyrOut += 1
+
+    # Expected output: 3*8=24 hexes, 36*8 + 18*4=360 tets, 18*6=108 pyramids
+    assert nbHexOut == 3 * 8, f"Expected {3*8} hexahedra in output, got {nbHexOut}"
+    assert nbTetOut == 36 * 8 + 18 * 4, f"Expected {36*8 + 18*4} tetrahedra in output, got {nbTetOut}"
+    assert nbPyrOut == 18 * 6, f"Expected {18*6} pyramids in output, got {nbPyrOut}"
+
+    # Verify OriginalID array exists and has correct size
+    cellData: vtkCellData = output.GetCellData()
+    assert cellData is not None, "Cell data should be defined"
+    originalIdArray: vtkDataArray = cellData.GetArray( "OriginalID" )
+    assert originalIdArray is not None, "OriginalID array should be defined"
+    assert originalIdArray.GetNumberOfTuples() == expectedNbCells, \
+        f"OriginalID array should have {expectedNbCells} values"
+
+
+def test_multi_polygon_mesh_split() -> None:
+    """Test splitting a mesh with multiple polygon types (2 quads, 4 triangles).
+
+    This test verifies that the total number of cells generated matches the expected formula:
+    nbNewCells = nbQuad * 4 + nbTriangle * 4
+    """
+    # Load the multi-polygon mesh
+    input_mesh = readUnstructuredGrid( os.path.join( data_root, multi_polygon_types_mesh_path ) )
+    assert input_mesh is not None, "Input mesh should be loaded successfully"
+
+    # Count cells by type in input mesh
+    nbQuad = 0
+    nbTriangle = 0
+    for i in range( input_mesh.GetNumberOfCells() ):
+        cellType = input_mesh.GetCellType( i )
+        if cellType == VTK_QUAD:
+            nbQuad += 1
+        elif cellType == VTK_TRIANGLE:
+            nbTriangle += 1
+
+    assert nbQuad == 2, "Expected 2 quads in input mesh"
+    assert nbTriangle == 4, "Expected 4 triangles in input mesh"
+
+    # Apply the split filter
+    splitMeshFilter = SplitMesh( input_mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
+    assert output is not None, "Output mesh should be defined"
+
+    # Calculate expected number of cells using the formula
+    # 1 quad -> 4 quads, 1 triangle -> 4 triangles
+    expectedNbCells = nbQuad * 4 + nbTriangle * 4
+    assert output.GetNumberOfCells() == expectedNbCells, \
+        f"Expected {expectedNbCells} cells, got {output.GetNumberOfCells()}"
+
+    # Verify cell type distribution in output
+    nbQuadOut = 0
+    nbTriangleOut = 0
+    for i in range( output.GetNumberOfCells() ):
+        cellType = output.GetCellType( i )
+        if cellType == VTK_QUAD:
+            nbQuadOut += 1
+        elif cellType == VTK_TRIANGLE:
+            nbTriangleOut += 1
+
+    # Expected output: 2*4=8 quads, 4*4=16 triangles
+    assert nbQuadOut == 2 * 4, f"Expected {2*4} quads in output, got {nbQuadOut}"
+    assert nbTriangleOut == 4 * 4, f"Expected {4*4} triangles in output, got {nbTriangleOut}"
+
+    # Verify OriginalID array exists and has correct size
+    cellData: vtkCellData = output.GetCellData()
+    assert cellData is not None, "Cell data should be defined"
+    originalIdArray: vtkDataArray = cellData.GetArray( "OriginalID" )
+    assert originalIdArray is not None, "OriginalID array should be defined"
+    assert originalIdArray.GetNumberOfTuples() == expectedNbCells, \
+        f"OriginalID array should have {expectedNbCells} values"

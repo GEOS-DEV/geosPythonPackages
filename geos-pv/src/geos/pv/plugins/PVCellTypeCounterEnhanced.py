@@ -137,19 +137,19 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
         if len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( VTKHandler() )
-        cellTypeCounterEnhancedFilter.applyFilter()
-        outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
+        if cellTypeCounterEnhancedFilter.applyFilter():
+            outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
 
-        # print counts in Output Messages view
-        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+            # print counts in Output Messages view
+            counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
-        self._countsAll += counts
-        # save to file if asked
-        if self._saveToFile and self._filename is not None:
-            try:
-                with open( self._filename, 'w' ) as fout:
-                    fout.write( self._countsAll.print() )
-                    cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
-            except Exception as e:
-                cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
+            self._countsAll += counts
+            # save to file if asked
+            if self._saveToFile and self._filename is not None:
+                try:
+                    with open( self._filename, 'w' ) as fout:
+                        fout.write( self._countsAll.print() )
+                        cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
+                except Exception as e:
+                    cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
         return 1

@@ -282,8 +282,12 @@ class MeshQualityEnhanced():
             metrics = metrics.intersection( computedMetrics )
         return metrics if commonComputedMetricsExists else None
 
-    def applyFilter( self: Self ) -> None:
-        """Apply MeshQualityEnhanced filter."""
+    def applyFilter( self: Self ) -> bool:
+        """Apply MeshQualityEnhanced filter.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
         try:
             self._outputMesh.ShallowCopy( self.inputMesh )
@@ -302,10 +306,15 @@ class MeshQualityEnhanced():
             self._outputMesh.Modified()
 
             self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except Exception as e:
+        except ( ValueError, IndexError, TypeError, AttributeError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh computed with the stats."""
@@ -317,10 +326,15 @@ class MeshQualityEnhanced():
             self._outputMesh, self.speHandler )
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-        cellTypeCounterEnhancedFilter.applyFilter()
+        if not cellTypeCounterEnhancedFilter.applyFilter():
+            raise
+
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
-        assert counts is not None, "CellTypeCounts is undefined"
+        if counts is None:
+            raise AttributeError( "CellTypeCounts is undefined" )
+
         self._qualityMetricSummary.setCellTypeCounts( counts )
+        return
 
     def _evaluateMeshQualityAll( self: Self ) -> None:
         """Compute all mesh quality metrics."""
@@ -335,7 +349,9 @@ class MeshQualityEnhanced():
                 self._countVertexIncidentEdges()
             else:
                 # TODO: add other metrics
-                print( "" )
+                pass
+
+        return
 
     def _evaluateCellQuality( self: Self, metricIndex: int ) -> None:
         """Compute mesh input quality metric. By default, the metric is computed for all cell types.
@@ -375,7 +391,8 @@ class MeshQualityEnhanced():
         else:
             output = self._applyMeshQualityFilter( metricIndex, cellToApplyTo )
 
-            assert output is not None, "Output mesh from mesh quality calculation is undefined."
+            if output is None:
+                raise AttributeError( "Output mesh from mesh quality calculation is undefined." )
             # Transfer output cell array to input mesh
             # TODO: to test if Shallow copy of vtkMeshQualityFilter result
             # and rename "Quality" array is more efficient than what is done here
@@ -422,7 +439,8 @@ class MeshQualityEnhanced():
             metricIndex (int): Metric index
         """
         metric = getQualityMetricFromIndex( metricIndex )
-        assert metric is not None, f"Additional cell quality metric index {metricIndex} is undefined."
+        if metric is None:
+            raise AttributeError( f"Additional cell quality metric index {metricIndex} is undefined." )
         # Output array
         name: str = getQualityMetricArrayName( metric.getMetricIndex() )
         newArray: vtkDoubleArray = vtkDoubleArray()
@@ -436,7 +454,8 @@ class MeshQualityEnhanced():
             newArray.SetValue( i, val )
         # Add array
         cellArrays: vtkCellData = self._outputMesh.GetCellData()
-        assert cellArrays is not None, "Cell data from output mesh is undefined."
+        if cellArrays is None:
+            raise AttributeError( "Cell data from output mesh is undefined." )
         cellArrays.AddArray( newArray )
         cellArrays.Modified()
         self._outputMesh.Modified()
@@ -448,7 +467,7 @@ class MeshQualityEnhanced():
         attributeFromName: str,
         attributeToName: str,
         qualityMetric: int,
-    ) -> bool:
+    ) -> None:
         """Transfer quality attribute to the client mesh.
 
         The attribute is renamed with quality metric name. Because a default quality
@@ -460,14 +479,13 @@ class MeshQualityEnhanced():
             attributeFromName (str): The name of the quality attribute in initial mesh
             attributeToName (str): Name of the attribute in the final mesh
             qualityMetric (QualityMetricOtherEnum):The quality metric.
-
-        Returns:
-            bool: True if the attribute was successfully transferred, False otherwise
         """
         cellArrays: vtkCellData = inputMesh.GetCellData()
-        assert cellArrays is not None, "Cell data from vtkMeshQuality output mesh is undefined."
+        if cellArrays is None:
+            raise AttributeError( "Cell data from vtkMeshQuality output mesh is undefined." )
         array: vtkDataArray = cellArrays.GetArray( attributeFromName )
-        assert array is not None, f"{attributeFromName} attribute is undefined."
+        if array is None:
+            raise AttributeError( f"{ attributeFromName } attribute is undefined." )
 
         # Rename array
         array.SetName( attributeToName )
@@ -478,11 +496,12 @@ class MeshQualityEnhanced():
         # Add array to input mesh
         inputCellArrays: vtkCellData = self._outputMesh.GetCellData()
 
-        assert inputCellArrays is not None, "Cell data from input mesh is undefined."
+        if inputCellArrays is None:
+            raise AttributeError( "Cell data from input mesh is undefined." )
         inputCellArrays.AddArray( array )
         inputCellArrays.Modified()
 
-        return True
+        return
 
     def _replaceIrrelevantValues( self: Self, array: vtkDataArray, mesh: vtkUnstructuredGrid,
                                   metric: MeshQualityMetricEnum ) -> None:
@@ -543,7 +562,8 @@ class MeshQualityEnhanced():
             cellType (int): Cell type index
         """
         cellArrays: vtkCellData = self._outputMesh.GetCellData()
-        assert cellArrays is not None, "Cell data from input mesh is undefined."
+        if cellArrays is None:
+            raise AttributeError( "Cell data from input mesh is undefined." )
         arrayName: str = getQualityMetricArrayName( metricIndex )
         array: vtkDataArray | None = cellArrays.GetArray( arrayName )
 
@@ -584,7 +604,8 @@ class MeshQualityEnhanced():
     def _createFieldDataStatsSummary( self: Self ) -> None:
         """Create field data arrays with quality statistics."""
         fieldData: vtkFieldData = self._outputMesh.GetFieldData()
-        assert fieldData is not None, "Field data is undefined."
+        if fieldData is None:
+            raise AttributeError( "Field data is undefined." )
         for cellType in self._allCellTypesExtended:
             count: int = self._qualityMetricSummary.getCellTypeCountsOfCellType( cellType )
             metrics: Optional[ set[ int ] ] = self.getComputedMetricsFromCellType( cellType )
@@ -687,7 +708,8 @@ class MeshQualityEnhanced():
 
         # Create point attribute
         pointData: vtkPointData = self._outputMesh.GetPointData()
-        assert pointData is not None, "Point data is undefined."
+        if pointData is None:
+            raise AttributeError( "Point data is undefined." )
         countArray: vtkIntArray = numpy_to_vtk( incidentCounts, deep=1 )
         metricName: str = metric.getMetricName().replace( " ", "" )
         name: str = QUALITY_ARRAY_NAME + "_" + metricName
@@ -696,7 +718,8 @@ class MeshQualityEnhanced():
         pointData.Modified()
 
         fieldData: vtkFieldData = self._outputMesh.GetFieldData()
-        assert fieldData is not None, "Field data is undefined."
+        if fieldData is None:
+            raise AttributeError( "Field data is undefined." )
         for statType in list( StatTypes ):
             name = metricName + "_" + statType.getString()
             val: float | int = statType.compute( incidentCounts )
@@ -756,7 +779,8 @@ class MeshQualityEnhanced():
 
         # Add array
         cellArrays: vtkCellData = self._outputMesh.GetCellData()
-        assert cellArrays is not None, "Cell data from output mesh is undefined."
+        if cellArrays is None:
+            raise AttributeError( "Cell data from output mesh is undefined." )
         cellArrays.AddArray( newArray )
         cellArrays.Modified()
         self._outputMesh.Modified()
@@ -778,8 +802,10 @@ class MeshQualityEnhanced():
         cellCenter: npt.NDArray[ np.float64 ] = np.zeros( 3 )
         if cell.GetCellDimension() == 2:
             # Polygonal cell
-            assert ptsIds is not None, "Point ids are required for computing polygonal cell center."
-            assert points is not None, "Points are required for computing polygonal cell center."
+            if ptsIds is None:
+                raise ValueError( "Point ids are required for computing polygonal cell center." )
+            if points is None:
+                raise ValueError( "Points are required for computing polygonal cell center." )
             cell.GetPointIds()
             vtkPolygon.ComputeCentroid( ptsIds, points, cellCenter )  # type: ignore[call-overload]
         elif cell.GetCellDimension() == 3:
@@ -802,7 +828,8 @@ class MeshQualityEnhanced():
         Returns:
             npt.NDArray[np.float64]: Coordinates of the normal vector
         """
-        assert face.GetCellDimension() == 2, "Cell must be a planar polygon."
+        if face.GetCellDimension() != 2:
+            raise TypeError( "Cell must be a planar polygon." )
         facePtsIds: vtkIdList = face.GetPointIds()
         # Need only 3 points among all to get the normal of the face since we suppose face is a plane
         ptsCoords: npt.NDArray[ np.float64 ] = np.zeros( ( 3, 3 ), dtype=float )
