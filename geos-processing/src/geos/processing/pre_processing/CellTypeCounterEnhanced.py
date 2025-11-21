@@ -86,8 +86,12 @@ class CellTypeCounterEnhanced():
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
                                  " to True during the filter initialization." )
 
-    def applyFilter( self: Self ) -> None:
-        """Apply CellTypeCounterEnhanced filter."""
+    def applyFilter( self: Self ) -> bool:
+        """Apply CellTypeCounterEnhanced filter.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
         try:
             # compute cell type counts
@@ -112,10 +116,15 @@ class CellTypeCounterEnhanced():
                 array.SetValue( 0, self._counts.getTypeCount( cellType ) )
                 self.outTable.AddColumn( array )
             self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except AssertionError as e:
+        except TypeError as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def GetCellTypeCountsObject( self: Self ) -> CellTypeCounts:
         """Get CellTypeCounts object.

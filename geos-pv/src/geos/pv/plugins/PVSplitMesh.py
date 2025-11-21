@@ -53,7 +53,7 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
         splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
         if len( splitMeshFilter.logger.handlers ) == 0:
             splitMeshFilter.setLoggerHandler( VTKHandler() )
-        splitMeshFilter.applyFilter()
-        outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
+        if splitMeshFilter.applyFilter():
+            outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
 
         return

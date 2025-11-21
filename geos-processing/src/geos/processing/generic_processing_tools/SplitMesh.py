@@ -93,24 +93,33 @@ class SplitMesh():
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
                                  " during the filter initialization." )
 
-    def applyFilter( self: Self ) -> None:
-        """Apply the filter SplitMesh."""
+    def applyFilter( self: Self ) -> bool:
+        """Apply the filter SplitMesh.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Applying filter { self.logger.name }." )
         try:
             # Count the number of cells before splitting. Then we will be able to know how many new cells and points
             # to allocate because each cell type is splitted in a known number of new cells and points.
             nbCells: int = self.inputMesh.GetNumberOfCells()
             counts: CellTypeCounts = self._getCellCounts()
+            if counts.getTypeCount( VTK_WEDGE ) != 0:
+                raise TypeError( "Input mesh contains wedges that are not currently supported." )
+
+            nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
+            nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
+            # Current implementation only supports meshes composed of either polygons or polyhedra
+            if nbPolyhedra * nbPolygon != 0:
+                raise TypeError(
+                    "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two." )
+
             nbTet: int = counts.getTypeCount( VTK_TETRA )  # will divide into 8 tets
             nbPyr: int = counts.getTypeCount( VTK_PYRAMID )  # will divide into 6 pyramids and 4 tets so 10 new cells
             nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )  # will divide into 8 hexes
             nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )  # will divide into 4 triangles
             nbQuad: int = counts.getTypeCount( VTK_QUAD )  # will divide into 4 quads
-            nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
-            nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
-            assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
-            # Current implementation only supports meshes composed of either polygons or polyhedra
-            assert nbPolyhedra * nbPolygon == 0, "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two."
             nbNewPoints: int = 0
             nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
             nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 + nbTriangles * 4 + nbQuad * 4
@@ -125,6 +134,7 @@ class SplitMesh():
             self.originalId.SetName( "OriginalID" )
             self.originalId.Allocate( nbNewCells )
             self.cellTypes = []
+
             # Define cell type to splitting method mapping
             splitMethods = {
                 VTK_HEXAHEDRON: self._splitHexahedron,
@@ -142,20 +152,29 @@ class SplitMesh():
                 else:
                     raise TypeError(
                         f"Cell type { vtkCellTypes.GetClassNameFromTypeId( cellType ) } is not supported." )
-            # add points and cells
+
+            # Add points and cells
             self.outputMesh.SetPoints( self.points )
             self.outputMesh.SetCells( self.cellTypes, self.cells )
-            # add attribute saving original cell ids
+
+            # Add attribute saving original cell ids
             cellArrays: vtkCellData = self.outputMesh.GetCellData()
-            assert cellArrays is not None, "Cell data is undefined."
+            if cellArrays is None:
+                raise AttributeError( "Cell data is undefined." )
             cellArrays.AddArray( self.originalId )
-            # transfer all cell arrays
+
+            # Transfer all cell arrays
             self._transferCellArrays( self.outputMesh )
             self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except Exception as e:
+        except ( TypeError, AttributeError ) as e:
             self.logger.error( f"The filter {self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the splitted mesh computed."""
@@ -171,7 +190,8 @@ class SplitMesh():
             self.inputMesh, self.speHandler )
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-        cellTypeCounterEnhancedFilter.applyFilter()
+        if not cellTypeCounterEnhancedFilter.applyFilter():
+            raise
         return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
@@ -422,23 +442,25 @@ class SplitMesh():
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_QUAD ] * 4 )
 
-    def _transferCellArrays( self: Self, splittedMesh: vtkUnstructuredGrid ) -> bool:
+    def _transferCellArrays( self: Self, splittedMesh: vtkUnstructuredGrid ) -> None:
         """Transfer arrays from input mesh to splitted mesh.
 
         Args:
-            splittedMesh (vtkUnstructuredGrid): splitted mesh
-
-        Returns:
-            bool: True if arrays were successfully transferred.
+            splittedMesh (vtkUnstructuredGrid): Splitted mesh.
         """
-        cellDataSplitted: vtkCellData = splittedMesh.GetCellData()
-        assert cellDataSplitted is not None, "Cell data of splitted mesh should be defined."
         cellData: vtkCellData = self.inputMesh.GetCellData()
-        assert cellData is not None, "Cell data of input mesh should be defined."
+        if cellData is None:
+            raise AttributeError( "Cell data of input mesh should be defined." )
+
+        cellDataSplitted: vtkCellData = splittedMesh.GetCellData()
+        if cellDataSplitted is None:
+            raise AttributeError( "Cell data of splitted mesh should be defined." )
+
         # for each array of input mesh
         for i in range( cellData.GetNumberOfArrays() ):
             array: vtkDataArray = cellData.GetArray( i )
-            assert array is not None, "Array should be defined."
+            if array is None:
+                raise AttributeError( "Array should be defined." )
             npArray: npt.NDArray[ np.float64 ] = vtk_to_numpy( array )
             # get number of components
             dims: tuple[ int, ...] = npArray.shape
@@ -455,4 +477,4 @@ class SplitMesh():
             cellDataSplitted.AddArray( newArray )
             cellDataSplitted.Modified()
         splittedMesh.Modified()
-        return True
+        return
