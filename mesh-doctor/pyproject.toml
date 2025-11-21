@@ -18,7 +18,7 @@ authors = [{name = "GEOS Contributors" }]
 maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
                {name = "Romain Baville", email = "romain.baville@external.totalenergies.com" },
                {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
-license = {text = "LGPL-2.1"}
+license = {text = "Apache-2.0"}
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"

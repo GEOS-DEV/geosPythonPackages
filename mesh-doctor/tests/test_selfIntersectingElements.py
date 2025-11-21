@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkHexahedron, vtkUnstructuredGrid, VTK_HEXAHEDRON
 from geos.mesh_doctor.actions.selfIntersectingElements import Options, meshAction

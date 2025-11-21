@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from dataclasses import dataclass
 from typing import Any
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid

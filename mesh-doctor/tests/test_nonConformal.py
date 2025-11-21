@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 import numpy
 from geos.mesh_doctor.actions.generateCube import buildRectilinearBlocksMesh, XYZ
 from geos.mesh_doctor.actions.nonConformal import Options, meshAction

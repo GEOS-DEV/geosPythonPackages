@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkUnstructuredGrid, vtkVertex, VTK_VERTEX
 from geos.mesh_doctor.actions.generateGlobalIds import buildGlobalIds

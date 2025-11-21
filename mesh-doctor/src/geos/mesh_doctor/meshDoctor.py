@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 import sys
 from geos.mesh_doctor.parsing import ActionHelper
 from geos.mesh_doctor.parsing.cliParsing import parseAndSetVerbosity, setupLogger
