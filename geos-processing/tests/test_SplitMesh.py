@@ -142,22 +142,18 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         test_case (TestCase): test case
     """
     cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
-    splitMeshFilter: SplitMesh = SplitMesh()
-    splitMeshFilter.SetInputDataObject( test_case.mesh )
-    splitMeshFilter.Update()
-    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    splitMeshFilter: SplitMesh = SplitMesh( test_case.mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh is undefined."
     pointsOut: vtkPoints = output.GetPoints()
     assert pointsOut is not None, "Points from output mesh are undefined."
     assert pointsOut.GetNumberOfPoints(
     ) == test_case.pointsExp.shape[ 0 ], f"Number of points is expected to be {test_case.pointsExp.shape[0]}."
     pointCoords: npt.NDArray[ np.float64 ] = vtk_to_numpy( pointsOut.GetData() )
-    print( "Points coords: ", cellTypeName, pointCoords.tolist() )
     assert np.array_equal( pointCoords.ravel(), test_case.pointsExp.ravel() ), "Points coordinates mesh are wrong."
 
     cellsOut: vtkCellArray = output.GetCells()
-    typesArray0: npt.NDArray[ np.int64 ] = vtk_to_numpy( output.GetDistinctCellTypesArray() )
-    print( "typesArray0", cellTypeName, typesArray0 )
 
     assert cellsOut is not None, "Cells from output mesh are undefined."
     assert cellsOut.GetNumberOfCells() == len(
@@ -168,7 +164,6 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
 
-    print( "typesArray", cellTypeName, typesArray )
     # Pyramid splitting produces both pyramids (first 6 cells) and tetrahedra (last 4 cells)
     if test_case.cellType == VTK_PYRAMID:
         assert typesArray.size == 2, "Pyramid splitting should produce 2 distinct cell types"
@@ -184,8 +179,6 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         cellsOutObs: list[ int ] = [ ptIds.GetId( j ) for j in range( ptIds.GetNumberOfIds() ) ]
         nbPtsExp: int = len( test_case.cellsExp[ i ] )
         actualCellType: int = output.GetCellType( i )
-        print( "cell type", cellTypeName, i, vtkCellTypes.GetClassNameFromTypeId( actualCellType ) )
-        print( "cellsOutObs: ", cellTypeName, i, cellsOutObs )
         assert ptIds is not None, "Point ids must be defined"
         assert ptIds.GetNumberOfIds() == nbPtsExp, f"Cells must be defined by {nbPtsExp} points."
         assert cellsOutObs == test_case.cellsExp[ i ], "Cell point ids are wrong."
@@ -235,23 +228,19 @@ def test_multi_cells_mesh_split() -> None:
         elif cellType == VTK_PYRAMID:
             nbPyr += 1
 
-    print( f"Input mesh contains: {nbHex} hexahedra, {nbTet} tetrahedra, {nbPyr} pyramids" )
     assert nbHex == 3, "Expected 3 hexahedra in input mesh"
     assert nbTet == 36, "Expected 36 tetrahedra in input mesh"
     assert nbPyr == 18, "Expected 18 pyramids in input mesh"
 
     # Apply the split filter
-    splitMeshFilter = SplitMesh()
-    splitMeshFilter.SetInputDataObject( input_mesh )
-    splitMeshFilter.Update()
-    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    splitMeshFilter = SplitMesh( input_mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh should be defined"
 
     # Calculate expected number of cells using the formula
     # 1 hex -> 8 hexes, 1 tet -> 8 tets, 1 pyramid -> 6 pyramids + 4 tets = 10 cells
     expectedNbCells = nbHex * 8 + nbTet * 8 + nbPyr * 10
-    print( f"Expected number of cells: {expectedNbCells} (3*8 + 36*8 + 18*10)" )
-    print( f"Actual number of cells: {output.GetNumberOfCells()}" )
     assert output.GetNumberOfCells() == expectedNbCells, \
         f"Expected {expectedNbCells} cells, got {output.GetNumberOfCells()}"
 
@@ -268,7 +257,6 @@ def test_multi_cells_mesh_split() -> None:
         elif cellType == VTK_PYRAMID:
             nbPyrOut += 1
 
-    print( f"Output mesh contains: {nbHexOut} hexahedra, {nbTetOut} tetrahedra, {nbPyrOut} pyramids" )
     # Expected output: 3*8=24 hexes, 36*8 + 18*4=360 tets, 18*6=108 pyramids
     assert nbHexOut == 3 * 8, f"Expected {3*8} hexahedra in output, got {nbHexOut}"
     assert nbTetOut == 36 * 8 + 18 * 4, f"Expected {36*8 + 18*4} tetrahedra in output, got {nbTetOut}"
@@ -303,22 +291,18 @@ def test_multi_polygon_mesh_split() -> None:
         elif cellType == VTK_TRIANGLE:
             nbTriangle += 1
 
-    print( f"Input mesh contains: {nbQuad} quads, {nbTriangle} triangles" )
     assert nbQuad == 2, "Expected 2 quads in input mesh"
     assert nbTriangle == 4, "Expected 4 triangles in input mesh"
 
     # Apply the split filter
-    splitMeshFilter = SplitMesh()
-    splitMeshFilter.SetInputDataObject( input_mesh )
-    splitMeshFilter.Update()
-    output: vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    splitMeshFilter = SplitMesh( input_mesh )
+    splitMeshFilter.applyFilter()
+    output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
     assert output is not None, "Output mesh should be defined"
 
     # Calculate expected number of cells using the formula
     # 1 quad -> 4 quads, 1 triangle -> 4 triangles
     expectedNbCells = nbQuad * 4 + nbTriangle * 4
-    print( f"Expected number of cells: {expectedNbCells} (2*4 + 4*4)" )
-    print( f"Actual number of cells: {output.GetNumberOfCells()}" )
     assert output.GetNumberOfCells() == expectedNbCells, \
         f"Expected {expectedNbCells} cells, got {output.GetNumberOfCells()}"
 
@@ -332,7 +316,6 @@ def test_multi_polygon_mesh_split() -> None:
         elif cellType == VTK_TRIANGLE:
             nbTriangleOut += 1
 
-    print( f"Output mesh contains: {nbQuadOut} quads, {nbTriangleOut} triangles" )
     # Expected output: 2*4=8 quads, 4*4=16 triangles
     assert nbQuadOut == 2 * 4, f"Expected {2*4} quads in output, got {nbQuadOut}"
     assert nbTriangleOut == 4 * 4, f"Expected {4*4} triangles in output, got {nbTriangleOut}"
