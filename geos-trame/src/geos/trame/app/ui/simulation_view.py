@@ -100,7 +100,7 @@ def define_simulation_view(server) -> None:
                     )
         
         #        
-            access_granted = False # link to login button callback run_try_logging results
+            server.state.access_granted = False# link to login button callback run_try_logging results
             items = hint_config('p4', 12e6)
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
@@ -109,7 +109,7 @@ def define_simulation_view(server) -> None:
 
         with vuetify.VRow():
             with vuetify.VCol(cols=8):
-                vuetify.VFileInput(
+                vuetify.VTextField(
                         v_model=("key_path", None,),
                         label="Path to ssh key",
                         dense=True,
@@ -121,7 +121,10 @@ def define_simulation_view(server) -> None:
                 #
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
-                vuetify.VBtn("Log in", click="trigger('run_try_login')"),  # type: ignore
+                vuetify.VBtn("Log in", 
+                             click="trigger('run_try_login')",
+                             disabled=("access_granted",)
+                             )  # type: ignore
 
                 
         vuetify.VDivider(thickness=5, classes="my-4")
@@ -134,7 +137,7 @@ def define_simulation_view(server) -> None:
                     dense=True,
                     hide_details=True,
                     clearable=True,
-                    disabled=("!access_granted")
+                    disabled=("!access_granted",)
                 )
 
         with vuetify.VRow(), vuetify.VCol():
@@ -148,7 +151,7 @@ def define_simulation_view(server) -> None:
                 dense=True,
                 hide_details=True,
                 clearable=True,
-                disabled=("!access_granted")
+                disabled=("!access_granted",)
             # TODO callback validation of path
             )
 
@@ -159,7 +162,7 @@ def define_simulation_view(server) -> None:
                 dense=True,
                 clearable=True,
                 prepend_icon="mdi-download",
-                disabled=("!access_granted")
+                disabled=("!access_granted",)
             # TODO callback validation of path
             )
 
@@ -171,14 +174,14 @@ def define_simulation_view(server) -> None:
                     dense=True,
                     hide_details=True,
                     clearable=True,
-                    disabled=("!access_granted")
+                    disabled=("!access_granted",)
                 )
             
             vuetify.VSpacer()
             with vuetify.VCol(cols=1):
                 vuetify.VBtn("Run", 
                             click="trigger('run_simulation')",
-                            disabled=("!access_granted"),
+                            disabled=("!access_granted",),
                             classes="ml-auto"),  # type: ignore
 
 

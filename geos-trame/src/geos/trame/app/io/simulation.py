@@ -84,14 +84,8 @@ class Authentificator:#namespacing more than anything else
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            # if key:
             print(f"Connecting to {host} using key-based authentication...")
             client.connect(host, port, username, pkey=key, timeout=10)
-            # elif password:
-            #    print(f"Connecting to {host} using uid-password authentication...")
-            #    client.connect(host, port, username, password=password, timeout=10)
-            # else:
-                # raise paramiko.SSHException("No Key Found")
 
             return client
         except paramiko.AuthenticationException:
@@ -437,10 +431,12 @@ class Simulation:
                                                      key=Authentificator.get_key(server.state.login, server.state.password))
             
             if Authentificator.ssh_client :
-                home = os.environ.get('HOME')
-                server.state.key_path = f"{home}/.ssh/id_trame"
-                Authentificator._execute_remote_command(Authentificator.ssh_client, f"ls -l {home}")
+                id = os.environ.get('USER')
+                Authentificator._execute_remote_command(Authentificator.ssh_client, f"ls -l {SimulationConstant.REMOTE_HOME_BASE}/{id}")
        
+                # server.state.update({"access_granted" : True, "key_path" : f"{SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/id_trame" })
+                # server.state.flush()
+                server.state.access_granted = True
             print("login login login")
 
         @controller.trigger("run_simulation")
