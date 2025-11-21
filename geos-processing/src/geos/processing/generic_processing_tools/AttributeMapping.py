@@ -147,12 +147,15 @@ class AttributeMapping:
             attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
             wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
             if len( wrongAttributeNames ) > 0:
-                raise AttributeError( f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
+                raise AttributeError(
+                    f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
 
             attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
             attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
             if len( attributesAlreadyInMeshTo ) > 0:
-                raise AttributeError( f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
+                raise AttributeError(
+                    f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
+                )
 
             if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
                 partialAttributes: list[ str ] = []
@@ -161,7 +164,9 @@ class AttributeMapping:
                         partialAttributes.append( attributeName )
 
                 if len( partialAttributes ) > 0:
-                    raise AttributeError( f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
+                    raise AttributeError(
+                        f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials."
+                    )
 
             self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
             sharedElement: bool = False
@@ -193,4 +198,6 @@ class AttributeMapping:
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
         self.logger.info( f"The filter { self.logger.name } succeeded." )
-        self.logger.info( f"The { self.piece } attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece } mapping." )
+        self.logger.info(
+            f"The { self.piece } attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece } mapping."
+        )

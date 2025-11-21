@@ -172,7 +172,7 @@ class SurfaceGeomechanics:
         self.convertAttributesOn = True
 
     def ConvertAttributesOff( self: Self ) -> None:
-        """Deactivate the conversion of attributes from local to XYZ bais."""
+        """Deactivate the conversion of attributes from local to XYZ basis."""
         self.convertAttributesOn = False
 
     def GetConvertAttributes( self: Self ) -> bool:
@@ -273,7 +273,8 @@ class SurfaceGeomechanics:
                 continue
 
             if self.attributeOnPoints:
-                raise ValueError( "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
+                raise ValueError(
+                    "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
             localArray: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, attrNameLocal,
                                                                       self.attributeOnPoints )
 

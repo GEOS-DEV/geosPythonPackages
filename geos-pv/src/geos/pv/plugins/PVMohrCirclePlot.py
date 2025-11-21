@@ -287,7 +287,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     @smproperty.intvector( name="AnnotateCircles", label="Annotate Circles", default_values=1 )
     @smdomain.xml( """<BooleanDomain name="bool"/>""" )
     def b06SetAnnotateCircles( self: Self, boolean: bool ) -> None:
-        """Set option to add annotatations to circles.
+        """Set option to add annotations to circles.
 
         Args:
             boolean (bool): True to annotate circles, False otherwise.

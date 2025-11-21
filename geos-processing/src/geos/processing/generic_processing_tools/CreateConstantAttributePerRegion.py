@@ -166,7 +166,9 @@ class CreateConstantAttributePerRegion:
                 raise AttributeError( f"{ self.regionName } is not in the mesh." )
 
             if self.onBoth:
-                raise ValueError( f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique." )
+                raise ValueError(
+                    f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+                )
 
             nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.onPoints )
             if nbComponentsRegion != 1:
@@ -176,7 +178,9 @@ class CreateConstantAttributePerRegion:
             # Check if the number of components and number of values for the region indexes are coherent.
             for index in self.dictRegionValues:
                 if len( self.dictRegionValues[ index ] ) != self.nbComponents:
-                    raise ValueError( f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }." )
+                    raise ValueError(
+                        f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
+                    )
 
             listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
             validIndexes: list[ Any ] = []
@@ -189,7 +193,7 @@ class CreateConstantAttributePerRegion:
                     raise AttributeError( f"The region attribute { self.regionName } has to be global." )
 
                 validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                            self.onPoints )
+                                                                             self.onPoints )
                 if len( validIndexes ) == 0:
                     if len( self.dictRegionValues ) == 0:
                         self.logger.warning( "No region indexes entered." )
@@ -198,17 +202,18 @@ class CreateConstantAttributePerRegion:
                             f"The region indexes entered are not in the region attribute { self.regionName }." )
 
                     if not createConstantAttributeMultiBlock( self.mesh,
-                                                            self.defaultValue,
-                                                            self.newAttributeName,
-                                                            componentNames=self.componentNames,
-                                                            onPoints=self.onPoints,
-                                                            logger=self.logger ):
+                                                              self.defaultValue,
+                                                              self.newAttributeName,
+                                                              componentNames=self.componentNames,
+                                                              onPoints=self.onPoints,
+                                                              logger=self.logger ):
                         raise
 
                 else:
                     if len( invalidIndexes ) > 0:
                         self.logger.warning(
-                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
+                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
+                        )
 
                     # Parse the mesh to add the attribute on each dataset.
                     listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( self.mesh )
@@ -227,7 +232,7 @@ class CreateConstantAttributePerRegion:
 
             else:
                 validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                        self.onPoints )
+                                                                          self.onPoints )
                 if len( validIndexes ) == 0:
                     if len( self.dictRegionValues ) == 0:
                         self.logger.warning( "No region indexes entered." )
@@ -236,17 +241,18 @@ class CreateConstantAttributePerRegion:
                             f"The region indexes entered are not in the region attribute { self.regionName }." )
 
                     if not createConstantAttributeDataSet( self.mesh,
-                                                        self.defaultValue,
-                                                        self.newAttributeName,
-                                                        componentNames=self.componentNames,
-                                                        onPoints=self.onPoints,
-                                                        logger=self.logger ):
+                                                           self.defaultValue,
+                                                           self.newAttributeName,
+                                                           componentNames=self.componentNames,
+                                                           onPoints=self.onPoints,
+                                                           logger=self.logger ):
                         raise
 
                 else:
                     if len( invalidIndexes ) > 0:
                         self.logger.warning(
-                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
+                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
+                        )
 
                     regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )

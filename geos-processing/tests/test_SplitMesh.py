@@ -201,8 +201,8 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     cellDataInput: vtkCellData = test_case.mesh.GetCellData()
     assert cellDataInput is not None, "Cell data from input mesh should be defined."
     nbArrayInput: int = cellDataInput.GetNumberOfArrays()
-    nbArraySplited: int = cellData.GetNumberOfArrays()
-    assert nbArraySplited == nbArrayInput + 1, f"Number of arrays should be {nbArrayInput + 1}"
+    nbArraySplitted: int = cellData.GetNumberOfArrays()
+    assert nbArraySplitted == nbArrayInput + 1, f"Number of arrays should be {nbArrayInput + 1}"
 
 
 def test_multi_cells_mesh_split() -> None:

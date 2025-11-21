@@ -40,7 +40,7 @@ Input and output are vtkMultiBlockDataSet.
 To use it:
 
 * Load the module in Paraview: Tools>Manage Plugins...>Load new>PVSurfaceGeomechanics.
-* Select any pipeline child of the second ouput from
+* Select any pipeline child of the second output from
     GeosExtractMergeBlocksVolumeSurface* filter.
 * Select Filters > 3- Geos Geomechanics > Geos Surface Geomechanics.
 * (Optional) Set rock cohesion and/or friction angle.

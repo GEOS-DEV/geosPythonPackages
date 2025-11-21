@@ -122,13 +122,15 @@ class FillPartialArrays:
                     raise ValueError( f"{ attributeName } is not in the mesh." )
 
                 if onBoth:
-                    raise ValueError( f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique." )
+                    raise ValueError(
+                        f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
+                    )
 
                 if not fillPartialAttributes( self.multiBlockDataSet,
-                                            attributeName,
-                                            onPoints=onPoints,
-                                            listValues=self.dictAttributesValues[ attributeName ],
-                                            logger=self.logger ):
+                                              attributeName,
+                                              onPoints=onPoints,
+                                              listValues=self.dictAttributesValues[ attributeName ],
+                                              logger=self.logger ):
                     raise
 
             self.logger.info( f"The filter { self.logger.name } succeed." )

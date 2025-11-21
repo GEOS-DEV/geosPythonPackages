@@ -42,6 +42,7 @@ def test_mergeBlocks(
     assert dataset.GetFieldData().GetNumberOfArrays(
     ) == nbFieldAttributes, f"Expected {nbFieldAttributes} field attributes after the merge, not {dataset.GetFieldData().GetNumberOfArrays()}."
 
+
 class RaiseMergeBlocks( TestCase ):
     """Test failure on empty multiBlockDataSet."""
 
