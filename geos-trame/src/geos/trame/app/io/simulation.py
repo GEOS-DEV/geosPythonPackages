@@ -10,7 +10,7 @@ from trame_server.core import Server
 from trame_server.state import State
 from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
-import jinja2 
+from jinja2 import Template
 import paramiko 
 import os
 
@@ -27,6 +27,35 @@ class SimulationConstant:
     SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
 
 
+# Load template from file
+# with open("slurm_job_template.j2") as f:
+    # template = Template(f.read())
+
+#TODO from private-assets
+template_str = """#!/bin/sh
+#SBATCH --job-name="{{ job_name }}"
+#SBATCH --ntasks={{ ntasks }}
+#SBATCH --partition={{ partition }}
+#SBATCH --comment={{ comment }}
+#SBACTH --account={{ account }}
+#SBATCH --nodes={{ nodes }}
+#SBATCH --time={{ time | default('24:00:00') }}
+#SBATCH --mem={{ mem }}
+#SBATCH --output=job_GEOS_%j.out
+#SBATCH --error=job_GEOS_%j.err
+
+ulimit -s unlimited
+ulimit -c unlimited
+
+#module purge
+#module geos
+#run --mpi=pmix_v3 --hint=nomultithread \
+#    -n {{ ntasks }} geos \
+#    -o Outputs_{{ slurm_jobid | default('${SLURM_JOBID}') }} \
+#    -i {{ input_file | default('geosDeck.xml') }}
+
+echo "Hello world" >> hello.out
+"""
 
 
 
@@ -441,10 +470,35 @@ class Simulation:
 
         @controller.trigger("run_simulation")
         def run_simulation()-> None:
+            
+            if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
+                template = Template(template_str)
+                sdi = server.state.sd
+                ci ={'nodes': 2 , 'total_ranks': 96 }
+                rendered = template.render(job_name=server.state.simulation_job_name,
+                                           input_file=server.state.simulation_xml_filename,
+                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"{ci['nodes']*sdi.selected_cluster['mem_per_node']}GB",
+                                           commment='mycomment', partition='mypart', account='myaccount' )
+
+                with open('job.slurm','w') as f:
+                    f.write(rendered)
+                
+                if Authentificator.ssh_client:
+                    Authentificator._transfer_file_sftp(Authentificator.ssh_client,
+                                                        local_path='job.slurm',
+                                                        remote_path=server.state.simulation_remote_path)
+                    Authentificator._transfer_file_sftp(Authentificator.ssh_client,
+                                                        remote_path=server.state.simulation_remote_path+'/job.slurm',
+                                                        local_path=server.state.simulation_dl_path+'/dl.test',
+                                                        direction="get")
+                else:
+                    raise paramiko.SSHException
+
             pass
 
         @controller.trigger("kill_simulation")
         def kill_simulation(pid)->None:
+            # exec scancel jobid
             pass
 
     def __del__(self):
