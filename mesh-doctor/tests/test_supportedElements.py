@@ -8,7 +8,6 @@ from geos.mesh.utils.genericHelpers import toVtkIdList
 from geos.mesh_doctor.actions.supportedElements import Options, action, meshAction
 from geos.mesh_doctor.actions.vtkPolyhedron import FaceStream, parseFaceStream
 
-
 dataRoot: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 supportElementsFile: str = os.path.join( dataRoot, "supportedElements.vtu" )
 
