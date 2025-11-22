@@ -461,7 +461,8 @@ class Simulation:
             
             if Authentificator.ssh_client :
                 id = os.environ.get('USER')
-                Authentificator._execute_remote_command(Authentificator.ssh_client, f"ls -l {SimulationConstant.REMOTE_HOME_BASE}/{id}")
+                Authentificator._execute_remote_command(Authentificator.ssh_client, f"ps aux")
+                # Authentificator._execute_remote_command(Authentificator.ssh_client, f"ls -l {SimulationConstant.REMOTE_HOME_BASE}/{id}")
        
                 # server.state.update({"access_granted" : True, "key_path" : f"{SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/id_trame" })
                 # server.state.flush()
@@ -492,6 +493,20 @@ class Simulation:
                                                         remote_path=f'{server.state.simulation_remote_path}/job.slurm',
                                                         local_path=f'{server.state.simulation_dl_path}/dl.test',
                                                         direction="get")
+
+                    
+                    # TODO later ASYNC and subprocess # Submit job using subprocess (local ssh call)
+                    # import subprocess
+                    # result = subprocess.run(["ssh", "user@remote.host", "sbatch /remote/path/job.slurm"],
+                    #                         capture_output=True, text=True)
+                    
+                    # PARAMIKO >> subprocess
+                    # # Execute command remotely
+                    # stdin, stdout, stderr = client.exec_command("ls -l /tmp")
+                    # print(stdout.read().decode())
+                    # parse stdout
+
+
                 else:
                     raise paramiko.SSHException
 
