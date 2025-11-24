@@ -24,8 +24,9 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.utils.Logger import getLogger, GEOSHandler
 from geos.pv.utils.details import SISOFilter, FilterCategory
-from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays, loggerTitle
 
 __doc__ = """
 Fill partial arrays of input mesh.
@@ -52,7 +53,12 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Fill a partial attribute with constant value per component."""
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
+        #remove noisy loggers to get clean OutputMessage windows
+        self.logger = getLogger( loggerTitle )
+        for hdlr in list(filter(lambda x : not isinstance(x, GEOSHandler),  self.logger.handlers)):
+                self.logger.removeHandler(hdlr)
 
+        
     @smproperty.xml( """
         <StringVectorProperty
             name="AttributeTable"
@@ -105,7 +111,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
             outputMesh,
             self.dictAttributesValues,
-            speHandler=True,
+            # speHandler=True,
         )
 
         # if not fillPartialArraysFilter.logger.hasHandlers():

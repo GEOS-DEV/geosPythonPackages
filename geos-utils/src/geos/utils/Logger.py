@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 import logging
-from typing import Any, Union, Generator
+from typing import Any, Generator
 from typing_extensions import Self
 
 import os
@@ -188,7 +188,6 @@ class GEOSHandler(logging.StreamHandler):
 
     def __init__(self, level = 0):
         super().__init__(level)
-        #default formatter
 
     def setLevel(self, level):
         return super().setLevel(level)
@@ -217,8 +216,6 @@ class GEOSHandler(logging.StreamHandler):
                 #see https://www.paraview.org/paraview-docs/v5.13.3/python/_modules/paraview/detail/loghandler.html#VTKHandler
                 prevMode = outwin.GetDisplayMode()
                 outwin.SetDisplayModeToNever()
-                
-                # lvl=GEOSHandler.get_vtk_level(record.levelno)
                 
                 if lvl == ERROR:
                     outwin.DisplayErrorText(GEOSFormatter.TrimColor(msg))
@@ -272,8 +269,6 @@ def getLogger( title: str, use_color=False ) -> Logger:
     if len( logger.handlers ) == 0:
         logger.setLevel( DEBUG )  # Set the desired default level for this logger
         # Create and add the stream handler
-        # ch = logging.StreamHandler()
-        # ch.setFormatter( CustomLoggerFormatter( use_color ) )  # Use your custom formatter
         geos_handler = GEOSHandler()
         geos_handler.setFormatter(GEOSFormatter())
         geos_handler.setLevel(logger.getEffectiveLevel())
@@ -284,8 +279,6 @@ def getLogger( title: str, use_color=False ) -> Logger:
         cli_handle.setLevel(logger.getEffectiveLevel())
         logger.addHandler(cli_handle)
 
-        file_handle = logging.FileHandler('log.geosPythonPackages')
-        logger.addHandler(file_handle)
         # Optional: Prevent messages from propagating to the root logger's handlers
         logger.propagate = True
 

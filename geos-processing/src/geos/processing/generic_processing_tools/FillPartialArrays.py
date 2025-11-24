@@ -5,11 +5,11 @@
 from typing_extensions import Self
 from typing import Union, Any
 
-from geos.utils.Logger import logging, Logger, getLogger
+from geos.utils.Logger import getLogger
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
 
-from geos.utils.details import addLogSupport
+# from geos.utils.details import addLogSupport
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 __doc__ = """
@@ -56,7 +56,7 @@ To use it:
 loggerTitle: str = "Fill Partial Attribute"
 
 
-@addLogSupport( loggerTitle=loggerTitle )
+# @addLogSupport( loggerTitle=loggerTitle )
 class FillPartialArrays:
 
     def __init__(
@@ -77,6 +77,7 @@ class FillPartialArrays:
             multiBlockDataSet (vtkMultiBlockDataSet): The mesh where to fill the attribute.
             dictAttributesValues (dict[str, Any]): The dictionary with the attribute to fill as keys and the list of filling values as items.
         """
+        self.logger = getLogger(loggerTitle)
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
 
