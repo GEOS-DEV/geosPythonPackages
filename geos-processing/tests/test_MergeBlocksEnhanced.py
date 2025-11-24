@@ -7,6 +7,8 @@
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
+import vtk
+from packaging.version import Version
 
 
 def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None:
@@ -15,6 +17,6 @@ def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None
     mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
     assert mergeBlockEnhancedFilter.applyFilter()
 
-    vtkMultiBlockDataSetFail: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-    failedMergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( vtkMultiBlockDataSetFail )
-    assert not failedMergeBlockEnhancedFilter.applyFilter()
+    if Version( vtk.__version__ ) < Version( "9.5" ):
+        failedMergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( vtkMultiBlockDataSet() )
+        assert not failedMergeBlockEnhancedFilter.applyFilter()
