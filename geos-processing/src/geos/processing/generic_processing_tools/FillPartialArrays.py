@@ -49,7 +49,13 @@ To use it:
     fillPartialArraysFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    fillPartialArraysFilter.applyFilter()
+    try:
+        fillPartialArraysFilter.applyFilter()
+    except ( ValueError, AttributeError ) as e:
+        fillPartialArraysFilter.logger.error( f"The filter { fillPartialArraysFilter.logger.name } failed du to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { fillPartialArraysFilter.logger.name } failed du to: { e }"
+        fillPartialArraysFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Fill Partial Attribute"
@@ -106,40 +112,34 @@ class FillPartialArrays:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
                                  " during the filter initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raise:
+            AttributeError: Error with attributes to fill.
+            ValueError: Error during the filling of the attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        try:
-            onPoints: Union[ None, bool ]
-            onBoth: bool
-            for attributeName in self.dictAttributesValues:
-                onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
-                if onPoints is None:
-                    raise ValueError( f"{ attributeName } is not in the mesh." )
 
-                if onBoth:
-                    raise ValueError(
-                        f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
-                    )
+        onPoints: Union[ None, bool ]
+        onBoth: bool
+        for attributeName in self.dictAttributesValues:
+            onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
+            if onPoints is None:
+                raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
 
-                if not fillPartialAttributes( self.multiBlockDataSet,
-                                              attributeName,
-                                              onPoints=onPoints,
-                                              listValues=self.dictAttributesValues[ attributeName ],
-                                              logger=self.logger ):
-                    raise
+            if onBoth:
+                raise AttributeError(
+                    f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
+                )
 
-            self.logger.info( f"The filter { self.logger.name } succeed." )
-        except ( ValueError, AttributeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+            if not fillPartialAttributes( self.multiBlockDataSet,
+                                          attributeName,
+                                          onPoints=onPoints,
+                                          listValues=self.dictAttributesValues[ attributeName ],
+                                          logger=self.logger ):
+                raise ValueError( "Something got wrong with the filling of partial attributes" )
 
-        return True
+        self.logger.info( f"The filter { self.logger.name } succeed." )
+
+        return
