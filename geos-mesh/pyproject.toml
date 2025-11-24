@@ -42,7 +42,7 @@ dependencies = [
     mesh-doctor = "geos.mesh.doctor.meshDoctor:main"
     meshDoctor = "geos.mesh.doctor.meshDoctor:main"
     convert_abaqus = "geos.mesh.conversion.main:main"
-    
+
 [project.urls]
 Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
 Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
@@ -55,11 +55,11 @@ build = [
 ]
 dev = [
    "mypy",
-   "ruff", 
+   "ruff",
    "yapf",
 ]
 test = [
-   "pytest-cov", 
+   "pytest-cov",
    "pytest"
 ]
 
@@ -73,3 +73,13 @@ python_functions = "test*"
 testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
+
+
+# [tool.coverage.run]
+# branch = true
+# source = [""]
+# omit = ["tests/*"]
+# where = ["src"]
+# include = ["geos.mesh*"]
+# exclude = ['tests*']
+# source = ["PVplugins, filters, processing, readers, utils, visu, writers, pyvistaTools, bin"]
