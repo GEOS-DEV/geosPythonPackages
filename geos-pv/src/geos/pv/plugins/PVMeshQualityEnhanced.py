@@ -239,8 +239,8 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        if meshQualityEnhancedFilter.applyFilter():
-
+        try:
+            meshQualityEnhancedFilter.applyFilter()
             outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
 
             # save to file if asked
@@ -249,6 +249,13 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                 logger: logging.Logger = meshQualityEnhancedFilter.logger
                 self.saveFile( stats, logger )
             self._blockIndex += 1
+        except ( ValueError, IndexError, TypeError, AttributeError ) as e:
+            meshQualityEnhancedFilter.logger.error(
+                f"The filter { meshQualityEnhancedFilter.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { meshQualityEnhancedFilter.logger.name } failed due to:\n{ e }"
+            meshQualityEnhancedFilter.logger.critical( mess, exc_info=True )
+
         return
 
     def saveFile(
