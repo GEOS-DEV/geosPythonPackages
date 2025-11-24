@@ -1,5 +1,5 @@
 import logging
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import Logger, getLogger, CustomLoggerFormatter, GEOSHandler
 from functools import wraps
 from typing import Type, TypeVar, Callable, Protocol, Any
 
@@ -41,18 +41,18 @@ def addLogSupport( loggerTitle: str ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
         @wraps( original_init )
         def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
             spe_handler = kwargs.pop( 'speHandler', False )
-            if spe_handler:
-                self.logger = logging.getLogger( loggerTitle )
-                self.logger.setLevel( logging.INFO )
-            else:
-                self.logger = getLogger( loggerTitle, True )
+            # if spe_handler:
+            #     self.logger = logging.getLogger( loggerTitle )
+            #     self.logger.setLevel( logging.INFO )
+            # else:
+            self.logger = getLogger( loggerTitle, True )
 
             original_init( self, *args, **kwargs )
 
         def setLoggerHandler( self: T, handler: logging.Handler ) -> None:
             # No docstring needed - Protocol defines the contract
             if not self.logger.handlers:
-                self.logger.addHandler( handler )
+                self.logger.addHandler( GEOSHandler() )
             else:
                 self.logger.warning(
                     "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."

@@ -108,10 +108,11 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             speHandler=True,
         )
 
-        if not filter.logger.hasHandlers():
-            filter.setLoggerHandler( VTKHandler() )
+        # if not fillPartialArraysFilter.logger.hasHandlers():
+        # fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
+        
 
-        filter.applyFilter()
+        fillPartialArraysFilter.applyFilter()
 
         self.clearDictAttributesValues = True
 

@@ -10,6 +10,7 @@ import re
 import tempfile
 from contextlib import contextmanager
 
+from vtkmodules.vtkCommonCore import vtkLogger
 from geos.utils.Errors import VTKError
 
 __doc__ = """
@@ -239,6 +240,95 @@ class CustomLoggerFormatter( logging.Formatter ):
             # Fallback for unknown levels or if a level is missing in the map
             return logging.Formatter().format( record )
 
+class GEOSFormatter( logging.Formatter ):
+
+    # define color codes
+    green: str = "\x1b[32;20m"
+    grey: str = "\x1b[38;20m"
+    yellow: str = "\x1b[33;20m"
+    red: str = "\x1b[31;20m"
+    bold_red: str = "\x1b[31;1m"
+    reset: str = "\x1b[0m"
+
+    # define prefix of log messages
+    format_short: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format_long: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
+    format_results: str = "%(name)s - %(levelname)s - %(message)s"
+
+    #: format for each logger output type without colors (e.g., for Paraview)
+    _formatDict : dict[int, str ] =  {
+        # DEBUG: format_long,
+        # INFO: format_short,
+        # WARNING: format_short,
+        # ERROR: format_short,
+        # CRITICAL: format_long,
+        # RESULTS_LEVEL_NUM: format_results,
+        DEBUG: grey + format_long + reset,
+        INFO: green + format_short + reset,
+        WARNING: yellow + format_short + reset,
+        ERROR: red + format_short + reset,
+        CRITICAL: bold_red + format_long + reset,
+        RESULTS_LEVEL_NUM: green + format_results + reset,
+    }
+
+    def __init__(self, fmt = None, datefmt = None, style = "%", validate = True, *, defaults = None) -> None:
+        super().__init__(fmt, datefmt, style, validate, defaults=defaults)
+
+    def format(self : Self, record : logging.LogRecord) -> str:
+        return self._formatDict.get( record.levelname, logging.Formatter() ).format(record)
+
+
+class GEOSHandler(logging.Handler):
+
+    def __init__(self, level = 0):
+        super().__init__(level)
+        #default formatter
+        self.formatter = GEOSFormatter()
+
+    @staticmethod
+    def get_vtk_level(level : int):
+        if level >= ERROR:
+            return vtkLogger.VERBOSITY_ERROR
+        elif level >= WARNING:
+            return vtkLogger.VERBOSITY_WARNING
+        elif level >= INFO:
+            return vtkLogger.VERBOSITY_INFO
+        elif level >= DEBUG:
+            return vtkLogger.VERBOSITY_TRACE
+        else:
+            return vtkLogger.VERBOSITY_MAX
+
+    def emit(self, record):
+        vtkLogger.Log( (lvl:=GEOSHandler.get_vtk_level(record.levelno)),
+                      record.filename,
+                      record.lineno,
+                      (msg:=self.format(record)))
+
+        try:
+            from vtkmodules.vtkCommonCore import vtkOutputWindow as win
+            outwin= win.GetInstance()
+            if outwin:
+                #see https://www.paraview.org/paraview-docs/v5.13.3/python/_modules/paraview/detail/loghandler.html#VTKHandler
+                prevMode = outwin.GetDisplayMode()
+                outwin.DisplayText(f"test test test ---")
+                outwin.SetDisplayModeToNever()
+
+                if lvl == ERROR:
+                    outwin.DisplayErrorText(self.format(record))
+                elif lvl == WARNING:
+                    outwin.DisplayErrorText(self.format(record))
+                else:
+                    # lvl == GEOSLogger.VERBOSITY_INFO:
+                    outwin.DisplayText(self.format(record))
+                # elif lvl == GEOSLogger.VERBOSITY_DEBUG:
+                    # outwin.DisplayDebugText(fullMsg)
+
+                outwin.SetDisplayMode(prevMode)
+
+        except Exception:
+            self.handleError(record)
+
+ 
 
 def getLogger( title: str, use_color: bool = False ) -> Logger:
     """Return the Logger with pre-defined configuration.
@@ -278,9 +368,9 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     if len( logger.handlers ) == 0:
         logger.setLevel( INFO )  # Set the desired default level for this logger
         # Create and add the stream handler
-        ch = logging.StreamHandler()
-        ch.setFormatter( CustomLoggerFormatter( use_color ) )  # Use your custom formatter
-        logger.addHandler( ch )
+        # ch = logging.StreamHandler()
+        # ch.setFormatter( CustomLoggerFormatter( use_color ) )  # Use your custom formatter
+        logger.addHandler( GEOSHandler() )
         # Optional: Prevent messages from propagating to the root logger's handlers
         logger.propagate = False
     # If you need to ensure a certain level is set every time getLogger is called,
