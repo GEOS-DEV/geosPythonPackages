@@ -3,6 +3,8 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="misc"
+import sys
+from pathlib import Path
 # Add Enum for filter categories
 from functools import update_wrapper
 from typing import Protocol, Any, Type, TypeVar, Callable, runtime_checkable, Union
@@ -22,6 +24,13 @@ from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
 )
+
+# update sys.path to load all GEOS Python Package dependencies
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
+
+update_paths()
 
 __doc__ = """
 Set of decorators that allows quicker generation of DataSet derived to the same DataSet derived filters. If it a list of type is provided, then the unique output type is set to vtkDataObject.
@@ -50,7 +59,6 @@ class FilterCategory( str, Enum ):
 
 
 U = TypeVar( 'U', bound='vtkDataObject' )
-
 
 @runtime_checkable
 class IsSISOFilter( Protocol[ U ] ):
