@@ -54,7 +54,14 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
         splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
         if len( splitMeshFilter.logger.handlers ) == 0:
             splitMeshFilter.setLoggerHandler( VTKHandler() )
-        if splitMeshFilter.applyFilter():
+
+        try:
+            splitMeshFilter.applyFilter()
             outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
+        except ( TypeError, AttributeError ) as e:
+            splitMeshFilter.logger.error( f"The filter {splitMeshFilter.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { splitMeshFilter.logger.name } failed due to:\n{ e }"
+            splitMeshFilter.logger.critical( mess, exc_info=True )
 
         return
