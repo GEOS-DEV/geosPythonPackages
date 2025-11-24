@@ -186,7 +186,11 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         if len( attributeMappingFilter.logger.handlers ) == 0:
             attributeMappingFilter.setLoggerHandler( VTKHandler() )
 
-        attributeMappingFilter.applyFilter()
-        self.clearAttributeNames = True
+        try:
+            attributeMappingFilter.applyFilter()
+            self.clearAttributeNames = True
+        except ( ValueError, AttributeError ) as e:
+            attributeMappingFilter.logger.error(
+                f"The filter { attributeMappingFilter.logger.name } failed du to:\n{ e }" )
 
         return 1

@@ -30,4 +30,32 @@ def test_AttributeMapping(
         fillAllPartialAttributes( meshFrom )
 
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
-    assert attributeMappingFilter.applyFilter()
+    attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints, error", [
+    ( "dataset", "emptydataset", {}, False, "ValueError" ),
+    ( "dataset", "emptydataset", { "Fault" }, False, "AttributeError" ),
+    ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False, "AttributeError" ),
+    ( "multiblock", "emptymultiblock", { "FAULT" }, False, "AttributeError" ),
+    ( "dataset", "emptyFracture", { "FAULT" }, False, "ValueError" ),
+] )
+def test_AttributeMappingRaises(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    onPoints: bool,
+    error: str,
+) -> None:
+    """Test the fails of the filter."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
+
+    if error == "AttributeError":
+        with pytest.raises( AttributeError ):
+            attributeMappingFilter.applyFilter()
+    elif error == "ValueError":
+        with pytest.raises( ValueError ):
+            attributeMappingFilter.applyFilter()
