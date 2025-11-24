@@ -148,98 +148,6 @@ logging.Logger.results = results  # type: ignore[attr-defined]
 
 # types redefinition to import logging.* from this module
 Logger = logging.Logger  # logger type
-
-
-class CustomLoggerFormatter( logging.Formatter ):
-    """Custom formatter for the logger.
-
-    .. WARNING:: Colors do not work in the output message window of Paraview.
-
-    To use it:
-
-    .. code-block:: python
-
-        logger = logging.getLogger( "Logger name", use_color=False )
-        # Ensure handler is added only once, e.g., by checking logger.handlers
-        if not logger.handlers:
-            ch = logging.StreamHandler()
-            ch.setFormatter(CustomLoggerFormatter())
-            logger.addHandler(ch)
-    """
-    # define color codes
-    green: str = "\x1b[32;20m"
-    grey: str = "\x1b[38;20m"
-    yellow: str = "\x1b[33;20m"
-    red: str = "\x1b[31;20m"
-    bold_red: str = "\x1b[31;1m"
-    reset: str = "\x1b[0m"
-
-    # define prefix of log messages
-    format1: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    format2: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
-    format_results: str = "%(name)s - %(levelname)s - %(message)s"
-
-    #: format for each logger output type with colors
-    FORMATS_COLOR: dict[ int, str ] = {
-        DEBUG: grey + format2 + reset,
-        INFO: green + format1 + reset,
-        WARNING: yellow + format1 + reset,
-        ERROR: red + format1 + reset,
-        CRITICAL: bold_red + format2 + reset,
-        RESULTS_LEVEL_NUM: green + format_results + reset,
-    }
-
-    #: format for each logger output type without colors (e.g., for Paraview)
-    FORMATS_PLAIN: dict[ int, str ] = {
-        DEBUG: format2,
-        INFO: format1,
-        WARNING: format1,
-        ERROR: format1,
-        CRITICAL: format2,
-        RESULTS_LEVEL_NUM: format_results,
-    }
-
-    # Pre-compiled formatters for efficiency
-    _compiled_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt )
-        for level, fmt in FORMATS_PLAIN.items()
-    }
-
-    _compiled_color_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt )
-        for level, fmt in FORMATS_COLOR.items()
-    }
-
-    def __init__( self: Self, use_color: bool = False ) -> None:
-        """Initialize the log formatter.
-
-        Args:
-            use_color (bool): If True, use color-coded log formatters.
-                              Defaults to False.
-        """
-        super().__init__()
-        if use_color:
-            self.active_formatters = self._compiled_color_formatters
-        else:
-            self.active_formatters = self._compiled_formatters
-
-    def format( self: Self, record: logging.LogRecord ) -> str:
-        """Return the format according to input record.
-
-        Args:
-            record (logging.LogRecord): record
-
-        Returns:
-            str: format as a string
-        """
-        # Defaulting to plain formatters as per original logic
-        log_fmt_obj: Union[ logging.Formatter, None ] = self.active_formatters.get( record.levelno )
-        if log_fmt_obj:
-            return log_fmt_obj.format( record )
-        else:
-            # Fallback for unknown levels or if a level is missing in the map
-            return logging.Formatter().format( record )
-
 class GEOSFormatter( logging.Formatter ):
 
     # define color codes
@@ -256,13 +164,7 @@ class GEOSFormatter( logging.Formatter ):
     format_results: str = "%(name)s - %(levelname)s - %(message)s"
 
     #: format for each logger output type without colors (e.g., for Paraview)
-    _formatDict : dict[int, str ] =  {
-        # DEBUG: format_long,
-        # INFO: format_short,
-        # WARNING: format_short,
-        # ERROR: format_short,
-        # CRITICAL: format_long,
-        # RESULTS_LEVEL_NUM: format_results,
+    _formatDict : dict[int, str ] = {
         DEBUG: grey + format_long + reset,
         INFO: green + format_short + reset,
         WARNING: yellow + format_short + reset,
@@ -275,15 +177,21 @@ class GEOSFormatter( logging.Formatter ):
         super().__init__(fmt, datefmt, style, validate, defaults=defaults)
 
     def format(self : Self, record : logging.LogRecord) -> str:
-        return self._formatDict.get( record.levelname, logging.Formatter() ).format(record)
+        return logging.Formatter( fmt= self._formatDict.get( record.levelno, []) ).format(record)
+
+    @staticmethod
+    def TrimColor(msg : str) -> str:
+        return  msg[8:-5]
 
 
-class GEOSHandler(logging.Handler):
+class GEOSHandler(logging.StreamHandler):
 
     def __init__(self, level = 0):
         super().__init__(level)
         #default formatter
-        self.formatter = GEOSFormatter()
+
+    def setLevel(self, level):
+        return super().setLevel(level)
 
     @staticmethod
     def get_vtk_level(level : int):
@@ -299,30 +207,26 @@ class GEOSHandler(logging.Handler):
             return vtkLogger.VERBOSITY_MAX
 
     def emit(self, record):
-        vtkLogger.Log( (lvl:=GEOSHandler.get_vtk_level(record.levelno)),
-                      record.filename,
-                      record.lineno,
-                      (msg:=self.format(record)))
-
         try:
+            msg = self.format(record)
+            lvl = GEOSHandler.get_vtk_level(record.levelno)
+
             from vtkmodules.vtkCommonCore import vtkOutputWindow as win
             outwin= win.GetInstance()
             if outwin:
                 #see https://www.paraview.org/paraview-docs/v5.13.3/python/_modules/paraview/detail/loghandler.html#VTKHandler
                 prevMode = outwin.GetDisplayMode()
-                outwin.DisplayText(f"test test test ---")
                 outwin.SetDisplayModeToNever()
-
+                
+                # lvl=GEOSHandler.get_vtk_level(record.levelno)
+                
                 if lvl == ERROR:
-                    outwin.DisplayErrorText(self.format(record))
+                    outwin.DisplayErrorText(GEOSFormatter.TrimColor(msg))
                 elif lvl == WARNING:
-                    outwin.DisplayErrorText(self.format(record))
+                    outwin.DisplayErrorText(GEOSFormatter.TrimColor(msg))
                 else:
-                    # lvl == GEOSLogger.VERBOSITY_INFO:
-                    outwin.DisplayText(self.format(record))
-                # elif lvl == GEOSLogger.VERBOSITY_DEBUG:
-                    # outwin.DisplayDebugText(fullMsg)
-
+                    outwin.DisplayText(GEOSFormatter.TrimColor(msg))
+ 
                 outwin.SetDisplayMode(prevMode)
 
         except Exception:
@@ -330,7 +234,7 @@ class GEOSHandler(logging.Handler):
 
  
 
-def getLogger( title: str, use_color: bool = False ) -> Logger:
+def getLogger( title: str, use_color=False ) -> Logger:
     """Return the Logger with pre-defined configuration.
 
     This function is now idempotent regarding handler addition.
@@ -366,13 +270,25 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
     if len( logger.handlers ) == 0:
-        logger.setLevel( INFO )  # Set the desired default level for this logger
+        logger.setLevel( DEBUG )  # Set the desired default level for this logger
         # Create and add the stream handler
         # ch = logging.StreamHandler()
         # ch.setFormatter( CustomLoggerFormatter( use_color ) )  # Use your custom formatter
-        logger.addHandler( GEOSHandler() )
+        geos_handler = GEOSHandler()
+        geos_handler.setFormatter(GEOSFormatter())
+        geos_handler.setLevel(logger.getEffectiveLevel())
+        logger.addHandler( geos_handler )
+        
+        cli_handle = logging.StreamHandler()
+        cli_handle.setFormatter(GEOSFormatter())
+        cli_handle.setLevel(logger.getEffectiveLevel())
+        logger.addHandler(cli_handle)
+
+        file_handle = logging.FileHandler('log.geosPythonPackages')
+        logger.addHandler(file_handle)
         # Optional: Prevent messages from propagating to the root logger's handlers
-        logger.propagate = False
+        logger.propagate = True
+
     # If you need to ensure a certain level is set every time getLogger is called,
     # even if handlers were already present, you can set the level outside the 'if' block.
     # However, typically, setLevel is part of the initial handler configuration.
