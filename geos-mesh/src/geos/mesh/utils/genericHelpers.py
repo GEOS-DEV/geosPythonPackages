@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay, Paloma Martinez
+# SPDX-FileContributor: Martin Lemay, Paloma Martinez, Alexandre Benedicto
 import logging
 import numpy as np
 import numpy.typing as npt
@@ -8,9 +8,9 @@ from typing import ( Iterator, List, Sequence, Any, Union, Tuple )
 
 from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger, vtkFloatArray
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
-                                            vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
-                                            VTK_TRIANGLE )
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkDataObject, vtkDataSet, vtkIncrementalOctreePointLocator,
+                                            vtkImageData, vtkMultiBlockDataSet, vtkPlane, vtkPolyData,
+                                            vtkRectilinearGrid, vtkStructuredGrid, vtkUnstructuredGrid, VTK_TRIANGLE )
 from vtkmodules.vtkFiltersCore import ( vtk3DLinearGridPlaneCutter, vtkPolyDataNormals, vtkPolyDataTangents )
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
@@ -30,6 +30,7 @@ These methods include:
     - extraction of a surface from a given elevation
     - conversion from a list to vtkIdList
     - conversion of vtk container into iterable
+    - copying of VTK mesh structures with attributes
 """
 
 
@@ -294,6 +295,61 @@ def getBoundsFromPointCoords( cellPtsCoord: list[ npt.NDArray[ np.float64 ] ] ) 
             bounds[ 2 * i ] = float( min( bounds[ 2 * i ], mins[ i ] ) )
             bounds[ 2 * i + 1 ] = float( max( bounds[ 2 * i + 1 ], maxs[ i ] ) )
     return bounds
+
+
+def copyMesh( sourceMesh: Union[ vtkDataSet, vtkUnstructuredGrid, vtkPolyData, vtkImageData, vtkStructuredGrid,
+                                 vtkRectilinearGrid ],
+              expectedType: Union[ type, None ] = None ) -> Union[ vtkDataSet, vtkUnstructuredGrid, vtkPolyData,
+                                                                   vtkImageData, vtkStructuredGrid,
+                                                                   vtkRectilinearGrid ]:
+    """Create a copy of a VTK mesh with structure and attributes.
+
+    This function creates a deep copy of any VTK dataset type, preserving both the mesh structure (points, cells)
+    and all associated attributes (point data, cell data, field data).
+
+    Args:
+        sourceMesh: The source mesh to copy. Can be any VTK dataset type including
+            vtkUnstructuredGrid, vtkPolyData, vtkImageData, vtkStructuredGrid, vtkRectilinearGrid.
+        expectedType: Optional expected type to enforce. If provided, the function will
+            verify that sourceMesh is of this type and raise a TypeError if not.
+            Example: expectedType=vtkUnstructuredGrid
+
+    Raises:
+        TypeError: If sourceMesh is not a VTK dataset type, or if expectedType is
+            specified and sourceMesh doesn't match the expected type.
+
+    Returns:
+        A new mesh instance with copied structure and attributes. The return type
+        matches the input mesh type.
+
+    Examples:
+        # Copy any mesh type
+        copiedMesh = copyMesh(originalMesh)
+
+        # Copy with type enforcement
+        copiedUnstructured = copyMesh(mesh, expectedType=vtkUnstructuredGrid)
+
+        # This will raise TypeError if mesh is not vtkPolyData
+        copiedPoly = copyMesh(mesh, expectedType=vtkPolyData)
+    """
+    # Validate that sourceMesh is a VTK dataset
+    if not isinstance( sourceMesh, vtkDataSet ):
+        raise TypeError( "sourceMesh must be a VTK dataset type (vtkDataSet or subclass), "
+                         f"but got {type(sourceMesh).__name__}." )
+
+    # If expectedType is specified, validate the mesh type
+    if expectedType is not None:
+        if not isinstance( expectedType, type ):
+            raise TypeError( f"expectedType must be a type, but got {type(expectedType).__name__}." )
+        if not isinstance( sourceMesh, expectedType ):
+            raise TypeError( f"sourceMesh is of type {type(sourceMesh).__name__}, "
+                             f"but expected {expectedType.__name__}." )
+
+    # Create a new instance of the same type as the source mesh
+    outputMesh = sourceMesh.NewInstance()
+    outputMesh.CopyStructure( sourceMesh )
+    outputMesh.CopyAttributes( sourceMesh )
+    return outputMesh
 
 
 def createSingleCellMesh( cellType: int, ptsCoord: npt.NDArray[ np.float64 ] ) -> vtkUnstructuredGrid:
