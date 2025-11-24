@@ -60,9 +60,9 @@ To use the filter:
     try:
         attributeMappingFilter.applyFilter()
     except( ValueError, AttributeError ) as e:
-        attributeMappingFilter.logger.error( f"The filter { attributeMappingFilter.logger.name } failed du to: { e }" )
+        attributeMappingFilter.logger.error( f"The filter { attributeMappingFilter.logger.name } failed due to: { e }" )
     except Exception as e:
-        mess: str = f"The filter { attributeMappingFilter.logger.name } failed du to: { e }"
+        mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to: { e }"
         attributeMappingFilter.logger.critical( mess, exc_info=True )
 """
 

@@ -123,9 +123,9 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
             outputMesh.Modified()
         except VTKError as e:
             mergeBlockEnhancedFilter.logger.error(
-                f"The filter { mergeBlockEnhancedFilter.logger.name } failed du to:\n{ e }" )
+                f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to:\n{ e }" )
         except Exception as e:
-            mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed du to:\n{ e }"
+            mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to:\n{ e }"
             mergeBlockEnhancedFilter.logger.critical( mess, exc_info=True )
 
         return 1

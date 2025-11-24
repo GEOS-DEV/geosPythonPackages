@@ -69,9 +69,9 @@ To use it:
     try:
         createConstantAttributePerRegionFilter.applyFilter()
     except ( ValueError, AttributeError ) as e:
-        createConstantAttributePerRegionFilter.logger.error( f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to { e }" )
+        createConstantAttributePerRegionFilter.logger.error( f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }" )
     except Exception as e:
-        mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to: { e }"
+        mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }"
         createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 """
 

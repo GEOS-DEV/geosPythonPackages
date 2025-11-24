@@ -191,6 +191,9 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
             self.clearAttributeNames = True
         except ( ValueError, AttributeError ) as e:
             attributeMappingFilter.logger.error(
-                f"The filter { attributeMappingFilter.logger.name } failed du to:\n{ e }" )
+                f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }"
+            attributeMappingFilter.logger.critical( mess, exc_info=True )
 
         return 1

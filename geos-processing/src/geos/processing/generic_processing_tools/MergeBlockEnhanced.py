@@ -48,9 +48,9 @@ To use it:
     try:
         mergeBlockEnhancedFilter.applyFilter()
     except VTKError as e:
-        mergeBlockEnhancedFilter.logger.error( f"The filter { mergeBlockEnhancedFilter.logger.name } failed du to: { e }" )
+        mergeBlockEnhancedFilter.logger.error( f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }" )
     except Exception as e:
-        mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed du to: { e }"
+        mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }"
         mergeBlockEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get the merged mesh

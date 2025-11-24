@@ -52,9 +52,9 @@ To use it:
     try:
         fillPartialArraysFilter.applyFilter()
     except ( ValueError, AttributeError ) as e:
-        fillPartialArraysFilter.logger.error( f"The filter { fillPartialArraysFilter.logger.name } failed du to: { e }" )
+        fillPartialArraysFilter.logger.error( f"The filter { fillPartialArraysFilter.logger.name } failed due to: { e }" )
     except Exception as e:
-        mess: str = f"The filter { fillPartialArraysFilter.logger.name } failed du to: { e }"
+        mess: str = f"The filter { fillPartialArraysFilter.logger.name } failed due to: { e }"
         fillPartialArraysFilter.logger.critical( mess, exc_info=True )
 """
 

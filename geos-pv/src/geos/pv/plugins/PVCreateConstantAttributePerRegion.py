@@ -293,9 +293,9 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             createConstantAttributePerRegionFilter.applyFilter()
         except ( ValueError, AttributeError ) as e:
             createConstantAttributePerRegionFilter.logger.error(
-                f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to:\n{ e }" )
+                f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to:\n{ e }" )
         except Exception as e:
-            mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to:\n{ e }"
+            mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to:\n{ e }"
             createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 
         self.clearDictRegion = True
