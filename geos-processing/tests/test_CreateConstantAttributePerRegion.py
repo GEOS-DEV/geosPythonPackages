@@ -13,85 +13,86 @@ import numpy as np
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType, succeed",
+    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType, error",
     [
         # Test the name of the new attribute (new on the mesh, one present on the other piece).
         ## For vtkDataSet.
-        ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+        ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, "None" ),
+        ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, "None" ),
         ## For vtkMultiBlockDataSet.
-        ( "multiblock", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "GLOBAL_IDS_CELLS", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
+        ( "multiblock", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, "None" ),
+        ( "multiblock", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, "None" ),
+        ( "multiblock", "GLOBAL_IDS_CELLS", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, "None" ),
         # Test if the region attribute is on cells or on points.
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float32, True ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float32, "None" ),
         # Test the component name.
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), (), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), ( "Component0", "Component1" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y" ), ( "X", "Y" ), np.float32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y", "Z" ), ( "X", "Y" ), np.float32, True ),
+        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), (), np.float32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), ( "Component0", "Component1" ), np.float32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, ( "X" ), ( "Component0", "Component1" ), np.float32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y" ), ( "X", "Y" ), np.float32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, ( "X", "Y", "Z" ), ( "X", "Y" ), np.float32, "None" ),
         # Test the type of value.
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int8, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int16, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int64, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint8, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint16, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint32, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint64, True ),
-        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float64, True ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int8, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int16, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.int64, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint8, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint16, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint32, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.uint64, "None" ),
+        ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float64, "None" ),
         # Test index/value.
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0 ],
             100: [ 1 ]
-        }, (), (), np.float32, True ),
+        }, (), (), np.float32, "None" ),
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0 ],
             100: [ 1 ],
             101: [ 2 ]
-        }, (), (), np.float32, True ),
+        }, (), (), np.float32, "None" ),
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0 ],
             100: [ 1 ],
             101: [ 2 ],
             2: [ 3 ]
-        }, (), (), np.float32, True ),
+        }, (), (), np.float32, "None" ),
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0, 0 ],
             100: [ 1, 1 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
+        }, (), ( "Component0", "Component1" ), np.float32, "None" ),
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0, 0 ],
             100: [ 1, 1 ],
             101: [ 2, 2 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
+        }, (), ( "Component0", "Component1" ), np.float32, "None" ),
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0, 0 ],
             100: [ 1, 1 ],
             101: [ 2, 2 ],
             2: [ 3, 3 ]
-        }, (), ( "Component0", "Component1" ), np.float32, True ),
+        }, (), ( "Component0", "Component1" ), np.float32, "None" ),
         # Test common error.
         ## Number of components.
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0 ],
             100: [ 1, 1 ]
-        }, (), (), np.float32, False ),  # Number of value inconsistent.
+        }, (), (), np.float32, "ValueError" ),  # Number of value inconsistent.
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0, 0 ],
             100: [ 1, 1 ]
-        }, (), (), np.float32, False ),  # More values than components.
+        }, (), (), np.float32, "ValueError" ),  # More values than components.
         ( "dataset", "newAttribute", "FAULT", {
             0: [ 0 ],
             100: [ 1 ]
-        }, ( "X", "Y" ), ( "X", "Y" ), np.float32, False ),  # More components than value.
+        }, ( "X", "Y" ), ( "X", "Y" ), np.float32, "ValueError" ),  # More components than value.
         ## Attribute name.
-        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32, False ),  # The attribute name already exist.
+        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32, "ValueError" ),  # The attribute name already exist.
         ## Region attribute.
         ( "dataset", "newAttribute", "PERM", {}, (),
-          (), np.float32, False ),  # Region attribute has too many components.
-        ( "multiblock", "newAttribute", "FAULT", {}, (), (), np.float32, False ),  # Region attribute is partial.
+          (), np.float32, "AttributeError" ),  # Region attribute has too many components.
+        ( "multiblock", "newAttribute", "FAULT", {}, (),
+          (), np.float32, "AttributeError" ),  # Region attribute is partial.
     ] )
 def test_CreateConstantAttributePerRegion(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
@@ -102,7 +103,7 @@ def test_CreateConstantAttributePerRegion(
     componentNames: tuple[ str, ...],
     componentNamesTest: tuple[ str, ...],
     valueNpType: int,
-    succeed: bool,
+    error: str,
 ) -> None:
     """Test CreateConstantAttributePerRegion."""
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
@@ -120,4 +121,11 @@ def test_CreateConstantAttributePerRegion(
         componentNames=componentNames,
     )
 
-    assert createConstantAttributePerRegionFilter.applyFilter() == succeed
+    if error == "None":
+        createConstantAttributePerRegionFilter.applyFilter()
+    elif error == "AttributeError":
+        with pytest.raises( AttributeError ):
+            createConstantAttributePerRegionFilter.applyFilter()
+    elif error == "ValueError":
+        with pytest.raises( ValueError ):
+            createConstantAttributePerRegionFilter.applyFilter()

@@ -289,7 +289,14 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         if len( createConstantAttributePerRegionFilter.logger.handlers ) == 0:
             createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
-        createConstantAttributePerRegionFilter.applyFilter()
+        try:
+            createConstantAttributePerRegionFilter.applyFilter()
+        except ( ValueError, AttributeError ) as e:
+            createConstantAttributePerRegionFilter.logger.error(
+                f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed du to:\n{ e }"
+            createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 
         self.clearDictRegion = True
 
