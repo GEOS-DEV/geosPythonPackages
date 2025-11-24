@@ -15,5 +15,6 @@ def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None
     mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
     assert mergeBlockEnhancedFilter.applyFilter()
 
-    failedMergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( vtkMultiBlockDataSet() )
+    vtkMultiBlockDataSetFail: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+    failedMergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( vtkMultiBlockDataSetFail )
     assert not failedMergeBlockEnhancedFilter.applyFilter()
