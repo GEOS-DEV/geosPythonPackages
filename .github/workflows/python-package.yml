@@ -1,4 +1,4 @@
-name: geosPythonPackages CI 
+name: geosPythonPackages CI
 on: pull_request
 
 # Cancels in-progress workflows for a PR when updated
@@ -6,16 +6,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  LABEL_TEST_GEOS_INTEGRATION: 'test-geos-integration'
+  LABEL_FORCE_GEOS_INTEGRATION: 'force-geos-integration'
 
 jobs:
   # Checks if PR title follows conventional semantics
-  semantic_pull_request:    
+  semantic_pull_request:
     permissions:
-      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
+      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and
       statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
-      contents: read    
+      contents: read
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check if the PR name has conventional semantics
         if: github.event_name == 'pull_request'
@@ -27,27 +30,42 @@ jobs:
           wip: true
           # Configure that a scope doesn't need to be provided.
           requireScope: false
-    
+
       - name: Skip the check on main branch
         if:  github.ref_name == 'main'
         run: |
           echo "This is not a Pull-Request, skipping"
 
+  check_draft:
+    runs-on: ubuntu-latest
+    needs: [semantic_pull_request]
+    steps:
+      - name: Fail if PR is a draft
+        run: |
+          if [ "${{ github.event.pull_request.draft }}" = "true" ]; then
+            echo "✗ This PR is a draft. CI will not proceed."
+            exit 1
+          else
+            echo "✓ This PR is ready for review."
+          fi
+
+  # build and test the standalone CI
   build:
     runs-on: ubuntu-latest
+    needs: [check_draft]
     strategy:
       fail-fast: false
       max-parallel: 3
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-        package-name: 
+        python-version: ["3.10","3.11","3.12"]
+        package-name:
           - geos-ats
+          - geos-utils
           - geos-geomechanics
           - geos-mesh
-          - geos-posp
+          - geos-processing
           - geos-timehistory
           - geos-trame
-          - geos-utils
           - geos-xml-tools
           - geos-xml-viewer
           - hdf5-wrapper
@@ -57,7 +75,7 @@ jobs:
             dependencies: "geos-utils"
           - package-name: geos-mesh
             dependencies: "geos-utils geos-geomechanics"
-          - package-name: geos-posp
+          - package-name: geos-processing
             dependencies: "geos-utils geos-mesh geos-geomechanics"
           - package-name: pygeos-tools
             dependencies: "geos-utils geos-mesh"
@@ -71,13 +89,25 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+
+    - name: Install OSMesa and GL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libosmesa6
+        sudo apt-get install -y \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxext-dev
+
     - name: Install package
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest yapf toml
 
-        DEPS="${{ matrix.dependencies || '' }}"  
+        DEPS="${{ matrix.dependencies || '' }}"
 
         if [ -n "$DEPS" ]; then
         echo "Installing additional dependencies: $DEPS"
@@ -88,7 +118,6 @@ jobs:
 
         echo "Installing main package..."
         python -m pip install ./${{ matrix.package-name }}/[test]
-
     - name: Lint with yapf
       # working-directory: ./${{ matrix.package-name }}
       run: |
@@ -99,3 +128,281 @@ jobs:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
       # wrap pytest to avoid error when no tests in the package
         sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
+
+  # check if GEOS has label for testing GEOS integration
+  check_integration_label:
+    runs-on: ubuntu-latest
+    needs: [build]
+    outputs:
+      has_geos_integration_label: ${{ steps.set-label.outputs.has_label }}
+    steps:
+      - name: Check if PR has '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label
+        id: set-label
+        run: |
+          echo "Checking for label..."
+          LABEL_FOUND=false
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "${{ env.LABEL_TEST_GEOS_INTEGRATION }}"; then
+            LABEL_FOUND=true
+            echo "Label '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' found"
+          fi
+          echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
+
+  check_force_integration_label:
+    runs-on: ubuntu-latest
+    needs: [build]
+    outputs:
+      has_geos_integration_force_label: ${{ steps.set-label.outputs.has_label }}
+    steps:
+      - name: Check if PR has '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label
+        id: set-label
+        run: |
+          echo "Checking for label..."
+          LABEL_FOUND=false
+          LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR Labels: $LABELS"
+          if echo "$LABELS" | grep -q "${{ env.LABEL_FORCE_GEOS_INTEGRATION }}"; then
+            LABEL_FOUND=true
+            echo "Label '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' found"
+          fi
+          echo "has_label=$LABEL_FOUND" >> $GITHUB_OUTPUT
+
+  # Step 3: Check if GEOS integration is required based on changed files
+  check_geos_integration_required:
+    name: Check GEOS Integration Required
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'pull_request'
+    outputs:
+      geos_integration_required: ${{ steps.check_changes.outputs.required }}
+      skip_reason: ${{ steps.check_changes.outputs.skip_reason }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history to compare with base branch
+    - name: Check if GEOS integration is required
+      id: check_changes
+      run: |
+        echo "Analyzing changed files to determine if GEOS integration test is required..."
+
+        # Get list of changed files
+        git fetch origin ${{ github.base_ref }}
+        CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        echo ""
+
+        # Define packages that are integrated into GEOS (from GEOS/scripts/setupPythonEnvironment.bash)
+        GEOS_INTEGRATED_PACKAGES=(
+          "geos-utils"
+          "geos-mesh"
+          "geos-xml-tools"
+          "hdf5-wrapper"
+          "pygeos-tools"
+          "geos-ats"
+        )
+
+        # Define patterns that DON'T require GEOS integration testing
+        SKIP_PATTERNS=(
+          "^docs/"
+          "^\.github/workflows/doc-test\.yml$"
+          "^\.github/workflows/typing-check\.yml$"
+          "^README\.md$"
+          "^\.readthedocs\.yml$"
+          "^\.gitignore$"
+          "^\.gitattributes$"
+          "^\.style\.yapf$"
+          "^\.ruff\.toml$"
+          "^\.mypy\.ini$"
+          # Packages not used in GEOS
+          "^geos-geomechanics/"
+          "^geos-posp/"
+          "^geos-pv/"
+          "^geos-timehistory/"
+          "^geos-trame/"
+          "^geos-xml-viewer/"
+        )
+
+        # Check if any changed file affects GEOS-integrated packages
+        REQUIRES_GEOS_TEST=false
+        AFFECTED_PACKAGES=""
+
+        for file in $CHANGED_FILES; do
+          # Check if file matches any skip pattern
+          SHOULD_SKIP=false
+          for pattern in "${SKIP_PATTERNS[@]}"; do
+            if echo "$file" | grep -qE "$pattern"; then
+              SHOULD_SKIP=true
+              break
+            fi
+          done
+
+          if [[ "$SHOULD_SKIP" == "false" ]]; then
+            # Check if file is in a GEOS-integrated package
+            for package in "${GEOS_INTEGRATED_PACKAGES[@]}"; do
+              if echo "$file" | grep -qE "^${package}/"; then
+                REQUIRES_GEOS_TEST=true
+                if [[ ! "$AFFECTED_PACKAGES" =~ "$package" ]]; then
+                  AFFECTED_PACKAGES="$AFFECTED_PACKAGES $package"
+                fi
+              fi
+            done
+
+            # Check for CI workflow changes that affect GEOS integration
+            if echo "$file" | grep -qE "^\.github/workflows/(python-package\.yml|test_geos_integration\.yml)$"; then
+              REQUIRES_GEOS_TEST=true
+              AFFECTED_PACKAGES="$AFFECTED_PACKAGES [CI-workflows]"
+            fi
+
+            # Check for root-level scripts that might affect integration
+            if echo "$file" | grep -qE "^install_packages\.sh$"; then
+              REQUIRES_GEOS_TEST=true
+              AFFECTED_PACKAGES="$AFFECTED_PACKAGES [install-scripts]"
+            fi
+          fi
+        done
+
+        if [[ "$REQUIRES_GEOS_TEST" == "true" ]]; then
+          echo "✓ GEOS integration test REQUIRED"
+          echo "  Affected packages/components:$AFFECTED_PACKAGES"
+          echo "  These packages are integrated into GEOS and require testing"
+          echo "required=true" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=none" >> "$GITHUB_OUTPUT"
+        else
+          echo "⊘ GEOS integration test NOT required"
+          echo "  All changes are in documentation, non-integrated packages, or config files"
+          echo "  To force GEOS integration testing, add the '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label"
+          echo "required=false" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=no-geos-integrated-changes" >> "$GITHUB_OUTPUT"
+        fi
+
+  geos_ci_dispatch:
+    name: Dispatch cases of GEOS CI
+    runs-on: ubuntu-latest
+    outputs:
+      is_GEOS_CI_skipped: ${{ steps.dispatch.outputs.skipped }}
+      fwd_geos_integration_required: ${{ steps.dispatch.outputs.fwd_geos_integration_required }}
+      fwd_skip_reason: ${{ steps.dispatch.outputs.skip_reason }}
+    needs: [check_geos_integration_required, check_integration_label, check_force_integration_label]
+    steps:
+      - name: Dispatch flag and req cases
+        id: dispatch
+        run: |
+          GEOS_REQUIRED="${{ needs.check_geos_integration_required.outputs.geos_integration_required }}"
+          HAS_TEST_LABEL="${{ needs.check_integration_label.outputs.has_geos_integration_label }}"
+          HAS_FORCE_LABEL="${{ needs.check_force_integration_label.outputs.has_geos_integration_force_label }}"
+          SKIP_REASON="${{ needs.check_geos_integration_required.outputs.skip_reason }}"
+
+          echo "fwd_geos_integration_required=${GEOS_REQUIRED}" >> "$GITHUB_OUTPUT"
+          echo "fwd_skip_reason=${SKIP_REASON}" >> "$GITHUB_OUTPUT"
+
+          echo "=== GEOS Integration Dispatch ==="
+          echo "GEOS Required (by file changes): ${GEOS_REQUIRED}"
+          echo "Has '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label: ${HAS_TEST_LABEL}"
+          echo "Has '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label: ${HAS_FORCE_LABEL}"
+          echo ""
+
+          # Case 1: Force label - always run tests
+          if [[ "$HAS_FORCE_LABEL" == "true" ]]; then
+            echo "✓ '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label present - forcing GEOS integration tests"
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Case 2: GEOS required AND test label present - run tests
+          if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "true" ]]; then
+            echo "✓ GEOS integration required and '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label present"
+            echo "  Will proceed with GEOS integration tests"
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Case 3: GEOS required BUT test label missing - ERROR
+          if [[ "$GEOS_REQUIRED" == "true" && "$HAS_TEST_LABEL" == "false" ]]; then
+            echo "✗ ERROR: GEOS integration is required but '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label is missing"
+            echo ""
+            echo "Your PR modifies GEOS-integrated packages:"
+            echo "  - geos-utils, geos-mesh, geos-xml-tools"
+            echo "  - hdf5-wrapper, pygeos-tools, geos-ats"
+            echo ""
+            echo "Action required: Add the '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label to this PR"
+            exit 1
+          fi
+
+          # Case 4: GEOS NOT required BUT test label present - SKIP TESTS
+          if [[ "$GEOS_REQUIRED" == "false" && "$HAS_TEST_LABEL" == "true" ]]; then
+            echo "⊘ SKIPPED: '${{ env.LABEL_TEST_GEOS_INTEGRATION }}' label present but GEOS integration is not required"
+            echo ""
+            echo "Your changes only affect:"
+            echo "  - Documentation"
+            echo "  - Non-integrated packages"
+            echo "  - Configuration files"
+            echo ""
+            echo "If you want to run GEOS integration tests anyway, use '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label to explicitly force testing"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Case 5: GEOS NOT required AND no labels - SKIP TESTS
+          if [[ "$GEOS_REQUIRED" == "false" && "$HAS_TEST_LABEL" == "false" ]]; then
+            echo "⊘ GEOS integration not required and no labels present"
+            echo "  Skipping GEOS integration tests"
+            echo "  Reason: ${SKIP_REASON}"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Should never reach here
+          echo "✗ ERROR: Unexpected state in dispatch logic"
+          exit 1
+
+  # Step 4: Run GEOS integration tests (only if required or label present)
+  geos_integration_test:
+    name: GEOS Integration Test
+    needs: [geos_ci_dispatch]
+    if: ${{ needs.geos_ci_dispatch.outputs.is_GEOS_CI_skipped != 'true' }}
+    uses: ./.github/workflows/test_geos_integration.yml
+
+  # Final validation - Summarize CI results
+  final_validation:
+    name: Final CI Validation
+    runs-on: ubuntu-latest
+    needs: [geos_ci_dispatch, geos_integration_test]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+    - name: Validate CI completion
+      run: |
+        echo "Final CI Validation"
+        echo "==================="
+
+        GEOS_REQUIRED="${{ needs.geos_ci_dispatch.outputs.fwd_geos_integration_required }}"
+        SKIP_REASON="${{ needs.geos_ci_dispatch.outputs.fwd_skip_reason }}"
+
+        GEOS_RESULT="${{ needs.geos_integration_test.result }}"
+
+        if [[ "$GEOS_REQUIRED" == "true" ]]; then
+          echo "GEOS integration test was required and triggered"
+          if [[ "$GEOS_RESULT" == "success" ]]; then
+            echo "✓ GEOS integration test PASSED"
+            echo "✓ All CI requirements satisfied - PR can be merged"
+          else
+            echo "✗ GEOS integration test FAILED or was skipped"
+            echo "✗ CI FAILED - PR cannot be merged until GEOS integration passes"
+            exit 1
+          fi
+        else
+          echo "GEOS integration test was NOT required"
+          echo "Reason: $SKIP_REASON"
+          echo ""
+          echo "Changed files do not affect GEOS-integrated packages:"
+          echo "  - geos-utils, geos-mesh, geos-xml-tools"
+          echo "  - hdf5-wrapper, pygeos-tools, geos-ats"
+          echo ""
+          echo "If you want to run GEOS integration tests anyway,"
+          echo "add the '${{ env.LABEL_FORCE_GEOS_INTEGRATION }}' label to this PR"
+          echo ""
+          echo "✓ CI requirements satisfied - PR can be merged"
+        fi

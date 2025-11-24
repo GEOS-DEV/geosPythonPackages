@@ -21,7 +21,7 @@ from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkFieldData, vtkImage
 from vtkmodules.vtkFiltersCore import vtkExtractCells, vtkResampleWithDataSet
 from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
 from geos.mesh.utils.arrayHelpers import getNumpyArrayByName, getNumpyGlobalIdsArray
-from geos.mesh.io.vtkIO import VtkOutput, read_mesh, write_mesh
+from geos.mesh.io.vtkIO import VtkOutput, readMesh, writeMesh
 from geos.pygeos_tools.model.pyevtk_tools import cGlobalIds
 from geos.utils.errors_handling.classes import required_attributes
 
@@ -86,7 +86,7 @@ class VTKMesh:
             vtk.vtkPointSet
                 General representation of VTK mesh data
         """
-        return read_mesh( self.meshfile )
+        return readMesh( self.meshfile )
 
     def export( self: Self, data: vtkPointSet = None, rootname: str = None, vtktype: str = None ) -> str:
         """
@@ -114,7 +114,7 @@ class VTKMesh:
             data = self.read()
 
         filename: str = ".".join( ( rootname, vtktype ) )
-        write_mesh( data, VtkOutput( filename, True ) )
+        writeMesh( data, VtkOutput( filename, True ) )
         return filename
 
     def extractMesh( self: Self,

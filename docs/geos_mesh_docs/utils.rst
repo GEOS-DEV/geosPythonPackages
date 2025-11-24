@@ -47,3 +47,13 @@ geos.mesh.utils.multiblockModifiers module
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+
+geos.mesh.utils.pyvistaTools module
+-----------------------------------------------
+
+.. automodule:: geos.mesh.utils.pyvistaTools
+   :members:
+   :undoc-members:
+   :show-inheritance:

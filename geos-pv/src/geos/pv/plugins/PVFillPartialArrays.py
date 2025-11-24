@@ -4,11 +4,11 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
 from pathlib import Path
-from typing import Union, Any
+from typing import Any, Optional, Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
+    VTKPythonAlgorithmBase, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler,
@@ -17,11 +17,6 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
@@ -29,7 +24,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.mesh.processing.FillPartialArrays import FillPartialArrays
+from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
 __doc__ = """
 Fill partial arrays of input mesh.
@@ -47,22 +43,13 @@ To use it:
 """
 
 
-@smproxy.filter( name="PVFillPartialArrays", label="Fill Partial Arrays" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
-@smproperty.input( name="Input", port_index=0 )
-@smdomain.datatype(
-    dataTypes=[ "vtkMultiBlockDataSet" ],
-    composite_data_supported=True,
-)
+@SISOFilter( category=FilterCategory.GEOS_UTILS,
+             decoratedLabel="Fill Partial Arrays",
+             decoratedType="vtkMultiBlockDataSet" )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
-        super().__init__( nInputPorts=1,
-                          nOutputPorts=1,
-                          inputType="vtkMultiBlockDataSet",
-                          outputType="vtkMultiBlockDataSet" )
-
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
 
@@ -70,7 +57,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         <StringVectorProperty
             name="AttributeTable"
             number_of_elements="2"
-            command="_setDictAttributesValues"
+            command="setDictAttributesValues"
             repeat_command="1"
             number_of_elements_per_command="2">
             <Documentation>
@@ -88,12 +75,12 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             </Hints>
         </StringVectorProperty>
     """ )
-    def _setDictAttributesValues( self: Self, attributeName: str, values: str ) -> None:
+    def setDictAttributesValues( self: Self, attributeName: Optional[ str ], values: Optional[ str ] ) -> None:
         """Set the dictionary with the region indexes and its corresponding list of value for each components.
 
         Args:
-            attributeName (str): Name of the attribute to consider.
-            values (str): List of the filing values. If multiple components use a comma between the value of each component.
+            attributeName (Optional[str]): Name of the attribute to consider.
+            values (Optional[str]): List of the filing values. If multiple components use a comma between the value of each component.
         """
         if self.clearDictAttributesValues:
             self.dictAttributesValues = {}
@@ -103,58 +90,19 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             if values is not None:
                 self.dictAttributesValues[ attributeName ] = list( values.split( "," ) )
             else:
-                self.dictAttributesValues[ attributeName ] = None  # type: ignore[unreachable]
+                self.dictAttributesValues[ attributeName ] = None
 
         self.Modified()
 
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+    def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
+        """Is applying FillPartialArrays to the mesh and return with the class's dictionary for attributes values.
 
         Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
+            inputMesh : A mesh to transform.
+            outputMesh : A mesh transformed.
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
-
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
-
-        Args:
-            request (vtkInformation): Request
-            inInfoVec (list[vtkInformationVector]): Input objects
-            outInfoVec (vtkInformationVector): Output objects
-
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        inputMesh: vtkMultiBlockDataSet = self.GetInputData( inInfoVec, 0, 0 )
-        outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
-        assert inputMesh is not None, "Input server mesh is null."
-        assert outputMesh is not None, "Output pipeline is null."
-
-        outputMesh.ShallowCopy( inputMesh )
-
-        filter: FillPartialArrays = FillPartialArrays(
+        fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
             outputMesh,
             self.dictAttributesValues,
             speHandler=True,
@@ -167,4 +115,4 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
         self.clearDictAttributesValues = True
 
-        return 1
+        return

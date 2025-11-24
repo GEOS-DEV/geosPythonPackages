@@ -2,7 +2,7 @@
 python -m pip install --upgrade ./geos-utils
 python -m pip install --upgrade ./geos-geomechanics
 python -m pip install --upgrade ./geos-mesh
-python -m pip install --upgrade ./geos-posp
+python -m pip install --upgrade ./geos-processing
 python -m pip install --upgrade ./geos-xml-tools
 python -m pip install --upgrade ./geos-xml-viewer
 python -m pip install --upgrade ./hdf5-wrapper

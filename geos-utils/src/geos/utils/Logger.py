@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Martin Lemay
+# SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 import logging
 from typing import Any, Union, Generator
 from typing_extensions import Self
@@ -9,6 +9,8 @@ import os
 import re
 import tempfile
 from contextlib import contextmanager
+
+from geos.utils.Errors import VTKError
 
 __doc__ = """
 Logger module manages logging tools.
@@ -19,8 +21,9 @@ It also include adaptor strategy to make vtkLogger behave as a logging's logger.
 Indeed, C++ adapted class is based on private Callback assignement which is not compatible
 with logging python's logic.
 
-usage:
-    #near logger definition
+Usage::
+
+    # near logger definition
     from vtkmodules.vtkCommonCore import vtkLogger
 
     vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_TRACE)
@@ -28,10 +31,10 @@ usage:
 
     ...
 
-    #near VTK calls
-     with VTKCaptureLog() as captured_log:
+    # near VTK calls
+    with VTKCaptureLog() as captured_log:
         vtkcalls..
-        captured_log.seek(0) # be kind let's just rewind
+        captured_log.seek(0)  # be kind let's just rewind
         captured = captured_log.read().decode()
 
     logger.error(captured.strip())
@@ -40,9 +43,12 @@ usage:
 
 
 class RegexExceptionFilter( logging.Filter ):
-    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog."""
+    """Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
 
-    pattern: str = r"ERR"  #pattern captured that will raise a vtkError
+    This transforms silent VTK errors into catchable Python exceptions.
+    """
+
+    pattern: str = r'\bERR\|'  # Pattern captured that will raise a vtkError
 
     def __init__( self ) -> None:
         """Init filter with class based pattern as this is patch to logging logic."""
@@ -58,9 +64,9 @@ class RegexExceptionFilter( logging.Filter ):
         Raises:
             VTKError(geos.utils.Error) if a pattern symbol is caught in the stderr.
         """
-        message = record.getMessage()
+        message = record.getMessage()  # Intercepts every log record before it's emitted
         if self.regex.search( message ):
-            raise TypeError( f"Log message matched forbidden pattern: {message}" )
+            raise VTKError( f"Log message matched forbidden pattern: {message}" )
         return True  # Allow other messages to pass
 
 
@@ -69,27 +75,26 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
     """Hard way of adapting C-like vtkLogger to logging class by throwing in stderr and reading back from it.
 
     Returns:
-        Generator: buffering os stderr.
-
+        Generator: Buffering os stderr.
     """
-    #equiv to pyvista's
+    # equiv to pyvista's
     # from pyvista.utilities import VtkErrorCatcher
     # with VtkErrorCatcher() as err:
     #     append_filter.Update()
     #     print(err)
-    # original_stderr_fd = sys.stderr.fileno()
-    original_stderr_fd = 2
-    saved_stderr_fd = os.dup( original_stderr_fd )
+    # originalStderrFd = sys.stderr.fileno()
+    originalStderrFd = 2  # Standard stderr file descriptor, not dynamic like sys.stderr.fileno()
+    savedStderrFd = os.dup( originalStderrFd )  # Backup original stderr
 
     # Create a temporary file to capture stderr
     with tempfile.TemporaryFile( mode='w+b' ) as tmp:
-        os.dup2( tmp.fileno(), original_stderr_fd )
+        os.dup2( tmp.fileno(), originalStderrFd )
         try:
             yield tmp
         finally:
             # Restore original stderr
-            os.dup2( saved_stderr_fd, original_stderr_fd )
-            os.close( saved_stderr_fd )
+            os.dup2( savedStderrFd, originalStderrFd )
+            os.close( savedStderrFd )
 
 
 class CountWarningHandler( logging.Handler ):
@@ -270,7 +275,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     """
     logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
-    if not logger.hasHandlers():  # More Pythonic way to check if logger.handlers is empty
+    if len( logger.handlers ) == 0:
         logger.setLevel( INFO )  # Set the desired default level for this logger
         # Create and add the stream handler
         ch = logging.StreamHandler()
