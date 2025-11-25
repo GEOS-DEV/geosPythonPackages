@@ -9,9 +9,6 @@ import pytest
 from typing import Any
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-# import sys
-# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-processing/src")
-# sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-utils/src")
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
 @pytest.mark.parametrize( "dictAttributesValues", [
@@ -53,8 +50,3 @@ def test_FillPartialArrays(
 
     fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
     assert fillPartialArraysFilter.applyFilter()
-
-
-# if "__main__" == __name__:
-    
-#     pytest.main(["-v", __file__,"-o", "log_cli=true", "-o" ,"log_cli_level=DEBUG"])

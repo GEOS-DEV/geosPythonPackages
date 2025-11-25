@@ -4,6 +4,8 @@
 import logging
 from typing import Any, Generator
 from typing_extensions import Self
+from functools import wraps
+from typing import Type, TypeVar, Callable, Any
 
 import os
 import re
@@ -42,6 +44,33 @@ Usage::
 
 """
 
+## decorators
+T = TypeVar('T')
+
+def addPluginLogSupport( loggerTitle: str ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+    """Decorator to add logger support in the class following existing architecture.
+
+    Args:
+        loggerTitle (str): Title to display in the logger
+    """
+
+    def decorator( cls: Type[ T ] ) -> Type[ T ]:
+        original_init = cls.__init__
+
+        @wraps( original_init )
+        def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
+
+            self.logger = getLogger( loggerTitle )
+            for hdlr in list(filter(lambda x : not isinstance(x,GEOSHandler),  self.logger.handlers)):
+                self.logger.removeHandler(hdlr)
+
+            original_init( self, *args, **kwargs )
+
+        cls.__init__ = new_init  # type: ignore[assignment]
+
+        return cls
+
+    return decorator
 
 class RegexExceptionFilter( logging.Filter ):
     """Class to regexp VTK messages rethrown into logger by VTKCaptureLog.
@@ -98,6 +127,8 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
             os.close( savedStderrFd )
 
 
+
+## helpers
 class CountWarningHandler( logging.Handler ):
     """Create an handler to count the warnings logged."""
 
@@ -177,11 +208,11 @@ class GEOSFormatter( logging.Formatter ):
         super().__init__(fmt, datefmt, style, validate, defaults=defaults)
 
     def format(self : Self, record : logging.LogRecord) -> str:
-        return logging.Formatter( fmt= self._formatDict.get( record.levelno, []) ).format(record)
+        return logging.Formatter( fmt= self._formatDict.get( record.levelno, [] ) ).format(record)
 
     @staticmethod
     def TrimColor(msg : str) -> str:
-        return  msg[8:-5]
+        return  msg[8:-4]
 
 
 class GEOSHandler(logging.StreamHandler):
@@ -216,20 +247,20 @@ class GEOSHandler(logging.StreamHandler):
                 #see https://www.paraview.org/paraview-docs/v5.13.3/python/_modules/paraview/detail/loghandler.html#VTKHandler
                 prevMode = outwin.GetDisplayMode()
                 outwin.SetDisplayModeToNever()
-                
-                if lvl == ERROR:
+
+                if lvl == vtkLogger.VERBOSITY_ERROR:
                     outwin.DisplayErrorText(GEOSFormatter.TrimColor(msg))
-                elif lvl == WARNING:
-                    outwin.DisplayErrorText(GEOSFormatter.TrimColor(msg))
-                else:
+                elif lvl == vtkLogger.VERBOSITY_WARNING:
+                    outwin.DisplayWarningText(GEOSFormatter.TrimColor(msg))
+                elif lvl == vtkLogger.VERBOSITY_INFO:
                     outwin.DisplayText(GEOSFormatter.TrimColor(msg))
+                elif lvl == vtkLogger.VERBOSITY_TRACE:
+                    outwin.DisplayDebugText(GEOSFormatter.TrimColor(msg))
  
                 outwin.SetDisplayMode(prevMode)
 
         except Exception:
             self.handleError(record)
-
- 
 
 def getLogger( title: str, use_color=False ) -> Logger:
     """Return the Logger with pre-defined configuration.

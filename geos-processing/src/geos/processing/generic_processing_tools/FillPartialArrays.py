@@ -55,8 +55,6 @@ To use it:
 
 loggerTitle: str = "Fill Partial Attribute"
 
-
-# @addLogSupport( loggerTitle=loggerTitle )
 class FillPartialArrays:
 
     def __init__(
