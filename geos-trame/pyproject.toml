@@ -8,7 +8,8 @@ version = "1.0.0"
 description = "Geos Simulation Modeler"
 authors = [{name = "GEOS Contributors" }]
 maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
-               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
+               {name = "Jacques Franc", email = "jacques.franc@external.totalenergies.com" },]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 4 - Beta",
