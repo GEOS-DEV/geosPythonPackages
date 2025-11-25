@@ -21,6 +21,7 @@ from geos.mesh.utils.arrayHelpers import getAttributeSet
 from geos.mesh.utils.arrayModifiers import ( copyAttribute, createCellCenterAttribute )
 from geos.mesh.utils.multiblockHelpers import getBlockNames
 
+from geos.utils.Errors import VTKError
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNameEnum,
                                               getAttributeToTransferFromInitialTime )
 
@@ -253,25 +254,35 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
-        try:
-            inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
-            executive = self.GetExecutive()
+        inputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet.GetData( inInfoVec[ 0 ] )
+        executive = self.GetExecutive()
+        mess: str
 
-            # First time step, compute the initial properties (useful for geomechanics analyses)
-            if self.requestDataStep == 0:
-                self.logger.info( "Apply the plugin for the first time step to get the initial properties." )
+        # First time step, compute the initial properties (useful for geomechanics analyses)
+        if self.requestDataStep == 0:
+            self.logger.info(
+                f"Apply the plugin { self.logger.name } for the first time step to get the initial properties." )
+            try:
                 doExtractAndMerge( inputMesh, self.outputCellsT0, vtkMultiBlockDataSet(), vtkMultiBlockDataSet(),
                                    self.extractFault, self.extractWell )
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )
+            except ( ValueError, VTKError ) as e:
+                self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
+                self.logger.critical( mess, exc_info=True )
 
-            # Current time step, extract, merge, rename and transfer properties
-            if self.requestDataStep == self.currentTimeStepIndex:
-                self.logger.info( f"Apply the filter for the current time step: { self.currentTimeStepIndex }." )
-                outputCells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
-                outputFaults: vtkMultiBlockDataSet = self.GetOutputData(
-                    outInfoVec, 1 ) if self.extractFault else vtkMultiBlockDataSet()
-                outputWells: vtkMultiBlockDataSet = self.GetOutputData(
-                    outInfoVec, 2 ) if self.extractWell else vtkMultiBlockDataSet()
+        # Current time step, extract, merge, rename and transfer properties
+        if self.requestDataStep == self.currentTimeStepIndex:
+            self.logger.info(
+                f"Apply the plugin { self.logger.name } for the current time step: { self.currentTimeStepIndex }." )
+            outputCells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
+            outputFaults: vtkMultiBlockDataSet = self.GetOutputData(
+                outInfoVec, 1 ) if self.extractFault else vtkMultiBlockDataSet()
+            outputWells: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec,
+                                                                    2 ) if self.extractWell else vtkMultiBlockDataSet()
+
+            try:
                 doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells, self.extractFault,
                                    self.extractWell )
 
@@ -293,12 +304,10 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 self.requestDataStep = -2
 
                 self.logger.info( f"The plugin { self.logger.name } succeeded." )
-        except AssertionError as e:
-            self.logger.error( f"The plugin failed.\n{e}" )
-            return 0
-        except Exception as e:
-            mess1: str = "Block extraction and merge failed due to:"
-            self.logger.critical( mess1 )
-            self.logger.critical( e, exc_info=True )
-            return 0
+            except ( ValueError, VTKError ) as e:
+                self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
+                self.logger.critical( mess, exc_info=True )
+
         return 1

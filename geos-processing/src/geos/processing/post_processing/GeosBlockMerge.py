@@ -7,7 +7,6 @@ from typing_extensions import Self
 
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid
 
-from geos.utils.Errors import VTKError
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
                                               getRockSuffixRenaming )
@@ -37,6 +36,7 @@ To use the filter:
 .. code-block:: python
 
     from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
+    from geos.utils.Errors import VTKError
 
     # Filter inputs.
     inputMesh: vtkMultiBlockDataSet
@@ -53,7 +53,13 @@ To use the filter:
     mergeBlockFilter.setLoggerHandler( yourHandler )
 
     # Do calculations
-    mergeBlockFilter.applyFilter()
+    try:
+        mergeBlockFilter.applyFilter()
+    except ( ValueError, VTKError ) as e:
+        mergeBlockFilter.logger.error( f"The filter { mergeBlockFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { mergeBlockFilter.logger.name } failed due to: { e }"
+        mergeBlockFilter.logger.critical( mess, exc_info=True )
 
     # Get the multiBlockDataSet with one dataSet per region
     outputMesh: vtkMultiBlockDataSet = mergeBlockFilter.getOutput()
@@ -125,69 +131,64 @@ class GeosBlockMerge():
         """Get the mesh with the composite blocks merged."""
         return self.outputMesh
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Apply the filter on the mesh.
 
-        Returns:
-            bool: True if the filter succeeded, False otherwise.
+        Raises:
+            ValueError: Something got wrong during the creation of an attribute.
+            VTKError: Error raises during the call of VTK function.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        try:
-            # Display phase names
-            self.computePhaseNames()
-            for phase, phaseNames in self.phaseNameDict.items():
-                if len( phaseNames ) > 0:
-                    self.logger.info( f"Identified { phase } phase(s) are: { phaseNames }." )
-                else:
-                    self.logger.info( f"No { phase } phase has been identified." )
+        # Display phase names
+        self.computePhaseNames()
+        for phase, phaseNames in self.phaseNameDict.items():
+            if len( phaseNames ) > 0:
+                self.logger.info( f"Identified { phase } phase(s) are: { phaseNames }." )
+            else:
+                self.logger.info( f"No { phase } phase has been identified." )
 
-            # Parse all the composite blocks
-            compositeBlockIndexesToMerge: dict[ str, int ] = getElementaryCompositeBlockIndexes( self.inputMesh )
-            nbBlocks: int = len( compositeBlockIndexesToMerge )
-            self.outputMesh.SetNumberOfBlocks( nbBlocks )
-            for newIndex, ( blockName, blockIndex ) in enumerate( compositeBlockIndexesToMerge.items() ):
-                # Set the name of the composite block
-                self.outputMesh.GetMetaData( newIndex ).Set( vtkCompositeDataSet.NAME(), blockName )
+        # Parse all the composite blocks
+        compositeBlockIndexesToMerge: dict[ str, int ] = getElementaryCompositeBlockIndexes( self.inputMesh )
+        nbBlocks: int = len( compositeBlockIndexesToMerge )
+        self.outputMesh.SetNumberOfBlocks( nbBlocks )
+        for newIndex, ( blockName, blockIndex ) in enumerate( compositeBlockIndexesToMerge.items() ):
+            # Set the name of the composite block
+            self.outputMesh.GetMetaData( newIndex ).Set( vtkCompositeDataSet.NAME(), blockName )
 
-                # Merge blocks
-                blockToMerge: vtkMultiBlockDataSet = extractBlock( self.inputMesh, blockIndex )
-                volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge,
-                                                               keepPartialAttributes=True,
-                                                               logger=self.logger )
+            # Merge blocks
+            blockToMerge: vtkMultiBlockDataSet = extractBlock( self.inputMesh, blockIndex )
+            volumeMesh: vtkUnstructuredGrid = mergeBlocks( blockToMerge,
+                                                           keepPartialAttributes=True,
+                                                           logger=self.logger )
 
-                # Create index attribute keeping the index in initial mesh
-                if not createConstantAttribute( volumeMesh, [ blockIndex ],
-                                                PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
-                                                onPoints=False,
-                                                logger=self.logger ):
-                    self.logger.warning( "BlockIndex attribute was not created." )
+            # Create index attribute keeping the index in initial mesh
+            if not createConstantAttribute( volumeMesh, [ blockIndex ],
+                                            PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
+                                            onPoints=False,
+                                            logger=self.logger ):
+                raise ValueError(
+                    f"Something got wrong during the creation of the attribute { PostProcessingOutputsEnum.BLOCK_INDEX.attributeName }."
+                )
 
-                # Rename attributes
-                self.renameAttributes( volumeMesh )
+            # Rename attributes
+            self.renameAttributes( volumeMesh )
 
-                # Convert the volume mesh to a surface mesh
-                if self.convertFaultToSurface:
-                    if not isTriangulate( volumeMesh ):
-                        volumeMesh.ShallowCopy( triangulateMesh( volumeMesh, self.logger ) )
-                    surfaceMesh: vtkPolyData = convertUnstructuredGridToPolyData( volumeMesh, self.logger )
-                    surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
-                    surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
-                    # Add the merged block to the output mesh
-                    self.outputMesh.SetBlock( newIndex, surfaceMesh )
-                else:
-                    self.outputMesh.SetBlock( newIndex, volumeMesh )
+            # Convert the volume mesh to a surface mesh
+            if self.convertFaultToSurface:
+                if not isTriangulate( volumeMesh ):
+                    volumeMesh.ShallowCopy( triangulateMesh( volumeMesh, self.logger ) )
+                surfaceMesh: vtkPolyData = convertUnstructuredGridToPolyData( volumeMesh, self.logger )
+                surfaceMesh.ShallowCopy( computeNormals( surfaceMesh, logger=self.logger ) )
+                surfaceMesh.ShallowCopy( computeTangents( surfaceMesh, logger=self.logger ) )
+                # Add the merged block to the output mesh
+                self.outputMesh.SetBlock( newIndex, surfaceMesh )
+            else:
+                self.outputMesh.SetBlock( newIndex, volumeMesh )
 
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except ( ValueError, TypeError, RuntimeError, AssertionError, VTKError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
 
-        return True
+        return
 
     def renameAttributes(
         self: Self,
