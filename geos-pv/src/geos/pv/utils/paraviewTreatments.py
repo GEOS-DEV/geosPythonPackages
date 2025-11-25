@@ -37,7 +37,6 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
-from geos.utils.Logger import ( CustomLoggerFormatter )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
@@ -484,12 +483,8 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     if logger is None:
-        logger = logging.getLogger( "getVtkOriginalCellIds" )
+        logger = getLogger( "getVtkOriginalCellIds" )
 
-    if not logger.hasHandlers():
-        handler = VTKHandler()
-        handler.setFormatter( CustomLoggerFormatter( False ) )
-        logger.addHandler( handler )
 
     # Merge blocks for vtkCompositeDataSet
     mesh2: vtkUnstructuredGrid = mergeBlocks( mesh, logger=logger )

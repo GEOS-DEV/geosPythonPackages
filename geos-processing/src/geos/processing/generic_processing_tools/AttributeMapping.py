@@ -41,7 +41,6 @@ To use the filter:
     attributeNames: set[ str ]
     # Optional inputs.
     onPoints: bool  # defaults to False
-    speHandler: bool  # defaults to False
 
     # Instantiate the filter
     attributeMappingFilter: AttributeMapping = AttributeMapping(
@@ -49,12 +48,7 @@ To use the filter:
         meshTo,
         attributeNames,
         onPoints,
-        speHandler,
     )
-
-    # Set the handler of yours (only if speHandler is True).
-    yourHandler: logging.Handler
-    attributeMappingFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
     attributeMappingFilter.applyFilter()
@@ -71,7 +65,6 @@ class AttributeMapping:
         meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         attributeNames: set[ str ],
         onPoints: bool = False,
-        speHandler: bool = False,
     ) -> None:
         """Transfer global attributes from a source mesh to a final mesh.
 
@@ -97,27 +90,7 @@ class AttributeMapping:
         self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
         # Logger.
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+        self.logger: Logger = getLogger( loggerTitle)
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.

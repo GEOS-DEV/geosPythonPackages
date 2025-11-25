@@ -60,12 +60,12 @@ def addPluginLogSupport( loggerTitle: str ) -> Callable[ [ Type[ T ] ], Type[ T 
 
         @wraps( original_init )
         def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
+            original_init( self, *args, **kwargs )
 
             logger = getLogger( loggerTitle )
             for hdlr in list( filter( lambda x: not isinstance( x, GEOSHandler ), logger.handlers ) ):
                 logger.removeHandler( hdlr )
 
-            original_init( self, *args, **kwargs )
 
         cls.__init__ = new_init  # type: ignore[assignment]
 

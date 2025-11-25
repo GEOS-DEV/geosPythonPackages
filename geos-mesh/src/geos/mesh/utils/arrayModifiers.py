@@ -87,7 +87,7 @@ def fillPartialAttributes(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "fillPartialAttributes", True )
+        logger = getLogger( "fillPartialAttributes")
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
@@ -178,7 +178,7 @@ def fillAllPartialAttributes(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "fillAllPartialAttributes", True )
+        logger = getLogger( "fillAllPartialAttributes")
 
     logger.warning(
         "The filling value for the attributes is depending of the type of attribute's data:\n0 for uint data,\n-1 for int data,\nnan for float data."
@@ -260,7 +260,7 @@ def createConstantAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createConstantAttribute", True )
+        logger = getLogger( "createConstantAttribute")
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
@@ -307,7 +307,7 @@ def createConstantAttributeMultiBlock(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createConstantAttributeMultiBlock", True )
+        logger = getLogger( "createConstantAttributeMultiBlock")
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
@@ -376,7 +376,7 @@ def createConstantAttributeDataSet(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createConstantAttributeDataSet", True )
+        logger = getLogger( "createConstantAttributeDataSet")
 
     # Check if all the values of listValues have the same type.
     valueType: type = type( listValues[ 0 ] )
@@ -458,7 +458,7 @@ def createAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "createAttribute", True )
+        logger = getLogger( "createAttribute")
 
     # Check if the input mesh is inherited from vtkDataSet.
     if not isinstance( dataSet, vtkDataSet ):
@@ -568,7 +568,7 @@ def copyAttribute(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "copyAttribute", True )
+        logger = getLogger( "copyAttribute")
 
     # Check if the multiBlockDataSetFrom is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSetFrom, vtkMultiBlockDataSet ):
@@ -650,7 +650,7 @@ def copyAttributeDataSet(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "copyAttributeDataSet", True )
+        logger = getLogger( "copyAttributeDataSet")
 
     # Check if the dataSetFrom is inherited from vtkDataSet.
     if not isinstance( dataSetFrom, vtkDataSet ):
@@ -724,7 +724,7 @@ def transferAttributeToDataSetWithElementMap(
     """
     # Check if an external logger is given.
     if logger is None:
-        logger = getLogger( "transferAttributeToDataSetWithElementMap", True )
+        logger = getLogger( "transferAttributeToDataSetWithElementMap")
 
     if flatIdDataSetTo not in elementMap:
         logger.error( f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
@@ -825,8 +825,8 @@ def transferAttributeWithElementMap(
         bool: True if transfer successfully ended.
     """
     # Check if an external logger is given.
-    if logger is None:
-        logger = getLogger( "transferAttributeWithElementMap", True )
+    if logger is None:#
+        logger = getLogger( "transferAttributeWithElementMap")
 
     if isinstance( meshTo, vtkDataSet ):
         return transferAttributeToDataSetWithElementMap( meshFrom,

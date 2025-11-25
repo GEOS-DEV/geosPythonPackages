@@ -39,6 +39,7 @@ To use the object:
     center: float = mohrCircle.getCircleCenter()
 """
 
+loggerTitle : str = "MohrCircle"
 
 class MohrCircle:
 

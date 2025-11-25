@@ -10,8 +10,7 @@ from typing_extensions import Self
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty,
 )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
+
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -25,7 +24,9 @@ from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_ROCK_COHESION,
 )
-from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
+from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics, loggerTitle
+from geos.utils.Logger import addPluginLogSupport
+
 from geos.mesh.utils.multiblockHelpers import (
     getBlockElementIndexesFlatten,
     getBlockFromFlatIndex,
@@ -62,6 +63,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
              decoratedLabel="Geos Surface Geomechanics",
              decoratedType="vtkMultiBlockDataSet" )
+@addPluginLogSupport(loggerTitle=loggerTitle)
 class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -129,10 +131,8 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         for blockIndex in surfaceBlockIndexes:
             surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( outputMesh, blockIndex ) )
 
-            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
+            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock )
             sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
-            if not sgFilter.logger.hasHandlers():
-                sgFilter.SetLoggerHandler( VTKHandler() )
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )

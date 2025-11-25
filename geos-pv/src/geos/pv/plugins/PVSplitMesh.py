@@ -19,8 +19,9 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
+from geos.processing.generic_processing_tools.SplitMesh import SplitMesh, loggerTitle
 from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 Split each cell of input mesh to smaller cells.
@@ -37,6 +38,7 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
+@addPluginLogSupport(loggerTitle=loggerTitle)
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

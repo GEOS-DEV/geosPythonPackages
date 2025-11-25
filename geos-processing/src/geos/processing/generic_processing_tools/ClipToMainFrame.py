@@ -52,6 +52,7 @@ To use it:
 
 """
 
+loggerTitle : str = "ClipToMainFrame"
 
 class ClipToMainFrameElement( vtkLandmarkTransform ):
 
@@ -218,7 +219,7 @@ loggerTitle: str = "Clip mesh to main frame."
 class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
 
-    def __init__( self, speHandler: bool = False, **properties: str ) -> None:
+    def __init__( self, **properties: str ) -> None:
         """Initialize the ClipToMainFrame Filter with optional speHandler args and forwarding properties to main class.
 
         Args:
@@ -228,12 +229,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         """
         super().__init__( **properties )
         # Logger.
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def ComputeTransform( self ) -> None:
         """Update the transformation."""

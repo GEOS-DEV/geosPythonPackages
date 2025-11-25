@@ -60,6 +60,7 @@ To use the filter:
     output :vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
 """
 
+loggerTitle: str = "SplitMesh"
 
 class SplitMesh( VTKPythonAlgorithmBase ):
 

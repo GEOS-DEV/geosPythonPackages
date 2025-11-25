@@ -23,7 +23,8 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
-from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
+from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame, loggerTitle
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 Clip the input mesh to the main frame applying the correct LandmarkTransform
@@ -39,13 +40,14 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Clip to the main frame",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
+@addPluginLogSupport(loggerTitle=loggerTitle)
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
-        self._realFilter = ClipToMainFrame( speHandler=True )
-        if not self._realFilter.logger.hasHandlers():
-            self._realFilter.SetLoggerHandler( VTKHandler() )
+        self._realFilter = ClipToMainFrame()
+    #     if not self._realFilter.logger.hasHandlers():
+    #         self._realFilter.SetLoggerHandler( VTKHandler() )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
