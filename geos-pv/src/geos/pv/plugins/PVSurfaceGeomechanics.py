@@ -20,6 +20,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 update_paths()
 
+from geos.utils.Errors import VTKError
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -126,8 +127,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
-            if sgFilter.applyFilter():
 
+            try:
+                sgFilter.applyFilter()
                 outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
                 # add attributes to output surface mesh
@@ -136,6 +138,11 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                     surfaceBlock.GetCellData().AddArray( attr )
                     surfaceBlock.GetCellData().Modified()
                 surfaceBlock.Modified()
+            except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+                sgFilter.logger.error( f"The filter { sgFilter.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess: str = f"The filter { sgFilter.logger.name } failed due to:\n{ e }"
+                sgFilter.logger.critical( mess, exc_info=True )
 
         outputMesh.Modified()
         return

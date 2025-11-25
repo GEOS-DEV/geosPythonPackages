@@ -40,6 +40,7 @@ To use the filter:
 .. code-block:: python
 
     from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
+    from geos.utils.Errors import VTKError
 
     # filter inputs
     inputMesh: vtkPolyData
@@ -61,7 +62,13 @@ To use the filter:
     sg.SetFrictionAngle( frictionAngle )
 
     # Do calculations
-    sg.applyFilter()
+    try:
+        sg.applyFilter()
+    except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+        sg.logger.error( f"The filter { sg.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { sg.logger.name } failed due to: { e }"
+        sg.logger.critical( mess, exc_info=True )
 
     # Get output object
     output: vtkPolyData = sg.GetOutputMesh()
@@ -221,11 +228,14 @@ class SurfaceGeomechanics:
         """
         return self.newAttributeNames
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Compute Geomechanical properties on input surface.
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+        Raises:
+            ValueError: Errors during the creation of an attribute.
+            VTKError: Error raises during the call of VTK function.
+            AttributeError: Attributes must be on cell.
+            AssertionError: Something got wrong during the shearCapacityUtilization computation.
         """
         msg = f"Applying filter {self.logger.name}"
         if self.name is not None:
@@ -235,28 +245,28 @@ class SurfaceGeomechanics:
 
         self.logger.info( msg )
 
-        try:
-            self.outputMesh = vtkPolyData()
-            self.outputMesh.ShallowCopy( self.inputMesh )
+        self.outputMesh = vtkPolyData()
+        self.outputMesh.ShallowCopy( self.inputMesh )
 
-            # Conversion of attributes from Normal/Tangent basis to xyz basis
-            if self.convertAttributesOn:
-                self.logger.info( "Conversion of attributes from local to XYZ basis." )
-                self.convertAttributesFromLocalToXYZBasis()
+        # Conversion of attributes from Normal/Tangent basis to xyz basis
+        if self.convertAttributesOn:
+            self.logger.info( "Conversion of attributes from local to XYZ basis." )
+            self.convertAttributesFromLocalToXYZBasis()
 
-            # Compute shear capacity utilization
-            self.computeShearCapacityUtilization()
+        # Compute shear capacity utilization
+        self.computeShearCapacityUtilization()
 
-            self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
 
-        return True
+        return
 
     def convertAttributesFromLocalToXYZBasis( self: Self ) -> None:
-        """Convert attributes from local to XYZ basis."""
+        """Convert attributes from local to XYZ basis.
+
+        Raises:
+            ValueError: Something got wrong during the creation of an attribute.
+            AttributeError: Attributes must be on cell.
+        """
         # Get the list of attributes to convert and filter
         attributesToConvert: set[ str ] = self.__filterAttributesToConvert()
 
@@ -273,7 +283,7 @@ class SurfaceGeomechanics:
                 continue
 
             if self.attributeOnPoints:
-                raise ValueError(
+                raise AttributeError(
                     "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
             localArray: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, attrNameLocal,
                                                                       self.attributeOnPoints )
@@ -290,7 +300,7 @@ class SurfaceGeomechanics:
                 self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
                 self.newAttributeNames.add( attrNameXYZ )
             else:
-                raise
+                raise ValueError( f"Something got wrong during the creation of the attribute { attrNameXYZ }." )
 
         return
 
@@ -356,7 +366,12 @@ class SurfaceGeomechanics:
         return attrXYZ
 
     def computeShearCapacityUtilization( self: Self ) -> None:
-        """Compute the shear capacity utilization (SCU) on surface."""
+        """Compute the shear capacity utilization (SCU) on surface.
+
+        Raises:
+            ValueError: Something got wrong during the creation of an attribute.
+            AssertionError: Something got wrong during the shearCapacityUtilization computation.
+        """
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
         if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributeOnPoints ):
@@ -367,18 +382,13 @@ class SurfaceGeomechanics:
 
             # Computation of the shear capacity utilization (SCU)
             # TODO: better handling of errors in shearCapacityUtilization
-            try:
-                scuAttribute: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization(
-                    traction, self.rockCohesion, self.frictionAngle )
-            except AssertionError:
-                self.logger.error( f"Failed to compute {SCUAttributeName}." )
-                raise
+            scuAttribute: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization( traction, self.rockCohesion,
+                                                                                     self.frictionAngle )
 
             # Create attribute
             if not createAttribute(
                     self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributeOnPoints, logger=self.logger ):
-                self.logger.error( f"Failed to create attribute {SCUAttributeName}." )
-                raise
+                raise ValueError( f"Failed to create attribute {SCUAttributeName}." )
             else:
                 self.logger.info( "SCU computed and added to the output mesh." )
                 self.newAttributeNames.add( SCUAttributeName )
