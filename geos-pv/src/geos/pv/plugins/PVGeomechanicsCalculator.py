@@ -253,7 +253,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             try:
                 geomechanicsCalculatorFilter.applyFilter()
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
-            except ( ValueError, TypeError, NameError ) as e:
+            except ( ValueError, AttributeError ) as e:
                 geomechanicsCalculatorFilter.logger.error(
                     f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
             except Exception as e:
@@ -287,7 +287,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     geomechanicsCalculatorFilter.applyFilter()
                     volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
                     volumeBlock.Modified()
-                except ( ValueError, TypeError, NameError ) as e:
+                except ( ValueError, AttributeError ) as e:
                     geomechanicsCalculatorFilter.logger.error(
                         f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
                 except Exception as e:

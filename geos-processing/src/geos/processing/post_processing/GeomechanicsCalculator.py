@@ -96,7 +96,7 @@ To use the filter:
     # Do calculations
     try:
         geomechanicsCalculatorFilter.applyFilter()
-    except ( ValueError, TypeError, NameError ) as e:
+    except ( ValueError, AttributeError ) as e:
         geomechanicsCalculatorFilter.logger.error( f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to: { e }" )
     except Exception as e:
         mess: str = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to: { e }"
