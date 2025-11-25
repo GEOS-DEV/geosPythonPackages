@@ -32,6 +32,7 @@ and add it using the member function setLoggerHandler.
 To use the filter:
 
 .. code-block:: python
+
     import logging
     from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 
