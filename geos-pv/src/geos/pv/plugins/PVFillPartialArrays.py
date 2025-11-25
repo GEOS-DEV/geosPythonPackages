@@ -24,6 +24,7 @@ from geos.pv.utils.details import SISOFilter, FilterCategory
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays, loggerTitle
 
 from geos.utils.Logger import addPluginLogSupport
+
 __doc__ = """
 Fill partial arrays of input mesh.
 
@@ -38,6 +39,7 @@ To use it:
 * Apply.
 
 """
+
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Fill Partial Arrays",
@@ -54,7 +56,6 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         # for hdlr in list(filter(lambda x : not isinstance(x, GEOSHandler),  self.logger.handlers)):
         #         self.logger.removeHandler(hdlr)
 
-        
     @smproperty.xml( """
         <StringVectorProperty
             name="AttributeTable"
