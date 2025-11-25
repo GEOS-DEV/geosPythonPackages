@@ -234,6 +234,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         """
         geomechanicsCalculatorFilter: GeomechanicsCalculator
         outputMesh.ShallowCopy( inputMesh )
+        mess: str
         if isinstance( outputMesh, vtkUnstructuredGrid ):
             geomechanicsCalculatorFilter = GeomechanicsCalculator(
                 outputMesh,
@@ -249,8 +250,16 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
             geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-            if geomechanicsCalculatorFilter.applyFilter():
+            try:
+                geomechanicsCalculatorFilter.applyFilter()
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+            except ( ValueError, TypeError, NameError ) as e:
+                geomechanicsCalculatorFilter.logger.error(
+                    f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
+                geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
+
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
             for blockIndex in volumeBlockIndexes:
@@ -274,9 +283,16 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
                 geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-                if geomechanicsCalculatorFilter.applyFilter():
+                try:
+                    geomechanicsCalculatorFilter.applyFilter()
                     volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
                     volumeBlock.Modified()
+                except ( ValueError, TypeError, NameError ) as e:
+                    geomechanicsCalculatorFilter.logger.error(
+                        f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
+                except Exception as e:
+                    mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
+                    geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
 
         outputMesh.Modified()
 
