@@ -97,7 +97,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Args:
             piece (int): 0 if on points, 1 if on cells.
         """
-        self.onPoints = bool( piece )
+        self.onPoints = not bool( piece )
         self.Modified()
 
     @smproperty.stringvector(
