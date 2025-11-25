@@ -6,11 +6,11 @@ import sys
 from pathlib import Path
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet, )
+from vtkmodules.vtkCommonDataModel import vtkPointSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -19,8 +19,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.SplitMesh import SplitMesh, loggerTitle
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.processing.generic_processing_tools.SplitMesh import (SplitMesh, loggerTitle)
+from geos.pv.utils.details import (SISOFilter, FilterCategory)
 from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
@@ -52,9 +52,10 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             inputMesh(vtkPointSet): Input mesh.
             outputMesh: Output mesh.
         """
-        splitMeshFilter: SplitMesh = SplitMesh()
-        splitMeshFilter.SetInputDataObject( inputMesh )
-        splitMeshFilter.Update()
-        outputMesh.ShallowCopy( splitMeshFilter.GetOutputDataObject( 0 ) )
+        splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
+        if len( splitMeshFilter.logger.handlers ) == 0:
+            splitMeshFilter.setLoggerHandler( VTKHandler() )
+        if splitMeshFilter.applyFilter():
+            outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
 
         return
