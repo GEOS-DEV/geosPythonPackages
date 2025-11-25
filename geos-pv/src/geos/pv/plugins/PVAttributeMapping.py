@@ -15,6 +15,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
