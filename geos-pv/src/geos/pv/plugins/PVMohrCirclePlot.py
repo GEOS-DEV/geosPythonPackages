@@ -30,7 +30,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCircle import MohrCircle, loggerTitle
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import (
     FAILURE_ENVELOPE,
@@ -59,7 +59,7 @@ from geos.pv.pyplotUtils.matplotlibOptions import (
     optionEnumToXml,
 )
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
-from geos.utils.Logger import ( GEOSHandler, GEOSFormatter )
+from geos.utils.Logger import ( addPluginLogSupport, getLogger )
 
 __doc__ = """
 PVMohrCirclePlot is a ParaView plugin that allows to compute and plot
@@ -111,6 +111,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=False,
 )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -184,15 +185,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
         # Request data processing step - incremented each time RequestUpdateExtent is called
         self.requestDataStep: int = -1
-
-        # Logger
-        self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
-        self.logger.setLevel( logging.INFO )
-        if not self.logger.hasHandlers():
-            handler = GEOSHandler()
-            handler.setFormatter( GEOSFormatter() )
-
-            self.logger.addHandler( handler )
+        self.logger: Logger = getLogger( loggerTitle )
 
     @smproperty.xml( """
         <Property name="Refresh Data"

@@ -28,8 +28,9 @@ from geos.utils.PhysicalConstants import (
     WATER_DENSITY,
 )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
-from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
+from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator, loggerTitle
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional geomechanics properties from existing ones in the mesh.
@@ -78,6 +79,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
              decoratedLabel="GEOS Geomechanics Calculator",
              decoratedType=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ] )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -241,11 +243,10 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter = GeomechanicsCalculator(
                 outputMesh,
                 self.computeAdvancedProperties,
-                speHandler=True,
             )
 
-            if not geomechanicsCalculatorFilter.logger.hasHandlers():
-                geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
+            # if not geomechanicsCalculatorFilter.logger.hasHandlers():
+            #     geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
             geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
@@ -259,18 +260,16 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             for blockIndex in volumeBlockIndexes:
                 volumeBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(
                     outputMesh.GetDataSet( blockIndex ) )
-                volumeBlockName: str = getBlockNameFromIndex( outputMesh, blockIndex )
-                filterName: str = f"Geomechanics Calculator for the block { volumeBlockName }"
+                # volumeBlockName: str = getBlockNameFromIndex( outputMesh, blockIndex )
+                # filterName: str = f"Geomechanics Calculator for the block { volumeBlockName }"
 
                 geomechanicsCalculatorFilter = GeomechanicsCalculator(
                     volumeBlock,
                     self.computeAdvancedProperties,
-                    filterName,
-                    True,
                 )
 
-                if not geomechanicsCalculatorFilter.logger.hasHandlers():
-                    geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
+                # if not geomechanicsCalculatorFilter.logger.hasHandlers():
+                    # geomechanicsCalculatorFilter.setLoggerHandler( GEOSHandler() )
 
                 geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
                 geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity

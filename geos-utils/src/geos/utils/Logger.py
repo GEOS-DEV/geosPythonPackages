@@ -62,9 +62,7 @@ def addPluginLogSupport( loggerTitles: list ) -> Callable[ [ Type[ T ] ], Type[ 
         def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
             original_init( self, *args, **kwargs )
 
-            # logger = getLogger( loggerTitle )
             for logger in loggerTitles:
-                # if not isinstance(logger, logging.PlaceHolder ):
                 for hdlr in list( filter( lambda x: not isinstance( x, GEOSHandler ),  getLogger(logger).handlers ) ):
                     getLogger(logger).removeHandler( hdlr )
         
