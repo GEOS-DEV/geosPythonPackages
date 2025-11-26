@@ -15,8 +15,7 @@ from paraview.simple import (  # type: ignore[import-not-found]
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
+
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
@@ -37,7 +36,6 @@ from geos.utils.GeosOutputsConstants import (
     FAILURE_ENVELOPE,
     GeosMeshOutputsEnum,
 )
-from geos.utils.Logger import GEOSFormatter
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
@@ -61,6 +59,7 @@ from geos.pv.pyplotUtils.matplotlibOptions import (
     optionEnumToXml,
 )
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
+from geos.utils.Logger import ( GEOSHandler, GEOSFormatter )
 
 __doc__ = """
 PVMohrCirclePlot is a ParaView plugin that allows to compute and plot
@@ -190,7 +189,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
         self.logger.setLevel( logging.INFO )
         if not self.logger.hasHandlers():
-            handler = VTKHandler()
+            handler = GEOSHandler()
             handler.setFormatter( GEOSFormatter() )
 
             self.logger.addHandler( handler )

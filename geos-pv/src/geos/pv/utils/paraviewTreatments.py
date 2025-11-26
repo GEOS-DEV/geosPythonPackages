@@ -13,8 +13,6 @@ import pandas as pd  # type: ignore[import-untypedGEOSFormatter ]
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -37,7 +35,7 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
-from geos.utils.Logger import ( GEOSFormatter )
+from geos.utils.Logger import ( GEOSFormatter, GEOSHandler )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
@@ -487,7 +485,7 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         logger = logging.getLogger( "getVtkOriginalCellIds" )
 
     if not logger.hasHandlers():
-        handler = VTKHandler()
+        handler = GEOSHandler()
         handler.setFormatter( GEOSFormatter() )
         logger.addHandler( handler )
 

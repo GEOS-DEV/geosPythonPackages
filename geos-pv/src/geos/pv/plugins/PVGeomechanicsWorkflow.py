@@ -31,8 +31,8 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty, smproxy )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )
+
+from geos.utils.Logger import GEOSHandler
 
 __doc__ = """
 PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:
@@ -141,7 +141,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
 
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( GEOSHandler() )
 
         self.logger.info( f"Apply plugin { self.logger.name }." )
 

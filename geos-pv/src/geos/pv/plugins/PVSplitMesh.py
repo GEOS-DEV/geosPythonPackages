@@ -7,8 +7,6 @@ from pathlib import Path
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
-# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import vtkPointSet
 
@@ -54,8 +52,6 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             outputMesh: Output mesh.
         """
         splitMeshFilter: SplitMesh = SplitMesh( inputMesh )
-        if len( splitMeshFilter.logger.handlers ) == 0:
-            splitMeshFilter.setLoggerHandler( VTKHandler() )
         if splitMeshFilter.applyFilter():
             outputMesh.ShallowCopy( splitMeshFilter.getOutput() )
 

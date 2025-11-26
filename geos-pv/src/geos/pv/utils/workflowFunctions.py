@@ -8,7 +8,7 @@ from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from paraview.detail.loghandler import ( VTKHandler )  # type: ignore[import-not-found]
+from geos.utils.Logger import GEOSHandler 
 
 
 def doExtractAndMerge(
@@ -35,7 +35,7 @@ def doExtractAndMerge(
                                                              extractWell=extractWell,
                                                              speHandler=True )
     if not blockExtractor.logger.hasHandlers():
-        blockExtractor.setLoggerHandler( VTKHandler() )
+        blockExtractor.setLoggerHandler( GEOSHandler() )
     blockExtractor.applyFilter()
 
     # recover output objects from GeosBlockExtractor filter and merge internal blocks
@@ -76,7 +76,7 @@ def mergeBlocksFilter(
     loggerName = f"GEOS Block Merge for the domain { domainToMerge }."
     mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True, loggerName )
     if not mergeBlockFilter.logger.hasHandlers():
-        mergeBlockFilter.setLoggerHandler( VTKHandler() )
+        mergeBlockFilter.setLoggerHandler( GEOSHandler() )
     mergeBlockFilter.applyFilter()
     mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
     mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )

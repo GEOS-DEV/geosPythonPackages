@@ -32,8 +32,7 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty, smproxy )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler )
+from geos.utils.Logger import GEOSHandler 
 
 __doc__ = """
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
@@ -116,7 +115,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( GEOSHandler() )
         self.logger.propagate = False
 
         self.logger.info( f"Apply plugin { self.logger.name }." )

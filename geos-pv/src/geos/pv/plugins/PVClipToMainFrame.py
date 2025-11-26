@@ -44,7 +44,6 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame()
         self.logger: Logger = getLogger( loggerTitle )
-        self.logger.info( f"Applying plugin {self.logger.name}." )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
@@ -54,6 +53,8 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
             outputMesh : A mesh transformed.
         """
         # struct
+        self.logger.info( f"Applying plugin {self.logger.name}." )
+
         self._realFilter.SetInputData( inputMesh )
         self._realFilter.ComputeTransform()
         self._realFilter.Update()

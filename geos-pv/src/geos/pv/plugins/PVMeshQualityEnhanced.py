@@ -8,7 +8,6 @@ from pathlib import Path
 from typing_extensions import Self, Optional
 
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import vtkDataArraySelection
@@ -33,7 +32,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, g
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
-from geos.utils.Logger import addPluginLogSupport
+from geos.utils.Logger import addPluginLogSupport, GEOSHandler
 
 __doc__ = """
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
@@ -232,8 +231,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
         meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh )
-        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
-            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,

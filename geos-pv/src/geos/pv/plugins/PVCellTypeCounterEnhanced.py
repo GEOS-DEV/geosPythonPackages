@@ -9,7 +9,6 @@ from typing import Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
-from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkTable
@@ -134,9 +133,7 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
-        if len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
-            cellTypeCounterEnhancedFilter.setLoggerHandler( VTKHandler() )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh )
         if cellTypeCounterEnhancedFilter.applyFilter():
             outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
 
