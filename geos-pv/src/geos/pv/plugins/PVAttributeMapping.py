@@ -15,6 +15,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
@@ -97,7 +98,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Args:
             piece (int): 0 if on points, 1 if on cells.
         """
-        self.onPoints = bool( piece )
+        self.onPoints = not bool( piece )
         self.Modified()
 
     @smproperty.stringvector(

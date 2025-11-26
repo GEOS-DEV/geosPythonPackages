@@ -197,5 +197,6 @@ class AttributeMapping:
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
         self.logger.info( f"The filter { self.logger.name } succeeded." )
-        self.logger.info( f"The { self.piece } attributes { self.attributeNames } have been transferred from the source"
-                          " mesh to the final mesh with the { self.piece } mapping." )
+        self.logger.info(
+            f"The { self.piece } attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece } mapping."
+        )

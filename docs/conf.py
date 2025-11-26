@@ -14,18 +14,17 @@
 #
 import os
 import sys
+import subprocess
 
 # Add python modules to be documented
 python_root = '..'
 python_modules = ( 'geos-ats', 'geos-geomechanics', 'geos-mesh', 'geos-processing', 'geos-pv', 'geos-timehistory',
-                   'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'pygeos-tools' )
+                   'geos-utils', 'geos-xml-tools', 'geos-xml-viewer', 'hdf5-wrapper', 'mesh-doctor', 'pygeos-tools' )
 
 
 for m in python_modules:
     sys.path.insert( 0, os.path.abspath( os.path.join( python_root, m, 'src' ) ) )
 
-<<<<<<< Updated upstream
-=======
 # Install mesh-doctor in editable mode if not already available
 # This ensures mesh-doctor command is available for sphinxcontrib.programoutput
 # try:
@@ -48,11 +47,10 @@ for m in python_modules:
 #     else:
 #         print( "mesh-doctor installed successfully." )
 
->>>>>>> Stashed changes
 # -- Project information -----------------------------------------------------
 
 project = u'GEOS Python Packages'
-copyright = u'2018-2024 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
+copyright = u'2018-2025 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOS Contributors.'
 author = u'GEOS Contributors'
 
 # The short X.Y version

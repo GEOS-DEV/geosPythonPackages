@@ -1,40 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
+import logging
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-    vtkIdTypeArray,
-    vtkDataArray,
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkCellArray,
-    vtkCellData,
-    vtkCell,
-    vtkCellTypes,
-    VTK_TRIANGLE,
-    VTK_QUAD,
-    VTK_TETRA,
-    VTK_HEXAHEDRON,
-    VTK_PYRAMID,
-    VTK_WEDGE,
-    VTK_POLYHEDRON,
-    VTK_POLYGON,
-)
 
-from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
+from vtkmodules.vtkCommonCore import vtkPoints, vtkIdTypeArray, vtkDataArray
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCell, vtkCellTypes,
+                                            VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID, VTK_WEDGE,
+                                            VTK_POLYHEDRON, VTK_POLYGON )
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
 __doc__ = """
-SplitMesh module is a vtk filter that split cells of a mesh composed of Tetrahedra, pyramids, and hexahedra.
+SplitMesh module is a vtk filter that splits cells of a mesh composed of tetrahedra, pyramids, hexahedra, triangles, and quads.
+
+Warning: Current implementation only supports meshes composed of either polygons or polyhedra, not both together.
 
 Filter input and output types are vtkUnstructuredGrid.
 
@@ -45,145 +30,155 @@ To use the filter:
     from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 
     # Filter inputs
-    input: vtkUnstructuredGrid
+    inputMesh: vtkUnstructuredGrid
+    speHandler: bool # optional
 
     # Instantiate the filter
-    splitMeshFilter: SplitMesh = SplitMesh()
+    splitMeshFilter: SplitMesh = SplitMesh( inputMesh, speHandler )
 
-    # Set input data object
-    splitMeshFilter.SetInputDataObject( input )
+    # Use your own handler (if speHandler is True)
+    yourHandler: logging.Handler
+    splitMeshFilter.setLoggerHandler( yourHandler )
 
     # Do calculations
-    splitMeshFilter.Update()
+    splitMeshFilter.applyFilter()
 
-    # Get output object
-    output :vtkUnstructuredGrid = splitMeshFilter.GetOutputDataObject( 0 )
+    # Get splitted mesh
+    outputMesh: vtkUnstructuredGrid = splitMeshFilter.getOutput()
 """
 
+loggerTitle: str = "Split Mesh"
 
-class SplitMesh( VTKPythonAlgorithmBase ):
 
-    def __init__( self ) -> None:
-        """SplitMesh filter splits each cell using edge centers."""
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkUnstructuredGrid" )
+class SplitMesh():
 
-        self.inData: vtkUnstructuredGrid
+    def __init__( self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False ) -> None:
+        """SplitMesh filter splits each cell using edge centers.
+
+        Args:
+            inputMesh (vtkUnstructuredGrid): The input mesh.
+            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
+                Defaults to False.
+        """
+        self.inputMesh: vtkUnstructuredGrid = inputMesh
+        self.outputMesh: vtkUnstructuredGrid = inputMesh.NewInstance()
         self.cells: vtkCellArray
         self.points: vtkPoints
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[ int ]
+        self.speHandler: bool = speHandler
+        self.handler: None | logging.Handler = None
 
-    def FillInputPortInformation( self: Self, port: int, info: vtkInformation ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestInformation.
+        # Logger
+        self.logger: Logger
+        if not speHandler:
+            self.logger = getLogger( loggerTitle, True )
+        else:
+            self.logger = logging.getLogger( loggerTitle )
+            self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
-        Args:
-            port (int): input port
-            info (vtkInformationVector): info
+    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
+        """Set a specific handler for the filter logger.
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        if port == 0:
-            info.Set( self.INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid" )
-        return 1
-
-    def RequestDataObject(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestDataObject.
+        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
 
         Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            handler (logging.Handler): The handler to add.
+        """
+        self.handler = handler
+        if len( self.logger.handlers ) == 0:
+            self.logger.addHandler( handler )
+        else:
+            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
+                                 " during the filter initialization." )
+
+    def applyFilter( self: Self ) -> bool:
+        """Apply the filter SplitMesh.
 
         Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+            bool: True if the filter succeeded, False otherwise.
         """
-        inData = self.GetInputData( inInfoVec, 0, 0 )
-        outData = self.GetOutputData( outInfoVec, 0 )
-        assert inData is not None
-        if outData is None or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
-        return super().RequestDataObject( request, inInfoVec, outInfoVec )
+        self.logger.info( f"Applying filter { self.logger.name }." )
+        try:
+            # Count the number of cells before splitting. Then we will be able to know how many new cells and points
+            # to allocate because each cell type is splitted in a known number of new cells and points.
+            nbCells: int = self.inputMesh.GetNumberOfCells()
+            counts: CellTypeCounts = self._getCellCounts()
+            if counts.getTypeCount( VTK_WEDGE ) != 0:
+                raise TypeError( "Input mesh contains wedges that are not currently supported." )
 
-    def RequestData(
-        self: Self,
-        request: vtkInformation,  # noqa: F841
-        inInfoVec: list[ vtkInformationVector ],  # noqa: F841
-        outInfoVec: vtkInformationVector,
-    ) -> int:
-        """Inherited from VTKPythonAlgorithmBase::RequestData.
+            nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
+            nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
+            # Current implementation only supports meshes composed of either polygons or polyhedra
+            if nbPolyhedra * nbPolygon != 0:
+                raise TypeError(
+                    "Input mesh is composed of both polygons and polyhedra, but it must contains only one of the two." )
 
-        Args:
-            request (vtkInformation): request
-            inInfoVec (list[vtkInformationVector]): input objects
-            outInfoVec (vtkInformationVector): output objects
+            nbTet: int = counts.getTypeCount( VTK_TETRA )  # will divide into 8 tets
+            nbPyr: int = counts.getTypeCount( VTK_PYRAMID )  # will divide into 6 pyramids and 4 tets so 10 new cells
+            nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )  # will divide into 8 hexes
+            nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )  # will divide into 4 triangles
+            nbQuad: int = counts.getTypeCount( VTK_QUAD )  # will divide into 4 quads
+            nbNewPoints: int = 0
+            nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
+            nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 + nbTriangles * 4 + nbQuad * 4
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
-        """
-        self.inData = self.GetInputData( inInfoVec, 0, 0 )
-        output: vtkUnstructuredGrid = self.GetOutputData( outInfoVec, 0 )
+            self.points = vtkPoints()
+            self.points.DeepCopy( self.inputMesh.GetPoints() )
+            self.points.Resize( self.inputMesh.GetNumberOfPoints() + nbNewPoints )
 
-        assert self.inData is not None, "Input mesh is undefined."
-        assert output is not None, "Output mesh is undefined."
+            self.cells = vtkCellArray()
+            self.cells.AllocateExact( nbNewCells, 8 )
+            self.originalId = vtkIdTypeArray()
+            self.originalId.SetName( "OriginalID" )
+            self.originalId.Allocate( nbNewCells )
+            self.cellTypes = []
 
-        nbCells: int = self.inData.GetNumberOfCells()
-        counts: CellTypeCounts = self._getCellCounts()
-        nbTet: int = counts.getTypeCount( VTK_TETRA )
-        nbPyr: int = counts.getTypeCount( VTK_PYRAMID )
-        nbHex: int = counts.getTypeCount( VTK_HEXAHEDRON )
-        nbTriangles: int = counts.getTypeCount( VTK_TRIANGLE )
-        nbQuad: int = counts.getTypeCount( VTK_QUAD )
-        nbPolygon: int = counts.getTypeCount( VTK_POLYGON )
-        nbPolyhedra: int = counts.getTypeCount( VTK_POLYHEDRON )
-        assert counts.getTypeCount( VTK_WEDGE ) == 0, "Input mesh contains wedges that are not currently supported."
-        assert nbPolyhedra * nbPolygon == 0, ( "Input mesh is composed of both polygons and polyhedra,"
-                                               " but it must contains only one of the two." )
-        nbNewPoints: int = 0
-        nbNewPoints = nbHex * 19 + nbTet * 6 + nbPyr * 9 if nbPolyhedra > 0 else nbTriangles * 3 + nbQuad * 5
-        nbNewCells: int = nbHex * 8 + nbTet * 8 + nbPyr * 10 * nbTriangles * 4 + nbQuad * 4
+            # Define cell type to splitting method mapping
+            splitMethods = {
+                VTK_HEXAHEDRON: self._splitHexahedron,
+                VTK_TETRA: self._splitTetrahedron,
+                VTK_PYRAMID: self._splitPyramid,
+                VTK_TRIANGLE: self._splitTriangle,
+                VTK_QUAD: self._splitQuad,
+            }
+            for c in range( nbCells ):
+                cell: vtkCell = self.inputMesh.GetCell( c )
+                cellType: int = cell.GetCellType()
+                splitMethod = splitMethods.get( cellType )
+                if splitMethod is not None:
+                    splitMethod( cell, c )
+                else:
+                    raise TypeError(
+                        f"Cell type { vtkCellTypes.GetClassNameFromTypeId( cellType ) } is not supported." )
 
-        self.points = vtkPoints()
-        self.points.DeepCopy( self.inData.GetPoints() )
-        self.points.Resize( self.inData.GetNumberOfPoints() + nbNewPoints )
+            # Add points and cells
+            self.outputMesh.SetPoints( self.points )
+            self.outputMesh.SetCells( self.cellTypes, self.cells )
 
-        self.cells = vtkCellArray()
-        self.cells.AllocateExact( nbNewCells, 8 )
-        self.originalId = vtkIdTypeArray()
-        self.originalId.SetName( "OriginalID" )
-        self.originalId.Allocate( nbNewCells )
-        self.cellTypes = []
-        for c in range( nbCells ):
-            cell: vtkCell = self.inData.GetCell( c )
-            cellType: int = cell.GetCellType()
-            if cellType == VTK_HEXAHEDRON:
-                self._splitHexahedron( cell, c )
-            elif cellType == VTK_TETRA:
-                self._splitTetrahedron( cell, c )
-            elif cellType == VTK_PYRAMID:
-                self._splitPyramid( cell, c )
-            elif cellType == VTK_TRIANGLE:
-                self._splitTriangle( cell, c )
-            elif cellType == VTK_QUAD:
-                self._splitQuad( cell, c )
-            else:
-                raise TypeError( f"Cell type {vtkCellTypes.GetClassNameFromTypeId(cellType)} is not supported." )
-        # add points and cells
-        output.SetPoints( self.points )
-        output.SetCells( self.cellTypes, self.cells )
-        # add attribute saving original cell ids
-        cellArrays: vtkCellData = output.GetCellData()
-        assert cellArrays is not None, "Cell data is undefined."
-        cellArrays.AddArray( self.originalId )
-        # transfer all cell arrays
-        self._transferCellArrays( output )
-        return 1
+            # Add attribute saving original cell ids
+            cellArrays: vtkCellData = self.outputMesh.GetCellData()
+            if cellArrays is None:
+                raise AttributeError( "Cell data is undefined." )
+            cellArrays.AddArray( self.originalId )
+
+            # Transfer all cell arrays
+            self._transferCellArrays( self.outputMesh )
+            self.logger.info( f"The filter { self.logger.name } succeeded." )
+        except ( TypeError, AttributeError ) as e:
+            self.logger.error( f"The filter {self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
+
+        return True
+
+    def getOutput( self: Self ) -> vtkUnstructuredGrid:
+        """Get the splitted mesh computed."""
+        return self.outputMesh
 
     def _getCellCounts( self: Self ) -> CellTypeCounts:
         """Get the number of cells of each type.
@@ -191,9 +186,12 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         Returns:
             CellTypeCounts: cell type counts
         """
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        cellTypeCounterEnhancedFilter.SetInputDataObject( self.inData )
-        cellTypeCounterEnhancedFilter.Update()
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
+            self.inputMesh, self.speHandler )
+        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
+        if not cellTypeCounterEnhancedFilter.applyFilter():
+            raise
         return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
@@ -261,7 +259,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         r"""Split a pyramid.
 
         Let's suppose an input pyramid composed of nodes (0, 1, 2, 3, 4),
-        the cell is splitted in 8 pyramids using edge centers.
+        the cell is split into 6 pyramids and 4 tetrahedra using edge centers.
 
                        4
                      ,/|\
@@ -310,7 +308,8 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         self.cells.InsertNextCell( 4, [ pt12, pt7, pt6, pt13 ] )
         for _ in range( 10 ):
             self.originalId.InsertNextValue( index )
-        self.cellTypes.extend( [ VTK_PYRAMID ] * 8 )
+        self.cellTypes.extend( [ VTK_PYRAMID ] * 6 )
+        self.cellTypes.extend( [ VTK_TETRA ] * 4 )
 
     def _splitHexahedron( self: Self, cell: vtkCell, index: int ) -> None:
         r"""Split a hexahedron.
@@ -378,7 +377,7 @@ class SplitMesh( VTKPythonAlgorithmBase ):
         r"""Split a triangle.
 
         Let's suppose an input triangle composed of nodes (0, 1, 2),
-        the cell is splitted in 3 triangles using edge centers.
+        the cell is split into 4 triangles using edge centers.
 
         2
         |\
@@ -443,23 +442,25 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             self.originalId.InsertNextValue( index )
         self.cellTypes.extend( [ VTK_QUAD ] * 4 )
 
-    def _transferCellArrays( self: Self, splittedMesh: vtkUnstructuredGrid ) -> bool:
+    def _transferCellArrays( self: Self, splittedMesh: vtkUnstructuredGrid ) -> None:
         """Transfer arrays from input mesh to splitted mesh.
 
         Args:
-            splittedMesh (vtkUnstructuredGrid): splitted mesh
-
-        Returns:
-            bool: True if arrays were successfully transfered.
+            splittedMesh (vtkUnstructuredGrid): Splitted mesh.
         """
+        cellData: vtkCellData = self.inputMesh.GetCellData()
+        if cellData is None:
+            raise AttributeError( "Cell data of input mesh should be defined." )
+
         cellDataSplitted: vtkCellData = splittedMesh.GetCellData()
-        assert cellDataSplitted is not None, "Cell data of splitted mesh should be defined."
-        cellData: vtkCellData = self.inData.GetCellData()
-        assert cellData is not None, "Cell data of input mesh should be defined."
+        if cellDataSplitted is None:
+            raise AttributeError( "Cell data of splitted mesh should be defined." )
+
         # for each array of input mesh
         for i in range( cellData.GetNumberOfArrays() ):
             array: vtkDataArray = cellData.GetArray( i )
-            assert array is not None, "Array should be defined."
+            if array is None:
+                raise AttributeError( "Array should be defined." )
             npArray: npt.NDArray[ np.float64 ] = vtk_to_numpy( array )
             # get number of components
             dims: tuple[ int, ...] = npArray.shape
@@ -476,4 +477,4 @@ class SplitMesh( VTKPythonAlgorithmBase ):
             cellDataSplitted.AddArray( newArray )
             cellDataSplitted.Modified()
         splittedMesh.Modified()
-        return True
+        return
