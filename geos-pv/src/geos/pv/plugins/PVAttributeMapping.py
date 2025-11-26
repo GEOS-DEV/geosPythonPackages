@@ -14,13 +14,11 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
+from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping, loggerTitle
+from geos.utils.Logger import addPluginLogSupport
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -69,6 +67,7 @@ To use it:
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],
     composite_data_supported=True,
 )
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -189,10 +188,10 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         outData.ShallowCopy( meshTo )
 
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
-                                                                     self.onPoints, True )
+                                                                     self.onPoints )
 
-        if not attributeMappingFilter.logger.hasHandlers():
-            attributeMappingFilter.setLoggerHandler( VTKHandler() )
+        # if not attributeMappingFilter.logger.hasHandlers():
+        #     attributeMappingFilter.setLoggerHandler( VTKHandler() )
 
         attributeMappingFilter.applyFilter()
         self.clearAttributeNames = True

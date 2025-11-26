@@ -12,9 +12,6 @@ from typing_extensions import Self
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 import vtkmodules.util.numpy_support as vnp
 
@@ -28,7 +25,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion, loggerTitle
+from geos.utils.Logger import addPluginLogSupport
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
@@ -57,6 +55,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_PROP,
              decoratedLabel="Create Constant Attribute Per Region",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -72,9 +71,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.valueNpType: type = np.float32
         self.nbComponents: int = 1
         self.componentNames: tuple[ str, ...] = ()
-
-        # Use the handler of paraview for the log.
-        self.speHandler: bool = True
 
     # Settings of the attribute with the region indexes:
     @smproperty.stringvector(
@@ -291,11 +287,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.valueNpType,
             self.nbComponents,
             self.componentNames,
-            self.speHandler,
         )
-
-        if not createConstantAttributePerRegionFilter.logger.hasHandlers():
-            createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
         createConstantAttributePerRegionFilter.applyFilter()
 

@@ -47,12 +47,11 @@ To use the filter:
     outputMesh: vtkUnstructuredGrid = splitMeshFilter.getOutput()
 """
 
-loggerTitle: str = "Split Mesh"
-
+loggerTitle: str = "SplitMesh"
 
 class SplitMesh():
 
-    def __init__( self, inputMesh: vtkUnstructuredGrid, speHandler: bool = False ) -> None:
+    def __init__( self, inputMesh: vtkUnstructuredGrid) -> None:
         """SplitMesh filter splits each cell using edge centers.
 
         Args:
@@ -66,32 +65,12 @@ class SplitMesh():
         self.points: vtkPoints
         self.originalId: vtkIdTypeArray
         self.cellTypes: list[ int ]
-        self.speHandler: bool = speHandler
-        self.handler: None | logging.Handler = None
 
+        #subordonate filter
+        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
+            self.inputMesh)
         # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        self.handler = handler
-        if len( self.logger.handlers ) == 0:
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> bool:
         """Apply the filter SplitMesh.
@@ -186,13 +165,9 @@ class SplitMesh():
         Returns:
             CellTypeCounts: cell type counts
         """
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
-            self.inputMesh, self.speHandler )
-        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
-            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-        if not cellTypeCounterEnhancedFilter.applyFilter():
+        if not self.cellTypeCounterEnhancedFilter.applyFilter():
             raise
-        return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+        return self.cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
         """Add a point at the center of the edge defined by input point ids.

@@ -10,8 +10,6 @@ from typing_extensions import Self
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
     vtkInformationVector,
@@ -29,7 +27,8 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
+from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced, loggerTitle 
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a Paraview plugin filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
@@ -60,6 +59,7 @@ To use it:
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
+@addPluginLogSupport(loggerTitles=[loggerTitle, f"{loggerTitle}.vtkErrorLogger" ])
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -117,10 +117,7 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input mesh is null."
         assert outputMesh is not None, "Output pipeline is null."
 
-        mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
-
-        if not mergeBlockEnhancedFilter.logger.hasHandlers():
-            mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
+        mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh )
 
         try:
             mergeBlockEnhancedFilter.applyFilter()

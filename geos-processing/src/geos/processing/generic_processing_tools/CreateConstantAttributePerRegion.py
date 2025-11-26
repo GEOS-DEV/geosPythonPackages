@@ -50,7 +50,6 @@ To use it:
     valueNpType: type
     nbComponents: int
     componentNames: tuple[ str, ... ]
-    speHandler: bool
 
     # Instantiate the filter
     createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
@@ -61,7 +60,6 @@ To use it:
         valueNpType,
         nbComponents,
         componentNames,
-        speHandler,
     )
 
     # Set your handler (only if speHandler is True).
@@ -86,7 +84,6 @@ class CreateConstantAttributePerRegion:
             valueNpType: type = np.float32,
             nbComponents: int = 1,
             componentNames: tuple[ str, ...] = (),  # noqa: C408
-            speHandler: bool = False,
     ) -> None:
         """Create an attribute with constant value per region.
 
@@ -123,33 +120,13 @@ class CreateConstantAttributePerRegion:
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
 
-        # Warnings counter.
+        # Logger.
+        self.logger: Logger = getLogger(loggerTitle)  # Warnings counter.
+
         self.counter: CountWarningHandler = CountWarningHandler()
         self.counter.setLevel( logging.INFO )
-
-        # Logger.
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            # This warning does not count for the number of warning created during the application of the filter.
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
     def applyFilter( self: Self ) -> bool:
         """Create a constant attribute per region in the mesh.
@@ -159,8 +136,6 @@ class CreateConstantAttributePerRegion:
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
 
         # Check the validity of the attribute region.
         if self.onPoints is None:

@@ -52,6 +52,7 @@ To use it:
 
 """
 
+loggerTitle : str = "ClipToMainFrame"
 
 class ClipToMainFrameElement( vtkLandmarkTransform ):
 
@@ -218,7 +219,7 @@ loggerTitle: str = "Clip mesh to main frame."
 class ClipToMainFrame( vtkTransformFilter ):
     """Filter to clip a mesh to the main frame using ClipToMainFrame class."""
 
-    def __init__( self, speHandler: bool = False, **properties: str ) -> None:
+    def __init__( self, **properties: str ) -> None:
         """Initialize the ClipToMainFrame Filter with optional speHandler args and forwarding properties to main class.
 
         Args:
@@ -228,12 +229,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         """
         super().__init__( **properties )
         # Logger.
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
@@ -254,21 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         clip.Update()
         self.SetTransform( clip )
-
-    def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+        self.logger.info( f"{self.logger.name} applied successfully." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.

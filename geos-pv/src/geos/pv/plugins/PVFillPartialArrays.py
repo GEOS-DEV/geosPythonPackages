@@ -10,10 +10,6 @@ from typing_extensions import Self
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smproperty,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
@@ -25,7 +21,9 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.pv.utils.details import SISOFilter, FilterCategory
-from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
+from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays, loggerTitle
+
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 Fill partial arrays of input mesh.
@@ -46,12 +44,14 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
+@addPluginLogSupport( loggerTitles=[loggerTitle] )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
+
 
     @smproperty.xml( """
         <StringVectorProperty
@@ -105,11 +105,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         fillPartialArraysFilter: FillPartialArrays = FillPartialArrays(
             outputMesh,
             self.dictAttributesValues,
-            speHandler=True,
         )
-
-        if not fillPartialArraysFilter.logger.hasHandlers():
-            fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
 
         fillPartialArraysFilter.applyFilter()
 

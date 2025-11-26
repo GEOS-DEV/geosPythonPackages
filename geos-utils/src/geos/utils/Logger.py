@@ -2,14 +2,17 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Romain Baville, Jacques Franc
 import logging
-from typing import Any, Union, Generator
+from typing import Any, Generator
 from typing_extensions import Self
+from functools import wraps
+from typing import Type, TypeVar, Callable
 
 import os
 import re
 import tempfile
 from contextlib import contextmanager
 
+from vtkmodules.vtkCommonCore import vtkLogger
 from geos.utils.Errors import VTKError
 
 __doc__ = """
@@ -40,6 +43,38 @@ Usage::
     logger.error(captured.strip())
 
 """
+
+## decorators
+T = TypeVar( 'T' )
+
+
+def addPluginLogSupport( loggerTitles: list ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+    """Decorator to add logger support in the class following existing architecture.
+
+    Args:
+        loggerTitle (str): Title to display in the logger
+    """
+
+    def decorator( cls: Type[ T ] ) -> Type[ T ]:
+        original_init = cls.__init__
+
+        @wraps( original_init )
+        def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
+            original_init( self, *args, **kwargs )
+
+            # logger = getLogger( loggerTitle )
+            for logger in loggerTitles:
+                # if not isinstance(logger, logging.PlaceHolder ):
+                for hdlr in list( filter( lambda x: not isinstance( x, GEOSHandler ),  getLogger(logger).handlers ) ):
+                    getLogger(logger).removeHandler( hdlr )
+        
+
+
+        cls.__init__ = new_init  # type: ignore[assignment]
+
+        return cls
+
+    return decorator
 
 
 class RegexExceptionFilter( logging.Filter ):
@@ -97,6 +132,7 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
             os.close( savedStderrFd )
 
 
+## helpers
 class CountWarningHandler( logging.Handler ):
     """Create an handler to count the warnings logged."""
 
@@ -149,22 +185,8 @@ logging.Logger.results = results  # type: ignore[attr-defined]
 Logger = logging.Logger  # logger type
 
 
-class CustomLoggerFormatter( logging.Formatter ):
-    """Custom formatter for the logger.
+class GEOSFormatter( logging.Formatter ):
 
-    .. WARNING:: Colors do not work in the output message window of Paraview.
-
-    To use it:
-
-    .. code-block:: python
-
-        logger = logging.getLogger( "Logger name", use_color=False )
-        # Ensure handler is added only once, e.g., by checking logger.handlers
-        if not logger.handlers:
-            ch = logging.StreamHandler()
-            ch.setFormatter(CustomLoggerFormatter())
-            logger.addHandler(ch)
-    """
     # define color codes
     green: str = "\x1b[32;20m"
     grey: str = "\x1b[38;20m"
@@ -174,73 +196,75 @@ class CustomLoggerFormatter( logging.Formatter ):
     reset: str = "\x1b[0m"
 
     # define prefix of log messages
-    format1: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    format2: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
+    format_short: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format_long: str = ( "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)" )
     format_results: str = "%(name)s - %(levelname)s - %(message)s"
 
-    #: format for each logger output type with colors
-    FORMATS_COLOR: dict[ int, str ] = {
-        DEBUG: grey + format2 + reset,
-        INFO: green + format1 + reset,
-        WARNING: yellow + format1 + reset,
-        ERROR: red + format1 + reset,
-        CRITICAL: bold_red + format2 + reset,
+    #: format for each logger output type without colors (e.g., for Paraview)
+    _formatDict: dict[ int, str ] = {
+        DEBUG: grey + format_long + reset,
+        INFO: green + format_short + reset,
+        WARNING: yellow + format_short + reset,
+        ERROR: red + format_short + reset,
+        CRITICAL: bold_red + format_long + reset,
         RESULTS_LEVEL_NUM: green + format_results + reset,
     }
 
-    #: format for each logger output type without colors (e.g., for Paraview)
-    FORMATS_PLAIN: dict[ int, str ] = {
-        DEBUG: format2,
-        INFO: format1,
-        WARNING: format1,
-        ERROR: format1,
-        CRITICAL: format2,
-        RESULTS_LEVEL_NUM: format_results,
-    }
-
-    # Pre-compiled formatters for efficiency
-    _compiled_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt )
-        for level, fmt in FORMATS_PLAIN.items()
-    }
-
-    _compiled_color_formatters: dict[ int, logging.Formatter ] = {
-        level: logging.Formatter( fmt )
-        for level, fmt in FORMATS_COLOR.items()
-    }
-
-    def __init__( self: Self, use_color: bool = False ) -> None:
-        """Initialize the log formatter.
-
-        Args:
-            use_color (bool): If True, use color-coded log formatters.
-                              Defaults to False.
-        """
-        super().__init__()
-        if use_color:
-            self.active_formatters = self._compiled_color_formatters
-        else:
-            self.active_formatters = self._compiled_formatters
-
     def format( self: Self, record: logging.LogRecord ) -> str:
-        """Return the format according to input record.
+        """Fomat using the above described format in color and style."""
+        return logging.Formatter( fmt=self._formatDict.get( record.levelno ) ).format( record )
 
-        Args:
-            record (logging.LogRecord): record
+    @staticmethod
+    def TrimColor( msg: str ) -> str:
+        """Helper function to discard bash color tag when throwing to vtk logger logic (C/C++)."""
+        return msg[ 8:-4 ]
 
-        Returns:
-            str: format as a string
-        """
-        # Defaulting to plain formatters as per original logic
-        log_fmt_obj: Union[ logging.Formatter, None ] = self.active_formatters.get( record.levelno )
-        if log_fmt_obj:
-            return log_fmt_obj.format( record )
+
+class GEOSHandler( logging.StreamHandler ):
+
+    @staticmethod
+    def get_vtk_level( level: int ) -> int:
+        """Translate logging levels to vtk taxonomy."""
+        if level >= ERROR:
+            return vtkLogger.VERBOSITY_ERROR
+        elif level >= WARNING:
+            return vtkLogger.VERBOSITY_WARNING
+        elif level >= INFO:
+            return vtkLogger.VERBOSITY_INFO
+        elif level >= DEBUG:
+            return vtkLogger.VERBOSITY_TRACE
         else:
-            # Fallback for unknown levels or if a level is missing in the map
-            return logging.Formatter().format( record )
+            return vtkLogger.VERBOSITY_MAX
+
+    def emit( self: Self, record: logging.LogRecord ) -> None:
+        """Overload of emit to display in the Command Output windows UI."""
+        try:
+            msg = self.format( record )
+            lvl = GEOSHandler.get_vtk_level( record.levelno )
+
+            from vtkmodules.vtkCommonCore import vtkOutputWindow as win
+            outwin = win.GetInstance()
+            if outwin:
+                #see https://www.paraview.org/paraview-docs/v5.13.3/python/_modules/paraview/detail/loghandler.html#VTKHandler
+                prevMode = outwin.GetDisplayMode()
+                outwin.SetDisplayModeToNever()
+
+                if lvl == vtkLogger.VERBOSITY_ERROR:
+                    outwin.DisplayErrorText( GEOSFormatter.TrimColor( msg ) )
+                elif lvl == vtkLogger.VERBOSITY_WARNING:
+                    outwin.DisplayWarningText( GEOSFormatter.TrimColor( msg ) )
+                elif lvl == vtkLogger.VERBOSITY_INFO:
+                    outwin.DisplayText( GEOSFormatter.TrimColor( msg ) )
+                elif lvl == vtkLogger.VERBOSITY_TRACE:
+                    outwin.DisplayDebugText( GEOSFormatter.TrimColor( msg ) )
+
+                outwin.SetDisplayMode( prevMode )
+
+        except Exception:
+            self.handleError( record )
 
 
-def getLogger( title: str, use_color: bool = False ) -> Logger:
+def getLogger( title: str ) -> Logger:
     """Return the Logger with pre-defined configuration.
 
     This function is now idempotent regarding handler addition.
@@ -276,13 +300,21 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
     if len( logger.handlers ) == 0:
-        logger.setLevel( INFO )  # Set the desired default level for this logger
+        logger.setLevel( DEBUG )  # Set the desired default level for this logger
         # Create and add the stream handler
-        ch = logging.StreamHandler()
-        ch.setFormatter( CustomLoggerFormatter( use_color ) )  # Use your custom formatter
-        logger.addHandler( ch )
+        geos_handler = GEOSHandler()
+        geos_handler.setFormatter( GEOSFormatter() )
+        geos_handler.setLevel( logger.getEffectiveLevel() )
+        logger.addHandler( geos_handler )
+
+        cli_handle = logging.StreamHandler()
+        cli_handle.setFormatter( GEOSFormatter() )
+        cli_handle.setLevel( logger.getEffectiveLevel() )
+        logger.addHandler( cli_handle )
+
         # Optional: Prevent messages from propagating to the root logger's handlers
-        logger.propagate = False
+        logger.propagate = True
+
     # If you need to ensure a certain level is set every time getLogger is called,
     # even if handlers were already present, you can set the level outside the 'if' block.
     # However, typically, setLevel is part of the initial handler configuration.

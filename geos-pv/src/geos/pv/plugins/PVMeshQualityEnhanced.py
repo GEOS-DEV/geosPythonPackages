@@ -22,7 +22,8 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
-from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
+from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced, loggerTitle
+from geos.processing.pre_processing.CellTypeCounterEnhanced import loggerTitle as cloggerTitle
 from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, getQualityMeasureNameFromIndex,
                                                        getQualityMeasureIndexFromName, getQuadQualityMeasure,
                                                        getTriangleQualityMeasure, getCommonPolygonQualityMeasure,
@@ -32,6 +33,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, g
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
@@ -59,6 +61,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_QC,
              decoratedLabel="Mesh Quality Enhanced",
              decoratedType="vtkUnstructuredGrid" )
+@addPluginLogSupport(loggerTitles=[loggerTitle,cloggerTitle])
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -228,7 +231,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh )
         if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
             meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,

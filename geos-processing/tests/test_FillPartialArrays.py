@@ -11,7 +11,6 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
-
 @pytest.mark.parametrize( "dictAttributesValues", [
     ( {
         "PORO": None

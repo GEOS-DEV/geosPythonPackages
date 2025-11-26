@@ -37,7 +37,7 @@ from geos.utils.GeosOutputsConstants import (
     FAILURE_ENVELOPE,
     GeosMeshOutputsEnum,
 )
-from geos.utils.Logger import CustomLoggerFormatter
+from geos.utils.Logger import GEOSFormatter
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
@@ -191,7 +191,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         self.logger.setLevel( logging.INFO )
         if not self.logger.hasHandlers():
             handler = VTKHandler()
-            handler.setFormatter( CustomLoggerFormatter( False ) )
+            handler.setFormatter( GEOSFormatter() )
 
             self.logger.addHandler( handler )
 

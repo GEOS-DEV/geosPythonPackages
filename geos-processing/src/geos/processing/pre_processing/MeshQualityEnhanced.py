@@ -95,13 +95,11 @@ class MeshQualityEnhanced():
     def __init__(
         self: Self,
         inputMesh: vtkUnstructuredGrid,
-        speHandler: bool = False,
     ) -> None:
         """Enhanced vtkMeshQuality filter.
 
         Args:
             inputMesh (vtkUnstructuredGrid): Input mesh
-            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.inputMesh: vtkUnstructuredGrid = inputMesh
@@ -125,32 +123,11 @@ class MeshQualityEnhanced():
         self._allCellTypesExtended: tuple[ int, ...] = getAllCellTypesExtended()
         self._allCellTypes: tuple[ int, ...] = getAllCellTypes()
 
+        #deps
+        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(self._outputMesh)
+
         # Logger.
-        self.speHandler: bool = speHandler
-        self.handler: None | logging.Handler = None
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
-            self.logger.propagate = False
-
-    def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        self.handler = handler
-        if len( self.logger.handlers ) == 0:
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+        self.logger: Logger = getLogger( loggerTitle )
 
     def GetQualityMetricSummary( self: Self ) -> QualityMetricSummary:
         """Get QualityMetricSummary object.
@@ -322,14 +299,10 @@ class MeshQualityEnhanced():
 
     def _computeCellTypeCounts( self: Self ) -> None:
         """Compute cell type counts."""
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
-            self._outputMesh, self.speHandler )
-        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
-            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-        if not cellTypeCounterEnhancedFilter.applyFilter():
+        if not self.cellTypeCounterEnhancedFilter.applyFilter():
             raise
 
-        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+        counts: CellTypeCounts = self.cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:
             raise AttributeError( "CellTypeCounts is undefined" )
 

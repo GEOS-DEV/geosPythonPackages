@@ -99,7 +99,7 @@ loggerTitle: str = "Surface Geomechanics"
 
 class SurfaceGeomechanics:
 
-    def __init__( self: Self, surfacicMesh: vtkPolyData, speHandler: bool = False ) -> None:
+    def __init__( self: Self, surfacicMesh: vtkPolyData) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.
 
         Input and Output objects are a vtkPolydata with surfaces
@@ -111,14 +111,10 @@ class SurfaceGeomechanics:
                 Defaults to False.
         """
         # Logger
-        self.logger: Logger
-        if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
-        else:
-            self.logger = logging.getLogger( loggerTitle )
-            self.logger.setLevel( logging.INFO )
+        self.logger: Logger= getLogger( loggerTitle )
 
         # Input surfacic mesh
+        print(surfacicMesh)
         if not surfacicMesh.IsA( "vtkPolyData" ):
             self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh
@@ -140,21 +136,6 @@ class SurfaceGeomechanics:
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_RAD
         # New created attributes names
         self.newAttributeNames: set[ str ] = set()
-
-    def SetLoggerHandler( self: Self, handler: Logger ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical, be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
 
     def SetSurfaceName( self: Self, name: str ) -> None:
         """Set a name for the input surface. For logging purpose only.
