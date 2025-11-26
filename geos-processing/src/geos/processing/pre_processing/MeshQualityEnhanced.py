@@ -100,7 +100,6 @@ class MeshQualityEnhanced():
 
         Args:
             inputMesh (vtkUnstructuredGrid): Input mesh
-            speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.inputMesh: vtkUnstructuredGrid = inputMesh
@@ -126,7 +125,7 @@ class MeshQualityEnhanced():
 
         #deps
         self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(self._outputMesh)
-        
+
         # Logger.
         self.logger: Logger = getLogger( loggerTitle )
 

@@ -51,10 +51,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         """Fill a partial attribute with constant value per component."""
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
-        #remove noisy loggers to get clean OutputMessage windows
-        # self.logger = getLogger( loggerTitle )
-        # for hdlr in list(filter(lambda x : not isinstance(x, GEOSHandler),  self.logger.handlers)):
-        #         self.logger.removeHandler(hdlr)
+
 
     @smproperty.xml( """
         <StringVectorProperty

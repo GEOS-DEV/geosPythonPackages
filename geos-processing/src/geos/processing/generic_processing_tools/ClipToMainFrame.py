@@ -250,7 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         clip.Update()
         self.SetTransform( clip )
-        self.logger.info( "ClipToMainFrame applied successfully." )
+        self.logger.info( f"{self.logger.name} applied successfully." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.

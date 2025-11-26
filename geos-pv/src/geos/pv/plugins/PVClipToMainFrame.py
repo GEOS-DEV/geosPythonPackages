@@ -8,9 +8,6 @@ from pathlib import Path
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
@@ -24,7 +21,7 @@ update_paths()
 
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame, loggerTitle
-from geos.utils.Logger import addPluginLogSupport
+from geos.utils.Logger import Logger, addPluginLogSupport
 
 __doc__ = """
 Clip the input mesh to the main frame applying the correct LandmarkTransform
@@ -46,8 +43,8 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame()
-    #     if not self._realFilter.logger.hasHandlers():
-    #         self._realFilter.SetLoggerHandler( VTKHandler() )
+        self.logger : Logger = getLogger( loggerTitle )
+        self.logger.info( f"Applying plugin {self.logger.name}." )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.
