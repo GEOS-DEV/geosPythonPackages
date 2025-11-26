@@ -1,5 +1,5 @@
-Geomechanics models
-======================
+Models
+=============
 
 This module defines data structures for geomechanics calculations.
 

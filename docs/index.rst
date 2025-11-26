@@ -76,23 +76,25 @@ Packages
 
 
 .. toctree::
-    :maxdepth: 5
+    :maxdepth: 2
 
     hdf5-wrapper
 
     geos-ats
 
-    geos-geomechanics
+    geos-utils
 
-    geos-mesh
+    mesh-doctor
 
-    geos-processing
+    ./geos_geomechanics_docs/geos-geomechanics
 
-    geos-pv
+    ./geos_mesh_docs/geos-mesh
+
+    ./geos_processing_docs/geos-processing
+
+    ./geos_pv_docs/geos-pv
 
     geos-timehistory
-
-    geos-utils
 
     geos-xml-tools
 

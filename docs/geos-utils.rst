@@ -1,14 +1,10 @@
-
 GEOS Utilities
 ===============
 
 The `geos-utils` python package defines utilities for all GEOS python packages including a logger, GEOS constants, basic functions, and unit management tools.
 
 
-API
-^^^
-
-geos.utils.ConnectionSet module
+ConnectionSet module
 --------------------------------
 
 .. automodule:: geos.utils.ConnectionSet
@@ -16,15 +12,15 @@ geos.utils.ConnectionSet module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.enumUnits module
+enumUnits module
 --------------------------------
 
 .. automodule:: geos.utils.enumUnits
    :members:
    :undoc-members:
    :show-inheritance:
-   
-geos.utils.geometryFunctions module
+
+geometryFunctions module
 ------------------------------------
 
 .. automodule:: geos.utils.geometryFunctions
@@ -32,7 +28,8 @@ geos.utils.geometryFunctions module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.GeosOutputsConstants module
+
+GeosOutputsConstants module
 -------------------------------------------
 
 .. automodule:: geos.utils.GeosOutputsConstants
@@ -40,7 +37,7 @@ geos.utils.GeosOutputsConstants module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.algebraFunctions module
+algebraFunctions module
 -------------------------------------------
 
 .. automodule:: geos.utils.algebraFunctions
@@ -48,7 +45,7 @@ geos.utils.algebraFunctions module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.Logger module
+Logger module
 ------------------------------
 
 .. automodule:: geos.utils.Logger
@@ -56,7 +53,8 @@ geos.utils.Logger module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.PhysicalConstants module
+.. _output-constant:
+PhysicalConstants module
 -----------------------------------------
 
 .. automodule:: geos.utils.PhysicalConstants
@@ -64,7 +62,7 @@ geos.utils.PhysicalConstants module
    :undoc-members:
    :show-inheritance:
 
-geos.utils.UnitRepository module
+UnitRepository module
 -------------------------------------
 
 .. automodule:: geos.utils.UnitRepository

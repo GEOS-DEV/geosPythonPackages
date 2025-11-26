@@ -50,7 +50,7 @@ To use it:
 * Select the mesh to transfer the global attributes (meshTo).
 * Select Filters > 4- Geos Utils > Attribute Mapping.
 * Select the source mesh with global attributes to transfer (meshFrom).
-* Select the on witch element (onPoints/onCells) the attributes to transfer are.
+* Select on which element (onPoints/onCells) the attributes to transfer are.
 * Select the global attributes to transfer from the source mesh to the final mesh.
 * Apply.
 

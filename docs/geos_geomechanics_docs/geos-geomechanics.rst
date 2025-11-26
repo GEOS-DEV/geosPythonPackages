@@ -1,10 +1,12 @@
 GEOS Geomechanics tools
 =============================
 
+This package contains geomechanics functions and data models.
+
 .. toctree::
    :maxdepth: 5
    :caption: Contents:
 
-   ./geos_geomechanics_docs/home.rst
+   model
 
-   ./geos_geomechanics_docs/modules.rst
+   processing
