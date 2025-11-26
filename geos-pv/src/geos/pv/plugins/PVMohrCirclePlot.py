@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from enum import Enum
 from typing import Any, Union, cast
@@ -14,7 +15,8 @@ from paraview.simple import (  # type: ignore[import-not-found]
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )
-
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler, )
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
@@ -29,12 +31,13 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.geomechanics.model.MohrCircle import MohrCircle, loggerTitle
+from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import (
     FAILURE_ENVELOPE,
     GeosMeshOutputsEnum,
 )
+from geos.utils.Logger import GEOSFormatter
 from geos.utils.PhysicalConstants import (
     DEFAULT_FRICTION_ANGLE_DEG,
     DEFAULT_FRICTION_ANGLE_RAD,
@@ -58,7 +61,6 @@ from geos.pv.pyplotUtils.matplotlibOptions import (
     optionEnumToXml,
 )
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
-from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 PVMohrCirclePlot is a ParaView plugin that allows to compute and plot
@@ -110,7 +112,6 @@ If you start from a raw GEOS output, execute the following steps before moving o
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=False,
 )
-@addPluginLogSupport(loggerTitle=loggerTitle)
 class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -186,13 +187,13 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         self.requestDataStep: int = -1
 
         # Logger
-        # self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
-        # self.logger.setLevel( logging.INFO )
-        # if not self.logger.hasHandlers():
-        #     handler = VTKHandler()
-        #     handler.setFormatter( CustomLoggerFormatter( False ) )
+        self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
+        self.logger.setLevel( logging.INFO )
+        if not self.logger.hasHandlers():
+            handler = VTKHandler()
+            handler.setFormatter( GEOSFormatter() )
 
-        #     self.logger.addHandler( handler )
+            self.logger.addHandler( handler )
 
     @smproperty.xml( """
         <Property name="Refresh Data"
@@ -659,7 +660,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         if self.requestDataStep < 0:
             # Get cell ids
             inData = self.GetInputData( inInfoVec, 0, 0 )
-            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger )
+            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger)
 
             # Update vtkDAS
             for circleId in self.cellIds:

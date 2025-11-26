@@ -32,6 +32,8 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty, smproxy )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler )
 
 __doc__ = """
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
@@ -85,7 +87,6 @@ loggerTitle: str = "Extract & Merge GEOS Block"
     """ )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
-@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -112,6 +113,11 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         self.requestDataStep: int = -1
 
         self.outputCellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
 
         self.logger.info( f"Apply plugin { self.logger.name }." )
 
