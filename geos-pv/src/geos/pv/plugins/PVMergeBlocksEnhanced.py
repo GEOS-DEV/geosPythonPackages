@@ -59,7 +59,7 @@ To use it:
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

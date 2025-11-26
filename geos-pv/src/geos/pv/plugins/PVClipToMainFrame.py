@@ -40,7 +40,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Clip to the main frame",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:

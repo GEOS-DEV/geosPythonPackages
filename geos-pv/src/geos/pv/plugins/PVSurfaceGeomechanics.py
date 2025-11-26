@@ -63,7 +63,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
              decoratedLabel="Geos Surface Geomechanics",
              decoratedType="vtkMultiBlockDataSet" )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

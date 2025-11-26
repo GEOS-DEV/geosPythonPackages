@@ -44,7 +44,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
-@addPluginLogSupport( loggerTitle=loggerTitle )
+@addPluginLogSupport( loggerTitles=[loggerTitle] )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:

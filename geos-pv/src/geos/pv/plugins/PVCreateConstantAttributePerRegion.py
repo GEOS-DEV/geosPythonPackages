@@ -55,7 +55,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_PROP,
              decoratedLabel="Create Constant Attribute Per Region",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

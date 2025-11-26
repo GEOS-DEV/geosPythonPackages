@@ -21,8 +21,9 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
+from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced, loggerTitle
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
+from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
@@ -43,6 +44,7 @@ To use it:
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

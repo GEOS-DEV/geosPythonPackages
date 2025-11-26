@@ -20,6 +20,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.SplitMesh import (SplitMesh, loggerTitle)
+from geos.processing.pre_processing.CellTypeCounterEnhanced import loggerTitle as cloggerTitle
 from geos.pv.utils.details import (SISOFilter, FilterCategory)
 from geos.utils.Logger import addPluginLogSupport
 
@@ -38,7 +39,7 @@ To use it:
 
 
 @SISOFilter( category=FilterCategory.GEOS_UTILS, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle, cloggerTitle])
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -52,7 +53,7 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             inputMesh(vtkPointSet): Input mesh.
             outputMesh: Output mesh.
         """
-        splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
+        splitMeshFilter: SplitMesh = SplitMesh( inputMesh )
         if len( splitMeshFilter.logger.handlers ) == 0:
             splitMeshFilter.setLoggerHandler( VTKHandler() )
         if splitMeshFilter.applyFilter():

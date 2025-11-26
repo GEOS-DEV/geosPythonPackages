@@ -250,21 +250,7 @@ class ClipToMainFrame( vtkTransformFilter ):
 
         clip.Update()
         self.SetTransform( clip )
-
-    def SetLoggerHandler( self, handler: logging.Handler ) -> None:
-        """Set a specific handler for the filter logger.
-
-        In this filter 4 log levels are use, .info, .error, .warning and .critical,
-        be sure to have at least the same 4 levels.
-
-        Args:
-            handler (logging.Handler): The handler to add.
-        """
-        if not self.logger.hasHandlers():
-            self.logger.addHandler( handler )
-        else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+        self.logger.info( "ClipToMainFrame applied successfully." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.

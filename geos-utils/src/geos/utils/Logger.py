@@ -48,7 +48,7 @@ Usage::
 T = TypeVar( 'T' )
 
 
-def addPluginLogSupport( loggerTitle: str ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
+def addPluginLogSupport( loggerTitles: list ) -> Callable[ [ Type[ T ] ], Type[ T ] ]:
     """Decorator to add logger support in the class following existing architecture.
 
     Args:
@@ -62,9 +62,12 @@ def addPluginLogSupport( loggerTitle: str ) -> Callable[ [ Type[ T ] ], Type[ T 
         def new_init( self: T, *args: Any, **kwargs: Any ) -> None:
             original_init( self, *args, **kwargs )
 
-            logger = getLogger( loggerTitle )
-            for hdlr in list( filter( lambda x: not isinstance( x, GEOSHandler ), logger.handlers ) ):
-                logger.removeHandler( hdlr )
+            # logger = getLogger( loggerTitle )
+            for logger in loggerTitles:
+                # if not isinstance(logger, logging.PlaceHolder ):
+                for hdlr in list( filter( lambda x: not isinstance( x, GEOSHandler ),  getLogger(logger).handlers ) ):
+                    getLogger(logger).removeHandler( hdlr )
+        
 
 
         cls.__init__ = new_init  # type: ignore[assignment]

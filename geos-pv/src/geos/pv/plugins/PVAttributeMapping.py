@@ -67,7 +67,7 @@ To use it:
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],
     composite_data_supported=True,
 )
-@addPluginLogSupport(loggerTitle=loggerTitle)
+@addPluginLogSupport(loggerTitles=[loggerTitle])
 class PVAttributeMapping( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
