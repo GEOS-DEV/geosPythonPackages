@@ -11,7 +11,6 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smproperty,
 )
 
-
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
@@ -63,7 +62,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
              decoratedLabel="Geos Surface Geomechanics",
              decoratedType="vtkMultiBlockDataSet" )
-@addPluginLogSupport(loggerTitles=[loggerTitle])
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

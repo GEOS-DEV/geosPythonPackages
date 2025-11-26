@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
-import logging
 
 from typing_extensions import Self
 
@@ -82,7 +81,7 @@ class MergeBlockEnhanced:
         self.outputMesh: vtkUnstructuredGrid = vtkUnstructuredGrid()
 
         # Logger
-        self.logger: Logger = getLogger( loggerTitle)
+        self.logger: Logger = getLogger( loggerTitle )
 
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.

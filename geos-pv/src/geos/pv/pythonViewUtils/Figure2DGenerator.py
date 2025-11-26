@@ -129,7 +129,7 @@ class Figure2DGenerator:
                 ax.set_ylim( ymin, ymax )
 
     def getFigure( self: Self ) -> figure.Figure:
-        """access the m_fig attribute.
+        """Access the m_fig attribute.
 
         Returns:
             figure.Figure: Figure containing all the plots.

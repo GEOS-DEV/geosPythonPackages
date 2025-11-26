@@ -27,7 +27,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced, loggerTitle 
+from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced, loggerTitle
 from geos.utils.Logger import addPluginLogSupport
 
 __doc__ = """
@@ -59,7 +59,7 @@ To use it:
 @smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
-@addPluginLogSupport(loggerTitles=[loggerTitle, f"{loggerTitle}.vtkErrorLogger" ])
+@addPluginLogSupport( loggerTitles=[ loggerTitle, f"{loggerTitle}.vtkErrorLogger" ] )
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

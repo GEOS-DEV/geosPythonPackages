@@ -44,7 +44,7 @@ To use it:
     dataTypes=[ "vtkUnstructuredGrid" ],
     composite_data_supported=True,
 )
-@addPluginLogSupport(loggerTitles=[loggerTitle])
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

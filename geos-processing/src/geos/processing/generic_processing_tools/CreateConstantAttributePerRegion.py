@@ -121,7 +121,7 @@ class CreateConstantAttributePerRegion:
         self.useDefaultValue: bool = False
 
         # Logger.
-        self.logger: Logger = getLogger(loggerTitle)  # Warnings counter.
+        self.logger: Logger = getLogger( loggerTitle )  # Warnings counter.
 
         self.counter: CountWarningHandler = CountWarningHandler()
         self.counter.setLevel( logging.INFO )
@@ -135,7 +135,6 @@ class CreateConstantAttributePerRegion:
             boolean (bool): True if calculation successfully ended, False otherwise.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-
 
         # Check the validity of the attribute region.
         if self.onPoints is None:

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
 # SPDX-FileContributor: Jacques Franc
-import logging
 
 import numpy as np
 import numpy.typing as npt
@@ -52,7 +51,6 @@ To use it:
 
 """
 
-loggerTitle : str = "ClipToMainFrame"
 
 class ClipToMainFrameElement( vtkLandmarkTransform ):
 

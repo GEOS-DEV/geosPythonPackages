@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
-import logging
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
@@ -49,9 +48,10 @@ To use the filter:
 
 loggerTitle: str = "SplitMesh"
 
+
 class SplitMesh():
 
-    def __init__( self, inputMesh: vtkUnstructuredGrid) -> None:
+    def __init__( self, inputMesh: vtkUnstructuredGrid ) -> None:
         """SplitMesh filter splits each cell using edge centers.
 
         Args:
@@ -67,8 +67,7 @@ class SplitMesh():
         self.cellTypes: list[ int ]
 
         #subordonate filter
-        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
-            self.inputMesh)
+        self.cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( self.inputMesh )
         # Logger
         self.logger: Logger = getLogger( loggerTitle )
 

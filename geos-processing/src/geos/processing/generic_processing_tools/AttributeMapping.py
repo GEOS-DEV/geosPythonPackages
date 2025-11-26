@@ -4,7 +4,6 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import numpy as np
 import numpy.typing as npt
-import logging
 from typing_extensions import Self, Union
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
@@ -90,7 +89,7 @@ class AttributeMapping:
         self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
         # Logger.
-        self.logger: Logger = getLogger( loggerTitle)
+        self.logger: Logger = getLogger( loggerTitle )
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.

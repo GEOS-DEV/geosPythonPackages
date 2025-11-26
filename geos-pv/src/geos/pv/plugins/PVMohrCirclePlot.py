@@ -660,7 +660,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         if self.requestDataStep < 0:
             # Get cell ids
             inData = self.GetInputData( inInfoVec, 0, 0 )
-            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger)
+            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger )
 
             # Update vtkDAS
             for circleId in self.cellIds:

@@ -641,7 +641,7 @@ def computeSurfaceTextureCoordinates(
     # Need to compute texture coordinates required for tangent calculation
     vtkErrorLogger: Logger
     if logger is None:
-        vtkErrorLogger = getLogger( "Compute Surface Texture Coordinates vtkError Logger", True )
+        vtkErrorLogger = getLogger( "Compute Surface Texture Coordinates vtkError Logger")
     else:
         vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
         vtkErrorLogger.setLevel( logging.INFO )

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Antoine Mazuyer, Martin Lemay
-import logging
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkIntArray

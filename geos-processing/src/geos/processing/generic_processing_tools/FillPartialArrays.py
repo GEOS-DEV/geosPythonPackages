@@ -55,6 +55,7 @@ To use it:
 
 loggerTitle: str = "Fill Partial Attribute"
 
+
 class FillPartialArrays:
 
     def __init__(
@@ -75,7 +76,7 @@ class FillPartialArrays:
             multiBlockDataSet (vtkMultiBlockDataSet): The mesh where to fill the attribute.
             dictAttributesValues (dict[str, Any]): The dictionary with the attribute to fill as keys and the list of filling values as items.
         """
-        self.logger = getLogger(loggerTitle)
+        self.logger = getLogger( loggerTitle )
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
 

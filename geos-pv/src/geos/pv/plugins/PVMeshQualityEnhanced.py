@@ -61,7 +61,7 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_QC,
              decoratedLabel="Mesh Quality Enhanced",
              decoratedType="vtkUnstructuredGrid" )
-@addPluginLogSupport(loggerTitles=[loggerTitle,cloggerTitle])
+@addPluginLogSupport( loggerTitles=[ loggerTitle, cloggerTitle ] )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

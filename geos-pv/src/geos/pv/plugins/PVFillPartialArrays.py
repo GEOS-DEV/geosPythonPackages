@@ -44,14 +44,13 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
-@addPluginLogSupport( loggerTitles=[loggerTitle] )
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self, ) -> None:
         """Fill a partial attribute with constant value per component."""
         self.clearDictAttributesValues: bool = True
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = {}
-
 
     @smproperty.xml( """
         <StringVectorProperty

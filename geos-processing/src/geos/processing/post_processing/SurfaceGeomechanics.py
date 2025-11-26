@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
-import logging
 import numpy as np
 
 from typing_extensions import Self, Union
@@ -99,7 +98,7 @@ loggerTitle: str = "Surface Geomechanics"
 
 class SurfaceGeomechanics:
 
-    def __init__( self: Self, surfacicMesh: vtkPolyData) -> None:
+    def __init__( self: Self, surfacicMesh: vtkPolyData ) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.
 
         Input and Output objects are a vtkPolydata with surfaces
@@ -111,10 +110,10 @@ class SurfaceGeomechanics:
                 Defaults to False.
         """
         # Logger
-        self.logger: Logger= getLogger( loggerTitle )
+        self.logger: Logger = getLogger( loggerTitle )
 
         # Input surfacic mesh
-        print(surfacicMesh)
+        print( surfacicMesh )
         if not surfacicMesh.IsA( "vtkPolyData" ):
             self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
         self.inputMesh: vtkPolyData = surfacicMesh

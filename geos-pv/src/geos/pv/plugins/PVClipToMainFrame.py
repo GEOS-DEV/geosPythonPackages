@@ -20,7 +20,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
-from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame, loggerTitle
+from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame, loggerTitle, getLogger
 from geos.utils.Logger import Logger, addPluginLogSupport
 
 __doc__ = """
@@ -37,13 +37,13 @@ To use it:
 @SISOFilter( category=FilterCategory.GEOS_UTILS,
              decoratedLabel="Clip to the main frame",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
-@addPluginLogSupport(loggerTitles=[loggerTitle])
+@addPluginLogSupport( loggerTitles=[ loggerTitle ] )
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):
 
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame()
-        self.logger : Logger = getLogger( loggerTitle )
+        self.logger: Logger = getLogger( loggerTitle )
         self.logger.info( f"Applying plugin {self.logger.name}." )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:

@@ -8,7 +8,7 @@ from typing import Any, Union
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd  # type: ignore[import-untypedGEOSFormatter ]
 
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
@@ -37,6 +37,7 @@ from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
+from geos.utils.Logger import ( GEOSFormatter )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
@@ -483,8 +484,12 @@ def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSe
         list[str]: ids of the cells.
     """
     if logger is None:
-        logger = getLogger( "getVtkOriginalCellIds" )
+        logger = logging.getLogger( "getVtkOriginalCellIds" )
 
+    if not logger.hasHandlers():
+        handler = VTKHandler()
+        handler.setFormatter( GEOSFormatter() )
+        logger.addHandler( handler )
 
     # Merge blocks for vtkCompositeDataSet
     mesh2: vtkUnstructuredGrid = mergeBlocks( mesh, logger=logger )
