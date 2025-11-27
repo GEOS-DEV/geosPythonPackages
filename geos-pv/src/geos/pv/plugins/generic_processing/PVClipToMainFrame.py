@@ -16,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet, )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -30,13 +30,15 @@ Clip the input mesh to the main frame applying the correct LandmarkTransform
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVClipToMainFrame.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVClipToMainFrame
+* Select the mesh to process
+* Select the filter: Filters > 0- GEOS Generic-Processing > Clip to the main frame
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
+@SISOFilter( category=FilterCategory.GEOS_GENERIC_PROCESSING,
              decoratedLabel="Clip to the main frame",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):

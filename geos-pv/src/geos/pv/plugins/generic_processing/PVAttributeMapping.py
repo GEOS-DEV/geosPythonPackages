@@ -8,7 +8,7 @@ from typing import Union
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -47,19 +47,19 @@ Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
-* Select the mesh to transfer the global attributes (meshTo).
-* Select Filters > 4- Geos Utils > Attribute Mapping.
-* Select the source mesh with global attributes to transfer (meshFrom).
-* Select the on witch element (onPoints/onCells) the attributes to transfer are.
-* Select the global attributes to transfer from the source mesh to the final mesh.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVAttributeMapping
+* Select the mesh to transfer the global attributes (meshTo)
+* Select the filter: Filters > 0- GEOS Generic-Processing > Attribute Mapping
+* Select the source mesh with global attributes to transfer (meshFrom)
+* Select the on which element (onPoints/onCells) the attributes to transfer are
+* Select the global attributes to transfer from the source mesh to the final mesh
+* Apply
 
 """
 
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smhint.xml( '<ShowInMenu category="0- GEOS Generic-Processing"/>' )
 @smproperty.input( name="meshFrom", port_index=1, label="Mesh From" )
 @smdomain.datatype(
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],

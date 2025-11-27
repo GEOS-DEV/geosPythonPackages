@@ -22,7 +22,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkDataSet, )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -45,16 +45,16 @@ The relation index/values is given by a dictionary. Its keys are the indexes and
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCreateConstantAttributePerRegion.
-* Select the mesh in which you want to create the attributes.
-* Select the filter Create Constant Attribute Per Region in filter|0- Geos Pre-processing.
-* Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVCreateConstantAttributePerRegion
+* Select the mesh in which you want to create the attributes
+* Select the filter: Filters > 0- GEOS Generic-Processing > Create Constant Attribute Per Region
+* Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_PROP,
+@SISOFilter( category=FilterCategory.GEOS_GENERIC_PROCESSING,
              decoratedLabel="Create Constant Attribute Per Region",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
