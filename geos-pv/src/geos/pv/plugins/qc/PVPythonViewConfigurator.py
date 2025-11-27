@@ -10,7 +10,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -61,14 +61,16 @@ This filter results in opening a new Python View window and displaying cross-plo
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVPythonViewConfigurator.
-* Select the vtkDataObject containing the data to plot.
-* Search and Apply PVPythonViewConfigurator Filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVPythonViewConfigurator.
+* Select the vtkDataObject containing the data to plot
+* Select the filter: Filters > 3- GEOS QC > Python View Configurator
+* Configure the plot with the widgets
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
+@SISOFilter( category=FilterCategory.GEOS_QC,
              decoratedLabel="Python View Configurator",
              decoratedType="vtkDataObject" )
 class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
