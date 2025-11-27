@@ -20,7 +20,7 @@ import os
 @dataclass(frozen=True)
 class SimulationConstant:
     SIMULATION_GEOS_PATH = "/workrd/users/"
-    HOST = "fr-vmx00368.main.glb.corp.local"  #"p4log01"  # Only run on P4 machine
+    HOST = "p4log01"  # Only run on P4 machine
     REMOTE_HOME_BASE = "/users"
     PORT = 22
     SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/users/"
@@ -478,8 +478,8 @@ class Simulation:
                 ci ={'nodes': 2 , 'total_ranks': 96 }
                 rendered = template.render(job_name=server.state.simulation_job_name,
                                            input_file=server.state.simulation_xml_filename,
-                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"{ci['nodes']*sdi.selected_cluster['mem_per_node']}GB",
-                                           commment='mycomment', partition='mypart', account='myaccount' )
+                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"{2}GB",
+                                           commment="GEOS,CCS,testTrame", partition='p4_general', account='myaccount' )
 
                 with open('job.slurm','w') as f:
                     f.write(rendered)
@@ -489,8 +489,13 @@ class Simulation:
                                                         local_path='job.slurm',
                                                         remote_path=f'{server.state.simulation_remote_path}/job.slurm',
                                                         direction="put")
+                    
+                    Authentificator._execute_remote_command(Authentificator.ssh_client,
+                                                            f'cd {server.state.simulation_remote_path} && sbatch job.slurm')
+                    Authentificator._execute_remote_command(Authentificator.ssh_client,
+                                                            f'squeue -u $USER')
                     Authentificator._transfer_file_sftp(Authentificator.ssh_client,
-                                                        remote_path=f'{server.state.simulation_remote_path}/job.slurm',
+                                                        remote_path=f'{server.state.simulation_remote_path}/hello.out',
                                                         local_path=f'{server.state.simulation_dl_path}/dl.test',
                                                         direction="get")
 
