@@ -158,7 +158,7 @@ class CreateConstantAttributePerRegion:
     def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
 
-        Raise:
+        Raises:
             ValueError: Errors with the input value for the region index or errors during the creation of the new attribute.
             AttributeError: Errors with the attribute of the mesh.
         """
@@ -202,7 +202,7 @@ class CreateConstantAttributePerRegion:
                                                                          self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
@@ -214,7 +214,7 @@ class CreateConstantAttributePerRegion:
                                                           onPoints=self.onPoints,
                                                           logger=self.logger ):
                     raise ValueError(
-                        f"Something got wrong with the creation of the attribute { self.newAttributeName }." )
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -235,14 +235,14 @@ class CreateConstantAttributePerRegion:
                                             onPoints=self.onPoints,
                                             logger=self.logger ):
                         raise ValueError(
-                            f"Something got wrong with the creation of the attribute { self.newAttributeName }." )
+                            f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
         else:
             validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
                                                                       self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
@@ -254,7 +254,7 @@ class CreateConstantAttributePerRegion:
                                                        onPoints=self.onPoints,
                                                        logger=self.logger ):
                     raise ValueError(
-                        f"Something got wrong with the creation of the attribute { self.newAttributeName }." )
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -270,7 +270,7 @@ class CreateConstantAttributePerRegion:
                                         onPoints=self.onPoints,
                                         logger=self.logger ):
                     raise ValueError(
-                        f"Something got wrong with the creation of the attribute { self.newAttributeName }." )
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
         # Log the output message.
         self._logOutputMessage( validIndexes )

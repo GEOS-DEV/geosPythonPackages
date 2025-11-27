@@ -716,7 +716,7 @@ class GeomechanicsCalculator:
 
         Raises:
             AttributeError: A mandatory attribute is missing.
-            ValueError: Something got wrong during the creation of an attribute.
+            ValueError: Something went wrong during the creation of an attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
@@ -747,7 +747,7 @@ class GeomechanicsCalculator:
                                     componentNames=componentNames,
                                     onPoints=onPoints,
                                     logger=self.logger ):
-                raise ValueError( f"Something got wrong during the creation of the attribute { attributeName }." )
+                raise ValueError( f"Something went wrong during the creation of the attribute { attributeName }." )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
         self.logger.info( f"The filter { self.logger.name } succeeded." )

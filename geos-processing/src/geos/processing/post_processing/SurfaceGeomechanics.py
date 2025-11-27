@@ -235,7 +235,7 @@ class SurfaceGeomechanics:
             ValueError: Errors during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
             AttributeError: Attributes must be on cell.
-            AssertionError: Something got wrong during the shearCapacityUtilization computation.
+            AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         msg = f"Applying filter {self.logger.name}"
         if self.name is not None:
@@ -264,7 +264,7 @@ class SurfaceGeomechanics:
         """Convert attributes from local to XYZ basis.
 
         Raises:
-            ValueError: Something got wrong during the creation of an attribute.
+            ValueError: Something went wrong during the creation of an attribute.
             AttributeError: Attributes must be on cell.
         """
         # Get the list of attributes to convert and filter
@@ -300,7 +300,7 @@ class SurfaceGeomechanics:
                 self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
                 self.newAttributeNames.add( attrNameXYZ )
             else:
-                raise ValueError( f"Something got wrong during the creation of the attribute { attrNameXYZ }." )
+                raise ValueError( f"Something went wrong during the creation of the attribute { attrNameXYZ }." )
 
         return
 
@@ -353,7 +353,7 @@ class SurfaceGeomechanics:
         for i, cellAttribute in enumerate( attrArray ):
             if len( cellAttribute ) not in ( 3, 6, 9 ):
                 raise ValueError(
-                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( cellAttribute.shape ) }."
+                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but went { len( cellAttribute.shape ) }."
                 )
 
             # Compute attribute XYZ components
@@ -369,8 +369,8 @@ class SurfaceGeomechanics:
         """Compute the shear capacity utilization (SCU) on surface.
 
         Raises:
-            ValueError: Something got wrong during the creation of an attribute.
-            AssertionError: Something got wrong during the shearCapacityUtilization computation.
+            ValueError: Something went wrong during the creation of an attribute.
+            AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 

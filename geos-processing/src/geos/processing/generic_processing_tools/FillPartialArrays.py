@@ -138,7 +138,7 @@ class FillPartialArrays:
                                           onPoints=onPoints,
                                           listValues=self.dictAttributesValues[ attributeName ],
                                           logger=self.logger ):
-                raise ValueError( "Something got wrong with the filling of partial attributes" )
+                raise ValueError( "Something went wrong with the filling of partial attributes" )
 
         self.logger.info( f"The filter { self.logger.name } succeed." )
 

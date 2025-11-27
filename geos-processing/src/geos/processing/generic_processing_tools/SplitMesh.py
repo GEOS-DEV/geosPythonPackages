@@ -446,7 +446,7 @@ class SplitMesh():
             splittedMesh (vtkUnstructuredGrid): Splitted mesh.
 
         Raises:
-            AttributeError: Errors with cell data.
+            AttributeError: Cell attribute splitted are not defined.
         """
         cellData: vtkCellData = self.inputMesh.GetCellData()
         if cellData is None:

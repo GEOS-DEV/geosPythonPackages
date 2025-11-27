@@ -135,7 +135,7 @@ class GeosBlockMerge():
         """Apply the filter on the mesh.
 
         Raises:
-            ValueError: Something got wrong during the creation of an attribute.
+            ValueError: Something went wrong during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
@@ -168,7 +168,7 @@ class GeosBlockMerge():
                                             onPoints=False,
                                             logger=self.logger ):
                 raise ValueError(
-                    f"Something got wrong during the creation of the attribute { PostProcessingOutputsEnum.BLOCK_INDEX.attributeName }."
+                    f"Something went wrong during the creation of the attribute { PostProcessingOutputsEnum.BLOCK_INDEX.attributeName }."
                 )
 
             # Rename attributes

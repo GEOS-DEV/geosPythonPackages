@@ -33,29 +33,42 @@ def test_AttributeMapping(
     attributeMappingFilter.applyFilter()
 
 
-@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints, error", [
-    ( "dataset", "emptydataset", {}, False, "ValueError" ),
-    ( "dataset", "emptydataset", { "Fault" }, False, "AttributeError" ),
-    ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False, "AttributeError" ),
-    ( "multiblock", "emptymultiblock", { "FAULT" }, False, "AttributeError" ),
-    ( "dataset", "emptyFracture", { "FAULT" }, False, "ValueError" ),
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
+    ( "dataset", "emptydataset", { "Fault" }, False ),  # Attribute not in the mesh from
+    ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False ),  # Attribute on both meshes
+    ( "multiblock", "emptymultiblock", { "FAULT" }, False ),  # Partial attribute in the mesh from
 ] )
-def test_AttributeMappingRaises(
+def test_AttributeMappingRaisesAttributeError(
     dataSetTest: Any,
     meshFromName: str,
     meshToName: str,
     attributeNames: set[ str ],
     onPoints: bool,
-    error: str,
 ) -> None:
-    """Test the fails of the filter."""
+    """Test the fails of the filter with attributes issues."""
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
 
-    if error == "AttributeError":
-        with pytest.raises( AttributeError ):
-            attributeMappingFilter.applyFilter()
-    elif error == "ValueError":
-        with pytest.raises( ValueError ):
-            attributeMappingFilter.applyFilter()
+    with pytest.raises( AttributeError ):
+        attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
+    ( "dataset", "emptydataset", {}, False ),  # no attribute to map
+    ( "dataset", "emptyFracture", { "FAULT" }, False ),  # meshes with same type but different cells dimension
+] )
+def test_AttributeMappingRaisesValueError(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    onPoints: bool,
+) -> None:
+    """Test the fails of the filter with input value issue."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
+
+    with pytest.raises( ValueError ):
+        attributeMappingFilter.applyFilter()

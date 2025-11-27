@@ -142,7 +142,7 @@ class AttributeMapping:
 
         Mapping the piece of the attributes to transfer.
 
-        Raise:
+        Raises:
             ValueError: Errors with the input attributeNames or the input mesh.
             AttributeError: Errors with the attribute of the mesh.
         """
