@@ -44,11 +44,12 @@ A summary figure can be exported by ticking the box and choosing a filename befo
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMeshQualityEnhanced.
-* Select the input mesh.
-* Select the metrics to compute.
-* Choose a filename for export if needed.
-* Apply the filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVMeshQualityEnhanced
+* Select the input mesh to process
+* Select the filter: Filters > 3- GEOS QC > Mesh Quality Enhanced
+* Select the metrics to compute
+* Choose a filename for export if needed
+* Apply
 
 
 .. IMPORTANT::

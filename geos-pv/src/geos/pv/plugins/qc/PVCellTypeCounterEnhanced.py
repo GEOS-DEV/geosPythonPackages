@@ -15,7 +15,7 @@ from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkTable
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -29,15 +29,16 @@ The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can 
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounterEnhanced.
-* Select the input mesh.
-* Apply the filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVCellTypeCounterEnhanced
+* Select the input mesh to process
+* Select the filter: Filters > 3- GEOS QC > Cell Type Counter Enhanced
+* Apply
 
 """
 
 
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
-@smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
+@smhint.xml( '<ShowInMenu category="3- GEOS QC"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
