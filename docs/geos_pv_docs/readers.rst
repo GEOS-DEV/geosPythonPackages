@@ -4,4 +4,4 @@ Readers
 PVGeosLogReader
 --------------------
 
-.. automodule:: geos.pv.plugins.PVGeosLogReader
+.. automodule:: geos.pv.plugins.post_processing.PVGeosLogReader
