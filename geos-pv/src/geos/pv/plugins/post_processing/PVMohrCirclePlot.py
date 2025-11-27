@@ -25,7 +25,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid, )
 
 # Update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -78,20 +78,20 @@ This plugin requires the presence of a `stressEffective` attribute in the mesh. 
 .. Warning::
     The whole ParaView pipeline will be executed for all timesteps present in the initial PVD file. Please be aware that the number of pipeline filters and timesteps should be as limited as possible. Otherwise, please consider going to get a cup of coffee.
 
-* Load the module in ParaView: Tools > Manage Plugins.... > Load new > PVMohrCirclePlot
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVMohrCirclePlot
 
 If you start from a raw GEOS output, execute the following steps before moving on.
 - First, consider removing some unnecessary timesteps manually from the PVD file in order to reduce the calculation time and resources used in the following steps.
-- Load the data into ParaView, then apply the `PVGeosExtractMergeBlock*` plugin on it.
+- Load the data into ParaView, then apply the `PVGeosBLockExtractAndMerge` plugin on it.
 - Select the filter output that you want to consider for the Mohr's circle plot.
 
 
-* Extract a few number of cells with the `ExtractSelection` ParaView Filter, then use the `MergeBlocks` ParaView Filter.
-* Select the resulting mesh in the pipeline.
-* Select Filters > 3- Geos Geomechanics > Plot Mohr's Circle.
+* Extract a few number of cells with the `ExtractSelection` ParaView Filter, then use the `MergeBlocks` ParaView Filter
+* Select the resulting mesh in the pipeline
+* Select the filter: Filters > 2- GEOS Post-Processing > Plot Mohr's Circle
 * Select the cell Ids and time steps you want
-* (Optional) Set rock cohesion and/or friction angle.
-* Apply.
+* (Optional) Set rock cohesion and/or friction angle
+* Apply
 
 
 
@@ -104,7 +104,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
 
 @smproxy.filter( name="PVMohrCirclePlot", label="Plot Mohr's Circles" )
 @smhint.xml( """
-    <ShowInMenu category="3- Geos Geomechanics"/>
+    <ShowInMenu category="2- GEOS Post-Processing"/>
     <View type="PythonView"/>
     """ )
 @smproperty.input( name="Input", port_index=0 )
@@ -303,7 +303,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     @smproperty.intvector( name="AnnotateCircles", label="Annotate Circles", default_values=1 )
     @smdomain.xml( """<BooleanDomain name="bool"/>""" )
     def b06SetAnnotateCircles( self: Self, boolean: bool ) -> None:
-        """Set option to add annotatations to circles.
+        """Set option to add annotations to circles.
 
         Args:
             boolean (bool): True to annotate circles, False otherwise.

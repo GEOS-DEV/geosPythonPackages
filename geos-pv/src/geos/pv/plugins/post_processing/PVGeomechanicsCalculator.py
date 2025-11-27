@@ -18,7 +18,7 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -68,9 +68,9 @@ The output mesh has the same type than the input one.
 
 To use it:
 
-* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeomechanicsCalculator
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsCalculator
 * Select the mesh you want to compute geomechanics properties on
-* Search Filters > Filter Category.GEOS_GEOMECHANICS > GEOS Geomechanics Calculator
+* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Geomechanics Calculator
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties
 * Apply
@@ -78,7 +78,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
+@SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Geomechanics Calculator",
              decoratedType=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ] )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):

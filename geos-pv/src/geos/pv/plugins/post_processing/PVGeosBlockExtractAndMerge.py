@@ -11,7 +11,7 @@ from pathlib import Path
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -62,9 +62,11 @@ Input and output meshes are vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeosBlockExtractAndMerge.
-* Select the Geos output .pvd file loaded in Paraview.
-* Search and Apply PVGeosBlockExtractAndMerge Filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeosBlockExtractAndMerge
+* Select the Geos output .pvd file loaded in Paraview to process
+* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Extract and Merge Blocks
+* Apply
+
 """
 
 loggerTitle: str = "Extract & Merge GEOS Block"
@@ -72,14 +74,14 @@ loggerTitle: str = "Extract & Merge GEOS Block"
 
 @smproxy.filter(
     name="PVGeosBlockExtractAndMerge",
-    label="Geos Extract and Merge Blocks",
+    label="GEOS Extract and Merge Blocks",
 )
 @smproperty.xml( """
     <OutputPort index="0" name="Volume"/>
     <OutputPort index="1" name="Fault"/>
     <OutputPort index="2" name="Well"/>
     <Hints>
-        <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+        <ShowInMenu category="2- Geos Post-Processing"/>
         <View type="RenderView" port="0"/>
         <View type="None" port="1"/>
         <View type="None" port="2"/>
