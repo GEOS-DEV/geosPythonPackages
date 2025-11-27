@@ -33,11 +33,13 @@ def test_AttributeMapping(
     attributeMappingFilter.applyFilter()
 
 
-@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
-    ( "dataset", "emptydataset", { "Fault" }, False ),  # Attribute not in the mesh from
-    ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False ),  # Attribute on both meshes
-    ( "multiblock", "emptymultiblock", { "FAULT" }, False ),  # Partial attribute in the mesh from
-] )
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, onPoints",
+    [
+        ( "dataset", "emptydataset", { "Fault" }, False ),  # Attribute not in the mesh from
+        ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False ),  # Attribute on both meshes
+        ( "multiblock", "emptymultiblock", { "FAULT" }, False ),  # Partial attribute in the mesh from
+    ] )
 def test_AttributeMappingRaisesAttributeError(
     dataSetTest: Any,
     meshFromName: str,
@@ -54,10 +56,12 @@ def test_AttributeMappingRaisesAttributeError(
         attributeMappingFilter.applyFilter()
 
 
-@pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, onPoints", [
-    ( "dataset", "emptydataset", {}, False ),  # no attribute to map
-    ( "dataset", "emptyFracture", { "FAULT" }, False ),  # meshes with same type but different cells dimension
-] )
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, onPoints",
+    [
+        ( "dataset", "emptydataset", {}, False ),  # no attribute to map
+        ( "dataset", "emptyFracture", { "FAULT" }, False ),  # meshes with same type but different cells dimension
+    ] )
 def test_AttributeMappingRaisesValueError(
     dataSetTest: Any,
     meshFromName: str,
