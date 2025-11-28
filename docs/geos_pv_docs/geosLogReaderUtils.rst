@@ -1,43 +1,43 @@
 GeosLogReaderUtils functions
 ============================
 
-This package define functions dedicated to the GeosLogReader.
+This package defines functions dedicated to the GeosLogReader.
 
 
-GeosLogReaderAquifers module
--------------------------------------------------------------------
+Aquifer log reader
+---------------------------
 
 .. automodule:: geos.pv.geosLogReaderUtils.GeosLogReaderAquifers
    :members:
    :undoc-members:
    :show-inheritance:
 
-geosLogReaderConvergence module
----------------------------------------------------------------------
+Convergence log reader
+--------------------------------
 
 .. automodule:: geos.pv.geosLogReaderUtils.GeosLogReaderConvergence
    :members:
    :undoc-members:
    :show-inheritance:
 
-GeosLogReaderFlow module
----------------------------------------------------------------
+Flow log reader
+-------------------------
 
 .. automodule:: geos.pv.geosLogReaderUtils.GeosLogReaderFlow
    :members:
    :undoc-members:
    :show-inheritance:
 
-GeosLogReaderFunctions module
---------------------------------------------------------------------
+Functions log reader
+--------------------------
 
 .. automodule:: geos.pv.geosLogReaderUtils.geosLogReaderFunctions
    :members:
    :undoc-members:
    :show-inheritance:
 
-GeosLogReaderWells module
---------------------------------------------------------------------
+Wells log reader
+---------------------
 
 .. automodule:: geos.pv.geosLogReaderUtils.GeosLogReaderWells
    :members:

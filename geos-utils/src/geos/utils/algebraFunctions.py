@@ -18,29 +18,29 @@ def getAttributeMatrixFromVector( attrArray: npt.NDArray[ np.float64 ], ) -> npt
     * if input vector size is 3:
         .. math::
 
-            (v1, v2, v3)   =>   \\begin{bmatrix}
+            (v1, v2, v3)   =>   \begin{bmatrix}
                                     v0 &  0 &  0 \\
                                     0 & v1 &  0 \\
                                     0 &  0 & v2
-                                \\end{bmatrix}
+                                \end{bmatrix}
 
     * if input vector size is 9:
         .. math::
 
-            (v1, v2, v3, v4, v5, v6, v7, v8, v9)   =>   \\begin{bmatrix}
+            (v1, v2, v3, v4, v5, v6, v7, v8, v9)   =>   \begin{bmatrix}
                                                             v1 & v6 & v5 \\
                                                             v9 & v2 & v4 \\
                                                             v8 & v7 & v3
-                                                        \\end{bmatrix}
+                                                        \end{bmatrix}
 
     * if input vector size is 6 (symmetrical tensor):
         .. math::
 
-            (v1, v2, v3, v4, v5, v6)   =>   \\begin{bmatrix}
+            (v1, v2, v3, v4, v5, v6)   =>   \begin{bmatrix}
                                                 v1 & v6 & v5 \\
                                                 v6 & v2 & v4 \\
                                                 v5 & v4 & v3
-                                            \\end{bmatrix}
+                                            \end{bmatrix}
 
     .. Note::
         In the case of 3 x 3 tensors, GEOS is currently only implemented for symmetrical cases.
@@ -92,31 +92,31 @@ def getAttributeVectorFromMatrix( attrMatrix: npt.NDArray[ np.float64 ], size: i
     * 3x3 diagonal matrix:
         .. math::
 
-            \\begin{bmatrix}
+            \begin{bmatrix}
                 M00 &   0 &   0 \\
                   0 & M11 &   0 \\
                   0 &   0 & M22
-            \\end{bmatrix}
+            \end{bmatrix}
                =>   (M00, M11, M22)
 
     * 3x3 Generic matrix:
         .. math::
 
-            \\begin{bmatrix}
+            \begin{bmatrix}
                 M00 & M01 & M02 \\
                 M10 & M11 & M12 \\
                 M20 & M21 & M22
-            \\end{matrix}
+            \end{bmatrix}
                =>   (M00, M11, M22, M12, M02, M01, M21, M20, M10)
 
     * Symmetric case
         .. math::
 
-            \\begin{bmatrix}
+            \begin{bmatrix}
                 M00 & M01 & M02 \\
                 M01 & M11 & M12 \\
                 M02 & M12 & M22
-            \\end{bmatrix}
+            \end{bmatrix}
                =>   (M00, M11, M22, M12, M02, M01)
 
     .. Note::

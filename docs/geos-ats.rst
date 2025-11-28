@@ -1,5 +1,5 @@
 
-GEOS ATS
+ATS
 ==========
 
 The `geos-ats` python package includes tools for managing integrated tests for GEOS.
@@ -7,10 +7,10 @@ It is built using the `Automated Test System <https://ats.readthedocs.io/en/late
 The available console scripts for this package and its API are described below.
 
 
-run_geos_ats
-----------------
+Usage
+--------
 
-Primary entry point for running integrated tests.
+`run_geos_ats` is the primary entry point for running integrated tests.
 
 .. argparse::
    :module: geos.ats.command_line_parsers

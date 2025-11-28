@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 from typing import Any
 import numpy as np
@@ -10,7 +10,22 @@ from geos.utils.algebraFunctions import getAttributeMatrixFromVector
 from geos.utils.PhysicalConstants import (
     EPSILON, )
 
-__doc__ = """Functions to compute additional geomechanical properties."""
+__doc__ = """The `geomechanicsCalculatorFunctions` module contains functions to compute additional geomechanical properties such as:
+
+    - specific gravity
+    - Young modulus
+    - Poisson ratio
+    - bulk modulus
+    - shear modulus
+    - lambda coefficient
+    - oedometric modulus
+    - Biot coefficient
+    - total stress
+    - elastic strain
+    - reservoir stress
+    - ...
+
+"""
 
 
 def specificGravity( density: npt.NDArray[ np.float64 ], specificDensity: float ) -> npt.NDArray[ np.float64 ]:
@@ -210,7 +225,7 @@ def biotCoefficient( Kgrain: float, bulkModulus: npt.NDArray[ np.float64 ] ) -> 
         bulkModulus (npt.NDArray[np.float64]): default bulk modulus (*K* - Pa)
 
     Returns:
-        npt.NDArray[np.float64]: biot coefficient (*b*)
+        npt.NDArray[np.float64]: Biot coefficient (*b*)
 
     """
     assert bulkModulus is not None, "Bulk modulus must be defined"
@@ -521,7 +536,7 @@ def reservoirStressPathOed( biotCoefficient: npt.NDArray[ np.float64 ],
         RSP_{oed}=b\frac{1-2\nu}{1-\nu}
 
     Args:
-        biotCoefficient (npt.NDArray[np.float64]): biot coefficient (*b*)
+        biotCoefficient (npt.NDArray[np.float64]): Biot coefficient (*b*)
         poissonRatio (npt.NDArray[np.float64]): Poisson's ratio (:math:`\nu`)
 
     Returns:
@@ -786,7 +801,7 @@ def compressibility(
     biotCoefficient: npt.NDArray[ np.float64 ],
     porosity: npt.NDArray[ np.float64 ],
 ) -> npt.NDArray[ np.float64 ]:
-    r"""Compute compressibility from elastic moduli, biot coefficient and porosity.
+    r"""Compute compressibility from elastic moduli, Biot coefficient and porosity.
 
     Compressibility formula is:
 

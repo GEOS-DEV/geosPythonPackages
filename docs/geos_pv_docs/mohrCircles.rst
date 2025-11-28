@@ -3,7 +3,7 @@ Mohr's Circle Package
 
 This package includes utilities to compute and plot Mohr's Circles using the Python View from Paraview.
 
-geos.pv.utils.mohrCircles.functionsMohrCircle module
+functionsMohrCircle module
 --------------------------------------------------------
 
 .. automodule:: geos.pv.utils.mohrCircles.functionsMohrCircle
@@ -11,7 +11,7 @@ geos.pv.utils.mohrCircles.functionsMohrCircle module
    :undoc-members:
    :show-inheritance:
 
-geos.pv.utils.mohrCircles.plotMohrCircles module
+plotMohrCircles module
 --------------------------------------------------
 
 .. automodule:: geos.pv.utils.mohrCircles.plotMohrCircles

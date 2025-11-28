@@ -27,12 +27,9 @@ CreateConstantAttributePerRegion is a vtk filter that allows to create an attrib
 with constant values per components for each chosen indexes of a reference/region attribute.
 If other region indexes exist values are set to nan for float type, -1 for int type or 0 for uint type.
 
-Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
-The relation index/values is given by a dictionary.
-Its keys are the indexes and its items are the list of values for each component.
-To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
+Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have exactly one component.
+The values for each region are provided with a dictionary with regions indexes as keys and list of values for each components as associated values. By default, the value type is set to float32, the is one component.
 
-By default, the value type is set to float32, their is one component and no name and the logger use an intern handler.
 
 To use it:
 

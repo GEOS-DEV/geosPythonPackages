@@ -10,7 +10,7 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
 
 .. Note::
 
-    Several processing filters require the definition of physical parameters. The following list is non-exhaustive.
+    Several processing filters require the definition of physical parameters. The following list is non-exhaustive. See :ref:`output-constant`.
 
     Default values:
     - grainBulkModulus = 38e9 Pa ( quartz value )
@@ -19,8 +19,8 @@ GEOS computes many outputs including flow and geomechanic properties if coupled 
     - friction angle: 10°
 
 
-geos.processing.post_processing.SurfaceGeomechanics
--------------------------------------------------------
+SurfaceGeomechanics
+-----------------------------
 
 .. automodule:: geos.processing.post_processing.SurfaceGeomechanics
     :members:
@@ -28,8 +28,8 @@ geos.processing.post_processing.SurfaceGeomechanics
     :show-inheritance:
 
 
-geos.processing.post_processing.GeomechanicsCalculator module
---------------------------------------------------------------
+GeomechanicsCalculator
+--------------------------------
 
 .. automodule:: geos.processing.post_processing.GeomechanicsCalculator
    :members:
@@ -37,8 +37,8 @@ geos.processing.post_processing.GeomechanicsCalculator module
    :show-inheritance:
 
 
-geos.processing.post_processing.GeosBlockExtractor module
-----------------------------------------------------------
+GeosBlockExtractor
+------------------------------------
 
 .. automodule:: geos.processing.post_processing.GeosBlockExtractor
    :members:
@@ -46,7 +46,7 @@ geos.processing.post_processing.GeosBlockExtractor module
    :show-inheritance:
 
 
-geos.processing.post_processing.GeosBlockMerge module
+GeosBlockMerge
 -----------------------------------------------------
 
 .. automodule:: geos.processing.post_processing.GeosBlockMerge
