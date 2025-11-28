@@ -27,7 +27,7 @@ Usage is:
 
     from geos.pv.utils.details import SISOFilter, FilterCategory
 
-    @SISO(category=FilterCategory.GEOS_UTILS,decoratedLabel='Awesome Filter',decoratedType='vtkMultiBlockDataSet')
+    @SISO(category=FilterCategory.GEOS_POST_PROCESSING,decoratedLabel='Awesome Filter',decoratedType='vtkMultiBlockDataSet')
     class PVMyFilter:
         ...
 
