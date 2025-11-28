@@ -11,37 +11,37 @@ The plugins include:
 PVAttributeMapping
 --------------------
 
-.. automodule:: geos.pv.plugins.PVAttributeMapping
+.. automodule:: geos.pv.plugins.generic_processing.PVAttributeMapping
 
 
 PVCreateConstantAttributePerRegion
 -----------------------------------
 
-.. automodule:: geos.pv.plugins.PVCreateConstantAttributePerRegion
+.. automodule:: geos.pv.plugins.generic_processing.PVCreateConstantAttributePerRegion
 
 
 PVFillPartialArrays
 --------------------
 
-.. automodule:: geos.pv.plugins.PVFillPartialArrays
+.. automodule:: geos.pv.plugins.generic_processing.PVFillPartialArrays
 
 
 PVSplitMesh
 ----------------------------------
 
-.. automodule:: geos.pv.plugins.PVSplitMesh
+.. automodule:: geos.pv.plugins.generic_processing.PVSplitMesh
 
 
 PVMergeBlocksEnhanced module
 --------------------------------------
 
-.. automodule:: geos.pv.plugins.PVMergeBlocksEnhanced
+.. automodule:: geos.pv.plugins.generic_processing.PVMergeBlocksEnhanced
 
 
 PVClipToMainFrame
 ----------------------------------
 
-.. automodule:: geos.pv.plugins.PVClipToMainFrame
+.. automodule:: geos.pv.plugins.generic_processing.PVClipToMainFrame
 
 
 Geos output pre-processing
@@ -50,7 +50,7 @@ Geos output pre-processing
 PVGeosBlockExtractAndMerge plugin
 ----------------------------------
 
-.. automodule:: geos.pv.plugins.PVGeosBlockExtractAndMerge
+.. automodule:: geos.pv.plugins.post_processing.PVGeosBlockExtractAndMerge
 
 
 Geomechanics workflows
@@ -60,22 +60,23 @@ Geomechanics workflows
 PVGeomechanicsWorkflow plugin
 ------------------------------
 
-.. automodule:: geos.pv.plugins.PVGeomechanicsWorkflow
+.. automodule:: geos.pv.plugins.post_processing.PVGeomechanicsWorkflow
 
 
 PVGeomechanicsCalculator plugin
 ---------------------------------------
 
-.. automodule:: geos.pv.plugins.PVGeomechanicsCalculator
+.. automodule:: geos.pv.plugins.post_processing.PVGeomechanicsCalculator
 
 
 PVMohrCirclePlot plugin
 ---------------------------------
 
-.. automodule:: geos.pv.plugins.PVMohrCirclePlot
+.. automodule:: geos.pv.plugins.post_processing.PVMohrCirclePlot
 
 
 PVSurfaceGeomechanics plugin
 --------------------------------
 
-.. automodule:: geos.pv.plugins.PVSurfaceGeomechanics
+.. automodule:: geos.pv.plugins.post_processing.PVSurfaceGeomechanics
+

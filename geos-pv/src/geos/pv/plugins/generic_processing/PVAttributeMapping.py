@@ -8,7 +8,7 @@ from typing import Union
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -33,7 +33,9 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
 )
 
-__doc__ = """
+from geos.pv.utils.details import FilterCategory
+
+__doc__ = f"""
 AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.
 
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
@@ -47,19 +49,19 @@ Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
-* Select the mesh to transfer the global attributes (meshTo).
-* Select Filters > 4- Geos Utils > Attribute Mapping.
-* Select the source mesh with global attributes to transfer (meshFrom).
-* Select on which element (onPoints/onCells) the attributes to transfer are.
-* Select the global attributes to transfer from the source mesh to the final mesh.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVAttributeMapping
+* Select the mesh to transfer the global attributes (meshTo)
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Attribute Mapping
+* Select the source mesh with global attributes to transfer (meshFrom)
+* Select on which element (onPoints/onCells) the attributes to transfer are
+* Select the global attributes to transfer from the source mesh to the final mesh
+* Apply
 
 """
 
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
 @smproperty.input( name="meshFrom", port_index=1, label="Mesh From" )
 @smdomain.datatype(
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],

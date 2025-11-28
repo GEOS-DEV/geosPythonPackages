@@ -14,7 +14,7 @@ from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler, )
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
@@ -37,30 +37,29 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPolyData,
 )
 
-__doc__ = """
+__doc__ = f"""
 PVSurfaceGeomechanics is a Paraview plugin that allows to compute
 additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU).
 
 Input and output are vtkMultiBlockDataSet.
 .. Important::
-
-    - Please refer to the GeosExtractMergeBlockVolumeSurface* filters to provide the correct input.
+    - Please refer to the PVGeosBlockExtractAndMerge plugin to provide the correct input.
     - This filter only works on triangles at the moment. Please apply a triangulation algorithm beforehand if required.
 
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVSurfaceGeomechanics.
-* Select any pipeline child of the second ouput from
-    GeosExtractMergeBlocksVolumeSurface* filter.
-* Select Filters > 3- Geos Geomechanics > Geos Surface Geomechanics.
-* (Optional) Set rock cohesion and/or friction angle.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVSurfaceGeomechanics
+* Select any pipeline child "Fault" from PVGeosBlockExtractAndMerge plugin
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > GEOS Surface Geomechanics
+* (Optional) Set rock cohesion and/or friction angle
+* Apply
+
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
-             decoratedLabel="Geos Surface Geomechanics",
+@SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
+             decoratedLabel="GEOS Surface Geomechanics",
              decoratedType="vtkMultiBlockDataSet" )
 class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 

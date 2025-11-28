@@ -9,7 +9,7 @@ from pathlib import Path
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -22,9 +22,10 @@ from geos.utils.PhysicalConstants import (
     WATER_DENSITY,
 )
 
-from geos.pv.plugins.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
-from geos.pv.plugins.PVGeomechanicsCalculator import PVGeomechanicsCalculator
-from geos.pv.plugins.PVSurfaceGeomechanics import PVSurfaceGeomechanics
+from geos.pv.plugins.post_processing.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
+from geos.pv.plugins.post_processing.PVGeomechanicsCalculator import PVGeomechanicsCalculator
+from geos.pv.plugins.post_processing.PVSurfaceGeomechanics import PVSurfaceGeomechanics
+from geos.pv.utils.details import FilterCategory
 
 from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
@@ -34,7 +35,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler )
 
-__doc__ = """
+__doc__ = f"""
 PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:
     1. PVGeosBlockExtractAndMerge
     2. PVGeomechanicsCalculator
@@ -76,12 +77,12 @@ Input and output meshes are vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeomechanicsWorkflow.
-* Select the Geos output .pvd file loaded in Paraview.
-* Select Filters > 3- Geos Geomechanics > Geos Geomechanics Workflow.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsWorkflow
+* Select the Geos output .pvd file loaded in Paraview to process
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Geomechanics Workflow.
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties on volume mesh
-* Apply PVGeomechanicsWorkflow
+* Apply
 
 """
 
@@ -90,14 +91,14 @@ loggerTitle: str = "GEOS Geomechanics Workflow"
 
 @smproxy.filter(
     name="PVGeomechanicsWorkflow",
-    label="Geos Geomechanics Workflow",
+    label="GEOS Geomechanics Workflow",
 )
-@smproperty.xml( """
+@smproperty.xml( f"""
     <OutputPort index="0" name="Volume"/>
     <OutputPort index="1" name="Fault"/>
     <OutputPort index="2" name="Well"/>
     <Hints>
-        <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+        <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
         <View type="RenderView" port="0"/>
         <View type="None" port="1"/>
         <View type="None" port="2"/>
