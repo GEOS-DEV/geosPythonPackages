@@ -33,6 +33,7 @@ To use the filter:
 
 .. code-block:: python
 
+    import logging
     from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 
     # Filter inputs.
@@ -57,7 +58,13 @@ To use the filter:
     attributeMappingFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    attributeMappingFilter.applyFilter()
+    try:
+        attributeMappingFilter.applyFilter()
+    except( ValueError, AttributeError ) as e:
+        attributeMappingFilter.logger.error( f"The filter { attributeMappingFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to: { e }"
+        attributeMappingFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Attribute Mapping"
@@ -130,70 +137,61 @@ class AttributeMapping:
         """
         return self.ElementMap
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Transfer global attributes from a source mesh to a final mesh.
 
         Mapping the piece of the attributes to transfer.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Errors with the input attributeNames or the input mesh.
+            AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        try:
-            if len( self.attributeNames ) == 0:
-                raise ValueError( f"Please enter at least one { self.piece } attribute to transfer." )
+        if len( self.attributeNames ) == 0:
+            raise ValueError( f"Please enter at least one { self.piece } attribute to transfer." )
 
-            attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
-            wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
-            if len( wrongAttributeNames ) > 0:
-                raise AttributeError(
-                    f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
+        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
+        wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
+        if len( wrongAttributeNames ) > 0:
+            raise AttributeError(
+                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
 
-            attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
-            attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
-            if len( attributesAlreadyInMeshTo ) > 0:
-                raise AttributeError(
-                    f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
-                )
+        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
+        attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
+        if len( attributesAlreadyInMeshTo ) > 0:
+            raise AttributeError(
+                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
 
-            if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
-                partialAttributes: list[ str ] = []
-                for attributeName in self.attributeNames:
-                    if not isAttributeGlobal( self.meshFrom, attributeName, self.onPoints ):
-                        partialAttributes.append( attributeName )
-
-                if len( partialAttributes ) > 0:
-                    raise AttributeError(
-                        f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials."
-                    )
-
-            self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
-            sharedElement: bool = False
-            for key in self.ElementMap:
-                if np.any( self.ElementMap[ key ] > -1 ):
-                    sharedElement = True
-
-            if not sharedElement:
-                raise ValueError( f"The two meshes do not have any shared { self.piece }." )
-
+        if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
+            partialAttributes: list[ str ] = []
             for attributeName in self.attributeNames:
-                # TODO:: Modify arrayModifiers function to raise error.
-                if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
-                                                        self.onPoints, self.logger ):
-                    raise
+                if not isAttributeGlobal( self.meshFrom, attributeName, self.onPoints ):
+                    partialAttributes.append( attributeName )
 
-            # Log the output message.
-            self._logOutputMessage()
-        except ( TypeError, ValueError, AttributeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+            if len( partialAttributes ) > 0:
+                raise AttributeError(
+                    f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
 
-        return True
+        self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
+        sharedElement: bool = False
+        for key in self.ElementMap:
+            if np.any( self.ElementMap[ key ] > -1 ):
+                sharedElement = True
+
+        if not sharedElement:
+            raise ValueError( f"The two meshes do not have any shared { self.piece }." )
+
+        for attributeName in self.attributeNames:
+            # TODO:: Modify arrayModifiers function to raise error.
+            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
+                                                    self.onPoints, self.logger ):
+                raise ValueError( f"Fail to transfer the attribute { attributeName }." )
+
+        # Log the output message.
+        self._logOutputMessage()
+
+        return
 
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""

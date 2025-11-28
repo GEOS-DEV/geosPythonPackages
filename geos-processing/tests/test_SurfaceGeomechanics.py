@@ -69,7 +69,7 @@ def test_SurfaceGeomechanics() -> None:
 
     sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( testCase.mesh )
 
-    assert sgFilter.applyFilter()
+    sgFilter.applyFilter()
 
     mesh: vtkPolyData = sgFilter.GetOutputMesh()
     assert mesh.GetCellData().HasArray( "SCU" )
@@ -81,4 +81,4 @@ def test_failingSurfaceGeomechanics() -> None:
     failingCase: TriangulatedSurfaceTestCase = TriangulatedSurfaceTestCase( pointsCoords, triangles, None )
     sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( failingCase.mesh )
     with pytest.raises( AssertionError ):
-        assert sgFilter.applyFilter()
+        sgFilter.applyFilter()

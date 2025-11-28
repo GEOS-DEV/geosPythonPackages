@@ -48,7 +48,13 @@ To use the filter:
     geosBlockExtractor.setLoggerHandler( yourHandler )
 
     # Do calculations
-    geosBlockExtractor.applyFilter()
+    try:
+        geosBlockExtractor.applyFilter()
+    except ( ValueError, TypeError ) as e:
+        geosBlockExtractor.logger.error( f"The filter { geosBlockExtractor.logger.name } failed due to: { e }." )
+    except Exception as e:
+        mess: str = f"The filter { geosBlockExtractor.logger.name } failed du to: { e }"
+        geosBlockExtractor.logger.critical( mess, exc_info=True )
 
     # Get the multiBlockDataSet with blocks of the extracted domain.
     geosDomainExtracted: vtkMultiBlockDataSet
@@ -128,6 +134,9 @@ class GeosBlockExtractor:
             Args:
                 geosDomainName (GeosDomainNameEnum): Name of the GEOS domain.
                 multiBlockDataSet (vtkMultiBlockDataSet): The mesh to set.
+
+            Raises:
+                ValueError: The mesh is not a GEOS domain.
             """
             if geosDomainName.value == "CellElementRegion":
                 self.volume = multiBlockDataSet
@@ -196,35 +205,27 @@ class GeosBlockExtractor:
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Extract the volume, the fault or the well domain of the mesh from GEOS.
 
-        Returns:
-            bool: True if the filter succeeded, False otherwise.
+        Raises:
+            ValueError: The mesh extracted is not a GEOS domain.
+            TypeError: The mesh extracted has the wrong dimension.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        try:
-            extractGeosDomain: GeosExtractDomainBlock = GeosExtractDomainBlock()
-            extractGeosDomain.SetInputData( self.geosMesh )
+        extractGeosDomain: GeosExtractDomainBlock = GeosExtractDomainBlock()
+        extractGeosDomain.SetInputData( self.geosMesh )
 
-            domainNames: list = []
-            for domain in self.domainToExtract:
-                extractGeosDomain.RemoveAllIndices()
-                extractGeosDomain.AddGeosDomainName( domain )
-                extractGeosDomain.Update()
-                self.extractedGeosDomain.setExtractedDomain( domain, extractGeosDomain.GetOutput() )
-                domainNames.append( domain.value )
+        domainNames: list = []
+        for domain in self.domainToExtract:
+            extractGeosDomain.RemoveAllIndices()
+            extractGeosDomain.AddGeosDomainName( domain )
+            extractGeosDomain.Update()
+            self.extractedGeosDomain.setExtractedDomain( domain, extractGeosDomain.GetOutput() )
+            domainNames.append( domain.value )
 
-            self.logger.info( f"The GEOS domain { domainNames } have been extracted." )
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
+        self.logger.info( f"The GEOS domain { domainNames } have been extracted." )
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
 
-        except ( ValueError, TypeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }." )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
-
-        return True
+        return

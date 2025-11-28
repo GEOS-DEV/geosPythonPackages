@@ -50,4 +50,18 @@ def test_FillPartialArrays(
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
 
     fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
-    assert fillPartialArraysFilter.applyFilter()
+    fillPartialArraysFilter.applyFilter()
+
+
+def test_FillPartialArraysRaises( dataSetTest: vtkMultiBlockDataSet, ) -> None:
+    """Test the raise of FillPartialArray."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    fillPartialArraysFilter: FillPartialArrays
+
+    with pytest.raises( AttributeError ):
+        fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "poro": None } )
+        fillPartialArraysFilter.applyFilter()
+
+    with pytest.raises( ValueError ):
+        fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "PORO": [ 4, 4, 4 ] } )
+        fillPartialArraysFilter.applyFilter()

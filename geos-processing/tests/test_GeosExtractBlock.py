@@ -26,7 +26,7 @@ def test_GeosExtractBlock(
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "meshGeosExtractBlockTmp" )
 
     geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
-    assert geosBlockExtractor.applyFilter()
+    geosBlockExtractor.applyFilter()
 
     extractedVolume: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.volume
     extractedFault: vtkMultiBlockDataSet = geosBlockExtractor.extractedGeosDomain.fault
