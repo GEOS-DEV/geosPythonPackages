@@ -136,24 +136,36 @@ def define_simulation_view(server) -> None:
             
                 #
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
-            with vuetify.VCol(cols=2):
+            with vuetify.VCol(cols=1):
                 vuetify.VBtn("Log in", 
                              click="trigger('run_try_login')",
                              disabled=("access_granted",)
                              )  # type: ignore
+                #
+            vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
+            with vuetify.VCol(cols=1):
+                vuetify.VTextField(
+                        v_model=("slurm_comment", None,),
+                        label="Comment to slurm",
+                        dense=True,
+                        hide_details=True,
+                        clearable=True,
+                             )  # type: ignore
+
 
                 
         vuetify.VDivider(thickness=5, classes="my-4")
 
         with vuetify.VRow():
             with vuetify.VCol():
-                vuetify.VTextField(
+                vuetify.VFileInput(
                     v_model=("simulation_xml_filename",),
                     label="Simulation file name",
                     dense=True,
                     hide_details=True,
                     clearable=True,
-                    readonly=True,
+                    multiple=True,
+                    # readonly=True,
                     disabled=("!access_granted",)
                 )
 

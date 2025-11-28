@@ -47,14 +47,18 @@ template_str = """#!/bin/sh
 ulimit -s unlimited
 ulimit -c unlimited
 
-#module purge
-#module geos
-#run --mpi=pmix_v3 --hint=nomultithread \
-#    -n {{ ntasks }} geos \
-#    -o Outputs_{{ slurm_jobid | default('${SLURM_JOBID}') }} \
-#    -i {{ input_file | default('geosDeck.xml') }}
+module purge
+module use /workrd/SCR/GEOS/l1092082/modules
+module load geos-develop-d36028cb-hypreUpdate
 
-echo "Hello world" >> hello.out
+export HDF5_USE_FILE_LOCKING=FALSE
+export OMP_NUM_THREADS=1
+
+srun --mpi=pmix_v3 --hint=nomultithread \
+    -n {{ ntasks }} geos \
+    -o Outputs_{{ slurm_jobid | default('${SLURM_JOBID}') }} \
+    -i {{ input_file | default('geosDeck.xml') }} | tee log.out
+
 """
 
 
@@ -62,6 +66,29 @@ echo "Hello world" >> hello.out
 class Authentificator:#namespacing more than anything else
 
     ssh_client : paramiko.SSHClient
+
+    @staticmethod
+    def _sftp_copy_tree(ssh_client, local_root, remote_root):
+        # Connect to remote server
+        sftp = ssh_client.open_sftp()
+
+        local_root = Path(local_root).resolve()
+
+        for path in local_root.rglob("*"):
+            remote_path = f"{remote_root}/{path.relative_to(local_root)}"
+
+            if path.is_dir():
+                # Create remote directory if it doesn't exist
+                try:
+                    sftp.mkdir(remote_path)
+                except IOError:
+                    # Directory may already exist
+                    pass
+            else:
+                # Upload file
+                sftp.put(str(path), remote_path)
+
+        sftp.close()
 
     @staticmethod
     def get_key( id, pword ):
@@ -478,24 +505,44 @@ class Simulation:
                 ci ={'nodes': 2 , 'total_ranks': 96 }
                 rendered = template.render(job_name=server.state.simulation_job_name,
                                            input_file=server.state.simulation_xml_filename,
-                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"{2}GB",
-                                           commment="GEOS,CCS,testTrame", partition='p4_general', account='myaccount' )
+                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",#TODO profile to use the correct amount
+                                           commment=server.state.slurm_comment, partition='p4_general', account='myaccount' )
 
-                with open('job.slurm','w') as f:
-                    f.write(rendered)
+                # with open(Path(server.state.simulation_xml_filename).parent/Path('job.slurm'),'w') as f:
+                    # f.write(rendered)
                 
                 if Authentificator.ssh_client:
-                    Authentificator._transfer_file_sftp(Authentificator.ssh_client,
-                                                        local_path='job.slurm',
-                                                        remote_path=f'{server.state.simulation_remote_path}/job.slurm',
-                                                        direction="put")
+                    #write slurm directly on remote
+                    try:
+                        sftp = Authentificator.ssh_client.open_sftp()
+                        remote_path = Path(server.state.simulation_xml_filename).parent/Path('job.slurm')
+                        with sftp.file(remote_path,'w') as f:
+                            f.write(rendered)
+
+                    # except FileExistsError:
+                        # print(f"Error: Local file '{remote_path}' not found.")
+                    except PermissionError as e:
+                        print(f"Permission error: {e}")
+                    except IOError as e:
+                        print(f"Error accessing remote file or path: {e}")
+                    except Exception as e:
+                        print(f"An error occurred during SFTP: {e}")
+
+                    Authentificator._sftp_copy_tree(Authentificator.ssh_client,
+                                    Path(server.state.simulation_xml_filename).parent,
+                                    Path(server.state.simulation_remote_path))
+
                     
                     Authentificator._execute_remote_command(Authentificator.ssh_client,
                                                             f'cd {server.state.simulation_remote_path} && sbatch job.slurm')
+                    
+
                     Authentificator._execute_remote_command(Authentificator.ssh_client,
                                                             f'squeue -u $USER')
+                    
+
                     Authentificator._transfer_file_sftp(Authentificator.ssh_client,
-                                                        remote_path=f'{server.state.simulation_remote_path}/hello.out',
+                                                        remote_path=f'{server.state.simulation_remote_path}/log.out',
                                                         local_path=f'{server.state.simulation_dl_path}/dl.test',
                                                         direction="get")
 
