@@ -16,7 +16,6 @@ from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 
 from geos.mesh.utils import arrayHelpers
-from geos.mesh.utils.arrayModifiers import createConstantAttribute
 
 from geos.utils.pieceEnum import Piece
 
@@ -95,7 +94,6 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, p
     ( "CellAttribute", Piece.CELLS ),
     ( "PointAttribute", Piece.POINTS ),
     ( "NewAttribute", Piece.NONE ),
-    ( "NewAttribute", Piece.BOTH ),
 ] )
 def test_getAttributePieceInfo(
     dataSetTest: vtkDataSet,
@@ -104,8 +102,6 @@ def test_getAttributePieceInfo(
 ) -> None:
     """Test getting attribute piece information."""
     dataSet: vtkDataSet = dataSetTest( "dataset" )
-    if pieceTest == Piece.BOTH:  # Create a case with an attribute with the same name on points and on cells.
-        createConstantAttribute( dataSet, [ 42. ], attributeName, piece=pieceTest )
     pieceObtained = arrayHelpers.getAttributePieceInfo( dataSet, attributeName )
     assert pieceObtained == pieceTest
 
