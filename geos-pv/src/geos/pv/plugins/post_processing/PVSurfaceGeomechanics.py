@@ -7,11 +7,10 @@ from pathlib import Path
 import numpy as np
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -21,21 +20,12 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 update_paths()
 
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_ROCK_COHESION,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
-from geos.mesh.utils.multiblockHelpers import (
-    getBlockElementIndexesFlatten,
-    getBlockFromFlatIndex,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArray, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkPolyData,
-)
+from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
+
+from vtkmodules.vtkCommonCore import vtkDataArray
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData
 
 __doc__ = f"""
 PVSurfaceGeomechanics is a Paraview plugin that allows to compute
@@ -130,21 +120,21 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
             sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
-            if not sgFilter.logger.hasHandlers():
+            if len( sgFilter.logger.handlers ) == 0:
                 sgFilter.SetLoggerHandler( VTKHandler() )
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
-            sgFilter.applyFilter()
+            if sgFilter.applyFilter():
 
-            outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
+                outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
-            # add attributes to output surface mesh
-            for attributeName in sgFilter.GetNewAttributeNames():
-                attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
-                surfaceBlock.GetCellData().AddArray( attr )
-                surfaceBlock.GetCellData().Modified()
-            surfaceBlock.Modified()
+                # add attributes to output surface mesh
+                for attributeName in sgFilter.GetNewAttributeNames():
+                    attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
+                    surfaceBlock.GetCellData().AddArray( attr )
+                    surfaceBlock.GetCellData().Modified()
+                surfaceBlock.Modified()
 
         outputMesh.Modified()
         return

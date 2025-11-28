@@ -8,6 +8,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkCompositeDataSet, vtkDataObjectTr
                                             vtkUnstructuredGrid, vtkDataSet )
 from packaging.version import Version
 from vtkmodules.vtkCommonCore import vtkLogger
+from geos.utils.Errors import VTKError
 
 # TODO: remove this condition when all codes are adapted for VTK newest version.
 import vtk
@@ -50,20 +51,21 @@ def mergeBlocks(
     .. Warning:: This function will not work properly if there are duplicated cell IDs in the different blocks of the input mesh.
 
     """
+    vtkErrorLogger: Logger
     if logger is None:
-        logger = getLogger( "mergeBlocks" )
-    # Creation of a child logger to deal with VTKErrors without polluting parent logger
-    mbLogger: Logger = getLogger( f"{logger.name}.vtkErrorLogger" )
-
-    mbLogger.propagate = False
+        vtkErrorLogger = getLogger( "Merge blocks", True )
+    else:
+        vtkErrorLogger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
 
     vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-    mbLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    mbLogger.setLevel( logging.DEBUG )
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
 
     # Fill the partial attributes with default values to keep them during the merge.
     if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
-        logger.warning( "Failed to fill partial attributes. Merging without keeping partial attributes." )
+        raise ValueError( "Failed to fill partial attributes. Merging without keeping partial attributes." )
 
     outputMesh: vtkUnstructuredGrid
 
@@ -76,9 +78,10 @@ def mergeBlocks(
 
     else:
         if inputMesh.IsA( "vtkDataSet" ):
-            logger.warning( "Input mesh is already a single block." )
+            vtkErrorLogger.warning( "Input mesh is already a single block." )
             outputMesh = vtkUnstructuredGrid.SafeDownCast( inputMesh )
         else:
+
             with VTKCaptureLog() as captured_log:
 
                 af: vtkAppendDataSets = vtkAppendDataSets()
@@ -95,8 +98,14 @@ def mergeBlocks(
                 captured_log.seek( 0 )
                 captured = captured_log.read().decode()
 
-            mbLogger.debug( captured.strip() )
+            if captured != "":
+                vtkErrorLogger.error( captured.strip() )
+                # raise VTKError( captured.strip() )
+                # pass
 
             outputMesh = af.GetOutputDataObject( 0 )
+
+            if outputMesh is None:
+                raise VTKError( "Something went wrong in VTK" )
 
     return outputMesh

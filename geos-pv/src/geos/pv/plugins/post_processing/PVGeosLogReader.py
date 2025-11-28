@@ -4,6 +4,7 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import sys
+import logging
 from pathlib import Path
 from enum import Enum
 from typing import Union, cast
@@ -22,42 +23,24 @@ update_paths()
 
 import vtkmodules.util.numpy_support as vnp
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from vtk import VTK_DOUBLE  # type: ignore[import-untyped]
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
-from vtkmodules.vtkCommonCore import (
-    vtkDoubleArray,
-    vtkInformation,
-    vtkInformationVector,
-)
+from vtkmodules.vtkCommonCore import vtkDoubleArray, vtkInformation, vtkInformationVector, VTK_DOUBLE
 from vtkmodules.vtkCommonDataModel import vtkTable
 
-from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import (
-    identifyProperties,
-    transformUserChoiceToListPhases,
-)
-
+from geos.pv.geosLogReaderUtils.geosLogReaderFunctions import ( identifyProperties, transformUserChoiceToListPhases )
 from geos.pv.geosLogReaderUtils.GeosLogReaderAquifers import GeosLogReaderAquifers
 from geos.pv.geosLogReaderUtils.GeosLogReaderConvergence import GeosLogReaderConvergence
 from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
-from geos.utils.enumUnits import (
-    Mass,
-    MassRate,
-    Pressure,
-    Time,
-    Unit,
-    Volume,
-    VolumetricRate,
-    enumerationDomainUnit,
-)
-
+from geos.utils.enumUnits import ( Mass, MassRate, Pressure, Time, Unit, Volume, VolumetricRate, enumerationDomainUnit )
 from geos.utils.UnitRepository import UnitRepository
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos.pv.utils.paraviewTreatments import (
-    strListToEnumerationDomainXml, )
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
+from geos.pv.utils.paraviewTreatments import strListToEnumerationDomainXml
 
 __doc__ = """
 ``PVGeosLogReader`` is a Paraview plugin that allows to read GEOS output log.
@@ -163,6 +146,13 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         propsSolvers: list[ str ] = [ "NewtonIter", "LinearIter" ]
         for prop in propsSolvers:
             self.m_convergence.AddArray( prop )
+
+        self.logger: logging.Logger = logging.getLogger( "Geos Log Reader" )
+        self.logger.setLevel( logging.INFO )
+        if len( self.logger.handlers ) == 0:
+            self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
+        self.logger.info( f"Apply plugin { self.logger.name }." )
 
     @smproperty.stringvector( name="DataFilepath", default_values="Enter a filepath to your data" )
     @smdomain.filelist()
@@ -587,8 +577,8 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                                                             array_type=VTK_DOUBLE )  # type: ignore[no-untyped-call]
                 newAttr.SetName( column )
                 output.AddColumn( newAttr )
+            self.logger.info( f"The plugin { self.logger.name } succeeded." )
         except Exception as e:
-            print( "Error while reading Geos log file:" )
-            print( str( e ) )
+            self.logger.error( f"The plugin { self.logger.name } failed.\n{ e }" )
             return 0
         return 1

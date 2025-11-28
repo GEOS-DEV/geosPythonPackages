@@ -18,38 +18,19 @@ update_paths()
 
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 import geos.pv.utils.paraviewTreatments as pvt
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos.pv.utils.DisplayOrganizationParaview import (
-    DisplayOrganizationParaview, )
-from geos.pv.pyplotUtils.matplotlibOptions import (
-    FontStyleEnum,
-    FontWeightEnum,
-    LegendLocationEnum,
-    LineStyleEnum,
-    MarkerStyleEnum,
-    OptionSelectionEnum,
-    optionEnumToXml,
-)
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
+from geos.pv.utils.DisplayOrganizationParaview import DisplayOrganizationParaview
+from geos.pv.pyplotUtils.matplotlibOptions import ( FontStyleEnum, FontWeightEnum, LegendLocationEnum, LineStyleEnum,
+                                                    MarkerStyleEnum, OptionSelectionEnum, optionEnumToXml )
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+
 from paraview.simple import (  # type: ignore[import-not-found]
-    GetActiveSource, GetActiveView, Render, Show, servermanager,
-)
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
-    vtkInformation,
-)
+    GetActiveSource, GetActiveView, Render, Show, servermanager )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase )
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataObject,
-    vtkMultiBlockDataSet,
-)
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from vtkmodules.vtkCommonCore import vtkDataArraySelection, vtkInformation
+from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkMultiBlockDataSet
 
 __doc__ = f"""
 PVPythonViewConfigurator is a Paraview plugin that allows to create cross-plots

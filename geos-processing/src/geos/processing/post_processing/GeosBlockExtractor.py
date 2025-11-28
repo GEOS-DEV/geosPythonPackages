@@ -179,6 +179,7 @@ class GeosBlockExtractor:
         else:
             self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -188,15 +189,19 @@ class GeosBlockExtractor:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
 
-    def applyFilter( self: Self ) -> None:
-        """Extract the volume, the fault or the well domain of the mesh from GEOS."""
+    def applyFilter( self: Self ) -> bool:
+        """Extract the volume, the fault or the well domain of the mesh from GEOS.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -216,5 +221,10 @@ class GeosBlockExtractor:
 
         except ( ValueError, TypeError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }." )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True

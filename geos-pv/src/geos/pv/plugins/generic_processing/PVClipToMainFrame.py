@@ -5,15 +5,12 @@
 import sys
 from pathlib import Path
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet, )
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -46,7 +43,7 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame( speHandler=True )
-        if not self._realFilter.logger.hasHandlers():
+        if len( self._realFilter.logger.handlers ) == 0:
             self._realFilter.SetLoggerHandler( VTKHandler() )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:

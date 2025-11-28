@@ -9,17 +9,13 @@ from pathlib import Path
 from typing import Any
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 import vtkmodules.util.numpy_support as vnp
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet, )
+from vtkmodules.vtkCommonDataModel import vtkDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -29,8 +25,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
-
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = f"""
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to create an attribute
@@ -294,7 +289,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if not createConstantAttributePerRegionFilter.logger.hasHandlers():
+        if len( createConstantAttributePerRegionFilter.logger.handlers ) == 0:
             createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
         createConstantAttributePerRegionFilter.applyFilter()
