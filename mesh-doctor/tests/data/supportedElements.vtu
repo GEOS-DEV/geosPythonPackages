@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="2.3" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="80" NumberOfCells="14">
+      <PointData>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="8.200609733428363">
+          AQAAAACAAADAAwAAHwEAAA==eJxlk7FuwjAURT2xlS9g6NCFL4AB6lepW8f+AFs3ZtgshjYDQ8REhwp/CEMkFsbsXSLxBZUqZmI79/kqWIp04tx3/JzExvBwlm6EkNgRLyTXeJqveswZXeOlvSIf//5lelxHfh1eZDt7U64f3p+Rua7Os/v+og/rWeq15Ueh50J7IdZ8j01XKz0WcoIdOT2xI6cnRj7UemLkMQ+uyNkQ1+SsyNMQ1+TRtQ31bagPQ3sIo50vae9lnF9dxvI1OUQuRgPZfXwrL/efmlmf4Uets7nW2VybONWmTKpFX2Xn2cv896fjgthRppDT00bzmeEJTngCF8SOMvCkfOb4P3fOhji8Z08MTxg4D/otDX0nk10YODO6ns15OBPfAMsrmQg=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              8.2006097334
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="binary" RangeMin="0" RangeMax="79">
+          AQAAAACAAACAAgAAjgAAAA==eJwtxddCAQAAAECbStJQGdGm0paRkS0R//83Hty9XCCwFXTIYUccdcxxJ7zjXe856X2nfOC0D33kY58441Of+dxZ55x3wRcuuuRLX/naN771ne9ddsUPfvSTq372i1/95nd/+NM1f7nuhptu+dttd9x1zz/ue+ChRx574qln/vXcf1546X+vvPYGbVYMWQ==
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="binary" RangeMin="1" RangeMax="80">
+          AQAAAACAAABwAAAALQAAAA==eJxjZIAAZijNBqW5oDQ/lBaG0tJQWhlKa0JpPShtAaVdoLQHlA6A0gBDeAHg
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="binary" RangeMin="1" RangeMax="42">
+          AQAAAACAAAAOAAAAFgAAAA==eJxjZGblZOfi4ebl4xfQ0gIAA60AyQ==
+        </DataArray>
+        <DataArray type="Int64" Name="face_connectivity" format="binary" RangeMin="68" RangeMax="79">
+          AQAAAACAAAAgAQAARwAAAA==eJx1jjkOwDAIBPM4ErCd4/+/SeHZZiVoRhwDxLHjhBcMq2czl5aH1QsOOOGCN3zgC7/G15w83ydPe6rpy/e/5OnOD9yzClc=
+        </DataArray>
+        <DataArray type="Int64" Name="face_offsets" format="binary" RangeMin="3" RangeMax="36">
+          AQAAAACAAABQAAAAIwAAAA==eJxjZoAANijNCaV5oLQAlBaB0hJQWgZKK0BpFSgNABawALs=
+        </DataArray>
+        <DataArray type="Int64" Name="polyhedron_to_faces" format="binary" RangeMin="0" RangeMax="9">
+          AQAAAACAAABQAAAAIgAAAA==eJwtxbcBACAIADAsiP7/sAPJkog2PL28nT4uXz9/BXgALg==
+        </DataArray>
+        <DataArray type="Int64" Name="polyhedron_offsets" format="binary" RangeMin="0" RangeMax="10">
+          AQAAAACAAABwAAAAEQAAAA==eJxjYKAtYIHSXFAaAAEAAA8=
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

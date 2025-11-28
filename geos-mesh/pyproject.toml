@@ -39,8 +39,6 @@ dependencies = [
 ]
 
 [project.scripts]
-    mesh-doctor = "geos.mesh.doctor.meshDoctor:main"
-    meshDoctor = "geos.mesh.doctor.meshDoctor:main"
     convert_abaqus = "geos.mesh.conversion.main:main"
     
 [project.urls]
