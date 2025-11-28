@@ -12,6 +12,8 @@ import numpy.typing as npt
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
+from geos.utils.pieceEnum import Piece
+
 
 @pytest.fixture
 def arrayExpected( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
@@ -199,7 +201,7 @@ def getElementMap() -> Any:
         elementMap (Dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
     """
 
-    def _get_elementMap( meshFromName: str, meshToName: str, points: bool ) -> Dict[ int, npt.NDArray[ np.int64 ] ]:
+    def _get_elementMap( meshFromName: str, meshToName: str, piece: Piece ) -> Dict[ int, npt.NDArray[ np.int64 ] ]:
         """Get the element indexes mapping dictionary between two meshes.
 
         Args:
@@ -211,7 +213,7 @@ def getElementMap() -> Any:
             elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
         elementMap: Dict[ int, npt.NDArray[ np.int64 ] ] = {}
-        nbElements: Tuple[ int, int ] = ( 4092, 212 ) if points else ( 1740, 156 )
+        nbElements: Tuple[ int, int ] = ( 4092, 212 ) if piece == Piece.POINTS else ( 1740, 156 )
         if meshFromName == "multiblock":
             if meshToName == "emptymultiblock":
                 elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
