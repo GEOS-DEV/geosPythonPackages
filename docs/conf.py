@@ -27,25 +27,25 @@ for m in python_modules:
 
 # Install mesh-doctor in editable mode if not already available
 # This ensures mesh-doctor command is available for sphinxcontrib.programoutput
-# try:
-#     subprocess.run( [ sys.executable, '-m', 'geos.mesh_doctor.cli', '--help' ],
-#                     capture_output=True, check=True, timeout=5 )
-# except ( subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError ):
-#     # mesh-doctor not available, install it and its dependencies in editable mode
-#     print( "Installing mesh-doctor dependencies for documentation generation..." )
-#     packages_to_install = [ 'geos-utils', 'geos-mesh', 'mesh-doctor' ]
-#     for pkg in packages_to_install:
-#         pkg_path = os.path.abspath( os.path.join( python_root, pkg ) )
-#         try:
-#             print( f"  Installing {pkg}..." )
-#             subprocess.run( [ sys.executable, '-m', 'pip', 'install', '-e', pkg_path ],
-#                             check=True, capture_output=True )
-#         except subprocess.CalledProcessError as e:
-#             print( f"Warning: Could not install {pkg}: {e}" )
-#             print( "Documentation may be incomplete." )
-#             break
-#     else:
-#         print( "mesh-doctor installed successfully." )
+try:
+    subprocess.run( [ sys.executable, '-m', 'geos.mesh_doctor.cli', '--help' ],
+                    capture_output=True, check=True, timeout=5 )
+except ( subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError ):
+    # mesh-doctor not available, install it and its dependencies in editable mode
+    print( "Installing mesh-doctor dependencies for documentation generation..." )
+    packages_to_install = [ 'geos-utils', 'geos-mesh', 'mesh-doctor' ]
+    for pkg in packages_to_install:
+        pkg_path = os.path.abspath( os.path.join( python_root, pkg ) )
+        try:
+            print( f"  Installing {pkg}..." )
+            subprocess.run( [ sys.executable, '-m', 'pip', 'install', '-e', pkg_path ],
+                            check=True, capture_output=True )
+        except subprocess.CalledProcessError as e:
+            print( f"Warning: Could not install {pkg}: {e}" )
+            print( "Documentation may be incomplete." )
+            break
+    else:
+        print( "mesh-doctor installed successfully." )
 
 # -- Project information -----------------------------------------------------
 

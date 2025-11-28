@@ -4,7 +4,7 @@ GEOS Geomechanics tools
 This package contains geomechanics functions and data models.
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 2
    :caption: Contents:
 
    model

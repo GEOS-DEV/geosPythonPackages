@@ -1,4 +1,4 @@
-GEOS Utilities
+Utilities
 ===============
 
 The `geos-utils` python package defines utilities for all GEOS python packages including a logger, GEOS constants, basic functions, and unit management tools.

@@ -80,8 +80,6 @@ Packages
 
     geos-ats
 
-    geos-utils
-
     mesh-doctor
 
     ./geos_geomechanics_docs/geos-geomechanics
@@ -99,5 +97,7 @@ Packages
     geos-xml-tools
 
     geos-xml-viewer
+
+    geos-utils
 
     pygeos-tools
