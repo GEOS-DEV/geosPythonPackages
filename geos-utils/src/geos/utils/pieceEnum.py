@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Romain Baville
 from enum import Enum
 
-class Piece( Enum ):
+class Piece( str, Enum ):
+    """String Enum of a vtkDataObject pieces."""
     POINTS = "points"
     CELLS = "cells"
