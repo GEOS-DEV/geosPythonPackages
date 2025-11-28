@@ -192,6 +192,8 @@ def UpdateElementMappingToDataSet(
         nbElementsTo = dataSetTo.GetNumberOfPoints()
     elif piece == Piece.CELLS:
         nbElementsTo = dataSetTo.GetNumberOfCells()
+    else:
+        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped.")
 
     elementMap[ flatIdDataSetTo ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
     if isinstance( meshFrom, vtkDataSet ):
@@ -283,6 +285,8 @@ def UpdateDictElementMappingFromDataSetToDataSet(
         nbElementsFrom = dataSetFrom.GetNumberOfPoints()
     elif piece == Piece.CELLS:
         nbElementsFrom = dataSetFrom.GetNumberOfCells()
+    else:
+        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped.")
 
     for idElementTo in range( nbElementsTo ):
         # Test if the element of the final mesh is already mapped.
@@ -368,18 +372,14 @@ def getAttributePieceInfo(
     Returns:
         Piece: The piece of the attribute.
     """
-    piece: Piece
-    if isAttributeInObject( mesh, attributeName, Piece.POINTS ):
-        if isAttributeInObject( mesh, attributeName, Piece.CELLS ):
-            piece = Piece.BOTH
-        else:
-            piece = Piece.POINTS
+    if isAttributeInObject( mesh, attributeName, Piece.BOTH ):
+        return Piece.BOTH
+    elif isAttributeInObject( mesh, attributeName, Piece.POINTS ):
+        return Piece.POINTS
     elif isAttributeInObject( mesh, attributeName, Piece.CELLS ):
-        piece = Piece.CELLS
+        return Piece.CELLS
     else:
-        piece = Piece.NONE
-
-    return piece
+        return Piece.NONE
 
 
 def checkValidValuesInMultiBlock(
@@ -701,7 +701,7 @@ def isAttributeInObjectMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSe
 
 
 def isAttributeInObjectDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> bool:
-    """Check if an attribute is in the input object.
+    """Check if an attribute is in the input object for the input piece.
 
     Args:
         dataSet (vtkDataSet): Input dataSet.
@@ -711,15 +711,16 @@ def isAttributeInObjectDataSet( dataSet: vtkDataSet, attributeName: str, piece: 
     Returns:
         bool: True if the attribute is in the table, False otherwise.
     """
-    data: Union[ vtkPointData, vtkCellData ]
     if piece == Piece.POINTS:
-        data = dataSet.GetPointData()
+        return bool( dataSet.GetPointData().HasArray( attributeName ) )
     elif piece == Piece.CELLS:
-        data = dataSet.GetCellData()
+        return bool( dataSet.GetCellData().HasArray( attributeName ) )
+    elif piece == Piece.BOTH:
+        onPoints: int = dataSet.GetPointData().HasArray( attributeName )
+        onCells: int = dataSet.GetCellData().HasArray( attributeName )
+        return onCells == onPoints == 1
     else:
-        raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }.")
-    assert data is not None, f"{ piece.value } data was not recovered."
-    return bool( data.HasArray( attributeName ) )
+        return False
 
 
 def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, piece: Piece ) -> bool:
