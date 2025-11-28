@@ -36,16 +36,36 @@ def test_getCellDimension(
     assert cellDimObtained == cellDimExpected
 
 
-@pytest.mark.parametrize( "meshFromName, meshToName, points", [
-    ( "multiblock", "emptymultiblock", False ),
-    ( "multiblock", "emptyFracture", False ),
-    ( "dataset", "emptyFracture", False ),
-    ( "dataset", "emptypolydata", False ),
-    ( "fracture", "emptyFracture", True ),
-    ( "fracture", "emptyFracture", False ),
-    ( "fracture", "emptymultiblock", False ),
-    ( "polydata", "emptypolydata", False ),
-] )
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, points",
+    [
+        ( "well", "emptyWell", False ),  # 1D vtu -> 1D vtu onCells
+        ( "well", "emptyWell", True ),  # 1D vtu -> 1D vtu onPoints
+        ( "well", "emptyFracture", True ),  # 1D vtu -> 2D vtu onCells
+        ( "well", "emptypolydata", True ),  # 1D vtu -> 2D vtp onCells
+        ( "well", "emptydataset", True ),  # 1D vtu -> 3D vtu onCells
+        ( "well", "emptymultiblock", True ),  # 1D vtu -> vtm(3D vtu & 2D vtu) onPoints
+        ( "fracture", "emptyFracture", False ),  # 2D vtu -> 2D vtu onCells
+        ( "fracture", "emptyWell", True ),  # 2D vtu -> 1D vtu onPoints
+        ( "fracture", "emptypolydata", False ),  # 2D vtu -> 2D vtp onCells
+        ( "fracture", "emptydataset", False ),  # 2D vtu -> 3D vtu onCells
+        ( "fracture", "emptymultiblock", False ),  # 2D vtu -> vtm(3D vtu & 2D vtu) onCells
+        ( "polydata", "emptypolydata", False ),  # 2D vtp -> 2D vtp onCells
+        ( "polydata", "emptyWell", True ),  # 2D vtp -> 1D vtu onPoints
+        ( "polydata", "emptyFracture", False ),  # 2D vtp -> 2D vtu onCells
+        ( "polydata", "emptydataset", False ),  # 2D vtp -> 3D vtu onCells
+        ( "polydata", "emptymultiblock", False ),  # 2D vtp -> vtm(3D vtu & 2D vtu) onCells
+        ( "dataset", "emptydataset", False ),  # 3D vtu -> 3D vtu onCells
+        ( "dataset", "emptyWell", True ),  # 3D vtu -> 1D vtu onPoints
+        ( "dataset", "emptyFracture", False ),  # 3D vtu -> 2D vtu onCells
+        ( "dataset", "emptypolydata", False ),  # 3D vtu -> 2D vtp onCells
+        ( "dataset", "emptymultiblock", False ),  # 3D vtu -> vtm(3D vtu & 2D vtu) onCells
+        ( "multiblock", "emptymultiblock", False ),  # vtm( 3D vtu & 2D vtu ) -> vtm( 3D vtu & 2D vtu ) onCells
+        ( "multiblock", "emptyWell", True ),  # vtm(3D vtu & 2D vtu) -> 1D vtu onPoints
+        ( "multiblock", "emptyFracture", False ),  # vtm(3D vtu & 2D vtu) -> 2D vtu onCells
+        ( "multiblock", "emptypolydata", False ),  # vtm(3D vtu & 2D vtu) -> 2D vtp onCells
+        ( "multiblock", "emptydataset", False ),  # vtm(3D vtu & 2D vtu) -> 3D vtu onCells
+    ] )
 def test_computeElementMapping(
     dataSetTest: vtkDataSet,
     getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
