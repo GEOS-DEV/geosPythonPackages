@@ -43,7 +43,7 @@ from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignor
 from geos.pv.utils.paraviewTreatments import strListToEnumerationDomainXml
 
 __doc__ = """
-``PVGeosLogReader`` is a Paraview plugin that allows to read Geos output log.
+``PVGeosLogReader`` is a Paraview plugin that allows to read GEOS output log.
 
 Input is a file and output is a vtkTable containing log information.
 
@@ -53,8 +53,8 @@ Input is a file and output is a vtkTable containing log information.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeosLogReader.
-* Open (File>Open...) and Select Geos output log .out/.txt file.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeosLogReader
+* Open (File>Open...) and Select GEOS output log .out/.txt file
 * In the "Open data with..." window, Select PVGeosLogReader reader.
 
 """
@@ -62,7 +62,7 @@ To use it:
 
 @smproxy.reader(
     name="PVGeosLogReader",
-    label="Geos Log Reader",
+    label="GEOS Log Reader",
     extensions=[ "txt", "out" ],
     file_description="txt and out files of GEOS log files",
 )

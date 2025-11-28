@@ -8,13 +8,14 @@ from typing import Union
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
 update_paths()
 
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
+
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
@@ -24,7 +25,9 @@ from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-fou
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkDataSet, vtkMultiBlockDataSet
 
-__doc__ = """
+from geos.pv.utils.details import FilterCategory
+
+__doc__ = f"""
 AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.
 
 Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
@@ -38,19 +41,19 @@ Input and output meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVAttributeMapping.
-* Select the mesh to transfer the global attributes (meshTo).
-* Select Filters > 4- Geos Utils > Attribute Mapping.
-* Select the source mesh with global attributes to transfer (meshFrom).
-* Select the on witch element (onPoints/onCells) the attributes to transfer are.
-* Select the global attributes to transfer from the source mesh to the final mesh.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVAttributeMapping
+* Select the mesh to transfer the global attributes (meshTo)
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Attribute Mapping
+* Select the source mesh with global attributes to transfer (meshFrom)
+* Select the on which element (onPoints/onCells) the attributes to transfer are
+* Select the global attributes to transfer from the source mesh to the final mesh
+* Apply
 
 """
 
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
 @smproperty.input( name="meshFrom", port_index=1, label="Mesh From" )
 @smdomain.datatype(
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],
@@ -89,7 +92,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Args:
             piece (int): 0 if on points, 1 if on cells.
         """
-        self.onPoints = bool( piece )
+        self.onPoints = not bool( piece )
         self.Modified()
 
     @smproperty.stringvector(

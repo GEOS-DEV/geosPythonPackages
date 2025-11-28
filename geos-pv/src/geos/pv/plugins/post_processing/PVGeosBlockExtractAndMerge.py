@@ -11,7 +11,7 @@ from pathlib import Path
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -26,6 +26,7 @@ from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNam
 
 from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from geos.pv.utils.workflowFunctions import doExtractAndMerge
+from geos.pv.utils.details import FilterCategory
 
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
@@ -36,7 +37,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-__doc__ = """
+__doc__ = f"""
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
     1. Extraction of domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
     2. Actions on each region of a GEOS output domain (volume, fault, wells) to:
@@ -63,9 +64,11 @@ Input and output meshes are vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVGeosBlockExtractAndMerge.
-* Select the Geos output .pvd file loaded in Paraview.
-* Search and Apply PVGeosBlockExtractAndMerge Filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeosBlockExtractAndMerge
+* Select the Geos output .pvd file loaded in Paraview to process
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Extract and Merge Blocks
+* Apply
+
 """
 
 loggerTitle: str = "Extract & Merge GEOS Block"
@@ -73,14 +76,14 @@ loggerTitle: str = "Extract & Merge GEOS Block"
 
 @smproxy.filter(
     name="PVGeosBlockExtractAndMerge",
-    label="Geos Extract and Merge Blocks",
+    label="GEOS Extract and Merge Blocks",
 )
-@smproperty.xml( """
+@smproperty.xml( f"""
     <OutputPort index="0" name="Volume"/>
     <OutputPort index="1" name="Fault"/>
     <OutputPort index="2" name="Well"/>
     <Hints>
-        <ShowInMenu category="2- Geos Output Mesh Pre-processing"/>
+        <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
         <View type="RenderView" port="0"/>
         <View type="None" port="1"/>
         <View type="None" port="2"/>

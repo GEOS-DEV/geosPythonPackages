@@ -5,9 +5,9 @@ Mesh Quality
 PVCellTypeCounterEnhanced
 ----------------------------------
 
-.. automodule:: geos.pv.plugins.PVCellTypeCounterEnhanced
+.. automodule:: geos.pv.plugins.qc.PVCellTypeCounterEnhanced
 
 PVMeshQualityEnhanced
 ---------------------------
 
-.. automodule:: geos.pv.plugins.PVMeshQualityEnhanced
+.. automodule:: geos.pv.plugins.qc.PVMeshQualityEnhanced

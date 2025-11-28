@@ -16,7 +16,7 @@ from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-fou
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -28,7 +28,7 @@ from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, g
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional geomechanics properties from existing ones in the mesh.
 
 To compute the geomechanics outputs, the mesh must have the following properties:
@@ -62,9 +62,9 @@ The output mesh has the same type than the input one.
 
 To use it:
 
-* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeomechanicsCalculator
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsCalculator
 * Select the mesh you want to compute geomechanics properties on
-* Search Filters > Filter Category.GEOS_GEOMECHANICS > GEOS Geomechanics Calculator
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Geomechanics Calculator
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties
 * Apply
@@ -72,7 +72,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
+@SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Geomechanics Calculator",
              decoratedType=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ] )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
