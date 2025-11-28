@@ -7,3 +7,5 @@ class Piece( str, Enum ):
     """String Enum of a vtkDataObject pieces."""
     POINTS = "points"
     CELLS = "cells"
+    BOTH = "cells and points"
+    NONE = "none"
