@@ -3,6 +3,6 @@
 # SPDX-FileContributor: Romain Baville
 from enum import Enum
 
-class AttributePiece( Enum ):
+class Piece( Enum ):
     POINTS = "points"
     CELLS = "cells"
