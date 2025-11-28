@@ -34,7 +34,7 @@ from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, g
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional geomechanics properties from existing ones in the mesh.
 
 To compute the geomechanics outputs, the mesh must have the following properties:
@@ -70,7 +70,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsCalculator
 * Select the mesh you want to compute geomechanics properties on
-* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Geomechanics Calculator
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Geomechanics Calculator
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties
 * Apply

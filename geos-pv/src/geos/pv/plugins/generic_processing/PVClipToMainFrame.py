@@ -25,14 +25,14 @@ update_paths()
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
 
-__doc__ = """
+__doc__ = f"""
 Clip the input mesh to the main frame applying the correct LandmarkTransform
 
 To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVClipToMainFrame
 * Select the mesh to process
-* Select the filter: Filters > 0- Generic-Processing > Clip to the main frame
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Clip to the main frame
 * Apply
 
 """

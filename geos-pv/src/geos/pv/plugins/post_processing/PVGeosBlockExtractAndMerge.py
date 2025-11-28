@@ -26,6 +26,7 @@ from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNam
 
 from geos.pv.utils.paraviewTreatments import getTimeStepIndex
 from geos.pv.utils.workflowFunctions import doExtractAndMerge
+from geos.pv.utils.details import FilterCategory
 
 from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
@@ -35,7 +36,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler )
 
-__doc__ = """
+__doc__ = f"""
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
     1. Extraction of domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
     2. Actions on each region of a GEOS output domain (volume, fault, wells) to:
@@ -64,7 +65,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeosBlockExtractAndMerge
 * Select the Geos output .pvd file loaded in Paraview to process
-* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Extract and Merge Blocks
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Extract and Merge Blocks
 * Apply
 
 """
@@ -76,12 +77,12 @@ loggerTitle: str = "Extract & Merge GEOS Block"
     name="PVGeosBlockExtractAndMerge",
     label="GEOS Extract and Merge Blocks",
 )
-@smproperty.xml( """
+@smproperty.xml( f"""
     <OutputPort index="0" name="Volume"/>
     <OutputPort index="1" name="Fault"/>
     <OutputPort index="2" name="Well"/>
     <Hints>
-        <ShowInMenu category="2- Geos Post-Processing"/>
+        <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
         <View type="RenderView" port="0"/>
         <View type="None" port="1"/>
         <View type="None" port="2"/>

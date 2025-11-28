@@ -51,7 +51,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from geos.pv.utils.details import SISOFilter, FilterCategory
 
-__doc__ = """
+__doc__ = f"""
 PVPythonViewConfigurator is a Paraview plugin that allows to create cross-plots
 from input data using the PythonView.
 
@@ -63,7 +63,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVPythonViewConfigurator.
 * Select the vtkDataObject containing the data to plot
-* Select the filter: Filters > 3- QC > Python View Configurator
+* Select the filter: Filters > { FilterCategory.QC.value } > Python View Configurator
 * Configure the plot with the widgets
 * Apply
 

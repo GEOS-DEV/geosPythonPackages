@@ -25,6 +25,7 @@ from geos.utils.PhysicalConstants import (
 from geos.pv.plugins.post_processing.PVGeosBlockExtractAndMerge import PVGeosBlockExtractAndMerge
 from geos.pv.plugins.post_processing.PVGeomechanicsCalculator import PVGeomechanicsCalculator
 from geos.pv.plugins.post_processing.PVSurfaceGeomechanics import PVSurfaceGeomechanics
+from geos.pv.utils.details import FilterCategory
 
 from vtkmodules.vtkCommonCore import ( vtkInformation, vtkInformationVector )
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
@@ -34,7 +35,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 from paraview.detail.loghandler import (  # type: ignore[import-not-found]
     VTKHandler )
 
-__doc__ = """
+__doc__ = f"""
 PVGeomechanicsWorkflow is a Paraview plugin that executes multiple plugins:
     1. PVGeosBlockExtractAndMerge
     2. PVGeomechanicsCalculator
@@ -78,7 +79,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsWorkflow
 * Select the Geos output .pvd file loaded in Paraview to process
-* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Geomechanics Workflow.
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Geomechanics Workflow.
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties on volume mesh
 * Apply
@@ -92,12 +93,12 @@ loggerTitle: str = "GEOS Geomechanics Workflow"
     name="PVGeomechanicsWorkflow",
     label="GEOS Geomechanics Workflow",
 )
-@smproperty.xml( """
+@smproperty.xml( f"""
     <OutputPort index="0" name="Volume"/>
     <OutputPort index="1" name="Fault"/>
     <OutputPort index="2" name="Well"/>
     <Hints>
-        <ShowInMenu category="2- GEOS Post-Processing"/>
+        <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
         <View type="RenderView" port="0"/>
         <View type="None" port="1"/>
         <View type="None" port="2"/>

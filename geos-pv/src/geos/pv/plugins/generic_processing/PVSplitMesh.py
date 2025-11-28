@@ -22,7 +22,7 @@ update_paths()
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 Split each cell of input mesh to smaller cells.
 
 Output mesh is of same type as input mesh. If input mesh is a composite mesh, the plugin split cells of each part independently.
@@ -31,7 +31,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVSplitMesh
 * Select the input mesh to process
-* Select the filter: Filters > 0- Generic-Processing > Split Mesh
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Split Mesh
 * Apply
 
 """

@@ -23,22 +23,23 @@ update_paths()
 
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
+from geos.pv.utils.details import FilterCategory
 
-__doc__ = """
+__doc__ = f"""
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
 
 To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVCellTypeCounterEnhanced
 * Select the input mesh to process
-* Select the filter: Filters > 3- QC > Cell Type Counter Enhanced
+* Select the filter: Filters > { FilterCategory.QC.value } > Cell Type Counter Enhanced
 * Apply
 
 """
 
 
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
-@smhint.xml( '<ShowInMenu category="3- QC"/>' )
+@smhint.xml( f'<ShowInMenu category="{ FilterCategory.QC.value }"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],

@@ -37,7 +37,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkPolyData,
 )
 
-__doc__ = """
+__doc__ = f"""
 PVSurfaceGeomechanics is a Paraview plugin that allows to compute
 additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU).
 
@@ -51,7 +51,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVSurfaceGeomechanics
 * Select any pipeline child "Fault" from PVGeosBlockExtractAndMerge plugin
-* Select the filter: Filters > 2- GEOS Post-Processing > GEOS Surface Geomechanics
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > GEOS Surface Geomechanics
 * (Optional) Set rock cohesion and/or friction angle
 * Apply
 
