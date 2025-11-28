@@ -43,6 +43,7 @@ additional geomechanical attributes from the input surfaces, such as shear capac
 
 Input and output are vtkMultiBlockDataSet.
 .. Important::
+
     - Please refer to the GeosExtractMergeBlockVolumeSurface* filters to provide the correct input.
     - This filter only works on triangles at the moment. Please apply a triangulation algorithm beforehand if required.
 
@@ -55,7 +56,6 @@ To use it:
 * Select Filters > 3- Geos Geomechanics > Geos Surface Geomechanics.
 * (Optional) Set rock cohesion and/or friction angle.
 * Apply.
-
 """
 
 

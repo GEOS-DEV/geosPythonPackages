@@ -4,8 +4,8 @@ Generic processing filters
 The `generic_processing_tools` module of `geos-processing` package contains filters to process meshes.
 
 
-AttributeMapping filter
-----------------------------------
+AttributeMapping
+---------------------
 
 .. automodule:: geos.processing.generic_processing_tools.AttributeMapping
    :members:
@@ -13,8 +13,8 @@ AttributeMapping filter
    :show-inheritance:
 
 
-CreateConstantAttributePerRegion filter
------------------------------------------------
+CreateConstantAttributePerRegion
+--------------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.CreateConstantAttributePerRegion
     :members:
@@ -22,8 +22,8 @@ CreateConstantAttributePerRegion filter
     :show-inheritance:
 
 
-FillPartialArrays filter
----------------------------------
+FillPartialArrays
+------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.FillPartialArrays
     :members:
@@ -31,7 +31,7 @@ FillPartialArrays filter
     :show-inheritance:
 
 
-SplitMesh filter
+SplitMesh
 -------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.SplitMesh
@@ -40,7 +40,7 @@ SplitMesh filter
     :show-inheritance:
 
 
-MergeBlockEnhanced filter
+MergeBlockEnhanced
 ----------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.MergeBlockEnhanced
@@ -49,7 +49,7 @@ MergeBlockEnhanced filter
     :show-inheritance:
 
 
-ClipToMainFrame filter
+ClipToMainFrame
 ------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame

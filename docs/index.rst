@@ -78,8 +78,6 @@ Packages
 .. toctree::
     :maxdepth: 2
 
-    hdf5-wrapper
-
     geos-ats
 
     geos-utils
@@ -93,6 +91,8 @@ Packages
     ./geos_processing_docs/geos-processing
 
     ./geos_pv_docs/geos-pv
+
+    hdf5-wrapper
 
     geos-timehistory
 

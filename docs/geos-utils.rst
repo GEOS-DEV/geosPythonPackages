@@ -54,6 +54,7 @@ Logger module
    :show-inheritance:
 
 .. _output-constant:
+
 PhysicalConstants module
 -----------------------------------------
 
