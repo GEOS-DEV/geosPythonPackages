@@ -47,14 +47,14 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVCreateConstantAttributePerRegion
 * Select the mesh in which you want to create the attributes
-* Select the filter: Filters > 0- GEOS Generic-Processing > Create Constant Attribute Per Region
+* Select the filter: Filters > 0- Generic-Processing > Create Constant Attribute Per Region
 * Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names
 * Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GENERIC_PROCESSING,
+@SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Create Constant Attribute Per Region",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):

@@ -63,14 +63,14 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVPythonViewConfigurator.
 * Select the vtkDataObject containing the data to plot
-* Select the filter: Filters > 3- GEOS QC > Python View Configurator
+* Select the filter: Filters > 3- QC > Python View Configurator
 * Configure the plot with the widgets
 * Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_QC,
+@SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Python View Configurator",
              decoratedType="vtkDataObject" )
 class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):

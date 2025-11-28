@@ -49,7 +49,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVAttributeMapping
 * Select the mesh to transfer the global attributes (meshTo)
-* Select the filter: Filters > 0- GEOS Generic-Processing > Attribute Mapping
+* Select the filter: Filters > 0- Generic-Processing > Attribute Mapping
 * Select the source mesh with global attributes to transfer (meshFrom)
 * Select the on which element (onPoints/onCells) the attributes to transfer are
 * Select the global attributes to transfer from the source mesh to the final mesh
@@ -59,7 +59,7 @@ To use it:
 
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
-@smhint.xml( '<ShowInMenu category="0- GEOS Generic-Processing"/>' )
+@smhint.xml( '<ShowInMenu category="0- Generic-Processing"/>' )
 @smproperty.input( name="meshFrom", port_index=1, label="Mesh From" )
 @smdomain.datatype(
     dataTypes=[ "vtkDataSet", "vtkMultiBlockDataSet" ],

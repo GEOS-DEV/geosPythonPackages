@@ -36,14 +36,14 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVFillPartialArrays
 * Select the input mesh to process
-* Select the filter: Filters > 0- GEOS Generic-Processing > Fill Partial Arrays
+* Select the filter: Filters > 0- Generic-Processing > Fill Partial Arrays
 * Set the partial attribute to fill and its filling values
 * Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GENERIC_PROCESSING,
+@SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):

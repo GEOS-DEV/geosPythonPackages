@@ -37,10 +37,10 @@ Usage is:
 # Enum for filter categories
 class FilterCategory( str, Enum ):
     """String Enum to sort into category in PV task bar under Plugins."""
-    GEOS_GENERIC_PROCESSING = "0- GEOS Generic-Processing"
+    GENERIC_PROCESSING = "0- Generic-Processing"
     GEOS_PRE_PROCESSING = "1- GEOS Pre-Processing"
     GEOS_POST_PROCESSING = "2- GEOS Post-Processing"
-    GEOS_QC = "3- GEOS QC"
+    QC = "3- QC"
     # Add more as needed
 
 

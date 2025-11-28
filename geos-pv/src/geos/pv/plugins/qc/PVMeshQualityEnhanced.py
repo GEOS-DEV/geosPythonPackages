@@ -46,7 +46,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVMeshQualityEnhanced
 * Select the input mesh to process
-* Select the filter: Filters > 3- GEOS QC > Mesh Quality Enhanced
+* Select the filter: Filters > 3- QC > Mesh Quality Enhanced
 * Select the metrics to compute
 * Choose a filename for export if needed
 * Apply
@@ -57,7 +57,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_QC,
+@SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Mesh Quality Enhanced",
              decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):

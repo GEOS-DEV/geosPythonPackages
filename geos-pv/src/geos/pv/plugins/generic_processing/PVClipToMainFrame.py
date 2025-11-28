@@ -32,13 +32,13 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVClipToMainFrame
 * Select the mesh to process
-* Select the filter: Filters > 0- GEOS Generic-Processing > Clip to the main frame
+* Select the filter: Filters > 0- Generic-Processing > Clip to the main frame
 * Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GENERIC_PROCESSING,
+@SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Clip to the main frame",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVClipToMainFrame( VTKPythonAlgorithmBase ):

@@ -44,7 +44,7 @@ To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVMergeBlocksEnhanced
 * Select the multiblock dataset mesh you want to merge
-* Select the filter: Filters > 0- GEOS Generic-Processing > Merge Blocks Keeping Partial Attributes
+* Select the filter: Filters > 0- Generic-Processing > Merge Blocks Keeping Partial Attributes
 * Apply
 
 
@@ -57,7 +57,7 @@ To use it:
 
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
-@smhint.xml( '<ShowInMenu category="0- GEOS Generic-Processing"/>' )
+@smhint.xml( '<ShowInMenu category="0- Generic-Processing"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
