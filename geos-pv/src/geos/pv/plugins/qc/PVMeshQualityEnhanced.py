@@ -33,7 +33,7 @@ from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignor
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
 
 The output stats are available as attributes of the filter output mesh and can be exported from spreadsheet.
@@ -44,11 +44,12 @@ A summary figure can be exported by ticking the box and choosing a filename befo
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMeshQualityEnhanced.
-* Select the input mesh.
-* Select the metrics to compute.
-* Choose a filename for export if needed.
-* Apply the filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVMeshQualityEnhanced
+* Select the input mesh to process
+* Select the filter: Filters > { FilterCategory.QC.value } > Mesh Quality Enhanced
+* Select the metrics to compute
+* Choose a filename for export if needed
+* Apply
 
 
 .. IMPORTANT::
@@ -56,7 +57,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_QC,
+@SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Mesh Quality Enhanced",
              decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
