@@ -8,6 +8,7 @@ from typing_extensions import Self
 
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
+from geos.utils.Errors import VTKError
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 
@@ -31,7 +32,6 @@ To use it:
 
     from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
     import logging
-    from geos.utils.Errors import VTKError
 
     # Define filter inputs
     multiblockdataset: vtkMultiblockDataSet
@@ -108,7 +108,7 @@ class MergeBlockEnhanced:
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
 
-        Raise:
+        Raises:
             VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )

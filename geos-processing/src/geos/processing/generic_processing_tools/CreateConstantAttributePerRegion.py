@@ -204,8 +204,10 @@ class CreateConstantAttributePerRegion:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
                 else:
-                    self.logger.warning(
-                        f"The region indexes entered are not in the region attribute { self.regionName }." )
+                    if len( invalidIndexes ) > 0:
+                        self.logger.warning(
+                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
+                        )
 
                 if not createConstantAttributeMultiBlock( self.mesh,
                                                           self.defaultValue,
@@ -217,18 +219,32 @@ class CreateConstantAttributePerRegion:
                         f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
-                if len( invalidIndexes ) > 0:
-                    self.logger.warning(
-                        f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
+                validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
+                                                                          self.onPoints )
+                if len( validIndexes ) == 0:
+                    if len( self.dictRegionValues ) == 0:
+                        self.logger.warning( "No region indexes entered." )
+                    else:
+                        self.logger.warning(
+                            f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                # Parse the mesh to add the attribute on each dataset.
-                listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( self.mesh )
-                for flatIdDataSet in listFlatIdDataSet:
-                    dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
+                    if not createConstantAttributeDataSet( self.mesh,
+                                                           self.defaultValue,
+                                                           self.newAttributeName,
+                                                           componentNames=self.componentNames,
+                                                           onPoints=self.onPoints,
+                                                           logger=self.logger ):
+                        raise
 
-                    regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
+                else:
+                    if len( invalidIndexes ) > 0:
+                        self.logger.warning(
+                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
+                        )
+
+                    regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    if not createAttribute( dataSet,
+                    if not createAttribute( self.mesh,
                                             newArray,
                                             self.newAttributeName,
                                             componentNames=self.componentNames,
