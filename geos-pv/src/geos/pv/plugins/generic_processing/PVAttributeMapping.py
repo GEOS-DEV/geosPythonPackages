@@ -34,6 +34,7 @@ from vtkmodules.vtkCommonDataModel import (
 )
 
 from geos.pv.utils.details import FilterCategory
+from geos.utils.pieceEnum import Piece
 
 __doc__ = f"""
 AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.
@@ -53,7 +54,7 @@ To use it:
 * Select the mesh to transfer the global attributes (meshTo)
 * Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Attribute Mapping
 * Select the source mesh with global attributes to transfer (meshFrom)
-* Select the on which element (onPoints/onCells) the attributes to transfer are
+* Select the on which element ({ Piece.POINTS.value }/{ Piece.CELLS.value }) the attributes to transfer are
 * Select the global attributes to transfer from the source mesh to the final mesh
 * Apply
 
@@ -78,7 +79,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         """Map attributes of the source mesh (meshFrom) to the final mesh (meshTo)."""
         super().__init__( nInputPorts=2, nOutputPorts=1, inputType="vtkObject", outputType="vtkObject" )
 
-        self.onPoints: bool = False
+        self.piece: Piece = Piece.CELLS
         self.clearAttributeNames = True
         self.attributeNames: list[ str ] = []
 
@@ -100,7 +101,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         Args:
             piece (int): 0 if on points, 1 if on cells.
         """
-        self.onPoints = not bool( piece )
+        self.piece = Piece.POINTS if piece == 0 else Piece.CELLS
         self.Modified()
 
     @smproperty.stringvector(
@@ -192,7 +193,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         outData.ShallowCopy( meshTo )
 
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
-                                                                     self.onPoints, True )
+                                                                     self.piece, True )
 
         if not attributeMappingFilter.logger.hasHandlers():
             attributeMappingFilter.setLoggerHandler( VTKHandler() )

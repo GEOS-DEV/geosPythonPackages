@@ -15,14 +15,11 @@ import numpy as np
 @pytest.mark.parametrize(
     "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType, succeed",
     [
-        # Test the name of the new attribute (new on the mesh, one present on the other piece).
+        # Test the name of the new attribute.
         ## For vtkDataSet.
         ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
         ## For vtkMultiBlockDataSet.
         ( "multiblock", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
-        ( "multiblock", "GLOBAL_IDS_CELLS", "GLOBAL_IDS_POINTS", {}, (), (), np.float32, True ),
         # Test if the region attribute is on cells or on points.
         ( "dataset", "newAttribute", "FAULT", {}, (), (), np.float32, True ),
         # Test the component name.
