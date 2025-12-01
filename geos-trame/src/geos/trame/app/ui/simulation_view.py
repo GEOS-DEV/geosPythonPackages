@@ -87,9 +87,18 @@ class SuggestDecomposition:
 
         return [ f"{self.selected_cluster['name']}: {sd['nodes']} x {sd['ranks_per_node']}", f"{self.selected_cluster['name']}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}" ]
 
+  
 
 
 def define_simulation_view(server) -> None:
+
+    @server.state.change("simulation_xml_temp")
+    def on_temp_change(simulation_xml_temp : list, **kw):
+        current_list = server.state.simulation_xml_filename
+
+        new_list = current_list + simulation_xml_temp 
+        server.state.simulation_xml_filename = new_list
+        server.state.simulation_xml_temp = []
 
     with vuetify.VContainer():
         with vuetify.VRow():
@@ -116,6 +125,9 @@ def define_simulation_view(server) -> None:
         #        
             server.state.access_granted = False
             server.state.simulation_xml_filename = [ ]
+            # server.state.simulation_xml_temp = [ ]  
+
+
             sd = SuggestDecomposition('p4', 12e6)
             items = sd.to_list()
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
@@ -159,7 +171,7 @@ def define_simulation_view(server) -> None:
         with vuetify.VRow():
             with vuetify.VCol(cols=4):
                 vuetify.VFileUpload(
-                    v_model=("simulation_xml_filename",),
+                    v_model=("simulation_xml_temp",[]),
                     title="Simulation file name",
                     density='comfortable',
                     hide_details=True,
@@ -167,12 +179,13 @@ def define_simulation_view(server) -> None:
                     multiple=True,
                     filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt',
                     # readonly=True,
-                    disabled=("!access_granted",)
+                    disabled=("access_granted",)
                 )
             with vuetify.VCol(cols=4):
                 with vuetify.VList():
-                  with vuetify.VListItem( v_for=(f"file in {server.state.simulation_xml_filename}"), key="i", value="file" ):
+                  with vuetify.VListItem( v_for=("(file,i) in simulation_xml_filename"), key="i", value="file" ):
                     vuetify.VListItemTitle( "{{ file.name }}" )
+                    vuetify.VListItemSubtitle("{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}")
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
