@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Romain Baville, Martin Lemay
-
+import logging
 from typing_extensions import Self
 from typing import Union, Any
 
-from geos.utils.Logger import logging, Logger, getLogger
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
 
@@ -89,6 +89,7 @@ class FillPartialArrays:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -99,7 +100,7 @@ class FillPartialArrays:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
@@ -112,32 +113,33 @@ class FillPartialArrays:
             boolean (bool): True if calculation successfully ended, False otherwise.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        try:
+            onPoints: Union[ None, bool ]
+            onBoth: bool
+            for attributeName in self.dictAttributesValues:
+                onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
+                if onPoints is None:
+                    raise ValueError( f"{ attributeName } is not in the mesh." )
 
-        onPoints: Union[ None, bool ]
-        onBoth: bool
-        for attributeName in self.dictAttributesValues:
-            onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
-            if onPoints is None:
-                self.logger.error( f"{ attributeName } is not in the mesh." )
-                self.logger.error( f"The attribute { attributeName } has not been filled." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                if onBoth:
+                    raise ValueError(
+                        f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
+                    )
 
-            if onBoth:
-                self.logger.error( f"There is two attribute named { attributeName },"
-                                   " one on points and the other on cells. The attribute must be unique." )
-                self.logger.error( f"The attribute { attributeName } has not been filled." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                if not fillPartialAttributes( self.multiBlockDataSet,
+                                              attributeName,
+                                              onPoints=onPoints,
+                                              listValues=self.dictAttributesValues[ attributeName ],
+                                              logger=self.logger ):
+                    raise
 
-            if not fillPartialAttributes( self.multiBlockDataSet,
-                                          attributeName,
-                                          onPoints=onPoints,
-                                          listValues=self.dictAttributesValues[ attributeName ],
-                                          logger=self.logger ):
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
-
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+            self.logger.info( f"The filter { self.logger.name } succeed." )
+        except ( ValueError, AttributeError ) as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
         return True
