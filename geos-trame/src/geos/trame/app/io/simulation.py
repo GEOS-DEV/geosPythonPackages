@@ -499,9 +499,10 @@ class Simulation:
         @controller.trigger("run_simulation")
         def run_simulation()-> None:
             
-            if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
+            # if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
+            if server.state.access_granted and server.state.simulation_xml_filename:
                 template = Template(template_str)
-                sdi = server.state.sd
+                # sdi = server.state.sd
                 ci ={'nodes': 2 , 'total_ranks': 96 }
                 rendered = template.render(job_name=server.state.simulation_job_name,
                                            input_file=server.state.simulation_xml_filename,

@@ -115,9 +115,9 @@ def define_simulation_view(server) -> None:
         
         #        
             server.state.access_granted = False
-            server.state.simulation_xml_filename = "geosDeck.xml" 
-            server.state.sd = SuggestDecomposition('p4', 12e6)
-            items = server.state.sd.to_list()
+            server.state.simulation_xml_filename = [ ]
+            sd = SuggestDecomposition('p4', 12e6)
+            items = sd.to_list()
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
                 vuetify.VSelect(label="Cluster",
@@ -157,17 +157,22 @@ def define_simulation_view(server) -> None:
         vuetify.VDivider(thickness=5, classes="my-4")
 
         with vuetify.VRow():
-            with vuetify.VCol():
-                vuetify.VFileInput(
+            with vuetify.VCol(cols=4):
+                vuetify.VFileUpload(
                     v_model=("simulation_xml_filename",),
-                    label="Simulation file name",
-                    dense=True,
+                    title="Simulation file name",
+                    density='comfortable',
                     hide_details=True,
-                    clearable=True,
+                    # clearable=True,
                     multiple=True,
+                    filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt',
                     # readonly=True,
                     disabled=("!access_granted",)
                 )
+            with vuetify.VCol(cols=4):
+                with vuetify.VList():
+                  with vuetify.VListItem( v_for=(f"file in {server.state.simulation_xml_filename}"), key="i", value="file" ):
+                    vuetify.VListItemTitle( "{{ file.name }}" )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
