@@ -380,19 +380,8 @@ def createConstantAttributeDataSet(
         logger = getLogger( "createConstantAttributeDataSet", True )
 
     # Check the piece.
-    if piece != Piece.POINTS and piece != Piece.CELLS:
+    if piece not in [ Piece.POINTS, Piece.CELLS ]:
         raise ValueError( f"The attribute must be created on { Piece.POINTS.value } or { Piece.CELLS.value }." )
-
-    # Check if the attribute already exist in the input mesh.
-    if isAttributeInObjectDataSet( dataSet, attributeName, piece ):
-        logger.error( f"The attribute { attributeName } is already present in the dataSet." )
-        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-        return False
-
-    # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
-    oppositePiece: Piece = Piece.CELLS if piece == Piece.POINTS else Piece.POINTS
-    if isAttributeInObjectDataSet( dataSet, attributeName, oppositePiece ):
-        raise ValueError( f"An attribute with the same name exist on the opposite piece { oppositePiece.value }." )
 
     # Check if all the values of listValues have the same type.
     valueType: type = type( listValues[ 0 ] )
@@ -477,7 +466,7 @@ def createAttribute(
         logger = getLogger( "createAttribute", True )
 
     # Check the piece.
-    if piece != Piece.POINTS and piece != Piece.CELLS:
+    if piece not in [ Piece.POINTS, Piece.CELLS ]:
         raise ValueError( f"The attribute must be created on { Piece.POINTS.value } or { Piece.CELLS.value }." )
 
     # Check if the input mesh is inherited from vtkDataSet.
@@ -495,7 +484,7 @@ def createAttribute(
     # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
     oppositePiece: Piece = Piece.CELLS if piece == Piece.POINTS else Piece.POINTS
     if isAttributeInObjectDataSet( dataSet, attributeName, oppositePiece ):
-        raise ValueError( f"An attribute with the same name exist on the opposite piece { oppositePiece.value }." )
+        logger.warning( f"The attribute { attributeName } exist on the opposite piece { oppositePiece.value }." )
 
     # Check the coherency between the given array type and the vtk array type if it exist.
     if vtkDataType is not None:
@@ -524,7 +513,7 @@ def createAttribute(
 
     # Check if the input array has the good size.
     if len( npArray ) != nbElements:
-        logger.error( f"The array has to have { nbElements } elements, but have only { len( npArray ) } elements" )
+        logger.error( f"The array has to have { nbElements } elements, but have only { len( npArray ) } elements." )
         logger.error( f"The attribute { attributeName } has not been created into the mesh." )
         return False
 
@@ -741,6 +730,10 @@ def transferAttributeToDataSetWithElementMap(
     if logger is None:
         logger = getLogger( "transferAttributeToDataSetWithElementMap", True )
 
+    # Check the piece.
+    if piece not in [ Piece.POINTS, Piece.CELLS ]:
+        raise ValueError( f"The attribute must be on { Piece.POINTS.value } or { Piece.CELLS.value }." )
+
     if flatIdDataSetTo not in elementMap:
         logger.error( f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
         return False
@@ -886,7 +879,13 @@ def renameAttribute(
         bool: True if renaming operation successfully ended.
     """
     if isAttributeInObject( object, attributeName, piece ):
-        dim: int = 0 if piece == Piece.POINTS else 1
+        dim: int
+        if piece == Piece.POINTS:
+            dim = 0
+        elif piece == Piece.CELLS:
+            dim = 1
+        else:
+            raise ValueError( "The attribute to rename must be on points or on Cells.")
         filter = vtkArrayRename()
         filter.SetInputData( object )
         filter.SetArrayName( dim, attributeName, newAttributeName )

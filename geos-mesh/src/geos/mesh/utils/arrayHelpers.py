@@ -372,7 +372,9 @@ def getAttributePieceInfo(
     Returns:
         Piece: The piece of the attribute.
     """
-    if isAttributeInObject( mesh, attributeName, Piece.BOTH ):
+    if isAttributeInObject( mesh, attributeName, Piece.FIELD ):
+        return Piece.FIELD
+    elif isAttributeInObject( mesh, attributeName, Piece.BOTH ):
         return Piece.BOTH
     elif isAttributeInObject( mesh, attributeName, Piece.POINTS ):
         return Piece.POINTS
@@ -711,7 +713,9 @@ def isAttributeInObjectDataSet( dataSet: vtkDataSet, attributeName: str, piece: 
     Returns:
         bool: True if the attribute is in the table, False otherwise.
     """
-    if piece == Piece.POINTS:
+    if piece == Piece.FIELD:
+        return bool( dataSet.GetFieldData().HasArray( attributeName ) )
+    elif piece == Piece.POINTS:
         return bool( dataSet.GetPointData().HasArray( attributeName ) )
     elif piece == Piece.CELLS:
         return bool( dataSet.GetCellData().HasArray( attributeName ) )
@@ -831,8 +835,10 @@ def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece )
         dataArray = dataSet.GetPointData().GetArray( attributeName )
     elif piece == Piece.CELLS:
         dataArray = dataSet.GetCellData().GetArray( attributeName )
+    elif piece == Piece.FIELD:
+        dataArray = dataSet.GetFieldData().GetArray( attributeName )
     else:
-        raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }.")
+        raise ValueError( f"The attribute piece must be { Piece.FIELD.value }, { Piece.POINTS.value } or { Piece.CELLS.value }.")
 
     return dataArray
 

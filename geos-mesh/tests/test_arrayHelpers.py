@@ -90,18 +90,21 @@ def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, p
     assert attributes == expected
 
 
-@pytest.mark.parametrize( "attributeName, pieceTest", [
-    ( "CellAttribute", Piece.CELLS ),
-    ( "PointAttribute", Piece.POINTS ),
-    ( "NewAttribute", Piece.NONE ),
+@pytest.mark.parametrize( "meshName, attributeName, pieceTest", [
+    ( "dataset", "CellAttribute", Piece.CELLS ),
+    ( "dataset", "PointAttribute", Piece.POINTS ),
+    ( "dataset", "NewAttribute", Piece.NONE ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.BOTH ),
+    ( "multiblockGeosOutput", "TIME", Piece.FIELD ),
 ] )
 def test_getAttributePieceInfo(
     dataSetTest: vtkDataSet,
+    meshName: str,
     attributeName: str,
     pieceTest: Piece,
 ) -> None:
     """Test getting attribute piece information."""
-    dataSet: vtkDataSet = dataSetTest( "dataset" )
+    dataSet: vtkDataSet = dataSetTest( meshName )
     pieceObtained = arrayHelpers.getAttributePieceInfo( dataSet, attributeName )
     assert pieceObtained == pieceTest
 
@@ -146,21 +149,23 @@ def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, piece: Piece, expect
     assert attributes == expected
 
 
-@pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PORO", Piece.CELLS, 1 ),
-    ( "PORO", Piece.POINTS, 0 ),
+@pytest.mark.parametrize( "attributeName, piece", [
+    ( "rockPorosity_referencePorosity", Piece.CELLS ),
+    ( "ghostRank", Piece.POINTS ),
+    ( "TIME", Piece.FIELD ),
+    ( "ghostRank", Piece.BOTH ),
 ] )
-def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str, piece: Piece,
-                                               expected: dict[ str, int ] ) -> None:
+def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str, piece: Piece ) -> None:
     """Test presence of attribute in a multiblock."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     obtained: bool = arrayHelpers.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, piece )
-    assert obtained == expected
+    assert obtained
 
 
 @pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PORO", Piece.CELLS, 1 ),
-    ( "PORO", Piece.POINTS, 0 ),
+    ( "PointAttribute", Piece.POINTS, True ),
+    ( "PORO", Piece.CELLS, True ),
+    ( "PORO", Piece.POINTS, False ),
 ] )
 def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str, piece: Piece,
                                      expected: bool ) -> None:

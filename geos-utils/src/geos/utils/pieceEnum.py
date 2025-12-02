@@ -8,4 +8,5 @@ class Piece( str, Enum ):
     POINTS = "points"
     CELLS = "cells"
     BOTH = "cells and points"
+    FIELD = "field"
     NONE = "none"
