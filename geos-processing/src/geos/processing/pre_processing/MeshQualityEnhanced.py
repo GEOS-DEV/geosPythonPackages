@@ -29,6 +29,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
 
 import geos.utils.geometryFunctions as geom
 from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.pieceEnum import Piece
 
 __doc__ = """
 MeshQualityEnhanced module is a vtk filter that computes mesh quality stats.
@@ -360,7 +361,7 @@ class MeshQualityEnhanced():
             metricIndex (int): Quality metric index
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
-        if arrayName in getAttributesFromDataSet( self._outputMesh, False ):
+        if arrayName in getAttributesFromDataSet( self._outputMesh, piece=Piece.CELLS ):
             # Metric is already computed (by default computed for all cell types if applicable )
             return
 
