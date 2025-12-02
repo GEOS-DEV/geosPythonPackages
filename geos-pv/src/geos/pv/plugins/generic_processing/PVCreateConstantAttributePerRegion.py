@@ -9,27 +9,25 @@ from pathlib import Path
 from typing import Any
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 import vtkmodules.util.numpy_support as vnp
-
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet, )
+from vtkmodules.vtkCommonDataModel import vtkDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
+from geos.pv.utils.config import update_paths
+
+update_paths()
 
 from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-from geos.pv.utils.details import SISOFilter, FilterCategory
-
-__doc__ = """
+__doc__ = f"""
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to create an attribute
 with constant values per components for each chosen indexes of a reference/region attribute.
 If other region indexes exist, values are set to nan for float type, -1 for int type or 0 for uint type.
@@ -42,16 +40,16 @@ The relation index/values is given by a dictionary. Its keys are the indexes and
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCreateConstantAttributePerRegion.
-* Select the mesh in which you want to create the attributes.
-* Select the filter Create Constant Attribute Per Region in filter|0- Geos Pre-processing.
-* Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names.
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVCreateConstantAttributePerRegion
+* Select the mesh in which you want to create the attributes
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Create Constant Attribute Per Region
+* Choose the region attribute, the relation index/values, the new attribute name, the type of the value, the number of components and their names
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_PROP,
+@SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Create Constant Attribute Per Region",
              decoratedType=[ "vtkMultiBlockDataSet", "vtkDataSet" ] )
 class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
@@ -291,7 +289,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if not createConstantAttributePerRegionFilter.logger.hasHandlers():
+        if len( createConstantAttributePerRegionFilter.logger.handlers ) == 0:
             createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
 
         createConstantAttributePerRegionFilter.applyFilter()

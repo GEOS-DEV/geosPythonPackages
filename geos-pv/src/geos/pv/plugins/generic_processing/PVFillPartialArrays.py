@@ -7,15 +7,12 @@ from pathlib import Path
 from typing import Any, Optional, Union
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smproperty,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet, )
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -24,26 +21,26 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.pv.utils.details import SISOFilter, FilterCategory
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
-__doc__ = """
+__doc__ = f"""
 Fill partial arrays of input mesh.
 
 Input and output are vtkMultiBlockDataSet.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVFillPartialArrays.
-* Select the input mesh.
-* Select the partial arrays to fill.
-* Set the filling value (defaults to nan).
-* Apply.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVFillPartialArrays
+* Select the input mesh to process
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Fill Partial Arrays
+* Set the partial attribute to fill and its filling values
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
+@SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Fill Partial Arrays",
              decoratedType="vtkMultiBlockDataSet" )
 class PVFillPartialArrays( VTKPythonAlgorithmBase ):
@@ -108,7 +105,7 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             speHandler=True,
         )
 
-        if not fillPartialArraysFilter.logger.hasHandlers():
+        if len( fillPartialArraysFilter.logger.handlers ) == 0:
             fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
 
         fillPartialArraysFilter.applyFilter()

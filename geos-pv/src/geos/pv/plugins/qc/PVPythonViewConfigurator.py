@@ -10,7 +10,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from typing_extensions import Self
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -18,40 +18,21 @@ update_paths()
 
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 import geos.pv.utils.paraviewTreatments as pvt
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos.pv.utils.DisplayOrganizationParaview import (
-    DisplayOrganizationParaview, )
-from geos.pv.pyplotUtils.matplotlibOptions import (
-    FontStyleEnum,
-    FontWeightEnum,
-    LegendLocationEnum,
-    LineStyleEnum,
-    MarkerStyleEnum,
-    OptionSelectionEnum,
-    optionEnumToXml,
-)
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
+from geos.pv.utils.DisplayOrganizationParaview import DisplayOrganizationParaview
+from geos.pv.pyplotUtils.matplotlibOptions import ( FontStyleEnum, FontWeightEnum, LegendLocationEnum, LineStyleEnum,
+                                                    MarkerStyleEnum, OptionSelectionEnum, optionEnumToXml )
+from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+
 from paraview.simple import (  # type: ignore[import-not-found]
-    GetActiveSource, GetActiveView, Render, Show, servermanager,
-)
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    smdomain, smproperty,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection,
-    vtkInformation,
-)
+    GetActiveSource, GetActiveView, Render, Show, servermanager )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase )
+from vtkmodules.vtkCommonCore import vtkDataArraySelection, vtkInformation
+from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkMultiBlockDataSet
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataObject,
-    vtkMultiBlockDataSet,
-)
-from geos.pv.utils.details import SISOFilter, FilterCategory
-
-__doc__ = """
+__doc__ = f"""
 PVPythonViewConfigurator is a Paraview plugin that allows to create cross-plots
 from input data using the PythonView.
 
@@ -61,14 +42,16 @@ This filter results in opening a new Python View window and displaying cross-plo
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVPythonViewConfigurator.
-* Select the vtkDataObject containing the data to plot.
-* Search and Apply PVPythonViewConfigurator Filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVPythonViewConfigurator.
+* Select the vtkDataObject containing the data to plot
+* Select the filter: Filters > { FilterCategory.QC.value } > Python View Configurator
+* Configure the plot with the widgets
+* Apply
 
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_UTILS,
+@SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Python View Configurator",
              decoratedType="vtkDataObject" )
 class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):

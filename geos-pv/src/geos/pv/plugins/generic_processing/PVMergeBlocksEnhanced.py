@@ -8,30 +8,25 @@ from typing import Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
-)
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkUnstructuredGrid
 
 # Update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
 update_paths()
 
 from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
+from geos.pv.utils.details import FilterCategory
 
-__doc__ = """
+__doc__ = f"""
 Merge Blocks Keeping Partial Attributes is a Paraview plugin filter that allows to merge blocks from a multiblock dataset while keeping partial attributes.
 
 Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
@@ -42,9 +37,9 @@ Input is a vtkMultiBlockDataSet and output is a vtkUnstructuredGrid.
 
 To use it:
 
-* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVMergeBlocksEnhanced
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/generic_processing/PVMergeBlocksEnhanced
 * Select the multiblock dataset mesh you want to merge
-* Select Filters > 4- Geos Utils > Merge Blocks Keeping Partial Attributes
+* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Merge Blocks Keeping Partial Attributes
 * Apply
 
 
@@ -57,7 +52,7 @@ To use it:
 
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
-@smhint.xml( '<ShowInMenu category="4- Geos Utils"/>' )
+@smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
 @smproperty.input( name="Input", port_index=0, label="Input" )
 @smdomain.datatype( dataTypes=[ "vtkMultiBlockDataSet" ], composite_data_supported=True )
 class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
@@ -119,15 +114,11 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if not mergeBlockEnhancedFilter.logger.hasHandlers():
+        if len( mergeBlockEnhancedFilter.logger.handlers ) == 0:
             mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
 
-        try:
-            mergeBlockEnhancedFilter.applyFilter()
-        except ( ValueError, TypeError, RuntimeError ) as e:
-            mergeBlockEnhancedFilter.logger.error( f"MergeBlock failed due to {e}", exc_info=True )
-            return 0
-        else:
+        if mergeBlockEnhancedFilter.applyFilter():
             outputMesh.ShallowCopy( mergeBlockEnhancedFilter.getOutput() )
             outputMesh.Modified()
-            return 1
+
+        return 1

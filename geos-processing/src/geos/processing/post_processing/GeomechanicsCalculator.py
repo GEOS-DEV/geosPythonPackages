@@ -13,27 +13,13 @@ import numpy.typing as npt
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 
 from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.arrayHelpers import (
-    getArrayInObject,
-    isAttributeInObject,
-)
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
-from geos.utils.Logger import (
-    Logger,
-    getLogger,
-)
-from geos.utils.GeosOutputsConstants import (
-    AttributeEnum,
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-)
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_GRAIN_BULK_MODULUS,
-    DEFAULT_ROCK_COHESION,
-    WATER_DENSITY,
-)
+from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
+                                              PostProcessingOutputsEnum )
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
+                                           DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
@@ -717,9 +703,14 @@ class GeomechanicsCalculator:
         else:
             self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
-    def applyFilter( self: Self ) -> None:
-        """Compute the geomechanics properties and create attributes on the mesh."""
+    def applyFilter( self: Self ) -> bool:
+        """Compute the geomechanics properties and create attributes on the mesh.
+
+        Returns:
+            bool: True if the filter succeeded, False otherwise.
+        """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         try:
@@ -755,8 +746,13 @@ class GeomechanicsCalculator:
             self.logger.info( f"The filter { self.logger.name } succeeded." )
         except ( ValueError, TypeError, NameError ) as e:
             self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
+            return False
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
-        return
+        return True
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh with the geomechanics properties computed as attributes.
@@ -774,7 +770,7 @@ class GeomechanicsCalculator:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(

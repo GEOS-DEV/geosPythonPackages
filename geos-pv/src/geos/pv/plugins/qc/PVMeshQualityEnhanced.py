@@ -2,17 +2,18 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
 import sys
 from pathlib import Path
 from typing_extensions import Self, Optional
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty,
-)
-from vtkmodules.vtkCommonCore import (
-    vtkDataArraySelection, )
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
+from vtkmodules.vtkCommonCore import vtkDataArraySelection
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
@@ -23,27 +24,17 @@ update_paths()
 
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
-
-from geos.mesh.stats.meshQualityMetricHelpers import (
-    getQualityMetricsOther,
-    getQualityMeasureNameFromIndex,
-    getQualityMeasureIndexFromName,
-    getQuadQualityMeasure,
-    getTriangleQualityMeasure,
-    getCommonPolygonQualityMeasure,
-    getTetQualityMeasure,
-    getPyramidQualityMeasure,
-    getWedgeQualityMeasure,
-    getHexQualityMeasure,
-    getCommonPolyhedraQualityMeasure,
-)
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
+from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, getQualityMeasureNameFromIndex,
+                                                       getQualityMeasureIndexFromName, getQuadQualityMeasure,
+                                                       getTriangleQualityMeasure, getCommonPolygonQualityMeasure,
+                                                       getTetQualityMeasure, getPyramidQualityMeasure,
+                                                       getWedgeQualityMeasure, getHexQualityMeasure,
+                                                       getCommonPolyhedraQualityMeasure )
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
-
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
 
 The output stats are available as attributes of the filter output mesh and can be exported from spreadsheet.
@@ -54,11 +45,12 @@ A summary figure can be exported by ticking the box and choosing a filename befo
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVMeshQualityEnhanced.
-* Select the input mesh.
-* Select the metrics to compute.
-* Choose a filename for export if needed.
-* Apply the filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVMeshQualityEnhanced
+* Select the input mesh to process
+* Select the filter: Filters > { FilterCategory.QC.value } > Mesh Quality Enhanced
+* Select the metrics to compute
+* Choose a filename for export if needed
+* Apply
 
 
 .. IMPORTANT::
@@ -66,7 +58,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_QC,
+@SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Mesh Quality Enhanced",
              decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
@@ -137,7 +129,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     @smproperty.dataarrayselection( name="HexahedronSpecificQualityMetric" )
     def a08sSetHexMetrics( self: Self ) -> vtkDataArraySelection:
-        """Set Hexahdron quality metrics selection."""
+        """Set Hexahedron quality metrics selection."""
         return self._HexQualityMetric
 
     @smproperty.dataarrayselection( name="OtherMeshQualityMetric" )
@@ -228,7 +220,6 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._triangleQualityMetric ) )
         quadMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellSurfaceQualityMetric ).union(
             self._getQualityMetricsToUse( self._quadsQualityMetric ) )
-
         tetraMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellVolumeQualityMetric ).union(
             self._getQualityMetricsToUse( self._tetQualityMetric ) )
         pyrMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonCellVolumeQualityMetric ).union(
@@ -239,9 +230,9 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
             self._getQualityMetricsToUse( self._HexQualityMetric ) )
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
-        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced()
-
-        meshQualityEnhancedFilter.SetInputDataObject( inputMesh )
+        meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
+        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
+            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,
@@ -249,32 +240,36 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
-        meshQualityEnhancedFilter.Update()
+        if meshQualityEnhancedFilter.applyFilter():
 
-        outputMesh.ShallowCopy( meshQualityEnhancedFilter.GetOutputDataObject( 0 ) )
+            outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )
 
-        # save to file if asked
-        if self._saveToFile:
-            stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
-            self.saveFile( stats )
-        self._blockIndex += 1
+            # save to file if asked
+            if self._saveToFile:
+                stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
+                logger: logging.Logger = meshQualityEnhancedFilter.logger
+                self.saveFile( stats, logger )
+            self._blockIndex += 1
         return
 
-    def saveFile( self: Self, stats: QualityMetricSummary ) -> None:
+    def saveFile(
+        self: Self,
+        stats: QualityMetricSummary,
+        logger: logging.Logger,
+    ) -> None:
         """Export mesh quality metric summary file."""
         try:
             if self._filename is None:
-                print( "Mesh quality summary report file path is undefined." )
-                return
+                raise AttributeError( "Mesh quality summary report file path is undefined." )
+
             # add index for multiblock meshes
             index: int = self._filename.rfind( '.' )
-            filename: str = self._filename[ :index ] + f"_{self._blockIndex}" + self._filename[ index: ]
+            filename: str = self._filename[ :index ] + f"{ self._blockIndex }" + self._filename[ index: ]
             fig = stats.plotSummaryFigure()
             fig.savefig( filename, dpi=150 )
-            print( f"File {filename} was successfully written." )
+            logger.info( f"File { filename } was successfully written." )
         except Exception as e:
-            print( "Error while exporting the file due to:" )
-            print( str( e ) )
+            logger.error( f"Error while exporting the file due to:\n{ e }" )
 
     def __initVolumeQualityMetricSelection( self: Self ) -> None:
         """Initialize the volumic metrics selection."""

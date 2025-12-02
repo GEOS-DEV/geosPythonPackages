@@ -9,18 +9,15 @@ from typing import Optional
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkPointSet,
-    vtkTable,
-)
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkTable
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
@@ -28,21 +25,23 @@ update_paths()
 
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
+from geos.pv.utils.details import FilterCategory
 
-__doc__ = """
+__doc__ = f"""
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
 
 To use it:
 
-* Load the module in Paraview: Tools>Manage Plugins...>Load new>PVCellTypeCounterEnhanced.
-* Select the input mesh.
-* Apply the filter.
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/qc/PVCellTypeCounterEnhanced
+* Select the input mesh to process
+* Select the filter: Filters > { FilterCategory.QC.value } > Cell Type Counter Enhanced
+* Apply
 
 """
 
 
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
-@smhint.xml( '<ShowInMenu category="5- Geos QC"/>' )
+@smhint.xml( f'<ShowInMenu category="{ FilterCategory.QC.value }"/>' )
 @smproperty.input( name="Input", port_index=0 )
 @smdomain.datatype(
     dataTypes=[ "vtkUnstructuredGrid" ],
@@ -137,22 +136,22 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert inputMesh is not None, "Input server mesh is null."
         assert outputTable is not None, "Output pipeline is null."
 
-        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-        cellTypeCounterEnhancedFilter.SetInputDataObject( inputMesh )
-        cellTypeCounterEnhancedFilter.Update()
-        outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.GetOutputDataObject( 0 ) )
+        cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
+        if len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+            cellTypeCounterEnhancedFilter.setLoggerHandler( VTKHandler() )
+        if cellTypeCounterEnhancedFilter.applyFilter():
+            outputTable.ShallowCopy( cellTypeCounterEnhancedFilter.getOutput() )
 
-        # print counts in Output Messages view
-        counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+            # print counts in Output Messages view
+            counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
-        self._countsAll += counts
-        # save to file if asked
-        if self._saveToFile and self._filename is not None:
-            try:
-                with open( self._filename, 'w' ) as fout:
-                    fout.write( self._countsAll.print() )
-                    print( f"File {self._filename} was successfully written." )
-            except Exception as e:
-                print( "Error while exporting the file due to:" )
-                print( str( e ) )
+            self._countsAll += counts
+            # save to file if asked
+            if self._saveToFile and self._filename is not None:
+                try:
+                    with open( self._filename, 'w' ) as fout:
+                        fout.write( self._countsAll.print() )
+                        cellTypeCounterEnhancedFilter.logger.info( f"File {self._filename} was successfully written." )
+                except Exception as e:
+                    cellTypeCounterEnhancedFilter.logger.info( f"Error while exporting the file due to:\n{ e }" )
         return 1

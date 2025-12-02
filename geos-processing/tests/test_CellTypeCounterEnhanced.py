@@ -6,27 +6,15 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import pytest
-from typing import (
-    Iterator, )
+from typing import Iterator
 
-from geos.mesh.utils.genericHelpers import createSingleCellMesh, createMultiCellMesh
+from geos.mesh.utils.genericHelpers import ( createSingleCellMesh, createMultiCellMesh )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid,
-    vtkCellTypes,
-    vtkCell,
-    VTK_TRIANGLE,
-    VTK_QUAD,
-    VTK_TETRA,
-    VTK_VERTEX,
-    VTK_POLYHEDRON,
-    VTK_POLYGON,
-    VTK_PYRAMID,
-    VTK_HEXAHEDRON,
-    VTK_WEDGE,
-)
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypes, vtkCell, VTK_TRIANGLE, VTK_QUAD,
+                                            VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON, VTK_POLYGON, VTK_PYRAMID,
+                                            VTK_HEXAHEDRON, VTK_WEDGE )
 
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
@@ -71,9 +59,8 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
-    cellTypeCounterEnhancedFilter.Update()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( test_case.mesh )
+    assert cellTypeCounterEnhancedFilter.applyFilter()
     countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
@@ -130,9 +117,8 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): Test case
     """
-    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced()
-    cellTypeCounterEnhancedFilter.SetInputDataObject( test_case.mesh )
-    cellTypeCounterEnhancedFilter.Update()
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( test_case.mesh )
+    assert cellTypeCounterEnhancedFilter.applyFilter()
     countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 

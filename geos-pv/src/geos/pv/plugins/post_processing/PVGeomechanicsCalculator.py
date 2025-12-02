@@ -8,33 +8,27 @@ import numpy as np
 from pathlib import Path
 from typing_extensions import Self
 
-from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smproperty
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet )
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_GRAIN_BULK_MODULUS,
-    DEFAULT_ROCK_COHESION,
-    WATER_DENSITY,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
+                                           DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
 from geos.processing.post_processing.GeomechanicsCalculator import GeomechanicsCalculator
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
-__doc__ = """
+__doc__ = f"""
 PVGeomechanicsCalculator is a paraview plugin that allows to compute additional geomechanics properties from existing ones in the mesh.
 
 To compute the geomechanics outputs, the mesh must have the following properties:
@@ -68,9 +62,9 @@ The output mesh has the same type than the input one.
 
 To use it:
 
-* Load the module in Paraview: Tools > Manage Plugins... > Load new > PVGeomechanicsCalculator
+* Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVGeomechanicsCalculator
 * Select the mesh you want to compute geomechanics properties on
-* Search Filters > Filter Category.GEOS_GEOMECHANICS > GEOS Geomechanics Calculator
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > GEOS Geomechanics Calculator
 * Change the physical constants if needed
 * Select computeAdvancedProperties to compute the advanced properties
 * Apply
@@ -78,7 +72,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.GEOS_GEOMECHANICS,
+@SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Geomechanics Calculator",
              decoratedType=[ "vtkUnstructuredGrid", "vtkMultiBlockDataSet" ] )
 class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
@@ -199,7 +193,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
     @smdomain.xml( """
         <Documentation>
             Reference friction angle to compute critical pore pressure.
-            The unit is °. Default is no friction case (i.e., 0.°).
+            The unit is °. Default is no friction case (i.e., 10.°).
         </Documentation>
     """ )
     def setFrictionAngle( self: Self, frictionAngle: float ) -> None:
@@ -247,7 +241,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 speHandler=True,
             )
 
-            if not geomechanicsCalculatorFilter.logger.hasHandlers():
+            if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
                 geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
@@ -255,8 +249,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
             geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-            geomechanicsCalculatorFilter.applyFilter()
-            outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+            if geomechanicsCalculatorFilter.applyFilter():
+                outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
             for blockIndex in volumeBlockIndexes:
@@ -272,7 +266,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     True,
                 )
 
-                if not geomechanicsCalculatorFilter.logger.hasHandlers():
+                if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
                     geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
 
                 geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
@@ -280,9 +274,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
                 geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-                geomechanicsCalculatorFilter.applyFilter()
-                volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
-                volumeBlock.Modified()
+                if geomechanicsCalculatorFilter.applyFilter():
+                    volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+                    volumeBlock.Modified()
 
         outputMesh.Modified()
 
