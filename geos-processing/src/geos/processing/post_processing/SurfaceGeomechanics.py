@@ -32,6 +32,7 @@ from geos.utils.GeosOutputsConstants import (
     GeosMeshOutputsEnum,
     PostProcessingOutputsEnum,
 )
+from geos.utils.pieceEnum import Piece
 
 __doc__ = """
 SurfaceGeomechanics is a VTK filter that allows:
@@ -133,7 +134,7 @@ class SurfaceGeomechanics:
         }
 
         # Attributes are either on points or on cells
-        self.attributeOnPoints: bool = False
+        self.attributePiece: Piece = Piece.CELLS
         # Rock cohesion (Pa)
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         # Friction angle (rad)
@@ -284,14 +285,14 @@ class SurfaceGeomechanics:
             attrNameXYZ: str = f"{attrNameLocal}_{ComponentNameEnum.XYZ.name}"
 
             # Skip attribute if it is already in the object
-            if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributeOnPoints ):
+            if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributePiece ):
                 continue
 
-            if self.attributeOnPoints:
+            if self.attributePiece != Piece.CELLS:
                 self.logger.error(
                     "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
             localArray: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, attrNameLocal,
-                                                                      self.attributeOnPoints )
+                                                                      self.attributePiece )
 
             arrayXYZ: npt.NDArray[ np.float64 ] = self.__computeXYZCoordinates( localArray )
 
@@ -300,7 +301,7 @@ class SurfaceGeomechanics:
                                 arrayXYZ,
                                 attrNameXYZ,
                                 ComponentNameEnum.XYZ.value,
-                                onPoints=self.attributeOnPoints,
+                                piece=self.attributePiece,
                                 logger=self.logger ):
                 self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
                 self.newAttributeNames.add( attrNameXYZ )
@@ -316,7 +317,7 @@ class SurfaceGeomechanics:
         attributesFiltered: set[ str ] = set()
 
         if len( self.attributesToConvert ) != 0:
-            attributeSet: set[ str ] = getAttributeSet( self.outputMesh, False )
+            attributeSet: set[ str ] = getAttributeSet( self.outputMesh, Piece.CELLS )
             for attrName in self.attributesToConvert:
                 if attrName in attributeSet:
                     attr: vtkDataArray = self.outputMesh.GetCellData().GetArray( attrName )
@@ -376,11 +377,11 @@ class SurfaceGeomechanics:
         """
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
-        if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributeOnPoints ):
+        if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributePiece ):
             # Get the traction to compute the SCU
             tractionAttributeName: str = GeosMeshOutputsEnum.TRACTION.attributeName
             traction: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, tractionAttributeName,
-                                                                    self.attributeOnPoints )
+                                                                    self.attributePiece )
 
             # Computation of the shear capacity utilization (SCU)
             # TODO: better handling of errors in shearCapacityUtilization
@@ -393,7 +394,7 @@ class SurfaceGeomechanics:
 
             # Create attribute
             if not createAttribute(
-                    self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributeOnPoints, logger=self.logger ):
+                    self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributePiece, logger=self.logger ):
                 self.logger.error( f"Failed to create attribute {SCUAttributeName}." )
                 return False
             else:
