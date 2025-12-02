@@ -93,12 +93,36 @@ class SuggestDecomposition:
 def define_simulation_view(server) -> None:
 
     @server.state.change("simulation_xml_temp")
-    def on_temp_change(simulation_xml_temp : list, **kw):
+    def on_temp_change(simulation_xml_temp : list, **_):
         current_list = server.state.simulation_xml_filename
 
         new_list = current_list + simulation_xml_temp 
         server.state.simulation_xml_filename = new_list
         server.state.simulation_xml_temp = []
+
+    @server.state.change("simulation_xml_filename")
+    def on_simfiles_change(simulation_xml_filename : list, **_):
+        import re
+        pattern = re.compile(r"\.xml$", re.IGNORECASE)
+        has_xml = any(pattern.search(file if isinstance(file, str) else file.get("name", "")) for file in  simulation_xml_filename)
+        server.state.is_valid_jobfiles = has_xml
+
+
+    
+    # @controller.trigger("run_remove_jobfile")
+    def run_remove_jobfile(index_to_remove : int) -> None:
+        # for now just check there is an xml 
+        current_files = list(server.state.simulation_xml_filename) # On prend une copie de la liste 
+        if 0 <= index_to_remove < len(current_files):
+                # 1. Supprimer l'élément de la copie de la liste 
+            del current_files[index_to_remove]
+                
+                # 2. Remplacer la variable d'état par la nouvelle liste.
+                # Ceci est CRITIQUE pour la réactivité, car cela force Vue.js à se mettre à jour. 
+            server.state.simulation_xml_filename = current_files 
+            print(f"Fichier à l'index {index_to_remove} supprimé. Nouveaux fichiers: {len(current_files)}") 
+        else: 
+            print(f"Erreur: Index de suppression invalide ({index_to_remove}).")
 
     with vuetify.VContainer():
         with vuetify.VRow():
@@ -124,9 +148,8 @@ def define_simulation_view(server) -> None:
         
         #        
             server.state.access_granted = False
+            server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = [ ]
-            # server.state.simulation_xml_temp = [ ]  
-
 
             sd = SuggestDecomposition('p4', 12e6)
             items = sd.to_list()
@@ -186,6 +209,9 @@ def define_simulation_view(server) -> None:
                   with vuetify.VListItem( v_for=("(file,i) in simulation_xml_filename"), key="i", value="file" ):
                     vuetify.VListItemTitle( "{{ file.name }}" )
                     vuetify.VListItemSubtitle("{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}")
+                    with vuetify.VListItemAction():
+                        vuetify.VBtn(small=True, icon=True, children=[vuetify.VIcon("mdi-minus-circle-outline")],
+                                     click=(run_remove_jobfile, "[i]") )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
@@ -225,7 +251,7 @@ def define_simulation_view(server) -> None:
             with vuetify.VCol(cols=1):
                 vuetify.VBtn("Run", 
                             click="trigger('run_simulation')",
-                            disabled=("!access_granted",),
+                            disabled=("!is_valid_jobfiles",),
                             classes="ml-auto"),  # type: ignore
 
 

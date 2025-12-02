@@ -496,6 +496,8 @@ class Simulation:
                 server.state.access_granted = True
             print("login login login")
 
+
+
         @controller.trigger("run_simulation")
         def run_simulation()-> None:
             
