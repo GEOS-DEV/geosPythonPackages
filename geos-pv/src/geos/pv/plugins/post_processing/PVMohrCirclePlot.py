@@ -10,19 +10,18 @@ from typing import Any, Union, cast
 
 import numpy as np
 import numpy.typing as npt
-from paraview.simple import (  # type: ignore[import-not-found]
-    Render, )
+
+from paraview.simple import Render  # type: ignore[import-not-found]
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid, )
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -34,33 +33,18 @@ update_paths()
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.pieceEnum import Piece
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
-from geos.utils.GeosOutputsConstants import (
-    FAILURE_ENVELOPE,
-    GeosMeshOutputsEnum,
-)
+from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
 from geos.utils.Logger import CustomLoggerFormatter
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_DEG,
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_ROCK_COHESION,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_FRICTION_ANGLE_RAD,
+                                           DEFAULT_ROCK_COHESION )
 from geos.mesh.utils.arrayHelpers import getArrayInObject
 
 import geos.pv.utils.mohrCircles.functionsMohrCircle as mcf
 import geos.pv.utils.paraviewTreatments as pvt
-from geos.pv.utils.checkboxFunction import (  # type: ignore[attr-defined]
-    createModifiedCallback, )
-from geos.pv.utils.DisplayOrganizationParaview import (
-    buildNewLayoutWithPythonView, )
-from geos.pv.pyplotUtils.matplotlibOptions import (
-    FontStyleEnum,
-    FontWeightEnum,
-    LegendLocationEnum,
-    LineStyleEnum,
-    MarkerStyleEnum,
-    OptionSelectionEnum,
-    optionEnumToXml,
-)
+from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
+from geos.pv.utils.DisplayOrganizationParaview import buildNewLayoutWithPythonView
+from geos.pv.pyplotUtils.matplotlibOptions import ( FontStyleEnum, FontWeightEnum, LegendLocationEnum, LineStyleEnum,
+                                                    MarkerStyleEnum, OptionSelectionEnum, optionEnumToXml )
 from geos.pv.utils.mohrCircles.functionsMohrCircle import StressConventionEnum
 from geos.pv.utils.details import FilterCategory
 
@@ -662,7 +646,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         if self.requestDataStep < 0:
             # Get cell ids
             inData = self.GetInputData( inInfoVec, 0, 0 )
-            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger)
+            self.cellIds = pvt.getVtkOriginalCellIds( inData, self.logger )
 
             # Update vtkDAS
             for circleId in self.cellIds:

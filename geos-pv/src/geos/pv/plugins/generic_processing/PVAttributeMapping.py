@@ -17,21 +17,13 @@ update_paths()
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler,
-)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkDataSet,
-    vtkMultiBlockDataSet,
-)
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkDataSet, vtkMultiBlockDataSet
 
 from geos.pv.utils.details import FilterCategory
 from geos.utils.pieceEnum import Piece
@@ -195,7 +187,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
                                                                      self.piece, True )
 
-        if not attributeMappingFilter.logger.hasHandlers():
+        if len( attributeMappingFilter.logger.handlers ) == 0:
             attributeMappingFilter.setLoggerHandler( VTKHandler() )
 
         attributeMappingFilter.applyFilter()

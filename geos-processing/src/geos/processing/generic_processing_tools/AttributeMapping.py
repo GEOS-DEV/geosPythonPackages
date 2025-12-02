@@ -104,6 +104,7 @@ class AttributeMapping:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -114,7 +115,7 @@ class AttributeMapping:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
@@ -140,58 +141,58 @@ class AttributeMapping:
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
-        if len( self.attributeNames ) == 0:
-            self.logger.warning( f"Please enter at least one { self.piece.value } attribute to transfer." )
-            self.logger.warning( f"The filter { self.logger.name } has not been used." )
-            return False
+        try:
+            if len( self.attributeNames ) == 0:
+                raise ValueError( f"Please enter at least one { self.piece.value } attribute to transfer." )
 
-        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.piece )
-        wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
-        if len( wrongAttributeNames ) > 0:
-            self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.piece )
+            wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
+            if len( wrongAttributeNames ) > 0:
+                raise AttributeError(
+                    f"The { self.piece.value } attributes { wrongAttributeNames } are not present in the source mesh." )
 
-        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.piece )
-        attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
-        if len( attributesAlreadyInMeshTo ) > 0:
-            self.logger.error(
-                f"The { self.piece.value } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.piece )
+            attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
+            if len( attributesAlreadyInMeshTo ) > 0:
+                raise AttributeError(
+                    f"The { self.piece.value } attributes { attributesAlreadyInMeshTo } are already present in the final mesh."
+                )
 
-        if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
-            partialAttributes: list[ str ] = []
+            if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
+                partialAttributes: list[ str ] = []
+                for attributeName in self.attributeNames:
+                    if not isAttributeGlobal( self.meshFrom, attributeName, self.piece ):
+                        partialAttributes.append( attributeName )
+
+                if len( partialAttributes ) > 0:
+                    raise AttributeError(
+                        f"All { self.piece.value } attributes to transfer must be global, { partialAttributes } are partials."
+                    )
+
+            self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.piece )
+            sharedElement: bool = False
+            for key in self.ElementMap:
+                if np.any( self.ElementMap[ key ] > -1 ):
+                    sharedElement = True
+
+            if not sharedElement:
+                raise ValueError( f"The two meshes do not have any shared { self.piece.value }." )
+
             for attributeName in self.attributeNames:
-                if not isAttributeGlobal( self.meshFrom, attributeName, self.piece ):
-                    partialAttributes.append( attributeName )
+                # TODO:: Modify arrayModifiers function to raise error.
+                if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
+                                                        self.piece, self.logger ):
+                    raise
 
-            if len( partialAttributes ) > 0:
-                self.logger.error(
-                    f"All { self.piece.value } attributes to transfer must be global, { partialAttributes } are partials." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-
-        self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.piece )
-        sharedElement: bool = False
-        for key in self.ElementMap:
-            if np.any( self.ElementMap[ key ] > -1 ):
-                sharedElement = True
-
-        if not sharedElement:
-            self.logger.warning( f"The two meshes do not have any shared { self.piece.value }." )
-            self.logger.warning( f"The filter { self.logger.name } has not been used." )
+            # Log the output message.
+            self._logOutputMessage()
+        except ( TypeError, ValueError, AttributeError ) as e:
+            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
             return False
-
-        for attributeName in self.attributeNames:
-            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
-                                                    self.piece, self.logger ):
-                self.logger.error( f"The attribute { attributeName } has not been mapped." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
-
-        # Log the output message.
-        self._logOutputMessage()
+        except Exception as e:
+            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+            return False
 
         return True
 

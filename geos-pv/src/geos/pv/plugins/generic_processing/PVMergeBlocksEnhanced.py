@@ -8,19 +8,13 @@ from typing import Union
 from typing_extensions import Self
 
 from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
-    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
-)
-from paraview.detail.loghandler import (  # type: ignore[import-not-found]
-    VTKHandler, )
-from vtkmodules.vtkCommonCore import (
-    vtkInformation,
-    vtkInformationVector,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkCompositeDataSet,
-    vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
-)
+    VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy )
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
+# source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkUnstructuredGrid
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -120,15 +114,11 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if not mergeBlockEnhancedFilter.logger.hasHandlers():
+        if len( mergeBlockEnhancedFilter.logger.handlers ) == 0:
             mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
 
-        try:
-            mergeBlockEnhancedFilter.applyFilter()
-        except ( ValueError, TypeError, RuntimeError ) as e:
-            mergeBlockEnhancedFilter.logger.error( f"MergeBlock failed due to {e}", exc_info=True )
-            return 0
-        else:
+        if mergeBlockEnhancedFilter.applyFilter():
             outputMesh.ShallowCopy( mergeBlockEnhancedFilter.getOutput() )
             outputMesh.Modified()
-            return 1
+
+        return 1

@@ -60,7 +60,7 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
         test_case (TestCase): Test case
     """
     cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( test_case.mesh )
-    cellTypeCounterEnhancedFilter.applyFilter()
+    assert cellTypeCounterEnhancedFilter.applyFilter()
     countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
@@ -118,7 +118,7 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
         test_case (TestCase): Test case
     """
     cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( test_case.mesh )
-    cellTypeCounterEnhancedFilter.applyFilter()
+    assert cellTypeCounterEnhancedFilter.applyFilter()
     countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
     assert countsObs is not None, "CellTypeCounts is undefined"
 
