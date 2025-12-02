@@ -23,7 +23,7 @@ geos.utils.enumUnits module
    :members:
    :undoc-members:
    :show-inheritance:
-   
+
 geos.utils.geometryFunctions module
 ------------------------------------
 
@@ -60,6 +60,14 @@ geos.utils.PhysicalConstants module
 -----------------------------------------
 
 .. automodule:: geos.utils.PhysicalConstants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+geos.utils.pieceEnum module
+------------------------------
+
+.. automodule:: geos.utils.pieceEnum
    :members:
    :undoc-members:
    :show-inheritance:
