@@ -215,7 +215,7 @@ def define_simulation_view(server) -> None:
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
-                v_model=("simulation_remote_path",None),
+                v_model=("simulation_remote_path", "/workrd/users/l1165478/Example"),
                 label="Path where to write files and launch code",
                 prepend_icon="mdi-upload",
                 dense=True,
@@ -227,7 +227,7 @@ def define_simulation_view(server) -> None:
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
-                v_model=("simulation_dl_path", None),
+                v_model=("simulation_dl_path", "/users/l1165478/tmp/Example"),
                 label="Simulation download path",
                 dense=True,
                 clearable=True,

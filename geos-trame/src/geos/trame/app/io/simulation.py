@@ -11,7 +11,8 @@ from trame_server.state import State
 from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
 from jinja2 import Template
-import paramiko 
+import paramiko
+import re
 import os
 
 #TODO move outside
@@ -25,6 +26,8 @@ class SimulationConstant:
     PORT = 22
     SIMULATIONS_INFORMATION_FOLDER_PATH= "/workrd/users/"
     SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
+
+    # replace by conf-file json
 
 
 # Load template from file
@@ -65,7 +68,7 @@ srun --mpi=pmix_v3 --hint=nomultithread \
 
 class Authentificator:#namespacing more than anything else
 
-    ssh_client : paramiko.SSHClient
+    ssh_client : Optional[paramiko.SSHClient] = None
 
     @staticmethod
     def _sftp_copy_tree(ssh_client, file_tree,  remote_root):
@@ -97,14 +100,20 @@ class Authentificator:#namespacing more than anything else
                     print(f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
             if "subfolders" in node:
                 for subfolder, content in node["subfolders"].items():
-                    sftp.mkdir( str(rp/Path(subfolder))) 
-                    print(f"creating {rp/Path(subfolder)}")
+                    try:
+                        sftp.stat( str(rp/Path(subfolder)) )
+                    except FileNotFoundError:
+                        print(f"creating {rp/Path(subfolder)}")
+                        sftp.mkdir( str(rp/Path(subfolder)) ) 
                     Authentificator.dfs_tree(content, lp/Path(subfolder), sftp, remote_root)
             
             for folder, content in node.items():
                 if folder not in ["files", "subfolders"]:
-                    sftp.mkdir( str(rp/Path(folder)) )
-                    print(f"creating {rp/Path(folder)}")
+                    try:
+                        sftp.stat( str(rp/Path(folder)) )
+                    except FileNotFoundError:
+                        print(f"creating {rp/Path(folder)}")
+                        sftp.mkdir( str(rp/Path(folder)) ) 
                     Authentificator.dfs_tree(content, lp/Path(folder), sftp, remote_root)
 
 
@@ -203,11 +212,11 @@ class Authentificator:#namespacing more than anything else
                 print(stderr_data)
 
             print(f"Command exited with status: {exit_status}")
-            return exit_status
+            return (exit_status,stdout_data, stderr_data)
         
         except Exception as e:
             print(f"Error executing command: {e}")
-            return -1
+            return (-1,"","")
 
     @staticmethod
     def _transfer_file_sftp(client, local_path, remote_path, direction="put"):
@@ -363,23 +372,6 @@ def parse_launcher_output(output: str) -> SimulationInformation:
 #         json.dumps(info.to_dict()),  # type: ignore
 #     )
 
-
-##TODO yay slurm
-def get_launcher_command(launcher_params: LauncherParams) -> str:
-    launcher_cmd_args = (
-        f"{SimulationConstant.SIMULATION_GEOS_PATH} "
-        f"--nprocs {launcher_params.simulation_nb_process} "
-        f"--fname {launcher_params.simulation_cmd_filename} "
-        f"--job_name {launcher_params.simulation_job_name}"
-    )
-
-    # state.simulation_nb_process  is supposed to be an integer, but the UI present a VTextField,
-    # so if user changes it, then it can be defined as a str
-    if int(launcher_params.simulation_nb_process) > 1:
-        launcher_cmd_args += " --partition"
-    return launcher_cmd_args
-
-
 # def get_simulation_screenshot_timestep(filename: str) -> int:
 #     """
 #     From a given file name returns the time step.
@@ -444,41 +436,11 @@ class SimRunner(ISimRunner):
 
   
 
-
-    def launch_simulation(self):
-
-        if self.ssh_client:
-            try:
-                # --- 3. Execute a Remote Command ---
-                self._execute_remote_command(self.ssh_client, "ls -l /tmp")
-                
-                # --- 4. Upload a File (PUT) ---
-                remote_path_upload = f"/tmp/{self.local_upload_file}"
-                self._transfer_file_sftp(self.ssh_client, self.local_upload_file, remote_path_upload, direction="put")
-
-                # --- 5. Verify Upload by Listing Remote Directory ---
-                self._execute_remote_command(self.ssh_client, f"ls -l /tmp")
-
-                # --- 6. Download a File (GET) ---
-                remote_download_file = f"/workrd/{self.local_upload_file}" # Use a known remote file
-                local_download_file = "downloaded_hostname.txt"
-                self._transfer_file_sftp(self.ssh_client, local_download_file, remote_download_file, direction="get")
-                
-                # --- 7. Clean up the uploaded file (Optional) ---
-                self._execute_remote_command(self.ssh_client, f"rm {remote_path_upload}")
-                
-            finally:
-                # --- 8. Close the connection ---
-                self.ssh_client.close()
-                print("\nSSH Connection closed.")
-
-
 class Simulation:
     """
     Simulation component.
     Fills the UI with the screenshot as read from the simulation outputs folder and a graph with the time series
     from the simulation.
-
     Requires a simulation runner providing information on the output path of the simulation to monitor and ways to
     trigger the simulation.
     """
@@ -488,11 +450,11 @@ class Simulation:
         controller = server.controller
         self._sim_runner = sim_runner
         self._sim_info_dir = sim_info_dir or SimulationConstant.SIMULATIONS_INFORMATION_FOLDER_PATH
+        server.state.job_ids = []
 
         self._job_status_watcher: Optional[AsyncPeriodicRunner] = None
         self._job_status_watcher_period_ms = 2000
 
-        self.start_result_streams()
     
         #define triggers
         @controller.trigger("run_try_login")
@@ -505,14 +467,14 @@ class Simulation:
                                                      key=Authentificator.get_key(server.state.login, server.state.password))
             
             if Authentificator.ssh_client :
-                id = os.environ.get('USER')
-                Authentificator._execute_remote_command(Authentificator.ssh_client, f"ps aux")
+                # id = os.environ.get('USER')
+                # Authentificator._execute_remote_command(Authentificator.ssh_client, f"ps aux")
                 # Authentificator._execute_remote_command(Authentificator.ssh_client, f"ls -l {SimulationConstant.REMOTE_HOME_BASE}/{id}")
        
                 # server.state.update({"access_granted" : True, "key_path" : f"{SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/id_trame" })
                 # server.state.flush()
                 server.state.access_granted = True
-            print("login login login")
+                print("login login login")
 
         @staticmethod
         def gen_tree(xml_filename):
@@ -587,12 +549,22 @@ class Simulation:
                                     server.state.simulation_remote_path)
 
                     
-                    Authentificator._execute_remote_command(Authentificator.ssh_client,
+                    _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client,
                                                             f'cd {server.state.simulation_remote_path} && sbatch job.slurm')
                     
 
-                    Authentificator._execute_remote_command(Authentificator.ssh_client,
-                                                            f'squeue -u $USER')
+                    
+                    job_lines = sout.strip()
+                    job_id = re.search(r"\b\d+\b", job_lines[0])
+
+                    server.state.job_ids.append(job_id)
+                    
+
+                    
+
+                    # Authentificator._execute_remote_command(Authentificator.ssh_client,
+                    #                                         f'squeue -u $USER')
+                    self.start_result_streams()
                     
 
                     Authentificator._transfer_file_sftp(Authentificator.ssh_client,
@@ -683,13 +655,32 @@ class Simulation:
             self._job_status_watcher.stop()
 
     def start_result_streams(self) -> None:
-        pass
-        # self.stop_result_streams()
+        self.stop_result_streams()
 
-        # self._job_status_watcher = AsyncPeriodicRunner(
-        #     self._update_job_status, period_ms=self._job_status_watcher_period_ms
-        # )
+        self._job_status_watcher = AsyncPeriodicRunner(
+            self.check_jobs, period_ms=self._job_status_watcher_period_ms
+        )
 
+    def check_jobs(self):
+        if Authentificator.ssh_client:
+            try:
+                _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'date && squeue -u $USER')
+                job_lines = sout.strip().split("\n")[2:]
+                job_id = job_lines[0].split()[0]
+                job_status = job_lines[0].split()[4]
+                job_name = job_lines[0].split()[2]
+                print(f"{job_lines}\n job id:{job_id}\n status:{job_status}\n name:{job_name}")
+                
+            except PermissionError as e:
+                print(f"Permission error: {e}")
+            except IOError as e:
+                print(f"Error accessing remote file or path: {e}")
+            except Exception as e:
+                print(f"An error occurred during SFTP: {e}")
+        else:
+            return None
+
+            
     def start_simulation(self) -> None:
         state = self._server.state
         script_path = None
