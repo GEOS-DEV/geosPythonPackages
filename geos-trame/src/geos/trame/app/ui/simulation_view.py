@@ -206,12 +206,11 @@ def define_simulation_view(server) -> None:
                 )
             with vuetify.VCol(cols=4):
                 with vuetify.VList():
-                  with vuetify.VListItem( v_for=("(file,i) in simulation_xml_filename"), key="i", value="file" ):
+                  with vuetify.VListItem( v_for=("(file,i) in simulation_xml_filename"), key="i", value="file",
+                                         prepend_icon="mdi-minus-circle-outline",
+                                         click=(run_remove_jobfile, "[i]")  ):
                     vuetify.VListItemTitle( "{{ file.name }}" )
                     vuetify.VListItemSubtitle("{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}")
-                    with vuetify.VListItemAction():
-                        vuetify.VBtn(small=True, icon="mdi-minus-circle-outline",
-                                     click=(run_remove_jobfile, "[i]") )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField(
@@ -266,6 +265,7 @@ def define_simulation_view(server) -> None:
         with vuetify.VRow():
             with vuetify.VCol(cols=2):
                 SimulationStatusView(server=server)
+
 
         with vuetify.VRow(v_if="simulation_error"):
             html.Div("An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;")
