@@ -202,7 +202,7 @@ def define_simulation_view(server) -> None:
                     multiple=True,
                     filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt',
                     # readonly=True,
-                    disabled=("access_granted",)
+                    disabled=("!access_granted",)
                 )
             with vuetify.VCol(cols=4):
                 with vuetify.VList():
@@ -210,7 +210,7 @@ def define_simulation_view(server) -> None:
                     vuetify.VListItemTitle( "{{ file.name }}" )
                     vuetify.VListItemSubtitle("{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}")
                     with vuetify.VListItemAction():
-                        vuetify.VBtn(small=True, icon=True, children=[vuetify.VIcon("mdi-minus-circle-outline")],
+                        vuetify.VBtn(small=True, icon="mdi-minus-circle-outline",
                                      click=(run_remove_jobfile, "[i]") )
 
         with vuetify.VRow(), vuetify.VCol():

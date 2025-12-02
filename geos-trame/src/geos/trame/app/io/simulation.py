@@ -68,27 +68,45 @@ class Authentificator:#namespacing more than anything else
     ssh_client : paramiko.SSHClient
 
     @staticmethod
-    def _sftp_copy_tree(ssh_client, local_root, remote_root):
+    def _sftp_copy_tree(ssh_client, file_tree,  remote_root):
         # Connect to remote server
         sftp = ssh_client.open_sftp()
-
-        local_root = Path(local_root).resolve()
-
-        for path in local_root.rglob("*"):
-            remote_path = f"{remote_root}/{path.relative_to(local_root)}"
-
-            if path.is_dir():
-                # Create remote directory if it doesn't exist
-                try:
-                    sftp.mkdir(remote_path)
-                except IOError:
-                    # Directory may already exist
-                    pass
-            else:
-                # Upload file
-                sftp.put(str(path), remote_path)
+        
+        Authentificator.dfs_tree(file_tree["structure"], file_tree["root"], sftp=sftp, remote_root=remote_root)
 
         sftp.close()
+
+    @staticmethod
+    def dfs_tree(node, path, sftp, remote_root):
+
+        lp = Path(path)
+        rp = Path(remote_root)/lp
+
+        if isinstance(node, list):
+            for file in node:
+                # sftp.put(lp/Path(file), rp/Path(file))
+                with sftp.file( str(rp/Path(file.get('name'))), 'w') as f:
+                        f.write(file.get('content'))
+                print(f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+        elif isinstance(node, dict):
+            if "files" in node:
+                for file in node["files"]:
+                    # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
+                    with sftp.file( str(rp/Path(file.get('name'))), 'w') as f:
+                        f.write(file.get('content'))
+                    print(f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+            if "subfolders" in node:
+                for subfolder, content in node["subfolders"].items():
+                    sftp.mkdir( str(rp/Path(subfolder))) 
+                    print(f"creating {rp/Path(subfolder)}")
+                    Authentificator.dfs_tree(content, lp/Path(subfolder), sftp, remote_root)
+            
+            for folder, content in node.items():
+                if folder not in ["files", "subfolders"]:
+                    sftp.mkdir( str(rp/Path(folder)) )
+                    print(f"creating {rp/Path(folder)}")
+                    Authentificator.dfs_tree(content, lp/Path(folder), sftp, remote_root)
+
 
     @staticmethod
     def get_key( id, pword ):
@@ -496,7 +514,40 @@ class Simulation:
                 server.state.access_granted = True
             print("login login login")
 
+        @staticmethod
+        def gen_tree(xml_filename):
 
+            import re
+            xml_pattern = re.compile(r"\.xml$", re.IGNORECASE)
+            mesh_pattern = re.compile(r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE)
+            table_pattern = re.compile(r"\.(txt|dat|csv)$", re.IGNORECASE)
+            xml_matches = []
+            mesh_matches = []
+            table_matches = []
+
+            for file in xml_filename:
+                if xml_pattern.search(file.get("name","")):
+                    xml_matches.append(file)
+                elif mesh_pattern.search(file.get("name","")):
+                    mesh_matches.append(file) 
+                elif table_pattern.search(file.get("name","")): 
+                    table_matches.append(file) 
+
+            file_tree = {
+            'root' : '.',     
+            "structure": {
+                "files" : xml_matches,
+                "subfolders": {
+                   "mesh": mesh_matches,
+                   "tables": table_matches
+                    # "subfolders": {
+                    #     "inner_tables_1": ["placeholder.txt"],
+                    #     "inner_tables_2": ["placeholder.txt"]
+                    # }
+                }
+            }
+        }
+            return file_tree
 
         @controller.trigger("run_simulation")
         def run_simulation()-> None:
@@ -518,8 +569,8 @@ class Simulation:
                     #write slurm directly on remote
                     try:
                         sftp = Authentificator.ssh_client.open_sftp()
-                        remote_path = Path(server.state.simulation_xml_filename).parent/Path('job.slurm')
-                        with sftp.file(remote_path,'w') as f:
+                        remote_path = Path(server.state.simulation_remote_path)/Path('job.slurm')
+                        with sftp.file( str(remote_path),'w' ) as f:
                             f.write(rendered)
 
                     # except FileExistsError:
@@ -532,8 +583,8 @@ class Simulation:
                         print(f"An error occurred during SFTP: {e}")
 
                     Authentificator._sftp_copy_tree(Authentificator.ssh_client,
-                                    Path(server.state.simulation_xml_filename).parent,
-                                    Path(server.state.simulation_remote_path))
+                                    gen_tree(server.state.simulation_xml_filename),
+                                    server.state.simulation_remote_path)
 
                     
                     Authentificator._execute_remote_command(Authentificator.ssh_client,
