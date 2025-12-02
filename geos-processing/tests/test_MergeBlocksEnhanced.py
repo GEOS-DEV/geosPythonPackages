@@ -19,6 +19,7 @@ def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None
     mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
     mergeBlockEnhancedFilter.applyFilter()
 
+
 class RaiseMergeBlocksEnhanced( TestCase ):
     """Test failure on empty multiBlockDataSet."""
 
