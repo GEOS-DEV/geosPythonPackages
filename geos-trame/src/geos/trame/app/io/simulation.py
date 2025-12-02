@@ -452,6 +452,13 @@ class Simulation:
         self._sim_info_dir = sim_info_dir or SimulationConstant.SIMULATIONS_INFORMATION_FOLDER_PATH
         server.state.job_ids = []
 
+        server.state.status_colors = {
+            "PD": "#4CAF50",
+            "R": "#3F51B5",
+            "CA": "#FFC107",
+            "CG": "#484B45",
+            "F": "#E53935",
+        }
         self._job_status_watcher: Optional[AsyncPeriodicRunner] = None
         self._job_status_watcher_period_ms = 2000
 
@@ -555,9 +562,9 @@ class Simulation:
 
                     
                     job_lines = sout.strip()
-                    job_id = re.search(r"\b\d+\b", job_lines[0])
+                    job_id = re.search(r"Submitted batch job (\d+)", job_lines)
 
-                    server.state.job_ids.append(job_id)
+                    server.state.job_ids.append({'job_id':job_id[1]})
                     
 
                     
@@ -665,11 +672,20 @@ class Simulation:
         if Authentificator.ssh_client:
             try:
                 _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'date && squeue -u $USER')
+                #sacct -j <jobID> --format --format=JobID,State --noheader 
                 job_lines = sout.strip().split("\n")[2:]
-                job_id = job_lines[0].split()[0]
-                job_status = job_lines[0].split()[4]
-                job_name = job_lines[0].split()[2]
-                print(f"{job_lines}\n job id:{job_id}\n status:{job_status}\n name:{job_name}")
+                jid = self._server.state.job_ids
+                for job_line in job_lines:
+                    job_id = job_line.split()[0]
+                    index = next((i for i, item in enumerate(jid) if item.get("job_id") == job_id), None)
+                    if index is None:
+                        continue
+                    else:
+                        jid[index]['status'] = job_line.split()[4]
+                        jid[index]['name'] =  job_line.split()[2]
+                        print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
+                self._server.state.job_ids = jid
+                # self._server.state.flush()
                 
             except PermissionError as e:
                 print(f"Permission error: {e}")

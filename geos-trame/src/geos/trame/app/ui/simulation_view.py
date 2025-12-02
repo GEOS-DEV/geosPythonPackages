@@ -260,12 +260,26 @@ def define_simulation_view(server) -> None:
             vuetify.VSpacer()
             with vuetify.VCol(cols=1):
                 vuetify.VBtn("Kill", click="trigger('kill_simulation')"),  # type: ignore
-                
+        
+        color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
 
         with vuetify.VRow():
-            with vuetify.VCol(cols=2):
-                SimulationStatusView(server=server)
+            with vuetify.VCol(cols=4):
+                # SimulationStatusView(server=server)
+                with vuetify.VList():
+                    with vuetify.VListItem( v_for=("(jobs,i) in job_ids"), key="i", value="jobs", base_color=(color_expression,)):
+                        vuetify.VListItemTitle("{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}")
+                        # vuetify.VListItemTitle("{{ jobs.job_id }}")
 
 
         with vuetify.VRow(v_if="simulation_error"):
             html.Div("An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;")
+
+def get_color(status):
+        return {
+            'PD': "#4CAF50",
+            'R': "#3F51B5",
+            'CA': "#FFC107",
+            'CG': "#484B45",
+            'F': "#E53935",
+        }.get(status, "#607D8B")
