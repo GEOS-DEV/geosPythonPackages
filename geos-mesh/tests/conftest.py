@@ -212,7 +212,7 @@ def getElementMap() -> Any:
         Returns:
             elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
-        ShareCells2D3DId: npt.NDArray[ np.int64 ] = np.array(
+        sharedCells2D3DId: npt.NDArray[ np.int64 ] = np.array(
             [ [ 0, 0 ], [ 1, 1 ], [ 2, 2 ], [ 3, 3 ], [ 4, 4 ], [ 5, 5 ], [ 6, 6 ], [ 7, 7 ], [ 8, 8 ], [ 9, 9 ],
               [ 10, 10 ], [ 11, 11 ], [ 12, 12 ], [ 13, 13 ], [ 14, 14 ], [ 15, 15 ], [ 16, 16 ], [ 17, 17 ],
               [ 18, 18 ], [ 19, 19 ], [ 20, 20 ], [ 21, 21 ], [ 22, 22 ], [ 23, 23 ], [ 24, 48 ], [ 25, 50 ],
@@ -236,84 +236,84 @@ def getElementMap() -> Any:
               [ 154, 1238 ], [ 155, 1239 ] ],
             dtype=np.int64,
         )
-        SharePoints1D2DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 26 ] ], dtype=np.int64 )
-        SharePoints1D3DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 475 ] ], dtype=np.int64 )
+        sharedPoints1D2DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 26 ] ], dtype=np.int64 )
+        sharedPoints1D3DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 475 ] ], dtype=np.int64 )
         elementMap: Dict[ int, npt.NDArray[ np.int64 ] ] = {}
         nbElements: Tuple[ int, int, int ] = ( 4092, 212, 11 ) if points else ( 1740, 156, 10 )
         if meshFromName == "well":
             if meshToName == "emptyWell":
                 elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 2 ] ) ] )
-            if meshToName == "emptyFracture" or meshToName == "emptypolydata":
+            elif meshToName == "emptyFracture" or meshToName == "emptypolydata":
                 elementMap[ 0 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
-                for id3DElem in range( nbElements[ 1 ] ):
-                    for test in SharePoints1D2DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedPoint1D2DId in sharedPoints1D2DId:
+                        if id2DElem == sharedPoint1D2DId[ 1 ]:
+                            elementMap[ 0 ][ id2DElem ] = [ 0, sharedPoint1D2DId[ 0 ] ]
             elif meshToName == "emptydataset":
                 elementMap[ 0 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
                 for id3DElem in range( nbElements[ 0 ] ):
-                    for test in SharePoints1D3DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                    for sharedPoint1D3DId in sharedPoints1D3DId:
+                        if id3DElem == sharedPoint1D3DId[ 1 ]:
+                            elementMap[ 0 ][ id3DElem ] = [ 0, sharedPoint1D3DId[ 0 ] ]
             elif meshToName == "emptymultiblock":
                 elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
                 for id3DElem in range( nbElements[ 0 ] ):
-                    for test in SharePoints1D3DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 1 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                    for sharedPoint1D3DId in sharedPoints1D3DId:
+                        if id3DElem == sharedPoint1D3DId[ 1 ]:
+                            elementMap[ 1 ][ id3DElem ] = [ 0, sharedPoint1D3DId[ 0 ] ]
                 elementMap[ 3 ] = np.full( ( nbElements[ 1 ], 2 ), -1, np.int64 )
-                for id3DElem in range( nbElements[ 1 ] ):
-                    for test in SharePoints1D2DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 3 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                for id2DElem in range( nbElements[ 1 ] ):
+                    for sharedPoint1D2DId in sharedPoints1D2DId:
+                        if id2DElem == sharedPoint1D2DId[ 1 ]:
+                            elementMap[ 3 ][ id2DElem ] = [ 0, sharedPoint1D2DId[ 0 ] ]
         elif meshFromName == "fracture" or meshFromName == "polydata":
             if meshToName == "emptyFracture" or meshToName == "emptypolydata":
                 elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
             elif meshToName == "emptyWell":
                 elementMap[ 0 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
-                for id3DElem in range( nbElements[ 2 ] ):
-                    for test in SharePoints1D2DId:
-                        if id3DElem == test[ 0 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 0, test[ 1 ] ]
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedPoint1D2DId in sharedPoints1D2DId:
+                        if id1DElem == sharedPoint1D2DId[ 0 ]:
+                            elementMap[ 0 ][ id1DElem ] = [ 0, sharedPoint1D2DId[ 1 ] ]
             elif meshToName == "emptydataset":
                 elementMap[ 0 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
                 for id3DElem in range( nbElements[ 0 ] ):
-                    for test in ShareCells2D3DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                    for sharedCell2D3DId in sharedCells2D3DId:
+                        if id3DElem == sharedCell2D3DId[ 1 ]:
+                            elementMap[ 0 ][ id3DElem ] = [ 0, sharedCell2D3DId[ 0 ] ]
             elif meshToName == "emptymultiblock":
                 elementMap[ 1 ] = np.full( ( nbElements[ 0 ], 2 ), -1, np.int64 )
                 for id3DElem in range( nbElements[ 0 ] ):
-                    for test in ShareCells2D3DId:
-                        if id3DElem == test[ 1 ]:
-                            elementMap[ 1 ][ id3DElem ] = [ 0, test[ 0 ] ]
+                    for sharedCell2D3DId in sharedCells2D3DId:
+                        if id3DElem == sharedCell2D3DId[ 1 ]:
+                            elementMap[ 1 ][ id3DElem ] = [ 0, sharedCell2D3DId[ 0 ] ]
                 elementMap[ 3 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 1 ] ) ] )
         elif meshFromName == "dataset":
             if meshToName == "emptydataset":
                 elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
             elif meshToName == "emptyWell":
                 elementMap[ 0 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
-                for id3DElem in range( nbElements[ 2 ] ):
-                    for test in SharePoints1D3DId:
-                        if id3DElem == test[ 0 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 0, test[ 1 ] ]
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedPoint1D3DId in sharedPoints1D3DId:
+                        if id1DElem == sharedPoint1D3DId[ 0 ]:
+                            elementMap[ 0 ][ id1DElem ] = [ 0, sharedPoint1D3DId[ 1 ] ]
             elif meshToName == "emptypolydata" or meshToName == "emptyFracture":
-                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in ShareCells2D3DId[ :, 1 ] ] )
+                elementMap[ 0 ] = np.array( [ [ 0, element ] for element in sharedCells2D3DId[ :, 1 ] ] )
             elif meshToName == "emptymultiblock":
                 elementMap[ 1 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 0 ] ) ] )
-                elementMap[ 3 ] = np.array( [ [ 0, element ] for element in ShareCells2D3DId[ :, 1 ] ] )
+                elementMap[ 3 ] = np.array( [ [ 0, element ] for element in sharedCells2D3DId[ :, 1 ] ] )
         elif meshFromName == "multiblock":
             if meshToName == "emptymultiblock":
                 elementMap[ 1 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
-                elementMap[ 3 ] = np.array( [ [ 1, element ] for element in ShareCells2D3DId[ :, 1 ] ] )
+                elementMap[ 3 ] = np.array( [ [ 1, element ] for element in sharedCells2D3DId[ :, 1 ] ] )
             elif meshToName == "emptyWell":
                 elementMap[ 0 ] = np.full( ( nbElements[ 2 ], 2 ), -1, np.int64 )
-                for id3DElem in range( nbElements[ 2 ] ):
-                    for test in SharePoints1D3DId:
-                        if id3DElem == test[ 0 ]:
-                            elementMap[ 0 ][ id3DElem ] = [ 1, test[ 1 ] ]
+                for id1DElem in range( nbElements[ 2 ] ):
+                    for sharedPoint1D3DId in sharedPoints1D3DId:
+                        if id1DElem == sharedPoint1D3DId[ 0 ]:
+                            elementMap[ 0 ][ id1DElem ] = [ 1, sharedPoint1D3DId[ 1 ] ]
             elif meshToName == "emptyFracture" or meshToName == "emptypolydata":
-                elementMap[ 0 ] = np.array( [ [ 1, element ] for element in ShareCells2D3DId[ :, 1 ] ] )
+                elementMap[ 0 ] = np.array( [ [ 1, element ] for element in sharedCells2D3DId[ :, 1 ] ] )
             elif meshToName == "emptydataset":
                 elementMap[ 0 ] = np.array( [ [ 1, element ] for element in range( nbElements[ 0 ] ) ] )
 
