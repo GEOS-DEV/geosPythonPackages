@@ -207,7 +207,7 @@ def getElementMap() -> Any:
         Args:
             meshFromName (str): The name of the meshFrom.
             meshToName (str): The name of the meshTo.
-            points (bool): True if elements to map is points, False if it is cells.
+            piece (Piece): The element to map.
 
         Returns:
             elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.

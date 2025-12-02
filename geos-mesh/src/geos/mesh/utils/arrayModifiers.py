@@ -266,8 +266,8 @@ def createConstantAttribute(
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        return createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, piece,
-                                                  vtkDataType, logger )
+        return createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, piece, vtkDataType,
+                                                  logger )
 
     # Deals with dataSets.
     elif isinstance( mesh, vtkDataSet ):
@@ -336,8 +336,8 @@ def createConstantAttributeMultiBlock(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece,
-                                               vtkDataType, logger ):
+        if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece, vtkDataType,
+                                               logger ):
             return False
 
     return True
@@ -846,13 +846,9 @@ def transferAttributeWithElementMap(
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
-            if not transferAttributeToDataSetWithElementMap( meshFrom,
-                                                             dataSetTo,
-                                                             elementMap,
-                                                             attributeName,
-                                                             piece,
-                                                             flatIdDataSetTo=flatIdDataSetTo,
-                                                             logger=logger ):
+            if not transferAttributeToDataSetWithElementMap(
+                    meshFrom, dataSetTo, elementMap, attributeName, piece, flatIdDataSetTo=flatIdDataSetTo,
+                    logger=logger ):
                 logger.error(
                     f"The attribute transfer has failed for the dataset with the flat index { flatIdDataSetTo } of the final mesh."
                 )
@@ -885,7 +881,7 @@ def renameAttribute(
         elif piece == Piece.CELLS:
             dim = 1
         else:
-            raise ValueError( "The attribute to rename must be on points or on Cells.")
+            raise ValueError( "The attribute to rename must be on points or on Cells." )
         filter = vtkArrayRename()
         filter.SetInputData( object )
         filter.SetArrayName( dim, attributeName, newAttributeName )

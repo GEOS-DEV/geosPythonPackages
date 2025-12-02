@@ -57,8 +57,8 @@ def test_computeElementMapping(
     """Test getting the map between two meshes element."""
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
-    elementMapComputed: dict[ int, npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping(
-        meshFrom, meshTo, piece )
+    elementMapComputed: dict[ int,
+                              npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping( meshFrom, meshTo, piece )
     elementMapTest: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, piece )
 
     keysComputed: list[ int ] = list( elementMapComputed.keys() )
@@ -155,7 +155,8 @@ def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, piece: Piece, expect
     ( "TIME", Piece.FIELD ),
     ( "ghostRank", Piece.BOTH ),
 ] )
-def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str, piece: Piece ) -> None:
+def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str,
+                                               piece: Piece ) -> None:
     """Test presence of attribute in a multiblock."""
     multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     obtained: bool = arrayHelpers.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, piece )

@@ -1030,8 +1030,7 @@ class GeomechanicsCalculator:
                 totalStress = fcts.totalStress( effectiveStress, biotCoefficient, pressure )
             self._attributesToCreate.append( geomechanicProperty )
         else:
-            totalStress = getArrayInObject( self.output, geomechanicProperty.attributeName,
-                                            geomechanicProperty.piece )
+            totalStress = getArrayInObject( self.output, geomechanicProperty.attributeName, geomechanicProperty.piece )
             self.logger.warning(
                 f"{ geomechanicProperty.attributeName } is already on the mesh, it has not been computed by the filter."
             )
@@ -1290,8 +1289,7 @@ class GeomechanicsCalculator:
 
     def _computeCriticalPorePressure( self: Self ) -> None:
         """Compute the critical pore pressure and the pressure index."""
-        if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE.attributeName,
-                                    CRITICAL_PORE_PRESSURE.piece ):
+        if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE.attributeName, CRITICAL_PORE_PRESSURE.piece ):
             if self._basicProperties.totalStress is not None:
                 self._advancedProperties.criticalPorePressure = fcts.criticalPorePressure(
                     -1.0 * self._basicProperties.totalStress, self.physicalConstants.rockCohesion,
@@ -1317,8 +1315,7 @@ class GeomechanicsCalculator:
             self._attributesToCreate.append( CRITICAL_PORE_PRESSURE_THRESHOLD )
         else:
             self._advancedProperties.criticalPorePressureIndex = getArrayInObject(
-                self.output, CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName,
-                CRITICAL_PORE_PRESSURE_THRESHOLD.piece )
+                self.output, CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName, CRITICAL_PORE_PRESSURE_THRESHOLD.piece )
             self.logger.warning(
                 f"{ CRITICAL_PORE_PRESSURE_THRESHOLD.attributeName } is already on the mesh, it has not been computed by the filter."
             )

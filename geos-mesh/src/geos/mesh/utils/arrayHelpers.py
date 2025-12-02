@@ -193,7 +193,7 @@ def UpdateElementMappingToDataSet(
     elif piece == Piece.CELLS:
         nbElementsTo = dataSetTo.GetNumberOfCells()
     else:
-        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped.")
+        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped." )
 
     elementMap[ flatIdDataSetTo ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
     if isinstance( meshFrom, vtkDataSet ):
@@ -286,7 +286,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     elif piece == Piece.CELLS:
         nbElementsFrom = dataSetFrom.GetNumberOfCells()
     else:
-        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped.")
+        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped." )
 
     for idElementTo in range( nbElementsTo ):
         # Test if the element of the final mesh is already mapped.
@@ -838,7 +838,8 @@ def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece )
     elif piece == Piece.FIELD:
         dataArray = dataSet.GetFieldData().GetArray( attributeName )
     else:
-        raise ValueError( f"The attribute piece must be { Piece.FIELD.value }, { Piece.POINTS.value } or { Piece.CELLS.value }.")
+        raise ValueError(
+            f"The attribute piece must be { Piece.FIELD.value }, { Piece.POINTS.value } or { Piece.CELLS.value }." )
 
     return dataArray
 
@@ -991,7 +992,7 @@ def getAttributeValuesAsDF( surface: vtkPolyData,
     elif piece == Piece.CELLS:
         nbRows = surface.GetNumberOfCells()
     else:
-        raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }.")
+        raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }." )
 
     data: pd.DataFrame = pd.DataFrame( np.full( ( nbRows, len( attributeNames ) ), np.nan ), columns=attributeNames )
     for attributeName in attributeNames:

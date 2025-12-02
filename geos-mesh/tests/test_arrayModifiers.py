@@ -51,17 +51,24 @@ from geos.mesh.utils import arrayModifiers
     "idBlock, attributeName, nbComponentsTest, componentNamesTest, piece, listValues, listValuesTest, vtkDataTypeTest",
     [
         # Test fill an attribute on point and on cell.
-        ( 3, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.POINTS, None, [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
-        ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.CELLS, None, [ np.float64( np.nan ), np.float64( np.nan ), np.float64( np.nan ) ], VTK_DOUBLE ),
+        ( 3, "PointAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.POINTS, None,
+          [ np.float64( np.nan ), np.float64( np.nan ),
+            np.float64( np.nan ) ], VTK_DOUBLE ),
+        ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.CELLS, None,
+          [ np.float64( np.nan ), np.float64( np.nan ),
+            np.float64( np.nan ) ], VTK_DOUBLE ),
         # Test fill attributes with different number of component with or without component names.
         ( 3, "PORO", 1, (), Piece.CELLS, None, [ np.float32( np.nan ) ], VTK_FLOAT ),
-        ( 1, "collocated_nodes", 2, ( None, None ), Piece.POINTS, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
+        ( 1, "collocated_nodes", 2,
+          ( None, None ), Piece.POINTS, None, [ np.int64( -1 ), np.int64( -1 ) ], VTK_ID_TYPE ),
         # Test fill an attribute with different type of value.
         ( 3, "FAULT", 1, (), Piece.CELLS, None, [ np.int32( -1 ) ], VTK_INT ),
         ( 3, "FAULT", 1, (), Piece.CELLS, [ 4 ], [ np.int32( 4 ) ], VTK_INT ),
         ( 3, "PORO", 1, (), Piece.CELLS, [ 4 ], [ np.float32( 4 ) ], VTK_FLOAT ),
-        ( 1, "collocated_nodes", 2, ( None, None ), Piece.POINTS, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
-        ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.CELLS, [ 4, 4, 4 ], [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
+        ( 1, "collocated_nodes", 2,
+          ( None, None ), Piece.POINTS, [ 4, 4 ], [ np.int64( 4 ), np.int64( 4 ) ], VTK_ID_TYPE ),
+        ( 3, "CellAttribute", 3, ( "AX1", "AX2", "AX3" ), Piece.CELLS, [ 4, 4, 4 ],
+          [ np.float64( 4 ), np.float64( 4 ), np.float64( 4 ) ], VTK_DOUBLE ),
     ] )
 def test_fillPartialAttributes(
     dataSetTest: vtkMultiBlockDataSet,
@@ -181,10 +188,7 @@ def test_createConstantAttributeMultiBlock(
     """Test creation of constant attribute in multiblock dataset."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     values: list[ float ] = [ np.nan ]
-    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest,
-                                                             values,
-                                                             attributeName,
-                                                             piece=piece )
+    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest, values, attributeName, piece=piece )
 
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTest )
     for blockIndex in elementaryBlockIndexes:
@@ -552,7 +556,8 @@ def test_renameAttributeMultiblock(
         assert data.HasArray( newAttributeName ) == 1
 
 
-@pytest.mark.parametrize( "attributeName, piece", [ ( "CellAttribute", Piece.CELLS ), ( "PointAttribute", Piece.POINTS ) ] )
+@pytest.mark.parametrize( "attributeName, piece", [ ( "CellAttribute", Piece.CELLS ),
+                                                    ( "PointAttribute", Piece.POINTS ) ] )
 def test_renameAttributeDataSet(
     dataSetTest: vtkDataSet,
     attributeName: str,
