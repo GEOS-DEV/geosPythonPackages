@@ -563,7 +563,7 @@ def copyAttribute(
     multiBlockDataSetTo: vtkMultiBlockDataSet,
     attributeNameFrom: str,
     attributeNameTo: str,
-    piece: bool = False,
+    piece: Piece = Piece.CELLS,
     logger: Union[ Logger, None ] = None,
 ) -> bool:
     """Copy an attribute from a multiBlockDataSet to a similar one on the same piece.
