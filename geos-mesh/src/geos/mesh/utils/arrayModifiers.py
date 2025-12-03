@@ -64,7 +64,7 @@ def fillPartialAttributes(
     listValues: Union[ list[ Any ], None ] = None,
     logger: Union[ Logger, None ] = None,
     fillAll: bool = False,
-) -> bool:
+) -> None:
     """Fill input partial attribute of multiBlockDataSet with a constant value per component.
 
     Args:
@@ -82,8 +82,10 @@ def fillPartialAttributes(
         fillAll (bool, optional): True if fillPartialAttributes is used by fillAllPartialAttributes, else False.
             Defaults to False.
 
-    Returns:
-        bool: True if the attribute was correctly created and filled, False if not.
+    Raises:
+        TypeError: Error with the type of the mesh.
+        ValueError: Error with the values of the listValues.
+        AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -91,13 +93,15 @@ def fillPartialAttributes(
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
-        logger.error( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
-        return False
+        raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
+
+    # Check if the attribute exist in the input mesh.
+    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ):
+        raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
 
     # Check if the attribute is partial.
     if isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
-        logger.error( f"The attribute { attributeName } is already global." )
-        return False
+        raise AttributeError( f"The attribute { attributeName } is already global." )
 
     # Get information of the attribute to fill.
     vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, onPoints )
@@ -126,8 +130,7 @@ def fillPartialAttributes(
             defaultValue = valueType( 0 )
             mess = mess + f"{ attributeName } vtk data type is { vtkDataType } corresponding to { defaultValue.dtype } numpy type, default value is automatically set to 0."
         else:
-            logger.error( f"The type of the attribute { attributeName } is not compatible with the function." )
-            return False
+            raise AttributeError( f"The attribute { attributeName } has an unknown type." )
 
         listValues = [ defaultValue ] * nbComponents
 
@@ -136,7 +139,7 @@ def fillPartialAttributes(
 
     else:
         if len( listValues ) != nbComponents:
-            return False
+            raise ValueError( f"The listValues must have { nbComponents } elements, not { len( listValues ) }." )
 
         for idValue in range( nbComponents ):
             value: Any = listValues[ idValue ]
@@ -153,13 +156,13 @@ def fillPartialAttributes(
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
            createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
-    return True
+    return
 
 
 def fillAllPartialAttributes(
     multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
     logger: Union[ Logger, None ] = None,
-) -> bool:
+) -> None:
     """Fill all partial attributes of a multiBlockDataSet with the default value.
 
     All components of each attributes are filled with the same value. Depending of the type of the attribute's data, the default value is different:
@@ -172,12 +175,16 @@ def fillAllPartialAttributes(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if attributes were correctly created and filled, False if not.
+    Raises:
+        TypeError: Error with the type of the mesh.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "fillAllPartialAttributes", True )
+
+    # Check if the input mesh is inherited from vtkMultiBlockDataSet.
+    if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
+        raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
 
     logger.warning(
         "The filling value for the attributes is depending of the type of attribute's data:\n0 for uint data,\n-1 for int data,\nnan for float data."
@@ -187,11 +194,10 @@ def fillAllPartialAttributes(
     for onPoints in [ True, False ]:
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
         for attributeName in infoAttributes:
-            if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ) and \
-               not fillPartialAttributes( multiBlockDataSet, attributeName, onPoints=onPoints, logger=logger, fillAll=True ):
-                return False
+            if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
+                fillPartialAttributes( multiBlockDataSet, attributeName, onPoints=onPoints, logger=logger, fillAll=True )
 
-    return True
+    return
 
 
 def createEmptyAttribute(
@@ -207,7 +213,7 @@ def createEmptyAttribute(
         vtkDataType (int): Data type.
 
     Raises:
-        ValueError: Input vtkDataType is wrong.
+        ValueError: Error with the vtkDataType.
 
     Returns:
         vtkDataArray: The empty attribute.
@@ -259,7 +265,7 @@ def createConstantAttribute(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Input mesh with wrong type.
+        TypeError: Error with the type of the mesh.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -309,8 +315,8 @@ def createConstantAttributeMultiBlock(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Input mesh with wrong type.
-        ValueError: Input attribute name already in the mesh.
+        TypeError: Error with the type of the mesh.
+        AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -322,7 +328,7 @@ def createConstantAttributeMultiBlock(
 
     # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ):
-        raise ValueError( f"The attribute { attributeName } is already present in the mesh." )
+        raise AttributeError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
@@ -363,8 +369,8 @@ def createConstantAttributeDataSet(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Input data with wrong type.
-        ValueError: Input data with wrong value.
+        TypeError: Error with the type of the npArray values.
+        ValueError: Error with the vtkDataType.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -441,8 +447,9 @@ def createAttribute(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Input data with wrong type.
-        ValueError: Input data with wrong value.
+        TypeError: Error with the type of the mesh or the npArray values.
+        ValueError: Error with the values of npArray or vtkDataType.
+        AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -454,7 +461,7 @@ def createAttribute(
 
     # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
-        raise ValueError( f"The attribute { attributeName } is already present in the mesh." )
+        raise AttributeError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Check the coherency between the given array type and the vtk array type if it exist.
     if vtkDataType is not None:
