@@ -421,7 +421,8 @@ def createConstantAttributeDataSet(
     else:
         npArray = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ], valueType )
 
-    return createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType, logger )
+    createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType, logger )
+    return True
 
 
 def createAttribute(
@@ -432,8 +433,8 @@ def createAttribute(
     onPoints: bool = False,
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
-) -> bool:
-    """Create an attribute from the given numpy array.
+) -> None:
+    """Create the attribute from the given numpy array on the dataSet.
 
     Args:
         dataSet (vtkDataSet): DataSet where to create the attribute.
@@ -453,8 +454,9 @@ def createAttribute(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
+    Raises:
+        TypeError: Input data with wrong type.
+        ValueError: Input data with wrong value.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -462,31 +464,22 @@ def createAttribute(
 
     # Check if the input mesh is inherited from vtkDataSet.
     if not isinstance( dataSet, vtkDataSet ):
-        logger.error( "Input mesh has to be inherited from vtkDataSet." )  # type: ignore[unreachable]
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
+        raise TypeError( "Input datSet has to be inherited from vtkDataSet." )
 
     # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
-        logger.error( f"The attribute { attributeName } is already present in the dataSet." )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
+        raise ValueError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Check the coherency between the given array type and the vtk array type if it exist.
     if vtkDataType is not None:
         vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
         if vtkDataType not in vtkNumpyTypeMap:
-            logger.error( f"The vtk data type { vtkDataType } is unknown." )
-            logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-            return False
+            raise ValueError( f"The vtk data type { vtkDataType } is unknown." )
+
         npArrayTypeFromVtk: npt.DTypeLike = vtkNumpyTypeMap[ vtkDataType ]().dtype
         npArrayTypeFromInput: npt.DTypeLike = npArray.dtype
         if npArrayTypeFromVtk != npArrayTypeFromInput:
-            logger.error(
-                f"The numpy array type { npArrayTypeFromInput } is not coherent with the type of array created ({ npArrayTypeFromVtk }) from the given vtkDataType."
-            )
-            logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-            return False
+            raise TypeError( f"Input npArray type must be { npArrayTypeFromVtk }, not { npArrayTypeFromInput }." )
 
     data: Union[ vtkPointData, vtkCellData ]
     nbElements: int
@@ -502,9 +495,7 @@ def createAttribute(
 
     # Check if the input array has the good size.
     if len( npArray ) != nbElements:
-        logger.error( f"The array has to have { nbElements } elements, but have only { len( npArray ) } elements" )
-        logger.error( f"The attribute { attributeName } has not been created into the mesh." )
-        return False
+        raise ValueError( f"The npArray must have { nbElements } elements, not { len( npArray ) }." )
 
     # Check if an attribute with the same name exist on the opposite piece (points or cells).
     oppositePiece: bool = not onPoints
@@ -540,7 +531,7 @@ def createAttribute(
     data.AddArray( createdAttribute )
     data.Modified()
 
-    return True
+    return
 
 
 def copyAttribute(
@@ -680,7 +671,8 @@ def copyAttributeDataSet(
     componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, onPoints )
     vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, onPoints )
 
-    return createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
+    createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
+    return True
 
 
 def transferAttributeToDataSetWithElementMap(
@@ -777,13 +769,8 @@ def transferAttributeToDataSetWithElementMap(
 
         arrayTo[ idElementTo ] = valueToTransfer
 
-    return createAttribute( dataSetTo,
-                            arrayTo,
-                            attributeName,
-                            componentNames,
-                            onPoints=onPoints,
-                            vtkDataType=vtkDataType,
-                            logger=logger )
+    createAttribute( dataSetTo, arrayTo, attributeName, componentNames, onPoints=onPoints, vtkDataType=vtkDataType, logger=logger )
+    return True
 
 
 def transferAttributeWithElementMap(
