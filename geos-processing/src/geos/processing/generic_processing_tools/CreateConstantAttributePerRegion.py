@@ -201,7 +201,12 @@ class CreateConstantAttributePerRegion:
                         self.logger.warning(
                             f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                    createConstantAttributeMultiBlock( self.mesh, self.defaultValue, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
+                    createConstantAttributeMultiBlock( self.mesh,
+                                                       self.defaultValue,
+                                                       self.newAttributeName,
+                                                       componentNames=self.componentNames,
+                                                       onPoints=self.onPoints,
+                                                       logger=self.logger )
 
                 else:
                     if len( invalidIndexes ) > 0:
@@ -216,7 +221,12 @@ class CreateConstantAttributePerRegion:
 
                         regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
                         newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                        createAttribute( dataSet, newArray, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
+                        createAttribute( dataSet,
+                                         newArray,
+                                         self.newAttributeName,
+                                         componentNames=self.componentNames,
+                                         onPoints=self.onPoints,
+                                         logger=self.logger )
 
             else:
                 validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
@@ -228,7 +238,12 @@ class CreateConstantAttributePerRegion:
                         self.logger.warning(
                             f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                    createConstantAttributeDataSet( self.mesh, self.defaultValue, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
+                    createConstantAttributeDataSet( self.mesh,
+                                                    self.defaultValue,
+                                                    self.newAttributeName,
+                                                    componentNames=self.componentNames,
+                                                    onPoints=self.onPoints,
+                                                    logger=self.logger )
 
                 else:
                     if len( invalidIndexes ) > 0:
@@ -238,7 +253,12 @@ class CreateConstantAttributePerRegion:
 
                     regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    createAttribute( self.mesh, newArray, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
+                    createAttribute( self.mesh,
+                                     newArray,
+                                     self.newAttributeName,
+                                     componentNames=self.componentNames,
+                                     onPoints=self.onPoints,
+                                     logger=self.logger )
 
             # Log the output message.
             self._logOutputMessage( validIndexes )

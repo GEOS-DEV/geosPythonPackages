@@ -281,7 +281,12 @@ class SurfaceGeomechanics:
             arrayXYZ: npt.NDArray[ np.float64 ] = self.__computeXYZCoordinates( localArray )
 
             # Create converted attribute array in dataset
-            createAttribute( self.outputMesh, arrayXYZ, attrNameXYZ, ComponentNameEnum.XYZ.value, onPoints=self.attributeOnPoints, logger=self.logger )
+            createAttribute( self.outputMesh,
+                             arrayXYZ,
+                             attrNameXYZ,
+                             ComponentNameEnum.XYZ.value,
+                             onPoints=self.attributeOnPoints,
+                             logger=self.logger )
             self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
             self.newAttributeNames.add( attrNameXYZ )
 
@@ -368,7 +373,11 @@ class SurfaceGeomechanics:
                 raise
 
             # Create attribute
-            createAttribute( self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributeOnPoints, logger=self.logger )
+            createAttribute( self.outputMesh,
+                             scuAttribute,
+                             SCUAttributeName, (),
+                             self.attributeOnPoints,
+                             logger=self.logger )
             self.logger.info( "SCU computed and added to the output mesh." )
             self.newAttributeNames.add( SCUAttributeName )
 

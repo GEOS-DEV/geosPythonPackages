@@ -126,7 +126,11 @@ class FillPartialArrays:
                         f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
                     )
 
-                fillPartialAttributes( self.multiBlockDataSet, attributeName, onPoints=onPoints, listValues=self.dictAttributesValues[ attributeName ], logger=self.logger )
+                fillPartialAttributes( self.multiBlockDataSet,
+                                       attributeName,
+                                       onPoints=onPoints,
+                                       listValues=self.dictAttributesValues[ attributeName ],
+                                       logger=self.logger )
 
             self.logger.info( f"The filter { self.logger.name } succeed." )
         except ( ValueError, AttributeError ) as e:

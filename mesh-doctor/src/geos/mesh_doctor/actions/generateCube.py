@@ -184,7 +184,11 @@ def addFields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtk
         # Create list of values (all 1.0) for each component
         listValues = [ 1.0 ] * fieldInfo.dimension
         # Use the robust createConstantAttributeDataSet function
-        createConstantAttributeDataSet( dataSet=mesh, listValues=listValues, attributeName=fieldInfo.name, onPoints=onPoints, logger=setupLogger )
+        createConstantAttributeDataSet( dataSet=mesh,
+                                        listValues=listValues,
+                                        attributeName=fieldInfo.name,
+                                        onPoints=onPoints,
+                                        logger=setupLogger )
     return mesh
 
 

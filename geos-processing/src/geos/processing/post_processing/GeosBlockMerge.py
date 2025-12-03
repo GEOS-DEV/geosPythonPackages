@@ -157,7 +157,10 @@ class GeosBlockMerge():
                                                                logger=self.logger )
 
                 # Create index attribute keeping the index in initial mesh
-                createConstantAttribute( volumeMesh, [ blockIndex ], PostProcessingOutputsEnum.BLOCK_INDEX.attributeName, onPoints=False, logger=self.logger )
+                createConstantAttribute( volumeMesh, [ blockIndex ],
+                                         PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
+                                         onPoints=False,
+                                         logger=self.logger )
 
                 # Rename attributes
                 self.renameAttributes( volumeMesh )
