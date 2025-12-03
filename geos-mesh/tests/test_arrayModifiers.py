@@ -262,8 +262,7 @@ def test_createConstantAttributeDataSet(
     dataSet: vtkDataSet = dataSetTest( "dataset" )
 
     # Create the new constant attribute in the dataSet.
-    assert arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints,
-                                                          vtkDataType )
+    arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType )
 
     # Get the created attribute.
     data: Union[ vtkPointData, vtkCellData ]
@@ -299,6 +298,30 @@ def test_createConstantAttributeDataSet(
 
     vtkDataTypeCreated: int = attributeCreated.GetDataType()
     assert vtkDataTypeCreated == vtkDataTypeTest
+
+
+@pytest.mark.parametrize( "listValues, vtkDataType", [
+    ( [ np.int32( 42 ), np.int64( 42 ) ], VTK_DOUBLE ),  # All the values in the listValues are not the same
+    ( [ np.int32( 42 ) ], VTK_DOUBLE ),  # The type of the value is not coherent with the vtkDataType
+] )
+def test_createConstantAttributeDataSetRaiseTypeError(
+    dataSetTest: vtkDataSet,
+    listValues: list[ Any ],
+    vtkDataType: int,
+) -> None:
+    """Test the raises TypeError for the function createConstantAttributeDataSet."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( TypeError ):
+        arrayModifiers.createConstantAttributeDataSet( mesh, listValues, "newAttribute", vtkDataType=vtkDataType )
+
+
+def test_createConstantAttributeDataSetRaiseValueError(
+    dataSetTest: vtkDataSet,
+) -> None:
+    """Test the raises ValueError for the function createConstantAttributeDataSet with a wrong vtkDataType."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( ValueError ):
+        arrayModifiers.createConstantAttributeDataSet( mesh, [ np.int32( 42 ) ], "newAttribute", vtkDataType=64 )
 
 
 @pytest.mark.parametrize(

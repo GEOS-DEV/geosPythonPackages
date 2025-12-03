@@ -234,13 +234,7 @@ class CreateConstantAttributePerRegion:
                         self.logger.warning(
                             f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                    if not createConstantAttributeDataSet( self.mesh,
-                                                           self.defaultValue,
-                                                           self.newAttributeName,
-                                                           componentNames=self.componentNames,
-                                                           onPoints=self.onPoints,
-                                                           logger=self.logger ):
-                        raise
+                    createConstantAttributeDataSet( self.mesh, self.defaultValue, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
 
                 else:
                     if len( invalidIndexes ) > 0:
