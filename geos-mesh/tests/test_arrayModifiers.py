@@ -363,7 +363,7 @@ def test_createAttribute(
     npArrayTest: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( nbComponentsTest, nbElements, valueType )
 
     # Create the new attribute in the dataSet.
-    assert arrayModifiers.createAttribute( dataSet, npArrayTest, attributeName, componentNames, onPoints, vtkDataType )
+    arrayModifiers.createAttribute( dataSet, npArrayTest, attributeName, componentNames, onPoints, vtkDataType )
 
     # Get the created attribute.
     data: Union[ vtkPointData, vtkCellData ]
@@ -385,6 +385,43 @@ def test_createAttribute(
 
     vtkDataTypeCreated: int = attributeCreated.GetDataType()
     assert vtkDataTypeCreated == vtkDataTypeTest
+
+
+@pytest.mark.parametrize( "meshName, arrayType", [
+    ( "multiblock", "float64" ),  # The input mesh has the wrong type
+    ( "dataset", "int32" ),  # The input array has the wrong type (should be float64)
+] )
+def test_createAttributeRaiseTypeError(
+    dataSetTest: Any,
+    getArrayWithSpeTypeValue: npt.NDArray[ Any ],
+    meshName: str,
+    arrayType: str,
+) -> None:
+    """Test the raises TypeError for the function createAttribute."""
+    mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshName )
+    npArray: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( 1, 1, arrayType )
+    attributeName: str = "NewAttribute"
+    with pytest.raises( TypeError ):
+        arrayModifiers.createAttribute( mesh, npArray, attributeName, vtkDataType=VTK_DOUBLE )
+
+
+@pytest.mark.parametrize( "attributeName, vtkDataType, nbElements", [
+    ( "CellAttribute", VTK_DOUBLE, 1740 ),  # The attribute name is already on the mesh
+    ( "newAttribute", 64, 1740 ),  # The vtkDataType does not exist
+    ( "newAttribute", VTK_DOUBLE, 1741 ),  # The number of element of the array is wrong
+] )
+def test_createAttributeRaiseValueError(
+    dataSetTest: Any,
+    getArrayWithSpeTypeValue: npt.NDArray[ Any ],
+    attributeName: str,
+    vtkDataType: int,
+    nbElements: int,
+) -> None:
+    """Test the raises ValueError for the function createAttribute."""
+    mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( "dataset" )
+    npArray: npt.NDArray[ Any ] = getArrayWithSpeTypeValue( 1, nbElements, "float64" )
+    with pytest.raises( ValueError ):
+        arrayModifiers.createAttribute( mesh, npArray, attributeName, vtkDataType=vtkDataType )
 
 
 @pytest.mark.parametrize(

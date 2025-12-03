@@ -222,13 +222,7 @@ class CreateConstantAttributePerRegion:
 
                         regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
                         newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                        if not createAttribute( dataSet,
-                                                newArray,
-                                                self.newAttributeName,
-                                                componentNames=self.componentNames,
-                                                onPoints=self.onPoints,
-                                                logger=self.logger ):
-                            raise
+                        createAttribute( dataSet, newArray, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
 
             else:
                 validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
@@ -256,13 +250,7 @@ class CreateConstantAttributePerRegion:
 
                     regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    if not createAttribute( self.mesh,
-                                            newArray,
-                                            self.newAttributeName,
-                                            componentNames=self.componentNames,
-                                            onPoints=self.onPoints,
-                                            logger=self.logger ):
-                        raise
+                    createAttribute( self.mesh, newArray, self.newAttributeName, componentNames=self.componentNames, onPoints=self.onPoints, logger=self.logger )
 
             # Log the output message.
             self._logOutputMessage( validIndexes )
