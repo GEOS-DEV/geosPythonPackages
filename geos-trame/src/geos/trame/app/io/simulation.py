@@ -116,6 +116,11 @@ class Authentificator:#namespacing more than anything else
                         sftp.mkdir( str(rp/Path(folder)) ) 
                     Authentificator.dfs_tree(content, lp/Path(folder), sftp, remote_root)
 
+    @staticmethod
+    def kill_job( id ):
+        if Authentificator.ssh_client:
+            Authentificator._execute_remote_command(Authentificator.ssh_client, f"scancel {id}")
+        return None
 
     @staticmethod
     def get_key( id, pword ):
@@ -445,6 +450,9 @@ class Simulation:
     trigger the simulation.
     """
 
+
+
+
     def __init__(self, sim_runner: ISimRunner, server: Server, sim_info_dir: Optional[Path] = None) -> None:
         self._server = server
         controller = server.controller
@@ -518,6 +526,9 @@ class Simulation:
         }
             return file_tree
 
+       
+
+
         @controller.trigger("run_simulation")
         def run_simulation()-> None:
             
@@ -579,28 +590,15 @@ class Simulation:
                                                         local_path=f'{server.state.simulation_dl_path}/dl.test',
                                                         direction="get")
 
-                    
-                    # TODO later ASYNC and subprocess # Submit job using subprocess (local ssh call)
-                    # import subprocess
-                    # result = subprocess.run(["ssh", "user@remote.host", "sbatch /remote/path/job.slurm"],
-                    #                         capture_output=True, text=True)
-                    
-                    # PARAMIKO >> subprocess
-                    # # Execute command remotely
-                    # stdin, stdout, stderr = client.exec_command("ls -l /tmp")
-                    # print(stdout.read().decode())
-                    # parse stdout
-
-
                 else:
                     raise paramiko.SSHException
 
-            pass
 
-        @controller.trigger("kill_simulation")
-        def kill_simulation(pid)->None:
+        @controller.trigger("kill_all_simulations")
+        def kill_all_simulations()->None:
             # exec scancel jobid
-            pass
+            for jobs in server.state.job_ids:
+                Authentificator.kill_job(jobs['job_id'])
 
     def __del__(self):
         self.stop_result_streams()
@@ -685,7 +683,8 @@ class Simulation:
                         jid[index]['name'] =  job_line.split()[2]
                         print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
                 self._server.state.job_ids = jid
-                # self._server.state.flush()
+                self._server.state.dirty("job_ids")
+                self._server.state.flush()
                 
             except PermissionError as e:
                 print(f"Permission error: {e}")

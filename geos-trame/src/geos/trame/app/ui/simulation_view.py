@@ -1,7 +1,7 @@
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
 
-from geos.trame.app.io.simulation import SimulationConstant 
+from geos.trame.app.io.simulation import SimulationConstant, Authentificator
 from geos.trame.app.ui.simulation_status_view import SimulationStatusView
 import json
 
@@ -106,10 +106,23 @@ def define_simulation_view(server) -> None:
         pattern = re.compile(r"\.xml$", re.IGNORECASE)
         has_xml = any(pattern.search(file if isinstance(file, str) else file.get("name", "")) for file in  simulation_xml_filename)
         server.state.is_valid_jobfiles = has_xml
-
+    
+    
+    def kill_job(index_to_remove : int) -> None:
+        # for now just check there is an xml
+        jid = list(server.state.job_ids)
+        if 0 <= index_to_remove < len(jid):
+                # 1. Supprimer l'élément de la copie de la liste 
+            removed_id = jid[index_to_remove]['job_id']
+            Authentificator.kill_job(removed_id)
+            del jid[index_to_remove]
+                
+            server.state.job_ids = jid 
+            print(f"Job {removed_id} kill. Still running: {len(jid)}") 
+        else: 
+            print(f"Error: supress index does not exist ({index_to_remove}).")
 
     
-    # @controller.trigger("run_remove_jobfile")
     def run_remove_jobfile(index_to_remove : int) -> None:
         # for now just check there is an xml 
         current_files = list(server.state.simulation_xml_filename) # On prend une copie de la liste 
@@ -123,6 +136,7 @@ def define_simulation_view(server) -> None:
             print(f"Fichier à l'index {index_to_remove} supprimé. Nouveaux fichiers: {len(current_files)}") 
         else: 
             print(f"Erreur: Index de suppression invalide ({index_to_remove}).")
+    
 
     with vuetify.VContainer():
         with vuetify.VRow():
@@ -151,7 +165,7 @@ def define_simulation_view(server) -> None:
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = [ ]
 
-            sd = SuggestDecomposition('p4', 12e6)
+            sd = SuggestDecomposition('p4', 12)
             items = sd.to_list()
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=2):
@@ -180,7 +194,7 @@ def define_simulation_view(server) -> None:
             vuetify.VDivider(vertical=True, thickness=5, classes="mx-4")
             with vuetify.VCol(cols=1):
                 vuetify.VTextField(
-                        v_model=("slurm_comment", None,),
+                        v_model=("slurm_comment", "GEOS,CCS,testTrame",),
                         label="Comment to slurm",
                         dense=True,
                         hide_details=True,
@@ -259,7 +273,7 @@ def define_simulation_view(server) -> None:
         with vuetify.VRow():
             vuetify.VSpacer()
             with vuetify.VCol(cols=1):
-                vuetify.VBtn("Kill", click="trigger('kill_simulation')"),  # type: ignore
+                vuetify.VBtn("Kill", click="trigger('kill_all_simulations')"),  # type: ignore
         
         color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
 
@@ -269,17 +283,9 @@ def define_simulation_view(server) -> None:
                 with vuetify.VList():
                     with vuetify.VListItem( v_for=("(jobs,i) in job_ids"), key="i", value="jobs", base_color=(color_expression,)):
                         vuetify.VListItemTitle("{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}")
-                        # vuetify.VListItemTitle("{{ jobs.job_id }}")
+                        vuetify.VTooltip(text="here is a test for future display")
+                        vuetify.VBtn(icon="mdi-delete",click=(kill_job,"[i]"))
 
 
         with vuetify.VRow(v_if="simulation_error"):
             html.Div("An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;")
-
-def get_color(status):
-        return {
-            'PD': "#4CAF50",
-            'R': "#3F51B5",
-            'CA': "#FFC107",
-            'CG': "#484B45",
-            'F': "#E53935",
-        }.get(status, "#607D8B")
