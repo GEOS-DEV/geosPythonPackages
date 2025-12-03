@@ -276,7 +276,6 @@ def define_simulation_view(server) -> None:
                 vuetify.VBtn("Kill All", click="trigger('kill_all_simulations')"),  # type: ignore
         
         color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
-
         with vuetify.VRow():
             with vuetify.VCol(cols=4):
                 # SimulationStatusView(server=server)

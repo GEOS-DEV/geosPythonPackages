@@ -497,10 +497,15 @@ class Simulation:
             import re
             xml_pattern = re.compile(r"\.xml$", re.IGNORECASE)
             mesh_pattern = re.compile(r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE)
-            table_pattern = re.compile(r"\.(txt|dat|csv)$", re.IGNORECASE)
+            table_pattern = re.compile(r"\.(txt|dat|csv|geos)$", re.IGNORECASE)
             xml_matches = []
             mesh_matches = []
             table_matches = []
+
+            pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b" # all files
+            pattern_xml_path = r"\"(.*/)([\w\-.]+\.(?:xml))\b"
+            pattern_mesh_path = r"\"(.*/)([\w\-.]+\.(?:vtu|pvtu|vtm|pvtm))\b"
+            pattern_table_curly_path = r"((?:[\w\-/]+/)+)([\w\-.]+\.(?:geos|csv|dat|txt))"
 
             for file in xml_filename:
                 if xml_pattern.search(file.get("name","")):
@@ -509,6 +514,19 @@ class Simulation:
                     mesh_matches.append(file) 
                 elif table_pattern.search(file.get("name","")): 
                     table_matches.append(file) 
+
+
+            #assume the first XML is the main xml 
+            # TODO relocate
+            xml_expected_file_matches = re.findall(pattern_file, xml_matches[0]['content'].decode("utf-8"))
+            test_assert = {item.get("name") for item in xml_filename}.intersection(set(xml_expected_file_matches))
+
+            decoded = re.sub(pattern_xml_path,r'"\2', xml_matches[0]['content'].decode("utf-8"))
+            decoded = re.sub(pattern_mesh_path,r'"mesh/\2', decoded)
+            decoded = re.sub(pattern_table_curly_path,r"tables/\2", decoded)
+
+            xml_matches[0]['content'] = decoded.encode("utf-8")
+
 
             file_tree = {
             'root' : '.',     
@@ -568,6 +586,7 @@ class Simulation:
                     
 
                     
+                    #TODO encapsulate
                     job_lines = sout.strip()
                     job_id = re.search(r"Submitted batch job (\d+)", job_lines)
 
@@ -603,25 +622,6 @@ class Simulation:
         self._job_status_watcher_period_ms = period_ms
         if self._job_status_watcher:
             self._job_status_watcher.set_period_ms(period_ms)
-
-    # def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
-    #     newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
-    #     if not newer_file:
-    #         return
-    # def _update_screenshot_display(self, screenshots_folder_path: Path) -> None:
-    #     newer_file = get_most_recent_simulation_screenshot(screenshots_folder_path)
-    #     if not newer_file:
-    #         return
-
-    #     f_name = Path(newer_file).name
-    #     if not f_name:
-    #         return
-
-    #     self._server.state.active_screenshot_folder_path = str(screenshots_folder_path)
-    #     self._server.state.dirty("active_screenshot_folder_path")
-    #     self._server.state.active_screenshot_relative_path = f_name
-    #     self._server.state.dirty("active_screenshot_relative_path")
-    #     self._server.state.flush()
 
     def _update_job_status(self) -> None:
         sim_info = self.get_last_user_simulation_info()
