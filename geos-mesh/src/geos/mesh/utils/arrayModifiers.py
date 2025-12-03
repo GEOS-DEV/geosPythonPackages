@@ -861,66 +861,103 @@ def renameAttribute(
         vtkErrorLogger.error( captured.strip() )
 
     object.ShallowCopy( renameArrayFilter.GetOutput() )
-
     if object is None:
         raise VTKError( "Something went wrong with VTK renaming of the attribute." )
 
     return
 
 
-def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], cellCenterAttributeName: str ) -> bool:
-    """Create elementCenter attribute if it does not exist.
+def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], cellCenterAttributeName: str, logger: Union[ Logger, Any ] = None, ) -> None:
+    """Create cellElementCenter attribute if it does not exist.
 
     Args:
-        mesh (vtkMultiBlockDataSet | vtkDataSet): input mesh
-        cellCenterAttributeName (str): Name of the attribute
+        mesh (vtkMultiBlockDataSet | vtkDataSet): Input mesh.
+        cellCenterAttributeName (str): Name of the attribute.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Raised if input mesh is not a vtkMultiBlockDataSet or a
-        vtkDataSet.
-
-    Returns:
-        bool: True if calculation successfully ended, False otherwise.
+        TypeError: Error with the mesh type.
+        AttributeError: Error with the attribute cellCenterAttributeName.
     """
-    ret: int = 1
+    if logger is None:
+        logger = getLogger( "createCellCenterAttribute", True )
+
     if isinstance( mesh, vtkMultiBlockDataSet ):
+        if isAttributeInObjectMultiBlockDataSet( mesh, cellCenterAttributeName, False ):
+            raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
+
         elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
         for blockIndex in elementaryBlockIndexes:
             dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
-            ret *= int( doCreateCellCenterAttribute( dataSet, cellCenterAttributeName ) )
+            createCellCenterAttributeDataSet( dataSet, cellCenterAttributeName, logger )
     elif isinstance( mesh, vtkDataSet ):
-        ret = int( doCreateCellCenterAttribute( mesh, cellCenterAttributeName ) )
+        createCellCenterAttributeDataSet( mesh, cellCenterAttributeName, logger )
     else:
         raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
-    return bool( ret )
+
+    return
 
 
-def doCreateCellCenterAttribute( block: vtkDataSet, cellCenterAttributeName: str ) -> bool:
-    """Create elementCenter attribute in a vtkDataSet if it does not exist.
+def createCellCenterAttributeDataSet( block: vtkDataSet, cellCenterAttributeName: str, logger: Union[ Logger, Any ] = None, ) -> None:
+    """Create cellElementCenter attribute in a vtkDataSet if it does not exist.
 
     Args:
-        block (vtkDataSet): Input mesh that must be a vtkDataSet
-        cellCenterAttributeName (str): Name of the attribute
+        block (vtkDataSet): Input mesh that must be a vtkDataSet.
+        cellCenterAttributeName (str): Name of the attribute.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if calculation successfully ended, False otherwise.
+    Raises:
+        TypeError: Error with the type of the mesh or the npArray values.
+        AttributeError: Error with the attribute cellCenterAttributeName.
+        VTKError: Error with a VTK function.
     """
-    if not isAttributeInObject( block, cellCenterAttributeName, False ):
+    if logger is None:
+        logger = getLogger( "createCellCenterAttributeDataSet", True )
+
+    if not isinstance( block, vtkDataSet ):
+        raise TypeError( "Input mesh has to be inherited from vtkDataSet." )
+
+    if isAttributeInObject( block, cellCenterAttributeName, False ):
+        raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
+
+    vtkErrorLogger: Logger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+    vtkErrorLogger.setLevel( logging.INFO )
+    vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+    vtkErrorLogger.propagate = False
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    with VTKCaptureLog() as capturedLog:
         # apply ElementCenter filter
-        filter: vtkCellCenters = vtkCellCenters()
-        filter.SetInputData( block )
-        filter.Update()
-        output: vtkPointSet = filter.GetOutputDataObject( 0 )
-        assert output is not None, "vtkCellCenters output is null."
-        # transfer output to output arrays
-        centers: vtkPoints = output.GetPoints()
-        assert centers is not None, "Center are undefined."
-        centerCoords: vtkDataArray = centers.GetData()
-        assert centers is not None, "Center coordinates are undefined."
-        centerCoords.SetName( cellCenterAttributeName )
-        block.GetCellData().AddArray( centerCoords )
-        block.Modified()
-    return True
+        cellCenterFilter: vtkCellCenters = vtkCellCenters()
+        cellCenterFilter.SetInputData( block )
+        cellCenterFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
+
+    output: vtkPointSet = cellCenterFilter.GetOutputDataObject( 0 )
+    if output is None:
+        raise VTKError( "Something went wrong with VTK cell center filter." )
+
+    # transfer output to output arrays
+    centers: vtkPoints = output.GetPoints()
+    if centers is None:
+        raise VTKError( "Something went wrong with VTK cell center filter." )
+
+    centerCoords: vtkDataArray = centers.GetData()
+    if centerCoords is None:
+        raise VTKError( "Something went wrong with VTK cell center filter." )
+
+    centerCoords.SetName( cellCenterAttributeName )
+    block.GetCellData().AddArray( centerCoords )
+    block.Modified()
+
+    return
 
 
 def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet:
