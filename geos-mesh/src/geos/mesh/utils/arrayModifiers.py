@@ -233,7 +233,7 @@ def createConstantAttribute(
     onPoints: bool = False,
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
-) -> bool:
+) -> None:
     """Create a new attribute with a constant value in the mesh.
 
     Args:
@@ -254,8 +254,8 @@ def createConstantAttribute(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
+    Raises:
+        TypeError: Input mesh with wrong type.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -269,7 +269,10 @@ def createConstantAttribute(
     elif isinstance( mesh, vtkDataSet ):
         createConstantAttributeDataSet( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
-    return True
+    else:
+        raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
+
+    return
 
 
 def createConstantAttributeMultiBlock(
@@ -402,6 +405,7 @@ def createConstantAttributeDataSet(
     createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType, logger )
 
     return
+
 
 def createAttribute(
     dataSet: vtkDataSet,
