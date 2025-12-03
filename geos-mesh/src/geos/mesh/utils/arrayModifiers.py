@@ -150,9 +150,8 @@ def fillPartialAttributes(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ) and \
-           not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger ):
-            return False
+        if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
+           createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
     return True
 
@@ -269,8 +268,9 @@ def createConstantAttribute(
 
     # Deals with dataSets.
     elif isinstance( mesh, vtkDataSet ):
-        return createConstantAttributeDataSet( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType,
-                                               logger )
+        createConstantAttributeDataSet( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+
+    return True
 
 
 def createConstantAttributeMultiBlock(
@@ -335,9 +335,7 @@ def createConstantAttributeMultiBlock(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints,
-                                               vtkDataType, logger ):
-            return False
+        createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
     return True
 
@@ -350,7 +348,7 @@ def createConstantAttributeDataSet(
     onPoints: bool = False,
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
-) -> bool:
+) -> None:
     """Create an attribute with a constant value per component in the dataSet.
 
     Args:
@@ -371,8 +369,9 @@ def createConstantAttributeDataSet(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
+    Raises:
+        TypeError: Input data with wrong type.
+        ValueError: Input data with wrong value.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -383,9 +382,7 @@ def createConstantAttributeDataSet(
     for value in listValues:
         valueTypeTest: type = type( value )
         if valueType != valueTypeTest:
-            logger.error( "All values in the list of values don't have the same type." )
-            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-            return False
+            raise TypeError( "All values in the list of values must have the same type." )
 
     # Convert int and float type into numpy scalar type.
     if valueType in ( int, float ):
@@ -401,16 +398,11 @@ def createConstantAttributeDataSet(
     if vtkDataType is not None:
         vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
         if vtkDataType not in vtkNumpyTypeMap:
-            logger.error( f"The vtk data type { vtkDataType } is unknown." )
-            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-            return False
+            raise ValueError( f"The vtk data type { vtkDataType } is unknown." )
+
         npArrayTypeFromVtk: npt.DTypeLike = vtkNumpyTypeMap[ vtkDataType ]().dtype
         if npArrayTypeFromVtk != valueType:
-            logger.error(
-                f"Values type { valueType } is not coherent with the type of array created ({ npArrayTypeFromVtk }) from the given vtkDataType."
-            )
-            logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-            return False
+            raise TypeError( f"Input values in listValues type must be { npArrayTypeFromVtk }, not { valueType }." )
 
     # Create the numpy array constant per component.
     nbComponents: int = len( listValues )
@@ -422,8 +414,8 @@ def createConstantAttributeDataSet(
         npArray = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ], valueType )
 
     createAttribute( dataSet, npArray, attributeName, componentNames, onPoints, vtkDataType, logger )
-    return True
 
+    return
 
 def createAttribute(
     dataSet: vtkDataSet,
