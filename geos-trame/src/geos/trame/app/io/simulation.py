@@ -517,10 +517,6 @@ class Simulation:
                 "subfolders": {
                    "mesh": mesh_matches,
                    "tables": table_matches
-                    # "subfolders": {
-                    #     "inner_tables_1": ["placeholder.txt"],
-                    #     "inner_tables_2": ["placeholder.txt"]
-                    # }
                 }
             }
         }

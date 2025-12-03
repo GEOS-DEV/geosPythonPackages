@@ -273,7 +273,7 @@ def define_simulation_view(server) -> None:
         with vuetify.VRow():
             vuetify.VSpacer()
             with vuetify.VCol(cols=1):
-                vuetify.VBtn("Kill", click="trigger('kill_all_simulations')"),  # type: ignore
+                vuetify.VBtn("Kill All", click="trigger('kill_all_simulations')"),  # type: ignore
         
         color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
 
@@ -281,10 +281,8 @@ def define_simulation_view(server) -> None:
             with vuetify.VCol(cols=4):
                 # SimulationStatusView(server=server)
                 with vuetify.VList():
-                    with vuetify.VListItem( v_for=("(jobs,i) in job_ids"), key="i", value="jobs", base_color=(color_expression,)):
-                        vuetify.VListItemTitle("{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}")
-                        vuetify.VTooltip(text="here is a test for future display")
-                        vuetify.VBtn(icon="mdi-delete",click=(kill_job,"[i]"))
+                        with vuetify.VListItem( v_for=("(jobs,i) in job_ids"), key="i", value="jobs", base_color=(color_expression,),prepend_icon="mdi-minus-circle-outline",click=(kill_job,"[i]") ):
+                            vuetify.VListItemTitle("{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}")
 
 
         with vuetify.VRow(v_if="simulation_error"):
