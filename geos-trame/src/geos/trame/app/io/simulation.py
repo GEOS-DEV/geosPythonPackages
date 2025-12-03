@@ -672,10 +672,11 @@ class Simulation:
                     jid[index]['status'] = job_line.split()[2]
                     if (jid[index]['status'] == 'COMPLETED'):
                         # tar and copy back
-                        Authentificator._execute_remote_command(Authentificator.ssh_client, f'cd {self._server.simulation_remote_path} && tar cvfz Outputs_{job_id} {job_id}.tgz')
+                        Authentificator._execute_remote_command(Authentificator.ssh_client, f'cd {self._server.state.simulation_remote_path} && tar cvfz {job_id}.tgz Outputs_{job_id}/')
                         Authentificator._transfer_file_sftp(Authentificator.ssh_client,
-                                                            f'{self._server.simulation_dl_path}/{job_id}.tgz',
-                                                            f'{self._server.simulation_remote_path}/{job_id}.tgz')
+                                                            f'{self._server.state.simulation_dl_path}/{job_id}.tgz',
+                                                            f'{self._server.state.simulation_remote_path}/{job_id}.tgz',
+                                                            direction='get')
                         
                     jid[index]['name'] =  job_line.split()[1]
                     print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
