@@ -178,10 +178,7 @@ class AttributeMapping:
                 raise ValueError( f"The two meshes do not have any shared { self.piece }." )
 
             for attributeName in self.attributeNames:
-                # TODO:: Modify arrayModifiers function to raise error.
-                if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
-                                                        self.onPoints, self.logger ):
-                    raise
+                transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.onPoints, self.logger )
 
             # Log the output message.
             self._logOutputMessage()

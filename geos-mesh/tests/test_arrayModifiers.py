@@ -669,6 +669,64 @@ def test_copyAttributeDataSetAttributeError(
         arrayModifiers.copyAttributeDataSet( meshFrom, meshTo, "newAttribute", "newAttribute" )
 
 
+@pytest.mark.parametrize( "isMeshFrom, meshToName", [
+    ( True, "emptymultiblock" ),  # The mesh to is not a vtkDataSet.
+    ( False, "emptyFracture" ),  # The mesh from is not a mesh.
+] )
+def test_transferAttributeToDataSetWithElementMapTypeError(
+    dataSetTest: Any,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    isMeshFrom: bool,
+    meshToName: str,
+) -> None:
+    """Test the raises TypeError for the function transferAttributeToDataSetWithElementMap."""
+    meshFrom: Union[ bool, vtkMultiBlockDataSet ]
+    if isMeshFrom:
+        meshFrom = dataSetTest( "multiblock" )
+    else:
+        meshFrom = False
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", meshToName, False )
+    with pytest.raises( TypeError ):
+        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, "FAULT", False )
+
+
+@pytest.mark.parametrize( "attributeName", [
+    ( "PORO" ),  # The attribute is partial.
+    ( "newAttribute" ),  # The attribute is not in the mesh from.
+] )
+def test_transferAttributeToDataSetWithElementMapAttributeError(
+    dataSetTest: vtkMultiBlockDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    attributeName: str,
+) -> None:
+    """Test the raises AttributeError for the function transferAttributeToDataSetWithElementMap."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshTo: vtkMultiBlockDataSet = dataSetTest( "emptyFracture" )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptyFracture", False )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, False )
+
+
+@pytest.mark.parametrize( "meshToNameTransfer, meshToNameMap, flatIdDataSetTo", [
+    ( "emptyFracture", "emptymultiblock", 0 ),  # The map is wrong.
+    ( "emptyFracture", "emptyFracture", 1 ),  # The flatIdDataSetTo is wrong.
+] )
+def test_transferAttributeToDataSetWithElementMapValueError(
+    dataSetTest: vtkDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    meshToNameTransfer: str,
+    meshToNameMap: str,
+    flatIdDataSetTo: int,
+) -> None:
+    """Test the raises ValueError for the function transferAttributeToDataSetWithElementMap."""
+    meshFrom: vtkDataSet = dataSetTest( "dataset" )
+    meshTo: vtkDataSet = dataSetTest( meshToNameTransfer )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "dataset", meshToNameMap, False )
+    with pytest.raises( ValueError ):
+        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, "FAULT", False, flatIdDataSetTo=flatIdDataSetTo )
+
+
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeName, onPoints, defaultValueTest", [
     ( "fracture", "emptyFracture", "collocated_nodes", True, [ -1, -1 ] ),
     ( "multiblock", "emptyFracture", "FAULT", False, -1 ),
@@ -693,7 +751,7 @@ def test_transferAttributeWithElementMap(
     meshTo: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshToName )
     elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, onPoints )
 
-    assert arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints )
+    arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints )
 
     for flatIdDataSetTo in elementMap:
         dataTo: Union[ vtkPointData, vtkCellData ]
@@ -720,6 +778,30 @@ def test_transferAttributeWithElementMap(
 
                 arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
                 assert np.all( arrayTo[ idElementTo ] == arrayFrom[ idElementFrom ] )
+
+
+def test_transferAttributeWithElementMapTypeError(
+    dataSetTest: vtkMultiBlockDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+) -> None:
+    """Test the raises TypeError for the function transferAttributeWithElementMap with the mesh to with a wrong type."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshTo: bool = False
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptymultiblock", False )
+    with pytest.raises( TypeError ):
+        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, "FAULT", False )
+
+
+def test_transferAttributeWithElementMapAttributeError(
+    dataSetTest: vtkMultiBlockDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+) -> None:
+    """Test the raises AttributeError for the function transferAttributeWithElementMap with an attribute already in the mesh to."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshTo: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptymultiblock", False )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, "FAULT", False )
 
 
 @pytest.mark.parametrize( "attributeName, onPoints", [

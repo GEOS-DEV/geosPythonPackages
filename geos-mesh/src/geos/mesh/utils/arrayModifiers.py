@@ -642,7 +642,7 @@ def transferAttributeToDataSetWithElementMap(
     onPoints: bool,
     flatIdDataSetTo: int = 0,
     logger: Union[ Logger, Any ] = None,
-) -> bool:
+) -> None:
     """Transfer attributes from the source mesh to the final mesh using a map of points/cells.
 
     If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
@@ -670,23 +670,33 @@ def transferAttributeToDataSetWithElementMap(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if transfer successfully ended.
+    Raises:
+        TypeError: Error with the type of the mesh to or the mesh from.
+        ValueError: Error with the values of the map elementMap.
+        AttributeError: Error with the attribute AttributeName.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "transferAttributeToDataSetWithElementMap", True )
 
+    if not isinstance( dataSetTo, vtkDataSet ):
+        raise TypeError( "The mesh to has to be inherited from vtkDataSet." )
+
     if flatIdDataSetTo not in elementMap:
-        logger.error( f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
-        return False
+        raise ValueError( f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
 
     nbElementsTo: int = dataSetTo.GetNumberOfPoints() if onPoints else dataSetTo.GetNumberOfCells()
     if len( elementMap[ flatIdDataSetTo ] ) != nbElementsTo:
-        logger.error(
-            f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo })\
-                      but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map." )
-        return False
+        raise ValueError( f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo }) but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map." )
+
+    if not isinstance( meshFrom, ( vtkDataSet, vtkMultiBlockDataSet ) ):
+        raise TypeError( "The mesh from has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
+
+    if not isAttributeInObject( meshFrom, attributeName, onPoints ):
+        raise AttributeError(  f"The attribute { attributeName } is not in the mesh from." )
+
+    if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, onPoints ):
+        raise AttributeError(  f"The attribute { attributeName } must be global in the mesh from." )
 
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, onPoints )
     nbComponents: int = len( componentNames )
@@ -700,6 +710,8 @@ def transferAttributeToDataSetWithElementMap(
     elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
                           VTK_UNSIGNED_LONG_LONG ):
         defaultValue = 0
+    else:
+        raise AttributeError( f"The attribute { attributeName } has an unknown type." )
 
     typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
     valueType: type = typeMapping[ vtkDataType ]
@@ -729,7 +741,8 @@ def transferAttributeToDataSetWithElementMap(
         arrayTo[ idElementTo ] = valueToTransfer
 
     createAttribute( dataSetTo, arrayTo, attributeName, componentNames, onPoints=onPoints, vtkDataType=vtkDataType, logger=logger )
-    return True
+
+    return
 
 
 def transferAttributeWithElementMap(
@@ -739,7 +752,7 @@ def transferAttributeWithElementMap(
     attributeName: str,
     onPoints: bool,
     logger: Union[ Logger, Any ] = None,
-) -> bool:
+) -> None:
     """Transfer attributes from the source mesh to the final mesh using a map of points/cells.
 
     If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
@@ -767,37 +780,28 @@ def transferAttributeWithElementMap(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if transfer successfully ended.
+    Raises:
+        TypeError: Error with the type of the mesh to.
+        AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "transferAttributeWithElementMap", True )
 
     if isinstance( meshTo, vtkDataSet ):
-        return transferAttributeToDataSetWithElementMap( meshFrom,
-                                                         meshTo,
-                                                         elementMap,
-                                                         attributeName,
-                                                         onPoints,
-                                                         logger=logger )
+        transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, onPoints, logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
+        if isAttributeInObjectMultiBlockDataSet( meshTo, attributeName, onPoints ):
+            raise AttributeError( f"The attribute { attributeName } is already in the mesh to." )
+
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
-            if not transferAttributeToDataSetWithElementMap( meshFrom,
-                                                             dataSetTo,
-                                                             elementMap,
-                                                             attributeName,
-                                                             onPoints,
-                                                             flatIdDataSetTo=flatIdDataSetTo,
-                                                             logger=logger ):
-                logger.error(
-                    f"The attribute transfer has failed for the dataset with the flat index { flatIdDataSetTo } of the final mesh."
-                )
-                logger.warning( "The final mesh may has been modify for the other datasets." )
-                return False
-        return True
+            transferAttributeToDataSetWithElementMap( meshFrom, dataSetTo, elementMap, attributeName, onPoints, flatIdDataSetTo=flatIdDataSetTo, logger=logger )
+    else:
+        raise TypeError( "The mesh to has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
+
+    return
 
 
 def renameAttribute(
