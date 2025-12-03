@@ -909,7 +909,7 @@ def createCellCenterAttributeDataSet( block: vtkDataSet, cellCenterAttributeName
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Error with the type of the mesh or the npArray values.
+        TypeError: Error with the type of the mesh.
         AttributeError: Error with the attribute cellCenterAttributeName.
         VTKError: Error with a VTK function.
     """
@@ -960,18 +960,48 @@ def createCellCenterAttributeDataSet( block: vtkDataSet, cellCenterAttributeName
     return
 
 
-def transferPointDataToCellData( mesh: vtkPointSet ) -> vtkPointSet:
+def transferPointDataToCellData( mesh: vtkPointSet, logger: Union[ Logger, Any ] = None,  ) -> vtkPointSet:
     """Transfer point data to cell data.
 
     Args:
         mesh (vtkPointSet): Input mesh.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
+
+    Raises:
+        TypeError: Error with the type of the mesh.
+        VTKError: Error with a VTK function.
 
     Returns:
         vtkPointSet: Output mesh where point data were transferred to cells.
 
     """
-    filter = vtkPointDataToCellData()
-    filter.SetInputDataObject( mesh )
-    filter.SetProcessAllArrays( True )
-    filter.Update()
-    return filter.GetOutputDataObject( 0 )
+    if logger is None:
+        logger = getLogger( "transferPointDataToCellData", True )
+
+    if not isinstance( mesh, vtkPointSet ):
+        raise TypeError( "Input mesh has to be inherited from vtkPointSet." )
+
+    vtkErrorLogger: Logger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+    vtkErrorLogger.setLevel( logging.INFO )
+    vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+    vtkErrorLogger.propagate = False
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    with VTKCaptureLog() as capturedLog:
+        pointToCellFilter = vtkPointDataToCellData()
+        pointToCellFilter.SetInputDataObject( mesh )
+        pointToCellFilter.SetProcessAllArrays( True )
+        pointToCellFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
+
+    output: vtkPointSet = pointToCellFilter.GetOutputDataObject( 0 )
+    if output is None:
+        raise VTKError( "Something went wrong with VTK pointData to cellData filter." )
+
+    return output
