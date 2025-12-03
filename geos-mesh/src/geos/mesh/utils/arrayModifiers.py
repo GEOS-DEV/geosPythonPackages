@@ -26,10 +26,7 @@ from vtkmodules.vtkFiltersCore import (
     vtkCellCenters,
     vtkPointDataToCellData,
 )
-from vtkmodules.vtkCommonCore import (
-    vtkDataArray,
-    vtkPoints, vtkLogger
-)
+from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
     getComponentNamesDataSet,
@@ -46,7 +43,6 @@ from geos.mesh.utils.arrayHelpers import (
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Errors import VTKError
-
 
 __doc__ = """
 ArrayModifiers contains utilities to process VTK Arrays objects.
@@ -157,7 +153,8 @@ def fillPartialAttributes(
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObjectDataSet( dataSet, attributeName, onPoints ):
-           createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+            createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType,
+                                            logger )
 
     return
 
@@ -198,7 +195,11 @@ def fillAllPartialAttributes(
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, onPoints )
         for attributeName in infoAttributes:
             if not isAttributeGlobal( multiBlockDataSet, attributeName, onPoints ):
-                fillPartialAttributes( multiBlockDataSet, attributeName, onPoints=onPoints, logger=logger, fillAll=True )
+                fillPartialAttributes( multiBlockDataSet,
+                                       attributeName,
+                                       onPoints=onPoints,
+                                       logger=logger,
+                                       fillAll=True )
 
     return
 
@@ -276,7 +277,8 @@ def createConstantAttribute(
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+        createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType,
+                                           logger )
 
     # Deals with dataSets.
     elif isinstance( mesh, vtkDataSet ):
@@ -337,7 +339,8 @@ def createConstantAttributeMultiBlock(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
+        createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType,
+                                        logger )
 
     return
 
@@ -686,20 +689,23 @@ def transferAttributeToDataSetWithElementMap(
         raise TypeError( "The mesh to has to be inherited from vtkDataSet." )
 
     if flatIdDataSetTo not in elementMap:
-        raise ValueError( f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
+        raise ValueError(
+            f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
 
     nbElementsTo: int = dataSetTo.GetNumberOfPoints() if onPoints else dataSetTo.GetNumberOfCells()
     if len( elementMap[ flatIdDataSetTo ] ) != nbElementsTo:
-        raise ValueError( f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo }) but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map." )
+        raise ValueError(
+            f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo }) but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map."
+        )
 
     if not isinstance( meshFrom, ( vtkDataSet, vtkMultiBlockDataSet ) ):
         raise TypeError( "The mesh from has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
     if not isAttributeInObject( meshFrom, attributeName, onPoints ):
-        raise AttributeError(  f"The attribute { attributeName } is not in the mesh from." )
+        raise AttributeError( f"The attribute { attributeName } is not in the mesh from." )
 
     if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, onPoints ):
-        raise AttributeError(  f"The attribute { attributeName } must be global in the mesh from." )
+        raise AttributeError( f"The attribute { attributeName } must be global in the mesh from." )
 
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, onPoints )
     nbComponents: int = len( componentNames )
@@ -743,7 +749,13 @@ def transferAttributeToDataSetWithElementMap(
 
         arrayTo[ idElementTo ] = valueToTransfer
 
-    createAttribute( dataSetTo, arrayTo, attributeName, componentNames, onPoints=onPoints, vtkDataType=vtkDataType, logger=logger )
+    createAttribute( dataSetTo,
+                     arrayTo,
+                     attributeName,
+                     componentNames,
+                     onPoints=onPoints,
+                     vtkDataType=vtkDataType,
+                     logger=logger )
 
     return
 
@@ -800,7 +812,13 @@ def transferAttributeWithElementMap(
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
-            transferAttributeToDataSetWithElementMap( meshFrom, dataSetTo, elementMap, attributeName, onPoints, flatIdDataSetTo=flatIdDataSetTo, logger=logger )
+            transferAttributeToDataSetWithElementMap( meshFrom,
+                                                      dataSetTo,
+                                                      elementMap,
+                                                      attributeName,
+                                                      onPoints,
+                                                      flatIdDataSetTo=flatIdDataSetTo,
+                                                      logger=logger )
     else:
         raise TypeError( "The mesh to has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
@@ -867,7 +885,11 @@ def renameAttribute(
     return
 
 
-def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], cellCenterAttributeName: str, logger: Union[ Logger, Any ] = None, ) -> None:
+def createCellCenterAttribute(
+    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ],
+    cellCenterAttributeName: str,
+    logger: Union[ Logger, Any ] = None,
+) -> None:
     """Create cellElementCenter attribute if it does not exist.
 
     Args:
@@ -899,7 +921,11 @@ def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], 
     return
 
 
-def createCellCenterAttributeDataSet( block: vtkDataSet, cellCenterAttributeName: str, logger: Union[ Logger, Any ] = None, ) -> None:
+def createCellCenterAttributeDataSet(
+    block: vtkDataSet,
+    cellCenterAttributeName: str,
+    logger: Union[ Logger, Any ] = None,
+) -> None:
     """Create cellElementCenter attribute in a vtkDataSet if it does not exist.
 
     Args:
@@ -960,7 +986,10 @@ def createCellCenterAttributeDataSet( block: vtkDataSet, cellCenterAttributeName
     return
 
 
-def transferPointDataToCellData( mesh: vtkPointSet, logger: Union[ Logger, Any ] = None,  ) -> vtkPointSet:
+def transferPointDataToCellData(
+    mesh: vtkPointSet,
+    logger: Union[ Logger, Any ] = None,
+) -> vtkPointSet:
     """Transfer point data to cell data.
 
     Args:
