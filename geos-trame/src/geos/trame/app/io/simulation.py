@@ -548,9 +548,9 @@ class Simulation:
             if server.state.access_granted and server.state.simulation_xml_filename:
                 template = Template(template_str)
                 # sdi = server.state.sd
-                ci ={'nodes': 2 , 'total_ranks': 96 }
+                ci ={'nodes': 1 , 'total_ranks': 2 }
                 rendered = template.render(job_name=server.state.simulation_job_name,
-                                           input_file=server.state.simulation_xml_filename,
+                                           input_file=[ item for item in server.state.simulation_xml_filename if item.get('type') == 'text/xml' ][0].get('name'),
                                            nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",#TODO profile to use the correct amount
                                            commment=server.state.slurm_comment, partition='p4_general', account='myaccount' )
 
@@ -663,18 +663,20 @@ class Simulation:
     def check_jobs(self):
         if Authentificator.ssh_client:
             try:
-                # _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'date && squeue -u $USER')
-                #sacct -j <jobID> --format --format=JobID,State --noheader 
                 jid = self._server.state.job_ids
                 for index,job in enumerate(jid):
                     job_id = job['job_id']
                     _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'sacct -j {job_id} -o JobID,JobName,State --noheader')
                     job_line = sout.strip().split("\n")[-1]
-                    # index = next((i for i, item in enumerate(jid) if item.get("job_id") == job_id), None)
-                    # if index is None:
-                        # continue
-                    # else:
+
                     jid[index]['status'] = job_line.split()[2]
+                    if (jid[index]['status'] == 'COMPLETED'):
+                        # tar and copy back
+                        Authentificator._execute_remote_command(Authentificator.ssh_client, f'cd {self._server.simulation_remote_path} && tar cvfz Outputs_{job_id} {job_id}.tgz')
+                        Authentificator._transfer_file_sftp(Authentificator.ssh_client,
+                                                            f'{self._server.simulation_dl_path}/{job_id}.tgz',
+                                                            f'{self._server.simulation_remote_path}/{job_id}.tgz')
+                        
                     jid[index]['name'] =  job_line.split()[1]
                     print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
                 self._server.state.job_ids = jid
