@@ -188,10 +188,7 @@ def test_createConstantAttributeMultiBlock(
     """Test creation of constant attribute in multiblock dataset."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     values: list[ float ] = [ np.nan ]
-    assert arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest,
-                                                             values,
-                                                             attributeName,
-                                                             onPoints=onPoints )
+    arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest, values, attributeName, onPoints=onPoints )
 
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTest )
     for blockIndex in elementaryBlockIndexes:
@@ -201,6 +198,24 @@ def test_createConstantAttributeMultiBlock(
 
         attributeWellCreated: int = data.HasArray( attributeName )
         assert attributeWellCreated == 1
+
+
+def test_createConstantAttributeMultiBlockRaiseTypeError(
+    dataSetTest: vtkDataSet,
+) -> None:
+    """Test the raises TypeError for the function createConstantAttributeMultiBlock with a wrong mesh type."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( TypeError ):
+        arrayModifiers.createConstantAttributeMultiBlock( mesh, [ np.int32( 42 ) ], "newAttribute" )
+
+
+def test_createConstantAttributeMultiBlockRaiseValueError(
+    dataSetTest: vtkMultiBlockDataSet,
+) -> None:
+    """Test the raises ValueError for the function createConstantAttributeMultiBlock with a wrong attributeName."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    with pytest.raises( ValueError ):
+        arrayModifiers.createConstantAttributeMultiBlock( mesh, [ np.int32( 42 ) ], "PORO" )
 
 
 @pytest.mark.parametrize(

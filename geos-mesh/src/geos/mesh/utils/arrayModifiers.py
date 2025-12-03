@@ -263,8 +263,7 @@ def createConstantAttribute(
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        return createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, onPoints,
-                                                  vtkDataType, logger )
+        createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
     # Deals with dataSets.
     elif isinstance( mesh, vtkDataSet ):
@@ -281,7 +280,7 @@ def createConstantAttributeMultiBlock(
     onPoints: bool = False,
     vtkDataType: Union[ int, None ] = None,
     logger: Union[ Logger, None ] = None,
-) -> bool:
+) -> None:
     """Create a new attribute with a constant value per component on every block of the multiBlockDataSet.
 
     Args:
@@ -302,8 +301,9 @@ def createConstantAttributeMultiBlock(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if the attribute was correctly created, False if it was not created.
+    Raises:
+        TypeError: Input mesh with wrong type.
+        ValueError: Input attribute name already in the mesh.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -311,25 +311,11 @@ def createConstantAttributeMultiBlock(
 
     # Check if the input mesh is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSet, vtkMultiBlockDataSet ):
-        logger.error( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
-        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-        return False
+        raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, onPoints ):
-        logger.error( f"The attribute { attributeName } is already present in the multiBlockDataSet." )
-        logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
-        return False
-
-    # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
-    oppositePiece: bool = not onPoints
-    oppositePieceName: str = "points" if oppositePiece else "cells"
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, oppositePiece ):
-        oppositePieceState: str = "global" if isAttributeGlobal( multiBlockDataSet, attributeName,
-                                                                 oppositePiece ) else "partial"
-        logger.warning(
-            f"A { oppositePieceState } attribute with the same name ({ attributeName }) is already present in the multiBlockDataSet but on { oppositePieceName }."
-        )
+        raise ValueError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
@@ -337,7 +323,7 @@ def createConstantAttributeMultiBlock(
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, onPoints, vtkDataType, logger )
 
-    return True
+    return
 
 
 def createConstantAttributeDataSet(
