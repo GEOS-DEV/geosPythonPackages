@@ -59,8 +59,8 @@ export OMP_NUM_THREADS=1
 
 srun --mpi=pmix_v3 --hint=nomultithread \
     -n {{ ntasks }} geos \
-    -o Outputs_{{ slurm_jobid | default('${SLURM_JOBID}') }} \
-    -i {{ input_file | default('geosDeck.xml') }} | tee log.out
+    -o Outputs_${SLURM_JOBID} \
+    -i {{ input_file | default('geosDeck.xml') }} | tee Outputs_${SLURM_JOBID}/log_${SLURM_JOBID}.out
 
 """
 
@@ -265,7 +265,7 @@ class Authentificator:#namespacing more than anything else
 
 @unique
 class SlurmJobStatus(Enum):
-    PENDING = "PD"
+    PENDING = "PEND"
     RUNNING = "R"
     COMPLETING = "CG"
     COMPLETED = "CD"
@@ -461,11 +461,11 @@ class Simulation:
         server.state.job_ids = []
 
         server.state.status_colors = {
-            "PD": "#4CAF50",
-            "R": "#3F51B5",
-            "CA": "#FFC107",
-            "CG": "#484B45",
-            "F": "#E53935",
+            "PENDING": "#4CAF50", #PD
+            "RUNNING": "#3F51B5", #R
+            "CANCELLED": "#FFC107", #CA
+            "COMPLETED": "#484B45", #CD
+            "FAILED": "#E53935", #F
         }
         self._job_status_watcher: Optional[AsyncPeriodicRunner] = None
         self._job_status_watcher_period_ms = 2000
@@ -539,8 +539,6 @@ class Simulation:
             }
         }
             return file_tree
-
-       
 
 
         @controller.trigger("run_simulation")
@@ -665,19 +663,20 @@ class Simulation:
     def check_jobs(self):
         if Authentificator.ssh_client:
             try:
-                _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'date && squeue -u $USER')
+                # _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'date && squeue -u $USER')
                 #sacct -j <jobID> --format --format=JobID,State --noheader 
-                job_lines = sout.strip().split("\n")[2:]
                 jid = self._server.state.job_ids
-                for job_line in job_lines:
-                    job_id = job_line.split()[0]
-                    index = next((i for i, item in enumerate(jid) if item.get("job_id") == job_id), None)
-                    if index is None:
-                        continue
-                    else:
-                        jid[index]['status'] = job_line.split()[4]
-                        jid[index]['name'] =  job_line.split()[2]
-                        print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
+                for index,job in enumerate(jid):
+                    job_id = job['job_id']
+                    _,sout, serr = Authentificator._execute_remote_command(Authentificator.ssh_client, f'sacct -j {job_id} -o JobID,JobName,State --noheader')
+                    job_line = sout.strip().split("\n")[-1]
+                    # index = next((i for i, item in enumerate(jid) if item.get("job_id") == job_id), None)
+                    # if index is None:
+                        # continue
+                    # else:
+                    jid[index]['status'] = job_line.split()[2]
+                    jid[index]['name'] =  job_line.split()[1]
+                    print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")
                 self._server.state.job_ids = jid
                 self._server.state.dirty("job_ids")
                 self._server.state.flush()
