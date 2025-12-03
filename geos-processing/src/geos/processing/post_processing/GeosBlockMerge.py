@@ -202,9 +202,9 @@ class GeosBlockMerge():
                     if suffix == "_density":
                         for phaseName in self.phaseNameDict[ PhaseTypeEnum.ROCK.type ]:
                             if phaseName in attributeName:
-                                renameAttribute( mesh, attributeName, newName, False )
+                                renameAttribute( mesh, attributeName, newName, False, logger=self.logger )
                     else:
-                        renameAttribute( mesh, attributeName, newName, False )
+                        renameAttribute( mesh, attributeName, newName, False, logger=self.logger )
 
         return
 

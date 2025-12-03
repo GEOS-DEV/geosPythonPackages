@@ -855,3 +855,24 @@ def test_renameAttributeDataSet(
     else:
         assert vtkDataSetTest.GetCellData().HasArray( attributeName ) == 0
         assert vtkDataSetTest.GetCellData().HasArray( newAttributeName ) == 1
+
+
+def test_renameAttributeTypeError() -> None:
+    """Test the raises TypeError for the function renameAttribute with the mesh to with a wrong type."""
+    with pytest.raises( TypeError ):
+        arrayModifiers.renameAttribute( False, "PORO", "newName", False )
+
+
+@pytest.mark.parametrize( "attributeName, newName", [
+    ( "newName", "newName" ),  # The attribute is not in the mesh.
+    ( "PORO", "PORO" ),  # The new name is already an attribute in the mesh.
+] )
+def test_renameAttributeAttributeError(
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    newName: str,
+) -> None:
+    """Test the raises AttributeError for the function renameAttribute."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.renameAttribute( mesh, attributeName, newName, False )

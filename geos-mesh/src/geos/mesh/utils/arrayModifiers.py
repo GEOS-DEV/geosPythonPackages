@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Alexandre Benedicto, Paloma Martinez, Romain Baville
+import logging
 import numpy as np
 import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
 from typing import Union, Any
-from geos.utils.Logger import getLogger, Logger
+from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
 
 from vtk import (  # type: ignore[import-untyped]
     VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG,
@@ -27,7 +28,7 @@ from vtkmodules.vtkFiltersCore import (
 )
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
-    vtkPoints,
+    vtkPoints, vtkLogger
 )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
@@ -44,6 +45,8 @@ from geos.mesh.utils.arrayHelpers import (
     getNumberOfComponentsMultiBlock,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
+from geos.utils.Errors import VTKError
+
 
 __doc__ = """
 ArrayModifiers contains utilities to process VTK Arrays objects.
@@ -809,28 +812,60 @@ def renameAttribute(
     attributeName: str,
     newAttributeName: str,
     onPoints: bool,
-) -> bool:
-    """Rename an attribute.
+    logger: Union[ Logger, Any ] = None,
+) -> None:
+    """Rename an attribute with a unique name.
 
     Args:
         object (vtkMultiBlockDataSet): Object where the attribute is.
         attributeName (str): Name of the attribute.
         newAttributeName (str): New name of the attribute.
         onPoints (bool): True if attributes are on points, False if they are on cells.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if renaming operation successfully ended.
+    Raises:
+        TypeError: Error with the type of the mesh.
+        AttributeError: Error with the attribute attributeName or newAttributeName.
+        VTKError: Error with a VTK function.
     """
-    if isAttributeInObject( object, attributeName, onPoints ):
+    if logger is None:
+        logger = getLogger( "renameAttribute", True )
+
+    if not isinstance( object, ( vtkDataSet, vtkMultiBlockDataSet ) ):
+        raise TypeError( "The mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet" )
+
+    if not isAttributeInObject( object, attributeName, onPoints ):
+        raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
+
+    if isAttributeInObject( object, newAttributeName, onPoints ):
+        raise AttributeError( f"The attribute { newAttributeName } is already an attribute." )
+
+    vtkErrorLogger: Logger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+    vtkErrorLogger.setLevel( logging.INFO )
+    vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+    vtkErrorLogger.propagate = False
+    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+    with VTKCaptureLog() as capturedLog:
         dim: int = 0 if onPoints else 1
-        filter = vtkArrayRename()
-        filter.SetInputData( object )
-        filter.SetArrayName( dim, attributeName, newAttributeName )
-        filter.Update()
-        object.ShallowCopy( filter.GetOutput() )
-    else:
-        return False
-    return True
+        renameArrayFilter = vtkArrayRename()
+        renameArrayFilter.SetInputData( object )
+        renameArrayFilter.SetArrayName( dim, attributeName, newAttributeName )
+        renameArrayFilter.Update()
+
+        capturedLog.seek( 0 )
+        captured = capturedLog.read().decode()
+
+    if captured != "":
+        vtkErrorLogger.error( captured.strip() )
+
+    object.ShallowCopy( renameArrayFilter.GetOutput() )
+
+    if object is None:
+        raise VTKError( "Something went wrong with VTK renaming of the attribute." )
+
+    return
 
 
 def createCellCenterAttribute( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], cellCenterAttributeName: str ) -> bool:
