@@ -206,12 +206,16 @@ def createEmptyAttribute(
         componentNames (tuple[str,...]): Name of the components for vectorial attributes.
         vtkDataType (int): Data type.
 
+    Raises:
+        ValueError: Input vtkDataType is wrong.
+
     Returns:
         vtkDataArray: The empty attribute.
     """
     # Check if the vtk data type is correct.
     vtkNumpyTypeMap: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
-    assert vtkDataType in vtkNumpyTypeMap, f"Attribute type { vtkDataType } is unknown. The empty attribute { attributeName } has not been created into the mesh."
+    if vtkDataType not in vtkNumpyTypeMap:
+        raise ValueError( f"Attribute type { vtkDataType } is unknown." )
 
     nbComponents: int = len( componentNames )
 

@@ -170,6 +170,12 @@ def test_createEmptyAttribute(
     assert newAttr.IsA( str( expectedDatatypeArray ) )
 
 
+def test_createEmptyAttributeValueError() -> None:
+    """Test the raises ValueError for the function createEmptyAttribute with a wrong vtkDataType."""
+    with pytest.raises( ValueError ):
+        newAttr: vtkDataArray = arrayModifiers.createEmptyAttribute( "newAttribute", (), 64 )
+
+
 @pytest.mark.parametrize(
     "attributeName, onPoints",
     [
