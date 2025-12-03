@@ -534,7 +534,7 @@ def copyAttribute(
     attributeNameTo: str,
     onPoints: bool = False,
     logger: Union[ Logger, None ] = None,
-) -> bool:
+) -> None:
     """Copy an attribute from a multiBlockDataSet to a similar one on the same piece.
 
     Args:
@@ -547,8 +547,10 @@ def copyAttribute(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if copy successfully ended, False otherwise.
+    Raises:
+        TypeError: Error with the type of the mesh from or to.
+        ValueError: Error with the data of the meshes from and to.
+        AttributeError: Error with the attribute attributeNameFrom or attributeNameTo.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -556,57 +558,35 @@ def copyAttribute(
 
     # Check if the multiBlockDataSetFrom is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSetFrom, vtkMultiBlockDataSet ):
-        logger.error(  # type: ignore[unreachable]
-            "multiBlockDataSetFrom has to be inherited from vtkMultiBlockDataSet." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise TypeError( "Input mesh from has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the multiBlockDataSetTo is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSetTo, vtkMultiBlockDataSet ):
-        logger.error(  # type: ignore[unreachable]
-            "multiBlockDataSetTo has to be inherited from vtkMultiBlockDataSet." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise TypeError( "Input mesh to has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute exist in the multiBlockDataSetFrom.
     if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSetFrom, attributeNameFrom, onPoints ):
-        logger.error( f"The attribute { attributeNameFrom } is not in the multiBlockDataSetFrom." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise AttributeError( f"The attribute { attributeNameFrom } is not present in the mesh from." )
 
     # Check if the attribute already exist in the multiBlockDataSetTo.
     if isAttributeInObjectMultiBlockDataSet( multiBlockDataSetTo, attributeNameTo, onPoints ):
-        logger.error( f"The attribute { attributeNameTo } is already in the multiBlockDataSetTo." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise AttributeError( f"The attribute { attributeNameTo } is already present in the mesh to." )
 
     # Check if the two multiBlockDataSets are similar.
     elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
     elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
     if elementaryBlockIndexesTo != elementaryBlockIndexesFrom:
-        logger.error( "multiBlockDataSetFrom and multiBlockDataSetTo do not have the same block indexes." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise ValueError( "The two meshes do not have the same block indexes." )
 
     # Parse blocks of the two mesh to copy the attribute.
     for idBlock in elementaryBlockIndexesTo:
         dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( idBlock ) )
-        if dataSetFrom is None:
-            logger.error( f"Block { idBlock } of multiBlockDataSetFrom is null." )  # type: ignore[unreachable]
-            logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-            return False
-
         dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( idBlock ) )
-        if dataSetTo is None:
-            logger.error( f"Block { idBlock } of multiBlockDataSetTo is null." )  # type: ignore[unreachable]
-            logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-            return False
 
-        if isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, onPoints ) and \
-        not copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints, logger ):
-            return False
+        if isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, onPoints ):
+            copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints, logger )
 
-    return True
+    return
 
 
 def copyAttributeDataSet(
@@ -616,7 +596,7 @@ def copyAttributeDataSet(
     attributeNameTo: str,
     onPoints: bool = False,
     logger: Union[ Logger, Any ] = None,
-) -> bool:
+) -> None:
     """Copy an attribute from a dataSet to a similar one on the same piece.
 
     Args:
@@ -629,8 +609,9 @@ def copyAttributeDataSet(
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
-    Returns:
-        bool: True if copy successfully ended, False otherwise.
+    Raises:
+        TypeError: Error with the type of the mesh from.
+        AttributeError: Error with the attribute attributeNameFrom.
     """
     # Check if an external logger is given.
     if logger is None:
@@ -638,34 +619,19 @@ def copyAttributeDataSet(
 
     # Check if the dataSetFrom is inherited from vtkDataSet.
     if not isinstance( dataSetFrom, vtkDataSet ):
-        logger.error( "dataSetFrom has to be inherited from vtkDataSet." )  # type: ignore[unreachable]
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
-
-    # Check if the dataSetTo is inherited from vtkDataSet.
-    if not isinstance( dataSetTo, vtkDataSet ):
-        logger.error( "dataSetTo has to be inherited from vtkDataSet." )  # type: ignore[unreachable]
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise TypeError( "Input mesh from has to be inherited from vtkDataSet." )
 
     # Check if the attribute exist in the dataSetFrom.
     if not isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, onPoints ):
-        logger.error( f"The attribute { attributeNameFrom } is not in the dataSetFrom." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
-
-    # Check if the attribute already exist in the dataSetTo.
-    if isAttributeInObjectDataSet( dataSetTo, attributeNameTo, onPoints ):
-        logger.error( f"The attribute { attributeNameTo } is already in the dataSetTo." )
-        logger.error( f"The attribute { attributeNameFrom } has not been copied." )
-        return False
+        raise AttributeError( f"The attribute { attributeNameFrom } is not in the input mesh from." )
 
     npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, onPoints )
     componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, onPoints )
     vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, onPoints )
 
     createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, onPoints, vtkArrayType, logger )
-    return True
+
+    return
 
 
 def transferAttributeToDataSetWithElementMap(

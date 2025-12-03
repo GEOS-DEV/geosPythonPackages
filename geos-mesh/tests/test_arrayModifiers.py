@@ -534,8 +534,7 @@ def test_copyAttribute(
     multiBlockDataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
 
     # Copy the attribute from the multiBlockDataSetFrom to the multiBlockDataSetTo.
-    assert arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo,
-                                         onPoints )
+    arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo, onPoints )
 
     # Parse the two multiBlockDataSet and test if the attribute has been copied.
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
@@ -556,6 +555,49 @@ def test_copyAttribute(
         assert attributeExistCopied == attributeExistTest
 
 
+@pytest.mark.parametrize( "meshNameFrom, meshNameTo", [
+    ( "dataset", "emptydataset" ),
+    ( "dataset", "emptymultiblock" ),
+    ( "multiblock", "emptydataset" ),
+] )
+def test_copyAttributeTypeError(
+    dataSetTest: Any,
+    meshNameFrom: str,
+    meshNameTo: str,
+) -> None:
+    """Test the raises TypeError for the function copyAttribute."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshNameFrom )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshNameTo )
+    with pytest.raises( TypeError ):
+        arrayModifiers.copyAttribute( meshFrom, meshTo, "PORO", "PORO" )
+
+
+def test_copyAttributeValueError(
+    dataSetTest: vtkMultiBlockDataSet,
+) -> None:
+    """Test the raises ValueError for the function copyAttribute with two meshes with different block architecture."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "meshGeosExtractBlockTmp" )
+    meshTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
+    with pytest.raises( ValueError ):
+        arrayModifiers.copyAttribute( meshFrom, meshTo, "PORO", "PORO" )
+
+
+@pytest.mark.parametrize( "attributeNameFrom, attributeNameTo", [
+    ( "PORO", "PORO" ),  # An attribute PORO is already present in the mesh to
+    ( "newAttribute", "newAttribute" ),  # newAttribute is not in the mesh from
+] )
+def test_copyAttributeAttributeError(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeNameFrom: str,
+    attributeNameTo: str,
+) -> None:
+    """Test the raises AttributeError for the function copyAttribute."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshTo: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.copyAttribute( meshFrom, meshTo, attributeNameFrom, attributeNameTo )
+
+
 @pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, onPoints", [
     ( "CellAttribute", "CellAttributeTo", False ),
     ( "PointAttribute", "PointAttributeTo", True ),
@@ -571,7 +613,7 @@ def test_copyAttributeDataSet(
     dataSetTo: vtkDataSet = dataSetTest( "emptydataset" )
 
     # Copy the attribute from the dataSetFrom to the dataSetTo.
-    assert arrayModifiers.copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints )
+    arrayModifiers.copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, onPoints )
 
     # Get the tested attribute and its copy.
     dataFrom: Union[ vtkPointData, vtkCellData ]
@@ -605,6 +647,26 @@ def test_copyAttributeDataSet(
     vtkDataTypeTest: int = attributeTest.GetDataType()
     vtkDataTypeCopied: int = attributeCopied.GetDataType()
     assert vtkDataTypeCopied == vtkDataTypeTest
+
+
+def test_copyAttributeDataSetTypeError(
+    dataSetTest: Any,
+) -> None:
+    """Test the raises TypeError for the function copyAttributeDataSet with a mesh from with a wrong type."""
+    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshTo: vtkDataSet = dataSetTest( "emptydataset" )
+    with pytest.raises( TypeError ):
+        arrayModifiers.copyAttributeDataSet( meshFrom, meshTo, "PORO", "PORO" )
+
+
+def test_copyAttributeDataSetAttributeError(
+    dataSetTest: vtkDataSet,
+) -> None:
+    """Test the raises AttributeError for the function copyAttributeDataSet with an attributeNameFrom not in the mesh From."""
+    meshFrom: vtkDataSet = dataSetTest( "dataset" )
+    meshTo: vtkDataSet = dataSetTest( "emptydataset" )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.copyAttributeDataSet( meshFrom, meshTo, "newAttribute", "newAttribute" )
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeName, onPoints, defaultValueTest", [
