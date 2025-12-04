@@ -503,9 +503,9 @@ class Simulation:
             table_matches = []
 
             pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b" # all files
-            pattern_xml_path = r"\"(.*/)([\w\-.]+\.(?:xml))\b"
-            pattern_mesh_path = r"\"(.*/)([\w\-.]+\.(?:vtu|pvtu|vtm|pvtm))\b"
-            pattern_table_curly_path = r"((?:[\w\-/]+/)+)([\w\-.]+\.(?:geos|csv|dat|txt))"
+            pattern_xml_path = r"\"(.*/)*([\w\-.]+\.(?:xml))\b"
+            pattern_mesh_path = r"\"(.*/)*([\w\-.]+\.(?:vtu|pvtu|vtm|pvtm))\b"
+            pattern_table_curly_path = r"((?:[\w\-/]+/)+)*([\w\-.]+\.(?:geos|csv|dat|txt))"
 
             for file in xml_filename:
                 if xml_pattern.search(file.get("name","")):
@@ -553,9 +553,6 @@ class Simulation:
                                            input_file=[ item for item in server.state.simulation_xml_filename if item.get('type') == 'text/xml' ][0].get('name'),
                                            nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",#TODO profile to use the correct amount
                                            commment=server.state.slurm_comment, partition='p4_general', account='myaccount' )
-
-                # with open(Path(server.state.simulation_xml_filename).parent/Path('job.slurm'),'w') as f:
-                    # f.write(rendered)
                 
                 if Authentificator.ssh_client:
                     #write slurm directly on remote
@@ -590,11 +587,6 @@ class Simulation:
 
                     server.state.job_ids.append({'job_id':job_id[1]})
                     
-
-                    
-
-                    # Authentificator._execute_remote_command(Authentificator.ssh_client,
-                    #                                         f'squeue -u $USER')
                     self.start_result_streams()
                     
 
