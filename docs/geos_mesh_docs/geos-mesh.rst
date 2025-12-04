@@ -7,12 +7,12 @@ GEOS Mesh tools
       :maxdepth: 1
       :caption: Contents:
 
-      ./geos_mesh_docs/converter
+      ./converter
 
-      ./geos_mesh_docs/io
+      ./io
 
-      ./geos_mesh_docs/model
+      ./model
 
-      ./geos_mesh_docs/stats
+      ./stats
 
-      ./geos_mesh_docs/utils
+      ./utils

@@ -11,8 +11,8 @@ python -m pip install --upgrade ./mesh-doctor
 python -m pip install --upgrade ./pygeos-tools
 python -m pip install --upgrade ./geos-pv
 #! trame install requires npm
-cd ./geos-trame/vue-components
-npm i
-npm run build
-cd ../../
-python -m pip install ./geos-trame
+# cd ./geos-trame/vue-components
+# npm i
+# npm run build
+# cd ../../
+# python -m pip install ./geos-trame

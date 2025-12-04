@@ -46,7 +46,7 @@ To use it:
 * Select the mesh to transfer the global attributes (meshTo)
 * Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Attribute Mapping
 * Select the source mesh with global attributes to transfer (meshFrom)
-* Select the on which element ({ Piece.POINTS.value }/{ Piece.CELLS.value }) the attributes to transfer are
+* Select on which element ({ Piece.POINTS.value }/{ Piece.CELLS.value }) the attributes to transfer are
 * Select the global attributes to transfer from the source mesh to the final mesh
 * Apply
 
