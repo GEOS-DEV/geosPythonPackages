@@ -40,28 +40,36 @@ from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-fou
 
 __doc__ = f"""
 PVGeosBlockExtractAndMerge is a Paraview plugin processing the input mesh at the current time in two steps:
+
     1. Extraction of domains (volume, fault and well) from a GEOS output multiBlockDataSet mesh
     2. Actions on each region of a GEOS output domain (volume, fault, wells) to:
-        * Merge Ranks
-        * Identify "Fluids" and "Rock" phases
-        * Rename "Rock" attributes depending on the phase they refer to for more clarity
-        * Convert volume meshes to surface if needed
-        * Copy "geomechanics" attributes from the initial timestep to the current one if they exist
+
+        - Merge Ranks
+        - Identify "Fluids" and "Rock" phases
+        - Rename "Rock" attributes depending on the phase they refer to for more clarity
+        - Convert volume meshes to surface if needed
+        - Copy "geomechanics" attributes from the initial timestep to the current one if they exist
+
 
 This filter results in 3 output pipelines with the vtkMultiBlockDataSet:
+
     - "Volume" contains the volume domain
     - "Fault" contains the fault domain if it exist
     - "Well" contains the well domain if it exist
 
+
 Input and output meshes are vtkMultiBlockDataSet.
 
 .. Important::
+
     - The input mesh must be an output of a GEOS simulation or contain at least three blocks labeled with the same domain names:
         * "CellElementRegion" for volume domain
         * "SurfaceElementRegion" for fault domain if the input contains fault
         * "WellElementRegion" for well domain if the input contains well
-        * See more https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html?_sm_au_=iVVT5rrr5fN00R8sQ0WpHK6H8sjL6#xml-element-elementregions
-    - The filter detected automatically the three domains. If one of them if not in the input mesh, the associated output pipeline will be empty
+
+        See more about `Element region <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html>`_ in GEOS documentation.
+    - The filter detects automatically the three domains. If one of them is not in the input mesh, the associated output pipeline will be empty.
+
 
 To use it:
 
