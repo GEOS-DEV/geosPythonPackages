@@ -39,7 +39,7 @@ template_str = """#!/bin/sh
 #SBATCH --job-name="{{ job_name }}"
 #SBATCH --ntasks={{ ntasks }}
 #SBATCH --partition={{ partition }}
-#SBATCH --comment={{ comment }}
+#SBATCH --comment={{ comment_gr }}
 #SBACTH --account={{ account }}
 #SBATCH --nodes={{ nodes }}
 #SBATCH --time={{ time | default('24:00:00') }}
@@ -549,10 +549,11 @@ class Simulation:
                 template = Template(template_str)
                 # sdi = server.state.sd
                 ci ={'nodes': 1 , 'total_ranks': 2 }
+                #TODO profile to use the correct amount
                 rendered = template.render(job_name=server.state.simulation_job_name,
                                            input_file=[ item for item in server.state.simulation_xml_filename if item.get('type') == 'text/xml' ][0].get('name'),
-                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",#TODO profile to use the correct amount
-                                           commment=server.state.slurm_comment, partition='p4_general', account='myaccount' )
+                                           nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",
+                                           comment_gr=server.state.slurm_comment, partition='p4_general', account='myaccount' )
                 
                 if Authentificator.ssh_client:
                     #write slurm directly on remote
