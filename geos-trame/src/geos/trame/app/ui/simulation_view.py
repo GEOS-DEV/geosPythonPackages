@@ -282,7 +282,8 @@ def define_simulation_view(server) -> None:
                 with vuetify.VList():
                         with vuetify.VListItem( v_for=("(jobs,i) in job_ids"), key="i", value="jobs", base_color=(color_expression,),prepend_icon="mdi-minus-circle-outline",click=(kill_job,"[i]") ):
                             vuetify.VListItemTitle("{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}")
-
+                            vuetify.VProgressLinear(v_model=("simulation_progress","0"),)
+            
 
         with vuetify.VRow(v_if="simulation_error"):
             html.Div("An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;")
