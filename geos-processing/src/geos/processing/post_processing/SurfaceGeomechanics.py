@@ -353,7 +353,7 @@ class SurfaceGeomechanics:
         for i, cellAttribute in enumerate( attrArray ):
             if len( cellAttribute ) not in ( 3, 6, 9 ):
                 raise ValueError(
-                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but went { len( cellAttribute.shape ) }."
+                    f"Inconsistent number of components for attribute. Expected 3, 6 or 9 but got { len( cellAttribute.shape ) }."
                 )
 
             # Compute attribute XYZ components
