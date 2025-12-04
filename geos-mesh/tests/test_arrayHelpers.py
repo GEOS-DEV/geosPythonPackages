@@ -16,7 +16,6 @@ from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 
 from geos.mesh.utils import arrayHelpers
-
 from geos.utils.pieceEnum import Piece
 
 
@@ -37,16 +36,36 @@ def test_getCellDimension(
     assert cellDimObtained == cellDimExpected
 
 
-@pytest.mark.parametrize( "meshFromName, meshToName, piece", [
-    ( "multiblock", "emptymultiblock", Piece.CELLS ),
-    ( "multiblock", "emptyFracture", Piece.CELLS ),
-    ( "dataset", "emptyFracture", Piece.CELLS ),
-    ( "dataset", "emptypolydata", Piece.CELLS ),
-    ( "fracture", "emptyFracture", Piece.POINTS ),
-    ( "fracture", "emptyFracture", Piece.CELLS ),
-    ( "fracture", "emptymultiblock", Piece.CELLS ),
-    ( "polydata", "emptypolydata", Piece.CELLS ),
-] )
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, piece",
+    [
+        ( "well", "emptyWell", Piece.CELLS ),  # 1D vtu -> 1D vtu onCells
+        ( "well", "emptyWell", Piece.POINTS ),  # 1D vtu -> 1D vtu onPoints
+        ( "well", "emptyFracture", Piece.POINTS ),  # 1D vtu -> 2D vtu onCells
+        ( "well", "emptypolydata", Piece.POINTS ),  # 1D vtu -> 2D vtp onCells
+        ( "well", "emptydataset", Piece.POINTS ),  # 1D vtu -> 3D vtu onCells
+        ( "well", "emptymultiblock", Piece.POINTS ),  # 1D vtu -> vtm(3D vtu & 2D vtu) onPoints
+        ( "fracture", "emptyFracture", Piece.CELLS ),  # 2D vtu -> 2D vtu onCells
+        ( "fracture", "emptyWell", Piece.POINTS ),  # 2D vtu -> 1D vtu onPoints
+        ( "fracture", "emptypolydata", Piece.CELLS ),  # 2D vtu -> 2D vtp onCells
+        ( "fracture", "emptydataset", Piece.CELLS ),  # 2D vtu -> 3D vtu onCells
+        ( "fracture", "emptymultiblock", Piece.CELLS ),  # 2D vtu -> vtm(3D vtu & 2D vtu) onCells
+        ( "polydata", "emptypolydata", Piece.CELLS ),  # 2D vtp -> 2D vtp onCells
+        ( "polydata", "emptyWell", Piece.POINTS ),  # 2D vtp -> 1D vtu onPoints
+        ( "polydata", "emptyFracture", Piece.CELLS ),  # 2D vtp -> 2D vtu onCells
+        ( "polydata", "emptydataset", Piece.CELLS ),  # 2D vtp -> 3D vtu onCells
+        ( "polydata", "emptymultiblock", Piece.CELLS ),  # 2D vtp -> vtm(3D vtu & 2D vtu) onCells
+        ( "dataset", "emptydataset", Piece.CELLS ),  # 3D vtu -> 3D vtu onCells
+        ( "dataset", "emptyWell", Piece.POINTS ),  # 3D vtu -> 1D vtu onPoints
+        ( "dataset", "emptyFracture", Piece.CELLS ),  # 3D vtu -> 2D vtu onCells
+        ( "dataset", "emptypolydata", Piece.CELLS ),  # 3D vtu -> 2D vtp onCells
+        ( "dataset", "emptymultiblock", Piece.CELLS ),  # 3D vtu -> vtm(3D vtu & 2D vtu) onCells
+        ( "multiblock", "emptymultiblock", Piece.CELLS ),  # vtm( 3D vtu & 2D vtu ) -> vtm( 3D vtu & 2D vtu ) onCells
+        ( "multiblock", "emptyWell", Piece.POINTS ),  # vtm(3D vtu & 2D vtu) -> 1D vtu onPoints
+        ( "multiblock", "emptyFracture", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 2D vtu onCells
+        ( "multiblock", "emptypolydata", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 2D vtp onCells
+        ( "multiblock", "emptydataset", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 3D vtu onCells
+    ] )
 def test_computeElementMapping(
     dataSetTest: vtkDataSet,
     getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
