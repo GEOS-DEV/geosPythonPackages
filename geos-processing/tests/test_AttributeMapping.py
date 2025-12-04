@@ -59,8 +59,8 @@ def test_AttributeMappingRaisesAttributeError(
 @pytest.mark.parametrize(
     "meshFromName, meshToName, attributeNames, onPoints",
     [
-        ( "dataset", "emptydataset", {}, False ),  # no attribute to map
-        ( "dataset", "emptyFracture", { "FAULT" }, False ),  # meshes with same type but different cells dimension
+        ( "dataset", "emptydataset", {}, False ),  # No attribute to map
+        ( "dataset", "multiblockGeosOutput", { "FAULT" }, False ),  # Meshes with no common cells
     ] )
 def test_AttributeMappingRaisesValueError(
     dataSetTest: Any,
