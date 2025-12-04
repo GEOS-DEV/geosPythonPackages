@@ -18,10 +18,13 @@ GeosBlockExtractor is a vtk filter that allows to extract the domain (volume, fa
 
 .. Important::
     The input mesh must be an output of a GEOS simulation or contain at least three blocks labeled with the same domain names:
-        "CellElementRegion" for volume domain
-        "SurfaceElementRegion" for fault domain
-        "WellElementRegion" for well domain
-        See more https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html?_sm_au_=iVVT5rrr5fN00R8sQ0WpHK6H8sjL6#xml-element-elementregions
+        - "CellElementRegion" for volume domain
+        - "SurfaceElementRegion" for fault domain
+        - "WellElementRegion" for well domain
+
+        See more in `GEOS documentation`_ about Element region.
+
+.. _GEOS documentation: https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/ElementRegions.html
 
 .. Note::
     Volume domain is automatically extracted, by defaults Fault and Well domains are empty multiBlockDataSet.
@@ -154,9 +157,9 @@ class GeosBlockExtractor:
 
         Args:
             geosMesh (vtkMultiBlockDataSet): The mesh from Geos.
-            extractFault (bool, Optional): True if SurfaceElementRegion needs to be extracted, False otherwise.
+            extractFault (bool, optional): True if SurfaceElementRegion needs to be extracted, False otherwise.
                 Defaults to False.
-            extractWell (bool, Optional): True if WellElementRegion needs to be extracted, False otherwise.
+            extractWell (bool, optional): True if WellElementRegion needs to be extracted, False otherwise.
                 Defaults to False.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.

@@ -19,7 +19,7 @@ from geos.mesh.model.CellTypeCounts import CellTypeCounts
 __doc__ = """
 SplitMesh module is a vtk filter that splits cells of a mesh composed of tetrahedra, pyramids, hexahedra, triangles, and quads.
 
-Warning: Current implementation only supports meshes composed of either polygons or polyhedra, not both together.
+.. Warning:: Current implementation only supports meshes composed of either polygons or polyhedra, not both together.
 
 Filter input and output types are vtkUnstructuredGrid.
 
