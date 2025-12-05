@@ -45,7 +45,7 @@ To use it:
 * Select the mesh to transfer the global attributes (meshTo)
 * Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Attribute Mapping
 * Select the source mesh with global attributes to transfer (meshFrom)
-* Select the on which element (onPoints/onCells) the attributes to transfer are
+* Select on which element (onPoints/onCells) the attributes to transfer are
 * Select the global attributes to transfer from the source mesh to the final mesh
 * Apply
 
@@ -189,7 +189,14 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         if len( attributeMappingFilter.logger.handlers ) == 0:
             attributeMappingFilter.setLoggerHandler( VTKHandler() )
 
-        attributeMappingFilter.applyFilter()
-        self.clearAttributeNames = True
+        try:
+            attributeMappingFilter.applyFilter()
+            self.clearAttributeNames = True
+        except ( ValueError, AttributeError ) as e:
+            attributeMappingFilter.logger.error(
+                f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }"
+            attributeMappingFilter.logger.critical( mess, exc_info=True )
 
         return 1

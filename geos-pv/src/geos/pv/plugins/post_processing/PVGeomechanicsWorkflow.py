@@ -15,6 +15,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.utils.Errors import VTKError
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
@@ -335,16 +336,12 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
 
             self.logger.info( f"The plugin { self.logger.name } succeeded." )
 
-        except AssertionError as e:
-            mess: str = "Geomechanics workflow failed due to:"
-            self.logger.error( mess )
-            self.logger.error( str( e ) )
-            return 0
+        except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+            self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
         except Exception as e:
-            mess1: str = "Geomechanics workflow failed due to:"
-            self.logger.critical( mess1 )
-            self.logger.critical( e, exc_info=True )
-            return 0
+            mess: str = f"The filter { self.logger.name } failed due to:\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+
         return 1
 
     def applyPVGeosBlockExtractAndMerge( self: Self ) -> None:

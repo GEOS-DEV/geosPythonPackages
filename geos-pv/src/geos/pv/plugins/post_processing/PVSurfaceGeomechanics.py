@@ -20,6 +20,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 update_paths()
 
+from geos.utils.Errors import VTKError
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -32,15 +33,17 @@ PVSurfaceGeomechanics is a Paraview plugin that allows to compute
 additional geomechanical attributes from the input surfaces, such as shear capacity utilization (SCU).
 
 Input and output are vtkMultiBlockDataSet.
+
 .. Important::
-    - Please refer to the PVGeosBlockExtractAndMerge plugin to provide the correct input.
+
+    - Please refer to the :ref:`GEOS Extract and Merge Blocks <PVGeosBlockExtractAndMerge_plugin>` plugin to provide the correct input.
     - This filter only works on triangles at the moment. Please apply a triangulation algorithm beforehand if required.
 
 
 To use it:
 
 * Load the plugin in Paraview: Tools > Manage Plugins ... > Load New ... > .../geosPythonPackages/geos-pv/src/geos/pv/plugins/post_processing/PVSurfaceGeomechanics
-* Select any pipeline child "Fault" from PVGeosBlockExtractAndMerge plugin
+* Select any pipeline child "Fault" from "GEOS Extract and Merge Blocks" plugin
 * Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > GEOS Surface Geomechanics
 * (Optional) Set rock cohesion and/or friction angle
 * Apply
@@ -125,8 +128,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
-            if sgFilter.applyFilter():
 
+            try:
+                sgFilter.applyFilter()
                 outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
                 # add attributes to output surface mesh
@@ -135,6 +139,11 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                     surfaceBlock.GetCellData().AddArray( attr )
                     surfaceBlock.GetCellData().Modified()
                 surfaceBlock.Modified()
+            except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+                sgFilter.logger.error( f"The filter { sgFilter.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess: str = f"The filter { sgFilter.logger.name } failed due to:\n{ e }"
+                sgFilter.logger.critical( mess, exc_info=True )
 
         outputMesh.Modified()
         return

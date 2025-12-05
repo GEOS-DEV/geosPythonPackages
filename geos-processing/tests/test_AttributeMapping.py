@@ -30,4 +30,49 @@ def test_AttributeMapping(
         fillAllPartialAttributes( meshFrom )
 
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
-    assert attributeMappingFilter.applyFilter()
+    attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, onPoints",
+    [
+        ( "dataset", "emptydataset", { "Fault" }, False ),  # Attribute not in the mesh from
+        ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, False ),  # Attribute on both meshes
+        ( "multiblock", "emptymultiblock", { "FAULT" }, False ),  # Partial attribute in the mesh from
+    ] )
+def test_AttributeMappingRaisesAttributeError(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    onPoints: bool,
+) -> None:
+    """Test the fails of the filter with attributes issues."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
+
+    with pytest.raises( AttributeError ):
+        attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, onPoints",
+    [
+        ( "dataset", "emptydataset", {}, False ),  # No attribute to map
+        ( "dataset", "multiblockGeosOutput", { "FAULT" }, False ),  # Meshes with no common cells
+    ] )
+def test_AttributeMappingRaisesValueError(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    onPoints: bool,
+) -> None:
+    """Test the fails of the filter with input value issue."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, onPoints )
+
+    with pytest.raises( ValueError ):
+        attributeMappingFilter.applyFilter()
