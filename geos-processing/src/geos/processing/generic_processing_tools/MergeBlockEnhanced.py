@@ -8,7 +8,6 @@ from typing_extensions import Self
 
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
-from geos.utils.Errors import VTKError
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 
@@ -32,6 +31,7 @@ To use it:
 
     from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
     import logging
+    from geos.utils.Errors import VTKError
 
     # Define filter inputs
     multiblockdataset: vtkMultiblockDataSet
@@ -45,7 +45,13 @@ To use it:
     mergeBlockEnhancedFilter.setLoggerHandler( yourHandler )
 
     # Do calculations
-    mergeBlockEnhancedFilter.applyFilter()
+    try:
+        mergeBlockEnhancedFilter.applyFilter()
+    except VTKError as e:
+        mergeBlockEnhancedFilter.logger.error( f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }"
+        mergeBlockEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get the merged mesh
     mergeBlockEnhancedFilter.getOutput()
@@ -99,29 +105,21 @@ class MergeBlockEnhanced:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
                                  " during the filter initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
 
-        Returns:
-            bool: True if the blocks were successfully merged, False otherwise.
+        Raises:
+            VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
-        try:
-            outputMesh: vtkUnstructuredGrid
-            outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
-            self.outputMesh = outputMesh
+        outputMesh: vtkUnstructuredGrid
+        outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
+        self.outputMesh = outputMesh
 
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except VTKError as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
 
-        return True
+        return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

@@ -34,10 +34,11 @@ def doExtractAndMerge(
                                                              extractFault=extractFault,
                                                              extractWell=extractWell,
                                                              speHandler=True )
-    if not blockExtractor.logger.hasHandlers():
+    if len( blockExtractor.logger.handlers ) == 0:
         blockExtractor.setLoggerHandler( VTKHandler() )
-    if not blockExtractor.applyFilter():
-        raise
+
+    blockExtractor.applyFilter()
+
     # recover output objects from GeosBlockExtractor filter and merge internal blocks
     volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
     outputCells.ShallowCopy( mergeBlocksFilter( volumeBlockExtracted, False, "Volume" ) )
@@ -75,10 +76,9 @@ def mergeBlocksFilter(
     """
     loggerName = f"GEOS Block Merge for the domain { domainToMerge }."
     mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True, loggerName )
-    if not mergeBlockFilter.logger.hasHandlers():
+    if len( mergeBlockFilter.logger.handlers ) == 0:
         mergeBlockFilter.setLoggerHandler( VTKHandler() )
-    if not mergeBlockFilter.applyFilter():
-        raise
+    mergeBlockFilter.applyFilter()
     mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
     mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )
     return mergedBlocks
