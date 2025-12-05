@@ -5,12 +5,14 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 import os
 import pytest
-from typing import Union, Any, Tuple, Dict
+from typing import Union, Any
 import numpy as np
 import numpy.typing as npt
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
+
+from geos.utils.pieceEnum import Piece
 
 
 @pytest.fixture
@@ -198,19 +200,19 @@ def getElementMap() -> Any:
     """Get the element indexes mapping dictionary using the function _get_elementMap() between two meshes.
 
     Returns:
-        elementMap (Dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
+        elementMap (dict[int, npt.NDArray[np.int64]]): The cell mapping dictionary.
     """
 
-    def _get_elementMap( meshFromName: str, meshToName: str, points: bool ) -> Dict[ int, npt.NDArray[ np.int64 ] ]:
+    def _get_elementMap( meshFromName: str, meshToName: str, piece: Piece ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Get the element indexes mapping dictionary between two meshes.
 
         Args:
             meshFromName (str): The name of the meshFrom.
             meshToName (str): The name of the meshTo.
-            points (bool): True if elements to map is points, False if it is cells.
+            piece (Piece): The element to map.
 
         Returns:
-            elementMap (Dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
+            elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
         sharedCells2D3DId: npt.NDArray[ np.int64 ] = np.array(
             [ [ 0, 0 ], [ 1, 1 ], [ 2, 2 ], [ 3, 3 ], [ 4, 4 ], [ 5, 5 ], [ 6, 6 ], [ 7, 7 ], [ 8, 8 ], [ 9, 9 ],
@@ -238,8 +240,8 @@ def getElementMap() -> Any:
         )
         sharedPoints1D2DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 26 ] ], dtype=np.int64 )
         sharedPoints1D3DId: npt.NDArray[ np.int64 ] = np.array( [ [ 0, 475 ] ], dtype=np.int64 )
-        elementMap: Dict[ int, npt.NDArray[ np.int64 ] ] = {}
-        nbElements: Tuple[ int, int, int ] = ( 4092, 212, 11 ) if points else ( 1740, 156, 10 )
+        elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
+        nbElements: tuple[ int, int, int ] = ( 4092, 212, 11 ) if piece == Piece.POINTS else ( 1740, 156, 10 )
         if meshFromName == "well":
             if meshToName == "emptyWell":
                 elementMap[ 0 ] = np.array( [ [ 0, element ] for element in range( nbElements[ 2 ] ) ] )

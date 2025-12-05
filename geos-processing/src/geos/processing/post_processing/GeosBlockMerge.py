@@ -7,6 +7,7 @@ from typing_extensions import Self
 
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid
 
+from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
                                               getRockSuffixRenaming )
@@ -165,7 +166,7 @@ class GeosBlockMerge():
             # Create index attribute keeping the index in initial mesh
             if not createConstantAttribute( volumeMesh, [ blockIndex ],
                                             PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
-                                            onPoints=False,
+                                            piece=Piece.CELLS,
                                             logger=self.logger ):
                 raise ValueError(
                     f"Something went wrong during the creation of the attribute { PostProcessingOutputsEnum.BLOCK_INDEX.attributeName }."
@@ -200,23 +201,23 @@ class GeosBlockMerge():
             mesh (vtkUnstructuredGrid): The mesh with the attribute to rename.
         """
         # All the attributes to rename are on cells
-        for attributeName in getAttributeSet( mesh, False ):
+        for attributeName in getAttributeSet( mesh, piece=Piece.CELLS ):
             for suffix, newName in getRockSuffixRenaming().items():
                 if suffix in attributeName:
                     # Fluid and Rock density attribute have the same suffix, only the rock density need to be renamed
                     if suffix == "_density":
                         for phaseName in self.phaseNameDict[ PhaseTypeEnum.ROCK.type ]:
                             if phaseName in attributeName:
-                                renameAttribute( mesh, attributeName, newName, False )
+                                renameAttribute( mesh, attributeName, newName, piece=Piece.CELLS )
                     else:
-                        renameAttribute( mesh, attributeName, newName, False )
+                        renameAttribute( mesh, attributeName, newName, piece=Piece.CELLS )
 
         return
 
     def computePhaseNames( self: Self ) -> None:
         """Get the names of the phases in the mesh from Cell attributes."""
         # All the phase attributes are on cells
-        for name in getAttributeSet( self.inputMesh, False ):
+        for name in getAttributeSet( self.inputMesh, piece=Piece.CELLS ):
             if PHASE_SEP in name and "dofIndex" not in name:
                 phaseName: str
                 suffixName: str

@@ -63,6 +63,14 @@ PhysicalConstants module
    :undoc-members:
    :show-inheritance:
 
+pieceEnum module
+------------------------------
+
+.. automodule:: geos.utils.pieceEnum
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 UnitRepository module
 -------------------------------------
 
