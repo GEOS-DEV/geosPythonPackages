@@ -327,11 +327,6 @@ def createConstantAttributeMultiBlock(
         logger.error( f"The constant attribute { attributeName } has not been created into the mesh." )
         return False
 
-    # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
-    oppositePiece: Piece = Piece.CELLS if piece == Piece.POINTS else Piece.POINTS
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, oppositePiece ):
-        raise ValueError( f"An attribute with the same name exist on the opposite piece { oppositePiece.value }." )
-
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:

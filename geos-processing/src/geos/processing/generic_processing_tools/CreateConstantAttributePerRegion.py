@@ -11,8 +11,8 @@ from typing_extensions import Self
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )
@@ -64,7 +64,13 @@ To use it:
     createConstantAttributePerRegionFilter.addLoggerHandler( yourHandler )
 
     # Do calculations.
-    createConstantAttributePerRegionFilter.applyFilter()
+    try:
+        createConstantAttributePerRegionFilter.applyFilter()
+    except ( ValueError, AttributeError ) as e:
+        createConstantAttributePerRegionFilter.logger.error( f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }"
+        createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Create Constant Attribute Per Region"
@@ -111,7 +117,7 @@ class CreateConstantAttributePerRegion:
         # Region attribute settings.
         self.regionName: str = regionName
         self.dictRegionValues: dict[ Any, Any ] = dictRegionValues
-        self.piece = getAttributePieceInfo( self.mesh, self.regionName )
+        self.piece: Piece = getAttributePieceInfo( self.mesh, self.regionName )
 
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
@@ -145,131 +151,127 @@ class CreateConstantAttributePerRegion:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
                                  " during the filter initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Errors with the input value for the region index or errors during the creation of the new attribute.
+            AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         # Add the handler to count warnings messages.
         self.logger.addHandler( self.counter )
 
-        try:
-            # Check the validity of the attribute region.
-            if self.piece == Piece.NONE:
-                raise AttributeError( f"{ self.regionName } is not in the mesh." )
-            elif self.piece == Piece.BOTH:
+        # Check the validity of the attribute region.
+        if self.piece == Piece.NONE:
+            raise AttributeError( f"The attribute { self.regionName } is not in the mesh." )
+
+        if self.piece == Piece.BOTH:
+            raise AttributeError(
+                f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+            )
+
+        nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.piece )
+        if nbComponentsRegion != 1:
+            raise AttributeError( f"The region attribute { self.regionName } has to many components, one is requires." )
+
+        self._setInfoRegion()
+        # Check if the number of components and number of values for the region indexes are coherent.
+        for index in self.dictRegionValues:
+            if len( self.dictRegionValues[ index ] ) != self.nbComponents:
                 raise ValueError(
-                    f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+                    f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
                 )
 
-            nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.piece )
-            if nbComponentsRegion != 1:
-                raise ValueError( f"The region attribute { self.regionName } has to many components, one is requires." )
+        listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
+        validIndexes: list[ Any ] = []
+        invalidIndexes: list[ Any ] = []
+        regionArray: npt.NDArray[ Any ]
+        newArray: npt.NDArray[ Any ]
+        if isinstance( self.mesh, vtkMultiBlockDataSet ):
+            # Check if the attribute region is global.
+            if not isAttributeGlobal( self.mesh, self.regionName, self.piece ):
+                raise AttributeError( f"The region attribute { self.regionName } has to be global." )
 
-            self._setInfoRegion()
-            # Check if the number of components and number of values for the region indexes are coherent.
-            for index in self.dictRegionValues:
-                if len( self.dictRegionValues[ index ] ) != self.nbComponents:
-                    raise ValueError(
-                        f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
-                    )
-
-            listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
-            validIndexes: list[ Any ] = []
-            invalidIndexes: list[ Any ] = []
-            regionArray: npt.NDArray[ Any ]
-            newArray: npt.NDArray[ Any ]
-            if isinstance( self.mesh, vtkMultiBlockDataSet ):
-                # Check if the attribute region is global.
-                if not isAttributeGlobal( self.mesh, self.regionName, self.piece ):
-                    raise AttributeError( f"The region attribute { self.regionName } has to be global." )
-
-                validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                             self.piece )
-                if len( validIndexes ) == 0:
-                    if len( self.dictRegionValues ) == 0:
-                        self.logger.warning( "No region indexes entered." )
-                    else:
-                        self.logger.warning(
-                            f"The region indexes entered are not in the region attribute { self.regionName }." )
-
-                    if not createConstantAttributeMultiBlock( self.mesh,
-                                                              self.defaultValue,
-                                                              self.newAttributeName,
-                                                              componentNames=self.componentNames,
-                                                              piece=self.piece,
-                                                              logger=self.logger ):
-                        raise
-
+            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
+                                                                         self.piece )
+            if len( validIndexes ) == 0:
+                if len( self.dictRegionValues ) == 0:
+                    self.logger.warning( "No region index entered." )
                 else:
-                    if len( invalidIndexes ) > 0:
-                        self.logger.warning(
-                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
-                        )
+                    self.logger.warning(
+                        f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                    # Parse the mesh to add the attribute on each dataset.
-                    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( self.mesh )
-                    for flatIdDataSet in listFlatIdDataSet:
-                        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
-
-                        regionArray = getArrayInObject( dataSet, self.regionName, self.piece )
-                        newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                        if not createAttribute( dataSet,
-                                                newArray,
-                                                self.newAttributeName,
-                                                componentNames=self.componentNames,
-                                                piece=self.piece,
-                                                logger=self.logger ):
-                            raise
+                if not createConstantAttributeMultiBlock( self.mesh,
+                                                          self.defaultValue,
+                                                          self.newAttributeName,
+                                                          componentNames=self.componentNames,
+                                                          piece=self.piece,
+                                                          logger=self.logger ):
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
-                validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                          self.piece )
-                if len( validIndexes ) == 0:
-                    if len( self.dictRegionValues ) == 0:
-                        self.logger.warning( "No region indexes entered." )
-                    else:
-                        self.logger.warning(
-                            f"The region indexes entered are not in the region attribute { self.regionName }." )
+                if len( invalidIndexes ) > 0:
+                    self.logger.warning(
+                        f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
 
-                    if not createConstantAttributeDataSet( self.mesh,
-                                                           self.defaultValue,
-                                                           self.newAttributeName,
-                                                           componentNames=self.componentNames,
-                                                           piece=self.piece,
-                                                           logger=self.logger ):
-                        raise
+                # Parse the mesh to add the attribute on each dataset.
+                listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( self.mesh )
+                for flatIdDataSet in listFlatIdDataSet:
+                    dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
 
-                else:
-                    if len( invalidIndexes ) > 0:
-                        self.logger.warning(
-                            f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }."
-                        )
-
-                    regionArray = getArrayInObject( self.mesh, self.regionName, self.piece )
+                    regionArray = getArrayInObject( dataSet, self.regionName, self.piece )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    if not createAttribute( self.mesh,
+                    if not createAttribute( dataSet,
                                             newArray,
                                             self.newAttributeName,
                                             componentNames=self.componentNames,
                                             piece=self.piece,
                                             logger=self.logger ):
-                        raise
+                        raise ValueError(
+                            f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
-            # Log the output message.
-            self._logOutputMessage( validIndexes )
-        except ( ValueError, AttributeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        else:
+            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
+                                                                      self.piece )
+            if len( validIndexes ) == 0:
+                if len( self.dictRegionValues ) == 0:
+                    self.logger.warning( "No region index entered." )
+                else:
+                    self.logger.warning(
+                        f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-        return True
+                if not createConstantAttributeDataSet( self.mesh,
+                                                       self.defaultValue,
+                                                       self.newAttributeName,
+                                                       componentNames=self.componentNames,
+                                                       piece=self.piece,
+                                                       logger=self.logger ):
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+
+            else:
+                if len( invalidIndexes ) > 0:
+                    self.logger.warning(
+                        f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
+
+                regionArray = getArrayInObject( self.mesh, self.regionName, self.piece )
+                newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
+                if not createAttribute( self.mesh,
+                                        newArray,
+                                        self.newAttributeName,
+                                        componentNames=self.componentNames,
+                                        piece=self.piece,
+                                        logger=self.logger ):
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+
+        # Log the output message.
+        self._logOutputMessage( validIndexes )
+
+        return
 
     def _setInfoRegion( self: Self ) -> None:
         """Update self.dictRegionValues and set self.defaultValue.

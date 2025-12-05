@@ -65,7 +65,13 @@ To use the filter:
     meshQualityEnhancedFilter.SetOtherMeshQualityMetrics(otherQualityMetrics)
 
     # Do calculations
-    meshQualityEnhancedFilter.applyFilter()
+    try:
+        meshQualityEnhancedFilter.applyFilter()
+    except ( ValueError, IndexError, TypeError, AttributeError ) as e:
+        meshQualityEnhancedFilter.logger.error( f"The filter { meshQualityEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { meshQualityEnhancedFilter.logger.name } failed due to: { e }"
+        meshQualityEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get output mesh quality report
     outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
@@ -283,39 +289,28 @@ class MeshQualityEnhanced():
             metrics = metrics.intersection( computedMetrics )
         return metrics if commonComputedMetricsExists else None
 
-    def applyFilter( self: Self ) -> bool:
-        """Apply MeshQualityEnhanced filter.
-
-        Returns:
-            bool: True if the filter succeeded, False otherwise.
-        """
+    def applyFilter( self: Self ) -> None:
+        """Apply MeshQualityEnhanced filter."""
         self.logger.info( f"Apply filter { self.logger.name }." )
-        try:
-            self._outputMesh.ShallowCopy( self.inputMesh )
-            # Compute cell type counts
-            self._computeCellTypeCounts()
 
-            # Compute metrics and associated attributes
-            self._evaluateMeshQualityAll()
+        self._outputMesh.ShallowCopy( self.inputMesh )
+        # Compute cell type counts
+        self._computeCellTypeCounts()
 
-            # Compute stats summary
-            self._updateStatsSummary()
+        # Compute metrics and associated attributes
+        self._evaluateMeshQualityAll()
 
-            # Create field data
-            self._createFieldDataStatsSummary()
+        # Compute stats summary
+        self._updateStatsSummary()
 
-            self._outputMesh.Modified()
+        # Create field data
+        self._createFieldDataStatsSummary()
 
-            self.logger.info( f"The filter { self.logger.name } succeeded." )
-        except ( ValueError, IndexError, TypeError, AttributeError ) as e:
-            self.logger.error( f"The filter { self.logger.name } failed.\n{ e }" )
-            return False
-        except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed.\n{ e }"
-            self.logger.critical( mess, exc_info=True )
-            return False
+        self._outputMesh.Modified()
 
-        return True
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
+
+        return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh computed with the stats."""
@@ -327,8 +322,7 @@ class MeshQualityEnhanced():
             self._outputMesh, self.speHandler )
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
-        if not cellTypeCounterEnhancedFilter.applyFilter():
-            raise
+        cellTypeCounterEnhancedFilter.applyFilter()
 
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:

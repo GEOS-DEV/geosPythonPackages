@@ -31,4 +31,49 @@ def test_AttributeMapping(
         fillAllPartialAttributes( meshFrom )
 
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, piece )
-    assert attributeMappingFilter.applyFilter()
+    attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, piece",
+    [
+        ( "dataset", "emptydataset", { "Fault" }, Piece.CELLS ),  # Attribute not in the mesh from
+        ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" }, Piece.CELLS ),  # Attribute on both meshes
+        ( "multiblock", "emptymultiblock", { "FAULT" }, Piece.CELLS ),  # Partial attribute in the mesh from
+    ] )
+def test_AttributeMappingRaisesAttributeError(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    piece: Piece,
+) -> None:
+    """Test the fails of the filter with attributes issues."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, piece )
+
+    with pytest.raises( AttributeError ):
+        attributeMappingFilter.applyFilter()
+
+
+@pytest.mark.parametrize(
+    "meshFromName, meshToName, attributeNames, piece",
+    [
+        ( "dataset", "emptydataset", {}, Piece.CELLS ),  # No attribute to map
+        ( "dataset", "multiblockGeosOutput", { "FAULT" }, Piece.CELLS ),  # Meshes with no common cells
+    ] )
+def test_AttributeMappingRaisesValueError(
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
+    attributeNames: set[ str ],
+    piece: Piece,
+) -> None:
+    """Test the fails of the filter with input value issue."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, piece )
+
+    with pytest.raises( ValueError ):
+        attributeMappingFilter.applyFilter()

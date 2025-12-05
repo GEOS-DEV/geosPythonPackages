@@ -302,6 +302,9 @@ def test_createConstantAttributeDataSet(
         ## Test with a new attributeName on cells and on points.
         ( (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
         ( (), (), Piece.CELLS, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
+        ## Test with an attributeName already existing on opposite piece.
+        ( (), (), Piece.POINTS, VTK_DOUBLE, VTK_DOUBLE, "float64", "CellAttribute" ),
+        ( (), (), Piece.CELLS, VTK_DOUBLE, VTK_DOUBLE, "float64", "PointAttribute" ),
         # Test the number of components and their names.
         ( ( "X" ), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),
         ( ( "X", "Y" ), ( "X", "Y" ), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "float32", "newAttribute" ),

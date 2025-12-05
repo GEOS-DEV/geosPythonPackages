@@ -108,7 +108,14 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
         if len( fillPartialArraysFilter.logger.handlers ) == 0:
             fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
 
-        fillPartialArraysFilter.applyFilter()
+        try:
+            fillPartialArraysFilter.applyFilter()
+        except ( ValueError, AttributeError ) as e:
+            fillPartialArraysFilter.logger.error(
+                f"The filter { fillPartialArraysFilter.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess: str = f"The filter { fillPartialArraysFilter.logger.name } failed due to:\n{ e }"
+            fillPartialArraysFilter.logger.critical( mess, exc_info=True )
 
         self.clearDictAttributesValues = True
 
