@@ -153,7 +153,8 @@ def test_CreateConstantAttributePerRegionRaisesAttributeError(
             0: [ 0 ],
             100: [ 1 ],
         }, ( "X", "Y" ), ( "X", "Y" ), np.float32 ),  # More components than value.
-        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32 ),  # The attribute name already exist on the mesh on the same piece.
+        ( "dataset", "PERM", "FAULT", {}, (),
+          (), np.float32 ),  # The attribute name already exist on the mesh on the same piece.
     ] )
 def test_CreateConstantAttributePerRegionRaisesValueError(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],

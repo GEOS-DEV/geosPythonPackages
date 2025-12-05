@@ -742,12 +742,8 @@ class GeomechanicsCalculator:
             if attribute.nbComponent == 6:
                 componentNames = ComponentNameEnum.XYZ.value
 
-            if not createAttribute( self.output,
-                                    array,
-                                    attributeName,
-                                    componentNames=componentNames,
-                                    piece=piece,
-                                    logger=self.logger ):
+            if not createAttribute(
+                    self.output, array, attributeName, componentNames=componentNames, piece=piece, logger=self.logger ):
                 raise ValueError( f"Something went wrong during the creation of the attribute { attributeName }." )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
@@ -1307,8 +1303,7 @@ class GeomechanicsCalculator:
         Raises:
             AttributeError: A mandatory attribute is missing.
         """
-        if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE.attributeName,
-                                    CRITICAL_PORE_PRESSURE.piece ):
+        if not isAttributeInObject( self.output, CRITICAL_PORE_PRESSURE.attributeName, CRITICAL_PORE_PRESSURE.piece ):
             if self._basicProperties.totalStress is not None:
                 self._advancedProperties.criticalPorePressure = fcts.criticalPorePressure(
                     -1.0 * self._basicProperties.totalStress, self.physicalConstants.rockCohesion,

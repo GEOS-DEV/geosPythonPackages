@@ -148,13 +148,12 @@ class AttributeMapping:
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         if len( self.attributeNames ) == 0:
-            raise ValueError( f"Please enter at least one attribute to transfer." )
+            raise ValueError( "Please enter at least one attribute to transfer." )
 
         attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.piece )
         wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
         if len( wrongAttributeNames ) > 0:
-            raise AttributeError(
-                f"The attributes { wrongAttributeNames } are not present in the source mesh." )
+            raise AttributeError( f"The attributes { wrongAttributeNames } are not present in the source mesh." )
 
         attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.piece )
         attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
