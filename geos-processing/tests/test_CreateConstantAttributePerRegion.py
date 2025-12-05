@@ -103,35 +103,26 @@ def test_CreateConstantAttributePerRegion(
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
+    "meshType, newAttributeName, regionName",
     [
-        ( "dataset", "newAttribute", "PERM", {}, (), (), np.float32 ),  # Region attribute has too many components
-        ( "multiblock", "newAttribute", "FAULT", {}, (), (), np.float32 ),  # Region attribute is partial.
+        ( "dataset", "newAttribute", "PERM" ),  # Region attribute has too many components
+        ( "multiblock", "newAttribute", "FAULT" ),  # Region attribute is partial.
+        ( "dataset", "PERM", "FAULT" ),  # The attribute name already exist in the mesh.
     ] )
 def test_CreateConstantAttributePerRegionRaisesAttributeError(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     meshType: str,
     newAttributeName: str,
     regionName: str,
-    dictRegionValues: dict[ Any, Any ],
-    componentNames: tuple[ str, ...],
-    componentNamesTest: tuple[ str, ...],
-    valueNpType: int,
 ) -> None:
-    """Test tes fails of CreateConstantAttributePerRegion with attributes issues."""
+    """Test the fails of CreateConstantAttributePerRegion with attributes issues."""
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
-    nbComponents: int = len( componentNamesTest )
-    if nbComponents == 0:  # If the attribute has one component, the component has no name.
-        nbComponents += 1
 
     createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
         mesh,
         regionName,
-        dictRegionValues,
+        {},
         newAttributeName,
-        valueNpType=valueNpType,
-        nbComponents=nbComponents,
-        componentNames=componentNames,
     )
 
     with pytest.raises( AttributeError ):
@@ -139,44 +130,37 @@ def test_CreateConstantAttributePerRegionRaisesAttributeError(
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
+    "dictRegionValues, componentNames",
     [
-        ( "dataset", "newAttribute", "FAULT", {
+        ( {
             0: [ 0 ],
             100: [ 1, 1 ],
-        }, (), (), np.float32 ),  # Number of value inconsistent.
-        ( "dataset", "newAttribute", "FAULT", {
+        }, () ),  # Number of value inconsistent.
+        ( {
             0: [ 0, 0 ],
             100: [ 1, 1 ],
-        }, (), (), np.float32 ),  # More values than components.
-        ( "dataset", "newAttribute", "FAULT", {
+        }, () ),  # More values than components.
+        ( {
             0: [ 0 ],
             100: [ 1 ],
-        }, ( "X", "Y" ), ( "X", "Y" ), np.float32 ),  # More components than value.
-        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32 ),  # The attribute name already exist in the mesh.
+        }, ( "X", "Y" ) ),  # More components than value.
     ] )
 def test_CreateConstantAttributePerRegionRaisesValueError(
-    dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
-    meshType: str,
-    newAttributeName: str,
-    regionName: str,
+    dataSetTest: vtkDataSet,
     dictRegionValues: dict[ Any, Any ],
     componentNames: tuple[ str, ...],
-    componentNamesTest: tuple[ str, ...],
-    valueNpType: int,
 ) -> None:
     """Test the fails of CreateConstantAttributePerRegion with inputs value issues."""
-    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
-    nbComponents: int = len( componentNamesTest )
+    mesh: vtkDataSet = dataSetTest( 'dataset' )
+    nbComponents: int = len( componentNames )
     if nbComponents == 0:  # If the attribute has one component, the component has no name.
         nbComponents += 1
 
     createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
         mesh,
-        regionName,
+        "FAULT",
         dictRegionValues,
-        newAttributeName,
-        valueNpType=valueNpType,
+        "newAttribute",
         nbComponents=nbComponents,
         componentNames=componentNames,
     )
