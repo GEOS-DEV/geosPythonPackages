@@ -1,6 +1,6 @@
 #------------------------------------------------------------------
 #
-#  Generated on 2025-12-03 16:57
+#  Generated on 2025-12-08 11:03
 #  GEOS version: 
 #
 #-------------------------------------------------------------------
@@ -449,10 +449,7 @@ class BlueprintType(BaseModel):
     )
 
 
-class Box(BaseModel):
-    class Meta:
-        name = "BoxType"
-
+class BoxType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     epsilon: str = field(
         default="-1",
@@ -4696,10 +4693,7 @@ class FieldSpecificationType(BaseModel):
     )
 
 
-class File(BaseModel):
-    class Meta:
-        name = "FileType"
-
+class FileType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     name: str = field(
         metadata={
@@ -6503,10 +6497,7 @@ class PerfectlyPlasticType(BaseModel):
     )
 
 
-class Perforation(BaseModel):
-    class Meta:
-        name = "PerforationType"
-
+class PerforationType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     distance_from_head: str = field(
         metadata={
@@ -11890,10 +11881,7 @@ class FiniteVolumeType(BaseModel):
     )
 
 
-class Functions(BaseModel):
-    class Meta:
-        name = "FunctionsType"
-
+class FunctionsType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     composite_function: list[CompositeFunctionType] = field(
         default_factory=list,
@@ -11931,7 +11919,7 @@ class Functions(BaseModel):
 
 class GeometryType(BaseModel):
     model_config = ConfigDict(defer_build=True)
-    box: list[Box] = field(
+    box: list[BoxType] = field(
         default_factory=list,
         metadata={
             "name": "Box",
@@ -12024,12 +12012,9 @@ class GraphType(BaseModel):
     )
 
 
-class Included(BaseModel):
-    class Meta:
-        name = "IncludedType"
-
+class IncludedType(BaseModel):
     model_config = ConfigDict(defer_build=True)
-    file: list[File] = field(
+    file: list[FileType] = field(
         default_factory=list,
         metadata={
             "name": "File",
@@ -12039,12 +12024,9 @@ class Included(BaseModel):
     )
 
 
-class InternalWell(BaseModel):
-    class Meta:
-        name = "InternalWellType"
-
+class InternalWellType(BaseModel):
     model_config = ConfigDict(defer_build=True)
-    perforation: list[Perforation] = field(
+    perforation: list[PerforationType] = field(
         default_factory=list,
         metadata={
             "name": "Perforation",
@@ -12576,12 +12558,12 @@ class TasksType(BaseModel):
     )
 
 
-class Vtkwell(BaseModel):
+class VtkwellType(BaseModel):
     class Meta:
         name = "VTKWellType"
 
     model_config = ConfigDict(defer_build=True)
-    perforation: list[Perforation] = field(
+    perforation: list[PerforationType] = field(
         default_factory=list,
         metadata={
             "name": "Perforation",
@@ -12775,7 +12757,7 @@ class CoarseningType(BaseModel):
 
 class InternalMeshType(BaseModel):
     model_config = ConfigDict(defer_build=True)
-    internal_well: list[InternalWell] = field(
+    internal_well: list[InternalWellType] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -12791,7 +12773,7 @@ class InternalMeshType(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: list[Vtkwell] = field(
+    vtkwell: list[VtkwellType] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -12911,7 +12893,7 @@ class InternalMeshType(BaseModel):
 
 class InternalWellboreType(BaseModel):
     model_config = ConfigDict(defer_build=True)
-    internal_well: list[InternalWell] = field(
+    internal_well: list[InternalWellType] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -12927,7 +12909,7 @@ class InternalWellboreType(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: list[Vtkwell] = field(
+    vtkwell: list[VtkwellType] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -13212,12 +13194,12 @@ class SoloEventType(BaseModel):
     )
 
 
-class Vtkmesh(BaseModel):
+class VtkmeshType(BaseModel):
     class Meta:
         name = "VTKMeshType"
 
     model_config = ConfigDict(defer_build=True)
-    internal_well: list[InternalWell] = field(
+    internal_well: list[InternalWellType] = field(
         default_factory=list,
         metadata={
             "name": "InternalWell",
@@ -13233,7 +13215,7 @@ class Vtkmesh(BaseModel):
             "namespace": "",
         },
     )
-    vtkwell: list[Vtkwell] = field(
+    vtkwell: list[VtkwellType] = field(
         default_factory=list,
         metadata={
             "name": "VTKWell",
@@ -13477,7 +13459,7 @@ class MeshType(BaseModel):
             "namespace": "",
         },
     )
-    vtkmesh: list[Vtkmesh] = field(
+    vtkmesh: list[VtkmeshType] = field(
         default_factory=list,
         metadata={
             "name": "VTKMesh",
@@ -23211,10 +23193,7 @@ class SolversType(BaseModel):
     )
 
 
-class Problem(BaseModel):
-    class Meta:
-        name = "ProblemType"
-
+class ProblemType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     events: list[EventsType] = field(
         default_factory=list,
@@ -23240,7 +23219,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    functions: list[Functions] = field(
+    functions: list[FunctionsType] = field(
         default_factory=list,
         metadata={
             "name": "Functions",
@@ -23320,7 +23299,7 @@ class Problem(BaseModel):
             "namespace": "",
         },
     )
-    included: list[Included] = field(
+    included: list[IncludedType] = field(
         default_factory=list,
         metadata={
             "name": "Included",
@@ -23346,6 +23325,6 @@ class Problem(BaseModel):
     )
 
 
-class Problem(Problem):
+class Problem(ProblemType):
     pass
     model_config = ConfigDict(defer_build=True)

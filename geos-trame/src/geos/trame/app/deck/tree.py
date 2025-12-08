@@ -18,7 +18,7 @@ from trame_simput import get_simput_manager
 
 from geos.trame.app.deck.file import DeckFile
 from geos.trame.app.geosTrameException import GeosTrameException
-from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
+from geos.trame.schema_generated.schema_mod import Problem, IncludedType, FileType, FunctionsType
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 
 
@@ -144,7 +144,7 @@ class DeckTree( object ):
 
         return timeline
 
-    def plots( self ) -> list[ Functions ]:
+    def plots( self ) -> list[ FunctionsType ]:
         """Get the functions in the current problem."""
         assert self.input_file is not None and self.input_file.problem is not None
         return self.input_file.problem.functions
@@ -179,7 +179,7 @@ class DeckTree( object ):
 
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:
-        """Append an Included object which follows this structure according to the documentation.
+        """Append an IncludedType object which follows this structure according to the documentation.
 
         <Included>
             <File name="./included_file.xml" />
@@ -192,8 +192,8 @@ class DeckTree( object ):
         if len( included_file_path ) == 0:
             return
 
-        includedTag = Included()
-        includedTag.file.append( File( name=DeckTree._append_id( included_file_path ) ) )
+        includedTag = IncludedType()
+        includedTag.file.append( FileType( name=DeckTree._append_id( included_file_path ) ) )
 
         model.included.append( includedTag )
 

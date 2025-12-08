@@ -15,7 +15,7 @@ from geos.trame.app.ui.viewer.boxViewer import BoxViewer
 from geos.trame.app.ui.viewer.perforationViewer import PerforationViewer
 from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
-from geos.trame.schema_generated.schema_mod import Box, Vtkmesh, Vtkwell, InternalWell, Perforation
+from geos.trame.schema_generated.schema_mod import BoxType, VtkmeshType, VtkwellType, InternalWellType, PerforationType
 
 pv.OFF_SCREEN = True
 
@@ -32,17 +32,17 @@ class DeckViewer( vuetify.VCard ):
         """Deck representing the 3D View using PyVista.
 
         This view can show:
-         - Vtkmesh,
-         - Vtkwell,
-         - Perforation,
-         - InternalWell
-         - Box
+         - VtkmeshType,
+         - VtkwellType,
+         - PerforationType,
+         - InternalWellType
+         - BoxType
 
         Everything is handle in the method 'update_viewer()' which is trigger when the
         'state.object_state' changed (see DeckTree).
 
         This View handle widgets, such as clip widget or slider to control Wells or
-        Perforation settings.
+        PerforationType settings.
         """
         super().__init__( **kwargs )
 
@@ -126,23 +126,23 @@ class DeckViewer( vuetify.VCard ):
     def update_viewer( self, active_block: BaseModel, path: str, show_obj: bool ) -> None:
         """Add from path the dataset given by the user.
 
-        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation, Box.
+        Supported data type is: VtkwellType, VtkmeshType, InternalWellType, PerforationType, BoxType.
 
         object_state  : array used to store path to the data and if we want to show it or not.
         """
-        if isinstance( active_block, Vtkmesh ):
+        if isinstance( active_block, VtkmeshType ):
             self._update_vtkmesh( show_obj )
 
-        if isinstance( active_block, Vtkwell ):
+        if isinstance( active_block, VtkwellType ):
             self._update_vtkwell( path, show_obj )
 
-        if isinstance( active_block, InternalWell ):
+        if isinstance( active_block, InternalWellType ):
             self._update_internalwell( path, show_obj )
 
-        if isinstance( active_block, Perforation ):
+        if isinstance( active_block, PerforationType ):
             self._update_perforation( active_block, show_obj, path )
 
-        if isinstance( active_block, Box ):
+        if isinstance( active_block, BoxType ):
             self._update_box( active_block, show_obj )
 
         # when data is added in the pv.Plotter, we need to refresh the scene to update
@@ -220,7 +220,7 @@ class DeckViewer( vuetify.VCard ):
         return None
 
     def _update_internalwell( self, path: str, show: bool ) -> None:
-        """Used to control the visibility of the InternalWell.
+        """Used to control the visibility of the InternalWellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -235,7 +235,7 @@ class DeckViewer( vuetify.VCard ):
         self.ctrl.view_update()
 
     def _update_vtkwell( self, path: str, show: bool ) -> None:
-        """Used to control the visibility of the Vtkwell.
+        """Used to control the visibility of the VtkwellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -273,7 +273,7 @@ class DeckViewer( vuetify.VCard ):
         self.ctrl.view_update()
 
     def _update_vtkmesh( self, show: bool ) -> None:
-        """Used to control the visibility of the Vtkmesh.
+        """Used to control the visibility of the VtkmeshType.
 
         This method will create the mesh if it doesn't exist.
 
@@ -298,7 +298,7 @@ class DeckViewer( vuetify.VCard ):
                                        tubing=False,
                                        outline_translation=False )
 
-    def _update_perforation( self, perforation: Perforation, show: bool, path: str ) -> None:
+    def _update_perforation( self, perforation: PerforationType, show: bool, path: str ) -> None:
         """Generate VTK dataset from a perforation."""
         if not show:
             if path in self._perforations:
@@ -345,7 +345,7 @@ class DeckViewer( vuetify.VCard ):
 
         self._perforations[ path ] = saved_perforation
 
-    def _update_box( self, active_block: Box, show_obj: bool ) -> None:
+    def _update_box( self, active_block: BoxType, show_obj: bool ) -> None:
         """Generate and display a Box and inner cell(s) from the mesh."""
         if self.region_engine.input.number_of_cells == 0 and show_obj:
             self.ctrl.on_add_warning(
@@ -363,7 +363,7 @@ class DeckViewer( vuetify.VCard ):
         if not show_obj:
             return
 
-        box: Box = active_block
+        box: BoxType = active_block
         self.box_engine = BoxViewer( self.region_engine.input, box )
 
         box_polydata: pv.PolyData = self.box_engine.get_box_polydata()

@@ -10,15 +10,4 @@
     <DocstringStyle>reStructuredText</DocstringStyle>
     <RelativeImports>false</RelativeImports>
   </Output>
-  <Substitutions>
-  <Substitution type="class" search="FileType" replace="File"/>
-    <Substitution type="class" search="FunctionsType" replace="Functions"/>
-    <Substitution type="class" search="IncludedType" replace="Included"/>
-    <Substitution type="class" search="ProblemType" replace="Problem"/>
-    <Substitution type="class" search="PerforationType" replace="Perforation"/>
-    <Substitution type="class" search="InternalWellType" replace="InternalWell"/>
-    <Substitution type="class" search="VtkmeshType" replace="Vtkmesh"/>
-    <Substitution type="class" search="VtkwellType" replace="Vtkwell"/>
-    <Substitution type="class" search="BoxType" replace="Box"/>
-  </Substitutions>
 </Config>
