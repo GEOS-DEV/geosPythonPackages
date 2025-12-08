@@ -29,6 +29,24 @@ class SimulationConstant:
 
     # replace by conf-file json
 
+#If proxyJump are needed
+# 
+# proxy_cmd = "ssh -W {host}:{port} proxyuser@bastion.example.com".format(
+#     host=ssh_host, port=ssh_port
+# )
+# from paramiko import ProxyCommand
+# sock = ProxyCommand(proxy_cmd)
+
+# client = paramiko.SSHClient()
+# client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+# client.connect(
+#     hostname=ssh_host,
+#     port=ssh_port,
+#     username=username,
+#     key_filename=keyfile,
+#     sock=sock,   # <— tunnel created by ProxyCommand
+# )
+
 
 # Load template from file
 # with open("slurm_job_template.j2") as f:
@@ -42,7 +60,7 @@ template_str = """#!/bin/sh
 #SBATCH --comment={{ comment_gr }}
 #SBACTH --account={{ account }}
 #SBATCH --nodes={{ nodes }}
-#SBATCH --time={{ time | default('24:00:00') }}
+#SBATCH --time={{ time | default('00:10:00') }}
 #SBATCH --mem={{ mem }}
 #SBATCH --output=job_GEOS_%j.out
 #SBATCH --error=job_GEOS_%j.err
@@ -449,10 +467,6 @@ class Simulation:
     Requires a simulation runner providing information on the output path of the simulation to monitor and ways to
     trigger the simulation.
     """
-
-
-
-
     def __init__(self, sim_runner: ISimRunner, server: Server, sim_info_dir: Optional[Path] = None) -> None:
         self._server = server
         controller = server.controller
@@ -553,7 +567,7 @@ class Simulation:
                 rendered = template.render(job_name=server.state.simulation_job_name,
                                            input_file=[ item for item in server.state.simulation_xml_filename if item.get('type') == 'text/xml' ][0].get('name'),
                                            nodes= ci['nodes'], ntasks=ci['total_ranks'], mem=f"0",
-                                           comment_gr=server.state.slurm_comment, partition='p4_general', account='myaccount' )
+                                           comment_gr=server.state.slurm_comment, partition='p4_dev', account='myaccount' )
                 
                 if Authentificator.ssh_client:
                     #write slurm directly on remote
@@ -586,7 +600,7 @@ class Simulation:
                     job_lines = sout.strip()
                     job_id = re.search(r"Submitted batch job (\d+)", job_lines)
 
-                    server.state.job_ids.append({'job_id':job_id[1]})
+                    server.state.job_ids.append({'job_id': job_id[1]})
                     
                     self.start_result_streams()
                     
@@ -629,18 +643,20 @@ class Simulation:
         if job_status == SimulationStatus.DONE:
             self.stop_result_streams()
 
-    def get_last_user_simulation_info(self) -> SimulationInformation:
-        last_sim_information = self.get_last_information_path()
-        return SimulationInformation.from_file(last_sim_information)
+    # TODO: might be useful for history
+    #
+    # def get_last_user_simulation_info(self) -> SimulationInformation:
+    #     last_sim_information = self.get_last_information_path()
+    #     return SimulationInformation.from_file(last_sim_information)
 
-    def get_last_information_path(self) -> Optional[Path]:
-        user_igg = self._sim_runner.get_user_igg()
+    # def get_last_information_path(self) -> Optional[Path]:
+    #     user_igg = self._sim_runner.get_user_igg()
 
-        user_files = list(reversed(sorted(self._sim_info_dir.glob(f"{user_igg}*.json"))))
-        if not user_files:
-            return None
-
-        return user_files[0]
+    #     user_files = list(reversed(sorted(self._sim_info_dir.glob(f"{user_igg}*.json"))))
+    #     if not user_files:
+    #         return None
+    #
+    #   return user_files[0]
 
     def stop_result_streams(self):
         if self._job_status_watcher is not None:
@@ -670,6 +686,15 @@ class Simulation:
                                                             f'{self._server.state.simulation_dl_path}/{job_id}.tgz',
                                                             f'{self._server.state.simulation_remote_path}/{job_id}.tgz',
                                                             direction='get')
+                    elif (jid[index]['status'] == 'RUNNING'):
+                        # getthe completed status
+                        pattern = re.compile(r'\((\d+(?:\.\d+)?)%\s*completed\)')
+                        with Authentificator.ssh_client.open_sftp().file( str(Path(self._server.state.simulation_remote_path)/Path(f"job_GEOS_{job_id}.out")), "r") as f:                  
+                            for line in f:
+                                m = pattern.search(line)
+                                if m:
+                                    self._server.state.simulation_progress = str(m.group(1))
+
                         
                     jid[index]['name'] =  job_line.split()[1]
                     print(f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n")

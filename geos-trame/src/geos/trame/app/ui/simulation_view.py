@@ -124,14 +124,10 @@ def define_simulation_view(server) -> None:
 
     
     def run_remove_jobfile(index_to_remove : int) -> None:
-        # for now just check there is an xml 
-        current_files = list(server.state.simulation_xml_filename) # On prend une copie de la liste 
+        current_files = list(server.state.simulation_xml_filename) 
         if 0 <= index_to_remove < len(current_files):
-                # 1. Supprimer l'élément de la copie de la liste 
             del current_files[index_to_remove]
                 
-                # 2. Remplacer la variable d'état par la nouvelle liste.
-                # Ceci est CRITIQUE pour la réactivité, car cela force Vue.js à se mettre à jour. 
             server.state.simulation_xml_filename = current_files 
             print(f"Fichier à l'index {index_to_remove} supprimé. Nouveaux fichiers: {len(current_files)}") 
         else: 
