@@ -6,7 +6,7 @@ import multiprocessing
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.supportedElements import Options, Result
-from geos.mesh_doctor.parsing import SUPPORTED_ELEMENTS
+from geos.mesh_doctor.baseTypes import SUPPORTED_ELEMENTS, UserInputs
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
@@ -17,18 +17,6 @@ __CHUNK_SIZE_DEFAULT = 1
 __NUM_PROC_DEFAULT = multiprocessing.cpu_count()
 
 __SUPPORTED_ELEMENTS_DEFAULT = { __CHUNK_SIZE: __CHUNK_SIZE_DEFAULT, __NUM_PROC: __NUM_PROC_DEFAULT }
-
-
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
-    """Convert parsed command-line options to Options object.
-
-    Args:
-        parsedOptions: Dictionary of parsed command-line options.
-
-    Returns:
-        Options: Configuration options for supported elements check.
-    """
-    return Options( chunkSize=parsedOptions[ __CHUNK_SIZE ], nproc=parsedOptions[ __NUM_PROC ] )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
@@ -54,6 +42,18 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         default=__NUM_PROC_DEFAULT,
         help=f"[int]: Number of threads used for parallel processing. Defaults to your CPU count {__NUM_PROC_DEFAULT}."
     )
+
+
+def convert( parsedOptions: UserInputs ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
+    return Options( chunkSize=parsedOptions[ __CHUNK_SIZE ], nproc=parsedOptions[ __NUM_PROC ] )
 
 
 def displayResults( options: Options, result: Result ) -> None:

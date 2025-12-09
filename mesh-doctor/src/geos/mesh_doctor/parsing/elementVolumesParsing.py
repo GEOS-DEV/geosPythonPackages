@@ -5,7 +5,7 @@ from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.elementVolumes import Options, Result
-from geos.mesh_doctor.parsing import ELEMENT_VOLUMES
+from geos.mesh_doctor.baseTypes import ELEMENT_VOLUMES, UserInputs
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
@@ -32,7 +32,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     help=f"[float]: The minimum acceptable volume. Defaults to {__MIN_VOLUME_DEFAULT}." )
 
 
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+def convert( parsedOptions: UserInputs ) -> Options:
     """From the parsed cli options, return the converted options for elements volumes check.
 
     Args:

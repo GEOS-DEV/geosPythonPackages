@@ -15,7 +15,8 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from typing import Any
 from geos.mesh_doctor.actions.fixElementsOrderings import Options, Result
-from geos.mesh_doctor.parsing import vtkOutputParsing, FIX_ELEMENTS_ORDERINGS
+from geos.mesh_doctor.baseTypes import FIX_ELEMENTS_ORDERINGS, UserInputs
+from geos.mesh_doctor.parsing import vtkOutputParsing
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __CELL_TYPE_MAPPING = {
@@ -59,7 +60,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     vtkOutputParsing.fillVtkOutputSubparser( p )
 
 
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+def convert( parsedOptions: UserInputs ) -> Options:
     """From the parsed cli options, return the converted options for self intersecting elements check.
 
     Args:

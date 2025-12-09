@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from __future__ import annotations
-import textwrap
 from argparse import ArgumentParser, _ArgumentGroup
+import textwrap
 from typing import Any
 from geos.mesh.io.vtkIO import VtkOutput
 

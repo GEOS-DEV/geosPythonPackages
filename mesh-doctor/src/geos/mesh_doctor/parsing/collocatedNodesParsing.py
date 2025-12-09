@@ -5,7 +5,7 @@ from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.collocatedNodes import Options, Result
-from geos.mesh_doctor.parsing import COLLOCATES_NODES
+from geos.mesh_doctor.baseTypes import COLLOCATES_NODES, UserInputs
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
@@ -13,18 +13,6 @@ __TOLERANCE = "tolerance"
 __TOLERANCE_DEFAULT = 0.
 
 __COLLOCATED_NODES_DEFAULT = { __TOLERANCE: __TOLERANCE_DEFAULT }
-
-
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
-    """Convert parsed command-line options to Options object.
-
-    Args:
-        parsedOptions: Dictionary of parsed command-line options.
-
-    Returns:
-        Options: Configuration options for supported elements check.
-    """
-    return Options( parsedOptions[ __TOLERANCE ] )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
@@ -41,6 +29,18 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     default=__TOLERANCE_DEFAULT,
                     required=True,
                     help="[float]: The absolute distance between two nodes for them to be considered collocated." )
+
+
+def convert( parsedOptions: UserInputs ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
+    return Options( parsedOptions[ __TOLERANCE ] )
 
 
 def displayResults( options: Options, result: Result ) -> None:

@@ -6,9 +6,7 @@ import argparse
 from copy import deepcopy
 from typing import Any
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
-from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
-                                                                 as sharedFillSubparser, displayResults )  # noqa: F401
-from geos.mesh_doctor.parsing import (
+from geos.mesh_doctor.baseTypes import (
     ALL_CHECKS,
     COLLOCATES_NODES,
     ELEMENT_VOLUMES,
@@ -21,6 +19,8 @@ from geos.mesh_doctor.parsing import elementVolumesParsing as evParser
 from geos.mesh_doctor.parsing import nonConformalParsing as ncParser
 from geos.mesh_doctor.parsing import selfIntersectingElementsParsing as sieParser
 from geos.mesh_doctor.parsing import supportedElementsParsing as seParser
+from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
+                                                                 as sharedFillSubparser, displayResults )  # noqa: F401
 
 # Ordered list of check names for this configuration
 ORDERED_CHECK_NAMES = [

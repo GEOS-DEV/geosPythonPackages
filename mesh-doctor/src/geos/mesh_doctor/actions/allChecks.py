@@ -2,23 +2,27 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable, TypeAlias
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from geos.mesh.io.vtkIO import readUnstructuredGrid
+from geos.mesh_doctor.baseTypes import OptionsProtocol, ResultProtocol
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.mesh_doctor.register import __loadModuleAction
-from geos.mesh.io.vtkIO import readUnstructuredGrid
+
+CheckOptions: TypeAlias = dict[ str, OptionsProtocol ]  # per check done, an OptionsProtocol instance
+CheckResults: TypeAlias = dict[ str, ResultProtocol ]  # per check done, a ResultProtocol instance
 
 
 @dataclass( frozen=True )
 class Options:
     checksToPerform: list[ str ]
-    checksOptions: dict[ str, Any ]
+    checksOptions: CheckOptions
     checkDisplays: dict[ str, Any ]
 
 
 @dataclass( frozen=True )
 class Result:
-    checkResults: dict[ str, Any ]
+    checkResults: CheckResults
 
 
 def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
@@ -31,12 +35,12 @@ def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
     Returns:
         Result: The result of all checks performed.
     """
-    checkResults: dict[ str, Any ] = {}
+    checkResults: CheckResults = {}
     for checkName in options.checksToPerform:
-        checkMeshAction = __loadModuleAction( checkName, "meshAction" )
+        checkMeshAction: Callable[..., ResultProtocol ] = __loadModuleAction( checkName, "meshAction" )
         setupLogger.info( f"Performing check '{checkName}'." )
-        option = options.checksOptions[ checkName ]
-        checkResult = checkMeshAction( mesh, option )
+        option: OptionsProtocol = options.checksOptions[ checkName ]
+        checkResult: ResultProtocol = checkMeshAction( mesh, option )
         checkResults[ checkName ] = checkResult
     return Result( checkResults=checkResults )
 
