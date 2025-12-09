@@ -312,9 +312,10 @@ class DeckViewer( vuetify.VCard ):
 
     def _make_mesh_transparent(self, isTransparent : bool):
         opacity : float = 0.2 if isTransparent else 1.
-        prop = self._mesh_actor.GetProperty()
-        prop.SetOpacity(opacity)
-        self.plotter.renderer.Modified()
+        if self._mesh_actor is not None:
+            prop = self._mesh_actor.GetProperty()
+            prop.SetOpacity(opacity)
+            self.plotter.renderer.Modified()
         return
 
 
