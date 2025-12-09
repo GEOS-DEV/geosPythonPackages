@@ -121,13 +121,10 @@ class MeshDoctorFilterBase:
             self.logger.warning( "The logger already has a handler, to use yours set 'speHandler' "
                                  "to True during initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Apply the filter operation.
 
         This method should be overridden by subclasses to implement specific filter logic.
-
-        Returns:
-            bool: True if filter applied successfully, False otherwise.
         """
         raise NotImplementedError( "Subclasses must implement applyFilter method." )
 
@@ -229,14 +226,11 @@ class MeshDoctorGeneratorBase:
             self.logger.warning( "The logger already has a handler, to use yours set 'speHandler' "
                                  "to True during initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Apply the filter operation to generate a mesh.
 
         This method should be overridden by subclasses to implement specific generation logic.
         The generated mesh should be assigned to self.mesh.
-
-        Returns:
-            bool: True if mesh generated successfully, False otherwise.
         """
         raise NotImplementedError( "Subclasses must implement applyFilter method." )
 
