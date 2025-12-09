@@ -62,7 +62,7 @@ class DeckViewer( vuetify.VCard ):
         self.SELECTED_DATA_ARRAY = "viewer_selected_data_array"
         self.state.change( self.SELECTED_DATA_ARRAY )( self._update_actor_array )
 
-        self.box_engine: dict[str, BoxViewer] = {}
+        self.box_engine: dict[ str, BoxViewer ] = {}
         self.region_engine = region_viewer
         self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer ] = {}
@@ -355,23 +355,23 @@ class DeckViewer( vuetify.VCard ):
             return
 
         if self.box_engine is not None and active_block.name in self.box_engine:
-            box_polydata_actor: pv.Actor = self.box_engine[active_block.name].get_box_polydata_actor()
-            extracted_cell_actor: pv.Actor = self.box_engine[active_block.name].get_extracted_cells_actor()
+            box_polydata_actor: pv.Actor = self.box_engine[ active_block.name ].get_box_polydata_actor()
+            extracted_cell_actor: pv.Actor = self.box_engine[ active_block.name ].get_extracted_cells_actor()
             self.plotter.remove_actor( box_polydata_actor )
             self.plotter.remove_actor( extracted_cell_actor )
-            del self.box_engine[active_block.name]
+            del self.box_engine[ active_block.name ]
 
         if not show_obj:
             return
 
         box: Box = active_block
-        self.box_engine[active_block.name] = BoxViewer( self.region_engine.input, box )
+        self.box_engine[ active_block.name ] = BoxViewer( self.region_engine.input, box )
 
-        box_polydata: pv.PolyData = self.box_engine[active_block.name].get_box_polydata()
-        extracted_cell: pv.UnstructuredGrid = self.box_engine[active_block.name].get_extracted_cells()
+        box_polydata: pv.PolyData = self.box_engine[ active_block.name ].get_box_polydata()
+        extracted_cell: pv.UnstructuredGrid = self.box_engine[ active_block.name ].get_extracted_cells()
 
         if box_polydata is not None and extracted_cell is not None:
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
-            self.box_engine[active_block.name].set_box_polydata_actor( _box_polydata_actor )
-            self.box_engine[active_block.name].set_extracted_cells_actor( _extracted_cells_actor )
+            self.box_engine[ active_block.name ].set_box_polydata_actor( _box_polydata_actor )
+            self.box_engine[ active_block.name ].set_extracted_cells_actor( _extracted_cells_actor )
