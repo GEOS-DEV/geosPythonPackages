@@ -8,12 +8,53 @@ from geos.utils.Logger import getLogger
 
 __VERBOSE_KEY = "verbose"
 __QUIET_KEY = "quiet"
+__OUTPUT_LOG_KEY = "outputLog"
 
 __VERBOSITY_FLAG = "v"
 __QUIET_FLAG = "q"
 
 setupLogger = getLogger( "mesh-doctor" )
 setupLogger.propagate = False
+
+
+class LineWrappingFormatter( logging.Formatter ):
+    """Custom formatter that wraps long lines at a specified width."""
+
+    def __init__( self, fmt: str = None, datefmt: str = None, max_width: int = 120 ) -> None:
+        """Initialize the formatter with optional line wrapping.
+
+        Args:
+            fmt: Log message format string
+            datefmt: Date format string
+            max_width: Maximum line width before wrapping
+        """
+        super().__init__( fmt, datefmt )
+        self.max_width = max_width
+
+    def format( self, record: logging.LogRecord ) -> str:
+        """Format the log record and wrap long lines.
+
+        Args:
+            record: The log record to format
+
+        Returns:
+            Formatted and wrapped log message
+        """
+        formatted = super().format( record )
+        if len( formatted ) <= self.max_width:
+            return formatted
+
+        # Split into lines and wrap each line
+        lines = formatted.split( '\n' )
+        wrapped_lines = []
+        for line in lines:
+            if len( line ) <= self.max_width:
+                wrapped_lines.append( line )
+            else:
+                # Wrap long lines
+                wrapped = textwrap.fill( line, width=self.max_width, subsequent_indent='    ' )
+                wrapped_lines.append( wrapped )
+        return '\n'.join( wrapped_lines )
 
 
 def parseCommaSeparatedString( value: str ) -> list[ str ]:
@@ -67,13 +108,18 @@ def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
                                        action='count',
                                        default=0,
                                        dest=__QUIET_KEY )
+    dummyVerbosityParser.add_argument( '--' + __OUTPUT_LOG_KEY,
+                                       type=str,
+                                       default=None,
+                                       dest=__OUTPUT_LOG_KEY )
 
-    # Parse only known args to extract verbosity/quiet flags
+    # Parse only known args to extract verbosity/quiet flags and outputLog
     # cliArgs[1:] is used assuming cliArgs[0] is the script name (like sys.argv)
     args, _ = dummyVerbosityParser.parse_known_args( cliArgs[ 1: ] )
 
     verboseCount = args.verbose
     quietCount = args.quiet
+    outputLogFile = args.outputLog
 
     if verboseCount == 0 and quietCount == 0:
         # Default level (no -v or -q flags)
@@ -92,6 +138,19 @@ def parseAndSetVerbosity( cliArgs: list[ str ] ) -> None:
     # Set the level on the ROOT logger.
     # Loggers from getCustomLogger (with level NOTSET) will inherit this.
     setupLogger.setLevel( effectiveLevel )
+
+    # Add file handler if outputLog is specified
+    if outputLogFile:
+        try:
+            fileHandler = logging.FileHandler( outputLogFile, mode='w' )
+            fileHandler.setLevel( effectiveLevel )
+            # Use custom formatter with 120 character max width
+            fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            fileHandler.setFormatter( LineWrappingFormatter( fmt=fmt, max_width=120 ) )
+            setupLogger.addHandler( fileHandler )
+            setupLogger.info( f"Log output will be written to \"{outputLogFile}\"" )
+        except Exception as e:
+            setupLogger.error( f"Failed to create log file \"{outputLogFile}\": {e}" )
 
     # Use the setupLogger (which uses your custom formatter) for this message
     setupLogger.info( f"Logger level set to \"{logging.getLevelName( effectiveLevel )}\"" )
@@ -125,4 +184,10 @@ def initParser() -> argparse.ArgumentParser:
                          default=0,
                          dest=__QUIET_KEY,
                          help=f"Use -{__QUIET_FLAG} to reduce the verbosity of the output." )
+    parser.add_argument( '--' + __OUTPUT_LOG_KEY,
+                         type=str,
+                         default=None,
+                         dest=__OUTPUT_LOG_KEY,
+                         metavar='LOG_FILE',
+                         help="[string]: Path to output file (.txt or .out) where logs will be written." )
     return parser
