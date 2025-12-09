@@ -303,21 +303,20 @@ class DeckViewer( vuetify.VCard ):
         if not show:
             if path in self._perforations:
                 self._remove_perforation( path )
-            self._make_mesh_transparent(False)
+            self._make_mesh_transparent( False )
             return
 
         distance_from_head = float( perforation.distance_from_head )
         self._add_perforation( distance_from_head, path )
-        self._make_mesh_transparent(True)
+        self._make_mesh_transparent( True )
 
-    def _make_mesh_transparent(self, isTransparent : bool):
-        opacity : float = 0.2 if isTransparent else 1.
+    def _make_mesh_transparent( self, isTransparent: bool ):
+        opacity: float = 0.2 if isTransparent else 1.
         if self._mesh_actor is not None:
             prop = self._mesh_actor.GetProperty()
-            prop.SetOpacity(opacity)
+            prop.SetOpacity( opacity )
             self.plotter.renderer.Modified()
         return
-
 
     def _remove_perforation( self, path: str ) -> None:
         """Remove all actor related to the given path and clean the stored perforation."""
@@ -372,7 +371,7 @@ class DeckViewer( vuetify.VCard ):
             self.plotter.remove_actor( extracted_cell_actor )
 
         if not show_obj:
-            self._make_mesh_transparent(False)
+            self._make_mesh_transparent( False )
             return
 
         box: Box = active_block
@@ -382,7 +381,7 @@ class DeckViewer( vuetify.VCard ):
         extracted_cell: pv.UnstructuredGrid = self.box_engine.get_extracted_cells()
 
         if box_polydata is not None and extracted_cell is not None:
-            self._make_mesh_transparent(True)
+            self._make_mesh_transparent( True )
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
             self.box_engine.set_box_polydata_actor( _box_polydata_actor )
