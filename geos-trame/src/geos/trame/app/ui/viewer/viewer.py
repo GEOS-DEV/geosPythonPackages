@@ -310,7 +310,7 @@ class DeckViewer( vuetify.VCard ):
         self._add_perforation( distance_from_head, path )
         self._make_mesh_transparent( True )
 
-    def _make_mesh_transparent( self, isTransparent: bool ):
+    def _make_mesh_transparent( self, isTransparent: bool ) -> None:
         opacity: float = 0.2 if isTransparent else 1.
         if self._mesh_actor is not None:
             prop = self._mesh_actor.GetProperty()
