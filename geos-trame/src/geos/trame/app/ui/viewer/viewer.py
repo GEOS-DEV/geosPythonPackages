@@ -62,7 +62,7 @@ class DeckViewer( vuetify.VCard ):
         self.SELECTED_DATA_ARRAY = "viewer_selected_data_array"
         self.state.change( self.SELECTED_DATA_ARRAY )( self._update_actor_array )
 
-        self.box_engine: BoxViewer | None = None
+        self.box_engine: dict[ str, BoxViewer ] = {}
         self.region_engine = region_viewer
         self.well_engine = well_viewer
         self._perforations: dict[ str, PerforationViewer ] = {}
@@ -337,10 +337,20 @@ class DeckViewer( vuetify.VCard ):
         if not show:
             if path in self._perforations:
                 self._remove_perforation( path )
+            self._make_mesh_transparent( False )
             return
 
         distance_from_head = float( perforation.distance_from_head )
         self._add_perforation( distance_from_head, path )
+        self._make_mesh_transparent( True )
+
+    def _make_mesh_transparent( self, isTransparent: bool ) -> None:
+        opacity: float = 0.2 if isTransparent else 1.
+        if self._mesh_actor is not None:
+            prop = self._mesh_actor.GetProperty()
+            prop.SetOpacity( opacity )
+            self.plotter.renderer.Modified()
+        return
 
     def _remove_perforation( self, path: str ) -> None:
         """Remove all actor related to the given path and clean the stored perforation."""
@@ -388,25 +398,28 @@ class DeckViewer( vuetify.VCard ):
             )
             return
 
-        if self.box_engine is not None:
-            box_polydata_actor: pv.Actor = self.box_engine.get_box_polydata_actor()
-            extracted_cell_actor: pv.Actor = self.box_engine.get_extracted_cells_actor()
+        if self.box_engine is not None and active_block.name in self.box_engine:
+            box_polydata_actor: pv.Actor = self.box_engine[ active_block.name ].get_box_polydata_actor()
+            extracted_cell_actor: pv.Actor = self.box_engine[ active_block.name ].get_extracted_cells_actor()
             self.plotter.remove_actor( box_polydata_actor )
             self.plotter.remove_actor( extracted_cell_actor )
+            del self.box_engine[ active_block.name ]
 
         if not show_obj:
+            self._make_mesh_transparent( False )
             return
 
         box: Box = active_block
-        self.box_engine = BoxViewer( self.region_engine.input, box )
+        self.box_engine[ active_block.name ] = BoxViewer( self.region_engine.input, box )
 
-        box_polydata: pv.PolyData = self.box_engine.get_box_polydata()
-        extracted_cell: pv.UnstructuredGrid = self.box_engine.get_extracted_cells()
+        box_polydata: pv.PolyData = self.box_engine[ active_block.name ].get_box_polydata()
+        extracted_cell: pv.UnstructuredGrid = self.box_engine[ active_block.name ].get_extracted_cells()
 
         if box_polydata is not None and extracted_cell is not None:
+            self._make_mesh_transparent( True )
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
             _box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
             _extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
-            self.box_engine.set_box_polydata_actor( _box_polydata_actor )
-            self.box_engine.set_extracted_cells_actor( _extracted_cells_actor )
+            self.box_engine[ active_block.name ].set_box_polydata_actor( _box_polydata_actor )
+            self.box_engine[ active_block.name ].set_extracted_cells_actor( _extracted_cells_actor )
