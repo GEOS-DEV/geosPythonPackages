@@ -196,7 +196,7 @@ class DeckViewer( vuetify.VCard ):
             title_height=0.02,
             value=perforation_radius,
         )
-        
+
         self.plotter.add_slider_widget(
             self._on_change_zscale,
             [ 1, 50 ],
@@ -226,6 +226,10 @@ class DeckViewer( vuetify.VCard ):
     def _on_change_zscale( self, value: float ) -> None:
         if self._mesh_actor is not None:
             self._mesh_actor.SetScale( 1.0, 1.0, value )
+            if self.box_engine._box_polydata_actor is not None and self.box_engine._extracted_cells_actor is not None:
+                self.box_engine._box_polydata_actor.SetScale( 1.0, 1.0, value )
+                self.box_engine._extracted_cells_actor.SetScale( 1.0, 1.0, value )
+
             self.plotter.renderer.Modified()
         return
 
