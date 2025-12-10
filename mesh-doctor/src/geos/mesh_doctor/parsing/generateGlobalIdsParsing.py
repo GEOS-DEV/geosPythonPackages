@@ -6,7 +6,8 @@ from argparse import _SubParsersAction, ArgumentParser, _ArgumentGroup
 from dataclasses import dataclass
 from typing import Any
 from geos.mesh_doctor.actions.generateGlobalIds import Options, Result
-from geos.mesh_doctor.parsing import vtkOutputParsing, GENERATE_GLOBAL_IDS
+from geos.mesh_doctor.baseTypes import GENERATE_GLOBAL_IDS, UserInputs
+from geos.mesh_doctor.parsing import vtkOutputParsing
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
 __CELLS, __POINTS = "cells", "points"
@@ -18,19 +19,19 @@ class GlobalIdsInfo:
     points: bool
 
 
-def convertToGlobalIdsInfo( parsedOptions: dict[ str, Any ] ) -> GlobalIdsInfo:
-    """Extract GlobalIdsInfo from parsed options.
+def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
+    """Add supported elements check subparser with its arguments.
 
     Args:
-        parsedOptions: Dictionary of parsed command-line options.
-
-    Returns:
-        GlobalIdsInfo: The global IDs configuration.
+        subparsers: The subparsers action to add the parser to.
     """
-    return GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )
+    p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
+    addVtuInputFileArgument( p )
+    addArguments( p )
+    vtkOutputParsing.fillVtkOutputSubparser( p )
 
 
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+def convert( parsedOptions: UserInputs ) -> Options:
     """Convert parsed command-line options to Options object.
 
     Args:
@@ -43,6 +44,16 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     return Options( vtkOutput=vtkOutputParsing.convert( parsedOptions ),
                     generateCellsGlobalIds=gids.cells,
                     generatePointsGlobalIds=gids.points )
+
+
+def displayResults( options: Options, result: Result ) -> None:
+    """Display the results of the generate global ids feature.
+
+    Args:
+        options: The options used for the check.
+        result: The result of the generate global ids feature.
+    """
+    setupLogger.info( result.info )
 
 
 def addArguments( parser: ArgumentParser | _ArgumentGroup ) -> None:
@@ -69,23 +80,13 @@ def addArguments( parser: ArgumentParser | _ArgumentGroup ) -> None:
     parser.set_defaults( **{ __POINTS: True } )
 
 
-def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
-    """Add supported elements check subparser with its arguments.
+def convertToGlobalIdsInfo( parsedOptions: UserInputs ) -> GlobalIdsInfo:
+    """Extract GlobalIdsInfo from parsed options.
 
     Args:
-        subparsers: The subparsers action to add the parser to.
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        GlobalIdsInfo: The global IDs configuration.
     """
-    p = subparsers.add_parser( GENERATE_GLOBAL_IDS, help="Adds globals ids for points and cells." )
-    addVtuInputFileArgument( p )
-    addArguments( p )
-    vtkOutputParsing.fillVtkOutputSubparser( p )
-
-
-def displayResults( options: Options, result: Result ) -> None:
-    """Display the results of the generate global ids feature.
-
-    Args:
-        options: The options used for the check.
-        result: The result of the generate global ids feature.
-    """
-    setupLogger.info( result.info )
+    return GlobalIdsInfo( cells=parsedOptions[ __CELLS ], points=parsedOptions[ __POINTS ] )

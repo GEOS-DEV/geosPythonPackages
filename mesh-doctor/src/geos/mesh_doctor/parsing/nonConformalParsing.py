@@ -5,7 +5,7 @@ from __future__ import annotations
 from argparse import _SubParsersAction
 from typing import Any
 from geos.mesh_doctor.actions.nonConformal import Options, Result
-from geos.mesh_doctor.parsing import NON_CONFORMAL
+from geos.mesh_doctor.baseTypes import NON_CONFORMAL, UserInputs
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
@@ -22,20 +22,6 @@ __NON_CONFORMAL_DEFAULT = {
     __POINT_TOLERANCE: __POINT_TOLERANCE_DEFAULT,
     __FACE_TOLERANCE: __FACE_TOLERANCE_DEFAULT
 }
-
-
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
-    """Convert parsed command-line options to Options object.
-
-    Args:
-        parsedOptions: Dictionary of parsed command-line options.
-
-    Returns:
-        Options: Configuration options for supported elements check.
-    """
-    return Options( angleTolerance=parsedOptions[ __ANGLE_TOLERANCE ],
-                    pointTolerance=parsedOptions[ __POINT_TOLERANCE ],
-                    faceTolerance=parsedOptions[ __FACE_TOLERANCE ] )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
@@ -63,6 +49,20 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         metavar=__FACE_TOLERANCE_DEFAULT,
         default=__FACE_TOLERANCE_DEFAULT,
         help=f"[float]: tolerance for two faces to be considered \"touching\". Defaults to {__FACE_TOLERANCE_DEFAULT}" )
+
+
+def convert( parsedOptions: UserInputs ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for supported elements check.
+    """
+    return Options( angleTolerance=parsedOptions[ __ANGLE_TOLERANCE ],
+                    pointTolerance=parsedOptions[ __POINT_TOLERANCE ],
+                    faceTolerance=parsedOptions[ __FACE_TOLERANCE ] )
 
 
 def displayResults( options: Options, result: Result ) -> None:

@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 import sys
-from geos.mesh_doctor.parsing import ActionHelper
+from geos.mesh_doctor.baseTypes import ActionHelper
 from geos.mesh_doctor.parsing.cliParsing import parseAndSetVerbosity, setupLogger
 from geos.mesh_doctor.register import registerParsingActions
 

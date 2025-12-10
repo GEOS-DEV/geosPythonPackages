@@ -55,7 +55,12 @@ def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
             cells.ReplaceCellAtId( cellIdx, toVtkIdList( newSupportPointIds ) )
         else:
             unchangedCellTypes.add( cellType )
-    isWrittenError = writeMesh( outputMesh, options.vtkOutput )
+    try:
+        isWrittenError = writeMesh( outputMesh, options.vtkOutput, options.vtkOutput.canOverwrite )
+    except FileExistsError as e:
+        from geos.mesh_doctor.parsing.cliParsing import setupLogger
+        setupLogger.error( f"{e} Use --canOverwrite to allow overwriting existing files." )
+        raise SystemExit( 1 )
     return Result( output=options.vtkOutput.output if not isWrittenError else "",
                    unchangedCellTypes=frozenset( unchangedCellTypes ) )
 

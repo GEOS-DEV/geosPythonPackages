@@ -4,19 +4,14 @@
 from __future__ import annotations
 import argparse
 from copy import deepcopy
-from typing import Any
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
-from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
-                                                                 as sharedFillSubparser, displayResults )  # noqa: F401
-from geos.mesh_doctor.parsing import (
-    MAIN_CHECKS,
-    COLLOCATES_NODES,
-    ELEMENT_VOLUMES,
-    SELF_INTERSECTING_ELEMENTS,
-)
+from geos.mesh_doctor.baseTypes import ( MAIN_CHECKS, COLLOCATES_NODES, ELEMENT_VOLUMES, SELF_INTERSECTING_ELEMENTS,
+                                         UserInputs )
 from geos.mesh_doctor.parsing import collocatedNodesParsing as cnParser
 from geos.mesh_doctor.parsing import elementVolumesParsing as evParser
 from geos.mesh_doctor.parsing import selfIntersectingElementsParsing as sieParser
+from geos.mesh_doctor.parsing._sharedChecksParsingLogic import ( CheckFeature, convert as sharedConvert, fillSubparser
+                                                                 as sharedFillSubparser, displayResults )  # noqa: F401
 
 # Ordered list of check names for this configuration
 ORDERED_CHECK_NAMES = [
@@ -57,7 +52,7 @@ def fillSubparser( subparsers: argparse._SubParsersAction ) -> None:
                          checkFeaturesConfig=CHECK_FEATURES_CONFIG )
 
 
-def convert( parsedArgs: dict[ str, Any ] ) -> AllChecksOptions:
+def convert( parsedArgs: UserInputs ) -> AllChecksOptions:
     """Converts arguments by calling the shared logic with the 'main_checks' configuration."""
     return sharedConvert( parsedArgs=parsedArgs,
                           orderedCheckNames=ORDERED_CHECK_NAMES,

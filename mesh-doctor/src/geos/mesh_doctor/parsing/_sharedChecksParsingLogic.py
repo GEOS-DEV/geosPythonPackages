@@ -6,18 +6,22 @@ import argparse
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Type, Union
+from geos.mesh_doctor.baseTypes import DefaultParameters, OptionsProtocol, ResultProtocol
 from geos.mesh_doctor.actions.allChecks import Options as AllChecksOptions
 from geos.mesh_doctor.actions.allChecks import Result as AllChecksResult
-from geos.mesh_doctor.parsing.cliParsing import parseCommaSeparatedString, setupLogger, addVtuInputFileArgument
+from geos.mesh_doctor.parsing.cliParsing import addVtuInputFileArgument, parseCommaSeparatedString, setupLogger
 
 
 @dataclass( frozen=True )
 class CheckFeature:
-    """A container for a check's configuration and associated classes."""
+    """A container for a check's configuration and associated classes.
+
+    The resultCls should be a dataclass that conforms to ResultProtocol.
+    """
     name: str
-    optionsCls: Type[ Any ]
-    resultCls: Type[ Any ]
-    defaultParams: dict[ str, Any ]
+    optionsCls: OptionsProtocol
+    resultCls: ResultProtocol
+    defaultParams: DefaultParameters
     display: Type[ Any ]
 
 

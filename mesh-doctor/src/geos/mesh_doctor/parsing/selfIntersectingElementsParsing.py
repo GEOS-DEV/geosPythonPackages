@@ -6,7 +6,7 @@ from argparse import _SubParsersAction
 import numpy
 from typing import Any
 from geos.mesh_doctor.actions.selfIntersectingElements import Options, Result
-from geos.mesh_doctor.parsing import SELF_INTERSECTING_ELEMENTS
+from geos.mesh_doctor.baseTypes import SELF_INTERSECTING_ELEMENTS, UserInputs
 from geos.mesh_doctor.parsing._sharedChecksParsingLogic import getOptionsUsedMessage
 from geos.mesh_doctor.parsing.cliParsing import setupLogger, addVtuInputFileArgument
 
@@ -14,28 +14,6 @@ __MIN_DISTANCE = "minDistance"
 __MIN_DISTANCE_DEFAULT = numpy.finfo( float ).eps
 
 __SELF_INTERSECTING_ELEMENTS_DEFAULT = { __MIN_DISTANCE: __MIN_DISTANCE_DEFAULT }
-
-
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
-    """Convert parsed command-line options to Options object.
-
-    Args:
-        parsedOptions: Dictionary of parsed command-line options.
-
-    Returns:
-        Options: Configuration options for self intersecting elements check.
-
-    Raises:
-        ValueError: If minimum distance is negative.
-    """
-    minDistance = parsedOptions[ __MIN_DISTANCE ]
-    if minDistance == 0:
-        setupLogger.warning( "Having minimum distance set to 0 can induce lots of false positive results "
-                             "(adjacent faces may be considered intersecting)." )
-    elif minDistance < 0:
-        raise ValueError(
-            f"Negative minimum distance ({minDistance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
-    return Options( minDistance=minDistance )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
@@ -55,6 +33,28 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     metavar=__MIN_DISTANCE_DEFAULT,
                     default=__MIN_DISTANCE_DEFAULT,
                     help=help_text )
+
+
+def convert( parsedOptions: UserInputs ) -> Options:
+    """Convert parsed command-line options to Options object.
+
+    Args:
+        parsedOptions: Dictionary of parsed command-line options.
+
+    Returns:
+        Options: Configuration options for self intersecting elements check.
+
+    Raises:
+        ValueError: If minimum distance is negative.
+    """
+    minDistance = parsedOptions[ __MIN_DISTANCE ]
+    if minDistance == 0:
+        setupLogger.warning( "Having minimum distance set to 0 can induce lots of false positive results "
+                             "(adjacent faces may be considered intersecting)." )
+    elif minDistance < 0:
+        raise ValueError(
+            f"Negative minimum distance ({minDistance}) in the {SELF_INTERSECTING_ELEMENTS} check is not allowed." )
+    return Options( minDistance=minDistance )
 
 
 def displayResults( options: Options, result: Result ) -> None:

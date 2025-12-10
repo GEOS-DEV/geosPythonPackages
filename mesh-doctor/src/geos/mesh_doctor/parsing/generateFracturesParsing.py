@@ -6,7 +6,8 @@ from argparse import _SubParsersAction
 import os
 from typing import Any
 from geos.mesh_doctor.actions.generateFractures import Options, Result, FracturePolicy
-from geos.mesh_doctor.parsing import vtkOutputParsing, GENERATE_FRACTURES
+from geos.mesh_doctor.baseTypes import GENERATE_FRACTURES, UserInputs
+from geos.mesh_doctor.parsing import vtkOutputParsing
 from geos.mesh_doctor.parsing.cliParsing import addVtuInputFileArgument
 from geos.mesh.io.vtkIO import VtkOutput
 
@@ -22,27 +23,6 @@ __FRACTURES_OUTPUT_DIR = "fracturesOutputDir"
 __FRACTURES_DATA_MODE = "fracturesDataMode"
 __FRACTURES_DATA_MODE_VALUES = "binary", "ascii"
 __FRACTURES_DATA_MODE_DEFAULT = __FRACTURES_DATA_MODE_VALUES[ 0 ]
-
-
-def convertToFracturePolicy( s: str ) -> FracturePolicy:
-    """Converts the user input to the proper enum chosen.
-
-    I do not want to use the auto conversion already available to force explicit conversion.
-
-    Args:
-        s (str): The user input
-
-    Raises:
-        ValueError: If the parsed options are invalid.
-
-    Returns:
-        FracturePolicy: The matching enum.
-    """
-    if s == __FIELD_POLICY:
-        return FracturePolicy.FIELD
-    elif s == __INTERNAL_SURFACES_POLICY:
-        return FracturePolicy.INTERNAL_SURFACES
-    raise ValueError( f"Policy {s} is not valid. Please use one of \"{', '.join(map(str, __POLICIES))}\"." )
 
 
 def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
@@ -88,7 +68,7 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
         help='[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
 
-def convert( parsedOptions: dict[ str, Any ] ) -> Options:
+def convert( parsedOptions: UserInputs ) -> Options:
     """Convert parsed command-line options to Options object.
 
     Args:
@@ -137,6 +117,27 @@ def displayResults( options: Options, result: Result ) -> None:
     pass
 
 
+def convertToFracturePolicy( s: str ) -> FracturePolicy:
+    """Converts the user input to the proper enum chosen.
+
+    I do not want to use the auto conversion already available to force explicit conversion.
+
+    Args:
+        s (str): The user input
+
+    Raises:
+        ValueError: If the parsed options are invalid.
+
+    Returns:
+        FracturePolicy: The matching enum.
+    """
+    if s == __FIELD_POLICY:
+        return FracturePolicy.FIELD
+    elif s == __INTERNAL_SURFACES_POLICY:
+        return FracturePolicy.INTERNAL_SURFACES
+    raise ValueError( f"Policy {s} is not valid. Please use one of \"{', '.join(map(str, __POLICIES))}\"." )
+
+
 def areValuesParsable( values: str ) -> bool:
     """Check if a string contains parsable values.
 
@@ -182,5 +183,5 @@ def buildAllFracturesVtkOutput( fractureOutputDir: str, fracturesDataMode: bool,
     allFracturesVtkOutput: list[ VtkOutput ] = []
     for fractureName in fractureNames:
         fracturePath = os.path.join( fractureOutputDir, nameWithoutExtension + fractureName )
-        allFracturesVtkOutput.append( VtkOutput( fracturePath, fracturesDataMode ) )
+        allFracturesVtkOutput.append( VtkOutput( fracturePath, fracturesDataMode, meshVtkOutput.canOverwrite ) )
     return allFracturesVtkOutput
