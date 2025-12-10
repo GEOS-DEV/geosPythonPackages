@@ -766,6 +766,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 assert self.pythonView is not None, "No Python View was found."
                 self._defineCurvesAspect()
                 mohrCircles: list[ MohrCircle ] = self._filterMohrCircles()
+                print( mohrCircles )
 
                 self.pythonView.Script = mcf.buildPythonViewScript(
                     geos_pv_path,
@@ -812,12 +813,21 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _filterMohrCircles( self: Self ) -> list[ MohrCircle ]:
         """Filter the list of all MohrCircle to get those to plot.
 
+        Mohr circles are sort by cell indexes first then by timesteps.
+
         Returns:
             list[MohrCircle]: list of MohrCircle to plot.
         """
         # Circle ids to plot
         circleIds: list[ str ] = self._getCircleIds()
-        return [ mohrCircle for mohrCircle in self.mohrCircles if mohrCircle.getCircleId() in circleIds ]
+        mohrCircleToPlot: list[ MohrCircle ] = [ MohrCircle( "-1" ) for i in range( len( circleIds ) ) ]
+        for mohrCircle in self.mohrCircles:
+            try:
+                mohrCircleToPlot[ circleIds.index( str( mohrCircle.getCircleId() ) ) ] = mohrCircle
+            except ValueError:
+                continue
+
+        return mohrCircleToPlot
 
     def _updateRequestedTimeSteps( self: Self ) -> None:
         """Update the requestedTimeStepsIndexes attribute from user choice."""
@@ -842,13 +852,15 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _getCircleIds( self: Self ) -> list[ str ]:
         """Get circle ids to plot.
 
+        This list of circle indexes is sort by cell indexes first then by timesteps
+
         Returns:
             list[str]: list of circle ids to plot.
         """
         cellIds: list[ str ] = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
         timeSteps: list[ str ] = pvt.getArrayChoices( self.a02GetTimestepsToPlot() )
 
-        return [ mcf.getMohrCircleId( cellId, timeStep ) for timeStep in timeSteps for cellId in cellIds ]
+        return [ mcf.getMohrCircleId( cellId, timeStep ) for cellId in cellIds for timeStep in timeSteps ]
 
     def _defineCurvesAspect( self: Self ) -> None:
         """Add curve aspect parameters according to user choices."""
