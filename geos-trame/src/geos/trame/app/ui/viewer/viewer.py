@@ -227,13 +227,18 @@ class DeckViewer( vuetify.VCard ):
         self.state[ self.ZAMPLIFICATION ] = value
         if self._mesh_actor is not None:
             self._mesh_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
-            if hasattr( self.box_engine,"_box_polydata_actor" ) and hasattr( self.box_engine,"_extracted_cells_actor" ):
+            if hasattr( self.box_engine, "_box_polydata_actor" ) and hasattr( self.box_engine,
+                                                                              "_extracted_cells_actor" ):
                 self.box_engine._box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
                 self.box_engine._extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
 
             if self.plotter.plane_widgets:
-                self.plotter.plane_widgets[0].PlaceWidget(list(self._mesh_actor.GetBounds()))
-                self.plotter.plane_widgets[0].SetPlaceFactor(1.)
+                self.plotter.plane_widgets[ 0 ].PlaceWidget( list( self._mesh_actor.GetBounds() ) )
+                self.plotter.plane_widgets[ 0 ].SetPlaceFactor( 1. )
+
+            if self.well_engine._wells_actors:
+                for wa in self.well_engine._wells_actors:
+                    wa.actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
 
             self.plotter.renderer.Modified()
         return
@@ -257,6 +262,7 @@ class DeckViewer( vuetify.VCard ):
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
+        tube_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
         self.well_engine.append_actor( path, tube_actor )
 
         self.ctrl.view_update()
@@ -272,6 +278,7 @@ class DeckViewer( vuetify.VCard ):
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
+        tube_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
         self.well_engine.append_actor( path, tube_actor )
 
         self.ctrl.view_update()
@@ -398,8 +405,8 @@ class DeckViewer( vuetify.VCard ):
 
         if box_polydata is not None and extracted_cell is not None:
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
-            _box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ])
+            _box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
-            _extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ])
+            _extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
             self.box_engine.set_box_polydata_actor( _box_polydata_actor )
             self.box_engine.set_extracted_cells_actor( _extracted_cells_actor )
