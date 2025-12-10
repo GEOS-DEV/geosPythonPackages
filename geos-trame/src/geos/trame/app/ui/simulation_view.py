@@ -2,7 +2,6 @@ from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
 
 from geos.trame.app.io.simulation import SimulationConstant, Authentificator
-from geos.trame.app.ui.simulation_status_view import SimulationStatusView
 import json
 
 
@@ -264,7 +263,6 @@ def define_simulation_view( server ) -> None:
         color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
         with vuetify.VRow():
             with vuetify.VCol( cols=4 ):
-                # SimulationStatusView(server=server)
                 with vuetify.VList():
                     with vuetify.VListItem( v_for=( "(jobs,i) in job_ids" ),
                                             key="i",
