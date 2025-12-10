@@ -9,10 +9,7 @@ from typing import Union, Any
 from typing_extensions import Self
 
 import vtkmodules.util.numpy_support as vnp
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkDataSet,
-)
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
@@ -27,12 +24,9 @@ CreateConstantAttributePerRegion is a vtk filter that allows to create an attrib
 with constant values per components for each chosen indexes of a reference/region attribute.
 If other region indexes exist values are set to nan for float type, -1 for int type or 0 for uint type.
 
-Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have one component.
-The relation index/values is given by a dictionary.
-Its keys are the indexes and its items are the list of values for each component.
-To use a handler of yours, set the variable 'speHandler' to True and add it using the member function addLoggerHandler.
+Input mesh is either vtkMultiBlockDataSet or vtkDataSet and the region attribute must have exactly one component.
+The values for each region are provided with a dictionary with regions indexes as keys and list of values for each components as associated values. By default, the value type is set to float32, the is one component.
 
-By default, the value type is set to float32, their is one component and no name and the logger use an intern handler.
 
 To use it:
 
@@ -69,7 +63,13 @@ To use it:
     createConstantAttributePerRegionFilter.addLoggerHandler( yourHandler )
 
     # Do calculations.
-    createConstantAttributePerRegionFilter.applyFilter()
+    try:
+        createConstantAttributePerRegionFilter.applyFilter()
+    except ( ValueError, AttributeError ) as e:
+        createConstantAttributePerRegionFilter.logger.error( f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { createConstantAttributePerRegionFilter.logger.name } failed due to: { e }"
+        createConstantAttributePerRegionFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Create Constant Attribute Per Region"
@@ -134,6 +134,7 @@ class CreateConstantAttributePerRegion:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -144,18 +145,19 @@ class CreateConstantAttributePerRegion:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             # This warning does not count for the number of warning created during the application of the filter.
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
                                  " during the filter initialization." )
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Errors with the input value for the region index or errors during the creation of the new attribute.
+            AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
@@ -164,32 +166,24 @@ class CreateConstantAttributePerRegion:
 
         # Check the validity of the attribute region.
         if self.onPoints is None:
-            self.logger.error( f"{ self.regionName } is not in the mesh." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError( f"The attribute { self.regionName } is not in the mesh." )
 
         if self.onBoth:
-            self.logger.error( f"There are two attributes named { self.regionName }, one on points"
-                               "and the other on cells. The region attribute must be unique." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError(
+                f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
+            )
 
         nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.onPoints )
         if nbComponentsRegion != 1:
-            self.logger.error( f"The region attribute { self.regionName } has to many components, one is requires." )
-            self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError( f"The region attribute { self.regionName } has to many components, one is requires." )
 
         self._setInfoRegion()
         # Check if the number of components and number of values for the region indexes are coherent.
         for index in self.dictRegionValues:
             if len( self.dictRegionValues[ index ] ) != self.nbComponents:
-                self.logger.error( f"The number of value given for the region index { index } is not correct."
-                                   f" You must set a value for each component, in this case { self.nbComponents }." )
-                return False
+                raise ValueError(
+                    f"The number of value given for the region index { index } is not correct. You must set a value for each component, in this case { self.nbComponents }."
+                )
 
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
         validIndexes: list[ Any ] = []
@@ -199,16 +193,13 @@ class CreateConstantAttributePerRegion:
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
             # Check if the attribute region is global.
             if not isAttributeGlobal( self.mesh, self.regionName, self.onPoints ):
-                self.logger.error( f"The region attribute { self.regionName } has to be global." )
-                self.logger.error( f"The new attribute { self.newAttributeName } has not been added." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                raise AttributeError( f"The region attribute { self.regionName } has to be global." )
 
             validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
                                                                          self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
@@ -219,8 +210,8 @@ class CreateConstantAttributePerRegion:
                                                           componentNames=self.componentNames,
                                                           onPoints=self.onPoints,
                                                           logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -240,15 +231,15 @@ class CreateConstantAttributePerRegion:
                                             componentNames=self.componentNames,
                                             onPoints=self.onPoints,
                                             logger=self.logger ):
-                        self.logger.error( f"The filter { self.logger.name } failed." )
-                        return False
+                        raise ValueError(
+                            f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
         else:
             validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
                                                                       self.onPoints )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
-                    self.logger.warning( "No region indexes entered." )
+                    self.logger.warning( "No region index entered." )
                 else:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
@@ -259,8 +250,8 @@ class CreateConstantAttributePerRegion:
                                                        componentNames=self.componentNames,
                                                        onPoints=self.onPoints,
                                                        logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -275,13 +266,13 @@ class CreateConstantAttributePerRegion:
                                         componentNames=self.componentNames,
                                         onPoints=self.onPoints,
                                         logger=self.logger ):
-                    self.logger.error( f"The filter { self.logger.name } failed." )
-                    return False
+                    raise ValueError(
+                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
         # Log the output message.
         self._logOutputMessage( validIndexes )
 
-        return True
+        return
 
     def _setInfoRegion( self: Self ) -> None:
         """Update self.dictRegionValues and set self.defaultValue.
