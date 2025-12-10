@@ -196,6 +196,18 @@ class DeckViewer( vuetify.VCard ):
             title_height=0.02,
             value=perforation_radius,
         )
+        
+        self.plotter.add_slider_widget(
+            self._on_change_zscale,
+            [ 1, 50 ],
+            title="Z exaggeration",
+            title_opacity=0.5,
+            pointa=( 0.02, 0.37 ),
+            pointb=( 0.30, 0.37 ),
+            title_color="black",
+            title_height=0.02,
+            value=1.,
+        )
 
     def _remove_slider( self ) -> None:
         """Create slider to control in the gui well parameters."""
@@ -210,6 +222,12 @@ class DeckViewer( vuetify.VCard ):
     def _on_change_perforation_size( self, value: float ) -> None:
         for _, perforation in self._perforations.items():
             perforation.update_perforation_radius( value )
+
+    def _on_change_zscale( self, value: float ) -> None:
+        if self._mesh_actor is not None:
+            self._mesh_actor.SetScale( 1.0, 1.0, value )
+            self.plotter.renderer.Modified()
+        return
 
     def _get_perforation_size( self ) -> float | None:
         if len( self._perforations ) <= 0:
