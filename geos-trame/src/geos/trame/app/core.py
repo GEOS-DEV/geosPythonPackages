@@ -24,11 +24,8 @@ from geos.trame.app.ui.timeline import TimelineEditor
 from geos.trame.app.ui.viewer.viewer import DeckViewer
 from geos.trame.app.components.alertHandler import AlertHandler
 
-
 from geos.trame.app.io.simulation import Simulation, SimRunner
 from geos.trame.app.ui.simulation_view import define_simulation_view
-
-
 
 import sys
 
@@ -44,7 +41,7 @@ class GeosTrame:
         self.deckEditor: DeckEditor | None = None
         self.timelineEditor: TimelineEditor | None = None
         self.deckInspector: DeckInspector | None = None
-        self.simulationLauncher : Simulation | None = None 
+        self.simulationLauncher: Simulation | None = None
         self.server = server
         server.enable_module( module )
 
@@ -76,8 +73,8 @@ class GeosTrame:
         self.well_viewer = WellViewer( 5, 5 )
 
         ######## Simulation runner
-        self.sim_runner : SimRunner = SimRunner(self.state.user_id)
-        self.simulation = Simulation(self.sim_runner, server=server)
+        self.sim_runner: SimRunner = SimRunner( self.state.user_id )
+        self.simulation = Simulation( self.sim_runner, server=server )
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
@@ -189,7 +186,6 @@ class GeosTrame:
                     ):
                         vuetify.VIcon( "mdi-content-save-outline" )
 
-
             # input file editor
             with vuetify.VCol( v_show=( "tab_idx == 0", ), classes="flex-grow-1 pa-0 ma-0" ):
                 if self.tree.input_file is not None:
@@ -203,10 +199,10 @@ class GeosTrame:
                         "The file " + self.state.input_file + " cannot be parsed.",
                         file=sys.stderr,
                     )
-            
-            with vuetify.VCol( v_show=( "tab_idx == 1"), classes="flex-grow-1 pa-0 ma-0") :
+
+            with vuetify.VCol( v_show=( "tab_idx == 1" ), classes="flex-grow-1 pa-0 ma-0" ):
                 if self.simulation is not None:
-                    define_simulation_view(self.server)
+                    define_simulation_view( self.server )
                 else:
                     self.ctrl.on_add_error(
                         "Error",
