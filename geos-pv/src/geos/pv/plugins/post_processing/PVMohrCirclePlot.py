@@ -73,7 +73,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
 
 * Extract a few number of cells with the `ExtractSelection` ParaView Filter, then use the `MergeBlocks` ParaView Filter
 * Select the resulting mesh in the pipeline
-* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Plot Mohr's Circle
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > Plot Mohr's Circle
 * Select the cell Ids and time steps you want
 * (Optional) Set rock cohesion and/or friction angle
 * Apply
@@ -89,7 +89,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
 
 @smproxy.filter( name="PVMohrCirclePlot", label="Plot Mohr's Circles" )
 @smhint.xml( f"""
-    <ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>
+    <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
     <View type="PythonView"/>
     """ )
 @smproperty.input( name="Input", port_index=0 )
