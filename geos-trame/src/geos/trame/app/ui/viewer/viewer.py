@@ -224,11 +224,16 @@ class DeckViewer( vuetify.VCard ):
             perforation.update_perforation_radius( value )
 
     def _on_change_zscale( self, value: float ) -> None:
+        self.state[ self.ZAMPLIFICATION ] = value
         if self._mesh_actor is not None:
-            self._mesh_actor.SetScale( 1.0, 1.0, value )
-            if self.box_engine._box_polydata_actor is not None and self.box_engine._extracted_cells_actor is not None:
-                self.box_engine._box_polydata_actor.SetScale( 1.0, 1.0, value )
-                self.box_engine._extracted_cells_actor.SetScale( 1.0, 1.0, value )
+            self._mesh_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+            if hasattr( self.box_engine,"_box_polydata_actor" ) and hasattr( self.box_engine,"_extracted_cells_actor" ):
+                self.box_engine._box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+                self.box_engine._extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+
+            if self.plotter.plane_widgets:
+                self.plotter.plane_widgets[0].PlaceWidget(list(self._mesh_actor.GetBounds()))
+                self.plotter.plane_widgets[0].SetPlaceFactor(1.)
 
             self.plotter.renderer.Modified()
         return
@@ -393,6 +398,8 @@ class DeckViewer( vuetify.VCard ):
 
         if box_polydata is not None and extracted_cell is not None:
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
+            _box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ])
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
+            _extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ])
             self.box_engine.set_box_polydata_actor( _box_polydata_actor )
             self.box_engine.set_extracted_cells_actor( _extracted_cells_actor )
