@@ -17,11 +17,11 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-
+import vtk
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -104,7 +104,10 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
         Mohr's circles are plotted using a Python View.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataObject" )
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType="vtkUnstructuredGrid",
+                          outputType="vtkMultiBlockDataSet" )
 
         # Create a new PythonView
         self.pythonView: Any = buildNewLayoutWithPythonView()
@@ -719,9 +722,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         outData = self.GetOutputData( outInfoVec, 0 )
 
         assert inData is not None
-        if ( outData is None ) or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        if outData is None or ( not outData.IsA( "vtkMultiBlockDataSet" ) ):
+            outData = vtk.vtkMultiBlockDataSet()
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )  # type: ignore
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
@@ -766,7 +769,6 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 assert self.pythonView is not None, "No Python View was found."
                 self._defineCurvesAspect()
                 mohrCircles: list[ MohrCircle ] = self._filterMohrCircles()
-                print( mohrCircles )
 
                 self.pythonView.Script = mcf.buildPythonViewScript(
                     geos_pv_path,
@@ -775,7 +777,66 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                     self.frictionAngle,
                     self._getUserChoices(),
                 )
+
                 Render()
+
+                # Cell indexes annotation
+                nbCells = inputMesh.GetNumberOfCells()
+                inputData = inputMesh.NewInstance()
+                inputData.ShallowCopy( inputMesh )
+                outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
+
+                cellId = vtk.vtkStringArray()
+                cellId.SetName( "cellId" )
+                cellId.SetNumberOfValues( nbCells )
+
+                cellMask = vtk.vtkIntArray()
+                cellMask.SetName( "CellMask" )
+                cellMask.SetNumberOfValues( nbCells )
+
+                selected_local = set()
+                originalCellIds = inputMesh.GetCellData().GetArray( "vtkOriginalCellIds" )
+                for localCellId in range( nbCells ):
+                    if str( originalCellIds.GetValue( localCellId ) ) in self.requestedCellIds:
+                        selected_local.add( localCellId )
+                        cellId.SetValue( localCellId, f"{ originalCellIds.GetValue( localCellId ) }" )
+                        cellMask.SetValue( localCellId, 1 )
+                    else:
+                        cellMask.SetValue( localCellId, 0 )
+
+                inputData.GetCellData().AddArray( cellId )
+                inputData.GetCellData().AddArray( cellMask )
+
+                idBlock = 0
+                for localCellId in selected_local:
+                    globalCellId = f"{ originalCellIds.GetValue( localCellId ) }"
+                    text = vtk.vtkVectorText()
+                    text.SetText( globalCellId )
+                    text.Update()
+
+                    cellBounds = inputMesh.GetCell( localCellId ).GetBounds()
+                    transformFilter = vtk.vtkTransform()
+                    transformFilter.Translate( cellBounds[ 1 ], cellBounds[ 3 ], cellBounds[ 5 ] )
+
+                    scaleX = ( cellBounds[ 1 ] - cellBounds[ 0 ] ) / 4
+                    scaleY = ( cellBounds[ 3 ] - cellBounds[ 2 ] ) / 4
+                    scaleZ = ( cellBounds[ 5 ] - cellBounds[ 4 ] ) / 4
+                    transformFilter.Scale( scaleX, scaleY, scaleZ )
+
+                    transformFromPolyDataFilter = vtk.vtkTransformPolyDataFilter()
+                    transformFromPolyDataFilter.SetTransform( transformFilter )
+                    transformFromPolyDataFilter.SetInputData( text.GetOutput() )
+                    transformFromPolyDataFilter.Update()
+
+                    meshText = vtk.vtkPolyData()
+                    meshText.ShallowCopy( transformFromPolyDataFilter.GetOutput() )
+
+                    outputMesh.SetBlock( idBlock, meshText )
+                    outputMesh.GetMetaData( idBlock ).Set( vtk.vtkCompositeDataSet.NAME(), f"Cell_{ globalCellId }" )
+                    idBlock += 1
+
+                outputMesh.SetBlock( idBlock, inputData )
+                outputMesh.GetMetaData( idBlock ).Set( vtk.vtkCompositeDataSet.NAME(), "Input Data" )
 
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
