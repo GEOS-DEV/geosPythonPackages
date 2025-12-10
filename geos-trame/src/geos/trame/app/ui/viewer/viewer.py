@@ -199,7 +199,7 @@ class DeckViewer( vuetify.VCard ):
 
         self.plotter.add_slider_widget(
             self._on_change_zscale,
-            [ 1, 50 ],
+            [ 1, 10 ],
             title="Z exaggeration",
             title_opacity=0.5,
             pointa=( 0.02, 0.37 ),
@@ -234,11 +234,11 @@ class DeckViewer( vuetify.VCard ):
 
             if self.plotter.plane_widgets:
                 self.plotter.plane_widgets[ 0 ].PlaceWidget( list( self._mesh_actor.GetBounds() ) )
-                self.plotter.plane_widgets[ 0 ].SetPlaceFactor( 1. )
+                self.plotter.plane_widgets[ 0 ].SetPlaceFactor( self.state[ self.ZAMPLIFICATION ] )
 
-            if self.well_engine._wells_actors:
-                for wa in self.well_engine._wells_actors:
-                    wa.actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+            # if self.well_engine._wells_actors:
+            #     for wa in self.well_engine._wells_actors:
+            #         wa.actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
 
             self.plotter.renderer.Modified()
         return
