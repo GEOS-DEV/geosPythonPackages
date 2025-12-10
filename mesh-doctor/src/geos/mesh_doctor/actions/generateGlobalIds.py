@@ -62,7 +62,11 @@ def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
         Result: The result of the global ids addition.
     """
     buildGlobalIds( mesh, options.generateCellsGlobalIds, options.generatePointsGlobalIds )
-    writeMesh( mesh, options.vtkOutput )
+    try:
+        writeMesh( mesh, options.vtkOutput, options.vtkOutput.canOverwrite )
+    except FileExistsError as e:
+        setupLogger.error( f"{e} Use --canOverwrite to allow overwriting existing files." )
+        raise SystemExit( 1 )
     return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 

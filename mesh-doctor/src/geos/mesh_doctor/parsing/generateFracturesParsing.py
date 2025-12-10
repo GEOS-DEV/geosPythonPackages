@@ -183,5 +183,5 @@ def buildAllFracturesVtkOutput( fractureOutputDir: str, fracturesDataMode: bool,
     allFracturesVtkOutput: list[ VtkOutput ] = []
     for fractureName in fractureNames:
         fracturePath = os.path.join( fractureOutputDir, nameWithoutExtension + fractureName )
-        allFracturesVtkOutput.append( VtkOutput( fracturePath, fracturesDataMode ) )
+        allFracturesVtkOutput.append( VtkOutput( fracturePath, fracturesDataMode, meshVtkOutput.canOverwrite ) )
     return allFracturesVtkOutput

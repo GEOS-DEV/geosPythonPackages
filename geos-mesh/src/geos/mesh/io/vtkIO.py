@@ -61,6 +61,7 @@ class VtkOutput:
     """Configuration for writing a VTK file."""
     output: str
     isDataModeBinary: bool = True
+    canOverwrite: bool = False
 
 
 def _readData( filepath: str, readerClass: VtkReaderClass ) -> Optional[ vtkPointSet ]:

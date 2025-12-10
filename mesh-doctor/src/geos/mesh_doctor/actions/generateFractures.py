@@ -614,9 +614,18 @@ def meshAction( mesh: vtkUnstructuredGrid, options: Options ) -> Result:
         Result: The result of the fracture generation.
     """
     outputMesh, fractureMeshes = __splitMeshOnFractures( mesh, options )
-    writeMesh( outputMesh, options.meshVtkOutput )
+    try:
+        writeMesh( outputMesh, options.meshVtkOutput, options.meshVtkOutput.canOverwrite )
+    except FileExistsError as e:
+        setupLogger.error( f"{e} Use --canOverwrite to allow overwriting existing files." )
+        raise SystemExit( 1 )
     for i, fractureMesh in enumerate( fractureMeshes ):
-        writeMesh( fractureMesh, options.allFracturesVtkOutput[ i ] )
+        try:
+            fractureOutput = options.allFracturesVtkOutput[ i ]
+            writeMesh( fractureMesh, fractureOutput, fractureOutput.canOverwrite )
+        except FileExistsError as e:
+            setupLogger.error( f"{e} Use --canOverwrite to allow overwriting existing files." )
+            raise SystemExit( 1 )
     # TODO provide statistics about what was actually performed (size of the fracture, number of split nodes...).
     return Result( info="OK" )
 

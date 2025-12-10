@@ -222,7 +222,11 @@ def meshAction( options: Options ) -> Result:
         Result: The result of creation of the mesh.
     """
     outputMesh = buildCube( options )
-    writeMesh( outputMesh, options.vtkOutput )
+    try:
+        writeMesh( outputMesh, options.vtkOutput, options.vtkOutput.canOverwrite )
+    except FileExistsError as e:
+        setupLogger.error( f"{e} Use --canOverwrite to allow overwriting existing files." )
+        raise SystemExit( 1 )
     return Result( info=f"Mesh was written to {options.vtkOutput.output}" )
 
 

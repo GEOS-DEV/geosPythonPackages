@@ -11,6 +11,7 @@ __OUTPUT_FILE = "output"
 __OUTPUT_BINARY_MODE = "data-mode"
 __OUTPUT_BINARY_MODE_VALUES = "binary", "ascii"
 __OUTPUT_BINARY_MODE_DEFAULT = __OUTPUT_BINARY_MODE_VALUES[ 0 ]
+__CAN_OVERWRITE = "canOverwrite"
 
 
 def getVtkOutputHelp() -> str:
@@ -22,7 +23,8 @@ def getVtkOutputHelp() -> str:
     msg = ( f"{__OUTPUT_FILE} [string]: The vtk output file destination.\n"
             f"    {__OUTPUT_BINARY_MODE} [string]: For \".vtu\" output format, "
             f"the data mode can be {' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. "
-            f"Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}." )
+            f"Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}.\n"
+            f"    {__CAN_OVERWRITE} [flag]: Allow overwriting existing output files. Defaults to False." )
     return textwrap.dedent( msg )
 
 
@@ -57,6 +59,10 @@ def fillVtkOutputSubparser( parser: ArgumentParser | _ArgumentGroup, prefix: str
                          metavar=", ".join( __OUTPUT_BINARY_MODE_VALUES ),
                          default=__OUTPUT_BINARY_MODE_DEFAULT,
                          help=help_text )
+    parser.add_argument( '--' + __buildArg( prefix, __CAN_OVERWRITE ),
+                         action='store_true',
+                         default=False,
+                         help="[flag]: Allow overwriting existing output files. Defaults to False." )
 
 
 def convert( parsedOptions: dict[ str, Any ], prefix: str = "" ) -> VtkOutput:
@@ -71,6 +77,8 @@ def convert( parsedOptions: dict[ str, Any ], prefix: str = "" ) -> VtkOutput:
     """
     outputKey = __buildArg( prefix, __OUTPUT_FILE ).replace( "-", "_" )
     binaryModeKey = __buildArg( prefix, __OUTPUT_BINARY_MODE ).replace( "-", "_" )
+    canOverwriteKey = __buildArg( prefix, __CAN_OVERWRITE )
     output = parsedOptions[ outputKey ]
     isDataModeBinary: bool = parsedOptions[ binaryModeKey ] == __OUTPUT_BINARY_MODE_DEFAULT
-    return VtkOutput( output=output, isDataModeBinary=isDataModeBinary )
+    canOverwrite: bool = parsedOptions.get( canOverwriteKey, False )
+    return VtkOutput( output=output, isDataModeBinary=isDataModeBinary, canOverwrite=canOverwrite )

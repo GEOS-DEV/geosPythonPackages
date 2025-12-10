@@ -169,8 +169,12 @@ class MeshDoctorFilterBase:
                                            Defaults to False.
         """
         if self.mesh:
-            vtkOutput = VtkOutput( filepath, isDataModeBinary )
-            writeMesh( self.mesh, vtkOutput, canOverwrite )
+            vtkOutput = VtkOutput( filepath, isDataModeBinary, canOverwrite )
+            try:
+                writeMesh( self.mesh, vtkOutput, vtkOutput.canOverwrite )
+            except FileExistsError as e:
+                self.logger.error( f"{e} Set canOverwrite=True to allow overwriting existing files." )
+                raise
         else:
             self.logger.error( f"No mesh available. Cannot output vtkUnstructuredGrid at {filepath}." )
 
@@ -280,7 +284,11 @@ class MeshDoctorGeneratorBase:
                                            Defaults to False.
         """
         if self.mesh:
-            vtkOutput = VtkOutput( filepath, isDataModeBinary )
-            writeMesh( self.mesh, vtkOutput, canOverwrite )
+            vtkOutput = VtkOutput( filepath, isDataModeBinary, canOverwrite )
+            try:
+                writeMesh( self.mesh, vtkOutput, vtkOutput.canOverwrite )
+            except FileExistsError as e:
+                self.logger.error( f"{e} Set canOverwrite=True to allow overwriting existing files." )
+                raise
         else:
             self.logger.error( f"No mesh generated. Cannot output vtkUnstructuredGrid at {filepath}." )
