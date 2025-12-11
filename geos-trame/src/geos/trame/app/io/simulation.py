@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from dataclasses import dataclass, field, fields
 from enum import Enum, unique
-from geos.trame.app.ui.simulation_status_view import SimulationStatus
 from typing import Callable, Optional, Union
 import datetime
 from trame_server.core import Server
@@ -316,43 +315,6 @@ class SlurmJobStatus( Enum ):
         except ValueError:
             return cls.UNKNOWN
 
-
-# TODO: dataclass_json
-# @dataclass_json
-@dataclass
-class SimulationInformation:
-
-    def get_simulation_status(
-        self,
-        get_running_user_jobs_f: Callable[ [], list[ tuple[ str, SlurmJobStatus ] ] ],
-    ) -> SimulationStatus:
-        """
-        Returns the simulation status given the current Jobs running for the current user.
-        Only runs the callback if the timeseries file is not already present in the done directory.
-        """
-        if not self.geos_job_id:
-            return SimulationStatus.NOT_RUN
-
-        done_sim_path = self.get_simulation_dir( SimulationStatus.DONE )
-        if self.get_timeseries_path( done_sim_path ).exists():
-            return SimulationStatus.DONE
-
-        user_jobs = get_running_user_jobs_f()
-        if ( self.geos_job_id, SlurmJobStatus.RUNNING ) in user_jobs:
-            return SimulationStatus.RUNNING
-
-        if ( self.geos_job_id, SlurmJobStatus.COMPLETING ) in user_jobs:
-            return SimulationStatus.COMPLETING
-
-        if ( self.copy_back_job_id, SlurmJobStatus.RUNNING ) in user_jobs:
-            return SimulationStatus.COPY_BACK
-
-        if ( self.copy_job_id, SlurmJobStatus.RUNNING ) in user_jobs:
-            return SimulationStatus.SCHEDULED
-
-        return SimulationStatus.UNKNOWN
-
-
 @dataclass
 class LauncherParams:
     simulation_files_path: Optional[ str ] = None
@@ -381,32 +343,6 @@ def get_timestamp() -> str:
 
 def get_simulation_output_file_name( timestamp: str, user_name: str = "user_name" ):
     return f"{user_name}_{timestamp}.json"
-
-
-def parse_launcher_output( output: str ) -> SimulationInformation:
-    split_output = output.split( "\n" )
-
-    information = SimulationInformation()
-    information_dict = information.to_dict()  # type: ignore
-
-    content_to_parse = [
-        ( "Working directory: ", "working_directory" ),
-        ( "1. copy job id: ", "copy_job_id" ),
-        ( "2. geos job id: ", "geos_job_id" ),
-        ( "3. copy back job id: ", "copy_back_job_id" ),
-        ( "Run directory: ", "run_directory" ),
-    ]
-
-    for line in split_output:
-        for info_tuple in content_to_parse:
-            if info_tuple[ 0 ] in line:
-                split_line = line.split( info_tuple[ 0 ] )
-                if len( split_line ) < 2:
-                    continue
-                information_dict[ info_tuple[ 1 ] ] = split_line[ -1 ]
-
-    information_dict[ "timestamp" ] = get_timestamp()
-    return SimulationInformation.from_dict( information_dict )  # type: ignore
 
 
 # def write_simulation_information_to_repo(info: SimulationInformation, sim_info_path: Path) -> Optional[Path]:
@@ -756,32 +692,9 @@ class Simulation:
             if isinstance( script_path, Path ) and script_path.is_file():
                 os.remove( script_path )
 
-    def _write_sim_info( self, launcher_params: LauncherParams, sim_info: Optional[ SimulationInformation ] ) -> None:
-        if sim_info is None:
-            raise RuntimeError( "Error parsing simulation launcher output." )
-
-        # Make sure to save the absolute path to the working directory used by the launcher in case parsed information
-        # is a relative Path
-        if not Path( sim_info.working_directory ).is_absolute():
-            sim_info.working_directory = path_to_string( launcher_params.simulation_files_path + "/" +
-                                                         sim_info.working_directory )
-        print( "simulation information", sim_info )
-
-        sim_info.user_igg = self._sim_runner.get_user_igg()
-        write_simulation_information_to_repo( sim_info, self._sim_info_dir )
-
 
 def path_to_string( p: Union[ str, Path ] ) -> str:
     return Path( p ).as_posix()
-
-
-def write_simulation_information_to_repo( info: SimulationInformation, sim_info_path: Path ) -> Optional[ Path ]:
-    return write_file(
-        sim_info_path.as_posix(),
-        get_simulation_output_file_name( info.timestamp, info.user_igg ),
-        json.dumps( info.to_dict() ),  # type: ignore
-    )
-
 
 def write_file( folder_path: str, filename: str, file_content: str ) -> Optional[ Path ]:
     try:
