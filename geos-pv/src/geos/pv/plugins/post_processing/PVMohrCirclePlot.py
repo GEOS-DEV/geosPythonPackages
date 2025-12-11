@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from enum import Enum
 from typing import Any, Union, cast
+from typing_extensions import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -17,11 +18,13 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
-import vtk
-from typing_extensions import Self
+
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkStringArray, vtkIntArray
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkCompositeDataSet
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkRenderingFreeType import vtkVectorText
+from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -723,7 +726,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
         assert inData is not None
         if outData is None or ( not outData.IsA( "vtkMultiBlockDataSet" ) ):
-            outData = vtk.vtkMultiBlockDataSet()
+            outData = vtkMultiBlockDataSet()
             outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )  # type: ignore
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
@@ -786,11 +789,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 inputData.ShallowCopy( inputMesh )
                 outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
 
-                cellId = vtk.vtkStringArray()
+                cellId = vtkStringArray()
                 cellId.SetName( "cellId" )
                 cellId.SetNumberOfValues( nbCells )
 
-                cellMask = vtk.vtkIntArray()
+                cellMask = vtkIntArray()
                 cellMask.SetName( "CellMask" )
                 cellMask.SetNumberOfValues( nbCells )
 
@@ -810,12 +813,12 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 idBlock = 0
                 for localCellId in selected_local:
                     globalCellId = f"{ originalCellIds.GetValue( localCellId ) }"
-                    text = vtk.vtkVectorText()
+                    text = vtkVectorText()
                     text.SetText( globalCellId )
                     text.Update()
 
                     cellBounds = inputMesh.GetCell( localCellId ).GetBounds()
-                    transformFilter = vtk.vtkTransform()
+                    transformFilter = vtkTransform()
                     transformFilter.Translate( cellBounds[ 1 ], cellBounds[ 3 ], cellBounds[ 5 ] )
 
                     scaleX = ( cellBounds[ 1 ] - cellBounds[ 0 ] ) / 4
@@ -823,20 +826,20 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                     scaleZ = ( cellBounds[ 5 ] - cellBounds[ 4 ] ) / 4
                     transformFilter.Scale( scaleX, scaleY, scaleZ )
 
-                    transformFromPolyDataFilter = vtk.vtkTransformPolyDataFilter()
+                    transformFromPolyDataFilter = vtkTransformPolyDataFilter()
                     transformFromPolyDataFilter.SetTransform( transformFilter )
                     transformFromPolyDataFilter.SetInputData( text.GetOutput() )
                     transformFromPolyDataFilter.Update()
 
-                    meshText = vtk.vtkPolyData()
+                    meshText = vtkPolyData()
                     meshText.ShallowCopy( transformFromPolyDataFilter.GetOutput() )
 
                     outputMesh.SetBlock( idBlock, meshText )
-                    outputMesh.GetMetaData( idBlock ).Set( vtk.vtkCompositeDataSet.NAME(), f"Cell_{ globalCellId }" )
+                    outputMesh.GetMetaData( idBlock ).Set( vtkCompositeDataSet.NAME(), f"Cell_{ globalCellId }" )
                     idBlock += 1
 
                 outputMesh.SetBlock( idBlock, inputData )
-                outputMesh.GetMetaData( idBlock ).Set( vtk.vtkCompositeDataSet.NAME(), "Input Data" )
+                outputMesh.GetMetaData( idBlock ).Set( vtkCompositeDataSet.NAME(), "Input Data" )
 
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
