@@ -15,7 +15,7 @@ import numpy as np
 @pytest.mark.parametrize(
     "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
     [
-        # Test the name of the new attribute (new on the mesh, one present on the other piece).
+        # Test the name of the new attribute.
         ## For vtkDataSet.
         ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32 ),
         ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32 ),
@@ -103,35 +103,24 @@ def test_CreateConstantAttributePerRegion(
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
+    "meshType, regionName",
     [
-        ( "dataset", "newAttribute", "PERM", {}, (), (), np.float32 ),  # Region attribute has too many components
-        ( "multiblock", "newAttribute", "FAULT", {}, (), (), np.float32 ),  # Region attribute is partial.
+        ( "dataset", "PERM" ),  # Region attribute has too many components
+        ( "multiblock", "FAULT" ),  # Region attribute is partial.
     ] )
 def test_CreateConstantAttributePerRegionRaisesAttributeError(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     meshType: str,
-    newAttributeName: str,
     regionName: str,
-    dictRegionValues: dict[ Any, Any ],
-    componentNames: tuple[ str, ...],
-    componentNamesTest: tuple[ str, ...],
-    valueNpType: int,
 ) -> None:
     """Test tes fails of CreateConstantAttributePerRegion with attributes issues."""
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
-    nbComponents: int = len( componentNamesTest )
-    if nbComponents == 0:  # If the attribute has one component, the component has no name.
-        nbComponents += 1
 
     createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
         mesh,
         regionName,
-        dictRegionValues,
-        newAttributeName,
-        valueNpType=valueNpType,
-        nbComponents=nbComponents,
-        componentNames=componentNames,
+        {},
+        "newAttribute",
     )
 
     with pytest.raises( AttributeError ):
@@ -139,44 +128,39 @@ def test_CreateConstantAttributePerRegionRaisesAttributeError(
 
 
 @pytest.mark.parametrize(
-    "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
+    "newAttributeName, dictRegionValues, componentNames",
     [
-        ( "dataset", "newAttribute", "FAULT", {
+        ( "newAttribute", {
             0: [ 0 ],
             100: [ 1, 1 ],
-        }, (), (), np.float32 ),  # Number of value inconsistent.
-        ( "dataset", "newAttribute", "FAULT", {
+        }, () ),  # Number of value inconsistent.
+        ( "newAttribute", {
             0: [ 0, 0 ],
             100: [ 1, 1 ],
-        }, (), (), np.float32 ),  # More values than components.
-        ( "dataset", "newAttribute", "FAULT", {
+        }, () ),  # More values than components.
+        ( "newAttribute", {
             0: [ 0 ],
             100: [ 1 ],
-        }, ( "X", "Y" ), ( "X", "Y" ), np.float32 ),  # More components than value.
-        ( "dataset", "PERM", "FAULT", {}, (), (), np.float32 ),  # The attribute name already exist in the mesh.
+        }, ( "X", "Y" ) ),  # More components than value.
+        ( "PERM", {}, () ),  # The attribute name already exist on the mesh on the same piece.
     ] )
 def test_CreateConstantAttributePerRegionRaisesValueError(
-    dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
-    meshType: str,
+    dataSetTest: vtkDataSet,
     newAttributeName: str,
-    regionName: str,
     dictRegionValues: dict[ Any, Any ],
     componentNames: tuple[ str, ...],
-    componentNamesTest: tuple[ str, ...],
-    valueNpType: int,
 ) -> None:
     """Test the fails of CreateConstantAttributePerRegion with inputs value issues."""
-    mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] = dataSetTest( meshType )
-    nbComponents: int = len( componentNamesTest )
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    nbComponents: int = len( componentNames )
     if nbComponents == 0:  # If the attribute has one component, the component has no name.
         nbComponents += 1
 
     createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
         mesh,
-        regionName,
+        "FAULT",
         dictRegionValues,
         newAttributeName,
-        valueNpType=valueNpType,
         nbComponents=nbComponents,
         componentNames=componentNames,
     )

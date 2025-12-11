@@ -22,6 +22,7 @@ from geos.mesh.utils.arrayModifiers import ( copyAttribute, createCellCenterAttr
 from geos.mesh.utils.multiblockHelpers import getBlockNames
 
 from geos.utils.Errors import VTKError
+from geos.utils.pieceEnum import Piece
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNameEnum,
                                               getAttributeToTransferFromInitialTime )
 
@@ -298,10 +299,10 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                                    self.extractWell )
 
                 # Copy attributes from the initial time step
-                meshAttributes: set[ str ] = getAttributeSet( self.outputCellsT0, False )
+                meshAttributes: set[ str ] = getAttributeSet( self.outputCellsT0, piece=Piece.CELLS )
                 for ( attributeName, attributeNewName ) in getAttributeToTransferFromInitialTime().items():
                     if attributeName in meshAttributes:
-                        copyAttribute( self.outputCellsT0, outputCells, attributeName, attributeNewName, False,
+                        copyAttribute( self.outputCellsT0, outputCells, attributeName, attributeNewName, Piece.CELLS,
                                        self.logger )
 
                 # Create elementCenter attribute in the volume mesh if needed

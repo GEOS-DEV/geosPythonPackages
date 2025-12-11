@@ -11,6 +11,7 @@ from typing_extensions import Self
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
+from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
@@ -116,9 +117,7 @@ class CreateConstantAttributePerRegion:
         # Region attribute settings.
         self.regionName: str = regionName
         self.dictRegionValues: dict[ Any, Any ] = dictRegionValues
-        self.onPoints: Union[ None, bool ]
-        self.onBoth: bool
-        self.onPoints, self.onBoth = getAttributePieceInfo( self.mesh, self.regionName )
+        self.piece: Piece = getAttributePieceInfo( self.mesh, self.regionName )
 
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
@@ -165,15 +164,15 @@ class CreateConstantAttributePerRegion:
         self.logger.addHandler( self.counter )
 
         # Check the validity of the attribute region.
-        if self.onPoints is None:
+        if self.piece == Piece.NONE:
             raise AttributeError( f"The attribute { self.regionName } is not in the mesh." )
 
-        if self.onBoth:
+        if self.piece == Piece.BOTH:
             raise AttributeError(
                 f"There are two attributes named { self.regionName }, one on points and the other on cells. The region attribute must be unique."
             )
 
-        nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.onPoints )
+        nbComponentsRegion: int = getNumberOfComponents( self.mesh, self.regionName, self.piece )
         if nbComponentsRegion != 1:
             raise AttributeError( f"The region attribute { self.regionName } has to many components, one is requires." )
 
@@ -192,11 +191,11 @@ class CreateConstantAttributePerRegion:
         newArray: npt.NDArray[ Any ]
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
             # Check if the attribute region is global.
-            if not isAttributeGlobal( self.mesh, self.regionName, self.onPoints ):
+            if not isAttributeGlobal( self.mesh, self.regionName, self.piece ):
                 raise AttributeError( f"The region attribute { self.regionName } has to be global." )
 
             validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                         self.onPoints )
+                                                                         self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
@@ -208,7 +207,7 @@ class CreateConstantAttributePerRegion:
                                                           self.defaultValue,
                                                           self.newAttributeName,
                                                           componentNames=self.componentNames,
-                                                          onPoints=self.onPoints,
+                                                          piece=self.piece,
                                                           logger=self.logger ):
                     raise ValueError(
                         f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
@@ -223,20 +222,20 @@ class CreateConstantAttributePerRegion:
                 for flatIdDataSet in listFlatIdDataSet:
                     dataSet: vtkDataSet = vtkDataSet.SafeDownCast( self.mesh.GetDataSet( flatIdDataSet ) )
 
-                    regionArray = getArrayInObject( dataSet, self.regionName, self.onPoints )
+                    regionArray = getArrayInObject( dataSet, self.regionName, self.piece )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
                     if not createAttribute( dataSet,
                                             newArray,
                                             self.newAttributeName,
                                             componentNames=self.componentNames,
-                                            onPoints=self.onPoints,
+                                            piece=self.piece,
                                             logger=self.logger ):
                         raise ValueError(
                             f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
 
         else:
             validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                      self.onPoints )
+                                                                      self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
@@ -248,7 +247,7 @@ class CreateConstantAttributePerRegion:
                                                        self.defaultValue,
                                                        self.newAttributeName,
                                                        componentNames=self.componentNames,
-                                                       onPoints=self.onPoints,
+                                                       piece=self.piece,
                                                        logger=self.logger ):
                     raise ValueError(
                         f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
@@ -258,13 +257,13 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes { invalidIndexes } are not in the region attribute { self.regionName }." )
 
-                regionArray = getArrayInObject( self.mesh, self.regionName, self.onPoints )
+                regionArray = getArrayInObject( self.mesh, self.regionName, self.piece )
                 newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
                 if not createAttribute( self.mesh,
                                         newArray,
                                         self.newAttributeName,
                                         componentNames=self.componentNames,
-                                        onPoints=self.onPoints,
+                                        piece=self.piece,
                                         logger=self.logger ):
                     raise ValueError(
                         f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
@@ -282,7 +281,7 @@ class CreateConstantAttributePerRegion:
         """
         # Get the numpy type from the vtk typecode.
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        regionVtkType: int = getVtkDataTypeInObject( self.mesh, self.regionName, self.onPoints )
+        regionVtkType: int = getVtkDataTypeInObject( self.mesh, self.regionName, self.piece )
         regionNpType: type = dictType[ regionVtkType ]
 
         # Set the correct type of values and region index.
@@ -356,11 +355,10 @@ class CreateConstantAttributePerRegion:
 
         # Info about the created attribute.
         # The piece where the attribute is created.
-        piece: str = "points" if self.onPoints else "cells"
-        self.logger.info( f"The new attribute { self.newAttributeName } is created on { piece }." )
+        self.logger.info( f"The new attribute { self.newAttributeName } is created on { self.piece.value }." )
 
         # The number of component and they names if multiple.
-        componentNamesCreated: tuple[ str, ...] = getComponentNames( self.mesh, self.newAttributeName, self.onPoints )
+        componentNamesCreated: tuple[ str, ...] = getComponentNames( self.mesh, self.newAttributeName, self.piece )
         if self.nbComponents > 1:
             messComponent: str = ( f"The new attribute { self.newAttributeName } has { self.nbComponents } components"
                                    f" named { componentNamesCreated }." )
