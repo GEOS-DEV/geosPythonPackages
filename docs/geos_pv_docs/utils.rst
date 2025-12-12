@@ -4,7 +4,7 @@ Utilities
 This package defines utilities for Paraview plugins.
 
 
-geos.pv.utils.checkboxFunction module
+checkboxFunction module
 ---------------------------------------------
 
 .. automodule:: geos.pv.utils.checkboxFunction
@@ -12,7 +12,7 @@ geos.pv.utils.checkboxFunction module
    :undoc-members:
    :show-inheritance:
 
-geos.pv.utils.DisplayOrganizationParaview module
+DisplayOrganizationParaview module
 -------------------------------------------------
 
 .. automodule:: geos.pv.utils.DisplayOrganizationParaview
@@ -20,10 +20,18 @@ geos.pv.utils.DisplayOrganizationParaview module
    :undoc-members:
    :show-inheritance:
 
-geos.pv.utils.paraviewTreatments module
+paraviewTreatments module
 ---------------------------------------------
 
 .. automodule:: geos.pv.utils.paraviewTreatments
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+workflowFunctions module
+---------------------------------------
+
+.. automodule:: geos.pv.utils.workflowFunctions
    :members:
    :undoc-members:
    :show-inheritance:

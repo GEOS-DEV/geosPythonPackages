@@ -6,13 +6,10 @@ import logging
 
 from typing_extensions import Self
 
-from geos.utils.Logger import Logger, getLogger
+from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkUnstructuredGrid,
-)
+from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 
 __doc__ = """
 Merge Blocks Keeping Partial Attributes is a filter that allows to merge blocks from a multiblock dataset
@@ -50,8 +47,11 @@ To use it:
     # Do calculations
     try:
         mergeBlockEnhancedFilter.applyFilter()
-    except VTKError:
-        logging.error("Something went wrong in VTK")
+    except VTKError as e:
+        mergeBlockEnhancedFilter.logger.error( f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { mergeBlockEnhancedFilter.logger.name } failed due to: { e }"
+        mergeBlockEnhancedFilter.logger.critical( mess, exc_info=True )
 
     # Get the merged mesh
     mergeBlockEnhancedFilter.getOutput()
@@ -89,6 +89,7 @@ class MergeBlockEnhanced:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -98,7 +99,7 @@ class MergeBlockEnhanced:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
@@ -107,17 +108,18 @@ class MergeBlockEnhanced:
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
 
-        Returns:
-            bool: True if the blocks were successfully merged, False otherwise.
-
         Raises:
-            VTKError (geos.utils.Errors) : error captured if any from the VTK log
+            VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
 
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
         self.outputMesh = outputMesh
+
+        self.logger.info( f"The filter { self.logger.name } succeeded." )
+
+        return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
         """Get the merged mesh.

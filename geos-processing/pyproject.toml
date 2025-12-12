@@ -68,3 +68,6 @@ python_functions = "test*"
 testpaths = ["tests"]
 norecursedirs = "bin"
 filterwarnings = []
+
+
+# [tool.coverage.run]
