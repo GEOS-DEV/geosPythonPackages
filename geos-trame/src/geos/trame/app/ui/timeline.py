@@ -63,6 +63,7 @@ class TimelineEditor( vuetify.VCard ):
         if tasks is None:
             print('None values')
         logger.info(f"new tasks {tasks}")
+
         self.state.tasks = tasks
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
         #update and erase
@@ -72,6 +73,11 @@ class TimelineEditor( vuetify.VCard ):
                 rm_list.append(i)
             start_time = ( datetime.strptime(t["start"],date_fmt) - former_origin_time ).total_seconds()
             end_time = ( datetime.strptime(t["end"],date_fmt ) - former_origin_time ).total_seconds()
+
+            #negative events
+            if (start_time<0 or end_time<0):
+                continue
+
             event = {"begin_time": f"{ start_time: .6e}",
                      "end_time": f"{ end_time: .6e}",
                      "name": t["name"],
@@ -95,9 +101,7 @@ class TimelineEditor( vuetify.VCard ):
                 self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).total_seconds())
                 proxy.set_property("time_frequency", timedelta(days=int(t["freq"])).total_seconds())
             
-            # proxy.commit()
         self.ctrl.simput_reload_data()
-        # proxy.manager.commit_all()
         
         rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
         #remove lost indexes
