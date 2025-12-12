@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<Config xmlns="http://pypi.org/project/xsdata" version="22.3">
+  <Output maxLineLength="79">
+    <Package>schema_mod</Package>
+    <Format repr="true" eq="true" order="false" unsafeHash="false" frozen="false" slots="false" kwOnly="false">pydantic</Format>
+    <Structure>single-package</Structure>
+    <IncludeHeader>false</IncludeHeader>
+    <DocstringStyle>reStructuredText</DocstringStyle>
+    <RelativeImports>false</RelativeImports>
+  </Output>
+</Config>

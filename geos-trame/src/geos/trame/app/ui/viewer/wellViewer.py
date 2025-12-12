@@ -31,7 +31,7 @@ class WellViewer:
     def __init__( self, size: float, amplification: float ) -> None:
         """WellViewer stores all Well used in the pv.Plotter().
 
-        A Well in GEOS could a InternalWell or a Vtkwell.
+        A Well in GEOS could a InternalWellType or a VtkwellType.
         """
         self._wells: list[ Well ] = []
         self._wells_actors: list[ WellActor ] = []

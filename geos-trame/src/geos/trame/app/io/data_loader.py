@@ -13,10 +13,10 @@ from geos.trame.app.ui.viewer.regionViewer import RegionViewer
 from geos.trame.app.ui.viewer.wellViewer import WellViewer
 from geos.trame.app.utils.pv_utils import read_unstructured_grid, split_vector_arrays
 from geos.trame.schema_generated.schema_mod import (
-    Vtkmesh,
-    Vtkwell,
-    Perforation,
-    InternalWell,
+    VtkmeshType,
+    VtkwellType,
+    PerforationType,
+    InternalWellType,
 )
 
 
@@ -44,7 +44,7 @@ class DataLoader( AbstractElement ):
         """Load the data at the given id if none is already loaded."""
         if self.region_viewer.input.number_of_cells == 0:
             active_block = self.source.decode( node_id )
-            if isinstance( active_block, Vtkmesh ):
+            if isinstance( active_block, VtkmeshType ):
                 self._read_mesh( active_block )
 
     def _update_object_state( self, object_state: tuple[ str, bool ], **_: dict ) -> None:
@@ -56,10 +56,10 @@ class DataLoader( AbstractElement ):
 
         active_block = self.source.decode( path )
 
-        if isinstance( active_block, Vtkmesh ):
+        if isinstance( active_block, VtkmeshType ):
             self._update_vtkmesh( active_block, show_obj )
 
-        if isinstance( active_block, Vtkwell ):
+        if isinstance( active_block, VtkwellType ):
             if self.region_viewer.input.number_of_cells == 0 and show_obj:
                 self.ctrl.on_add_warning(
                     "Can't display " + active_block.name,
@@ -69,7 +69,7 @@ class DataLoader( AbstractElement ):
 
             self._update_vtkwell( active_block, path, show_obj )
 
-        if isinstance( active_block, InternalWell ):
+        if isinstance( active_block, InternalWellType ):
             if self.region_viewer.input.number_of_cells == 0 and show_obj:
                 self.ctrl.on_add_warning(
                     "Can't display " + active_block.name,
@@ -79,7 +79,7 @@ class DataLoader( AbstractElement ):
 
             self._update_internalwell( active_block, path, show_obj )
 
-        if ( isinstance( active_block, Perforation ) and self.well_viewer.get_number_of_wells() == 0 and show_obj ):
+        if ( isinstance( active_block, PerforationType ) and self.well_viewer.get_number_of_wells() == 0 and show_obj ):
             self.ctrl.on_add_warning(
                 "Can't display " + active_block.name,
                 "Please display a well before creating a perforation",
@@ -88,21 +88,21 @@ class DataLoader( AbstractElement ):
 
         self.ctrl.update_viewer( active_block, path, show_obj )
 
-    def _update_vtkmesh( self, mesh: Vtkmesh, show: bool ) -> None:
+    def _update_vtkmesh( self, mesh: VtkmeshType, show: bool ) -> None:
         if not show:
             self.region_viewer.reset()
             return
 
         self._read_mesh( mesh )
 
-    def _read_mesh( self, mesh: Vtkmesh ) -> None:
+    def _read_mesh( self, mesh: VtkmeshType ) -> None:
         unstructured_grid = read_unstructured_grid( self.source.get_abs_path( mesh.file ) )
         split_vector_arrays( unstructured_grid )
 
         unstructured_grid.set_active_scalars( unstructured_grid.cell_data.keys()[ 0 ] )
         self.region_viewer.add_mesh( unstructured_grid )
 
-    def _update_vtkwell( self, well: Vtkwell, path: str, show: bool ) -> None:
+    def _update_vtkwell( self, well: VtkwellType, path: str, show: bool ) -> None:
         if not show:
             self.well_viewer.remove( path )
             return
@@ -112,8 +112,8 @@ class DataLoader( AbstractElement ):
             raise GeosTrameException( f"Expected PolyData, got {type(well_polydata).__name__}" )
         self.well_viewer.add_mesh( well_polydata, path )
 
-    def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
-        """Used to control the visibility of the InternalWell.
+    def _update_internalwell( self, well: InternalWellType, path: str, show: bool ) -> None:
+        """Used to control the visibility of the InternalWellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -134,7 +134,7 @@ class DataLoader( AbstractElement ):
 
     @staticmethod
     def __parse_polyline_property( polyline_property: str, dtype: Type[ Any ] ) -> np.ndarray:
-        """Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
+        """Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWellType.
 
         This string always follow this for :
             "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"

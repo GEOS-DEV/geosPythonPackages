@@ -69,7 +69,7 @@ def test_client_interaction( server, baseline_image ):
 
         # Verify that the dataset used is the synthetic.vtu
         sb.driver.find_element( By.ID, "input-79" ).click()
-        assert sb.get_text( "name=Vtkmesh:file:undefined" ) == "synthetic.vtu"
+        assert sb.get_text( "name=VtkmeshType:file:undefined" ) == "synthetic.vtu"
 
         # Visualize it in the 3D View: show it and reset the camera
         sb.driver.find_element( By.CSS_SELECTOR, ".mdi-eye-off" ).click()
