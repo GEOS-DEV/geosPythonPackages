@@ -4,26 +4,28 @@
 import os
 from collections import defaultdict
 from typing import Any
-
 import dpath
 import funcy
 from pydantic import BaseModel
-from trame_simput import get_simput_manager
+
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
 from xsdata_pydantic.bindings import DictDecoder, XmlContext, XmlSerializer
 
+from trame_server.controller import Controller
+from trame_simput import get_simput_manager
+
 from geos.trame.app.deck.file import DeckFile
 from geos.trame.app.geosTrameException import GeosTrameException
-from geos.trame.app.utils.file_utils import normalize_path, format_xml
 from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
+from geos.trame.app.utils.file_utils import normalize_path, format_xml
 
 
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
-    def __init__( self, sm_id: str | None = None, **kwargs: Any ) -> None:
+    def __init__( self, sm_id: str | None = None, ctrl: Controller = None, **kwargs: Any ) -> None:
         """Constructor."""
         super( DeckTree, self ).__init__( **kwargs )
 
@@ -33,6 +35,7 @@ class DeckTree( object ):
         self.root = None
         self.input_has_errors = False
         self._sm_id = sm_id
+        self._ctrl = ctrl
 
     def set_input_file( self, input_filename: str ) -> None:
         """Set a new input file.
@@ -74,7 +77,7 @@ class DeckTree( object ):
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         new_path.append( key )
         assert self.input_file is not None and self.input_file.pb_dict is not None
-        funcy.set_in( self.input_file.pb_dict, new_path, value )
+        self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
     def _search( self, path: str ) -> list | None:
         new_path = path.split( "/" )
@@ -115,7 +118,7 @@ class DeckTree( object ):
             attribute_name_generator=text.camel_case,
         )
 
-        config = SerializerConfig( indent="  ", xml_declaration=False )
+        config = SerializerConfig( indent="  ", xml_declaration=False, ignore_default_attributes=True )
         serializer = XmlSerializer( context=context, config=config )
 
         return format_xml( serializer.render( obj ) )
@@ -171,6 +174,8 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
+
+            self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
 
     @staticmethod
     def _append_include_file( model: Problem, included_file_path: str ) -> None:
@@ -281,7 +286,7 @@ class DeckTree( object ):
 
             if proxy_name.isnumeric() and int( proxy_name ) < len( model_copy ):
                 models.append( ( proxy_name, model_copy ) )
-                model_copy = model_copy[ proxy_name ]
+                model_copy = model_copy[ int( proxy_name ) if is_list else proxy_name ]
                 continue
 
             if proxy_name in model_copy:

@@ -12,7 +12,6 @@ names, domain names, phase types, and the lists of attribute names to process.
 .. WARNING::
     Names may need to be updated when modifications occur in the GEOS code.
 
-
 .. todo::
 
     If possible, link GEOS names directly with GEOS code instead of redefining
@@ -95,17 +94,33 @@ class GeosMeshSuffixEnum( Enum ):
     STRAIN_SUFFIX = "strain"
     PERMEABILITY_SUFFIX = "_permeability"
     POROSITY_SUFFIX = "_porosity"
+    POROSITY_INIT_SUFFIX = "_initialPorosity"
     POROSITY_REF_SUFFIX = "_referencePorosity"
     BULK_MODULUS_SUFFIX = "_bulkModulus"
     SHEAR_MODULUS_SUFFIX = "_shearModulus"
     GRAIN_BULK_MODULUS_SUFFIX = "_grainBulkModulus"
     BIOT_COEFFICIENT_SUFFIX = "_biotCoefficient"
 
-    # fluid attributes suffix
+    # fluid attributes suffix multiPhases
+    TOTAL_FLUID_DENSITY_SUFFIX = "_totalDensity"
     PHASE_DENSITY_SUFFIX = "_phaseDensity"
+    PHASE_FRACTION_SUFFIX = "_phaseFraction"
     PHASE_MASS_DENSITY_SUFFIX = "_phaseMassDensity"
     PHASE_VISCOSITY_SUFFIX = "_phaseViscosity"
-    PHASE_FRACTION_SUFFIX = "_phaseFraction"
+    PHASE_INTERNAL_ENERGY_SUFFIX = "_phaseInternalEnergy"
+    PHASE_COMP_FRACTION_SUFFIX = "_phaseCompFraction"
+    PHASE_REAL_PERM_SUFFIX = "_phaseRelPerm"
+    PHASE_TRAP_VOL_FRACTION_SUFFIX = "_phaseTrappedVolFraction"
+
+    # fluid attributes suffix singlePhase
+    FLUID_DENSITY_SUFFIX = "_density"
+    FLUID_VISCOSITY_SUFFIX = "_viscosity"
+    FLUID_DENSITY_DERIVATE_SUFFIX = "_dDensity"
+    FLUID_VISCOSITY_DERIVATE_SUFFIX = "_dViscosity"
+    FLUID_INTERNAL_ENERGY_SUFFIX = "_internalEnergy"
+    FLUID_INTERNAL_ENERGY_DERIVATE_SUFFIX = "_dInternalEnergy"
+    FLUID_ENTHALPY_SUFFIX = "_enthalpy"
+    FLUID_ENTHALPY_DERIVATE_SUFFIX = "_dEnthalpy"
 
     # surface attribute transfer suffix
     SURFACE_PLUS_SUFFIX = "_Plus"
@@ -220,20 +235,36 @@ class PhaseTypeEnum( Enum ):
         (
             GeosMeshSuffixEnum.DENSITY_SUFFIX.value,
             GeosMeshSuffixEnum.STRESS_SUFFIX.value,
+            GeosMeshSuffixEnum.PERMEABILITY_SUFFIX.value,
+            GeosMeshSuffixEnum.POROSITY_SUFFIX.value,
+            GeosMeshSuffixEnum.POROSITY_INIT_SUFFIX.value,
+            GeosMeshSuffixEnum.POROSITY_REF_SUFFIX.value,
             GeosMeshSuffixEnum.BULK_MODULUS_SUFFIX.value,
             GeosMeshSuffixEnum.SHEAR_MODULUS_SUFFIX.value,
-            GeosMeshSuffixEnum.POROSITY_SUFFIX.value,
-            GeosMeshSuffixEnum.POROSITY_REF_SUFFIX.value,
-            GeosMeshSuffixEnum.PERMEABILITY_SUFFIX.value,
+            GeosMeshSuffixEnum.GRAIN_BULK_MODULUS_SUFFIX.value,
+            GeosMeshSuffixEnum.BIOT_COEFFICIENT_SUFFIX.value,
         ),
     )
     FLUID = (
         "Fluid",
         (
+            GeosMeshSuffixEnum.TOTAL_FLUID_DENSITY_SUFFIX.value,
             GeosMeshSuffixEnum.PHASE_DENSITY_SUFFIX.value,
-            GeosMeshSuffixEnum.PHASE_VISCOSITY_SUFFIX.value,
             GeosMeshSuffixEnum.PHASE_FRACTION_SUFFIX.value,
             GeosMeshSuffixEnum.PHASE_MASS_DENSITY_SUFFIX.value,
+            GeosMeshSuffixEnum.PHASE_VISCOSITY_SUFFIX.value,
+            GeosMeshSuffixEnum.PHASE_INTERNAL_ENERGY_SUFFIX.value,
+            GeosMeshSuffixEnum.PHASE_COMP_FRACTION_SUFFIX.value,
+            GeosMeshSuffixEnum.PHASE_REAL_PERM_SUFFIX.value,
+            GeosMeshSuffixEnum.PHASE_TRAP_VOL_FRACTION_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_DENSITY_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_VISCOSITY_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_DENSITY_DERIVATE_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_VISCOSITY_DERIVATE_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_INTERNAL_ENERGY_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_INTERNAL_ENERGY_DERIVATE_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_ENTHALPY_SUFFIX.value,
+            GeosMeshSuffixEnum.FLUID_ENTHALPY_DERIVATE_SUFFIX.value,
         ),
     )
     UNKNOWN = ( "Other", () )
@@ -299,15 +330,4 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
         PostProcessingOutputsEnum.YOUNG_MODULUS_INITIAL.attributeName,
         PostProcessingOutputsEnum.POISSON_RATIO.attributeName:
         PostProcessingOutputsEnum.POISSON_RATIO_INITIAL.attributeName,
-    }
-
-
-def getAttributeToConvertFromLocalToXYZ() -> set[ str ]:
-    """Get the list of attribute names to convert from local to xyz basis.
-
-    Returns:
-        list[str]: list of attributes to convert
-    """
-    return {
-        GeosMeshOutputsEnum.DISPLACEMENT_JUMP.attributeName,
     }

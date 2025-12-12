@@ -11,7 +11,8 @@ from typing import Optional, Union, Any
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkDataArray, vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
-                                            vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData, vtkPolyData )
+                                            vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData, vtkPolyData,
+                                            vtkCell )
 from vtkmodules.vtkFiltersCore import vtkCellCenters
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 
@@ -24,6 +25,58 @@ These methods include:
     - boolean functions to check whether an array is present in the dataset
     - bounds getter for vtu and multiblock datasets
 """
+
+
+def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ int ]:
+    """Get the set of the different cells dimension of a mesh.
+
+    Args:
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input mesh.
+    """
+    if isinstance( mesh, vtkDataSet ):
+        return getCellDimensionDataSet( mesh )
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        return getCellDimensionMultiBlockDataSet( mesh )
+    else:
+        raise TypeError( "The input mesh must be a vtkMultiBlockDataSet or a vtkDataSet." )
+
+
+def getCellDimensionMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a multiBlockDataSet.
+
+    Args:
+        multiBlockDataSet (vtkMultiBlockDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input multiBlockDataSet.
+    """
+    cellDim: set[ int ] = set()
+    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
+    for flatIdDataSet in listFlatIdDataSet:
+        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
+        cellDim = cellDim.union( getCellDimensionDataSet( dataSet ) )
+    return cellDim
+
+
+def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
+    """Get the set of the different cells dimension of a dataSet.
+
+    Args:
+        dataSet (vtkDataSet): The input mesh with the cells dimension to get.
+
+    Returns:
+        set[int]: The set of the different cells dimension in the input dataSet.
+    """
+    cellDim: set[ int ] = set()
+    cellIter = dataSet.NewCellIterator()
+    cellIter.InitTraversal()
+    while not cellIter.IsDoneWithTraversal():
+        cellDim.add( cellIter.GetCellDimension() )
+        cellIter.GoToNextCell()
+    return cellDim
 
 
 def computeElementMapping(
@@ -223,42 +276,49 @@ def UpdateDictElementMappingFromDataSetToDataSet(
     for idElementTo in range( nbElementsTo ):
         # Test if the element of the final mesh is already mapped.
         if -1 in elementMap[ flatIdDataSetTo ][ idElementTo ]:
-            coordElementTo: list[ tuple[ float, ...] ] = []
+            typeElemTo: int
+            coordElementTo: set[ tuple[ float, ...] ] = set()
             if points:
-                coordElementTo.append( dataSetTo.GetPoint( idElementTo ) )
+                typeElemTo = 0
+                coordElementTo.add( dataSetTo.GetPoint( idElementTo ) )
             else:
+                cellTo: vtkCell = dataSetTo.GetCell( idElementTo )
+                typeElemTo = cellTo.GetCellType()
                 # Get the coordinates of each points of the cell.
-                nbPointsTo: int = dataSetTo.GetCell( idElementTo ).GetNumberOfPoints()
-                cellPointsTo: vtkPoints = dataSetTo.GetCell( idElementTo ).GetPoints()
+                nbPointsTo: int = cellTo.GetNumberOfPoints()
+                cellPointsTo: vtkPoints = cellTo.GetPoints()
                 for idPointTo in range( nbPointsTo ):
-                    coordElementTo.append( cellPointsTo.GetPoint( idPointTo ) )
+                    coordElementTo.add( cellPointsTo.GetPoint( idPointTo ) )
 
             idElementFrom: int = 0
             ElementFromFund: bool = False
             while idElementFrom < nbElementsFrom and not ElementFromFund:
                 # Test if the element of the source mesh is already mapped.
                 if idElementFrom not in idElementsFromFund:
-                    coordElementFrom: list[ tuple[ float, ...] ] = []
+                    typeElemFrom: int
+                    coordElementFrom: set[ tuple[ float, ...] ] = set()
                     if points:
-                        coordElementFrom.append( dataSetFrom.GetPoint( idElementFrom ) )
+                        typeElemFrom = 0
+                        coordElementFrom.add( dataSetFrom.GetPoint( idElementFrom ) )
                     else:
-                        # Get the coordinates of each points of the cell.
-                        nbPointsFrom: int = dataSetFrom.GetCell( idElementFrom ).GetNumberOfPoints()
-                        cellPointsFrom: vtkPoints = dataSetFrom.GetCell( idElementFrom ).GetPoints()
+                        cellFrom: vtkCell = dataSetFrom.GetCell( idElementFrom )
+                        typeElemFrom = cellFrom.GetCellType()
+                        # Get the coordinates of each points of the face.
+                        nbPointsFrom: int = cellFrom.GetNumberOfPoints()
+                        cellPointsFrom: vtkPoints = cellFrom.GetPoints()
                         for idPointFrom in range( nbPointsFrom ):
-                            coordElementFrom.append( cellPointsFrom.GetPoint( idPointFrom ) )
+                            coordElementFrom.add( cellPointsFrom.GetPoint( idPointFrom ) )
 
                     pointShared: bool = True
-                    if dataSetTo.GetClassName() == dataSetFrom.GetClassName():
+                    if typeElemTo == typeElemFrom:
                         if coordElementTo != coordElementFrom:
                             pointShared = False
-                    elif isinstance( dataSetTo, vtkPolyData ):
-                        for coordPointsTo in coordElementTo:
-                            if coordPointsTo not in coordElementFrom:
+                    else:
+                        if nbPointsTo < nbPointsFrom:
+                            if not coordElementTo.issubset( coordElementFrom ):
                                 pointShared = False
-                    elif isinstance( dataSetFrom, vtkPolyData ):
-                        for coordPointsFrom in coordElementFrom:
-                            if coordPointsFrom not in coordElementTo:
+                        else:
+                            if not coordElementTo.issuperset( coordElementFrom ):
                                 pointShared = False
 
                     if pointShared:
@@ -267,6 +327,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                         idElementsFromFund.append( idElementFrom )
 
                 idElementFrom += 1
+    return
 
 
 def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:

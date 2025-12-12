@@ -15,7 +15,7 @@ from geos.utils.Errors import VTKError
 __doc__ = """
 Logger module manages logging tools.
 
-Code was modified from <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>
+Code was modified from `here <https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output>`_ .
 
 It also include adaptor strategy to make vtkLogger behave as a logging's logger.
 Indeed, C++ adapted class is based on private Callback assignement which is not compatible
@@ -255,7 +255,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
         import Logger
 
         # logger instantiation
-        logger :Logger.Logger = Logger.getLogger("My application")
+        logger: Logger.Logger = Logger.getLogger("My application")
 
         # logger use
         logger.debug("debug message")
@@ -275,7 +275,7 @@ def getLogger( title: str, use_color: bool = False ) -> Logger:
     """
     logger = logging.getLogger( title )
     # Only configure the logger (add handlers, set level) if it hasn't been configured before.
-    if not logger.hasHandlers():  # More Pythonic way to check if logger.handlers is empty
+    if len( logger.handlers ) == 0:
         logger.setLevel( INFO )  # Set the desired default level for this logger
         # Create and add the stream handler
         ch = logging.StreamHandler()

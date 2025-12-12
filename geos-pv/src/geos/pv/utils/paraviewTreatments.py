@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
 from enum import Enum
 from typing import Any, Union
 
@@ -9,18 +10,11 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 
-from packaging.version import Version
-
-# TODO: remove this condition when all codes are adapted for Paraview 6.0
-import vtk
-if Version( vtk.__version__ ) >= Version( "9.5" ):
-    from vtkmodules.vtkFiltersParallel import vtkMergeBlocks
-else:
-    from paraview.modules.vtkPVVTKExtensionsMisc import (  # type: ignore[import-not-found]
-        vtkMergeBlocks, )
 from paraview.simple import (  # type: ignore[import-not-found]
     FindSource, GetActiveView, GetAnimationScene, GetDisplayProperties, GetSources, servermanager,
 )
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler, )
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import (
     vtkDataArray,
@@ -37,11 +31,14 @@ from vtkmodules.vtkCommonDataModel import (
     vtkTable,
     vtkUnstructuredGrid,
 )
+from vtkmodules.vtkFiltersParallelDIY2 import vtkGenerateGlobalIds
 
 from geos.utils.GeosOutputsConstants import (
     ComponentNameEnum,
     GeosMeshOutputsEnum,
 )
+from geos.utils.Logger import ( CustomLoggerFormatter )
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 # valid sources for Python view configurator
 # TODO: need to be consolidated
@@ -122,8 +119,18 @@ def vtkUnstructuredGridCellsToDataframe( grid: vtkUnstructuredGrid ) -> pd.DataF
     Returns:
         pd.DataFrame: Pandas dataframe.
     """
-    cellIdAttributeName = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
+    cellIdAttributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     cellData = grid.GetCellData()
+    if not cellData.HasArray( GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName ):
+        print( "We have to create global ids." )
+        idFilter = vtkGenerateGlobalIds()
+        idFilter.SetInputData( grid )
+        idFilter.Update()
+        grid = idFilter.GetOutput()
+        cellData = grid.GetCellData()  # Update cellData to point to the new grid's cell data
+        cellIdAttributeName = "GlobalCellIds"
+        assert cellData.HasArray( cellIdAttributeName ), "Invalid global ids array name selected."
+
     numberCells: int = grid.GetNumberOfCells()
     data: dict[ str, Any ] = {}
     for i in range( cellData.GetNumberOfArrays() ):
@@ -450,7 +457,7 @@ def integrateSourceNames( sourceNames: set[ str ], arrayChoices: set[ str ] ) ->
 
     Args:
         sourceNames (set[str]): Name of sources found in ParaView pipeline.
-        arrayChoices (set[str]): Column names of the vtkdataarrayselection.
+        arrayChoices (set[str]): Column names of the vtkDataArraySelection.
 
     Returns:
         set[str]: [sourceName1__choice1, sourceName1__choice2,
@@ -464,19 +471,31 @@ def integrateSourceNames( sourceNames: set[ str ], arrayChoices: set[ str ] ) ->
     return completeNames
 
 
-def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ] ) -> list[ str ]:
+def getVtkOriginalCellIds( mesh: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet, vtkDataObject ],
+                           logger: Union[ logging.Logger, None ] = None ) -> list[ str ]:
     """Get vtkOriginalCellIds from a vtkUnstructuredGrid object.
 
     Args:
-        mesh (vtkMultiBlockDataSet|vtkCompositeDataSet|vtkDataObject): input mesh.
+        mesh (vtkMultiBlockDataSet|vtkCompositeDataSet|vtkDataObject): Input mesh.
+        logger(Union[logging.Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
 
     Returns:
         list[str]: ids of the cells.
     """
-    # merge blocks for vtkCompositeDataSet
-    mesh2: vtkUnstructuredGrid = mergeFilterPV( mesh )
+    if logger is None:
+        logger = logging.getLogger( "getVtkOriginalCellIds" )
+
+    if not logger.hasHandlers():
+        handler = VTKHandler()
+        handler.setFormatter( CustomLoggerFormatter( False ) )
+        logger.addHandler( handler )
+
+    # Merge blocks for vtkCompositeDataSet
+    mesh2: vtkUnstructuredGrid = mergeBlocks( mesh, logger=logger )
     attributeName: str = GeosMeshOutputsEnum.VTK_ORIGINAL_CELL_ID.attributeName
     data: vtkCellData = mesh2.GetCellData()
+
     assert data is not None, "Cell Data are undefined."
     assert bool( data.HasArray( attributeName ) ), f"Attribute {attributeName} is not in the mesh"
 
@@ -545,7 +564,7 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
     source = FindSource( sourceName )
     dataset: vtkDataObject = servermanager.Fetch( source )
     assert dataset is not None, "Dataset is undefined."
-    dataset2: vtkUnstructuredGrid = mergeFilterPV( dataset )
+    dataset2: vtkUnstructuredGrid = mergeBlocks( dataset )
     time: str = str( animationScene.TimeKeeper.Time )
     dfPerTimestep: dict[ str, pd.DataFrame ] = { time: vtkToDataframe( dataset2 ) }
     # then we iterate on the other timesteps of the source
@@ -553,7 +572,8 @@ def dataframeForEachTimestep( sourceName: str ) -> dict[ str, pd.DataFrame ]:
         animationScene.GoToNext()
         source = FindSource( sourceName )
         dataset = servermanager.Fetch( source )
-        dataset2 = mergeFilterPV( dataset )
+        # dataset2 = mergeFilterPV( dataset )
+        dataset2 = mergeBlocks( dataset )
         time = str( animationScene.TimeKeeper.Time )
         dfPerTimestep[ time ] = vtkToDataframe( dataset2 )
     return dfPerTimestep
@@ -572,20 +592,3 @@ def getTimeStepIndex( time: float, timeSteps: npt.NDArray[ np.float64 ] ) -> int
     indexes: npt.NDArray[ np.int64 ] = np.where( np.isclose( timeSteps, time ) )[ 0 ]
     assert ( indexes.size > 0 ), f"Current time {time} does not exist in the selected object."
     return int( indexes[ 0 ] )
-
-
-def mergeFilterPV( input: vtkDataObject, ) -> vtkUnstructuredGrid:
-    """Apply Paraview merge block filter.
-
-    Args:
-        input (vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): composite
-            object to merge blocks
-
-    Returns:
-        vtkUnstructuredGrid: merged block object
-
-    """
-    mergeFilter: vtkMergeBlocks = vtkMergeBlocks()
-    mergeFilter.SetInputData( input )
-    mergeFilter.Update()
-    return mergeFilter.GetOutputDataObject( 0 )
