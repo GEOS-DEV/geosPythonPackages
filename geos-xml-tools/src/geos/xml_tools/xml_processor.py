@@ -1,20 +1,49 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
 from lxml.etree import XMLSyntaxError  # type: ignore[import]
-import re
 import os
-from geos.xml_tools import regex_tools, unit_manager
-from geos.xml_tools import xml_formatter
-from typing import Iterable, Tuple, List
+import re
+from typing import Iterable
+from geos.xml_tools import regex_tools, unit_manager, xml_formatter
+
+__doc__ = """
+Pre-processor for XML files in GEOS.
+
+This module provides robust XML preprocessing for GEOS input files, including:
+* Merging multiple XML files via <Included> tags into a single tree.
+* Substituting parameter variables (e.g., $pressure) with their values.
+* Handling and converting physical units (e.g., 100[psi]) to SI.
+* Evaluating symbolic math expressions within XML attributes.
+* Optionally validating the final XML against a schema.
+
+Typical usage:
+    from geos.xml_tools import xml_processor
+    xml_processor.process([...])
+
+This is the core utility for preparing XML input for downstream GEOS tools.
+"""
 
 # Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
-__doc__ = """Tools for processing xml files in GEOSX."""
-
 
 def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.Element, level: int ) -> None:
-    """Merge nodes in an included file into the current structure level by level.
+    """Merges two XML nodes. When it encounters a child node in the targetNode that has the same name.
+
+    as one in the existingNode, it merges them recursively instead of just adding a duplicate.
+    Otherwise, it appends new children.
 
     Args:
         existingNode (lxml.etree.Element): The current node in the base xml structure.
@@ -60,7 +89,10 @@ def merge_xml_nodes( existingNode: ElementTree.Element, targetNode: ElementTree.
 
 
 def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCount: int, maxInclude: int = 100 ) -> None:
-    """Recursively merge included files into the current structure.
+    """Opens an XML file specified in an <Included> tag, recursively calls itself for any includes within that file.
+
+    and then uses merge_xml_nodes to merge the contents into the main XML tree.
+    It includes a safety check to prevent infinite include loops.
 
     Args:
         root (lxml.etree.Element): The root node of the base xml structure.
@@ -68,43 +100,51 @@ def merge_included_xml_files( root: ElementTree.Element, fname: str, includeCoun
         includeCount (int): The current recursion depth.
         maxInclude (int): The maximum number of xml files to include (default = 100)
     """
-    # Expand the input path
     pwd = os.getcwd()
-    includePath, fname = os.path.split( os.path.abspath( os.path.expanduser( fname ) ) )
-    os.chdir( includePath )
-
-    # Check to see if the code has fallen into a loop
-    includeCount += 1
-    if ( includeCount > maxInclude ):
-        raise Exception( 'Reached maximum recursive includes...  Is there an include loop?' )
-
-    # Check to make sure the file exists
-    if ( not os.path.isfile( fname ) ):
-        print( 'Included file does not exist: %s' % ( fname ) )
-        raise Exception( 'Check included file path!' )
-
-    # Load target xml
     try:
-        parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
-        includeTree = ElementTree.parse( fname, parser )
-        includeRoot = includeTree.getroot()
-    except XMLSyntaxError as err:
-        print( '\nCould not load included file: %s' % ( fname ) )
-        print( err.msg )
-        raise Exception( '\nCheck included file!' ) from err
+        # Expand the input path
+        includePath, fname = os.path.split( os.path.abspath( os.path.expanduser( fname ) ) )
+        os.chdir( includePath )
 
-    # Recursively add the includes:
-    for includeNode in includeRoot.findall( 'Included' ):
-        for f in includeNode.findall( 'File' ):
-            merge_included_xml_files( root, f.get( 'name' ), includeCount )
+        # Check to see if the code has fallen into a loop
+        includeCount += 1
+        if ( includeCount > maxInclude ):
+            raise Exception( 'Reached maximum recursive includes...  Is there an include loop?' )
 
-    # Merge the results into the xml tree
-    merge_xml_nodes( root, includeRoot, 0 )
-    os.chdir( pwd )
+        # Check to make sure the file exists
+        if ( not os.path.isfile( fname ) ):
+            print( 'Included file does not exist: %s' % ( fname ) )
+            raise Exception( 'Check included file path!' )
+
+        # Load target xml
+        try:
+            parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+            includeTree = ElementTree.parse( fname, parser )
+            includeRoot = includeTree.getroot()
+        except XMLSyntaxError as err:
+            print( '\nCould not load included file: %s' % ( fname ) )
+            print( err.msg )
+            raise Exception( '\nCheck included file!' ) from err
+
+        # Recursively add the includes:
+        for includeNode in includeRoot.findall( 'Included' ):
+            for f in includeNode.findall( 'File' ):
+                merge_included_xml_files( root, f.get( 'name' ), includeCount )
+
+        # Merge the results into the xml tree
+        merge_xml_nodes( root, includeRoot, 0 )
+    finally:
+        # This guarantees the original working directory is always restored
+        os.chdir( pwd )
 
 
 def apply_regex_to_node( node: ElementTree.Element ) -> None:
-    """Apply regexes that handle parameters, units, and symbolic math to each xml attribute in the structure.
+    """Recursively going through every element in the XML tree and inspects its attributes.
+
+    For each attribute value, it sequentially applies regular expressions to:
+    * Replace parameter variables ($variable) with their values.
+    * Convert physical units (value[unit]) into base SI values.
+    * Evaluate symbolic math expressions (`1+2*3`) into a single number.
 
     Args:
         node (lxml.etree.Element): The target node in the xml structure.
@@ -161,10 +201,16 @@ def process(
         outputFile: str = '',
         schema: str = '',
         verbose: int = 0,
-        parameter_override: List[ Tuple[ str, str ] ] = [],  # noqa: B006
+        parameter_override: list[ tuple[ str, str ] ] = [],  # noqa: B006
         keep_parameters: bool = True,
         keep_includes: bool = True ) -> str:
-    """Process an xml file.
+    """Process an xml file following these steps.
+
+    1) Merging multiple input files specified via <Included> tags into a single one.
+    2) Building a map of variables from <Parameters> blocks.
+    3) Applying regex substitutions for parameters ($variable), units (10[m/s]), symbolic math expressions (`1+2*3`).
+    4) Write the XML after these first 3 steps as a new file.
+    5) Optionally validates the final XML against a schema.
 
     Args:
         inputFiles (list): Input file names.
@@ -176,7 +222,7 @@ def process(
         keep_includes (bool): If True, then keep includes in the compiled file (default = True)
 
     Returns:
-        str: Output file name
+        str: Output file name.
     """
     if verbose:
         print( '\nReading input xml parameters and parsing symbolic math...' )
@@ -185,45 +231,49 @@ def process(
     if isinstance( inputFiles, str ):
         inputFiles = [ inputFiles ]
 
-    # Expand the input path
     pwd = os.getcwd()
-    expanded_files = [ os.path.abspath( os.path.expanduser( f ) ) for f in inputFiles ]
-    single_path, single_input = os.path.split( expanded_files[ 0 ] )
-    os.chdir( single_path )
+    try:
+        # Expand the input path
+        expanded_files = [ os.path.abspath( os.path.expanduser( f ) ) for f in inputFiles ]
+        single_path, single_input = os.path.split( expanded_files[ 0 ] )
+        os.chdir( single_path )
 
-    # Handle single vs. multiple command line inputs
-    root = ElementTree.Element( "Problem" )
-    tree = ElementTree.ElementTree()
-    if ( len( expanded_files ) == 1 ):
-        # Load single files directly
-        try:
-            parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
-            tree = ElementTree.parse( single_input, parser=parser )
-            root = tree.getroot()
-        except XMLSyntaxError as err:
-            print( '\nCould not load input file: %s' % ( single_input ) )
-            print( err.msg )
-            raise Exception( '\nCheck input file!' ) from err
+        # Handle single vs. multiple command line inputs
+        root = ElementTree.Element( "Problem" )
+        tree = ElementTree.ElementTree()
+        if ( len( expanded_files ) == 1 ):
+            # Load single files directly
+            try:
+                parser = ElementTree.XMLParser( remove_comments=True, remove_blank_text=True )
+                tree = ElementTree.parse( single_input, parser=parser )
+                root = tree.getroot()
+            except XMLSyntaxError as err:
+                print( '\nCould not load input file: %s' % ( single_input ) )
+                print( err.msg )
+                raise Exception( '\nCheck input file!' ) from err
 
-    else:
-        # For multiple inputs, create a simple xml structure to hold
-        # the included files.  These will be saved as comments in the compiled file
-        root = ElementTree.Element( 'Problem' )
-        tree = ElementTree.ElementTree( root )
-        included_node = ElementTree.Element( "Included" )
-        root.append( included_node )
-        for f in expanded_files:
-            included_file = ElementTree.Element( "File" )
-            included_file.set( 'name', f )
-            included_node.append( included_file )
+        else:
+            # For multiple inputs, create a simple xml structure to hold
+            # the included files.  These will be saved as comments in the compiled file
+            root = ElementTree.Element( 'Problem' )
+            tree = ElementTree.ElementTree( root )
+            included_node = ElementTree.Element( "Included" )
+            root.append( included_node )
+            for f in expanded_files:
+                included_file = ElementTree.Element( "File" )
+                included_file.set( 'name', f )
+                included_node.append( included_file )
 
-    # Add the included files to the xml structure
-    # Note: doing this first assumes that parameters aren't used in Included block
-    includeCount = 0
-    for includeNode in root.findall( 'Included' ):
-        for f in includeNode.findall( 'File' ):
-            merge_included_xml_files( root, f.get( 'name' ), includeCount )  # type: ignore[attr-defined]
-    os.chdir( pwd )
+        # Add the included files to the xml structure
+        # Note: doing this first assumes that parameters aren't used in Included block
+        includeCount = 0
+        for includeNode in root.findall( 'Included' ):
+            for f in includeNode.findall( 'File' ):
+                merge_included_xml_files( root, f.get( 'name' ), includeCount )  # type: ignore[attr-defined]
+
+    finally:
+        # This block ensures that the original working directory is always restored
+        os.chdir( pwd )
 
     # Build the parameter map
     Pmap = {}
@@ -251,19 +301,22 @@ def process(
     # Process any parameters, units, and symbolic math in the xml
     apply_regex_to_node( root )
 
-    # Comment out or remove the Parameter, Included nodes
-    for includeNode in root.findall( 'Included' ):
-        if keep_includes:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( includeNode ) ) )
-        root.remove( includeNode )
-    for parameterNode in root.findall( 'Parameters' ):
-        if keep_parameters:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( parameterNode ) ) )
-        root.remove( parameterNode )
-    for overrideNode in root.findall( 'CommandLineOverride' ):
-        if keep_parameters:
-            root.insert( -1, ElementTree.Comment( ElementTree.tostring( overrideNode ) ) )
-        root.remove( overrideNode )
+    # A dictionary to map element tags to their cleanup flags
+    nodes_to_cleanup = {
+        'Included': keep_includes,
+        'Parameters': keep_parameters,
+        'CommandLineOverride': keep_parameters
+    }
+
+    # Iterate over a static copy of the children to safely modify the tree
+    for node in list( root ):
+        # Check if the node's tag is one we need to process
+        if node.tag in nodes_to_cleanup:
+            # If the cleanup flag is True, create and append a comment
+            if nodes_to_cleanup[ node.tag ]:
+                root.insert( -1, ElementTree.Comment( ElementTree.tostring( node ) ) )
+            # We remove the original node
+            root.remove( node )
 
     # Generate a random output name if not specified
     if not outputFile:
@@ -275,11 +328,9 @@ def process(
     # Check for un-matched special characters
     with open( outputFile, 'r' ) as ofile:
         for line in ofile:
-            print()
             if any( [ sc in line for sc in [ '$', '[', ']', '`' ] ] ):  #noqa: C419
-                raise Exception(
-                    'Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!'
-                    % ( line ) )
+                raise Exception( 'Found un-matched special characters in the pre-processed input file on line:\n%s\n '
+                                 'Check your input xml for errors!' % ( line ) )
 
     # Apply formatting to the file
     xml_formatter.format_file( outputFile )
