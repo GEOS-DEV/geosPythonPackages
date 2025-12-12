@@ -41,18 +41,18 @@ def generateFileFromSchema():
     cleanInit()
 
 
-def run_process_Xsdata(schemaXSDFile, XmlconfigFile):
+def run_process_Xsdata(schemaXSDFile, XmlConfigFile):
     result = subprocess.Popen(
         [
             "xsdata",
             "generate",
             schemaXSDFile,
             "--config",
-            XmlconfigFile,
+            XmlConfigFile,
         ],
     )
     if result.wait() != 0:
-        raise RunTimeError(
+        raise RuntimeError(
             "Something went wrong with the schema generation. Please check parameters."
         )
 
