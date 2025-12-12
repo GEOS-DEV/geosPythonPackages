@@ -15,7 +15,7 @@ import os
 import sys
 import time
 from typing import Callable, Any, Union, Iterable
-from geos.xml_tools import ( attribute_coverage, command_line_parsers, vtk_builder, xml_formatter, xml_processor,
+from geos.xml_tools import ( attribute_coverage, command_line_parsers, xml_formatter, xml_processor,
                              xml_redundancy_check )
 
 __doc__ = """
@@ -26,8 +26,6 @@ This script provides a single entry point for all major XML tools in the package
 * XML formatting and structure cleanup
 * Attribute coverage analysis
 * Redundancy checking
-* VTK deck building
-* 3D visualization
 
 Run `geos-xml-tools --help` for a list of available commands and options.
 
@@ -193,17 +191,6 @@ REDUNDANCY - XML redundancy checking
   Examples:
     geos-xml-tools redundancy -r /path/to/geos/root
 
-VTK-BUILD - Build VTK deck from XML configuration
-  geos-xml-tools vtk-build FILE [OPTIONS]
-
-  Options:
-    -a, --attribute NAME      Cell attribute name for region marker (default: Region)
-    -o, --output FILE         Output VTK file (optional)
-
-  Examples:
-    geos-xml-tools vtk-build input.xml -a Region
-    geos-xml-tools vtk-build input.xml -o output.vtk
-
 For detailed help on any command, use:
   geos-xml-tools <command> --help
         """ )
@@ -284,38 +271,6 @@ def handle_redundancy() -> None:
     print( f"Analysis performed on: {redundancy_args.root}" )
 
 
-def handle_vtk_build() -> None:
-    """Handle VTK deck building command."""
-    # Build a simple parser for VTK building arguments
-    vtk_parser = argparse.ArgumentParser()
-    vtk_parser.add_argument( 'input', type=str, help='Input XML file' )
-    vtk_parser.add_argument( '-a',
-                             '--attribute',
-                             type=str,
-                             default='Region',
-                             help='Cell attribute name to use as region marker' )
-    vtk_parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
-
-    vtk_args, _ = vtk_parser.parse_known_args()
-
-    # Build the VTK deck
-    collection = vtk_builder.create_vtk_deck( vtk_args.input, cell_attribute=vtk_args.attribute )
-
-    if vtk_args.output:
-        # Save to file if output specified
-        import vtk
-        writer = vtk.vtkXMLPartitionedDataSetCollectionWriter()
-        writer.SetFileName( vtk_args.output )
-        writer.SetInputData( collection )
-        writer.Write()
-        print( "VTK deck building completed successfully!" )
-        print( f"Output file: {vtk_args.output}" )
-        print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
-    else:
-        print( "VTK deck building completed successfully!" )
-        print( f"Number of datasets: {collection.GetNumberOfPartitionedDataSets()}" )
-
-
 # Register all commands
 register_command(
     "preprocess", "XML preprocessing and variable substitution", command_line_parsers.build_preprocessor_input_parser,
@@ -329,8 +284,6 @@ register_command( "coverage", "XML attribute coverage analysis",
                   "geos-xml-tools coverage -r /path/to/geos/root -o coverage_report.xml" )
 register_command( "redundancy", "XML redundancy checking", command_line_parsers.build_xml_redundancy_input_parser,
                   handle_redundancy, "geos-xml-tools redundancy -r /path/to/geos/root" )
-register_command( "vtk-build", "Build VTK deck from XML configuration", command_line_parsers.build_vtk_parser,
-                  handle_vtk_build, "geos-xml-tools vtk-build input.xml -a Region -o file.vtm" )
 
 
 def show_command_help( command: str ) -> None:

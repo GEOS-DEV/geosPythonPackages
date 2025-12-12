@@ -139,34 +139,6 @@ XML redundancy checking.
     geos-xml-tools redundancy -r /path/to/geos/root
 
 
-VTK-Build
-~~~~~~~~~
-
-Build VTK deck from XML configuration.
-
-**Usage:**
-
-.. code-block:: bash
-
-    geos-xml-tools vtk-build FILE [OPTIONS]
-
-
-**Options:**
-    -a, --attribute NAME      Cell attribute name for region marker (default: Region)
-    -o, --output FILE         Output VTK file (optional)
-
-
-**Examples:**
-
-.. code-block:: bash
-
-    # Basic VTK deck building
-    geos-xml-tools vtk-build input.xml -a Region
-    
-    # Save to specific output file
-    geos-xml-tools vtk-build input.xml -o output.vtk
-
-
 Legacy Commands
 ---------------
 

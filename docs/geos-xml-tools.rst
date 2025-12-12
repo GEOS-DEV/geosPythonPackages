@@ -19,6 +19,4 @@ See :ref:`PythonToolsSetup` for setup instructions, and `Advanced XML Features <
 
     ./geos_xml_tools_docs/check_xml_redundancy
 
-    ./geos_xml_tools_docs/vtk_builder
-
     ./geos_xml_tools_docs/api
