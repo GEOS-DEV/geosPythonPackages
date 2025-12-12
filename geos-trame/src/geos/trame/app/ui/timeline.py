@@ -3,10 +3,8 @@
 # SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from typing import Any
 from datetime import datetime, timedelta
-from pandas import Timestamp
 import pytz
 import logging
-import dpath.util
 
 
 # from trame.widgets import gantt
@@ -51,8 +49,8 @@ class TimelineEditor( vuetify.VCard ):
                         taskUpdated=(self._updated_tasks,"$event"),
                         classes="fill_height",
                         )
-            with vuetify.VContainer("Debug"):
-               vuetify.VAlert("{{tasks}}", vmodel=("tasks",))
+            # with vuetify.VContainer("Debug"):
+            #    vuetify.VAlert("{{tasks}}", vmodel=("tasks",))
 
             #use to refect change in simput to gantt
             # def _on_change( topic: str, ids: list | None = None ) -> None:
@@ -72,8 +70,10 @@ class TimelineEditor( vuetify.VCard ):
         for i,t in enumerate(self.state.tasks):
             if i != t["id"]:
                 rm_list.append(i)
-            event = {"begin_time": str(( datetime.strptime(t["start"],date_fmt) - former_origin_time).total_seconds()),
-                     "end_time": str(( datetime.strptime(t["end"],date_fmt) - former_origin_time ).total_seconds()),
+            start_time = ( datetime.strptime(t["start"],date_fmt) - former_origin_time ).total_seconds()
+            end_time = ( datetime.strptime(t["end"],date_fmt ) - former_origin_time ).total_seconds()
+            event = {"begin_time": f"{ start_time: .6e}",
+                     "end_time": f"{ end_time: .6e}",
                      "name": t["name"],
                      "category": t["category"]}
 
