@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
 from __future__ import annotations
 from argparse import ArgumentParser, _ArgumentGroup
+from pathlib import Path
 import textwrap
 from typing import Any
 from geos.mesh.io.vtkIO import VtkOutput
@@ -51,7 +52,8 @@ def fillVtkOutputSubparser( parser: ArgumentParser | _ArgumentGroup, prefix: str
     parser.add_argument( '--' + __buildArg( prefix, __OUTPUT_FILE ),
                          type=str,
                          required=True,
-                         help="[string]: The vtk output file destination." )
+                         help=( "[string]: The vtk output file destination. Should only be the path without file"
+                         " extension. Example: ../path/to/output_file" ) )
     help_text = ( f"[string]: For \".vtu\" output format, the data mode can be "
                   f"{' or '.join(__OUTPUT_BINARY_MODE_VALUES)}. Defaults to {__OUTPUT_BINARY_MODE_DEFAULT}." )
     parser.add_argument( '--' + __buildArg( prefix, __OUTPUT_BINARY_MODE ),
@@ -65,20 +67,34 @@ def fillVtkOutputSubparser( parser: ArgumentParser | _ArgumentGroup, prefix: str
                          help="[flag]: Allow overwriting existing output files. Defaults to False." )
 
 
-def convert( parsedOptions: dict[ str, Any ], prefix: str = "" ) -> VtkOutput:
+def convert( parsedOptions: dict[ str, Any ], prefix: str = "", extension: str = ".vtu" ) -> VtkOutput:
     """Convert parsed command-line options to a VtkOutput object.
 
     Args:
         parsedOptions: Dictionary of parsed command-line options.
         prefix: Optional prefix used when parsing arguments.
+        extension: File extension to append to output path. Defaults to ".vtu".
 
     Returns:
         VtkOutput: Configured VTK output object.
+
+    Raises:
+        ValueError: If the output path already contains a file extension.
     """
     outputKey = __buildArg( prefix, __OUTPUT_FILE ).replace( "-", "_" )
     binaryModeKey = __buildArg( prefix, __OUTPUT_BINARY_MODE ).replace( "-", "_" )
     canOverwriteKey = __buildArg( prefix, __CAN_OVERWRITE )
     output = parsedOptions[ outputKey ]
+    # Check if output path already has a file extension
+    output_path = Path( output )
+    if output_path.suffix:
+        raise ValueError(
+            f"Output path should not include file extension when entering --output. "
+            f"Got '{output}', but expected path without extension (e.g., '{output_path.parent / output_path.stem}'). "
+            f"The extension '{extension}' will be added automatically."
+        )
+    # Append the extension
+    output_with_extension = output + extension
     isDataModeBinary: bool = parsedOptions[ binaryModeKey ] == __OUTPUT_BINARY_MODE_DEFAULT
     canOverwrite: bool = parsedOptions.get( canOverwriteKey, False )
-    return VtkOutput( output=output, isDataModeBinary=isDataModeBinary, canOverwrite=canOverwrite )
+    return VtkOutput( output=output_with_extension, isDataModeBinary=isDataModeBinary, canOverwrite=canOverwrite )

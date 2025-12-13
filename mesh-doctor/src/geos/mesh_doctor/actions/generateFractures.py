@@ -418,6 +418,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     # Creating the new points for the new mesh.
     oldPoints: vtkPoints = oldMesh.GetPoints()
     newPoints = vtkPoints()
+    newPoints.SetDataType( oldPoints.GetDataType() )  # Preserve precision (float vs double)
     newPoints.SetNumberOfPoints( numNewPoints )
     collocatedNodes = ones( numNewPoints, dtype=int ) * -1
     # Copying old points into the new container.
@@ -446,8 +447,8 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
 
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
         cellNodeMapping: IDMapping = cellToNodeMapping.get( c, {} )
-        cell: vtkCell = oldMesh.GetCell( c )
-        cellType: int = cell.GetCellType()
+        oldCell: vtkCell = oldMesh.GetCell( c )
+        cellType: int = oldCell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
         if cellType == VTK_POLYHEDRON:
             faceStream = vtkIdList()
@@ -463,7 +464,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
         else:
             # For the standard cells, we extract the point ids of the cell directly.
             # Then the values will be (potentially) overwritten in place, before being sent back into the cell.
-            cellPointIds: vtkIdList = cell.GetPointIds()
+            cellPointIds: vtkIdList = oldCell.GetPointIds()
             for i in range( cellPointIds.GetNumberOfIds() ):
                 currentPtId: int = cellPointIds.GetId( i )
                 newPtId: int = cellNodeMapping.get( currentPtId, currentPtId )
@@ -528,6 +529,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     fractureNodes: Collection[ int ] = tuple( filter( lambda n: n > -1, fractureNodesTmp ) )
     numPoints: int = len( fractureNodes )
     points = vtkPoints()
+    points.SetDataType( meshPoints.GetDataType() )  # Preserve precision (float vs double)
     points.SetNumberOfPoints( numPoints )
     node3dToNode2d: dict[ int, int ] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate( fractureNodes ):
@@ -588,6 +590,7 @@ def __splitMeshOnFractures( mesh: vtkUnstructuredGrid,
         tuple[ vtkUnstructuredGrid, list[ vtkUnstructuredGrid ] ]: The output mesh and a list of fracture meshes.
     """
     allFractureInfos: list[ FractureInfo ] = []
+    # TODO check ca
     for fractureId in range( len( options.fieldValuesPerFracture ) ):
         fractureInfo: FractureInfo = buildFractureInfo( mesh, options, False, fractureId )
         allFractureInfos.append( fractureInfo )

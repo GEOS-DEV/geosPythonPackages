@@ -12,12 +12,12 @@ from geos.mesh_doctor.parsing.cliParsing import addVtuInputFileArgument
 from geos.mesh.io.vtkIO import VtkOutput
 
 __POLICY = "policy"
-__FIELD_POLICY = "field"
-__INTERNAL_SURFACES_POLICY = "internalSurfaces"
-__POLICIES = ( __FIELD_POLICY, __INTERNAL_SURFACES_POLICY )
+__TAGGED_2D_CELLS_POLICY = "TAGGED_2D_CELLS"
+__TAGGED_3D_CELLS_POLICY = "TAGGED_3D_CELLS"
+__POLICIES = ( __TAGGED_2D_CELLS_POLICY, __TAGGED_3D_CELLS_POLICY )
 
-__FIELD_NAME = "name"
-__FIELD_VALUES = "values"
+__TAG_NAME = "tagName"
+__TAG_VALUES = "tagValues"
 
 __FRACTURES_OUTPUT_DIR = "fracturesOutputDir"
 __FRACTURES_DATA_MODE = "fracturesDataMode"
@@ -33,27 +33,32 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
     """
     p = subparsers.add_parser( GENERATE_FRACTURES, help="Splits the mesh to generate the faults and fractures." )
     addVtuInputFileArgument( p )
-    p.add_argument( '--' + __POLICY,
-                    type=convertToFracturePolicy,
-                    metavar=", ".join( __POLICIES ),
-                    required=True,
-                    help=f"[string]: The criterion to define the surfaces that will be changed into fracture zones. "
-                    f"Possible values are \"{', '.join(__POLICIES)}\"" )
+    p.add_argument( 
+        '--' + __POLICY,
+        type=convertToFracturePolicy,
+        metavar=", ".join( __POLICIES ),
+        required=True,
+        help=(
+            f"[string]: Two policies are available to identify/tag fractures that will be created. To tag cells in a mesh, a CellData array needs be present like 'attribute', 'region_id' (see more in --{__TAG_NAME}). "
+            f"1) The \"{__TAGGED_2D_CELLS_POLICY}\" {__POLICY} can only be used with a 3D cells mesh that also contains 2D cells (VTK_QUAD, VTK_TRIANGLE). These 2D cells should be tagged with a different value from the 3D cells (see more in --{__TAG_NAME}). "
+            "These tagged 2D cells will be the one used to generate the fractures. "
+            f"2) The \"{__TAGGED_3D_CELLS_POLICY}\" {__POLICY} needs to have a 3D cells mesh where the 3D cells are tagged with different values to identify group of cells. A"
+        ) )
     p.add_argument(
-        '--' + __FIELD_NAME,
+        '--' + __TAG_NAME,
         type=str,
-        help=
-        f"[string]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, defines which field will be considered to define the fractures. "
-        f"If the \"{__INTERNAL_SURFACES_POLICY}\" {__POLICY} is selected, defines the name of the attribute will be considered to identify the fractures."
+        help=(
+            ""
+        )
     )
     p.add_argument(
-        '--' + __FIELD_VALUES,
+        '--' + __TAG_VALUES,
         type=str,
         help=
         f"[list of comma separated integers]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, which changes of the field will be considered "
         f"as a fracture. If the \"{__INTERNAL_SURFACES_POLICY}\" {__POLICY} is selected, list of the fracture attributes. "
         "You can create multiple fractures by separating the values with ':' like shown in this example. "
-        f"--{__FIELD_VALUES} 10,12:13,14,16,18:22 will create 3 fractures identified respectively with the values (10,12), (13,14,16,18) and (22). "
+        f"--{__TAG_VALUES} 10,12:13,14,16,18:22 will create 3 fractures identified respectively with the values (10,12), (13,14,16,18) and (22). "
         "If no ':' is found, all values specified will be assumed to create only 1 single fracture." )
     vtkOutputParsing.fillVtkOutputSubparser( p )
     p.add_argument(
