@@ -1,7 +1,7 @@
 #------------------------------------------------------------------
 #
-#  Generated on 2025-12-08 11:03
-#  GEOS version: 
+#  Generated on 2025-12-15 10:51
+#  GEOS version: d5d87a5
 #
 #-------------------------------------------------------------------
 from typing import Optional
@@ -8523,6 +8523,48 @@ class SiloType(BaseModel):
     )
 
 
+class SinglePhasePoromechanicsConformingFracturesAlminitializationType(
+    BaseModel
+):
+    class Meta:
+        name = (
+            "SinglePhasePoromechanicsConformingFracturesALMInitializationType"
+        )
+
+    model_config = ConfigDict(defer_build=True)
+    log_level: str = field(
+        default="0",
+        metadata={
+            "name": "logLevel",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    poromechanics_solver_name: str = field(
+        metadata={
+            "name": "poromechanicsSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    solid_mechanics_statistics_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "solidMechanicsStatisticsName",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        },
+    )
+    name: str = field(
+        metadata={
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+        }
+    )
+
+
 class SinglePhasePoromechanicsConformingFracturesInitializationType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     log_level: str = field(
@@ -8594,6 +8636,46 @@ class SinglePhasePoromechanicsEmbeddedFracturesInitializationType(BaseModel):
 
 
 class SinglePhasePoromechanicsInitializationType(BaseModel):
+    model_config = ConfigDict(defer_build=True)
+    log_level: str = field(
+        default="0",
+        metadata={
+            "name": "logLevel",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    poromechanics_solver_name: str = field(
+        metadata={
+            "name": "poromechanicsSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    solid_mechanics_statistics_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "solidMechanicsStatisticsName",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        },
+    )
+    name: str = field(
+        metadata={
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+        }
+    )
+
+
+class SinglePhaseReservoirPoromechanicsConformingFracturesAlminitializationType(
+    BaseModel
+):
+    class Meta:
+        name = "SinglePhaseReservoirPoromechanicsConformingFracturesALMInitializationType"
+
     model_config = ConfigDict(defer_build=True)
     log_level: str = field(
         default="0",
@@ -12466,6 +12548,16 @@ class TasksType(BaseModel):
             "namespace": "",
         },
     )
+    single_phase_poromechanics_conforming_fractures_alminitialization: list[
+        SinglePhasePoromechanicsConformingFracturesAlminitializationType
+    ] = field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhasePoromechanicsConformingFracturesALMInitialization",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
     single_phase_poromechanics_conforming_fractures_initialization: list[
         SinglePhasePoromechanicsConformingFracturesInitializationType
     ] = field(
@@ -12492,6 +12584,16 @@ class TasksType(BaseModel):
         default_factory=list,
         metadata={
             "name": "SinglePhasePoromechanicsInitialization",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    single_phase_reservoir_poromechanics_conforming_fractures_alminitialization: list[
+        SinglePhaseReservoirPoromechanicsConformingFracturesAlminitializationType
+    ] = field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization",
             "type": "Element",
             "namespace": "",
         },
@@ -20039,6 +20141,156 @@ class SinglePhaseHybridFvmtype(BaseModel):
     )
 
 
+class SinglePhasePoromechanicsConformingFracturesAlmtype(BaseModel):
+    class Meta:
+        name = "SinglePhasePoromechanicsConformingFracturesALMType"
+
+    model_config = ConfigDict(defer_build=True)
+    linear_solver_parameters: list[LinearSolverParametersType] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinearSolverParameters",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+        default_factory=list,
+        metadata={
+            "name": "NonlinearSolverParameters",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    allow_non_converged_linear_solver_solution: str = field(
+        default="1",
+        metadata={
+            "name": "allowNonConvergedLinearSolverSolution",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    cfl_factor: str = field(
+        default="0.5",
+        metadata={
+            "name": "cflFactor",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    damage_flag: str = field(
+        default="0",
+        metadata={
+            "name": "damageFlag",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    flow_solver_name: str = field(
+        metadata={
+            "name": "flowSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    initial_dt: str = field(
+        default="1e+99",
+        metadata={
+            "name": "initialDt",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    is_thermal: str = field(
+        default="0",
+        metadata={
+            "name": "isThermal",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    log_level: str = field(
+        default="0",
+        metadata={
+            "name": "logLevel",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    solid_solver_name: str = field(
+        metadata={
+            "name": "solidSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    stabilization_multiplier: str = field(
+        default="1",
+        metadata={
+            "name": "stabilizationMultiplier",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    stabilization_region_names: str = field(
+        default="{}",
+        metadata={
+            "name": "stabilizationRegionNames",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*",
+        },
+    )
+    stabilization_type: str = field(
+        default="None",
+        metadata={
+            "name": "stabilizationType",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|None|Global|Local",
+        },
+    )
+    target_regions: str = field(
+        metadata={
+            "name": "targetRegions",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*",
+        }
+    )
+    use_physics_scaling: str = field(
+        default="1",
+        metadata={
+            "name": "usePhysicsScaling",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    write_linear_system: str = field(
+        default="0",
+        metadata={
+            "name": "writeLinearSystem",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    write_statistics: str = field(
+        default="none",
+        metadata={
+            "name": "writeStatistics",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|none|iteration|convergence|all",
+        },
+    )
+    name: str = field(
+        metadata={
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+        }
+    )
+
+
 class SinglePhasePoromechanicsConformingFracturesReservoirType(BaseModel):
     model_config = ConfigDict(defer_build=True)
     linear_solver_parameters: list[LinearSolverParametersType] = field(
@@ -20808,6 +21060,156 @@ class SinglePhaseProppantFvmtype(BaseModel):
             "type": "Attribute",
             "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
         },
+    )
+    use_physics_scaling: str = field(
+        default="1",
+        metadata={
+            "name": "usePhysicsScaling",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    write_linear_system: str = field(
+        default="0",
+        metadata={
+            "name": "writeLinearSystem",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    write_statistics: str = field(
+        default="none",
+        metadata={
+            "name": "writeStatistics",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|none|iteration|convergence|all",
+        },
+    )
+    name: str = field(
+        metadata={
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_]+",
+        }
+    )
+
+
+class SinglePhaseReservoirPoromechanicsConformingFracturesAlmtype(BaseModel):
+    class Meta:
+        name = "SinglePhaseReservoirPoromechanicsConformingFracturesALMType"
+
+    model_config = ConfigDict(defer_build=True)
+    linear_solver_parameters: list[LinearSolverParametersType] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinearSolverParameters",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    nonlinear_solver_parameters: list[NonlinearSolverParametersType] = field(
+        default_factory=list,
+        metadata={
+            "name": "NonlinearSolverParameters",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    allow_non_converged_linear_solver_solution: str = field(
+        default="1",
+        metadata={
+            "name": "allowNonConvergedLinearSolverSolution",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    cfl_factor: str = field(
+        default="0.5",
+        metadata={
+            "name": "cflFactor",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    damage_flag: str = field(
+        default="0",
+        metadata={
+            "name": "damageFlag",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    initial_dt: str = field(
+        default="1e+99",
+        metadata={
+            "name": "initialDt",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    is_thermal: str = field(
+        default="0",
+        metadata={
+            "name": "isThermal",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    log_level: str = field(
+        default="0",
+        metadata={
+            "name": "logLevel",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]+",
+        },
+    )
+    reservoir_and_wells_solver_name: str = field(
+        metadata={
+            "name": "reservoirAndWellsSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    solid_solver_name: str = field(
+        metadata={
+            "name": "solidSolverName",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*",
+        }
+    )
+    stabilization_multiplier: str = field(
+        default="1",
+        metadata={
+            "name": "stabilizationMultiplier",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)",
+        },
+    )
+    stabilization_region_names: str = field(
+        default="{}",
+        metadata={
+            "name": "stabilizationRegionNames",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*",
+        },
+    )
+    stabilization_type: str = field(
+        default="None",
+        metadata={
+            "name": "stabilizationType",
+            "type": "Attribute",
+            "pattern": r".*[\[\]`$].*|None|Global|Local",
+        },
+    )
+    target_regions: str = field(
+        metadata={
+            "name": "targetRegions",
+            "type": "Attribute",
+            "required": True,
+            "pattern": r".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*",
+        }
     )
     use_physics_scaling: str = field(
         default="1",
@@ -23043,6 +23445,16 @@ class SolversType(BaseModel):
             "namespace": "",
         },
     )
+    single_phase_poromechanics_conforming_fractures_alm: list[
+        SinglePhasePoromechanicsConformingFracturesAlmtype
+    ] = field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhasePoromechanicsConformingFracturesALM",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
     single_phase_poromechanics_conforming_fractures_reservoir: list[
         SinglePhasePoromechanicsConformingFracturesReservoirType
     ] = field(
@@ -23105,6 +23517,16 @@ class SolversType(BaseModel):
         default_factory=list,
         metadata={
             "name": "SinglePhaseReservoirPoromechanicsConformingFractures",
+            "type": "Element",
+            "namespace": "",
+        },
+    )
+    single_phase_reservoir_poromechanics_conforming_fractures_alm: list[
+        SinglePhaseReservoirPoromechanicsConformingFracturesAlmtype
+    ] = field(
+        default_factory=list,
+        metadata={
+            "name": "SinglePhaseReservoirPoromechanicsConformingFracturesALM",
             "type": "Element",
             "namespace": "",
         },
