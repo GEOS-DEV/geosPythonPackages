@@ -7,7 +7,7 @@ serve_path = str( Path( __file__ ).with_name( "serve" ).resolve() )
 serve = { "__gantt_chart": serve_path }
 
 # List of JS files to load (usually from the serve path above)
-scripts = [ "__gantt_chart/gantt-chart.umd.js"]
+scripts = [ "__gantt_chart/gantt-chart.umd.js" ]
 
 # List of CSS files to load (usually from the serve path above)
 # styles = ["__geos_trame/style.css"]

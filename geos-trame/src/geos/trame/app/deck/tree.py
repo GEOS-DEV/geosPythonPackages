@@ -10,7 +10,6 @@ import dpath
 import funcy
 from pydantic import BaseModel
 
-from trame_simput.core.proxy import ProxyManager, Proxy
 from xsdata.formats.dataclass.parsers.config import ParserConfig
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.utils import text
@@ -25,9 +24,12 @@ from geos.trame.schema_generated.schema_mod import Problem, Included, File, Func
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 
 import logging
+
 date_fmt = "%Y-%m-%d"
-logger = logging.getLogger("tree")
-logger.setLevel(logging.ERROR)         
+logger = logging.getLogger( "tree" )
+logger.setLevel( logging.ERROR )
+
+
 class DeckTree( object ):
     """A tree that represents a deck file along with all the available blocks and parameters."""
 
@@ -42,8 +44,8 @@ class DeckTree( object ):
         self.input_has_errors = False
         self._sm_id = sm_id
         self._ctrl = ctrl
-        self.world_origin_time = datetime(1924,3,28).strftime(date_fmt)# Total start date !!
-        self.registered_targets : dict = {}
+        self.world_origin_time = datetime( 1924, 3, 28 ).strftime( date_fmt )  # Total start date !!
+        self.registered_targets: dict = {}
 
     def set_input_file( self, input_filename: str ) -> None:
         """Set a new input file.
@@ -87,7 +89,7 @@ class DeckTree( object ):
         assert self.input_file is not None and self.input_file.pb_dict is not None
         self.input_file.pb_dict = funcy.set_in( self.input_file.pb_dict, new_path, value )
 
-    def drop(self, path:str ) -> None:
+    def drop( self, path: str ) -> None:
         """Remove in the tree."""
         new_path = [ int( x ) if x.isdigit() else x for x in path.split( "/" ) ]
         assert self.input_file is not None and self.input_file.pb_dict is not None
@@ -120,9 +122,9 @@ class DeckTree( object ):
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
         )
-        encoder = DictEncoder( context=context, config=SerializerConfig(indent="  ") )
-        nodeDict : dict = encoder.encode( data )
-        return nodeDict 
+        encoder = DictEncoder( context=context, config=SerializerConfig( indent="  " ) )
+        nodeDict: dict = encoder.encode( data )
+        return nodeDict
 
     @staticmethod
     def decode_data( data: dict ) -> Problem:
@@ -159,22 +161,28 @@ class DeckTree( object ):
         # list root events
         global_id = 0
         # solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
-        solver_events = self.input_file.problem.events[0].periodic_event
-        max_time = self.input_file.problem.events[0].max_time
+        solver_events = self.input_file.problem.events[ 0 ].periodic_event
+        max_time = self.input_file.problem.events[ 0 ].max_time
         for e in solver_events:
-            self.registered_targets[e.target.split('/')[-1]] = e.target            
-            e.end_time = max_time if float(e.end_time) > float(max_time) else e.end_time
+            self.registered_targets[ e.target.split( '/' )[ -1 ] ] = e.target
+            e.end_time = max_time if float( e.end_time ) > float( max_time ) else e.end_time
             #note here float conversion is used to correctly interpret scientific format
             item: dict[ str, str | int ] = {
-                "id": global_id,
-                "name": e.name,
-                "start": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.begin_time))).strftime(date_fmt),
-                "end": (datetime.strptime(self.world_origin_time,date_fmt) + timedelta(seconds=float(e.end_time))).strftime(date_fmt),
-                "duration" : str( timedelta(seconds=(float(e.end_time) - float(e.begin_time))).days ),
-                "category" : e.target.split('/')[-1],
+                "id":
+                global_id,
+                "name":
+                e.name,
+                "start": ( datetime.strptime( self.world_origin_time, date_fmt ) +
+                           timedelta( seconds=float( e.begin_time ) ) ).strftime( date_fmt ),
+                "end": ( datetime.strptime( self.world_origin_time, date_fmt ) +
+                         timedelta( seconds=float( e.end_time ) ) ).strftime( date_fmt ),
+                "duration":
+                str( timedelta( seconds=( float( e.end_time ) - float( e.begin_time ) ) ).days ),
+                "category":
+                e.target.split( '/' )[ -1 ],
             }
-            if(int(float(e.time_frequency))>0): 
-                item["freq"] = timedelta(seconds=float(e.time_frequency)).days
+            if ( int( float( e.time_frequency ) ) > 0 ):
+                item[ "freq" ] = timedelta( seconds=float( e.time_frequency ) ).days
             timeline.append( item )
             global_id = global_id + 1
 
