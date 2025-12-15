@@ -38,7 +38,6 @@ class TimelineEditor( vuetify.VCard ):
                     label="Select starting simulation date",
                     prepend_icon="",
                     prepend_inner_icon="$calendar",
-                    # placeholder="09/18/2024",
                     v_model=( "sdate", ),
                 )
                 vuetify.VDivider()
@@ -48,8 +47,6 @@ class TimelineEditor( vuetify.VCard ):
                     taskUpdated=( self._updated_tasks, "$event" ),
                     classes="fill_height",
                 )
-            # with vuetify.VContainer("Debug"):
-            #    vuetify.VAlert("{{tasks}}", vmodel=("tasks",))
 
             #use to refect change in simput to gantt
             # def _on_change( topic: str, ids: list | None = None ) -> None:
