@@ -64,13 +64,11 @@ class TimelineEditor( vuetify.VCard ):
             print('None values')
         logger.info(f"new tasks {tasks}")
 
+        rm_list = set([ t["id"] for t in self.state.tasks if "id" in t])-set([ t["id"] for t in tasks if "id" in t ])
         self.state.tasks = tasks
         former_origin_time: datetime = datetime.strptime( min(self.state.tasks, key=lambda d: datetime.strptime(d.get("start"),date_fmt)).get("start"), date_fmt)
         #update and erase
-        rm_list = []
         for i,t in enumerate(self.state.tasks):
-            if i != t["id"]:
-                rm_list.append(i)
             start_time = ( datetime.strptime(t["start"],date_fmt) - former_origin_time ).total_seconds()
             end_time = ( datetime.strptime(t["end"],date_fmt ) - former_origin_time ).total_seconds()
 
@@ -86,8 +84,11 @@ class TimelineEditor( vuetify.VCard ):
             #if added Event then 
             if not self.tree._search(f'Problem/Events/0/PeriodicEvent/{t["id"]}'):
                 self.tree.input_file.pb_dict['Problem']['Events'][0]['PeriodicEvent'].append( self.tree.encode_data(PeriodicEvent(name="test")) )
+                #should create proxy ??
+                proxy = self.simput_manager.proxymanager.create(proxy_type='PeriodicEvent',proxy_id=f'Problem/Events/0/PeriodicEvent/{t["id"]}', initial_values=self.tree.encode_data(PeriodicEvent(name="test")))
+            else:
+                proxy = self.simput_manager.proxymanager.get(f'Problem/Events/0/PeriodicEvent/{t["id"]}')
 
-            proxy = self.simput_manager.proxymanager.get(f'Problem/Events/0/PeriodicEvent/{t["id"]}')
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','beginTime', event['begin_time'])
             proxy.set_property("begin_time",event['begin_time'])
             self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','endTime', event['end_time'])
@@ -98,15 +99,17 @@ class TimelineEditor( vuetify.VCard ):
             proxy.set_property("target",event['category'])
             
             if "freq" in t and t["freq"] is not None:
-                self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', timedelta(days=int(t["freq"])).total_seconds())
-                proxy.set_property("time_frequency", timedelta(days=int(t["freq"])).total_seconds())
+                self.tree.update(f'Problem/Events/0/PeriodicEvent/{t["id"]}','timeFrequency', str(timedelta(days=int(t["freq"])).total_seconds()))
+                proxy.set_property("time_frequency", str(timedelta(days=int(t["freq"])).total_seconds()) )
             
         self.ctrl.simput_reload_data()
         
-        rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
+        # rm_list.extend( range(len(self.state.tasks),len(self.tree.input_file.problem.events[0].periodic_event)) )
         #remove lost indexes
         for i in rm_list:
             self.tree.drop(f'Problem/Events/0/PeriodicEvent/{i}')
+            #drop proxies as well
+            self.simput_manager.proxymanager.delete(proxy_id=f'Problem/Events/0/PeriodicEvent/{t["id"]}')
 
         return
 

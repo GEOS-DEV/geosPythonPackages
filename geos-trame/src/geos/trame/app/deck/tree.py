@@ -174,7 +174,7 @@ class DeckTree( object ):
                 "category" : e.target.split('/')[-1],
             }
             if(int(float(e.time_frequency))>0): 
-                item["freq"] = timedelta(seconds=float(e.time_frequency)).days #TODO deal with Days-Hours-Seconds
+                item["freq"] = timedelta(seconds=float(e.time_frequency)).days
             timeline.append( item )
             global_id = global_id + 1
 
@@ -210,8 +210,6 @@ class DeckTree( object ):
             with open( location, "w" ) as file:
                 file.write( model_as_xml )
                 file.close()
-
-            self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
 
             self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
 
