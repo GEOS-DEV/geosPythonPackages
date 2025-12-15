@@ -1,9 +1,12 @@
 #------------------------------------------------------------------
 #
-#  Generated on 2025-12-15 10:51
+#  Generated on 2025-12-15 11:30
 #  GEOS version: d5d87a5
 #
 #-------------------------------------------------------------------
+
+
+# ruff:noqa
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
