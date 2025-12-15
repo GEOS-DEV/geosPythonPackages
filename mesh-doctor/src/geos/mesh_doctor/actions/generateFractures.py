@@ -418,6 +418,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     # Creating the new points for the new mesh.
     oldPoints: vtkPoints = oldMesh.GetPoints()
     newPoints = vtkPoints()
+    newPoints.SetDataType( oldPoints.GetDataType() )  # Preserve precision from input mesh
     newPoints.SetNumberOfPoints( numNewPoints )
     collocatedNodes = ones( numNewPoints, dtype=int ) * -1
     # Copying old points into the new container.
@@ -528,6 +529,7 @@ def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: Fracture
     fractureNodes: Collection[ int ] = tuple( filter( lambda n: n > -1, fractureNodesTmp ) )
     numPoints: int = len( fractureNodes )
     points = vtkPoints()
+    points.SetDataType( meshPoints.GetDataType() )  # Preserve precision from input mesh
     points.SetNumberOfPoints( numPoints )
     node3dToNode2d: dict[ int, int ] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate( fractureNodes ):
