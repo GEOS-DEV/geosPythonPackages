@@ -87,10 +87,10 @@ def addHeader( sha: str = "", generatedSchemaFile: str = "schema_mod.py" ) -> No
 #-------------------------------------------------------------------\n"""
 
     try:
-        with open( "schema_mod.py", "r" ) as f:
+        with open( generatedSchemaFile, "r" ) as f:
             schema: str = f.read()
 
-        with open( "schema_mod.py", "w" ) as g:
+        with open( generatedSchemaFile, "w" ) as g:
             g.write( head )
             g.write( schema )
 
