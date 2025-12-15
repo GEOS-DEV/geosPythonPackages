@@ -110,6 +110,8 @@ class TimelineEditor( vuetify.VCard ):
                 self.tree.update( f'Problem/Events/0/PeriodicEvent/{t["id"]}', 'timeFrequency',
                                   str( timedelta( days=int( t[ "freq" ] ) ).total_seconds() ) )
                 proxy.set_property( "time_frequency", str( timedelta( days=int( t[ "freq" ] ) ).total_seconds() ) )
+            
+            proxy.commit()
 
         self.ctrl.simput_reload_data()
 
