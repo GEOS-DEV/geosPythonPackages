@@ -160,10 +160,9 @@ class DeckTree( object ):
         timeline = []
         # list root events
         global_id = 0
-        # solver_events = filter(lambda ev : 'Solver' in ev.target, self.input_file.problem.events[0].periodic_event)
-        solver_events = self.input_file.problem.events[ 0 ].periodic_event
+        all_periodic_events = self.input_file.problem.events[ 0 ].periodic_event
         max_time = self.input_file.problem.events[ 0 ].max_time
-        for e in solver_events:
+        for e in all_periodic_events:
             self.registered_targets[ e.target.split( '/' )[ -1 ] ] = e.target
             e.end_time = max_time if float( e.end_time ) > float( max_time ) else e.end_time
             #note here float conversion is used to correctly interpret scientific format

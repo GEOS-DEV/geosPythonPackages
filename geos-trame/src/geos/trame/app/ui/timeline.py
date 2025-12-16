@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 
-# from trame.widgets import gantt
 from geos.trame.app.gantt_chart.widgets.gantt_chart import Gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
@@ -56,9 +55,6 @@ class TimelineEditor( vuetify.VCard ):
             # self.simput_manager.proxymanager.on( _on_change )
 
     def _updated_tasks( self, *tasks: Any, **_: Any ) -> None:
-        if tasks is None:
-            print( 'None values' )
-        logger.info( f"new tasks {tasks}" )
 
         rm_list = ( { t_id
                       for t in self.state.tasks if ( t_id := t.get( "id" ) ) is not None } -
@@ -128,18 +124,16 @@ class TimelineEditor( vuetify.VCard ):
         """Helper function for shifting time."""
         return ( datetime.strptime( dt_str, date_fmt ) + time_delta ).strftime( date_fmt )
 
-    def _updated_sdate( self, sdate: str, **_: Any ) -> None:
-        #sdate seems to be a panda Timestamp
-        if sdate is None:
-            return
-
-        former_origin_time: str = min( self.state.tasks,
-                                       key=lambda d: datetime.strptime( d.get( "start" ), date_fmt ) ).get( "start" )
-        time_delta: timedelta = sdate.to_datetime() - pytz.utc.localize(
-            datetime.strptime( former_origin_time, date_fmt ) )
-        self.state.tasks = [ {
-            **d, "start": TimelineEditor.shift_str( d[ "start" ], time_delta ),
-            "end": TimelineEditor.shift_str( d[ "end" ], time_delta )
-        } for d in self.state.tasks ]
+    def _updated_sdate( self, sdate: Any, **_: Any ) -> None:
+        #sdate seems to some sort of panda Timestamp
+        if sdate is not None:
+            former_origin_time: str = min( self.state.tasks,
+                                        key=lambda d: datetime.strptime( d.get( "start" ), date_fmt ) ).get( "start" )
+            time_delta: timedelta = sdate.to_datetime() - pytz.utc.localize(
+                datetime.strptime( former_origin_time, date_fmt ) )
+            self.state.tasks = [ {
+                **d, "start": TimelineEditor.shift_str( d[ "start" ], time_delta ),
+                "end": TimelineEditor.shift_str( d[ "end" ], time_delta )
+            } for d in self.state.tasks ]
 
         return
