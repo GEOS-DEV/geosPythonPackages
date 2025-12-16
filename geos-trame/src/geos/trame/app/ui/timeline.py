@@ -126,7 +126,7 @@ class TimelineEditor( vuetify.VCard ):
     def _updated_sdate( self, sdate: Any, **_: Any ) -> None:
         #sdate seems to some sort of panda Timestamp
         if sdate is not None:
-            former_origin_time: str = min( 
+            former_origin_time: str = min(
                 self.state.tasks, key=lambda d: datetime.strptime( d.get( "start" ), date_fmt ) ).get( "start" )
             time_delta: timedelta = sdate.to_datetime() - pytz.utc.localize(
                 datetime.strptime( former_origin_time, date_fmt ) )
