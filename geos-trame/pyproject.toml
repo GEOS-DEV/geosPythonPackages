@@ -31,7 +31,6 @@ keywords = [
 
 dependencies = [
     "typing-extensions==4.12.2",
-    "pandas",
     "trame==3.6.5",
     "trame-vuetify==2.7.1",
     "trame-code==1.0.1",
