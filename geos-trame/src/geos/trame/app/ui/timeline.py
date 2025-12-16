@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Lionel Untereiner
+# SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from typing import Any
 
-# from trame.widgets import gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
