@@ -67,7 +67,7 @@
         <!-- Reuse singlePhaseFlow for the testing -->
         <VTKMesh
             name="SyntheticMesh"
-            file="ModelA.vtu"
+            file="../singlePhaseFlow/synthetic.vtu"
             logLevel="1" >
 
             <!-- Block to comment to deactivate external well definition -->
@@ -96,9 +96,11 @@
                 logLevel="2"
                 wellRegionName="wellRegion2" 
                 wellControlsName="wellControls2"
-                polylineNodeCoords="{ { 800, 1450, 395.646 },
-                                    { 800, 1450, -554.354 } }" 
-                polylineSegmentConn="{ { 0, 1 }}" 
+                polylineNodeCoords="{ { 800, 1450, 395.646 }, 
+                                      { 800, 1450, -200.0 },
+                                      { 800, 1450, 0.0 },
+                                      { 800, 1450, -554.354 } }"
+                polylineSegmentConn="{ { 0, 2 }, { 2, 1 }, { 1, 3 } }" 
                 radius="0.050"
                 numElementsPerSegment="5">
                 <Perforation   
@@ -147,7 +149,6 @@
 
         <PeriodicEvent
             name="statistics"
-            endTime="0"
             timeFrequency="31536000"
             target="/Tasks/compflowStatistics"/>
         
