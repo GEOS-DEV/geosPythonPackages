@@ -2,13 +2,17 @@
   "clusters": [
     {
       "name": "p4",
-      "simulation_default_path": "/www",
-      "geos_version_default": "daily_rhel",
-      "simulation_information_default_path": "/www",
+      "host": "p4log01",
+      "port": 22,
+      "remote_home_base": "/users/",
       "simulation_default_filename": "geosDeck.xml",
+      "simulation_default_path": "/workrd/users",
+      "simulation_dl_default_path": "/data/",
+      "geos_default_version": "daily_rhel",
+      "simulation_information_default_path": "/workrd/users",
       "n_nodes": 212,
-      "cpu": { "types": ["AMD EPYC 4th gen"], "per_node": 192 },
-      "mem_per_node": 768
+      "cores_per_nodes" : 192,
+      "mem_per_node": 747
     }
   ]
 }

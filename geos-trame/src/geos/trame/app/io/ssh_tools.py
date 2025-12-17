@@ -1,18 +1,25 @@
 from typing import Optional
 from pathlib import Path
 import paramiko
-
+import json
 
 # replace by conf-file json
 from dataclasses import dataclass
-@dataclass( frozen=True )
+@dataclass
 class SimulationConstant:
-    SIMULATION_GEOS_PATH = "/workrd/users/"
-    HOST = "p4log01"  # Only run on P4 machine
-    REMOTE_HOME_BASE = "/users"
-    PORT = 22
-    SIMULATIONS_INFORMATION_FOLDER_PATH = "/workrd/users/"
-    SIMULATION_DEFAULT_FILE_NAME = "geosDeck.xml"
+    name: str
+    host : str
+    port : int  = 22
+    remote_home_base : str
+    simulation_default_filename : str
+    simulation_default_path : str
+    simulation_dl_default_path : str
+    geos_default_version : str
+    simulation_information_default_path : str
+    n_nodes : int
+    cores_per_node : int
+    mem_per_node : int
+    # return ["P4: 1x22", "P4: 2x11"]
 
 #If proxyJump are needed
 #
@@ -35,6 +42,8 @@ class SimulationConstant:
 class Authentificator:  #namespacing more than anything else
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
+
+    sim_constants = SimulationConstant(**json.load(open( '/assets/cluster.json', 'r' )))
 
     @staticmethod
     def _sftp_copy_tree( ssh_client, file_tree, remote_root ):
@@ -92,6 +101,7 @@ class Authentificator:  #namespacing more than anything else
     def get_key( id, pword ):
 
         try:
+            import os
             home = os.environ.get( "HOME" )
             PRIVATE_KEY = paramiko.RSAKey.from_private_key_file( f"{home}/.ssh/id_trame" )
             return PRIVATE_KEY
@@ -102,22 +112,24 @@ class Authentificator:  #namespacing more than anything else
             PRIVATE_KEY = Authentificator.gen_key()
             temp_client = paramiko.SSHClient()
             temp_client.set_missing_host_key_policy( paramiko.AutoAddPolicy() )
-            temp_client.connect( SimulationConstant.HOST,
-                                 SimulationConstant.PORT,
+            temp_client.connect( SimulationConstant.host,
+                                 SimulationConstant.port,
                                  username=id,
                                  password=pword,
                                  timeout=10 )
             Authentificator._transfer_file_sftp( temp_client, f"{home}/.ssh/id_trame.pub",
-                                                 f"{SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/id_trame.pub" )
+                                                 f"{SimulationConstant.remote_home_base}/{id}/.ssh/id_trame.pub" )
             Authentificator._execute_remote_command(
                 temp_client,
-                f" cat {SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/id_trame.pub | tee -a {SimulationConstant.REMOTE_HOME_BASE}/{id}/.ssh/authorized_keys"
+                f" cat {SimulationConstant.remote_home_base}/{id}/.ssh/id_trame.pub | tee -a {SimulationConstant.remote_home_base}/{id}/.ssh/authorized_keys"
             )
 
             return PRIVATE_KEY
 
     @staticmethod
     def gen_key():
+
+        import os
 
         home = os.environ.get( "HOME" )
         file_path = f"{home}/.ssh/id_trame"
