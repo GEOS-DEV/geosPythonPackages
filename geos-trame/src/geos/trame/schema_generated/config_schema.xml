@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 
-<Config xmlns="http://pypi.org/project/xsdata" version="22.3">
+<Config xmlns="http://pypi.org/project/xsdata" version="25.4">
+  <Generator>
+    <Aliases>
+      <Alias name="Problem" type="class" replace="DeprecatedProblem"/>
+      <Alias name="ProblemType" type="class" replace="Problem"/>
+    </Aliases>
+  </Generator>
   <Output maxLineLength="79">
     <Package>schema_mod</Package>
     <Format repr="true" eq="true" order="false" unsafeHash="false" frozen="false" slots="false" kwOnly="false">pydantic</Format>
@@ -9,5 +15,14 @@
     <IncludeHeader>false</IncludeHeader>
     <DocstringStyle>reStructuredText</DocstringStyle>
     <RelativeImports>false</RelativeImports>
+    <CompoundFields>true</CompoundFields>
   </Output>
+  <!-- <Filters> -->
+    <!-- <Filter type="class" search="^Problem$"> -->
+  <!-- </Filters> -->
+  <Substitutions>
+    <!-- <Substitution type="class" search="^Problem$" replace="DuplicateProblem"/> -->
+    <!-- <Substitution type="class" search="^ProblemType$" replace="Problem"/> -->
+    <Substitution type="class" search="(?&lt;!Problem)Type$" replace=""/>
+  </Substitutions>
 </Config>
