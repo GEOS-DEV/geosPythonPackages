@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Lionel Untereiner
 from typing import Any
 
-from trame.widgets import gantt
+# from trame.widgets import gantt
 from trame.widgets import vuetify3 as vuetify
 from trame_simput import get_simput_manager
 
@@ -72,18 +72,18 @@ class TimelineEditor( vuetify.VCard ):
                 vuetify.VAlert( "{{ item.summary }}" )
                 vuetify.Template( "{{ item.start_date }}", raw_attrs=[ "v-slot:opposite" ] )
 
-            with vuetify.VContainer( "Events chart" ):
-                gantt.Gantt(
-                    canEdit=True,
-                    dateLimit=30,
-                    startDate="2024-11-01 00:00",
-                    endDate="2024-12-01 00:00",
-                    # title='Gantt-pre-test',
-                    fields=fields,
-                    update=( self.update_from_js, "items" ),
-                    items=( "items", items ),
-                    classes="fill_height",
-                )
+            # with vuetify.VContainer( "Events chart" ):
+            #     gantt.Gantt(
+            #         canEdit=True,
+            #         dateLimit=30,
+            #         startDate="2024-11-01 00:00",
+            #         endDate="2024-12-01 00:00",
+            #         # title='Gantt-pre-test',
+            #         fields=fields,
+            #         update=( self.update_from_js, "items" ),
+            #         items=( "items", items ),
+            #         classes="fill_height",
+            #     )
 
     def update_from_js( self, *items: tuple ) -> None:
         """Update method called from javascript."""
