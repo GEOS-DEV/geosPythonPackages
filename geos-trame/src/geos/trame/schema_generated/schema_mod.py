@@ -1,6 +1,6 @@
 #------------------------------------------------------------------
 #
-#  Generated on 2025-12-18 13:00
+#  Generated on 2025-12-18 14:36
 #  GEOS version: d587a5
 #
 #-------------------------------------------------------------------
@@ -24005,9 +24005,9 @@ class Solvers( BaseModel ):
     )
 
 
-class ProblemType(BaseModel):
-    model_config = ConfigDict(defer_build=True)
-    events: list[Events] = field(
+class ProblemType( BaseModel ):
+    model_config = ConfigDict( defer_build=True )
+    events: list[ Events ] = field(
         default_factory=list,
         metadata={
             "name": "Events",
@@ -24137,6 +24137,6 @@ class ProblemType(BaseModel):
     )
 
 
-class Problem(ProblemType):
+class Problem( ProblemType ):
     pass
-    model_config = ConfigDict(defer_build=True)
+    model_config = ConfigDict( defer_build=True )
