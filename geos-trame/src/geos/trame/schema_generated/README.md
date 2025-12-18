@@ -24,55 +24,45 @@ First, retrieve the `schema.xsd` corresponding to the GEOS version you want to u
 > [!WARNING]
 > We advise to use GEOS version from commit [#1e617be](https://github.com/GEOS-DEV/GEOS/commit/1e617be8614817d92f0a7a159994cbed1661ff98). You may encounter compatibility issues with older versions.
 
+In a sourced virtual environement set for geos_trame,
 
-The schema can be generated with the following command line with GEOS:
 ```bash
-geos -s schema.xsd
+(venv) cd geosPythonPackages/geos-trame/src/geos/trame/schema_generated
+(venv) python generate_schema.py -g 
+(venv) mv schema_<GEOS-commit-sha>.xsd schema.xsd
+(venv) python generate_schema.py -v <GEOS-commit-sha>
 ```
 
-Or it can be found in [GEOS Github repository](https://github.com/GEOS-DEV/GEOS). The schema can be found in `GEOS/src/coreComponents/schema/schema.xsd`.
+This two stage approach is defaulted: 
 
-Copy this file and paste in the `geosPythonPackages`:
+ 1. to take the latest commit on GEOS' `develop`. However, if a particular commit on `develop` is of interest,
+you can pass it through the option `-c <GEOS-commit-sha>`. It will generate `schema_<GEOS-commit-sha>.xsd`.
+ 2. to generate the `schema_mod.py` packages, metadata-ing the commit number in the header.
 
-```bash
-cp schema.xsd geosPythonPackages/geos-trame/src/geos/trame/schema_generated/.
-```
+In any other case, `schema.xsd` can be found in [GEOS Github repository](https://github.com/GEOS-DEV/GEOS) under `GEOS/src/coreComponents/schema/schema.xsd`
+and the first step can be skipped.
 
-#### 2. Create a dedicate venv
+The second stage relies on `xsdata[cli]` interfaced with `pydantic` as driver.
+The full documentation can be found [here](https://xsdata-pydantic.readthedocs.io/en/latest/codegen/).
 
-```bash
-cd geos-trame
-python -m venv pydantic-venv
-source pydantic-venv/bin/activate
-pip install -e .
-pip install "xsdata[cli]"
-```
-
-#### 3. Generate the new file
-
-The full documentation is [here](https://xsdata-pydantic.readthedocs.io/en/latest/codegen/).
-
+Options to the helper script can be displayed with `--help` parameters:
 
 ```bash
-cd src/geos/trame/schema_generated
-python generate_schema.py -v <GEOS-commit>
-```
-
-Check the options with `--help` parameters:
-
-```bash
-$ python generate_schema.py
-
-usage: generate_schema.py [-h] [-s SCHEMAFILE] [-cf CONFIGFILE] [-v VERSION]
+$ python generate_schema.py --help
 
 Generate schema from schema.xsd file
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
+  -g, --get-schema      Get the latest schema files.
+  -c COMMIT, --commit COMMIT
+                        Force a specific GEOS develop's commit for schema
+                        download
   -s SCHEMAFILE, --schemaFile SCHEMAFILE
                         Filepath to GEOS schema file.
   -cf CONFIGFILE, --configFile CONFIGFILE
-                        Filepath to xml configuration file for schema generation.
+                        Filepath to xml configuration file for schema
+                        generation.
   -v VERSION, --version VERSION
                         GEOS commit sha or version identification.
 ```
