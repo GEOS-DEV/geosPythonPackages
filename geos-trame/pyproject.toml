@@ -8,7 +8,8 @@ version = "1.0.0"
 description = "Geos Simulation Modeler"
 authors = [{name = "GEOS Contributors" }]
 maintainers = [{name = "Alexandre Benedicto", email = "alexandre.benedicto@external.totalenergies.com" },
-               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" }]
+               {name = "Paloma Martinez", email = "paloma.martinez@external.totalenergies.com" },
+               {name = "Jacques Franc", email= "jacques.franc@external.totalenergies.com" }]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -40,7 +41,6 @@ dependencies = [
     "matplotlib==3.9.4",
     "trame-matplotlib==2.0.3",
     "trame-components==2.4.2",
-    "trame-gantt==0.1.5",
     "mpld3<0.5.11",
     "xsdata==24.5",
     "xsdata-pydantic[lxml]==24.5",
@@ -48,6 +48,7 @@ dependencies = [
     "dpath==2.2.0",
     "colorcet==3.1.0",
     "funcy==2.0",
+    "pytz==2025.2",
     "typing_inspect==0.9.0",
     "typing_extensions>=4.12",
     "PyYAML",
