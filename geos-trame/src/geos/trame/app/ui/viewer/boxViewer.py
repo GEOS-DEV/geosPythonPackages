@@ -3,7 +3,7 @@
 # SPDX-FileContributor: Lucas Givord - Kitware
 import pyvista as pv
 
-from geos.trame.schema_generated.schema_mod import BoxType
+from geos.trame.schema_generated.schema_mod import Box
 
 import re
 
@@ -14,11 +14,11 @@ class BoxViewer:
     This mesh is represented in GEOS with a Box.
     """
 
-    def __init__( self, mesh: pv.UnstructuredGrid, box: BoxType ) -> None:
+    def __init__( self, mesh: pv.UnstructuredGrid, box: Box ) -> None:
         """Initialize the BoxViewer with a mesh and a box."""
         self._mesh: pv.UnstructuredGrid = mesh
 
-        self._box: BoxType = box
+        self._box: Box = box
         self._box_polydata: pv.PolyData = None
         self._box_polydata_actor: pv.Actor = None
 

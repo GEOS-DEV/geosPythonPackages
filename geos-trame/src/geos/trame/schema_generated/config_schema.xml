@@ -15,7 +15,6 @@
     <IncludeHeader>false</IncludeHeader>
     <DocstringStyle>reStructuredText</DocstringStyle>
     <RelativeImports>false</RelativeImports>
-    <CompoundFields>true</CompoundFields>
   </Output>
   <!-- <Filters> -->
     <!-- <Filter type="class" search="^Problem$"> -->
