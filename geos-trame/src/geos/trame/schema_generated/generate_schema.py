@@ -4,6 +4,7 @@ import os
 import subprocess
 
 import requests
+from lxml import etree
 
 
 def get_schema(commit_sha: str):
@@ -76,6 +77,26 @@ def latest_commits(n: int) -> None:
     ]
 
 
+def discard_problem_element(schema_file: str) -> str:
+    """Discard Problem element as it generates name conflict in XSDATA routine and is void."""
+
+    tree = etree.parse(schema_file)
+    root = tree.getroot()
+    ns = {"xsd": "http://www.w3.org/2001/XMLSchema"}
+
+    for el in root.xpath(
+        "//xsd:element[@name='Problem' and @type='Problem']", namespaces=ns
+    ):
+        parent = el.getparent()
+        parent.remove(el)
+
+    output_name: str = "schema.cleaned.xsd"
+    tree.write(
+        output_name, encoding="utf-8", xml_declaration=True, pretty_print=True
+    )
+    return output_name
+
+
 def generateFileFromSchema() -> None:
     """Generate pydantic file from xsd file with a parser."""
     p = argparse.ArgumentParser(
@@ -131,7 +152,8 @@ def generateFileFromSchema() -> None:
             for commit in commits:
                 get_schema(commit["sha"])
     else:
-        run_process_Xsdata(pp.schemaFile, pp.configFile)
+        cleaned_schema: str = discard_problem_element(pp.schemaFile)
+        run_process_Xsdata(cleaned_schema, pp.configFile)
         addHeader(pp.version)
         cleanInit()
 

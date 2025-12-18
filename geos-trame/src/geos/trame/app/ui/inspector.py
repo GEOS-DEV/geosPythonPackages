@@ -15,7 +15,7 @@ from geos.trame.app.data_types.renderable import Renderable
 from geos.trame.app.data_types.tree_node import TreeNode
 from geos.trame.app.deck.tree import DeckTree
 from geos.trame.app.utils.dict_utils import iterate_nested_dict
-from geos.trame.schema_generated.schema_mod import ProblemType
+from geos.trame.schema_generated.schema_mod import Problem
 
 vuetify.enable_lab()
 
@@ -113,7 +113,7 @@ class DeckInspector( vuetify.VTreeview ):
     # TODO
     # v should be a proxy like the one in paraview simple
     # maybe it can be Any of schema_mod (e.g. Problem)
-    def _set_source( self, v: ProblemType | None ) -> None:
+    def _set_source( self, v: Problem | None ) -> None:
 
         # TODO replace this snippet
         from xsdata.formats.dataclass.serializers.config import SerializerConfig
