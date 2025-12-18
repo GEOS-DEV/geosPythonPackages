@@ -122,8 +122,8 @@ def generateFileFromSchema() -> None:
             for commit in commits:
                 get_schema( commit[ "sha" ] )
     else:
-        run_process_Xsdata(pp.schemaFile, pp.configFile)
-        addHeader(pp.version)
+        run_process_Xsdata( pp.schemaFile, pp.configFile )
+        addHeader( pp.version )
         cleanInit()
 
 
