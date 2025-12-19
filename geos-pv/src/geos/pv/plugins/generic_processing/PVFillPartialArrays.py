@@ -15,7 +15,7 @@ from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-fou
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
 # update sys.path to load all GEOS Python Package dependencies
-geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent
+geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
 sys.path.insert( 0, str( geos_pv_path / "src" ) )
 from geos.pv.utils.config import update_paths
 
