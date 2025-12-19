@@ -227,10 +227,11 @@ class DeckViewer( vuetify.VCard ):
         self.state[ self.ZAMPLIFICATION ] = value
         if self._mesh_actor is not None:
             self._mesh_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
-            if hasattr( self.box_engine, "_box_polydata_actor" ) and hasattr( self.box_engine,
-                                                                              "_extracted_cells_actor" ):
-                self.box_engine._box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
-                self.box_engine._extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+            for k, _ in self.box_engine.items():
+                if hasattr( self.box_engine[ k ], "_box_polydata_actor" ) and hasattr(
+                        self.box_engine[ k ], "_extracted_cells_actor" ):
+                    self.box_engine[ k ]._box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+                    self.box_engine[ k ]._extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
 
             if self.plotter.plane_widgets:
                 self.plotter.plane_widgets[ 0 ].PlaceWidget( list( self._mesh_actor.GetBounds() ) )
