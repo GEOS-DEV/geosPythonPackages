@@ -138,11 +138,11 @@ class AttributesDiff:
             raise TypeError( "The meshes must have the same type." )
 
         dicMeshesMaxElementId: dict[ bool, list[ int ] ] = { False: [ 0, 0 ], True: [ 0, 0 ], }
-        if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
+        if isinstance( listMeshes[ 0 ], vtkDataSet ):
             for meshId, mesh in enumerate( listMeshes ):
                 for piece in dicMeshesMaxElementId:
                     dicMeshesMaxElementId[ piece ][ meshId ] = np.max( getArrayInObject( mesh, "localToGlobalMap", piece ) )
-        elif isinstance( self.listMeshes[ 0 ], vtkMultiBlockDataSet ):
+        elif isinstance( listMeshes[ 0 ], vtkMultiBlockDataSet ):
             setDatasetType: set[ str ] = set()
             for meshId, mesh in enumerate( listMeshes ):
                 listMeshBlockId: list[ int ] = getBlockElementIndexesFlatten( mesh )
