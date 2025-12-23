@@ -12,6 +12,13 @@ geos.processing.generic_processing_tools.AttributeMapping filter
    :undoc-members:
    :show-inheritance:
 
+geos.processing.generic_processing_tools.AttributesDiff filter
+----------------------------------------------------------------
+
+.. automodule:: geos.processing.generic_processing_tools.AttributesDiff
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 geos.processing.generic_processing_tools.CreateConstantAttributePerRegion filter
 --------------------------------------------------------------------------------
