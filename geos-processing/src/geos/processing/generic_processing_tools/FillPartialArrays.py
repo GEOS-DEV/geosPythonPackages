@@ -5,6 +5,7 @@ import logging
 from typing_extensions import Self
 from typing import Union, Any
 
+from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( Logger, getLogger )
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
@@ -120,22 +121,19 @@ class FillPartialArrays:
             ValueError: Error during the filling of the attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-
-        onPoints: Union[ None, bool ]
-        onBoth: bool
+        piece: Piece
         for attributeName in self.dictAttributesValues:
-            onPoints, onBoth = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
-            if onPoints is None:
+            piece = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
+            if piece == Piece.NONE:
                 raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
-
-            if onBoth:
+            elif piece == Piece.BOTH:
                 raise AttributeError(
                     f"There is two attribute named { attributeName }, one on points and the other on cells. The attribute name must be unique."
                 )
 
             if not fillPartialAttributes( self.multiBlockDataSet,
                                           attributeName,
-                                          onPoints=onPoints,
+                                          piece=piece,
                                           listValues=self.dictAttributesValues[ attributeName ],
                                           logger=self.logger ):
                 raise ValueError( "Something went wrong with the filling of partial attributes" )
