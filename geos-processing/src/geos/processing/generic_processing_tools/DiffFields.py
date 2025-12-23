@@ -17,39 +17,80 @@ from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Logger import ( Logger, getLogger )
 
 __doc__ = """
-Module to diff(operate) on fields between two meshes composing based on globalIds indirection
+Attributes Diff is a vtk that compute L1 and L2 differences between attributes shared by two identical meshes.
 
+Input meshes cans be vtkDataSet or vtkMultiBlockDataSet.
+
+To use the filter:
+
+.. code-block:: python
+
+    import logging
+    from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
+
+    from geos.processing.generic_processing_tools.AttributesDiff import AttributesDiff
+
+    # Filter inputs:
+    computeL2Diff: bool  # defaults to False
+    speHandler: bool  # defaults to False
+
+    # Instantiate the filter:
+    attributesDiffFilter: AttributesDiff = AttributesDiff( computeL2Diff, speHandler )
+
+    # Set the handler of yours (only if speHandler is True):
+    yourHandler: logging.Handler
+    attributesDiffFilter.setLoggerHandler( yourHandler )
+
+    # Set the meshes to compare:
+    listMeshes: list[ vtkMultiBlockDataSet | vtkDataSet ]
+    attributesDiffFilter.setMeshes( listMeshes )
+
+    # Log the shared attributes info (optional):
+    attributesDiffFilter.logSharedAttributeInfo()
+
+    # Get the shared attributes (optional):
+    dicSharedAttributes: dict[ bool, set[ str ] ]
+    dicSharedAttributes = attributesDiffFilter.getDicSharedAttribute()
+
+    # Set the attributes to compare:
+    dicAttributesToCompare: dict[ bool, set[ str ] ]
+    attributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
+
+    # Do calculations:
+    attributesDiffFilter.applyFilter()
+
+    # Get the mesh with the computed attributes differences as new attributes:
+    outputMesh: vtkMultiBlockDataSet | vtkDataSet
+    outputMesh = attributesDiffFilter.getOutput()
 """
 
-loggerTitle : str = "DiffFieldsFilter"
+loggerTitle : str = "Attributes Diff"
 
-class DiffFieldsFilter:
+class AttributesDiff:
 
     def __init__(
         self: Self,
         computeL2Diff: bool = False,
         speHandler: bool = False,
     ) -> None:
-        """ Difference of Fields.
+        """Compute differences (L1 and L2) between two identical meshes attribute.
 
         Args:
+            computeL2Diff (bool, optional): True to compute the L2 difference
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.listMeshes: list[ vtkMultiBlockDataSet | vtkDataSet ] = []
-        self.nbCells: int = 0
-        self.nbPoints: int = 0
-        self.idPointMax: int = 0
+        self.dicNbElements: dict[ bool, int ] = {}
 
         self.dicSharedAttributes: dict[ bool, set[ str ] ] = {}
         self.dicAttributesToCompare: dict[ bool, set[ str ] ] = {}
         self.dicAttributesDiffNames: dict[ bool, list[ str ] ] = {}
-        self.cellsAttributesArray: npt.NDArray[ np.float32 ] = np.array( [] )
-        self.pointsAttributesArray: npt.NDArray[ np.float32 ] = np.array( [] )
+        self.dicAttributesArray: dict[ bool, npt.NDArray[ np.float32 ] ] = {}
 
         self.computeL2Diff: bool = computeL2Diff
 
-        self.outputMesh: vtkMultiBlockDataSet | vtkDataSet = vtkDataSet()
+        self.outputMesh: vtkMultiBlockDataSet | vtkDataSet = vtkMultiBlockDataSet()
 
         # Logger.
         self.logger: Logger
@@ -90,79 +131,64 @@ class DiffFieldsFilter:
             TypeError: The meshes do not have the same type.
             ValueError: The meshes do not have the same cells or points number or datasets indexes or the number of meshes is to small.
         """
-        if len( listMeshes ) < 2:
-            raise ValueError ( "The list of meshes must contain at least two meshes." )
+        if len( listMeshes ) != 2:
+            raise ValueError ( "The list of meshes must contain two meshes." )
 
-        meshTypeRef: str = listMeshes[ 0 ].GetClassName()
-        for mesh in listMeshes[ 1: ]:
-            if mesh.GetClassName() != meshTypeRef:
-                raise TypeError( "All the meshes must have the same type." )
+        if listMeshes[ 0 ].GetClassName() != listMeshes[ 1 ].GetClassName():
+            raise TypeError( "The meshes must have the same type." )
 
-        nbDataSet: int
-        idPointMax: int
-        nbCellsRef: int
-        nbPointsRef: int
-        if isinstance( listMeshes[ 0 ], vtkDataSet ):
-            nbDataSet = 1
-            idPointMax = np.max( getArrayInObject( listMeshes[ 0 ], "localToGlobalMap", True ) )
-            nbCellsRef = listMeshes[ 0 ].GetNumberOfCells()
-            nbPointsRef = listMeshes[ 0 ].GetNumberOfPoints()
-            for mesh in listMeshes[ 1: ]:
-                if mesh.GetNumberOfCells() != nbCellsRef:
-                    raise ValueError( "All the meshes must have the same number of cells." )
-                if mesh.GetNumberOfPoints() != nbPointsRef:
-                    raise ValueError( "All the meshes must have the same number of points." )
-        elif isinstance( listMeshes[ 0 ], vtkMultiBlockDataSet ):
-            blockElementIndexesFlattenRef: list[ int ] = getBlockElementIndexesFlatten( listMeshes[ 0 ] )
-            nbDataSet = len( blockElementIndexesFlattenRef )
-            for mesh in listMeshes[ 1: ]:
-                if getBlockElementIndexesFlatten( mesh ) != blockElementIndexesFlattenRef:
-                    raise ValueError( "All the meshes do not have the same blocks indexes.")
-
-            for blockId in blockElementIndexesFlattenRef:
-                datasetTypeRef: str = listMeshes[ 0 ].GetDataSet( blockId ).GetClassName()
-                for mesh in listMeshes[ 1: ]:
-                    if mesh.GetDataSet( blockId ).GetClassName() != datasetTypeRef:
-                        raise TypeError( "The datasets with the same flatten index of all the meshes must have the same type.")
-
-                datasetRef: vtkDataSet = vtkDataSet.SafeDownCast( listMeshes[ 0 ].GetDataSet( blockId ) )
-                idPointMax = np.max( getArrayInObject( datasetRef, "localToGlobalMap", True ) )
-                nbCellsRef = datasetRef.GetNumberOfCells()
-                nbPointsRef = datasetRef.GetNumberOfPoints()
-                for mesh in listMeshes[ 1: ]:
-                    datasetTest: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockId ) )
-                    if datasetTest.GetNumberOfCells() != nbCellsRef:
-                        raise ValueError( "The datasets with the same flatten index of all the meshes must have the same number of cells." )
-                    if datasetTest.GetNumberOfPoints() != nbPointsRef:
-                        raise ValueError( "The datasets with the same flatten index of all the meshes must have the same number of points." )
+        dicMeshesMaxElementId: dict[ bool, list[ int ] ] = { False: [ 0, 0 ], True: [ 0, 0 ], }
+        if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
+            for meshId, mesh in enumerate( listMeshes ):
+                for piece in dicMeshesMaxElementId:
+                    dicMeshesMaxElementId[ piece ][ meshId ] = np.max( getArrayInObject( mesh, "localToGlobalMap", piece ) )
+        elif isinstance( self.listMeshes[ 0 ], vtkMultiBlockDataSet ):
+            setDatasetType: set[ str ] = set()
+            for meshId, mesh in enumerate( listMeshes ):
+                listMeshBlockId: list[ int ] = getBlockElementIndexesFlatten( mesh )
+                for meshBlockId in listMeshBlockId:
+                    setDatasetType.add( mesh.GetDataSet( meshBlockId ).GetClassName() )
+                    dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( meshBlockId ) )
+                    for piece in dicMeshesMaxElementId:
+                        dicMeshesMaxElementId[ piece ][ meshId ] = max( dicMeshesMaxElementId[ piece ][ meshId ], np.max( getArrayInObject( dataset, "localToGlobalMap", piece ) ) )
+                        if piece:
+                            a= dataset.GetNumberOfPoints()
+                        else:
+                            a= dataset.GetNumberOfCells()
+                        if a - len( getArrayInObject( dataset, "localToGlobalMap", piece ) ) != 0:
+                            print("r")
+                if len( setDatasetType ) != 1:
+                    raise TypeError( "All datasets of the meshes must have the same type." )
         else:
             raise TypeError( "The meshes must be inherited from vtkMultiBlockDataSet or vtkDataSet.")
 
+        for piece, listMeshMaxElementId in dicMeshesMaxElementId.items():
+            if listMeshMaxElementId[ 0 ] != listMeshMaxElementId[ 1 ]:
+                raise ValueError( f"The total number of { piece } in the meshes must be the same." )
+
         self.listMeshes = listMeshes
-        self.idPointMax = idPointMax
-        self.nbCells = nbCellsRef * nbDataSet
-        self.nbPoints = nbPointsRef * nbDataSet
-        self.computeSharedAttributes()
+        self.dicNbElements[ True ] = dicMeshesMaxElementId[ True ][ 0 ] + 1
+        self.dicNbElements[ False ] = dicMeshesMaxElementId[ False ][ 0 ] + 1
         self.outputMesh = listMeshes[ 0 ].NewInstance()
         self.outputMesh.ShallowCopy( listMeshes[ 0 ] )
+        self._computeDicSharedAttributes()
 
         return
 
-    def computeSharedAttributes( self: Self ) -> None:
+    def _computeDicSharedAttributes( self: Self ) -> None:
         """Compute the dictionary with the shared attributes per localization between the two meshes.
 
         Keys of the dictionary are the attribute localization and the value are the shared attribute per localization.
         """
         for piece in [ True, False ]:
-            sharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece )
-            for mesh in self.listMeshes[ 1: ]:
-                sharedAttributes.update( getAttributeSet( mesh, piece ) )
-            if sharedAttributes != set():
-                self.dicSharedAttributes[ piece ] = sharedAttributes
+            setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece )
+            setSharedAttributes.update( getAttributeSet( self.listMeshes[ 1 ], piece ) )
+            if setSharedAttributes != set():
+                self.dicSharedAttributes[ piece ] = setSharedAttributes
 
         return
 
-    def getSharedAttribute( self: Self ) -> dict[ bool, set[ str ] ]:
+    def getDicSharedAttribute( self: Self ) -> dict[ bool, set[ str ] ]:
         """Getter of the dictionary with the shared attributes per localization."""
         return self.dicSharedAttributes
 
@@ -185,33 +211,40 @@ class DiffFieldsFilter:
         Raises:
             ValueError: At least one attribute to compare is not a shared attribute.
         """
-        for piece, sharedAttributesToCompare in dicAttributesToCompare.items():
-            if not sharedAttributesToCompare.issubset( self.dicSharedAttributes[ piece ] ):
-                wrongAttributes: set[ str ] = sharedAttributesToCompare.difference( self.dicSharedAttributes[ piece ] )
+        for piece, setSharedAttributesToCompare in dicAttributesToCompare.items():
+            if not setSharedAttributesToCompare.issubset( self.dicSharedAttributes[ piece ] ):
+                wrongAttributes: set[ str ] = setSharedAttributesToCompare.difference( self.dicSharedAttributes[ piece ] )
                 raise ValueError( f"The attributes to compare { wrongAttributes } are not shared attributes.")
 
-        for piece in dicAttributesToCompare:
-            self.dicAttributesDiffNames[ piece ] = []
-
-        nbCellsComponents = 0
-        nbPointsComponents = 0
-        for piece, sharedAttributesToCompare in dicAttributesToCompare.items():
-            for attributeName in sharedAttributesToCompare:
-                self.dicAttributesDiffNames[ piece ].append( f"diff_{ attributeName }" )
-                if piece:
-                    nbPointsComponents += getNumberOfComponents( self.listMeshes[ 0 ], attributeName, piece )
+        dicNbComponents: dict[ bool, int ] = {}
+        dicAttributesDiffNames: dict[ bool, list[ str ] ] = {}
+        dicAttributesArray: dict[ bool, npt.NDArray[ np.float32 ] ] = {}
+        for piece, setSharedAttributesToCompare in dicAttributesToCompare.items():
+            dicNbComponents[ piece ] = 0
+            dicAttributesDiffNames[ piece ] = []
+            for attributeName in setSharedAttributesToCompare:
+                nbAttributeComponents = getNumberOfComponents( self.outputMesh, attributeName, piece )
+                dicNbComponents[ piece ] += nbAttributeComponents
+                diffAttributeName: str = f"diff_{ attributeName }"
+                if nbAttributeComponents > 1:
+                    dicAttributesDiffNames[ piece ].extend( [ diffAttributeName + "_component" + str( idAttributeComponent ) for idAttributeComponent in range( nbAttributeComponents ) ] )
                 else:
-                    nbCellsComponents += getNumberOfComponents( self.listMeshes[ 0 ], attributeName, piece )
+                    dicAttributesDiffNames[ piece ].append( diffAttributeName )
+            dicAttributesArray[ piece ] = np.zeros( shape=( self.dicNbElements[ piece ], dicNbComponents[ piece ], 2 ), dtype=np.float32 )
 
+        self.dicAttributesArray = dicAttributesArray
         self.dicAttributesToCompare = dicAttributesToCompare
-        self.cellsAttributesArray = np.zeros( shape=( self.nbCells, nbCellsComponents, len( self.listMeshes ) ), dtype=np.float32 )
-        self.pointsAttributesArray = np.zeros( shape=( self.nbPoints, nbPointsComponents, len( self.listMeshes ) ), dtype=np.float32 )
+        self.dicAttributesDiffNames = dicAttributesDiffNames
 
         return
 
     def getDicAttributesToCompare( self: Self ) -> dict[ bool, set[ str ] ]:
         """Getter of the dictionary of the attribute to compare per localization."""
         return self.dicAttributesToCompare
+
+    def getDicAttributesDiffNames( self: Self ) -> dict[ bool, list[ str ] ]:
+        """Getter of the dictionary with the name of the attribute created with the calculated attributes diff."""
+        return self.dicAttributesDiffNames
 
     def applyFilter( self: Self ) -> None:
         """Apply the diffFieldsFilter."""
@@ -223,8 +256,8 @@ class DiffFieldsFilter:
         if self.dicAttributesToCompare == {}:
             raise ValueError( "Set the attribute to compare per localization." )
 
-        self.computePointsAndCellsAttributesArrays()
-        self.computeL1()
+        self._computeDicAttributesArray()
+        self._computeL1()
         # if self.computeL2Diff:
         #     self.computeL2()
 
@@ -232,68 +265,46 @@ class DiffFieldsFilter:
 
         return
 
-    def computePointsAndCellsAttributesArrays( self: Self ) -> None:
-        """Compute one array per localization with all the values of all the attributes to compare."""
+    def _computeDicAttributesArray( self: Self ) -> None:
+        """Compute the dictionary with one array per localization with all the values of all the attributes to compare."""
         for piece, sharedAttributesToCompare in self.dicAttributesToCompare.items():
             idComponents: int = 0
             for attributeName in sharedAttributesToCompare:
                 arrayAttributeData: npt.NDArray[ Any ]
                 nbAttributeComponents: int
-                for idMesh, mesh in enumerate( self.listMeshes ):
+                for meshId, mesh in enumerate( self.listMeshes ):
                     if isinstance( mesh, vtkDataSet ):
                         arrayAttributeData = getArrayInObject( mesh, attributeName, piece )
                         nbAttributeComponents = getNumberOfComponents( mesh, attributeName, piece )
-                        if piece:
-                            self.pointsAttributesArray[ :, idComponents : idComponents + nbAttributeComponents, idMesh ] = arrayAttributeData.reshape( self.nbPoints, nbAttributeComponents )
-                        else:
-                            self.cellsAttributesArray[ :, idComponents : idComponents + nbAttributeComponents, idMesh ] = arrayAttributeData.reshape( self.nbCells, nbAttributeComponents )
+                        self.dicAttributesArray[ piece ][ :, idComponents : idComponents + nbAttributeComponents, meshId ] = arrayAttributeData.reshape( self.dicNbElements[ piece ], nbAttributeComponents )
                     else:
-                        it = mesh.NewIterator()
-                        while not it.IsDoneWithTraversal():
-                            # use localToGlobalMap
-                            dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )
+                        listMeshBlockId: list[ int ] = getBlockElementIndexesFlatten( mesh )
+                        for meshBlockId in listMeshBlockId:
+                            dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( meshBlockId ) )
                             arrayAttributeData = getArrayInObject( dataset, attributeName, piece )
                             nbAttributeComponents = getNumberOfComponents( dataset, attributeName, piece )
                             lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
-                            if piece:
-                                nbPoints: int = dataset.GetNumberOfPoints()
-                                self.pointsAttributesArray[ lToG, idComponents : idComponents + nbAttributeComponents, idMesh ] += arrayAttributeData.reshape( int( nbPoints / nbAttributeComponents ), nbAttributeComponents )
-                            else:
-                                nbCells: int = dataset.GetNumberOfCells()
-                                self.cellsAttributesArray[ lToG - self.idPointMax, idComponents : idComponents + nbAttributeComponents, idMesh ] += arrayAttributeData.reshape( int( nbCells / nbAttributeComponents ), nbAttributeComponents )
-                            it.GoToNextItem()
-
-                if nbAttributeComponents > 1:
-                    self.dicAttributesDiffNames[ piece ][ idComponents : idComponents + 1 ] = str( [ self.dicAttributesDiffNames[ piece ][ idComponents ] + "_component" + str( idAttributeComponent ) for idAttributeComponent in range( nbAttributeComponents ) ] )
+                            self.dicAttributesArray[ piece ][ lToG, idComponents : idComponents + nbAttributeComponents, meshId ] = arrayAttributeData.reshape( len( lToG ), nbAttributeComponents )
 
                 idComponents += nbAttributeComponents
 
         return
 
-    def computeL1( self: Self ) -> None:
+    def _computeL1( self: Self ) -> None:
         """Compute the L1 diff for all the wanted attribute and create attribute with it on the output mesh."""
-        for attributeId, dicItems in enumerate( self.dicAttributesDiffNames.items() ):
-            piece: bool
-            attributeDiffName: list[ str ]
-            piece, attributeDiffName = dicItems
-            attributeArray: npt.NDArray[ Any ]
-            if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
-                if piece:
-                    attributeArray = np.abs( self.pointsAttributesArray[ :, attributeId, 0 ] - self.pointsAttributesArray[ :, attributeId, 1 ] )
+        for piece in self.dicAttributesDiffNames:
+            for attributeId, attributeDiffName in enumerate( self.dicAttributesDiffNames[ piece ] ):
+                attributeArray: npt.NDArray[ Any ]
+                if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
+                    attributeArray = np.abs( self.dicAttributesArray[ piece ][ :, attributeId, 0 ] - self.dicAttributesArray[ piece ][ :, attributeId, 1 ] )
+                    createAttribute( self.outputMesh, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
                 else:
-                    attributeArray = np.abs( self.cellsAttributesArray[ :, attributeId, 0 ] - self.cellsAttributesArray[ :, attributeId, 1 ] )
-                createAttribute( self.outputMesh, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
-            else:
-                it = self.outputMesh.NewIterator()
-                while not it.IsDoneWithTraversal():
-                    dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( it ) )
-                    lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
-                    if piece:
-                        attributeArray = np.abs( self.cellsAttributesArray[ lToG, attributeId, 0 ] - self.cellsAttributesArray[ lToG, attributeId, 1 ] )
-                    else:
-                        attributeArray = np.abs( self.cellsAttributesArray[ lToG - self.idPointMax, attributeId, 0 ] - self.cellsAttributesArray[ lToG - self.idPointMax, attributeId, 1 ] )
-                    createAttribute( dataset, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
-                    it.GoToNextItem()
+                    listBlockId: list[ int ] = getBlockElementIndexesFlatten( self.outputMesh )
+                    for BlockId in listBlockId:
+                        dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( BlockId ) )
+                        lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
+                        attributeArray = np.abs( self.dicAttributesArray[ piece ][ lToG, attributeId, 0 ] - self.dicAttributesArray[ piece ][ lToG, attributeId, 1 ] )
+                        createAttribute( dataset, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
 
         return
 
