@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from enum import Enum
 from typing import Any, Union, cast
+from typing_extensions import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -18,10 +19,12 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
 from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
 
-from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkDataArraySelection as vtkDAS
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector, vtkStringArray, vtkIntArray
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkCompositeDataSet
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkRenderingFreeType import vtkVectorText
+from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 
 # Update sys.path to load all GEOS Python Package dependencies
 geos_pv_path: Path = Path( __file__ ).parent.parent.parent.parent.parent.parent
@@ -74,7 +77,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
 
 * Extract a few number of cells with the `ExtractSelection` ParaView Filter, then use the `MergeBlocks` ParaView Filter
 * Select the resulting mesh in the pipeline
-* Select the filter: Filters > { FilterCategory.GENERIC_PROCESSING.value } > Plot Mohr's Circle
+* Select the filter: Filters > { FilterCategory.GEOS_POST_PROCESSING.value } > Plot Mohr's Circle
 * Select the cell Ids and time steps you want
 * (Optional) Set rock cohesion and/or friction angle
 * Apply
@@ -90,7 +93,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
 
 @smproxy.filter( name="PVMohrCirclePlot", label="Plot Mohr's Circles" )
 @smhint.xml( f"""
-    <ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>
+    <ShowInMenu category="{ FilterCategory.GEOS_POST_PROCESSING.value }"/>
     <View type="PythonView"/>
     """ )
 @smproperty.input( name="Input", port_index=0 )
@@ -105,7 +108,10 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
         Mohr's circles are plotted using a Python View.
         """
-        super().__init__( nInputPorts=1, nOutputPorts=1, outputType="vtkDataObject" )
+        super().__init__( nInputPorts=1,
+                          nOutputPorts=1,
+                          inputType="vtkUnstructuredGrid",
+                          outputType="vtkMultiBlockDataSet" )
 
         # Create a new PythonView
         self.pythonView: Any = buildNewLayoutWithPythonView()
@@ -720,9 +726,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         outData = self.GetOutputData( outInfoVec, 0 )
 
         assert inData is not None
-        if ( outData is None ) or ( not outData.IsA( inData.GetClassName() ) ):
-            outData = inData.NewInstance()
-            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )
+        if outData is None or ( not outData.IsA( "vtkMultiBlockDataSet" ) ):
+            outData = vtkMultiBlockDataSet()
+            outInfoVec.GetInformationObject( 0 ).Set( outData.DATA_OBJECT(), outData )  # type: ignore
         return super().RequestDataObject( request, inInfoVec, outInfoVec )  # type: ignore[no-any-return]
 
     def RequestData(
@@ -775,7 +781,66 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                     self.frictionAngle,
                     self._getUserChoices(),
                 )
+
                 Render()
+
+                # Cell indexes annotation
+                nbCells = inputMesh.GetNumberOfCells()
+                inputData = inputMesh.NewInstance()
+                inputData.ShallowCopy( inputMesh )
+                outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
+
+                cellId = vtkStringArray()
+                cellId.SetName( "cellId" )
+                cellId.SetNumberOfValues( nbCells )
+
+                cellMask = vtkIntArray()
+                cellMask.SetName( "CellMask" )
+                cellMask.SetNumberOfValues( nbCells )
+
+                selected_local = set()
+                originalCellIds = inputMesh.GetCellData().GetArray( "vtkOriginalCellIds" )
+                for localCellId in range( nbCells ):
+                    if str( originalCellIds.GetValue( localCellId ) ) in self.requestedCellIds:
+                        selected_local.add( localCellId )
+                        cellId.SetValue( localCellId, f"{ originalCellIds.GetValue( localCellId ) }" )
+                        cellMask.SetValue( localCellId, 1 )
+                    else:
+                        cellMask.SetValue( localCellId, 0 )
+
+                inputData.GetCellData().AddArray( cellId )
+                inputData.GetCellData().AddArray( cellMask )
+
+                idBlock = 0
+                for localCellId in selected_local:
+                    globalCellId = f"{ originalCellIds.GetValue( localCellId ) }"
+                    text = vtkVectorText()
+                    text.SetText( globalCellId )
+                    text.Update()
+
+                    cellBounds = inputMesh.GetCell( localCellId ).GetBounds()
+                    transformFilter = vtkTransform()
+                    transformFilter.Translate( cellBounds[ 1 ], cellBounds[ 3 ], cellBounds[ 5 ] )
+
+                    scaleX = ( cellBounds[ 1 ] - cellBounds[ 0 ] ) / 4
+                    scaleY = ( cellBounds[ 3 ] - cellBounds[ 2 ] ) / 4
+                    scaleZ = ( cellBounds[ 5 ] - cellBounds[ 4 ] ) / 4
+                    transformFilter.Scale( scaleX, scaleY, scaleZ )
+
+                    transformFromPolyDataFilter = vtkTransformPolyDataFilter()
+                    transformFromPolyDataFilter.SetTransform( transformFilter )
+                    transformFromPolyDataFilter.SetInputData( text.GetOutput() )
+                    transformFromPolyDataFilter.Update()
+
+                    meshText = vtkPolyData()
+                    meshText.ShallowCopy( transformFromPolyDataFilter.GetOutput() )
+
+                    outputMesh.SetBlock( idBlock, meshText )
+                    outputMesh.GetMetaData( idBlock ).Set( vtkCompositeDataSet.NAME(), f"Cell_{ globalCellId }" )
+                    idBlock += 1
+
+                outputMesh.SetBlock( idBlock, inputData )
+                outputMesh.GetMetaData( idBlock ).Set( vtkCompositeDataSet.NAME(), "Input Data" )
 
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
@@ -813,12 +878,21 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _filterMohrCircles( self: Self ) -> list[ MohrCircle ]:
         """Filter the list of all MohrCircle to get those to plot.
 
+        Mohr circles are sort by cell indexes first then by timesteps.
+
         Returns:
             list[MohrCircle]: list of MohrCircle to plot.
         """
         # Circle ids to plot
         circleIds: list[ str ] = self._getCircleIds()
-        return [ mohrCircle for mohrCircle in self.mohrCircles if mohrCircle.getCircleId() in circleIds ]
+        mohrCircleToPlot: list[ MohrCircle ] = [ MohrCircle( "-1" ) for i in range( len( circleIds ) ) ]
+        for mohrCircle in self.mohrCircles:
+            try:
+                mohrCircleToPlot[ circleIds.index( str( mohrCircle.getCircleId() ) ) ] = mohrCircle
+            except ValueError:
+                continue
+
+        return mohrCircleToPlot
 
     def _updateRequestedTimeSteps( self: Self ) -> None:
         """Update the requestedTimeStepsIndexes attribute from user choice."""
@@ -843,13 +917,15 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _getCircleIds( self: Self ) -> list[ str ]:
         """Get circle ids to plot.
 
+        This list of circle indexes is sort by cell indexes first then by timesteps
+
         Returns:
             list[str]: list of circle ids to plot.
         """
         cellIds: list[ str ] = pvt.getArrayChoices( self.a01GetCellIdsDAS() )
         timeSteps: list[ str ] = pvt.getArrayChoices( self.a02GetTimestepsToPlot() )
 
-        return [ mcf.getMohrCircleId( cellId, timeStep ) for timeStep in timeSteps for cellId in cellIds ]
+        return [ mcf.getMohrCircleId( cellId, timeStep ) for cellId in cellIds for timeStep in timeSteps ]
 
     def _defineCurvesAspect( self: Self ) -> None:
         """Add curve aspect parameters according to user choices."""
