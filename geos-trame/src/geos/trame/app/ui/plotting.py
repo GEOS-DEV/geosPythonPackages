@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Lionel Untereiner
+# SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -57,42 +57,41 @@ class DeckPlotting( vuetify.VCard ):
             "dpi": dpi,
         }
 
-    @staticmethod
-    def _inverse_gaz( x: np.ndarray ) -> np.ndarray:
-        return 1 - x
-
     def _permeability( self, **kwargs: Any ) -> Figure:
         # read data
         assert self.source.input_file is not None
+        if self.source.input_file is None:
+            return Figure
+        water_x = np.array( [] )
+        water_y = np.array( [] )
+        gaz_x = np.array( [] )
+        gaz_y = np.array( [] )
         for f in self.source.plots():
             for t in f.table_function:
                 if t.name == "waterRelativePermeabilityTable":
                     fileX = t.coordinate_files.strip( "{(.+)}" ).strip()
                     assert fileX is not None and t.voxel_file is not None
-                    self.water_x = np.loadtxt( self.source.input_file.path + "/" + fileX )
-                    self.water_y = np.loadtxt( self.source.input_file.path + "/" + t.voxel_file )
+                    water_x = np.loadtxt( self.source.input_file.path + "/" + fileX )
+                    water_y = np.loadtxt( self.source.input_file.path + "/" + t.voxel_file )
 
                 if t.name == "gasRelativePermeabilityTable":
                     fileX = t.coordinate_files.strip( "{(.+)}" ).strip()
                     assert fileX is not None and t.voxel_file is not None
-
                     gaz_x = np.loadtxt( self.source.input_file.path + "/" + fileX )
-                    self.gaz_x = self._inverse_gaz( gaz_x )
-                    self.gaz_y = np.loadtxt( self.source.input_file.path + "/" + t.voxel_file )
+                    gaz_x = 1. - gaz_x
+                    gaz_y = np.loadtxt( self.source.input_file.path + "/" + t.voxel_file )
 
         # make drawing
         plt.close( "all" )
         fig, ax = plt.subplots( **kwargs )
 
-        if ( self.water_x is not None and self.water_y is not None and self.gaz_x is not None
-             and self.gaz_y is not None ):
-            np.random.seed( 0 )
-            ax.plot( self.water_x, self.water_y, label="water" )
-            ax.plot( self.gaz_x, self.gaz_y, label="gaz" )
+        if all( a.size > 0 for a in [ gaz_x, gaz_y, water_x, water_y ] ):
+            ax.plot( water_x, water_y, '+-', label="water" )
+            ax.plot( gaz_x, gaz_y, '+-', label="gaz" )
 
             ax.set_xlabel( "Water saturation" )
             ax.set_ylabel( "Relative permeability" )
-            ax.set_title( "Matplotlib Plot Rendered in D3!", size=14 )
+            ax.set_title( "Relative Permeabilities", size=14 )
             ax.grid( color="lightgray", alpha=0.7 )
             plt.xlim( [ 0, 1 ] )
             plt.ylim( [ 0, 1 ] )
