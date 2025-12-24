@@ -31,6 +31,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.utils.pieceEnum import Piece
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
 from geos.utils.Logger import CustomLoggerFormatter
@@ -799,7 +800,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # Get effective stress array
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( mesh,
                                                                    GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
-                                                                   False )
+                                                                   Piece.CELLS )
         # Get stress convention
         stressConvention = StressConventionEnum.GEOS_STRESS_CONVENTION if self.useGeosStressConvention else StressConventionEnum.COMMON_STRESS_CONVENTION
 

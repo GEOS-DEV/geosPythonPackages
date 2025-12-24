@@ -15,7 +15,7 @@ import numpy as np
 @pytest.mark.parametrize(
     "meshType, newAttributeName, regionName, dictRegionValues, componentNames, componentNamesTest, valueNpType",
     [
-        # Test the name of the new attribute (new on the mesh, one present on the other piece).
+        # Test the name of the new attribute.
         ## For vtkDataSet.
         ( "dataset", "newAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32 ),
         ( "dataset", "CellAttribute", "GLOBAL_IDS_POINTS", {}, (), (), np.float32 ),
