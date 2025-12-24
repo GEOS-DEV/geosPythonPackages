@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Lionel Untereiner
 from pathlib import Path
 from typing import Any
+from dotenv import load_dotenv
 
 from trame.app import get_server  # type: ignore
 from trame_server import Server
@@ -11,8 +12,8 @@ import sys
 
 sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-trame/src" )
 
+assert load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 from geos.trame.app.core import GeosTrame
-
 
 def main( server: Server = None, **kwargs: Any ) -> None:
     """Main function."""

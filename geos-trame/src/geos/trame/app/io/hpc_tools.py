@@ -1,5 +1,5 @@
 import json
-
+import os
 
 
 class SuggestDecomposition:
@@ -7,10 +7,10 @@ class SuggestDecomposition:
     def __init__( self, cluster_name, n_unknowns, job_type='cpu' ):
 
         # return ["P4: 1x22", "P4: 2x11"]
-        with open( '/assets/cluster.json', 'r' ) as file:
+        with open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' ) as file:
             all_cluster = json.load( file )
         self.selected_cluster = list( filter( lambda d: d.get( 'name' ) == cluster_name,
-                                              all_cluster[ "clusters" ] ) )[ 0 ]
+                                              all_cluster ) )
         self.n_unknowns = n_unknowns
         self.job_type = job_type
 

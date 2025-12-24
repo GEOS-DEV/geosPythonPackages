@@ -1,18 +1,14 @@
 {
-  "clusters": [
-    {
-      "name": "p4",
-      "host": "p4log01",
-      "port": 22,
-      "remote_home_base": "/users/",
-      "simulation_default_filename": "geosDeck.xml",
-      "simulation_default_path": "/workrd/users",
-      "simulation_dl_default_path": "/data/",
-      "geos_default_version": "daily_rhel",
-      "simulation_information_default_path": "/workrd/users",
-      "n_nodes": 212,
-      "cores_per_nodes" : 192,
-      "mem_per_node": 747
-    }
-  ]
+  "name": "p4",
+  "host": "p4log01",
+  "port": 22,
+  "remote_home_base": "/users/",
+  "simulation_default_filename": "geosDeck.xml",
+  "simulation_default_path": "/workrd/users",
+  "simulation_dl_default_path": "/data/",
+  "geos_default_version": "daily_rhel",
+  "simulation_information_default_path": "/workrd/users",
+  "n_nodes": 212,
+  "cores_per_node" : 192,
+  "mem_per_node": 747
 }

@@ -1,15 +1,16 @@
 from typing import Optional
 from pathlib import Path
 import paramiko
+import os
 import json
 
 # replace by conf-file json
 from dataclasses import dataclass
 @dataclass
 class SimulationConstant:
-    name: str
+    name : str
     host : str
-    port : int  = 22
+    port : int 
     remote_home_base : str
     simulation_default_filename : str
     simulation_default_path : str
@@ -43,7 +44,7 @@ class Authentificator:  #namespacing more than anything else
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
-    sim_constants = SimulationConstant(**json.load(open( '/assets/cluster.json', 'r' )))
+    sim_constants = SimulationConstant(**json.load(open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' )))
 
     @staticmethod
     def _sftp_copy_tree( ssh_client, file_tree, remote_root ):
@@ -62,13 +63,11 @@ class Authentificator:  #namespacing more than anything else
 
         if isinstance( node, list ):
             for file in node:
-                # sftp.put(lp/Path(file), rp/Path(file))
                 with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
                     f.write( file.get( 'content' ) )
                 print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
         elif isinstance( node, dict ):
             if "files" in node:
-                for file in node[ "files" ]:
                     # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
                     with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
                         f.write( file.get( 'content' ) )

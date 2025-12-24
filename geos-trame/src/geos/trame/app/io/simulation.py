@@ -182,6 +182,7 @@ class SimRunner( ISimRunner ):
     def __init__( self, user ):
         super().__init__()
 
+        #TODO delete
         # early test
         self.local_upload_file = "test_upload.txt"
         import time
@@ -203,7 +204,7 @@ class Simulation:
         self._server = server
         controller = server.controller
         self._sim_runner = sim_runner
-        self._sim_info_dir = sim_info_dir or SimulationConstant.SIMULATIONS_INFORMATION_FOLDER_PATH
+        self._sim_info_dir = sim_info_dir 
         server.state.job_ids = []
 
         server.state.status_colors = {
