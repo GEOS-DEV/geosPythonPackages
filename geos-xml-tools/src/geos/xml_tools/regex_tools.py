@@ -1,10 +1,25 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import re
-from typing import Dict
 
 __doc__ = """
-Tools for managing regular expressions in geosx_xml_tools.
+Regular Expression Utilities for geos-xml-tools.
 
-Define regex patterns used throughout the module:
+This module defines and manages regex patterns used throughout the package for:
+* Parameter substitution
+* Unit recognition and conversion
+* Symbolic math evaluation
+* String sanitization and formatting
 
 Pattern         |  Example targets             | Notes
 ------------------------------------------------------------------------------------
@@ -16,9 +31,10 @@ sanitize        |                              | Removes any residual characters
 strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
 strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
 
+Intended for internal use by XML processing and unit management tools.
 """
 
-patterns: Dict[ str, str ] = {
+patterns: dict[ str, str ] = {
     'parameters': r"\$:?([a-zA-Z_0-9]*)\$?",
     'units': r"([0-9]*?\.?[0-9]+(?:[eE][-+]?[0-9]*?)?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]",
     'units_b': r"([a-zA-Z]*)",
@@ -61,7 +77,7 @@ class DictRegexHandler():
         The key/value pairs of self.target indicate which values
         to look for and the values they will replace with.
         """
-        self.target: Dict[ str, str ] = {}
+        self.target: dict[ str, str ] = {}
 
     def __call__( self, match: re.Match ) -> str:
         """Replace the matching strings with their target.

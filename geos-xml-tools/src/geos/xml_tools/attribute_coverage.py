@@ -1,10 +1,33 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
 import os
 from pathlib import Path
-from typing import Any, Iterable, Dict
+from typing import Any, Iterable
 from geos.xml_tools import command_line_parsers
 
-record_type = Dict[ str, Dict[ str, Any ] ]
+__doc__ = """
+Tool designed to analyze how well a project's XML files cover the possibilities defined in an XML Schema Definition (.xsd) file.
+
+It checks which attributes are used in a codebase and generates a report.
+
+The script works in three main stages:
+* Parse the Schema: It reads the master .xsd file to understand all possible elements, attributes, and their default values.
+* Collect Usage Data: It scans through all .xml files in specified folders (like src and examples) and records every attribute value it finds.
+* Generate a Report: It creates a new XML file that summarizes the findings, showing which attributes were used, what values they were given, and their default values from the schema.
+"""
+
+record_type = dict[ str, dict[ str, Any ] ]
 
 
 def parse_schema_element( root: ElementTree.Element,
@@ -13,6 +36,10 @@ def parse_schema_element( root: ElementTree.Element,
                           recursive_types: Iterable[ str ] = [ 'PeriodicEvent', 'SoloEvent', 'HaltEvent' ],
                           folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> record_type:
     """Parse the xml schema at the current level.
+
+    Recursively builds a nested dictionary that mirrors the schema's structure.
+    For each element, it records the names of its valid attributes and children.
+    If an attribute has a default value defined in the schema, it stores that as well.
 
     Args:
         root (lxml.etree.Element): the root schema node
@@ -63,7 +90,10 @@ def parse_schema( fname: str ) -> record_type:
 
 
 def collect_xml_attributes_level( local_types: record_type, node: ElementTree.Element, folder: str ) -> None:
-    """Collect xml attribute usage at the current level.
+    """Collect xml attribute usage at the current level by going through the XML file's elements.
+
+    When it finds an attribute, it appends its value to the appropriate list
+    in the data structure created by parse_schema.
 
     Args:
         local_types (dict): dictionary containing attribute usage
@@ -96,7 +126,11 @@ def collect_xml_attributes( xml_types: record_type, fname: str, folder: str ) ->
 def write_attribute_usage_xml_level( local_types: record_type,
                                      node: ElementTree.Element,
                                      folders: Iterable[ str ] = [ 'src', 'examples' ] ) -> None:
-    """Write xml attribute usage file at a given level.
+    """Recursively builds a report called attribute usage file.
+
+    For each element and attribute from the schema, it creates a new XML element.
+    It sets attributes on this new element to show the collected values from the src and examples folders,
+    the default value, and a count of unique values found.
 
     Args:
         local_types (dict): dict containing attribute usage at the current level
@@ -141,22 +175,22 @@ def write_attribute_usage_xml( xml_types: record_type, fname: str ) -> None:
     xml_tree.write( fname, pretty_print=True )
 
 
-def process_xml_files( geosx_root: str, output_name: str ) -> None:
+def process_xml_files( geos_root: str, output_name: str ) -> None:
     """Test for xml attribute usage.
 
     Args:
-        geosx_root (str): GEOSX root directory
+        geos_root (str): GEOS root directory
         output_name (str): output file name
     """
     # Parse the schema
-    geosx_root = os.path.expanduser( geosx_root )
-    schema = '%ssrc/coreComponents/schema/schema.xsd' % ( geosx_root )
+    geos_root = os.path.expanduser( geos_root )
+    schema = '%ssrc/coreComponents/schema/schema.xsd' % ( geos_root )
     xml_types = parse_schema( schema )
 
     # Find all xml files, collect their attributes
     for folder in [ 'src', 'examples' ]:
         print( folder )
-        xml_files = Path( os.path.join( geosx_root, folder ) ).rglob( '*.xml' )
+        xml_files = Path( os.path.join( geos_root, folder ) ).rglob( '*.xml' )
         for f in xml_files:
             print( '  %s' % ( str( f ) ) )
             collect_xml_attributes( xml_types, str( f ), folder )
@@ -169,7 +203,7 @@ def main() -> None:
     """Entry point for the xml attribute usage test script.
 
     Args:
-        -r/--root (str): GEOSX root directory
+        -r/--root (str): GEOS root directory
         -o/--output (str): output file name
     """
     # Parse the user arguments
