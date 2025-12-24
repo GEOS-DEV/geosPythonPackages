@@ -181,10 +181,8 @@ class AttributeMapping:
             raise ValueError( f"The two meshes do not have any shared { self.piece.value }." )
 
         for attributeName in self.attributeNames:
-            # TODO:: Modify arrayModifiers function to raise error.
-            if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
-                                                    self.piece, self.logger ):
-                raise ValueError( f"Fail to transfer the attribute { attributeName }." )
+            transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.piece,
+                                             self.logger )
 
         # Log the output message.
         self._logOutputMessage()
