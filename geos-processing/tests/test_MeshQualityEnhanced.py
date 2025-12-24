@@ -146,7 +146,6 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
 
     # test method getComputedMetricsFromCellType
     for i, cellType in enumerate( getAllCellTypesExtended() ):
-        print( cellType )
         metrics: Optional[ set[ int ] ] = meshQualityEnhancedFilter.getComputedMetricsFromCellType( cellType )
         if test_case.cellTypeCounts[ i ] > 0:
             assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."

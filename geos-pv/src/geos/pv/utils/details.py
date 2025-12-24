@@ -13,10 +13,7 @@ from paraview.util.vtkAlgorithm import (  # type: ignore[import-not-found]
     VTKPythonAlgorithmBase, smdomain, smhint, smproperty, smproxy,
 )  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkMultiBlockDataSet,
-    vtkDataObject,
-)
+from vtkmodules.vtkCommonDataModel import vtkDataObject
 
 from vtkmodules.vtkCommonCore import (
     vtkInformation,
@@ -30,7 +27,7 @@ Usage is:
 
     from geos.pv.utils.details import SISOFilter, FilterCategory
 
-    @SISO(category=FilterCategory.GEOS_UTILS,decoratedLabel='Awesome Filter',decoratedType='vtkMultiBlockDataSet')
+    @SISO(category=FilterCategory.GEOS_POST_PROCESSING,decoratedLabel='Awesome Filter',decoratedType='vtkMultiBlockDataSet')
     class PVMyFilter:
         ...
 
@@ -40,12 +37,10 @@ Usage is:
 # Enum for filter categories
 class FilterCategory( str, Enum ):
     """String Enum to sort into category in PV task bar under Plugins."""
-    GEOS_PROP = '0- Geos Pre-processing'
-    GEOS_MESH = '1- Geos Mesh'
-    GEOS_GEOMECHANICS = '2- Geos Geomechanics'
-    GEOS_PV = '3- Geos PV'
-    GEOS_UTILS = '4- Geos Utils'
-    GEOS_QC = '5- Geos QC'
+    GENERIC_PROCESSING = "0- Generic-Processing"
+    GEOS_PRE_PROCESSING = "1- GEOS Pre-Processing"
+    GEOS_POST_PROCESSING = "2- GEOS Post-Processing"
+    QC = "3- QC"
     # Add more as needed
 
 
@@ -89,7 +84,7 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
                 """Pre-init the filter with the Base algo and I/O single type (usually vtkMultiBlockDataSet).
 
                 Args:
-                    ar : Fowarded arguments
+                    ar : Forwarded arguments
                     kw : Forwarded keywords args
                 """
                 VTKPythonAlgorithmBase.__init__(
@@ -145,8 +140,9 @@ def SISOFilter( category: FilterCategory, decoratedLabel: str,
                 Returns:
                     int: 1 if calculation successfully ended, 0 otherwise.
                 """
-                inputMesh: vtkMultiBlockDataSet = self.GetInputData( inInfoVec, 0, 0 )
-                outputMesh: vtkMultiBlockDataSet = self.GetOutputData( outInfoVec, 0 )
+                inputMesh = self.GetInputData( inInfoVec, 0, 0 )
+                outputMesh = self.GetOutputData( outInfoVec, 0 )
+
                 assert inputMesh is not None, "Input server mesh is null."
                 assert outputMesh is not None, "Output pipeline is null."
 
