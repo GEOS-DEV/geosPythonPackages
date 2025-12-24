@@ -84,10 +84,7 @@ def test_fillPartialAttributes(
     """Test filling a partial attribute from a multiblock with values."""
     multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     # Fill the attribute in the multiBlockDataSet.
-    arrayModifiers.fillPartialAttributes( multiBlockDataSetTest,
-                                          attributeName,
-                                          piece=piece,
-                                          listValues=listValues )
+    arrayModifiers.fillPartialAttributes( multiBlockDataSetTest, attributeName, piece=piece, listValues=listValues )
 
     # Get the dataSet where the attribute has been filled.
     dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( idBlock ) )
@@ -697,7 +694,8 @@ def test_transferAttributeToDataSetWithElementMapAttributeError(
     meshTo: vtkMultiBlockDataSet = dataSetTest( "emptyFracture" )
     elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptyFracture", Piece.CELLS )
     with pytest.raises( AttributeError ):
-        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, Piece.CELLS )
+        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName,
+                                                                 Piece.CELLS )
 
 
 @pytest.mark.parametrize(

@@ -197,11 +197,7 @@ def fillAllPartialAttributes(
         infoAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( multiBlockDataSet, piece )
         for attributeName in infoAttributes:
             if not isAttributeGlobal( multiBlockDataSet, attributeName, piece ):
-                fillPartialAttributes( multiBlockDataSet,
-                                       attributeName,
-                                       piece=piece,
-                                       logger=logger,
-                                       fillAll=True )
+                fillPartialAttributes( multiBlockDataSet, attributeName, piece=piece, logger=logger, fillAll=True )
 
     return
 
@@ -279,8 +275,7 @@ def createConstantAttribute(
 
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, piece, vtkDataType,
-                                           logger )
+        createConstantAttributeMultiBlock( mesh, listValues, attributeName, componentNames, piece, vtkDataType, logger )
 
     # Deals with dataSets.
     elif isinstance( mesh, vtkDataSet ):
@@ -345,8 +340,7 @@ def createConstantAttributeMultiBlock(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece, vtkDataType,
-                                        logger )
+        createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece, vtkDataType, logger )
 
     return
 
@@ -884,7 +878,8 @@ def renameAttribute(
         elif piece == Piece.CELLS:
             dim = 1
         else:
-            raise ValueError( f"The attribute to rename must be on { Piece.POINTS.value } or on { Piece.CELLS.value }." )
+            raise ValueError(
+                f"The attribute to rename must be on { Piece.POINTS.value } or on { Piece.CELLS.value }." )
         renameArrayFilter = vtkArrayRename()
         renameArrayFilter.SetInputData( object )
         renameArrayFilter.SetArrayName( dim, attributeName, newAttributeName )
