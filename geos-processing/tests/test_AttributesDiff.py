@@ -13,8 +13,9 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 from geos.processing.generic_processing_tools.AttributesDiff import AttributesDiff
 from geos.mesh.utils.arrayHelpers import getArrayInObject
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
+from geos.utils.pieceEnum import Piece
 
-
+# TODO: Create meshes for test
 @pytest.mark.parametrize( "mesh1Name, mesh2Name", [
 ] )
 def test_AttributesDiff(
@@ -29,12 +30,12 @@ def test_AttributesDiff(
     AttributesDiffFilter: AttributesDiff = AttributesDiff()
     AttributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
     AttributesDiffFilter.logSharedAttributeInfo()
-    dicAttributesToCompare: dict[ bool, set[ str ] ] = { False: set( [ "elementCenter", "localToGlobalMap" ] ), True: set( [ "localToGlobalMap" ] ) }
+    dicAttributesToCompare: dict[ Piece, set[ str ] ] = { Piece.CELLS: set( [ "elementCenter", "localToGlobalMap" ] ), Piece.POINTS: set( [ "localToGlobalMap" ] ) }
     AttributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
     AttributesDiffFilter.applyFilter()
     mesh: vtkDataSet | vtkMultiBlockDataSet = mesh1.NewInstance()
     mesh.ShallowCopy( AttributesDiffFilter.getOutput() )
-    dicAttributesDiffNames: dict[ bool, set[ str ] ] = AttributesDiffFilter.getDicAttributesDiffNames()
+    dicAttributesDiffNames: dict[ Piece, set[ str ] ] = AttributesDiffFilter.getDicAttributesDiffNames()
     listFlattenIndexes = getBlockElementIndexesFlatten( mesh )
     for it in listFlattenIndexes:
         dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )

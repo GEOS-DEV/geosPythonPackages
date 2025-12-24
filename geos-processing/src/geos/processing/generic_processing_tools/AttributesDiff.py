@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache 2.0
 # SPDX-FileCopyrightText: Copyright 2023-2025 TotalEnergies
-# SPDX-FileContributor: Jacques Franc
+# SPDX-FileContributor: Jacques Franc, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import logging
 
@@ -15,6 +15,7 @@ from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getAttributeSet, getNumberOfComponents, getArrayInObject )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.pieceEnum import Piece
 
 __doc__ = """
 Attributes Diff is a vtk that compute L1 and L2 differences between attributes shared by two identical meshes.
@@ -27,8 +28,8 @@ To use the filter:
 
     import logging
     from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
-
     from geos.processing.generic_processing_tools.AttributesDiff import AttributesDiff
+    from geos.utils.pieceEnum import Piece
 
     # Filter inputs:
     computeL2Diff: bool  # defaults to False
@@ -49,11 +50,11 @@ To use the filter:
     attributesDiffFilter.logSharedAttributeInfo()
 
     # Get the shared attributes (optional):
-    dicSharedAttributes: dict[ bool, set[ str ] ]
+    dicSharedAttributes: dict[ Piece, set[ str ] ]
     dicSharedAttributes = attributesDiffFilter.getDicSharedAttribute()
 
     # Set the attributes to compare:
-    dicAttributesToCompare: dict[ bool, set[ str ] ]
+    dicAttributesToCompare: dict[ Piece, set[ str ] ]
     attributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
 
     # Do calculations:
@@ -81,12 +82,12 @@ class AttributesDiff:
                 Defaults to False.
         """
         self.listMeshes: list[ vtkMultiBlockDataSet | vtkDataSet ] = []
-        self.dicNbElements: dict[ bool, int ] = {}
+        self.dicNbElements: dict[ Piece, int ] = {}
 
-        self.dicSharedAttributes: dict[ bool, set[ str ] ] = {}
-        self.dicAttributesToCompare: dict[ bool, set[ str ] ] = {}
-        self.dicAttributesDiffNames: dict[ bool, list[ str ] ] = {}
-        self.dicAttributesArray: dict[ bool, npt.NDArray[ np.float32 ] ] = {}
+        self.dicSharedAttributes: dict[ Piece, set[ str ] ] = {}
+        self.dicAttributesToCompare: dict[ Piece, set[ str ] ] = {}
+        self.dicAttributesDiffNames: dict[ Piece, list[ str ] ] = {}
+        self.dicAttributesArray: dict[ Piece, npt.NDArray[ np.float32 ] ] = {}
 
         self.computeL2Diff: bool = computeL2Diff
 
@@ -137,7 +138,7 @@ class AttributesDiff:
         if listMeshes[ 0 ].GetClassName() != listMeshes[ 1 ].GetClassName():
             raise TypeError( "The meshes must have the same type." )
 
-        dicMeshesMaxElementId: dict[ bool, list[ int ] ] = { False: [ 0, 0 ], True: [ 0, 0 ], }
+        dicMeshesMaxElementId: dict[ Piece, list[ int ] ] = { Piece.CELLS: [ 0, 0 ], Piece.POINTS: [ 0, 0 ], }
         if isinstance( listMeshes[ 0 ], vtkDataSet ):
             for meshId, mesh in enumerate( listMeshes ):
                 for piece in dicMeshesMaxElementId:
@@ -151,12 +152,6 @@ class AttributesDiff:
                     dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( meshBlockId ) )
                     for piece in dicMeshesMaxElementId:
                         dicMeshesMaxElementId[ piece ][ meshId ] = max( dicMeshesMaxElementId[ piece ][ meshId ], np.max( getArrayInObject( dataset, "localToGlobalMap", piece ) ) )
-                        if piece:
-                            a= dataset.GetNumberOfPoints()
-                        else:
-                            a= dataset.GetNumberOfCells()
-                        if a - len( getArrayInObject( dataset, "localToGlobalMap", piece ) ) != 0:
-                            print("r")
                 if len( setDatasetType ) != 1:
                     raise TypeError( "All datasets of the meshes must have the same type." )
         else:
@@ -164,11 +159,11 @@ class AttributesDiff:
 
         for piece, listMeshMaxElementId in dicMeshesMaxElementId.items():
             if listMeshMaxElementId[ 0 ] != listMeshMaxElementId[ 1 ]:
-                raise ValueError( f"The total number of { piece } in the meshes must be the same." )
+                raise ValueError( f"The total number of { piece.value } in the meshes must be the same." )
 
         self.listMeshes = listMeshes
-        self.dicNbElements[ True ] = dicMeshesMaxElementId[ True ][ 0 ] + 1
-        self.dicNbElements[ False ] = dicMeshesMaxElementId[ False ][ 0 ] + 1
+        self.dicNbElements[ Piece.CELLS ] = dicMeshesMaxElementId[ Piece.CELLS ][ 0 ] + 1
+        self.dicNbElements[ Piece.POINTS ] = dicMeshesMaxElementId[ Piece.POINTS ][ 0 ] + 1
         self.outputMesh = listMeshes[ 0 ].NewInstance()
         self.outputMesh.ShallowCopy( listMeshes[ 0 ] )
         self._computeDicSharedAttributes()
@@ -180,7 +175,7 @@ class AttributesDiff:
 
         Keys of the dictionary are the attribute localization and the value are the shared attribute per localization.
         """
-        for piece in [ True, False ]:
+        for piece in [ Piece.POINTS, Piece.CELLS ]:
             setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece )
             setSharedAttributes.update( getAttributeSet( self.listMeshes[ 1 ], piece ) )
             if setSharedAttributes != set():
@@ -188,7 +183,7 @@ class AttributesDiff:
 
         return
 
-    def getDicSharedAttribute( self: Self ) -> dict[ bool, set[ str ] ]:
+    def getDicSharedAttribute( self: Self ) -> dict[ Piece, set[ str ] ]:
         """Getter of the dictionary with the shared attributes per localization."""
         return self.dicSharedAttributes
 
@@ -198,15 +193,15 @@ class AttributesDiff:
             self.logger.warning( "The two meshes do not share any attribute." )
         else:
             for piece, sharedAttributes in self.dicSharedAttributes.items():
-                self.logger.info( f"Shared attributes on { piece } are { sharedAttributes }." )
+                self.logger.info( f"Shared attributes on { piece.value } are { sharedAttributes }." )
 
         return
 
-    def setDicAttributesToCompare( self: Self, dicAttributesToCompare: dict[ bool, set[ str ] ] ) -> None:
+    def setDicAttributesToCompare( self: Self, dicAttributesToCompare: dict[ Piece, set[ str ] ] ) -> None:
         """Setter of the dictionary with the shared attribute per localization to compare.
 
         Args:
-            dicAttributesToCompare (dict[bool, set[ str ]]): The dictionary with the attributes to compare per localization.
+            dicAttributesToCompare (dict[Piece, set[str]]): The dictionary with the attributes to compare per localization.
 
         Raises:
             ValueError: At least one attribute to compare is not a shared attribute.
@@ -216,9 +211,9 @@ class AttributesDiff:
                 wrongAttributes: set[ str ] = setSharedAttributesToCompare.difference( self.dicSharedAttributes[ piece ] )
                 raise ValueError( f"The attributes to compare { wrongAttributes } are not shared attributes.")
 
-        dicNbComponents: dict[ bool, int ] = {}
-        dicAttributesDiffNames: dict[ bool, list[ str ] ] = {}
-        dicAttributesArray: dict[ bool, npt.NDArray[ np.float32 ] ] = {}
+        dicNbComponents: dict[ Piece, int ] = {}
+        dicAttributesDiffNames: dict[ Piece, list[ str ] ] = {}
+        dicAttributesArray: dict[ Piece, npt.NDArray[ np.float32 ] ] = {}
         for piece, setSharedAttributesToCompare in dicAttributesToCompare.items():
             dicNbComponents[ piece ] = 0
             dicAttributesDiffNames[ piece ] = []
@@ -238,11 +233,11 @@ class AttributesDiff:
 
         return
 
-    def getDicAttributesToCompare( self: Self ) -> dict[ bool, set[ str ] ]:
+    def getDicAttributesToCompare( self: Self ) -> dict[ Piece, set[ str ] ]:
         """Getter of the dictionary of the attribute to compare per localization."""
         return self.dicAttributesToCompare
 
-    def getDicAttributesDiffNames( self: Self ) -> dict[ bool, list[ str ] ]:
+    def getDicAttributesDiffNames( self: Self ) -> dict[ Piece, list[ str ] ]:
         """Getter of the dictionary with the name of the attribute created with the calculated attributes diff."""
         return self.dicAttributesDiffNames
 
@@ -297,14 +292,14 @@ class AttributesDiff:
                 attributeArray: npt.NDArray[ Any ]
                 if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
                     attributeArray = np.abs( self.dicAttributesArray[ piece ][ :, attributeId, 0 ] - self.dicAttributesArray[ piece ][ :, attributeId, 1 ] )
-                    createAttribute( self.outputMesh, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
+                    createAttribute( self.outputMesh, attributeArray, attributeDiffName, piece=piece, logger=self.logger )
                 else:
                     listBlockId: list[ int ] = getBlockElementIndexesFlatten( self.outputMesh )
                     for BlockId in listBlockId:
                         dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( BlockId ) )
                         lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
                         attributeArray = np.abs( self.dicAttributesArray[ piece ][ lToG, attributeId, 0 ] - self.dicAttributesArray[ piece ][ lToG, attributeId, 1 ] )
-                        createAttribute( dataset, attributeArray, attributeDiffName, onPoints=piece, logger=self.logger )
+                        createAttribute( dataset, attributeArray, attributeDiffName, piece=piece, logger=self.logger )
 
         return
 
