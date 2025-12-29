@@ -455,6 +455,30 @@ def test_getNumberOfComponentsMultiBlock(
     assert obtained == expected
 
 
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "dataset", "PORO", Piece.CELLS, 1 ),
+    ( "dataset", "PERM", Piece.CELLS, 3 ),
+    ( "multiblock", "PointAttribute", Piece.POINTS, 3 ),
+] )
+def test_getNumberOfComponents(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: int,
+) -> None:
+    """Test getting the number of components of an attribute from a multiblock."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
+
+
+def test_getNumberOfComponentsTypeError() -> None:
+    """Test getNumberOfComponents TypeError raises."""
+    mesh: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getNumberOfComponents( mesh, "Attribute", Piece.CELLS)
+
+
 @pytest.mark.parametrize( "attributeName, piece, expected", [
     ( "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
     ( "PORO", Piece.CELLS, () ),

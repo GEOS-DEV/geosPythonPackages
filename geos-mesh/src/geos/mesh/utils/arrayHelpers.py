@@ -885,7 +885,7 @@ def getComponentNames(
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return getComponentNamesMultiBlock( mesh, attributeName, piece )
     else:
-        raise AssertionError( "Mesh type is not managed." )
+        raise TypeError( "Mesh type is not managed." )
 
 
 def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> tuple[ str, ...]:
