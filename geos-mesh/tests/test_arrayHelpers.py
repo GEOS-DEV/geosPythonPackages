@@ -129,6 +129,27 @@ def test_getAttributePieceInfo(
 
 
 @pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
+    ( "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
+    ( "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
+] )
+def test_checkValidValuesInMultiBlock(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeName: str,
+    listValues: list[ Any ],
+    piece: Piece,
+    validValuesTest: list[ Any ],
+    invalidValuesTest: list[ Any ],
+) -> None:
+    """Test the function checkValidValuesInDataSet."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    validValues: list[ Any ]
+    invalidValues: list[ Any ]
+    validValues, invalidValues = arrayHelpers.checkValidValuesInMultiBlock( multiBlockDataSet, attributeName, listValues, piece )
+    assert validValues == validValuesTest
+    assert invalidValues == invalidValuesTest
+
+
+@pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
     ( "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
     ( "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
     ( "FAULT", [ 0, 100, 101, 2 ], Piece.CELLS, [ 0, 100, 101 ], [ 2 ] ),
