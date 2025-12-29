@@ -466,23 +466,6 @@ def checkValidValuesInDataSet(
 
 ## ------------------------------------------------- Getter functions -------------------------------------------------
 
-def getArrayNames( data: vtkFieldData ) -> list[ str ]:
-    """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-
-    Returns:
-        list[str]: The array names in the order that they are stored in the field data.
-
-    Raises:
-        TypeError: The data entered is not a vtkFieldDate object.
-    """
-    if not isinstance( data, vtkFieldData ):
-        raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
-    return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
-
-
 def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.NDArray:
     """Get a numpy array of the GlobalIds if it exist.
 
@@ -538,23 +521,26 @@ def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Pie
     """Get the set of all attributes from an mesh on points or on cells.
 
     Args:
-        mesh (Any): Mesh where to find the attributes.
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): Mesh where to find the attributes.
         piece (Piece): The piece of the attribute.
 
     Returns:
-        set[str]: Set of attribute names present in input mesh.
+        (set[str]): Set of attribute names present in input mesh.
     """
-    attributes: dict[ str, int ]
+    attributeSet: set[ str ]
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        attributes = getAttributesFromMultiBlockDataSet( mesh, piece )
+        listDataSetIds: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        attributeSet = set()
+        for dataSetId in listDataSetIds:
+            dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( dataSetId ) )
+            attributeSet.update( getAttributeSet( dataset, piece ) )
     elif isinstance( mesh, vtkDataSet ):
-        attributes = getAttributesFromDataSet( mesh, piece )
+        fieldData: vtkPointData | vtkCellData = mesh.GetPointData() if piece == Piece.POINTS else mesh.GetCellData()
+        attributeSet = set( [ fieldData.GetArrayName( i ) for i in range( fieldData.GetNumberOfArrays() ) ] )
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
-    assert attributes is not None, "Attribute list is undefined."
-
-    return set( attributes.keys() ) if attributes is not None else set()
+    return attributeSet
 
 
 def getAttributesWithNumberOfComponents(

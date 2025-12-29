@@ -128,24 +128,6 @@ def test_getAttributePieceInfo(
     assert pieceObtained == pieceTest
 
 
-@pytest.mark.parametrize( "piece, expected", [
-    ( Piece.CELLS, [ "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" ] ),
-    ( Piece.POINTS, [ "GLOBAL_IDS_POINTS", "PointAttribute" ] )
-])
-def test_getArrayNames( dataSetTest: vtkDataSet, piece: Piece, expected: list[ str ] ) -> None:
-    """Test the function getArrayNames."""
-    dataset: vtkDataSet = dataSetTest( "dataset" )
-    fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
-    assert arrayHelpers.getArrayNames( fieldData ) == expected
-
-
-def test_getArrayNamesTypeError() -> None:
-    """Test getArrayNames TypeError raises."""
-    data: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
-    with pytest.raises( TypeError ):
-        arrayHelpers.getArrayNames( data )
-
-
 def test_getNumpyGlobalIdsArray( dataSetTest: vtkDataSet ) -> None:
     """Test the function getNumpyGlobalIdsArray."""
     dataset: vtkDataSet = dataSetTest( "dataset" )
@@ -169,6 +151,30 @@ def test_getNumpyGlobalIdsArrayAttributeError() -> None:
     fieldData: vtkFieldData = vtkFieldData()
     with pytest.raises( AttributeError ):
         arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+
+
+@pytest.mark.parametrize( "meshName, piece, expectedAttributeSet", [
+    ( "dataset", Piece.POINTS, set( [ "GLOBAL_IDS_POINTS", "PointAttribute" ] ) ),
+    ( "dataset", Piece.CELLS, set( [ "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" ] ) ),
+    ( "multiblock", Piece.CELLS, set( [ "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" ] ) ),
+])
+def test_getAttributeSet(
+    dataSetTest: Any,
+    meshName: str,
+    piece: Piece,
+    expectedAttributeSet: set[ str ],
+) -> None:
+    """Test getAttributeSet function."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    obtainedAttributeSet: set[ str ] = arrayHelpers.getAttributeSet( mesh, piece )
+    assert obtainedAttributeSet == expectedAttributeSet
+
+
+def test_getAttributeSetTypeError() -> None:
+    """Test getAttributeSet TypeError raises."""
+    mesh: vtkFieldData = vtkFieldData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getAttributeSet( mesh, Piece.CELLS )
 
 
 @pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
