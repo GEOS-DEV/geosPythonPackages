@@ -466,7 +466,6 @@ def checkValidValuesInDataSet(
 
 ## ------------------------------------------------- Getter functions -------------------------------------------------
 
-
 def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
 
@@ -481,36 +480,24 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 
-def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
-    """Get the vtkDataArray corresponding to the given name.
+def getCopyArrayByName( data: vtkFieldData, name: str ) -> vtkDataArray:
+    """Get the copy of a vtkDataArray corresponding to the given name if it exist.
 
     Args:
         data (vtkFieldData): Vtk field data.
         name (str): Array name.
 
     Returns:
-        Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
+        (vtkDataArray): The copy of the vtkDataArray associated with the name given.
+
+    Raises:
+        AttributeError: There is no array with the given name in the data.
     """
-    if data.HasArray( name ):
-        return data.GetArray( name )
-    logging.warning( f"No array named '{ name }' was found in '{ data }'." )
-    return None
+    if not data.HasArray( name ):
+        raise AttributeError( f"There is no array named { name } in the given fieldData.")
+    else:
+        return deepcopy( data.GetArray( name ) )
 
-
-def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
-    """Get the copy of a vtkDataArray corresponding to the given name.
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-        name (str): Array name.
-
-    Returns:
-        Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
-    """
-    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
-    if dataArray is not None:
-        return deepcopy( dataArray )
-    return None
 
 
 def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Optional[ npt.NDArray[ np.int64 ] ]:
@@ -531,7 +518,7 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Option
 
 def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
                          name: str,
-                         sorted: bool = False ) -> Optional[ npt.NDArray ]:
+                         sorted: bool = False ) -> npt.NDArray:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
@@ -543,15 +530,18 @@ def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
     Returns:
-        Optional[ npt.NDArray ]: Sorted array.
+        npt.NDArray: Sorted array.
+
+    Raises:
+        AttributeError: There is no array with the given name in the data.
     """
-    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
-    if dataArray is not None:
-        arr: npt.NDArray[ np.float64 ] = vtk_to_numpy( dataArray )
-        if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
-            sortArrayByGlobalIds( data, arr )
-        return arr
-    return None
+    if not data.HasArray( name ):
+        raise AttributeError( f"There is no array named { name } in the given fieldData.")
+
+    npArray: npt.NDArray[ Any ] = vtk_to_numpy( data.GetArray( name ) )
+    if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
+        sortArrayByGlobalIds( data, npArray )
+    return npArray
 
 
 def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Piece ) -> set[ str ]:
