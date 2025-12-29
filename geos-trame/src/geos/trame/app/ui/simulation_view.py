@@ -6,6 +6,12 @@ from geos.trame.app.io.hpc_tools import SuggestDecomposition
 
 def define_simulation_view( server ) -> None:
 
+    @server.state.change( "selected_cluster_name")
+    def on_cluster_change( selected_cluster_name : str , **_):
+        print(selected_cluster_name)
+        server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster(selected_cluster_name) , 12 ).to_list()#discard 12 
+
+
     @server.state.change( "simulation_xml_temp" )
     def on_temp_change( simulation_xml_temp: list, **_ ):
         current_list = server.state.simulation_xml_filename
@@ -43,9 +49,9 @@ def define_simulation_view( server ) -> None:
             del current_files[ index_to_remove ]
 
             server.state.simulation_xml_filename = current_files
-            print( f"Fichier à l'index {index_to_remove} supprimé. Nouveaux fichiers: {len(current_files)}" )
+            print( f"File at {index_to_remove} deleted. New files: {len(current_files)}" )
         else:
-            print( f"Erreur: Index de suppression invalide ({index_to_remove})." )
+            print( f"Erreur: Wrong deletion index ({index_to_remove})." )
 
     with vuetify.VContainer():
         with vuetify.VRow():
@@ -76,16 +82,15 @@ def define_simulation_view( server ) -> None:
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = []
             server.state.selected_cluster_names = [cluster.name for cluster in Authentificator.sim_constants]
-            server.state.selected_cluster_name = 'local' 
+            server.state.decompositions = []
 
-            sd = SuggestDecomposition( Authentificator.get_cluster(server.state.selected_cluster_name) , 12 ) #TODO reactive
             # items = sd.to_list()
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
-                vuetify.VSelect( label="Cluster", items=( "selected_cluster_names",  ), model_value=("selected_cluster_name",))
+                vuetify.VSelect( label="Cluster", items=( "selected_cluster_names",  ), v_model=("selected_cluster_name", 'local') )
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
-                vuetify.VSelect( label="Decomposition", items=( "decomposition", sd.to_list() ) )
+                vuetify.VSelect( label="Decomposition", items=( "decompositions", ), v_model=("decomposition", []) )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):
