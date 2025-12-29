@@ -28,6 +28,7 @@ These methods include:
     - bounds getter for vtu and multiblock datasets
 """
 
+## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ int ]:
     """Get the set of the different cells dimension of a mesh.
@@ -80,6 +81,7 @@ def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
         cellIter.GoToNextCell()
     return cellDim
 
+## ------------------------------------------------- Generic Helpers  -------------------------------------------------
 
 def computeElementMapping(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
@@ -345,6 +347,7 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                 idElementFrom += 1
     return
 
+## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
     """Checks if input mesh contains at least one of input data arrays.
@@ -367,6 +370,7 @@ def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
                 return True
     return False
 
+## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getAttributePieceInfo(
     mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ],
@@ -392,6 +396,7 @@ def getAttributePieceInfo(
     else:
         return Piece.NONE
 
+## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def checkValidValuesInMultiBlock(
     multiBlockDataSet: vtkMultiBlockDataSet,
@@ -459,29 +464,7 @@ def checkValidValuesInDataSet(
 
     return ( validValues, invalidValues )
 
-
-def getFieldType( data: vtkFieldData ) -> str:
-    """Returns whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
-
-    A vtk mesh can contain 3 types of field data:
-    - vtkFieldData (parent class)
-    - vtkCellData  (inheritance of vtkFieldData)
-    - vtkPointData (inheritance of vtkFieldData)
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-
-    Returns:
-        str: "vtkFieldData", "vtkCellData" or "vtkPointData"
-    """
-    if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
-    if data.IsA( "vtkCellData" ):
-        return "vtkCellData"
-    elif data.IsA( "vtkPointData" ):
-        return "vtkPointData"
-    else:
-        return "vtkFieldData"
+## ------------------------------------------------- Getter functions -------------------------------------------------
 
 
 def getArrayNames( data: vtkFieldData ) -> list[ str ]:
@@ -670,6 +653,7 @@ def getAttributesFromDataSet( dataSet: vtkDataSet, piece: Piece ) -> dict[ str, 
         attributes[ attributeName ] = nbComponents
     return attributes
 
+## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attributeName: str, piece: Piece ) -> bool:
     """Check if an attribute is in the input object.
@@ -754,6 +738,7 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
             return False
     return True
 
+## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> npt.NDArray[ Any ]:
     """Return the numpy array corresponding to input attribute name in table.
