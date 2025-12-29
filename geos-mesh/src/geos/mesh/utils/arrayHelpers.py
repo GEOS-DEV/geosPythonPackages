@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez, Romain Baville
-from copy import deepcopy
 import logging
 import numpy as np
 import numpy.typing as npt
@@ -722,22 +721,22 @@ def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) ->
     return npArray
 
 
-def getVtkDataTypeInObject( multiBlockDataSet: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
+def getVtkDataTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
                             piece: Piece ) -> int:
     """Return VTK type of requested array from input mesh.
 
     Args:
-        multiBlockDataSet (Union[vtkDataSet, vtkMultiBlockDataSet]): Input multiBlockDataSet.
+        mesh (Union[vtkDataSet, vtkMultiBlockDataSet]): Input multiBlockDataSet.
         attributeName (str): Name of the attribute.
         piece (Piece): The piece of the attribute.
 
     Returns:
         int: The type of the vtk array corresponding to input attribute name.
     """
-    if isinstance( multiBlockDataSet, vtkDataSet ):
-        return getVtkArrayTypeInObject( multiBlockDataSet, attributeName, piece )
+    if isinstance( mesh, vtkDataSet ):
+        return getVtkArrayTypeInObject( mesh, attributeName, piece )
     else:
-        return getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
+        return getVtkArrayTypeInMultiBlock( mesh, attributeName, piece )
 
 
 def getVtkArrayTypeInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> int:

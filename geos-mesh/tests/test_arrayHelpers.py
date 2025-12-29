@@ -354,6 +354,25 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     assert ( obtained == expected ).all()
 
 
+@pytest.mark.parametrize( "meshName, attributeName, piece, expectedVtkType", [
+    ( "dataset", "CellAttribute", Piece.CELLS, 11 ),
+    ( "dataset", "PointAttribute", Piece.POINTS, 11 ),
+    ( "multiblock", "collocated_nodes", Piece.POINTS, 12 ),
+])
+def test_getVtkArrayTypeInObject(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expectedVtkType: int,
+) -> None:
+    """Test the function getVtkArrayTypeInObject."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    obtainedVtkType: int = arrayHelpers.getVtkArrayTypeInMultiBlock( mesh, attributeName, piece )
+
+    assert obtainedVtkType == expectedVtkType
+
+
 @pytest.mark.parametrize( "attributeName, vtkDataType, piece", [
     ( "CellAttribute", 11, Piece.CELLS ),
     ( "PointAttribute", 11, Piece.POINTS ),
