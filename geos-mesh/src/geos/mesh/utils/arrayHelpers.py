@@ -483,26 +483,6 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 
-def getCopyArrayByName( data: vtkFieldData, name: str ) -> vtkDataArray:
-    """Get the copy of a vtkDataArray corresponding to the given name if it exist.
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-        name (str): Array name.
-
-    Returns:
-        (vtkDataArray): The copy of the vtkDataArray associated with the name given.
-
-    Raises:
-        AttributeError: There is no array with the given name in the data.
-    """
-    if not data.HasArray( name ):
-        raise AttributeError( f"There is no array named { name } in the given fieldData.")
-    else:
-        return deepcopy( data.GetArray( name ) )
-
-
-
 def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Optional[ npt.NDArray[ np.int64 ] ]:
     """Get a numpy array of the GlobalIds.
 
