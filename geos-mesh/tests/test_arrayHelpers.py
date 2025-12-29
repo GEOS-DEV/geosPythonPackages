@@ -265,6 +265,33 @@ def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, piece: Piece, expect
     assert attributes == expected
 
 
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "dataset", "Attribute", Piece.CELLS, False ),
+    ( "dataset", "GLOBAL_IDS_CELLS", Piece.CELLS, True ),
+    ( "dataset", "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
+    ( "multiblockGeosOutput", "TIME", Piece.FIELD, True ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.CELLS, True ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.POINTS, True ),
+] )
+def test_isAttributeInObject(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: bool,
+) -> None:
+    """Test the function isAttributeInObject."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    assert arrayHelpers.isAttributeInObject( mesh, attributeName, piece ) == expected
+
+
+def test_isAttributeInObjectTypeError() -> None:
+    """Test isAttributeInObject TypeError raises."""
+    mesh: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.isAttributeInObject( mesh, "Attribute", Piece.CELLS )
+
+
 @pytest.mark.parametrize( "attributeName, piece", [
     ( "rockPorosity_referencePorosity", Piece.CELLS ),
     ( "ghostRank", Piece.POINTS ),
