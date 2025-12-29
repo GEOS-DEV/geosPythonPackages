@@ -531,3 +531,12 @@ def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expecte
     """Test the function hasArray."""
     mesh: vtkDataSet = dataSetTest( "dataset" )
     assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+
+
+def test_computeCellCenterCoordinates( dataSetTest: vtkMultiBlockDataSet ) -> None:
+    """Test the function computeCellCenterCoordinates."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+    dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( 5 ) )
+    expected: npt.NDArray = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( "elementCenter" ) )
+    obtained: npt.NDArray = vnp.vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( dataset ) )
+    assert ( obtained == expected ).all()
