@@ -474,9 +474,12 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
 
     Returns:
         list[str]: The array names in the order that they are stored in the field data.
+
+    Raises:
+        TypeError: The data entered is not a vtkFieldDate object.
     """
-    if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
+    if not isinstance( data, vtkFieldData ):
+        raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 

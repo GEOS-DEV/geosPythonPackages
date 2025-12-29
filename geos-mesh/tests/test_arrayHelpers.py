@@ -128,6 +128,24 @@ def test_getAttributePieceInfo(
     assert pieceObtained == pieceTest
 
 
+@pytest.mark.parametrize( "piece, expected", [
+    ( Piece.CELLS, [ "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" ] ),
+    ( Piece.POINTS, [ "GLOBAL_IDS_POINTS", "PointAttribute" ] )
+])
+def test_getArrayNames( dataSetTest: vtkDataSet, piece: Piece, expected: list[ str ] ) -> None:
+    """Test the function getArrayNames."""
+    dataset: vtkDataSet = dataSetTest( "dataset" )
+    fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
+    assert arrayHelpers.getArrayNames( fieldData ) == expected
+
+
+def test_getArrayNamesTypeError() -> None:
+    """Test getArrayNames TypeError raises."""
+    data: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getArrayNames( data )
+
+
 @pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
     ( "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
     ( "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
