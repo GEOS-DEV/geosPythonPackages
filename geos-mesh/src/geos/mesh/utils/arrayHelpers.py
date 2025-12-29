@@ -511,7 +511,8 @@ def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
 
     npArray: npt.NDArray = vtk_to_numpy( data.GetArray( name ) )
     if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
-        sortArrayByGlobalIds( data, npArray )
+        globalids: npt.NDArray = getNumpyGlobalIdsArray( data )
+        npArray = npArray[ np.argsort( globalids ) ]
 
     return npArray
 
@@ -823,7 +824,7 @@ def getNumberOfComponents(
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return getNumberOfComponentsMultiBlock( mesh, attributeName, piece )
     else:
-        raise AssertionError( "Object type is not managed." )
+        raise TypeError( "The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
 
 
 def getNumberOfComponentsDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> int:
@@ -987,17 +988,3 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     pts: vtkPoints = output.GetPoints()
     assert pts is not None, "Cell center points are undefined."
     return pts.GetData()
-
-
-def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDArray[ np.float64 ] ) -> None:
-    """Sort an array following global Ids.
-
-    Args:
-        data (vtkFieldData): Global Ids array.
-        arr (npt.NDArray[ np.float64 ]): Array to sort.
-    """
-    globalids: npt.NDArray = getNumpyGlobalIdsArray( data )
-
-    arr = arr[ np.argsort( globalids ) ]
-
-    return
