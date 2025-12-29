@@ -996,8 +996,8 @@ def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDA
         data (vtkFieldData): Global Ids array.
         arr (npt.NDArray[ np.float64 ]): Array to sort.
     """
-    globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
-    if globalids is not None:
-        arr = arr[ np.argsort( globalids ) ]
-    else:
-        logging.warning( "No sorting was performed." )
+    globalids: npt.NDArray = getNumpyGlobalIdsArray( data )
+
+    arr = arr[ np.argsort( globalids ) ]
+
+    return

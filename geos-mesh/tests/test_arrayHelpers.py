@@ -531,3 +531,13 @@ def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expecte
     """Test the function hasArray."""
     mesh: vtkDataSet = dataSetTest( "dataset" )
     assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+
+
+def test_sortArrayByGlobalIds( dataSetTest ) -> None:
+    """Test the function sortArrayByGlobalIds."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    cellData: vtkCellData = mesh.GetCellData()
+    expectedArray: npt.NDArray = np.array( [ cellData.GetNumberOfTuples() - i for i in range( cellData.GetNumberOfTuples() ) ] )
+    obtainedArray: npt.NDArray = expectedArray.copy()
+    arrayHelpers.sortArrayByGlobalIds( cellData, obtainedArray )
+    assert ( obtainedArray == expectedArray ).all()
