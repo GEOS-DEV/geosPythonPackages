@@ -16,6 +16,8 @@ def define_simulation_view( server ) -> None:
         ll = SuggestDecomposition( Authentificator.get_cluster(server.state.selected_cluster_name) , 12 ).get_sd()
         if server.state.decomposition:
             server.state.sd = ll[ server.state.decompositions.index(decomposition) ]
+            server.state.simulation_remote_path = Authentificator.get_cluster(server.state.selected_cluster_name).simulation_remote_path
+            server.state.simulation_dl_path = Authentificator.get_cluster(server.state.selected_cluster_name).simulation_dl_default_path
         else:
             server.state.sd = {'nodes': 0, 'total_ranks': 0}
 

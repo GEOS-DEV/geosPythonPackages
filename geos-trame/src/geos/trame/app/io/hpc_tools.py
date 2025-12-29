@@ -1,8 +1,6 @@
 import json
 import os
 
-from geos.trame.app.io.ssh_tools import SimulationConstant, Authentificator
-
 class SuggestDecomposition:
 
     def __init__( self, selected_cluster,  n_unknowns, job_type='cpu' ):

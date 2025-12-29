@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --job-name="{{ job_name | geosCopyBack }}"
+#SBATCH --job-name="{{ job_name }}"
 #SBATCH --ntasks={{ ntasks }}
 #SBATCH --partition={{ partition }} 
 #SBATCH --comment={{ comment_gr }}
@@ -11,4 +11,4 @@
 #SBATCH --err=job_GEOS_%j.err
 #SBATCH --dependency=afterok:{{ dep_job_id }}
 
-srun tar cfz {{ dep_job_id }}.tgz Outputs_{{ dep_job_id }}/ && mv -v {{ dep_job_id }}.tgz {{ target_dl_path }}
+srun tar cfz {{ dep_job_id }}.tgz Outputs_{{ dep_job_id }}/ log_{{ dep_job_id }}.out && mv -v {{ dep_job_id }}.tgz {{ target_dl_path }}

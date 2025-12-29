@@ -11,11 +11,13 @@ class SimulationConstant:
     name : str
     host : str
     port : int 
-    remote_home_base : str
+    geos_path : str
+    geos_module : str
+    geos_load_list : list
+    remote_home_base : str # for ssh key
     simulation_default_filename : str
-    simulation_default_path : str
+    simulation_remote_path : str
     simulation_dl_default_path : str
-    geos_default_version : str
     simulation_information_default_path : str
     n_nodes : int
     cores_per_node : int

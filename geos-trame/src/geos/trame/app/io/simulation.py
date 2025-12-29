@@ -292,24 +292,27 @@ class Simulation:
                     # sdi = server.state.sd
                     # ci = { 'nodes': 1, 'total_ranks': 2 }
                     run_id : int = Simulation.render_and_run('p4_slurm.jinja','job.slurm', server,
-                                   job_name=server.state.simulation_job_name,
+                                            job_name=server.state.simulation_job_name,
                                             input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'][ 0 ].get( 'name' ),
                                             nodes=server.state.sd[ 'nodes' ],
                                             ntasks=server.state.sd[ 'total_ranks' ],
+                                            geos_module=Authentificator.get_cluster(server.state.selected_cluster_name).geos_module,
+                                            geos_load_list=" ".join(Authentificator.get_cluster(server.state.selected_cluster_name).geos_load_list),
+                                            geos_path=Authentificator.get_cluster(server.state.selected_cluster_name).geos_path,
                                             mem=f"0",
                                             comment_gr=server.state.slurm_comment,
                                             partition='p4_dev',
                                             account='myaccount')
                     
                     Simulation.render_and_run('p4_copyback.jinja', 'copyback.slurm', server,
-                                    job_name=server.state.simulation_job_name,
+                                            job_name=server.state.simulation_job_name,
                                             input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml' ][ 0 ].get( 'name' ),
                                             nodes=1,
                                             ntasks=1,
                                             mem=f"0",
                                             dep_job_id=run_id,
                                             comment_gr=server.state.slurm_comment,
-                                            partition='p4_transfert',
+                                            partition='p4_transfer',
                                             account='myaccount' )
 
                     self.start_result_streams()
