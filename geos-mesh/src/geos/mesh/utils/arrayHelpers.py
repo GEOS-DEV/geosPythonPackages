@@ -27,7 +27,6 @@ These methods include:
     - bounds getter for vtu and multiblock datasets
 """
 
-## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ int ]:
     """Get the set of the different cells dimension of a mesh.
@@ -80,7 +79,6 @@ def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
         cellIter.GoToNextCell()
     return cellDim
 
-## ------------------------------------------------- Generic Helpers  -------------------------------------------------
 
 def computeElementMapping(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
@@ -346,7 +344,6 @@ def UpdateDictElementMappingFromDataSetToDataSet(
                 idElementFrom += 1
     return
 
-## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
     """Checks if input mesh contains at least one of input data arrays.
@@ -369,7 +366,6 @@ def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
                 return True
     return False
 
-## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getAttributePieceInfo(
     mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ],
@@ -395,7 +391,6 @@ def getAttributePieceInfo(
     else:
         return Piece.NONE
 
-## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def checkValidValuesInMultiBlock(
     multiBlockDataSet: vtkMultiBlockDataSet,
@@ -463,7 +458,6 @@ def checkValidValuesInDataSet(
 
     return ( validValues, invalidValues )
 
-## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.NDArray:
     """Get a numpy array of the GlobalIds if it exist.
@@ -487,9 +481,7 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.ND
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
-                         name: str,
-                         sorted: bool = False ) -> npt.NDArray:
+def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ], name: str, sorted: bool = False ) -> npt.NDArray:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
@@ -507,7 +499,7 @@ def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
         AttributeError: There is no array with the given name in the data.
     """
     if not data.HasArray( name ):
-        raise AttributeError( f"There is no array named { name } in the given fieldData.")
+        raise AttributeError( f"There is no array named { name } in the given fieldData." )
 
     npArray: npt.NDArray = vtk_to_numpy( data.GetArray( name ) )
     if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
@@ -536,7 +528,7 @@ def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Pie
             attributeSet.update( getAttributeSet( dataset, piece ) )
     elif isinstance( mesh, vtkDataSet ):
         fieldData: vtkPointData | vtkCellData = mesh.GetPointData() if piece == Piece.POINTS else mesh.GetCellData()
-        attributeSet = set( [ fieldData.GetArrayName( i ) for i in range( fieldData.GetNumberOfArrays() ) ] )
+        attributeSet = { fieldData.GetArrayName( i ) for i in range( fieldData.GetNumberOfArrays() ) }
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
@@ -619,7 +611,6 @@ def getAttributesFromDataSet( dataSet: vtkDataSet, piece: Piece ) -> dict[ str, 
         attributes[ attributeName ] = nbComponents
     return attributes
 
-## ------------------------------------------------- Check functions  -------------------------------------------------
 
 def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attributeName: str, piece: Piece ) -> bool:
     """Check if an attribute is in the input object.
@@ -704,7 +695,6 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
             return False
     return True
 
-## ------------------------------------------------- Getter functions -------------------------------------------------
 
 def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> npt.NDArray[ Any ]:
     """Return the numpy array corresponding to input attribute name in table.
@@ -722,8 +712,7 @@ def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) ->
     return npArray
 
 
-def getVtkDataTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
-                            piece: Piece ) -> int:
+def getVtkDataTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str, piece: Piece ) -> int:
     """Return VTK type of requested array from input mesh.
 
     Args:
