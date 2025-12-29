@@ -352,3 +352,15 @@ def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple
 
     obtained_columns = data.columns.values.tolist()
     assert obtained_columns == list( expected_columns )
+
+
+@pytest.mark.parametrize( "attributeNames, expected", [
+    ( [ "CellAttribute" ], True ),  # Attribute on cells
+    ( [ "PointAttribute" ], True ),  # Attribute on points
+    ( [ "attribute" ], False ),  # "attribute" is not on the mesh
+    ( [ "CellAttribute", "attribute" ], True ),  # "attribute" is not on the mesh
+])
+def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expected ) -> None:
+    """Test the function hasArray."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
