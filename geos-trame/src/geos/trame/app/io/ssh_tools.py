@@ -63,6 +63,9 @@ class Authentificator:  #namespacing more than anything else
     @staticmethod
     def dfs_tree( node, path, sftp, remote_root ):
 
+        if path is None or remote_root is None:
+            return
+
         lp = Path( path )
         rp = Path( remote_root ) / lp
 
@@ -74,9 +77,11 @@ class Authentificator:  #namespacing more than anything else
         elif isinstance( node, dict ):
             if "files" in node:
                     # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
-                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                        f.write( file.get( 'content' ) )
-                    print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
+                    files = node['files']
+                    for file in files:
+                        with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
+                            f.write( file.get( 'content' ) )
+                        print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
             if "subfolders" in node:
                 for subfolder, content in node[ "subfolders" ].items():
                     try:

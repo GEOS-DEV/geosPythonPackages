@@ -11,6 +11,7 @@ class SuggestDecomposition:
         self.selected_cluster = selected_cluster
         self.n_unknowns = n_unknowns
         self.job_type = job_type
+        self.sd = []
 
     # @property
     # def selected_cluster(self):
@@ -60,24 +61,33 @@ class SuggestDecomposition:
         ranks_per_node = min( cores_per_node, ( n_ranks + min_nodes - 1 ) // min_nodes )
         n_nodes = ( n_ranks + ranks_per_node - 1 ) // ranks_per_node
 
-        return {
+        return [{
             'nodes': n_nodes,
             'ranks_per_node': ranks_per_node,
             'total_ranks': n_nodes * ranks_per_node,
             'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
-        }
-
-    def to_list( self ):
-
+        },
+        {
+            'nodes': n_nodes * 2,
+            'ranks_per_node': ranks_per_node // 2,
+            'total_ranks': n_nodes * ranks_per_node,
+            'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
+        },]
+    
+    def get_sd( self ):       
+        
         if self.job_type == 'cpu' and self.selected_cluster: #make it an enum
-            sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster.mem_per_node,
+            self.sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster.mem_per_node,
                                                self.selected_cluster.cores_per_node )
         else:
-            sd = {'nodes': 0, 'ranks_per_node': 0 , 'total_ranks': 0, 'unknowns_per_rank': 0}
+            self.sd = [{'nodes': 0, 'ranks_per_node': 0 , 'total_ranks': 0, 'unknowns_per_rank': 0 },]
         # elif job_type == 'gpu':
         # selected_cluster['n_nodes']*selected_cluster['gpu']['per_node']
 
+        return self.sd
+
+    def to_list( self ):
+        sd = self.get_sd()
         return [
-            f"{self.selected_cluster.name} : {sd['nodes']} x {sd['ranks_per_node']}",
-            f"{self.selected_cluster.name}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}"
-        ]
+            f"{self.selected_cluster.name} : {sd_item['nodes']} x {sd_item['ranks_per_node']}" for sd_item in sd
+                            ]

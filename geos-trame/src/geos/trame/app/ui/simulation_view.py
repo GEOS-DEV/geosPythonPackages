@@ -6,11 +6,18 @@ from geos.trame.app.io.hpc_tools import SuggestDecomposition
 
 def define_simulation_view( server ) -> None:
 
-    @server.state.change( "selected_cluster_name")
+    @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name : str , **_):
         print(selected_cluster_name)
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster(selected_cluster_name) , 12 ).to_list()#discard 12 
 
+    @server.state.change( "decomposition" )
+    def on_decomposition_selected( decomposition : str, **_):
+        ll = SuggestDecomposition( Authentificator.get_cluster(server.state.selected_cluster_name) , 12 ).get_sd()
+        if server.state.decomposition:
+            server.state.sd = ll[ server.state.decompositions.index(decomposition) ]
+        else:
+            server.state.sd = {'nodes': 0, 'total_ranks': 0}
 
     @server.state.change( "simulation_xml_temp" )
     def on_temp_change( simulation_xml_temp: list, **_ ):
@@ -82,15 +89,15 @@ def define_simulation_view( server ) -> None:
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = []
             server.state.selected_cluster_names = [cluster.name for cluster in Authentificator.sim_constants]
-            server.state.decompositions = []
+            # server.state.decompositions = []
+            server.state.sd = None
 
-            # items = sd.to_list()
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Cluster", items=( "selected_cluster_names",  ), v_model=("selected_cluster_name", 'local') )
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
-                vuetify.VSelect( label="Decomposition", items=( "decompositions", ), v_model=("decomposition", []) )
+                vuetify.VSelect( label="Decomposition", items=( "decompositions", []), v_model=("decomposition",'') )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):
@@ -113,7 +120,7 @@ def define_simulation_view( server ) -> None:
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
                 vuetify.VTextField(
-                    v_model=( "slurm_comment", ),
+                    v_model=( "slurm_comment", None ),
                     label="Comment to slurm",
                     dense=True,
                     hide_details=True,
@@ -145,7 +152,7 @@ def define_simulation_view( server ) -> None:
                         vuetify.VListItemSubtitle( "{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}" )
 
         with vuetify.VRow(), vuetify.VCol():
-            vuetify.VTextField( v_model=( "simulation_remote_path", ),
+            vuetify.VTextField( v_model=( "simulation_remote_path", None ),
                                 label="Path where to write files and launch code",
                                 prepend_icon="mdi-upload",
                                 dense=True,
@@ -156,7 +163,7 @@ def define_simulation_view( server ) -> None:
                                )
 
         with vuetify.VRow(), vuetify.VCol():
-            vuetify.VTextField( v_model=( "simulation_dl_path", ),
+            vuetify.VTextField( v_model=( "simulation_dl_path", None ),
                                 label="Simulation download path",
                                 dense=True,
                                 clearable=True,

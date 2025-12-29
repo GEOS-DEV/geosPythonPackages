@@ -16,12 +16,6 @@ import re
 import os
 
 
-#TODO move outside
-
-# Load template from file
-# with open("slurm_job_template.j2") as f:
-# template = Template(f.read())
-
 #TODO from private-assets
 # template_str = """#!/bin/sh
 # #SBATCH --job-name="{{ job_name }}"
@@ -224,8 +218,8 @@ class Simulation:
 
             # if server.state.key:
             Authentificator.ssh_client = Authentificator._create_ssh_client(
-                SimulationConstant.host,  #test 
-                SimulationConstant.port,
+                Authentificator.get_cluster(server.state.selected_cluster_name).host,  #test 
+                Authentificator.get_cluster(server.state.selected_cluster_name).port,
                 server.state.login,
                 key=Authentificator.get_key( server.state.login, server.state.password ) )
 
@@ -296,12 +290,12 @@ class Simulation:
                                                      server.state.simulation_remote_path )
                     
                     # sdi = server.state.sd
-                    ci = { 'nodes': 1, 'total_ranks': 2 }
+                    # ci = { 'nodes': 1, 'total_ranks': 2 }
                     run_id : int = Simulation.render_and_run('p4_slurm.jinja','job.slurm', server,
                                    job_name=server.state.simulation_job_name,
                                             input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'][ 0 ].get( 'name' ),
-                                            nodes=ci[ 'nodes' ],
-                                            ntasks=ci[ 'total_ranks' ],
+                                            nodes=server.state.sd[ 'nodes' ],
+                                            ntasks=server.state.sd[ 'total_ranks' ],
                                             mem=f"0",
                                             comment_gr=server.state.slurm_comment,
                                             partition='p4_dev',
@@ -310,8 +304,8 @@ class Simulation:
                     Simulation.render_and_run('p4_copyback.jinja', 'copyback.slurm', server,
                                     job_name=server.state.simulation_job_name,
                                             input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml' ][ 0 ].get( 'name' ),
-                                            nodes=ci[ 'nodes' ],
-                                            ntasks=ci[ 'total_ranks' ],
+                                            nodes=1,
+                                            ntasks=1,
                                             mem=f"0",
                                             dep_job_id=run_id,
                                             comment_gr=server.state.slurm_comment,
@@ -428,38 +422,38 @@ class Simulation:
         else:
             return None
 
-        @staticmethod
-        def render_and_run(template_name: str, dest_name: str , server,  **kwargs) -> int :
-            """Render the slurm template and run it. Return it job_id"""
+    @staticmethod
+    def render_and_run(template_name: str, dest_name: str , server,  **kwargs) -> int :
+        """Render the slurm template and run it. Return it job_id"""
 
-            if server.state.access_granted and server.state.simulation_xml_filename:
-                template = Environment(load=FileSystemLoader('jinja_t')).get_template(template)
-                rendered = template.render(kwargs)
+        if server.state.access_granted and server.state.simulation_xml_filename:
+            template = Environment(loader=FileSystemLoader(f'{os.getenv("TRAME_DIR")}/app/io/jinja_t')).get_template(template_name)
+            rendered = template.render(kwargs)
 
-                if Authentificator.ssh_client:
-                    #write slurm directly on remote
-                    try:
-                        sftp = Authentificator.ssh_client.open_sftp()
-                        remote_path = Path( server.state.simulation_remote_path ) / Path( dest_name )
-                        with sftp.file( str( remote_path ), 'w' ) as f:
-                            f.write( rendered )
+            if Authentificator.ssh_client:
+                #write slurm directly on remote
+                try:
+                    sftp = Authentificator.ssh_client.open_sftp()
+                    remote_path = Path( server.state.simulation_remote_path ) / Path( dest_name )
+                    with sftp.file( str( remote_path ), 'w' ) as f:
+                        f.write( rendered )
 
-                    # except FileExistsError:
-                    # print(f"Error: Local file '{remote_path}' not found.")
-                    except PermissionError as e:
-                        print( f"Permission error: {e}" )
-                    except IOError as e:
-                        print( f"Error accessing remote file or path: {e}" )
-                    except Exception as e:
-                        print( f"An error occurred during SFTP: {e}" )
+                # except FileExistsError:
+                # print(f"Error: Local file '{remote_path}' not found.")
+                except PermissionError as e:
+                    print( f"Permission error: {e}" )
+                except IOError as e:
+                    print( f"Error accessing remote file or path: {e}" )
+                except Exception as e:
+                    print( f"An error occurred during SFTP: {e}" )
 
-                    _, sout, _ = Authentificator._execute_remote_command(
-                        Authentificator.ssh_client, f'cd {server.state.simulation_remote_path} && sbatch {dest_name}' )
-                    job_lines = sout.strip()
-                    job_id = re.search( r"Submitted batch job (\d+)", job_lines )
-                    server.state.job_ids.append( { 'job_id': job_id[ 1 ] } )
+                _, sout, _ = Authentificator._execute_remote_command(
+                    Authentificator.ssh_client, f'cd {server.state.simulation_remote_path} && sbatch {dest_name}' )
+                job_lines = sout.strip()
+                job_id = re.search( r"Submitted batch job (\d+)", job_lines )
+                server.state.job_ids.append( { 'job_id': job_id[ 1 ] } )
 
-                    return job_id[1]
+                return job_id[1]
 
     # def start_simulation( self ) -> None:
     #     state = self._server.state
