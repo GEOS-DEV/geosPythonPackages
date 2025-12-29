@@ -146,6 +146,34 @@ def test_getArrayNamesTypeError() -> None:
         arrayHelpers.getArrayNames( data )
 
 
+@pytest.mark.parametrize( "piece", [
+    ( Piece.CELLS ),
+    ( Piece.POINTS ),
+])
+def test_getNumpyGlobalIdsArray( dataSetTest: vtkDataSet, piece: Piece ) -> None:
+    """Test the function getNumpyGlobalIdsArray."""
+    dataset: vtkDataSet = dataSetTest( "dataset" )
+    fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
+    npArrayObtained: npt.NDArray = arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+    nbElements: int = fieldData.GetNumberOfTuples()
+    npArrayExpected: npt.NDArray = np.array( [ i for i in range( nbElements ) ] )
+    assert ( npArrayObtained == npArrayExpected ).all()
+
+
+def test_getNumpyGlobalIdsArrayTypeError() -> None:
+    """Test getNumpyGlobalIdsArray TypeError raises."""
+    fieldData: vtkPolyData = vtkPolyData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+
+
+def test_getNumpyGlobalIdsArrayAttributeError() -> None:
+    """Test getNumpyGlobalIdsArray AttributeError raises."""
+    fieldData: vtkFieldData = vtkFieldData()
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+
+
 @pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
     ( "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
     ( "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),

@@ -483,19 +483,25 @@ def getArrayNames( data: vtkFieldData ) -> list[ str ]:
     return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
 
 
-def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Optional[ npt.NDArray[ np.int64 ] ]:
-    """Get a numpy array of the GlobalIds.
+def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.NDArray:
+    """Get a numpy array of the GlobalIds if it exist.
 
     Args:
         data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
 
     Returns:
-        Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
+        (npt.NDArray): The numpy array of GlobalIds.
+
+    Raises:
+        TypeError: The data entered is not a vtkFieldDate object.
+        AttributeError: There is no GlobalIds in the given data.
     """
+    if not isinstance( data, vtkFieldData ):
+        raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
+
     global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
     if global_ids is None:
-        logging.warning( "No GlobalIds array was found." )
-        return None
+        raise AttributeError( "There is no GlobalIds in the given fieldData." )
     return vtk_to_numpy( global_ids )
 
 
