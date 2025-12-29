@@ -527,9 +527,10 @@ def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
     if not data.HasArray( name ):
         raise AttributeError( f"There is no array named { name } in the given fieldData.")
 
-    npArray: npt.NDArray[ Any ] = vtk_to_numpy( data.GetArray( name ) )
+    npArray: npt.NDArray = vtk_to_numpy( data.GetArray( name ) )
     if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
         sortArrayByGlobalIds( data, npArray )
+
     return npArray
 
 
