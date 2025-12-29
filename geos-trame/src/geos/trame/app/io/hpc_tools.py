@@ -1,16 +1,14 @@
 import json
 import os
 
+from geos.trame.app.io.ssh_tools import SimulationConstant, Authentificator
 
 class SuggestDecomposition:
 
-    def __init__( self, cluster_name, n_unknowns, job_type='cpu' ):
+    def __init__( self, selected_cluster,  n_unknowns, job_type='cpu' ):
 
         # return ["P4: 1x22", "P4: 2x11"]
-        with open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' ) as file:
-            all_cluster = json.load( file )
-        self.selected_cluster = list( filter( lambda d: d.get( 'name' ) == cluster_name,
-                                              all_cluster ) )
+        self.selected_cluster = selected_cluster
         self.n_unknowns = n_unknowns
         self.job_type = job_type
 
@@ -71,13 +69,15 @@ class SuggestDecomposition:
 
     def to_list( self ):
 
-        if self.job_type == 'cpu':  #make it an enum
-            sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster[ 'mem_per_node' ],
-                                               self.selected_cluster[ 'cpu' ][ 'per_node' ] )
+        if self.job_type == 'cpu' and self.selected_cluster: #make it an enum
+            sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster.mem_per_node,
+                                               self.selected_cluster.cores_per_node )
+        else:
+            sd = {'nodes': 0, 'ranks_per_node': 0 , 'total_ranks': 0, 'unknowns_per_rank': 0}
         # elif job_type == 'gpu':
         # selected_cluster['n_nodes']*selected_cluster['gpu']['per_node']
 
         return [
-            f"{self.selected_cluster['name']}: {sd['nodes']} x {sd['ranks_per_node']}",
-            f"{self.selected_cluster['name']}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}"
+            f"{self.selected_cluster.name} : {sd['nodes']} x {sd['ranks_per_node']}",
+            f"{self.selected_cluster.name}: {sd['nodes'] * 2} x {sd['ranks_per_node'] // 2}"
         ]

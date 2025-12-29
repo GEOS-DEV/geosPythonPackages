@@ -206,6 +206,7 @@ class Simulation:
         self._sim_runner = sim_runner
         self._sim_info_dir = sim_info_dir 
         server.state.job_ids = []
+        server.state.selected_cluster = None
 
         server.state.status_colors = {
             "PENDING": "#4CAF50",  #PD
@@ -223,8 +224,8 @@ class Simulation:
 
             # if server.state.key:
             Authentificator.ssh_client = Authentificator._create_ssh_client(
-                SimulationConstant.HOST,  #test 
-                SimulationConstant.PORT,
+                SimulationConstant.host,  #test 
+                SimulationConstant.port,
                 server.state.login,
                 key=Authentificator.get_key( server.state.login, server.state.password ) )
 

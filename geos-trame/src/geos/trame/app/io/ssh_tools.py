@@ -44,7 +44,12 @@ class Authentificator:  #namespacing more than anything else
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
-    sim_constants = SimulationConstant(**json.load(open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' )))
+    sim_constants = [ SimulationConstant(**item) for item in json.load(open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' )) ]
+
+    @staticmethod
+    def get_cluster( name : str ):
+        match = next(( item for item in Authentificator.sim_constants if item.name == name ), None)
+        return match 
 
     @staticmethod
     def _sftp_copy_tree( ssh_client, file_tree, remote_root ):

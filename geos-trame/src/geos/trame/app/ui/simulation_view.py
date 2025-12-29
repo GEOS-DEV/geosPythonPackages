@@ -75,12 +75,17 @@ def define_simulation_view( server ) -> None:
             server.state.access_granted = False
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = []
+            server.state.selected_cluster_names = [cluster.name for cluster in Authentificator.sim_constants]
+            server.state.selected_cluster_name = 'local' 
 
-            sd = SuggestDecomposition( 'p4', 12 )
-            items = sd.to_list()
+            sd = SuggestDecomposition( Authentificator.get_cluster(server.state.selected_cluster_name) , 12 ) #TODO reactive
+            # items = sd.to_list()
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
-            with vuetify.VCol( cols=2 ):
-                vuetify.VSelect( label="Cluster", items=( "items", items ) )
+            with vuetify.VCol( cols=1 ):
+                vuetify.VSelect( label="Cluster", items=( "selected_cluster_names",  ), model_value=("selected_cluster_name",))
+            vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
+            with vuetify.VCol( cols=1 ):
+                vuetify.VSelect( label="Decomposition", items=( "decomposition", sd.to_list() ) )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):
