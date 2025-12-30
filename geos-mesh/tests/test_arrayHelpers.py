@@ -95,6 +95,13 @@ def test_computeElementMapping(
         assert np.all( elementMapComputed[ key ] == elementMapTest[ key ] )
 
 
+def test_computeElementMappingValueError() -> None:
+    """Test computeElementMapping ValueError raises."""
+    pieceWrongValue: Piece = Piece.BOTH
+    with pytest.raises( ValueError ):
+        arrayHelpers.computeElementMapping( vtkMultiBlockDataSet(), vtkMultiBlockDataSet(), pieceWrongValue )
+
+
 @pytest.mark.parametrize( "piece, expected", [ ( Piece.POINTS, {
     'GLOBAL_IDS_POINTS': 1,
     'collocated_nodes': 2,
