@@ -13,7 +13,8 @@ import numpy.typing as npt
 
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import vtkDoubleArray
-from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData, vtkCellData )
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData,
+                                            vtkCellData )
 
 from geos.mesh.utils import arrayHelpers
 from geos.utils.pieceEnum import Piece

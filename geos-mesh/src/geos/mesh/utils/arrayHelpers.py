@@ -18,13 +18,30 @@ from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
-ArrayHelpers module contains several utilities methods to get information on arrays in VTK datasets.
+ArrayHelpers module contains several utilities methods to get information on arrays in VTK meshes.
 
-These methods include:
-    - mesh element localization mapping by indexes
-    - array getters, with conversion into numpy array or pandas dataframe
-    - boolean functions to check whether an array is present in the dataset
-    - bounds getter for vtu and multiblock datasets
+There are two types of functions:
+    - Getters
+    - Checks
+
+The getter functions:
+    - get the array of an attribute (one for dataset, one for multiblockDataset, one for the both and one for fieldData)
+    - get the component names of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the number of components of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the piece of an attribute (for any meshes)
+    - get the values of an attribute as data frame (for polyData only)
+    - get the vtk type of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the set of attributes on one piece of a mesh (for any mesh)
+    - get the attribute and they number of component on one piece of a mesh (one for dataset, one for multiblockDataset and one for the both)
+    - get all the cells dimension of a mesh (for any meshes)
+    - get the GlobalIds array on one piece of a mesh (for any meshes)
+    - get the cell center coordinates of a mesh
+    - get the mapping between cells or points shared by two meshes
+
+The check functions:
+    - check of an attribute is on an mesh for a piece (one for dataset, one for multiblockDataset, one for the both and one for a list of attributes)
+    - check if an attribute is global (for multiblockDataset meshes)
+    - check if a value is a value of an attribute (one for dataset and one for multiblockDataset)
 """
 
 
@@ -152,11 +169,10 @@ def computeElementMapping(
             listDataSetFromIds: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
             for DataSetFromId in listDataSetFromIds:
                 dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( DataSetFromId ) )
-                DataSetFromMap: npt.NDArray  = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
+                DataSetFromMap: npt.NDArray = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
                 for idElementTo in range( nbElementsTo ):
-                    if -1 in elementMap[ 0 ][ idElementTo ]:
-                        if -1 not in DataSetFromMap[ idElementTo ]:
-                            elementMap[ 0 ][ idElementTo ] = [ DataSetFromId, DataSetFromMap[ idElementTo ][ 1 ] ]
+                    if -1 in elementMap[ 0 ][ idElementTo ] and -1 not in DataSetFromMap[ idElementTo ]:
+                        elementMap[ 0 ][ idElementTo ] = [ DataSetFromId, DataSetFromMap[ idElementTo ][ 1 ] ]
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         listDataSetToFlattenIds: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for DataSetToFlattenId in listDataSetToFlattenIds:
