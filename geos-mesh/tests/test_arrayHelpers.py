@@ -7,13 +7,13 @@
 import pytest
 from typing import Union, Any
 
+import pandas as pd  # type: ignore[import-untyped]
 import numpy as np
 import numpy.typing as npt
 
 import vtkmodules.util.numpy_support as vnp
-import pandas as pd  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDoubleArray
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData, vtkCellData
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData, vtkCellData )
 
 from geos.mesh.utils import arrayHelpers
 from geos.utils.pieceEnum import Piece
@@ -34,6 +34,13 @@ def test_getCellDimension(
     mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshName )
     cellDimObtained: set[ int ] = arrayHelpers.getCellDimension( mesh )
     assert cellDimObtained == cellDimExpected
+
+
+def test_getCellDimensionTypeError() -> None:
+    """Test getCellDimension TypeError raises."""
+    meshWrongType: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getCellDimension( meshWrongType )
 
 
 @pytest.mark.parametrize(

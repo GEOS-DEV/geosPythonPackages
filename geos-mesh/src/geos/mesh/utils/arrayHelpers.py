@@ -48,7 +48,7 @@ def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ 
         listDataSetFlattenIds: list[ int ] = getBlockElementIndexesFlatten( mesh )
         for dataSetFlattenIds in listDataSetFlattenIds:
             dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( dataSetFlattenIds ) )
-            cellDim = cellDim.union( getCellDimension( dataSet ) )
+            cellDim.update( getCellDimension( dataSet ) )
     else:
         raise TypeError( "The input mesh must be a vtkMultiBlockDataSet or a vtkDataSet." )
 
