@@ -5,15 +5,10 @@ class SuggestDecomposition:
 
     def __init__( self, selected_cluster,  n_unknowns, job_type='cpu' ):
 
-        # return ["P4: 1x22", "P4: 2x11"]
         self.selected_cluster = selected_cluster
         self.n_unknowns = n_unknowns
         self.job_type = job_type
         self.sd = []
-
-    # @property
-    # def selected_cluster(self):
-    #     return self.selected_cluster
 
     @staticmethod
     def compute( n_unknowns,

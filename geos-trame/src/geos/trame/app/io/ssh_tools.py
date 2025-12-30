@@ -22,7 +22,6 @@ class SimulationConstant:
     n_nodes : int
     cores_per_node : int
     mem_per_node : int
-    # return ["P4: 1x22", "P4: 2x11"]
 
 #If proxyJump are needed
 #
