@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Jacques Franc
+
 import asyncio
 import os
 from asyncio import CancelledError, ensure_future
@@ -34,7 +38,7 @@ class AsyncPeriodicRunner:
         if not self.task:
             return
 
-        ensure_future( self._wait_for_cancel() )
+        ensure_future( self._wait_for_cancel() )  #ignore
 
     async def _wait_for_cancel( self ):
         """

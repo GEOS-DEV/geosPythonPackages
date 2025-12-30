@@ -1,25 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Jacques Franc
+
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
 
 from geos.trame.app.io.simulation import Authentificator
 from geos.trame.app.io.hpc_tools import SuggestDecomposition
 
+
 def define_simulation_view( server ) -> None:
 
     @server.state.change( "selected_cluster_name" )
-    def on_cluster_change( selected_cluster_name : str , **_):
-        print(selected_cluster_name)
-        server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster(selected_cluster_name) , 12 ).to_list()#discard 12 
+    def on_cluster_change( selected_cluster_name: str, **_ ):
+        print( selected_cluster_name )
+        server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
+                                                            12 ).to_list()  #discard 12
 
     @server.state.change( "decomposition" )
-    def on_decomposition_selected( decomposition : str, **_):
-        ll = SuggestDecomposition( Authentificator.get_cluster(server.state.selected_cluster_name) , 12 ).get_sd()
+    def on_decomposition_selected( decomposition: str, **_ ):
+        ll = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), 12 ).get_sd()
         if server.state.decomposition:
-            server.state.sd = ll[ server.state.decompositions.index(decomposition) ]
-            server.state.simulation_remote_path = Authentificator.get_cluster(server.state.selected_cluster_name).simulation_remote_path
-            server.state.simulation_dl_path = Authentificator.get_cluster(server.state.selected_cluster_name).simulation_dl_default_path
+            server.state.sd = ll[ server.state.decompositions.index( decomposition ) ]
+            server.state.simulation_remote_path = Authentificator.get_cluster(
+                server.state.selected_cluster_name ).simulation_remote_path
+            server.state.simulation_dl_path = Authentificator.get_cluster(
+                server.state.selected_cluster_name ).simulation_dl_default_path
         else:
-            server.state.sd = {'nodes': 0, 'total_ranks': 0}
+            server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
     @server.state.change( "simulation_xml_temp" )
     def on_temp_change( simulation_xml_temp: list, **_ ):
@@ -90,16 +98,20 @@ def define_simulation_view( server ) -> None:
             server.state.access_granted = False
             server.state.is_valid_jobfiles = False
             server.state.simulation_xml_filename = []
-            server.state.selected_cluster_names = [cluster.name for cluster in Authentificator.sim_constants]
+            server.state.selected_cluster_names = [ cluster.name for cluster in Authentificator.sim_constants ]
             # server.state.decompositions = []
             server.state.sd = None
 
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
-                vuetify.VSelect( label="Cluster", items=( "selected_cluster_names",  ), v_model=("selected_cluster_name", 'local') )
+                vuetify.VSelect( label="Cluster",
+                                 items=( "selected_cluster_names", ),
+                                 v_model=( "selected_cluster_name", 'local' ) )
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
-                vuetify.VSelect( label="Decomposition", items=( "decompositions", []), v_model=("decomposition",'') )
+                vuetify.VSelect( label="Decomposition",
+                                 items=( "decompositions", [] ),
+                                 v_model=( "decomposition", '' ) )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):

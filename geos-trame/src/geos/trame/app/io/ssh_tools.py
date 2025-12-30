@@ -1,27 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Jacques Franc
+
 from typing import Optional
 from pathlib import Path
 import paramiko
 import os
 import json
-
-# replace by conf-file json
 from dataclasses import dataclass
+
+
 @dataclass
 class SimulationConstant:
-    name : str
-    host : str
-    port : int 
-    geos_path : str
-    geos_module : str
-    geos_load_list : list
-    remote_home_base : str # for ssh key
-    simulation_default_filename : str
-    simulation_remote_path : str
-    simulation_dl_default_path : str
-    simulation_information_default_path : str
-    n_nodes : int
-    cores_per_node : int
-    mem_per_node : int
+    name: str
+    host: str
+    port: int
+    geos_path: str
+    geos_module: str
+    geos_load_list: list
+    remote_home_base: str  # for ssh key
+    simulation_default_filename: str
+    simulation_remote_path: str
+    simulation_dl_default_path: str
+    simulation_information_default_path: str
+    n_nodes: int
+    cores_per_node: int
+    mem_per_node: int
+
 
 #If proxyJump are needed
 #
@@ -41,16 +46,20 @@ class SimulationConstant:
 #     sock=sock,   # <— tunnel created by ProxyCommand
 # )
 
+
 class Authentificator:  #namespacing more than anything else
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
-    sim_constants = [ SimulationConstant(**item) for item in json.load(open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' )) ]
+    sim_constants = [
+        SimulationConstant( **item )
+        for item in json.load( open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' ) )
+    ]
 
     @staticmethod
-    def get_cluster( name : str ):
-        match = next(( item for item in Authentificator.sim_constants if item.name == name ), None)
-        return match 
+    def get_cluster( name: str ):
+        match = next( ( item for item in Authentificator.sim_constants if item.name == name ), None )
+        return match
 
     @staticmethod
     def _sftp_copy_tree( ssh_client, file_tree, remote_root ):
@@ -77,12 +86,12 @@ class Authentificator:  #namespacing more than anything else
                 print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
         elif isinstance( node, dict ):
             if "files" in node:
-                    # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
-                    files = node['files']
-                    for file in files:
-                        with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                            f.write( file.get( 'content' ) )
-                        print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
+                # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
+                files = node[ 'files' ]
+                for file in files:
+                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
+                        f.write( file.get( 'content' ) )
+                    print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
             if "subfolders" in node:
                 for subfolder, content in node[ "subfolders" ].items():
                     try:

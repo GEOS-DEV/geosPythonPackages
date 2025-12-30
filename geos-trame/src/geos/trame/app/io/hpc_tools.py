@@ -1,22 +1,23 @@
-import json
-import os
+from geos.trame.app.io.ssh_tools import SimulationConstant
+
 
 class SuggestDecomposition:
 
-    def __init__( self, selected_cluster,  n_unknowns, job_type='cpu' ):
+    def __init__( self, selected_cluster: SimulationConstant, n_unknowns: int, job_type: str = 'cpu' ) -> None:
+        """Initialize the decomposition hinter for HPC."""
 
-        self.selected_cluster = selected_cluster
-        self.n_unknowns = n_unknowns
-        self.job_type = job_type
-        self.sd = []
+        self.selected_cluster: SimulationConstant = selected_cluster
+        self.n_unknowns: int = n_unknowns
+        self.job_type: str = job_type  #TODO should be an enum
+        self.sd: list[ dict ] = []
 
     @staticmethod
-    def compute( n_unknowns,
-                 memory_per_unknown_bytes,
-                 node_memory_gb,
-                 cores_per_node,
-                 min_unknowns_per_rank=10000,
-                 strong_scaling=True ):
+    def compute( n_unknowns: int,
+                 memory_per_unknown_bytes: int,
+                 node_memory_gb: int,
+                 cores_per_node: int,
+                 min_unknowns_per_rank: int = 10000,
+                 strong_scaling: bool = True ):
         """
         Suggests node/rank distribution for a cluster computation.
         
@@ -54,33 +55,42 @@ class SuggestDecomposition:
         ranks_per_node = min( cores_per_node, ( n_ranks + min_nodes - 1 ) // min_nodes )
         n_nodes = ( n_ranks + ranks_per_node - 1 ) // ranks_per_node
 
-        return [{
-            'nodes': n_nodes,
-            'ranks_per_node': ranks_per_node,
-            'total_ranks': n_nodes * ranks_per_node,
-            'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
-        },
-        {
-            'nodes': n_nodes * 2,
-            'ranks_per_node': ranks_per_node // 2,
-            'total_ranks': n_nodes * ranks_per_node,
-            'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
-        },]
-    
-    def get_sd( self ):       
-        
-        if self.job_type == 'cpu' and self.selected_cluster: #make it an enum
+        return [
+            {
+                'nodes': n_nodes,
+                'ranks_per_node': ranks_per_node,
+                'total_ranks': n_nodes * ranks_per_node,
+                'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
+            },
+            {
+                'nodes': n_nodes * 2,
+                'ranks_per_node': ranks_per_node // 2,
+                'total_ranks': n_nodes * ranks_per_node,
+                'unknowns_per_rank': n_unknowns // ( n_nodes * ranks_per_node )
+            },
+        ]
+
+    def get_sd( self ):
+        """Get the suggested decomposition popoulated."""
+
+        if self.job_type == 'cpu' and self.selected_cluster:  #make it an enum
             self.sd = SuggestDecomposition.compute( self.n_unknowns, 64, self.selected_cluster.mem_per_node,
-                                               self.selected_cluster.cores_per_node )
+                                                    self.selected_cluster.cores_per_node )
         else:
-            self.sd = [{'nodes': 0, 'ranks_per_node': 0 , 'total_ranks': 0, 'unknowns_per_rank': 0 },]
+            self.sd = [
+                {
+                    'nodes': 0,
+                    'ranks_per_node': 0,
+                    'total_ranks': 0,
+                    'unknowns_per_rank': 0
+                },
+            ]
         # elif job_type == 'gpu':
         # selected_cluster['n_nodes']*selected_cluster['gpu']['per_node']
 
         return self.sd
 
     def to_list( self ):
+        """Pretty printer to list of string for display in UI."""
         sd = self.get_sd()
-        return [
-            f"{self.selected_cluster.name} : {sd_item['nodes']} x {sd_item['ranks_per_node']}" for sd_item in sd
-                            ]
+        return [ f"{self.selected_cluster.name} : {sd_item['nodes']} x {sd_item['ranks_per_node']}" for sd_item in sd ]

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Lionel Untereiner
+# SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
@@ -12,8 +12,9 @@ import sys
 
 sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-trame/src" )
 
-assert load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+assert load_dotenv( dotenv_path=Path( __file__ ).parent.parent / ".env" )
 from geos.trame.app.core import GeosTrame
+
 
 def main( server: Server = None, **kwargs: Any ) -> None:
     """Main function."""

@@ -1,16 +1,21 @@
-from abc import ABC 
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Jacques Franc
+
+from abc import ABC
 from pathlib import Path
 from enum import Enum, unique, auto
-from typing import Optional 
+from typing import Optional
 from trame_server.core import Server
 
-from geos.trame.app.io.ssh_tools import Authentificator 
+from geos.trame.app.io.ssh_tools import Authentificator
 from geos.trame.app.utils.async_file_watcher import AsyncPeriodicRunner
 
 from jinja2 import Environment, FileSystemLoader
 import paramiko
 import re
 import os
+
 
 @unique
 class SimulationStatus( Enum ):
@@ -21,6 +26,7 @@ class SimulationStatus( Enum ):
     DONE = auto()
     NOT_RUN = auto()
     UNKNOWN = auto()
+
 
 @unique
 class SlurmJobStatus( Enum ):
@@ -38,6 +44,7 @@ class SlurmJobStatus( Enum ):
         except ValueError:
             return cls.UNKNOWN
 
+
 class ISimRunner( ABC ):
     """
     Abstract interface for sim runner.
@@ -54,6 +61,7 @@ class SimRunner( ISimRunner ):
     def __init__( self, user ):
         super().__init__()
 
+
 class Simulation:
     """
     Simulation component.
@@ -67,7 +75,7 @@ class Simulation:
         self._server = server
         controller = server.controller
         self._sim_runner = sim_runner
-        self._sim_info_dir = sim_info_dir 
+        self._sim_info_dir = sim_info_dir
         server.state.job_ids = []
         server.state.selected_cluster = None
 
@@ -87,8 +95,8 @@ class Simulation:
 
             # if server.state.key:
             Authentificator.ssh_client = Authentificator._create_ssh_client(
-                Authentificator.get_cluster(server.state.selected_cluster_name).host,  #test 
-                Authentificator.get_cluster(server.state.selected_cluster_name).port,
+                Authentificator.get_cluster( server.state.selected_cluster_name ).host,  #test 
+                Authentificator.get_cluster( server.state.selected_cluster_name ).port,
                 server.state.login,
                 key=Authentificator.get_key( server.state.login, server.state.password ) )
 
@@ -121,7 +129,7 @@ class Simulation:
 
             #assume the first XML is the main xml
             xml_expected_file_matches = re.findall( pattern_file, xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) )
-            
+
             #TODO all the needed files
             test_assert = { item.get( "name" )
                             for item in xml_filename }.intersection( set( xml_expected_file_matches ) )
@@ -145,43 +153,52 @@ class Simulation:
             }
             return FILE_TREE
 
-
-
         @controller.trigger( "run_simulation" )
         def run_simulation() -> None:
 
             # if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
-            if server.state.access_granted and server.state.simulation_xml_filename:    
+            if server.state.access_granted and server.state.simulation_xml_filename:
                 if Authentificator.ssh_client:
-                    
+
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
                                                      gen_tree( server.state.simulation_xml_filename ),
                                                      server.state.simulation_remote_path )
-                    
-                    run_id : int = Simulation.render_and_run('p4_slurm.jinja','job.slurm', server,
-                                            job_name=server.state.simulation_job_name,
-                                            input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'][ 0 ].get( 'name' ),
-                                            nodes=server.state.sd[ 'nodes' ],
-                                            ntasks=server.state.sd[ 'total_ranks' ],
-                                            geos_module=Authentificator.get_cluster(server.state.selected_cluster_name).geos_module,
-                                            geos_load_list=" ".join(Authentificator.get_cluster(server.state.selected_cluster_name).geos_load_list),
-                                            geos_path=Authentificator.get_cluster(server.state.selected_cluster_name).geos_path,
-                                            mem=f"0",
-                                            comment_gr=server.state.slurm_comment,
-                                            partition='p4_dev',
-                                            account='myaccount')
-                    
-                    Simulation.render_and_run('p4_copyback.jinja', 'copyback.slurm', server,
-                                            job_name=server.state.simulation_job_name,
-                                            input_file=[ item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml' ][ 0 ].get( 'name' ),
-                                            nodes=1,
-                                            ntasks=1,
-                                            mem=f"0",
-                                            dep_job_id=run_id,
-                                            target_dl_path=server.state.simulation_dl_path,
-                                            comment_gr=server.state.slurm_comment,
-                                            partition='p4_transfer',
-                                            account='myaccount' )
+
+                    run_id: int = Simulation.render_and_run(
+                        'p4_slurm.jinja',
+                        'job.slurm',
+                        server,
+                        job_name=server.state.simulation_job_name,
+                        input_file=[
+                            item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'
+                        ][ 0 ].get( 'name' ),
+                        nodes=server.state.sd[ 'nodes' ],
+                        ntasks=server.state.sd[ 'total_ranks' ],
+                        geos_module=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_module,
+                        geos_load_list=" ".join(
+                            Authentificator.get_cluster( server.state.selected_cluster_name ).geos_load_list ),
+                        geos_path=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_path,
+                        mem=f"0",
+                        comment_gr=server.state.slurm_comment,
+                        partition='p4_dev',
+                        account='myaccount' )
+
+                    Simulation.render_and_run( 'p4_copyback.jinja',
+                                               'copyback.slurm',
+                                               server,
+                                               job_name=server.state.simulation_job_name,
+                                               input_file=[
+                                                   item for item in server.state.simulation_xml_filename
+                                                   if item.get( 'type' ) == 'text/xml'
+                                               ][ 0 ].get( 'name' ),
+                                               nodes=1,
+                                               ntasks=1,
+                                               mem=f"0",
+                                               dep_job_id=run_id,
+                                               target_dl_path=server.state.simulation_dl_path,
+                                               comment_gr=server.state.slurm_comment,
+                                               partition='p4_transfer',
+                                               account='myaccount' )
 
                     self.start_result_streams()
 
@@ -210,7 +227,7 @@ class Simulation:
         self.stop_result_streams()
         self._job_status_watcher = AsyncPeriodicRunner( self.check_jobs, period_ms=self._job_status_watcher_period_ms )
 
-    def check_jobs( self ):
+    def check_jobs( self ) -> None:
         if Authentificator.ssh_client:
             try:
                 jid = self._server.state.job_ids
@@ -225,19 +242,21 @@ class Simulation:
 
                     if ( jid[ index ][ 'status' ] == 'RUNNING' ):
                         _, sout, _ = Authentificator._execute_remote_command(
-                            Authentificator.ssh_client, f"sacct -j {job_id} -o ElapsedRaw,TimelimitRaw --noheader --parsable2 | head -n 1 " )
-                        progress_line = sout.strip().split("|")
-                        jid[ index ][ 'slprogress' ] = str( float(progress_line[0])/ float(progress_line[1]) / 60 * 100 )
+                            Authentificator.ssh_client,
+                            f"sacct -j {job_id} -o ElapsedRaw,TimelimitRaw --noheader --parsable2 | head -n 1 " )
+                        progress_line = sout.strip().split( "|" )
+                        jid[ index ][ 'slprogress' ] = str(
+                            float( progress_line[ 0 ] ) / float( progress_line[ 1 ] ) / 60 * 100 )
 
                         # getthe completed status
                         pattern = re.compile( r'\((\d+(?:\.\d+)?)%\s*completed\)' )
                         _, sout, _ = Authentificator._execute_remote_command(
-                            Authentificator.ssh_client, f"grep \"completed\" {self._server.state.simulation_remote_path}/job_GEOS_{job_id}.out | tail -1" )
+                            Authentificator.ssh_client,
+                            f"grep \"completed\" {self._server.state.simulation_remote_path}/job_GEOS_{job_id}.out | tail -1"
+                        )
                         m = pattern.search( sout.strip() )
                         if m:
                             jid[ index ][ 'simprogress' ] = str( m.group( 1 ) )
-
-
 
                     print(
                         f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n"
@@ -252,16 +271,19 @@ class Simulation:
                 print( f"Error accessing remote file or path: {e}" )
             except Exception as e:
                 print( f"An error occurred during SFTP: {e}" )
+
+            return None
         else:
             return None
 
     @staticmethod
-    def render_and_run(template_name: str, dest_name: str , server,  **kwargs) -> int :
+    def render_and_run( template_name: str, dest_name: str, server, **kwargs ) -> int:
         """Render the slurm template and run it. Return it job_id"""
 
         if server.state.access_granted and server.state.simulation_xml_filename:
-            template = Environment(loader=FileSystemLoader(f'{os.getenv("TRAME_DIR")}/app/io/jinja_t')).get_template(template_name)
-            rendered = template.render(kwargs)
+            template = Environment(
+                loader=FileSystemLoader( f'{os.getenv("TRAME_DIR")}/app/io/jinja_t' ) ).get_template( template_name )
+            rendered = template.render( kwargs )
 
             if Authentificator.ssh_client:
                 #write slurm directly on remote
@@ -284,4 +306,4 @@ class Simulation:
                 job_id = re.search( r"Submitted batch job (\d+)", job_lines )
                 server.state.job_ids.append( { 'job_id': job_id[ 1 ] } )
 
-                return job_id[1]
+                return job_id[ 1 ]
