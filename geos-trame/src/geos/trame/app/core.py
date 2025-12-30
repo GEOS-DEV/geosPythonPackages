@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Lionel Untereiner
-
+# SPDX-FileContributor: Lionel Untereiner, Jacques Franc
+# ignore context collapsing as it is clearer this way
+# ruff: noqa: SIM117
 from trame.ui.vuetify3 import VAppLayout
 from trame.decorators import TrameApp
 from trame.widgets import html, simput

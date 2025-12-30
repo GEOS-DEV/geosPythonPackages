@@ -41,7 +41,7 @@ class AsyncPeriodicRunner:
         if not self.task:
             return
 
-        ensure_future( self._wait_for_cancel() )  #ignore
+        ensure_future( self._wait_for_cancel() )  # type:ignore[unreachable]
 
     async def _wait_for_cancel( self ) -> None:
         """Cancel and await cancel error for the task.
@@ -49,11 +49,11 @@ class AsyncPeriodicRunner:
         If cancel is done outside async, it may raise warnings as cancelled exception may be triggered outside async
         loop.
         """
-        if not self.task or self.task.done() or self.task.cancelled():
+        if not self.task or self.task.done() or self.task.cancelled():  # type:ignore[unreachable]
             self.task = None
             return
 
-        try:
+        try:  # type:ignore[unreachable]
             self.task.cancel()
             await self.task
         except CancelledError:

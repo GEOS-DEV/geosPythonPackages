@@ -53,16 +53,18 @@ class Authentificator:
 
     sim_constants = [
         SimulationConstant( **item )
-        for item in json.load( open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' ) )
+        for item in json.load( open( f'{os.getenv("TRAME_DIR")}/assets/cluster.json', 'r' ) )  # noqa: SIM115
     ]
 
     @staticmethod
-    def get_cluster( name: str ):
+    def get_cluster( name: str ) -> Optional[ SimulationConstant ]:
+        """Return the structured meta for cluster selected."""
         match = next( ( item for item in Authentificator.sim_constants if item.name == name ), None )
         return match
 
     @staticmethod
-    def _sftp_copy_tree( ssh_client, file_tree, remote_root ) -> None:
+    def _sftp_copy_tree( ssh_client: paramiko.SSHClient, file_tree: dict, remote_root: str ) -> None:
+        """Copy the file tree at remote root using ssh_client."""
         # Connect to remote server
         sftp = ssh_client.open_sftp()
 
@@ -71,10 +73,10 @@ class Authentificator:
         sftp.close()
 
     @staticmethod
-    def dfs_tree( node, path, sftp, remote_root ) -> None:
-
+    def dfs_tree( node: list | dict, path: str, sftp: paramiko.SFTPClient, remote_root: str ) -> None:
+        """Create the tree represented by node at local path in remote pointed by sftp client at remote_root."""
         if path is None or remote_root is None:
-            return
+            return  # type:ignore[unreachable]
 
         lp = Path( path )
         rp = Path( remote_root ) / lp
@@ -86,7 +88,6 @@ class Authentificator:
                 print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
         elif isinstance( node, dict ):
             if "files" in node:
-                # sftp.put( str(lp/Path(file)), str(rp/Path(file)) )
                 files = node[ 'files' ]
                 for file in files:
                     with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
@@ -99,7 +100,7 @@ class Authentificator:
                     except FileNotFoundError:
                         print( f"creating {rp/Path(subfolder)}" )
                         sftp.mkdir( str( rp / Path( subfolder ) ) )
-                    Authentificator.dfs_tree( content, lp / Path( subfolder ), sftp, remote_root )
+                    Authentificator.dfs_tree( content, str( lp / Path( subfolder ) ), sftp, remote_root )
 
             for folder, content in node.items():
                 if folder not in [ "files", "subfolders" ]:
@@ -108,17 +109,18 @@ class Authentificator:
                     except FileNotFoundError:
                         print( f"creating {rp/Path(folder)}" )
                         sftp.mkdir( str( rp / Path( folder ) ) )
-                    Authentificator.dfs_tree( content, lp / Path( folder ), sftp, remote_root )
+                    Authentificator.dfs_tree( content, str( lp / Path( folder ) ), sftp, remote_root )
 
     @staticmethod
-    def kill_job( id ) -> None:
+    def kill_job( id: int ) -> None:
+        """Cancel job identified by id in slurm schedulder."""
         if Authentificator.ssh_client:
             Authentificator._execute_remote_command( Authentificator.ssh_client, f"scancel {id}" )
         return None
 
     @staticmethod
-    def get_key( id, pword ) -> paramiko.RSAKey:
-
+    def get_key( id: str, pword: str ) -> paramiko.RSAKey:
+        """Return the ssh key if found or create and dispatch one."""
         try:
             import os
             home = os.environ.get( "HOME" )
@@ -147,7 +149,7 @@ class Authentificator:
 
     @staticmethod
     def gen_key() -> paramiko.RSAKey:
-
+        """Generate RSAKey for SSH protocol."""
         import os
 
         home = os.environ.get( "HOME" )
@@ -165,7 +167,11 @@ class Authentificator:
         return key
 
     @staticmethod
-    def _create_ssh_client( host, port, username, password=None, key=None ) -> paramiko.SSHClient:
+    def _create_ssh_client( host: str,
+                            port: int,
+                            username: str,
+                            password: str | None = None,
+                            key: paramiko.RSAKey = None ) -> paramiko.SSHClient:
         """Initializes and returns an SSH client connection.
 
         Uses context manager for automatic cleanup.
@@ -190,7 +196,7 @@ class Authentificator:
             return None
 
     @staticmethod
-    def _execute_remote_command( client, command ) -> None:
+    def _execute_remote_command( client: paramiko.SSHClient, command: str ) -> tuple[ int, str, str ]:
         """Executes a single command on the remote server and prints the output."""
         if not client:
             return
@@ -224,7 +230,10 @@ class Authentificator:
             return ( -1, "", "" )
 
     @staticmethod
-    def _transfer_file_sftp( client, local_path, remote_path, direction="put" ) -> Optional[ bool ]:
+    def _transfer_file_sftp( client: paramiko.SSHClient,
+                             local_path: str,
+                             remote_path: str,
+                             direction: str = "put" ) -> Optional[ bool ]:
         """Transfers a file using SFTP (Secure File Transfer Protocol).
 
         Direction can be 'put' (upload) or 'get' (download).

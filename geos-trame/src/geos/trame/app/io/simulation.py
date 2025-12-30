@@ -2,10 +2,9 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Jacques Franc
 
-from abc import ABC
 from pathlib import Path
 from enum import Enum, unique, auto
-from typing import Optional
+from typing import Optional, Any
 from trame_server.core import Server
 
 from geos.trame.app.io.ssh_tools import Authentificator
@@ -37,40 +36,20 @@ class SlurmJobStatus( Enum ):
     SUSPENDED = "S"
     UNKNOWN = "UNKNOWN"
 
-    @classmethod
-    def from_string( cls, job_str ) -> "SlurmJobStatus":
-        try:
-            return cls( job_str )
-        except ValueError:
-            return cls.UNKNOWN
-
-
-class ISimRunner( ABC ):
-    """Abstract interface for sim runner.
-    Provides methods to trigger simulation, get simulation output path and knowing if simulation is done or not.
-    """
-    pass
-
-
-class SimRunner( ISimRunner ):
-    """Runs sim on HPC."""
-
-    def __init__( self, user ) -> None:
-        super().__init__()
-
 
 class Simulation:
     """Simulation component.
+
     Fills the UI with the screenshot as read from the simulation outputs folder and a graph with the time series
     from the simulation.
     Requires a simulation runner providing information on the output path of the simulation to monitor and ways to
     trigger the simulation.
     """
 
-    def __init__( self, sim_runner: ISimRunner, server: Server, sim_info_dir: Optional[ Path ] = None ) -> None:
+    def __init__( self, server: Server, sim_info_dir: Optional[ Path ] = None ) -> None:
+        """Initialize the Simulation object with logging and sim triggers among other callbacks."""
         self._server = server
         controller = server.controller
-        self._sim_runner = sim_runner
         self._sim_info_dir = sim_info_dir
         server.state.job_ids = []
         server.state.selected_cluster = None
@@ -99,56 +78,6 @@ class Simulation:
             if Authentificator.ssh_client:
                 server.state.access_granted = True
 
-        @staticmethod
-        def gen_tree( xml_filename ):
-
-            import re
-            xml_pattern = re.compile( r"\.xml$", re.IGNORECASE )
-            mesh_pattern = re.compile( r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE )
-            table_pattern = re.compile( r"\.(txt|dat|csv|geos)$", re.IGNORECASE )
-            xml_matches = []
-            mesh_matches = []
-            table_matches = []
-
-            pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b"  # all files
-            pattern_xml_path = r"\"(.*/)*([\w\-.]+\.(?:xml))\b"
-            pattern_mesh_path = r"\"(.*/)*([\w\-.]+\.(?:vtu|pvtu|vtm|pvtm))\b"
-            pattern_table_curly_path = r"((?:[\w\-/]+/)+)*([\w\-.]+\.(?:geos|csv|dat|txt))"
-
-            for file in xml_filename:
-                if xml_pattern.search( file.get( "name", "" ) ):
-                    xml_matches.append( file )
-                elif mesh_pattern.search( file.get( "name", "" ) ):
-                    mesh_matches.append( file )
-                elif table_pattern.search( file.get( "name", "" ) ):
-                    table_matches.append( file )
-
-            #assume the first XML is the main xml
-            xml_expected_file_matches = re.findall( pattern_file, xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) )
-
-            #TODO all the needed files
-            test_assert = { item.get( "name" )
-                            for item in xml_filename }.intersection( set( xml_expected_file_matches ) )
-            assert test_assert
-
-            decoded = re.sub( pattern_xml_path, r'"\2', xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) )
-            decoded = re.sub( pattern_mesh_path, r'"mesh/\2', decoded )
-            decoded = re.sub( pattern_table_curly_path, r"tables/\2", decoded )
-
-            xml_matches[ 0 ][ 'content' ] = decoded.encode( "utf-8" )
-
-            FILE_TREE = {
-                'root': '.',
-                "structure": {
-                    "files": xml_matches,
-                    "subfolders": {
-                        "mesh": mesh_matches,
-                        "tables": table_matches
-                    }
-                }
-            }
-            return FILE_TREE
-
         @controller.trigger( "run_simulation" )
         def run_simulation() -> None:
 
@@ -157,7 +86,7 @@ class Simulation:
                 if Authentificator.ssh_client:
 
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
-                                                     gen_tree( server.state.simulation_xml_filename ),
+                                                     Authentificator.gen_tree( server.state.simulation_xml_filename ),
                                                      server.state.simulation_remote_path )
 
                     run_id: int = Simulation.render_and_run(
@@ -196,7 +125,7 @@ class Simulation:
                                                partition='p4_transfer',
                                                account='myaccount' )
 
-                    self.start_result_streams()
+                    self._start_result_streams()
 
                 else:
                     raise paramiko.SSHException
@@ -208,22 +137,25 @@ class Simulation:
                 Authentificator.kill_job( jobs[ 'job_id' ] )
 
     def __del__( self ) -> None:
-        self.stop_result_streams()
+        """Clean up running streams on destruction."""
+        self._stop_result_streams()
 
-    def set_status_watcher_period_ms( self, period_ms ) -> None:
+    def set_status_watcher_period_ms( self, period_ms: int ) -> None:
+        """Set the watcher period in ms."""
         self._job_status_watcher_period_ms = period_ms
         if self._job_status_watcher:
             self._job_status_watcher.set_period_ms( period_ms )
 
-    def stop_result_streams( self ) -> None:
+    def _stop_result_streams( self ) -> None:
         if self._job_status_watcher is not None:
             self._job_status_watcher.stop()
 
-    def start_result_streams( self ) -> None:
-        self.stop_result_streams()
+    def _start_result_streams( self ) -> None:
+        self._stop_result_streams()
         self._job_status_watcher = AsyncPeriodicRunner( self.check_jobs, period_ms=self._job_status_watcher_period_ms )
 
     def check_jobs( self ) -> None:
+        """Check on running jobs and update their names and progresses."""
         if Authentificator.ssh_client:
             try:
                 jid = self._server.state.job_ids
@@ -273,7 +205,7 @@ class Simulation:
             return None
 
     @staticmethod
-    def render_and_run( template_name: str, dest_name: str, server, **kwargs ) -> int:
+    def render_and_run( template_name: str, dest_name: str, server: Server, **kwargs: Any ) -> str:
         """Render the slurm template and run it. Return it job_id."""
         if server.state.access_granted and server.state.simulation_xml_filename:
             template = Environment(
@@ -299,6 +231,61 @@ class Simulation:
                     Authentificator.ssh_client, f'cd {server.state.simulation_remote_path} && sbatch {dest_name}' )
                 job_lines = sout.strip()
                 job_id = re.search( r"Submitted batch job (\d+)", job_lines )
-                server.state.job_ids.append( { 'job_id': job_id[ 1 ] } )
+                if job_id:
+                    server.state.job_ids.append( { 'job_id': job_id.group( 1 ) } )
+                    return job_id.group( 1 )
+                else:
+                    return "-1"
+            else:
+                return "-1"
+        else:
+            return "-1"
 
-                return job_id[ 1 ]
+    @staticmethod
+    def gen_tree( xml_filename: Any ) -> dict:
+        """Generate file tree to be copied on remote from files uploaded."""
+        import re
+        xml_pattern = re.compile( r"\.xml$", re.IGNORECASE )
+        mesh_pattern = re.compile( r"\.(vtu|vtm|pvtu|pvtm)$", re.IGNORECASE )
+        table_pattern = re.compile( r"\.(txt|dat|csv|geos)$", re.IGNORECASE )
+        xml_matches = []
+        mesh_matches = []
+        table_matches = []
+
+        pattern_file = r"[\w\-.]+\.(?:vtu|pvtu|dat|txt|xml|geos)\b"  # all files
+        pattern_xml_path = r"\"(.*/)*([\w\-.]+\.(?:xml))\b"
+        pattern_mesh_path = r"\"(.*/)*([\w\-.]+\.(?:vtu|pvtu|vtm|pvtm))\b"
+        pattern_table_curly_path = r"((?:[\w\-/]+/)+)*([\w\-.]+\.(?:geos|csv|dat|txt))"
+
+        for file in xml_filename:
+            if xml_pattern.search( file.get( "name", "" ) ):
+                xml_matches.append( file )
+            elif mesh_pattern.search( file.get( "name", "" ) ):
+                mesh_matches.append( file )
+            elif table_pattern.search( file.get( "name", "" ) ):
+                table_matches.append( file )
+
+        #assume the first XML is the main xml
+        xml_expected_file_matches = re.findall( pattern_file, xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) )
+
+        #TODO all the needed files
+        test_assert = { item.get( "name" ) for item in xml_filename }.intersection( set( xml_expected_file_matches ) )
+        assert test_assert
+
+        decoded = re.sub( pattern_xml_path, r'"\2', xml_matches[ 0 ][ 'content' ].decode( "utf-8" ) )
+        decoded = re.sub( pattern_mesh_path, r'"mesh/\2', decoded )
+        decoded = re.sub( pattern_table_curly_path, r"tables/\2", decoded )
+
+        xml_matches[ 0 ][ 'content' ] = decoded.encode( "utf-8" )
+
+        FILE_TREE = {
+            'root': '.',
+            "structure": {
+                "files": xml_matches,
+                "subfolders": {
+                    "mesh": mesh_matches,
+                    "tables": table_matches
+                }
+            }
+        }
+        return FILE_TREE

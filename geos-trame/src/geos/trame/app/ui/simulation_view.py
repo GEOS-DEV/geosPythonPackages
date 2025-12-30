@@ -1,17 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Jacques Franc
-
+# ignore context collapsing as it is clearer this way
+# ruff: noqa: SIM117
 from typing import Any
 
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
+from trame.app.core import Server
 
 from geos.trame.app.io.simulation import Authentificator
 from geos.trame.app.io.hpc_tools import SuggestDecomposition
 
 
-def define_simulation_view( server ) -> None:
+#TODO a class from it
+def define_simulation_view( server: Server ) -> None:
+    """Functional definition of UI elements."""
 
     @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
