@@ -311,6 +311,7 @@ class Simulation:
                                             ntasks=1,
                                             mem=f"0",
                                             dep_job_id=run_id,
+                                            target_dl_path=server.state.simulation_dl_path,
                                             comment_gr=server.state.slurm_comment,
                                             partition='p4_transfer',
                                             account='myaccount' )
@@ -384,6 +385,7 @@ class Simulation:
                     job_line = sout.strip().split( "\n" )[ -1 ]
 
                     jid[ index ][ 'status' ] = job_line.split()[ 2 ]
+                    jid[ index ][ 'name' ] = job_line.split()[ 1 ]
                     #  OLD COPY BACK POLICY
                     # if ( jid[ index ][ 'status' ] == 'COMPLETED' ):
                     #     # tar and copy back
@@ -397,18 +399,22 @@ class Simulation:
                     #         f'{self._server.state.simulation_remote_path}/{job_id}.tgz',
                     #         direction='get' )
                     if ( jid[ index ][ 'status' ] == 'RUNNING' ):
+                        _, sout, _ = Authentificator._execute_remote_command(
+                            Authentificator.ssh_client, f"sacct -j {job_id} -o ElapsedRaw,TimelimitRaw --noheader --parsable2 | head -n 1 " )
+                        progress_line = sout.strip().split("|")
+                        jid[ index ][ 'slprogress' ] = str( float(progress_line[0])/ float(progress_line[1]) / 60 * 100 )
+                        # jid[ index ][ 'simprogress' ] = "40"
+
                         # getthe completed status
                         pattern = re.compile( r'\((\d+(?:\.\d+)?)%\s*completed\)' )
-                        with Authentificator.ssh_client.open_sftp().file(
-                                str(
-                                    Path( self._server.state.simulation_remote_path ) /
-                                    Path( f"job_GEOS_{job_id}.out" ) ), "r" ) as f:
-                            for line in f:
-                                m = pattern.search( line )
-                                if m:
-                                    self._server.state.simulation_progress = str( m.group( 1 ) )
+                        _, sout, _ = Authentificator._execute_remote_command(
+                            Authentificator.ssh_client, f"grep \"completed\" {self._server.state.simulation_remote_path}/job_GEOS_{job_id}.out | tail -1" )
+                        m = pattern.search( sout.strip() )
+                        if m:
+                            jid[ index ][ 'simprogress' ] = str( m.group( 1 ) )
 
-                    jid[ index ][ 'name' ] = job_line.split()[ 1 ]
+
+
                     print(
                         f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n"
                     )

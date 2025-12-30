@@ -208,7 +208,8 @@ def define_simulation_view( server ) -> None:
                                             prepend_icon="mdi-minus-circle-outline",
                                             click=( kill_job, "[i]" ) ):
                         vuetify.VListItemTitle( "{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}" )
-                        vuetify.VProgressLinear( v_model=( "simulation_progress", "0" ), )
+                        vuetify.VProgressLinear( v_model=( "jobs.simprogress", "0" ), )
+                        vuetify.VProgressLinear( v_model=( "jobs.slprogress", "0" ), )
 
         with vuetify.VRow( v_if="simulation_error" ):
             html.Div( "An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;" )
