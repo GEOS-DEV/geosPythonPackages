@@ -20,35 +20,6 @@ class TimelineEditor( vuetify.VCard ):
 
         items = self.tree.timeline()
 
-        fields = [ {
-            "summary": {
-                "label": "Summary",
-                "component": "gantt-text",
-                "width": 300,
-                "placeholder": "Add a new task...",
-            },
-            "start_date": {
-                "label": "Start",
-                "component": "gantt-date",
-                "width": 75,
-                "placeholder": "Start",
-                "sort": "date",
-            },
-            "end_date": {
-                "label": "End",
-                "component": "gantt-date",
-                "width": 75,
-                "placeholder": "End",
-                "sort": "date",
-            },
-            "duration": {
-                "label": "Days",
-                "component": "gantt-number",
-                "width": 50,
-                "placeholder": "0",
-            },
-        } ]
-
         with self:
             vuetify.VCardTitle( "Events View" )
             vuetify.VDateInput(

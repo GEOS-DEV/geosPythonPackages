@@ -46,25 +46,21 @@ class SlurmJobStatus( Enum ):
 
 
 class ISimRunner( ABC ):
-    """
-    Abstract interface for sim runner.
+    """Abstract interface for sim runner.
     Provides methods to trigger simulation, get simulation output path and knowing if simulation is done or not.
     """
     pass
 
 
 class SimRunner( ISimRunner ):
-    """
-    Runs sim on HPC. 
-    """
+    """Runs sim on HPC."""
 
-    def __init__( self, user ):
+    def __init__( self, user ) -> None:
         super().__init__()
 
 
 class Simulation:
-    """
-    Simulation component.
+    """Simulation component.
     Fills the UI with the screenshot as read from the simulation outputs folder and a graph with the time series
     from the simulation.
     Requires a simulation runner providing information on the output path of the simulation to monitor and ways to
@@ -95,7 +91,7 @@ class Simulation:
 
             # if server.state.key:
             Authentificator.ssh_client = Authentificator._create_ssh_client(
-                Authentificator.get_cluster( server.state.selected_cluster_name ).host,  #test 
+                Authentificator.get_cluster( server.state.selected_cluster_name ).host,  #test
                 Authentificator.get_cluster( server.state.selected_cluster_name ).port,
                 server.state.login,
                 key=Authentificator.get_key( server.state.login, server.state.password ) )
@@ -178,7 +174,7 @@ class Simulation:
                         geos_load_list=" ".join(
                             Authentificator.get_cluster( server.state.selected_cluster_name ).geos_load_list ),
                         geos_path=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_path,
-                        mem=f"0",
+                        mem="0",
                         comment_gr=server.state.slurm_comment,
                         partition='p4_dev',
                         account='myaccount' )
@@ -193,7 +189,7 @@ class Simulation:
                                                ][ 0 ].get( 'name' ),
                                                nodes=1,
                                                ntasks=1,
-                                               mem=f"0",
+                                               mem="0",
                                                dep_job_id=run_id,
                                                target_dl_path=server.state.simulation_dl_path,
                                                comment_gr=server.state.slurm_comment,
@@ -211,15 +207,15 @@ class Simulation:
             for jobs in server.state.job_ids:
                 Authentificator.kill_job( jobs[ 'job_id' ] )
 
-    def __del__( self ):
+    def __del__( self ) -> None:
         self.stop_result_streams()
 
-    def set_status_watcher_period_ms( self, period_ms ):
+    def set_status_watcher_period_ms( self, period_ms ) -> None:
         self._job_status_watcher_period_ms = period_ms
         if self._job_status_watcher:
             self._job_status_watcher.set_period_ms( period_ms )
 
-    def stop_result_streams( self ):
+    def stop_result_streams( self ) -> None:
         if self._job_status_watcher is not None:
             self._job_status_watcher.stop()
 
@@ -278,8 +274,7 @@ class Simulation:
 
     @staticmethod
     def render_and_run( template_name: str, dest_name: str, server, **kwargs ) -> int:
-        """Render the slurm template and run it. Return it job_id"""
-
+        """Render the slurm template and run it. Return it job_id."""
         if server.state.access_granted and server.state.simulation_xml_filename:
             template = Environment(
                 loader=FileSystemLoader( f'{os.getenv("TRAME_DIR")}/app/io/jinja_t' ) ).get_template( template_name )

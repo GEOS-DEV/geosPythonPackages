@@ -47,7 +47,7 @@ class SimulationConstant:
 # )
 
 
-class Authentificator:  #namespacing more than anything else
+class Authentificator:
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
@@ -62,7 +62,7 @@ class Authentificator:  #namespacing more than anything else
         return match
 
     @staticmethod
-    def _sftp_copy_tree( ssh_client, file_tree, remote_root ):
+    def _sftp_copy_tree( ssh_client, file_tree, remote_root ) -> None:
         # Connect to remote server
         sftp = ssh_client.open_sftp()
 
@@ -71,7 +71,7 @@ class Authentificator:  #namespacing more than anything else
         sftp.close()
 
     @staticmethod
-    def dfs_tree( node, path, sftp, remote_root ):
+    def dfs_tree( node, path, sftp, remote_root ) -> None:
 
         if path is None or remote_root is None:
             return
@@ -111,13 +111,13 @@ class Authentificator:  #namespacing more than anything else
                     Authentificator.dfs_tree( content, lp / Path( folder ), sftp, remote_root )
 
     @staticmethod
-    def kill_job( id ):
+    def kill_job( id ) -> None:
         if Authentificator.ssh_client:
             Authentificator._execute_remote_command( Authentificator.ssh_client, f"scancel {id}" )
         return None
 
     @staticmethod
-    def get_key( id, pword ):
+    def get_key( id, pword ) -> paramiko.RSAKey:
 
         try:
             import os
@@ -146,7 +146,7 @@ class Authentificator:  #namespacing more than anything else
             return PRIVATE_KEY
 
     @staticmethod
-    def gen_key():
+    def gen_key() -> paramiko.RSAKey:
 
         import os
 
@@ -166,8 +166,8 @@ class Authentificator:  #namespacing more than anything else
 
     @staticmethod
     def _create_ssh_client( host, port, username, password=None, key=None ) -> paramiko.SSHClient:
-        """
-        Initializes and returns an SSH client connection.
+        """Initializes and returns an SSH client connection.
+
         Uses context manager for automatic cleanup.
         """
         client = paramiko.SSHClient()
@@ -190,10 +190,8 @@ class Authentificator:  #namespacing more than anything else
             return None
 
     @staticmethod
-    def _execute_remote_command( client, command ):
-        """
-        Executes a single command on the remote server and prints the output.
-        """
+    def _execute_remote_command( client, command ) -> None:
+        """Executes a single command on the remote server and prints the output."""
         if not client:
             return
 
@@ -226,9 +224,9 @@ class Authentificator:  #namespacing more than anything else
             return ( -1, "", "" )
 
     @staticmethod
-    def _transfer_file_sftp( client, local_path, remote_path, direction="put" ):
-        """
-        Transfers a file using SFTP (Secure File Transfer Protocol).
+    def _transfer_file_sftp( client, local_path, remote_path, direction="put" ) -> Optional[ bool ]:
+        """Transfers a file using SFTP (Secure File Transfer Protocol).
+
         Direction can be 'put' (upload) or 'get' (download).
         """
         if not client:

@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Jacques Franc
 
+from typing import Any
+
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
 
@@ -12,13 +14,13 @@ from geos.trame.app.io.hpc_tools import SuggestDecomposition
 def define_simulation_view( server ) -> None:
 
     @server.state.change( "selected_cluster_name" )
-    def on_cluster_change( selected_cluster_name: str, **_ ):
+    def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( selected_cluster_name )
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
                                                             12 ).to_list()  #discard 12
 
     @server.state.change( "decomposition" )
-    def on_decomposition_selected( decomposition: str, **_ ):
+    def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
         ll = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), 12 ).get_sd()
         if server.state.decomposition:
             server.state.sd = ll[ server.state.decompositions.index( decomposition ) ]
@@ -30,7 +32,7 @@ def define_simulation_view( server ) -> None:
             server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
     @server.state.change( "simulation_xml_temp" )
-    def on_temp_change( simulation_xml_temp: list, **_ ):
+    def on_temp_change( simulation_xml_temp: list, **_: Any ) -> None:
         current_list = server.state.simulation_xml_filename
 
         new_list = current_list + simulation_xml_temp
@@ -38,7 +40,7 @@ def define_simulation_view( server ) -> None:
         server.state.simulation_xml_temp = []
 
     @server.state.change( "simulation_xml_filename" )
-    def on_simfiles_change( simulation_xml_filename: list, **_ ):
+    def on_simfiles_change( simulation_xml_filename: list, **_: Any ) -> None:
         import re
         pattern = re.compile( r"\.xml$", re.IGNORECASE )
         has_xml = any(
@@ -155,15 +157,14 @@ def define_simulation_view( server ) -> None:
                     filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt',
                     # readonly=True,
                     disabled=( "!access_granted", ) )
-            with vuetify.VCol( cols=4 ):
-                with vuetify.VList():
-                    with vuetify.VListItem( v_for=( "(file,i) in simulation_xml_filename" ),
-                                            key="i",
-                                            value="file",
-                                            prepend_icon="mdi-minus-circle-outline",
-                                            click=( run_remove_jobfile, "[i]" ) ):
-                        vuetify.VListItemTitle( "{{ file.name }}" )
-                        vuetify.VListItemSubtitle( "{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}" )
+            with vuetify.VCol( cols=4 ), vuetify.VList():
+                with vuetify.VListItem( v_for=( "(file,i) in simulation_xml_filename" ),
+                                        key="i",
+                                        value="file",
+                                        prepend_icon="mdi-minus-circle-outline",
+                                        click=( run_remove_jobfile, "[i]" ) ):
+                    vuetify.VListItemTitle( "{{ file.name }}" )
+                    vuetify.VListItemSubtitle( "{{ file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'URL' }}" )
 
         with vuetify.VRow(), vuetify.VCol():
             vuetify.VTextField( v_model=( "simulation_remote_path", None ),
@@ -210,18 +211,16 @@ def define_simulation_view( server ) -> None:
                 vuetify.VBtn( "Kill All", click="trigger('kill_all_simulations')" ),  # type: ignore
 
         color_expression = "status_colors[job_ids[i].status] || '#607D8B'"
-        with vuetify.VRow():
-            with vuetify.VCol( cols=4 ):
-                with vuetify.VList():
-                    with vuetify.VListItem( v_for=( "(jobs,i) in job_ids" ),
-                                            key="i",
-                                            value="jobs",
-                                            base_color=( color_expression, ),
-                                            prepend_icon="mdi-minus-circle-outline",
-                                            click=( kill_job, "[i]" ) ):
-                        vuetify.VListItemTitle( "{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}" )
-                        vuetify.VProgressLinear( v_model=( "jobs.simprogress", "0" ), )
-                        vuetify.VProgressLinear( v_model=( "jobs.slprogress", "0" ), )
+        with vuetify.VRow(), vuetify.VCol( cols=4 ), vuetify.VList():
+            with vuetify.VListItem( v_for=( "(jobs,i) in job_ids" ),
+                                    key="i",
+                                    value="jobs",
+                                    base_color=( color_expression, ),
+                                    prepend_icon="mdi-minus-circle-outline",
+                                    click=( kill_job, "[i]" ) ):
+                vuetify.VListItemTitle( "{{ jobs.status }} -- {{ jobs.name }} -- {{ jobs.job_id }}" )
+                vuetify.VProgressLinear( v_model=( "jobs.simprogress", "0" ), )
+                vuetify.VProgressLinear( v_model=( "jobs.slprogress", "0" ), )
 
         with vuetify.VRow( v_if="simulation_error" ):
             html.Div( "An error occurred while running simulation : <br>{{simulation_error}}", style="color:red;" )
