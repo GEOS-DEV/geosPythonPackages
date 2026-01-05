@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self, Any
-# from functools import partial
+from functools import partial
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
@@ -176,7 +176,7 @@ class AttributesDiff:
         Keys of the dictionary are the attribute localization and the value are the shared attribute per localization.
         """
         for piece in [ Piece.POINTS, Piece.CELLS ]:
-            setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece ).intersection( getAttributeSet( self.listMeshes[ 1 ], piece ))
+            setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece ).intersection( getAttributeSet( self.listMeshes[ 1 ], piece ) )
             if setSharedAttributes != set():
                 self.dicSharedAttributes[ piece ] = setSharedAttributes
 
@@ -252,8 +252,8 @@ class AttributesDiff:
 
         self._computeDicAttributesArray()
         self._computeL1()
-        # if self.computeL2Diff:
-        #     self.computeL2()
+        if self.computeL2Diff:
+            self._computeL2()
 
         self.logger.info( f"The filter { self.logger.name } succeed." )
 
@@ -302,19 +302,31 @@ class AttributesDiff:
 
         return
 
-    # def computeL2(self, f, callback = partial(np.linalg.norm(ord=np.inf))):
-    #     """ compute by default inf norm """
-    #     s = f.shape
-    #     #loop
-    #     sp = fp.shape
-    #     s = f.shape
-    #     for i in range(0,s[1]):
-    #         n = callback( f[:,i,i1]-f[:,i,i2])
-    #         print(self.flist[i]+": "+str(n)+" ")
-    #     for i in range(0,sp[1]):
-    #         n = callback( fp[:,i,i1]-fp[:,i,i2])
-    #         print(self.flist[i]+": "+str(n)+" ")
-    #     self.logger.info("Lmax norm for fields {name} is {value}")
+    def _computeL2( self: Self ) -> None:
+        """ compute by default inf norm """
+        l2Max: float = 0
+        attributeNameL2Max: str
+        callback: npt.NDArray = partial( np.linalg.norm( ord=np.inf ) )
+        for piece in self.dicAttributesDiffNames:
+            for attributeId, attributeDiffName in enumerate( self.dicAttributesDiffNames[ piece ] ):
+                l2: float
+                if isinstance( self.listMeshes[ 0 ], vtkDataSet ):
+                    l2 = callback( self.dicAttributesArray[ piece ][ :, attributeId, 0 ] - self.dicAttributesArray[ piece ][ :, attributeId, 1 ] )
+                    self.logger.info( f"The inf norm of { attributeDiffName } is { l2 }." )
+                    if l2 > l2Max:
+                        attributeNameL2Max = attributeDiffName
+                else:
+                    listBlockId: list[ int ] = getBlockElementIndexesFlatten( self.outputMesh )
+                    for BlockId in listBlockId:
+                        dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( BlockId ) )
+                        lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
+                        l2 = callback( self.dicAttributesArray[ piece ][ lToG, attributeId, 0 ] - self.dicAttributesArray[ piece ][ lToG, attributeId, 1 ] )
+                        self.logger.info( f"The inf norm of { attributeDiffName } is { l2 }." )
+                        if l2 > l2Max:
+                            attributeNameL2Max = attributeDiffName
+        self.logger.info( f"The attribute with the highest inf norm is { attributeNameL2Max } with { l2Max }." )
+
+        return
 
     def getOutput( self: Self ) -> vtkMultiBlockDataSet | vtkDataSet:
         """Return the mesh with the computed diff as attributes for the wanted attributes.
