@@ -176,8 +176,7 @@ class AttributesDiff:
         Keys of the dictionary are the attribute localization and the value are the shared attribute per localization.
         """
         for piece in [ Piece.POINTS, Piece.CELLS ]:
-            setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece )
-            setSharedAttributes.update( getAttributeSet( self.listMeshes[ 1 ], piece ) )
+            setSharedAttributes: set[ str ] = getAttributeSet( self.listMeshes[ 0 ], piece ).intersection( getAttributeSet( self.listMeshes[ 1 ], piece ))
             if setSharedAttributes != set():
                 self.dicSharedAttributes[ piece ] = setSharedAttributes
 
