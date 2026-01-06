@@ -15,9 +15,9 @@ from geos.mesh.utils.arrayHelpers import getArrayInObject
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.pieceEnum import Piece
 
+
 # TODO: Create meshes for test
-@pytest.mark.parametrize( "mesh1Name, mesh2Name", [
-] )
+@pytest.mark.parametrize( "mesh1Name, mesh2Name", [] )
 def test_AttributesDiff(
     dataSetTest: Any,
     mesh1Name: str,
@@ -30,7 +30,10 @@ def test_AttributesDiff(
     AttributesDiffFilter: AttributesDiff = AttributesDiff()
     AttributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
     AttributesDiffFilter.logSharedAttributeInfo()
-    dicAttributesToCompare: dict[ Piece, set[ str ] ] = { Piece.CELLS: set( [ "elementCenter", "localToGlobalMap" ] ), Piece.POINTS: set( [ "localToGlobalMap" ] ) }
+    dicAttributesToCompare: dict[ Piece, set[ str ] ] = {
+        Piece.CELLS: { "elementCenter", "localToGlobalMap" },
+        Piece.POINTS: { "localToGlobalMap" }
+    }
     AttributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
     AttributesDiffFilter.applyFilter()
     mesh: vtkDataSet | vtkMultiBlockDataSet = mesh1.NewInstance()
@@ -38,8 +41,11 @@ def test_AttributesDiff(
     dicAttributesDiffNames: dict[ Piece, set[ str ] ] = AttributesDiffFilter.getDicAttributesDiffNames()
     listFlattenIndexes = getBlockElementIndexesFlatten( mesh )
     for it in listFlattenIndexes:
-        dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )
+        dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )  # type: ignore[union-attr]
         for piece, listDiffAttributesName in dicAttributesDiffNames.items():
             for diffAttributeName in listDiffAttributesName:
                 test = getArrayInObject( dataset, diffAttributeName, piece )
                 assert ( test == np.zeros( test.shape ) ).all()
+
+
+# TODO: Implement a test for checking the log of the inf norm

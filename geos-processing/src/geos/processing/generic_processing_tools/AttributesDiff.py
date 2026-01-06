@@ -156,7 +156,8 @@ class AttributesDiff:
                 listMeshBlockId: list[ int ] = getBlockElementIndexesFlatten( mesh )
                 for meshBlockId in listMeshBlockId:
                     setDatasetType.add( mesh.GetDataSet( meshBlockId ).GetClassName() )  # type: ignore[union-attr]
-                    dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( meshBlockId ) )  # type: ignore[union-attr]
+                    dataset: vtkDataSet = vtkDataSet.SafeDownCast(
+                        mesh.GetDataSet( meshBlockId ) )  # type: ignore[union-attr]
                     for piece in dicMeshesMaxElementId:
                         dicMeshesMaxElementId[ piece ][ meshId ] = max(
                             dicMeshesMaxElementId[ piece ][ meshId ],
