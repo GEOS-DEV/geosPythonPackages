@@ -10,6 +10,7 @@ from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
 from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.pieceEnum import Piece
 
 __doc__ = """
 AttributeMapping is a vtk filter that transfers global attributes from a source mesh to a final mesh with same
@@ -33,6 +34,7 @@ To use the filter:
 
 .. code-block:: python
 
+    import logging
     from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
 
     # Filter inputs.
@@ -40,7 +42,7 @@ To use the filter:
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ]
     attributeNames: set[ str ]
     # Optional inputs.
-    onPoints: bool  # defaults to False
+    piece: Piece  # defaults to Piece.CELLS
     speHandler: bool  # defaults to False
 
     # Instantiate the filter
@@ -48,7 +50,7 @@ To use the filter:
         meshFrom,
         meshTo,
         attributeNames,
-        onPoints,
+        piece,
         speHandler,
     )
 
@@ -57,7 +59,13 @@ To use the filter:
     attributeMappingFilter.setLoggerHandler( yourHandler )
 
     # Do calculations.
-    attributeMappingFilter.applyFilter()
+    try:
+        attributeMappingFilter.applyFilter()
+    except( ValueError, AttributeError ) as e:
+        attributeMappingFilter.logger.error( f"The filter { attributeMappingFilter.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to: { e }"
+        attributeMappingFilter.logger.critical( mess, exc_info=True )
 """
 
 loggerTitle: str = "Attribute Mapping"
@@ -70,7 +78,7 @@ class AttributeMapping:
         meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
         attributeNames: set[ str ],
-        onPoints: bool = False,
+        piece: Piece = Piece.CELLS,
         speHandler: bool = False,
     ) -> None:
         """Transfer global attributes from a source mesh to a final mesh.
@@ -81,28 +89,27 @@ class AttributeMapping:
             meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with attributes to transfer.
             meshTo (Union[vtkDataSet, vtkMultiBlockDataSet]): The final mesh where to transfer attributes.
             attributeNames (set[str]): Names of the attributes to transfer.
-            onPoints (bool): True if attributes are on points, False if they are on cells.
-                Defaults to False.
+            piece (Piece): The piece of the attribute.
+                Defaults to Piece.CELLS.
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         self.meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshFrom
         self.meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = meshTo
         self.attributeNames: set[ str ] = attributeNames
-        self.onPoints: bool = onPoints
-        # TODO/refact (@RomainBaville) make it an enum
-        self.piece: str = "points" if self.onPoints else "cells"
+        self.piece: Piece = piece
 
-        # cell map
+        # Element map
         self.ElementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
 
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
             self.logger = getLogger( loggerTitle, True )
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -113,7 +120,7 @@ class AttributeMapping:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
@@ -129,73 +136,64 @@ class AttributeMapping:
         """
         return self.ElementMap
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Transfer global attributes from a source mesh to a final mesh.
 
         Mapping the piece of the attributes to transfer.
 
-        Returns:
-            boolean (bool): True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Errors with the input attributeNames or the input mesh.
+            AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
 
         if len( self.attributeNames ) == 0:
-            self.logger.warning( f"Please enter at least one { self.piece } attribute to transfer." )
-            self.logger.warning( f"The filter { self.logger.name } has not been used." )
-            return False
+            raise ValueError( "Please enter at least one attribute to transfer." )
 
-        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.onPoints )
+        attributesInMeshFrom: set[ str ] = getAttributeSet( self.meshFrom, self.piece )
         wrongAttributeNames: set[ str ] = self.attributeNames.difference( attributesInMeshFrom )
         if len( wrongAttributeNames ) > 0:
-            self.logger.error(
-                f"The { self.piece } attributes { wrongAttributeNames } are not present in the source mesh." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError( f"The attributes { wrongAttributeNames } are not present in the source mesh." )
 
-        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.onPoints )
+        attributesInMeshTo: set[ str ] = getAttributeSet( self.meshTo, self.piece )
         attributesAlreadyInMeshTo: set[ str ] = self.attributeNames.intersection( attributesInMeshTo )
         if len( attributesAlreadyInMeshTo ) > 0:
-            self.logger.error(
-                f"The { self.piece } attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
-            self.logger.error( f"The filter { self.logger.name } failed." )
-            return False
+            raise AttributeError(
+                f"The attributes { attributesAlreadyInMeshTo } are already present in the final mesh." )
 
         if isinstance( self.meshFrom, vtkMultiBlockDataSet ):
             partialAttributes: list[ str ] = []
             for attributeName in self.attributeNames:
-                if not isAttributeGlobal( self.meshFrom, attributeName, self.onPoints ):
+                if not isAttributeGlobal( self.meshFrom, attributeName, self.piece ):
                     partialAttributes.append( attributeName )
 
             if len( partialAttributes ) > 0:
-                self.logger.error(
-                    f"All { self.piece } attributes to transfer must be global, { partialAttributes } are partials." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
+                raise AttributeError(
+                    f"All attributes to transfer must be global, { partialAttributes } are partials." )
 
-        self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.onPoints )
+        self.ElementMap = computeElementMapping( self.meshFrom, self.meshTo, self.piece )
         sharedElement: bool = False
         for key in self.ElementMap:
             if np.any( self.ElementMap[ key ] > -1 ):
                 sharedElement = True
 
         if not sharedElement:
-            self.logger.warning( f"The two meshes do not have any shared { self.piece }." )
-            self.logger.warning( f"The filter { self.logger.name } has not been used." )
-            return False
+            raise ValueError( f"The two meshes do not have any shared { self.piece.value }." )
 
         for attributeName in self.attributeNames:
+            # TODO:: Modify arrayModifiers function to raise error.
             if not transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName,
-                                                    self.onPoints, self.logger ):
-                self.logger.error( f"The attribute { attributeName } has not been mapped." )
-                self.logger.error( f"The filter { self.logger.name } failed." )
-                return False
+                                                    self.piece, self.logger ):
+                raise ValueError( f"Fail to transfer the attribute { attributeName }." )
 
         # Log the output message.
         self._logOutputMessage()
 
-        return True
+        return
 
     def _logOutputMessage( self: Self ) -> None:
         """Create and log result messages of the filter."""
         self.logger.info( f"The filter { self.logger.name } succeeded." )
-        self.logger.info( f"The { self.piece } attributes { self.attributeNames } have been transferred from the source"
-                          " mesh to the final mesh with the { self.piece } mapping." )
+        self.logger.info(
+            f"The attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece.value } mapping."
+        )

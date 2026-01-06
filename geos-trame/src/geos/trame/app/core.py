@@ -120,7 +120,7 @@ class GeosTrame:
                     cols=10,
                     order=2,
             ):
-                self.timelineEditor = TimelineEditor( source=self.tree, classes="ma-2", style="height: 40%" )
+                self.timelineEditor = TimelineEditor( source=self.tree, classes="ma-2", style="height: 60%" )
                 with vuetify.VRow( classes="mb-6 fill-height", ):
 
                     with vuetify.VCol(
@@ -130,7 +130,7 @@ class GeosTrame:
                         self.deckEditor = DeckEditor(
                             source=self.tree,
                             classes="ma-2",
-                            style="flex: 1; height: 100%;",
+                            style="height: 100%;",
                         )
 
                     with vuetify.VCol(
@@ -142,13 +142,13 @@ class GeosTrame:
                             region_viewer=self.region_viewer,
                             well_viewer=self.well_viewer,
                             classes="ma-2",
-                            style="flex: 1; height: 60%; width: 100%;",
+                            style="height: 60%; width: 100%;",
                         )
 
                         self.deckPlotting = DeckPlotting(
                             source=self.tree,
                             classes="ma-2",
-                            style="flex: 1; height: 40%; width: 100%;",
+                            style="height: 40%; width: 100%;",
                         )
 
     def build_ui( self ) -> None:

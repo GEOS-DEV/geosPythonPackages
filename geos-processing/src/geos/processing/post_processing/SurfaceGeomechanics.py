@@ -12,26 +12,13 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 from geos.mesh.utils.arrayModifiers import createAttribute
-from geos.mesh.utils.arrayHelpers import (
-    getArrayInObject,
-    getAttributeSet,
-    isAttributeInObject,
-)
-from geos.mesh.utils.genericHelpers import (
-    getLocalBasisVectors,
-    convertAttributeFromLocalToXYZForOneCell,
-)
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, isAttributeInObject )
+from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
+from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( Logger, getLogger )
-from geos.utils.PhysicalConstants import (
-    DEFAULT_FRICTION_ANGLE_RAD,
-    DEFAULT_ROCK_COHESION,
-)
-from geos.utils.GeosOutputsConstants import (
-    ComponentNameEnum,
-    GeosMeshOutputsEnum,
-    PostProcessingOutputsEnum,
-)
+from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_ROCK_COHESION )
+from geos.utils.GeosOutputsConstants import ( ComponentNameEnum, GeosMeshOutputsEnum, PostProcessingOutputsEnum )
 
 __doc__ = """
 SurfaceGeomechanics is a VTK filter that allows:
@@ -54,6 +41,7 @@ To use the filter:
 .. code-block:: python
 
     from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
+    from geos.utils.Errors import VTKError
 
     # filter inputs
     inputMesh: vtkPolyData
@@ -75,7 +63,13 @@ To use the filter:
     sg.SetFrictionAngle( frictionAngle )
 
     # Do calculations
-    sg.applyFilter()
+    try:
+        sg.applyFilter()
+    except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+        sg.logger.error( f"The filter { sg.logger.name } failed due to: { e }" )
+    except Exception as e:
+        mess: str = f"The filter { sg.logger.name } failed due to: { e }"
+        sg.logger.critical( mess, exc_info=True )
 
     # Get output object
     output: vtkPolyData = sg.GetOutputMesh()
@@ -117,6 +111,7 @@ class SurfaceGeomechanics:
         else:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
 
         # Input surfacic mesh
         if not surfacicMesh.IsA( "vtkPolyData" ):
@@ -133,7 +128,7 @@ class SurfaceGeomechanics:
         }
 
         # Attributes are either on points or on cells
-        self.attributeOnPoints: bool = False
+        self.attributePiece: Piece = Piece.CELLS
         # Rock cohesion (Pa)
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         # Friction angle (rad)
@@ -149,7 +144,7 @@ class SurfaceGeomechanics:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             self.logger.addHandler( handler )
         else:
             self.logger.warning(
@@ -185,7 +180,7 @@ class SurfaceGeomechanics:
         self.convertAttributesOn = True
 
     def ConvertAttributesOff( self: Self ) -> None:
-        """Deactivate the conversion of attributes from local to XYZ bais."""
+        """Deactivate the conversion of attributes from local to XYZ basis."""
         self.convertAttributesOn = False
 
     def GetConvertAttributes( self: Self ) -> bool:
@@ -234,11 +229,14 @@ class SurfaceGeomechanics:
         """
         return self.newAttributeNames
 
-    def applyFilter( self: Self ) -> bool:
+    def applyFilter( self: Self ) -> None:
         """Compute Geomechanical properties on input surface.
 
-        Returns:
-            int: 1 if calculation successfully ended, 0 otherwise.
+        Raises:
+            ValueError: Errors during the creation of an attribute.
+            VTKError: Error raises during the call of VTK function.
+            AttributeError: Attributes must be on cell.
+            AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         msg = f"Applying filter {self.logger.name}"
         if self.name is not None:
@@ -254,44 +252,42 @@ class SurfaceGeomechanics:
         # Conversion of attributes from Normal/Tangent basis to xyz basis
         if self.convertAttributesOn:
             self.logger.info( "Conversion of attributes from local to XYZ basis." )
-            if not self.convertAttributesFromLocalToXYZBasis():
-                self.logger.error( "Error while converting attributes from local to XYZ basis." )
-                return False
+            self.convertAttributesFromLocalToXYZBasis()
 
         # Compute shear capacity utilization
-        if not self.computeShearCapacityUtilization():
-            self.logger.error( "Error while computing SCU." )
-            return False
+        self.computeShearCapacityUtilization()
 
         self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
-        return True
 
-    def convertAttributesFromLocalToXYZBasis( self: Self ) -> bool:
+        return
+
+    def convertAttributesFromLocalToXYZBasis( self: Self ) -> None:
         """Convert attributes from local to XYZ basis.
 
-        Returns:
-            bool: True if calculation successfully ended or no attributes, False otherwise.
+        Raises:
+            ValueError: Something went wrong during the creation of an attribute.
+            AttributeError: Attributes must be on cell.
         """
         # Get the list of attributes to convert and filter
         attributesToConvert: set[ str ] = self.__filterAttributesToConvert()
 
         if len( attributesToConvert ) == 0:
             self.logger.warning( "No attribute to convert from local to XYZ basis were found." )
-            return True
+            return
 
         # Do conversion from local to XYZ for each attribute
         for attrNameLocal in attributesToConvert:
             attrNameXYZ: str = f"{attrNameLocal}_{ComponentNameEnum.XYZ.name}"
 
             # Skip attribute if it is already in the object
-            if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributeOnPoints ):
+            if isAttributeInObject( self.outputMesh, attrNameXYZ, self.attributePiece ):
                 continue
 
-            if self.attributeOnPoints:
-                self.logger.error(
+            if self.attributePiece != Piece.CELLS:
+                raise AttributeError(
                     "This filter can only convert cell attributes from local to XYZ basis, not point attributes." )
             localArray: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, attrNameLocal,
-                                                                      self.attributeOnPoints )
+                                                                      self.attributePiece )
 
             arrayXYZ: npt.NDArray[ np.float64 ] = self.__computeXYZCoordinates( localArray )
 
@@ -300,12 +296,14 @@ class SurfaceGeomechanics:
                                 arrayXYZ,
                                 attrNameXYZ,
                                 ComponentNameEnum.XYZ.value,
-                                onPoints=self.attributeOnPoints,
+                                piece=self.attributePiece,
                                 logger=self.logger ):
                 self.logger.info( f"Attribute {attrNameXYZ} added to the output mesh." )
                 self.newAttributeNames.add( attrNameXYZ )
+            else:
+                raise ValueError( f"Something went wrong during the creation of the attribute { attrNameXYZ }." )
 
-        return True
+        return
 
     def __filterAttributesToConvert( self: Self ) -> set[ str ]:
         """Filter the set of attribute names if they are vectorial and present.
@@ -316,7 +314,7 @@ class SurfaceGeomechanics:
         attributesFiltered: set[ str ] = set()
 
         if len( self.attributesToConvert ) != 0:
-            attributeSet: set[ str ] = getAttributeSet( self.outputMesh, False )
+            attributeSet: set[ str ] = getAttributeSet( self.outputMesh, Piece.CELLS )
             for attrName in self.attributesToConvert:
                 if attrName in attributeSet:
                     attr: vtkDataArray = self.outputMesh.GetCellData().GetArray( attrName )
@@ -351,7 +349,7 @@ class SurfaceGeomechanics:
         attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
         # Get all local basis vectors
-        localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh )
+        localBasis: npt.NDArray[ np.float64 ] = getLocalBasisVectors( self.outputMesh, self.logger )
 
         for i, cellAttribute in enumerate( attrArray ):
             if len( cellAttribute ) not in ( 3, 6, 9 ):
@@ -368,39 +366,36 @@ class SurfaceGeomechanics:
 
         return attrXYZ
 
-    def computeShearCapacityUtilization( self: Self ) -> bool:
+    def computeShearCapacityUtilization( self: Self ) -> None:
         """Compute the shear capacity utilization (SCU) on surface.
 
-        Returns:
-            bool: True if calculation successfully ended, False otherwise.
+        Raises:
+            ValueError: Something went wrong during the creation of an attribute.
+            AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
-        if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributeOnPoints ):
+        if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributePiece ):
             # Get the traction to compute the SCU
             tractionAttributeName: str = GeosMeshOutputsEnum.TRACTION.attributeName
             traction: npt.NDArray[ np.float64 ] = getArrayInObject( self.outputMesh, tractionAttributeName,
-                                                                    self.attributeOnPoints )
+                                                                    self.attributePiece )
 
             # Computation of the shear capacity utilization (SCU)
             # TODO: better handling of errors in shearCapacityUtilization
-            try:
-                scuAttribute: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization(
-                    traction, self.rockCohesion, self.frictionAngle )
-            except AssertionError:
-                self.logger.error( f"Failed to compute {SCUAttributeName}." )
-                return False
+            scuAttribute: npt.NDArray[ np.float64 ] = fcts.shearCapacityUtilization( traction, self.rockCohesion,
+                                                                                     self.frictionAngle )
 
             # Create attribute
             if not createAttribute(
-                    self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributeOnPoints, logger=self.logger ):
+                    self.outputMesh, scuAttribute, SCUAttributeName, (), self.attributePiece, logger=self.logger ):
                 self.logger.error( f"Failed to create attribute {SCUAttributeName}." )
-                return False
+                raise ValueError( f"Failed to create attribute {SCUAttributeName}." )
             else:
                 self.logger.info( "SCU computed and added to the output mesh." )
                 self.newAttributeNames.add( SCUAttributeName )
 
-        return True
+        return
 
     def GetOutputMesh( self: Self ) -> vtkPolyData:
         """Get the output mesh with computed attributes.

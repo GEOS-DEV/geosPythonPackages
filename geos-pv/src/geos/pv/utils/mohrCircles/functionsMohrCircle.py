@@ -1,0 +1,166 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
+# SPDX-FileContributor: Alexandre Benedicto, Paloma Martinez
+import os
+from typing import Any
+from enum import Enum
+import numpy as np
+import numpy.typing as npt
+from geos.geomechanics.model.MohrCircle import MohrCircle
+from geos.geomechanics.model.MohrCoulomb import MohrCoulomb
+
+from geos.pv.utils.mohrCircles import (
+    MOHR_CIRCLE_ANALYSIS_MAIN,
+    MOHR_CIRCLE_PATH,
+)
+
+__doc__ = """
+The functionsMohrCircle module provides a set of utilities to instantiate Mohr's
+circles and Mohr-Coulomb failure envelope.
+"""
+
+
+class StressConventionEnum( Enum ):
+    """Utility Enum to define the effective stress convention used for compression.
+
+    The usual convention considers the compression as positive.
+    With GEOS convention, the compression is considered negative.
+    """
+    GEOS_STRESS_CONVENTION = -1.0
+    COMMON_STRESS_CONVENTION = 1.0
+
+
+def buildPythonViewScript(
+    dirpath: str,
+    mohrCircles: list[ MohrCircle ],
+    rockCohesion: float,
+    frictionAngle: float,
+    userChoices: dict[ str, Any ],
+) -> str:
+    """Builds the Python script used to launch the Python View.
+
+    The script is returned as a string to be then injected in the Python View.
+
+    Args:
+        dirpath (str): Root directory path for the script creation.
+        mohrCircles (list[MohrCircle]): List of MohrCircle objects.
+        rockCohesion (float): Rock cohesion (Pa).
+        frictionAngle (float): Friction angle (rad).
+        userChoices (dict[str, Any]): Dictionary of user plot parameters.
+
+    Returns:
+        str: Complete Python View script.
+    """
+    pathPythonViewScript: str = os.path.join( dirpath, MOHR_CIRCLE_PATH, MOHR_CIRCLE_ANALYSIS_MAIN )
+
+    mohrCircleParams: list[ tuple[ str, float, float,
+                                   float ] ] = [ ( mohrCircle.getCircleId(), *( mohrCircle.getPrincipalComponents() ) )
+                                                 for mohrCircle in mohrCircles ]
+
+    script: str = ""
+    script += f"mohrCircleParams = {mohrCircleParams}\n"
+    script += f"rockCohesion = {rockCohesion}\n"
+    script += f"frictionAngle = {frictionAngle}\n"
+    script += f"userChoices = {userChoices}\n\n\n"
+    with open( pathPythonViewScript ) as file:
+        fileContents = file.read()
+        script += fileContents
+    return script
+
+
+def findAnnotateTuples( mohrCircle: MohrCircle, ) -> tuple[ str, str, tuple[ float, float ], tuple[ float, float ] ]:
+    """Get the values and location of min and max normal stress or Mohr's circle.
+
+    Args:
+        mohrCircle (MohrCircle): Mohr's circle to consider.
+        maxTau (float): Max shear stress.
+
+    Returns:
+        tuple[str, str, tuple[float, float], tuple[float, float]]: Labels and
+            location of labels.
+    """
+    p3, _, p1 = mohrCircle.getPrincipalComponents()
+    xMaxDisplay: str = f"{p1:.2E}"
+    xMinDisplay: str = f"{p3:.2E}"
+    yPosition: float = 0.0
+    xyMax: tuple[ float, float ] = ( p1, yPosition )
+    xyMin: tuple[ float, float ] = ( p3, yPosition )
+    return ( xMaxDisplay, xMinDisplay, xyMax, xyMin )
+
+
+def getMohrCircleId( cellId: str, timeStep: str ) -> str:
+    """Get Mohr's circle ID from cell ID and time step.
+
+    Args:
+        cellId (str): Cell ID.
+        timeStep (str): Time step.
+
+    Returns:
+        str: Mohr's circle ID.
+    """
+    return f"Cell_{cellId}@{timeStep}"
+
+
+def createMohrCircleAtTimeStep(
+    stressArray: npt.NDArray[ np.float64 ],
+    cellIds: list[ str ],
+    timeStep: str,
+    convention: StressConventionEnum,
+) -> set[ MohrCircle ]:
+    """Create MohrCircle object(s) at a given time step for all cell ids.
+
+    Args:
+        stressArray (npt.NDArray[np.float64]): Stress numpy array
+        cellIds (list[str]): List of cell ids
+        timeStep (str): Time step
+        convention (StressConventionEnum): Convention used for compression.
+
+    Raises:
+        ValueError: Stress array must consists of 6 components.
+
+    Returns:
+        set[MohrCircle]: Set of MohrCircle objects.
+    """
+    if stressArray.shape[ 1 ] != 6:
+        raise ValueError( "Expected 6 components for stress array, not {stressArray.shape[ 1 ]}.\n \
+        Cannot proceed with the creation of Mohr circles." )
+
+    mohrCircles: set[ MohrCircle ] = set()
+    for i, cellId in enumerate( cellIds ):
+        ide: str = getMohrCircleId( cellId, timeStep )
+        mohrCircle: MohrCircle = MohrCircle( ide )
+        mohrCircle.computePrincipalComponents( stressArray[ i ] * convention.value )
+        mohrCircles.add( mohrCircle )
+
+    return mohrCircles
+
+
+def createMohrCirclesFromPrincipalComponents(
+        mohrCircleParams: list[ tuple[ str, float, float, float ] ] ) -> list[ MohrCircle ]:
+    """Create Mohr's circle objects from principal components.
+
+    Args:
+        mohrCircleParams (list[tuple[str, float, float, float]]): List of Mohr's circle parameters
+
+    Returns:
+        list[MohrCircle]: List of Mohr's circle objects.
+    """
+    mohrCircles: list[ MohrCircle ] = []
+    for circleId, p3, p2, p1 in mohrCircleParams:
+        mohrCircle: MohrCircle = MohrCircle( circleId )
+        mohrCircle.setPrincipalComponents( p3, p2, p1 )
+        mohrCircles.append( mohrCircle )
+    return mohrCircles
+
+
+def createMohrCoulombEnvelope( rockCohesion: float, frictionAngle: float ) -> MohrCoulomb:
+    """Create MohrCoulomb object from user parameters.
+
+    Args:
+        rockCohesion (float): Rock cohesion (Pa).
+        frictionAngle (float): Friction angle in radian.
+
+    Returns:
+        MohrCoulomb: MohrCoulomb object.
+    """
+    return MohrCoulomb( rockCohesion, frictionAngle )

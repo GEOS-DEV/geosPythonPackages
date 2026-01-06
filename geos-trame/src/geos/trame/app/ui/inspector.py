@@ -63,7 +63,6 @@ class DeckInspector( vuetify.VTreeview ):
             if ids is not None and topic == "changed":
                 for obj_id in ids:
                     proxy = self.simput_manager.proxymanager.get( obj_id )
-                    #self.tree.decode( obj_id ) # if const function and return not used why ?? to decode context ??
                     for prop in proxy.edited_property_names:
                         self.tree.update( obj_id, text.camel_case( prop ), proxy.get_property( prop ) )
 

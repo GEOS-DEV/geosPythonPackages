@@ -4,8 +4,8 @@ Generic processing filters
 The `generic_processing_tools` module of `geos-processing` package contains filters to process meshes.
 
 
-geos.processing.generic_processing_tools.AttributeMapping filter
-----------------------------------------------------------------
+AttributeMapping
+---------------------
 
 .. automodule:: geos.processing.generic_processing_tools.AttributeMapping
    :members:
@@ -13,8 +13,8 @@ geos.processing.generic_processing_tools.AttributeMapping filter
    :show-inheritance:
 
 
-geos.processing.generic_processing_tools.CreateConstantAttributePerRegion filter
---------------------------------------------------------------------------------
+CreateConstantAttributePerRegion
+--------------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.CreateConstantAttributePerRegion
     :members:
@@ -22,8 +22,8 @@ geos.processing.generic_processing_tools.CreateConstantAttributePerRegion filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.FillPartialArrays filter
------------------------------------------------------------------
+FillPartialArrays
+------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.FillPartialArrays
     :members:
@@ -31,8 +31,8 @@ geos.processing.generic_processing_tools.FillPartialArrays filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.SplitMesh filter
----------------------------------------------------------
+SplitMesh
+-------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.SplitMesh
     :members:
@@ -40,8 +40,8 @@ geos.processing.generic_processing_tools.SplitMesh filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.MergeBlockEnhanced filter
-------------------------------------------------------------------
+MergeBlockEnhanced
+----------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.MergeBlockEnhanced
     :members:
@@ -49,8 +49,8 @@ geos.processing.generic_processing_tools.MergeBlockEnhanced filter
     :show-inheritance:
 
 
-geos.processing.generic_processing_tools.ClipToMainFrame filter
----------------------------------------------------------------
+ClipToMainFrame
+------------------------------
 
 .. automodule:: geos.processing.generic_processing_tools.ClipToMainFrame
     :members:
