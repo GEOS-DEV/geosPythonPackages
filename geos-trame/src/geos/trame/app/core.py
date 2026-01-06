@@ -25,7 +25,7 @@ from geos.trame.app.ui.timeline import TimelineEditor
 from geos.trame.app.ui.viewer.viewer import DeckViewer
 from geos.trame.app.components.alertHandler import AlertHandler
 
-from geos.trame.app.io.simulation import Simulation, SimRunner
+from geos.trame.app.io.simulation import Simulation
 from geos.trame.app.ui.simulation_view import define_simulation_view
 
 import sys
@@ -74,8 +74,7 @@ class GeosTrame:
         self.well_viewer = WellViewer( 5, 5 )
 
         ######## Simulation runner
-        self.sim_runner: SimRunner = SimRunner( self.state.user_id )
-        self.simulation = Simulation( self.sim_runner, server=server )
+        self.simulation = Simulation( server=server )
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )

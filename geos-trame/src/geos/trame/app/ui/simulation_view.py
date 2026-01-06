@@ -7,7 +7,7 @@ from typing import Any
 
 from trame.widgets import html
 from trame.widgets import vuetify3 as vuetify
-from trame.app.core import Server
+from trame_server import Server
 
 from geos.trame.app.io.simulation import Authentificator
 from geos.trame.app.io.hpc_tools import SuggestDecomposition
@@ -112,7 +112,7 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Cluster",
                                  items=( "selected_cluster_names", ),
-                                 v_model=( "selected_cluster_name", 'local' ) )
+                                 v_model=( "selected_cluster_name", 'p4' ) )
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Decomposition",
@@ -123,7 +123,7 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=8 ):
                 vuetify.VTextField( v_model=(
                     "key_path",
-                    None,
+                    "~/.ssh/id_trame",
                 ),
                                     label="Path to ssh key",
                                     dense=True,

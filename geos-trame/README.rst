@@ -21,23 +21,21 @@ Build and install the Vue components
     cd vue-components
     npm i
     npm run build
-    cd -
+    cd ..
 
-Associate it with `dotenv` environement file defining path to trame
+then configure the .env
+
+    sh configure.sh
+    
+this will generate a `dotenv` environement file defining useful path to trame,
 
 .. code-block:: console
 
     cat .env
-        TRAME_DIR=/path/to/geosPythonPackages/geos-trame/src/geos/trame
+        TEMPLATE_DIR=/path/to/geosPythonPackages/geos-trame/src/geos/trame/io/jinja_t
+        ASSETS_DIR=/path/to/geosPythonPackages/geos-trame/src/geos/trame/assets
 
-Then generic launcher templates and configuration are found under
-
-.. code-block:: console
-
-    ls ${TRAME_DIR}/app/io/jinja_t
-        ...
-    ls ${TRAME_DIR}/assets/cluster.json
-        ...
+those will have lower precedence than local environement variables if defined
 
 Install the application
 

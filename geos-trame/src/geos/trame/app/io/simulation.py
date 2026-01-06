@@ -73,7 +73,7 @@ class Simulation:
                 Authentificator.get_cluster( server.state.selected_cluster_name ).host,  #test
                 Authentificator.get_cluster( server.state.selected_cluster_name ).port,
                 server.state.login,
-                key=Authentificator.get_key( server.state.login, server.state.password ) )
+                key=Authentificator.get_key( server.state.login, server.state.password, server.state.key_path, server.state.selected_cluster_name ) )
 
             if Authentificator.ssh_client:
                 server.state.access_granted = True
@@ -86,7 +86,7 @@ class Simulation:
                 if Authentificator.ssh_client:
 
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
-                                                     Authentificator.gen_tree( server.state.simulation_xml_filename ),
+                                                     Simulation.gen_tree( server.state.simulation_xml_filename ),
                                                      server.state.simulation_remote_path )
 
                     run_id: int = Simulation.render_and_run(
@@ -209,7 +209,7 @@ class Simulation:
         """Render the slurm template and run it. Return it job_id."""
         if server.state.access_granted and server.state.simulation_xml_filename:
             template = Environment(
-                loader=FileSystemLoader( f'{os.getenv("TRAME_DIR")}/app/io/jinja_t' ) ).get_template( template_name )
+                loader=FileSystemLoader( f'{os.getenv("TEMPLATE_DIR")}' ) ).get_template( template_name )
             rendered = template.render( kwargs )
 
             if Authentificator.ssh_client:
