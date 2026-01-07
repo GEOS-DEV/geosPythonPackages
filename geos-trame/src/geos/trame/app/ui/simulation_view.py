@@ -92,7 +92,7 @@ def define_simulation_view( server: Server ) -> None:
 
     @server.state.change( "selected_cluster_name" )
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
-        print( selected_cluster_name )
+        print( f"selecting {selected_cluster_name}" )
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
                                                             server.state.nunknowns ).get_sd()
         
@@ -158,7 +158,6 @@ def define_simulation_view( server: Server ) -> None:
         # for now just check there is an xml
         jid = list( server.state.job_ids )
         if 0 <= index_to_remove < len( jid ):
-            # 1. Supprimer l'élément de la copie de la liste
             removed_id = jid[ index_to_remove ][ 'job_id' ]
             Authentificator.kill_job( removed_id )
             del jid[ index_to_remove ]
