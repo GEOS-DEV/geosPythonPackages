@@ -85,6 +85,28 @@ class Simulation:
             # if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
             if server.state.access_granted and server.state.simulation_xml_filename and server.state.decomposition:
                 if Authentificator.ssh_client:
+                    # create remote path
+                    try:
+                        sftp = Authentificator.ssh_client.open_sftp()
+                        sftp.stat( server.state.simulation_remote_path )
+                    except FileNotFoundError:
+                        import posixpath
+                        jpart = '/'
+                        for part in server.state.simulation_remote_path.split('/')[1:]:
+                            try:
+                                jpart = posixpath.join(jpart,part)
+                                sftp.stat( str(jpart) )  # exists?
+                            except FileNotFoundError:
+                                sftp.mkdir( str(jpart) )
+                            except PermissionError:
+                                print( f"Permission error creating root folder at {jpart}")
+                                raise
+                            except:
+                                print( f"Error creating root folder at {jpart}")
+                                raise
+
+                    # create local path
+                    os.makedirs(server.state.simulation_dl_path, exist_ok=True)
 
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
                                                      Simulation.gen_tree( server.state.simulation_xml_filename ),
@@ -158,52 +180,42 @@ class Simulation:
     def check_jobs( self ) -> None:
         """Check on running jobs and update their names and progresses."""
         if Authentificator.ssh_client:
-            try:
-                jid = self._server.state.job_ids
-                for index, job in enumerate( jid ):
-                    job_id = job[ 'job_id' ]
+            jid = self._server.state.job_ids
+            for index, job in enumerate( jid ):
+                job_id = job[ 'job_id' ]
+                _, sout, _ = Authentificator._execute_remote_command(
+                    Authentificator.ssh_client, f'sacct -j {job_id} -o JobID,JobName,State --noheader' )
+                job_line = sout.strip().split( "\n" )[ -1 ]
+
+                jid[ index ][ 'status' ] = job_line.split()[ 2 ]
+                jid[ index ][ 'name' ] = job_line.split()[ 1 ]
+
+                if ( jid[ index ][ 'status' ] == 'RUNNING' ):
                     _, sout, _ = Authentificator._execute_remote_command(
-                        Authentificator.ssh_client, f'sacct -j {job_id} -o JobID,JobName,State --noheader' )
-                    job_line = sout.strip().split( "\n" )[ -1 ]
+                        Authentificator.ssh_client,
+                        f"sacct -j {job_id} -o ElapsedRaw,TimelimitRaw --noheader --parsable2 | head -n 1 " )
+                    progress_line = sout.strip().split( "|" )
+                    jid[ index ][ 'slprogress' ] = str(
+                        float( progress_line[ 0 ] ) / float( progress_line[ 1 ] ) / 60 * 100 )
 
-                    jid[ index ][ 'status' ] = job_line.split()[ 2 ]
-                    jid[ index ][ 'name' ] = job_line.split()[ 1 ]
-
-                    if ( jid[ index ][ 'status' ] == 'RUNNING' ):
-                        _, sout, _ = Authentificator._execute_remote_command(
-                            Authentificator.ssh_client,
-                            f"sacct -j {job_id} -o ElapsedRaw,TimelimitRaw --noheader --parsable2 | head -n 1 " )
-                        progress_line = sout.strip().split( "|" )
-                        jid[ index ][ 'slprogress' ] = str(
-                            float( progress_line[ 0 ] ) / float( progress_line[ 1 ] ) / 60 * 100 )
-
-                        # getthe completed status
-                        pattern = re.compile( r'\((\d+(?:\.\d+)?)%\s*completed\)' )
-                        _, sout, _ = Authentificator._execute_remote_command(
-                            Authentificator.ssh_client,
-                            f"grep \"completed\" {self._server.state.simulation_remote_path}/job_GEOS_{job_id}.out | tail -1"
-                        )
-                        m = pattern.search( sout.strip() )
-                        if m:
-                            jid[ index ][ 'simprogress' ] = str( m.group( 1 ) )
-
-                    print(
-                        f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n"
+                    # getthe completed status
+                    pattern = re.compile( r'\((\d+(?:\.\d+)?)%\s*completed\)' )
+                    _, sout, _ = Authentificator._execute_remote_command(
+                        Authentificator.ssh_client,
+                        f"grep \"completed\" {self._server.state.simulation_remote_path}/job_GEOS_{job_id}.out | tail -1"
                     )
-                self._server.state.job_ids = jid
-                self._server.state.dirty( "job_ids" )
-                self._server.state.flush()
+                    m = pattern.search( sout.strip() )
+                    if m:
+                        jid[ index ][ 'simprogress' ] = str( m.group( 1 ) )
 
-            except PermissionError as e:
-                print( f"Permission error: {e}" )
-            except IOError as e:
-                print( f"Error accessing remote file or path: {e}" )
-            except Exception as e:
-                print( f"An error occurred during SFTP: {e}" )
+                print(
+                    f"{job_line}-{job_id}\n job id:{jid[index]['job_id']}\n status:{jid[index]['status']}\n name:{jid[index]['name']} \n --- \n"
+                )
+            self._server.state.job_ids = jid
+            self._server.state.dirty( "job_ids" )
+            self._server.state.flush()
 
-            return None
-        else:
-            return None
+        return None
 
     @staticmethod
     def render_and_run( template_name: str, dest_name: str, server: Server, **kwargs: Any ) -> str:
@@ -289,4 +301,6 @@ class Simulation:
                 }
             }
         }
+
+        print( f"Generated FILE_TREE: {FILE_TREE}" )
         return FILE_TREE

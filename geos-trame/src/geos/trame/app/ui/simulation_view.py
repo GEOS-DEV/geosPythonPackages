@@ -207,7 +207,6 @@ def define_simulation_view( server: Server ) -> None:
             server.state.simulation_xml_filename = []
             server.state.selected_cluster_names = [ cluster.name for cluster in Authentificator.sim_constants ]
             # server.state.decompositions = []
-            # server.state.sd = None
 
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):

@@ -84,22 +84,34 @@ class Authentificator:
         if isinstance( node, list ):
             for file in node:
                 print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
-                with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                    f.write( file.get( 'content' ) )
+                try:
+                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
+                        f.write( file.get( 'content' ) )
+                except:
+                    print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+                    raise
         elif isinstance( node, dict ):
             if "files" in node:
                 files = node[ 'files' ]
                 for file in files:
                     print( f"copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}" )
-                    with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
-                        f.write( file.get( 'content' ) )
+                    try:
+                        with sftp.file( str( rp / Path( file.get( 'name' ) ) ), 'w' ) as f:
+                            f.write( file.get( 'content' ) )
+                    except:
+                        print( f"Error copying {lp/Path(file.get('name'))} to {rp/Path(file.get('name'))}")
+                        raise
             if "subfolders" in node:
                 for subfolder, content in node[ "subfolders" ].items():
                     try:
                         sftp.stat( str( rp / Path( subfolder ) ) )
                     except FileNotFoundError:
-                        print( f"creating {rp/Path(subfolder)}" )
-                        sftp.mkdir( str( rp / Path( subfolder ) ) )
+                        try:
+                            print( f"creating {rp/Path(subfolder)}" )
+                            sftp.mkdir( str( rp / Path( subfolder ) ) )
+                        except:
+                            print( f"Error creating {rp/Path(subfolder)} on remote.")
+                            raise
                     Authentificator.dfs_tree( content, str( lp / Path( subfolder ) ), sftp, remote_root )
 
             for folder, content in node.items():
@@ -108,7 +120,11 @@ class Authentificator:
                         sftp.stat( str( rp / Path( folder ) ) )
                     except FileNotFoundError:
                         print( f"creating {rp/Path(folder)}" )
-                        sftp.mkdir( str( rp / Path( folder ) ) )
+                        try:
+                            sftp.mkdir( str( rp / Path( folder ) ) )
+                        except:
+                            print( f"Error creating {rp/Path(subfolder)} on remote.")
+                            raise
                     Authentificator.dfs_tree( content, str( lp / Path( folder ) ), sftp, remote_root )
 
     @staticmethod
@@ -226,9 +242,15 @@ class Authentificator:
 
             print( f"Command exited with status: {exit_status}" )
             return ( exit_status, stdout_data, stderr_data )
-
+        
+        except PermissionError as e:
+            print( f"Permission error: {e}" )
+            return ( -1, "", "" )
+        except IOError as e:
+            print( f"Error accessing remote file or path: {e}" )
+            return ( -1, "", "" )
         except Exception as e:
-            print( f"Error executing command: {e}" )
+            print( f"An error occurred during SFTP: {e}" )
             return ( -1, "", "" )
 
     @staticmethod
