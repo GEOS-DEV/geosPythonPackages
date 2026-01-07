@@ -12,6 +12,61 @@ from trame_server import Server
 from geos.trame.app.io.simulation import Authentificator
 from geos.trame.app.io.hpc_tools import SuggestDecomposition
 
+#rough estimate of n unknowns would be better from GEOS's dry-run
+# unknowns (oncell,onpoint)
+# for now do not take into account wells as dep on the num of wells (neg vs matrix elmts)
+# for now do not take into account frac as dep on the num of frac elmts (prob neg vs matrix elmts)
+solvers_to_unknowns = { 
+    "CompositionalMultiphaseFVM" : (3, 0),
+    "CompositionalMultiphaseHybridFVM" : (4, 0),
+    "CompositionalMultiphaseReservoirPoromechanics" : (3,3),
+    "CompositionalMultiphaseReservoirPoromechanicsConformingFractures" : (3,6),
+    "CompositionalMultiphaseWell" : (3,0),
+    "ElasticFirstOrderSEM" : (0,3),
+    "ElasticSEM" : (0,3),
+    "ImmiscibleMultiphaseFlow": (3,0),
+    "LaplaceFEM" : (0,3),
+    "MultiphasePoromechanics" : (3,3),
+    "MultiphasePoromechanicsReservoir" : (3,3),#??
+    "MultiphasePoromechanicsConformingFractures" : (3,6) ,
+    "SinglePhaseFVM" : (2,0),
+    "SinglePhaseHybridFVM" : (3,0),
+    "SinglePhasePoromechanics" : (2,3),
+    "SinglePhasePoromechanicsConformingFractures" : (2,3),
+    "SinglePhasePoromechanicsConformingFracturesALM" : (2,3),
+    "SinglePhaseWell" : (2,0),
+    "SolidMechanicsEmbeddedFractures": (0,3),
+    "SolidMechanicsAugmentedLagrangianContact": (0,3),
+    "SolidMechanicsLagrangeContact": (0,3),
+    "SolidMechanicsLagrangeContactBubbleStab": (0,3),
+    "SolidMechanicsLagrangianFEM": (0,3)
+}
+
+  # helpers
+def _what_solver(bcontent):
+        import xml.etree
+        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
+        nunk = [solvers_to_unknowns.get(elt.tag,0) for elt in sim_xml.find('Solvers')]
+        return max(nunk)
+
+
+def _how_many_cells( bcontent ):
+        import vtk
+        name = bcontent['name']
+        if name.endswith(".vtp"):
+            reader = vtk.vtkXMLPolyDataReader()
+        elif name.endswith(".vtu"):
+            reader = vtk.vtkXMLUnstructuredGridReader()
+        elif name.endswith(".vtm"):
+            reader = vtk.vtkXMLMultiBlockDataReader()
+        else:
+            raise ValueError("Unsupported kind (use 'vtp', 'vtu', or 'vtm').")
+
+        reader.SetReadFromInputString(1)
+        reader.SetInputString(bcontent['content'])
+        reader.Update()
+        output = reader.GetOutput()
+        return (output.GetNumberOfCells(), output.GetNumberOfPoints())
 
 #TODO a class from it
 def define_simulation_view( server: Server ) -> None:
@@ -21,18 +76,21 @@ def define_simulation_view( server: Server ) -> None:
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( selected_cluster_name )
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
-                                                            12 ).to_list()  #discard 12
+                                                            server.state.nunknowns ).to_list()
+        
+        server.state.simulation_remote_path = Authentificator.get_cluster(
+                server.state.selected_cluster_name ).simulation_remote_path
+        
+        server.state.simulation_dl_path = Authentificator.get_cluster(
+                server.state.selected_cluster_name ).simulation_dl_default_path
 
     @server.state.change( "decomposition" )
     def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
-        ll = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), 12 ).get_sd()
-        if server.state.decomposition:
+        ll = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), server.state.nunknowns ).get_sd()
+        # if server.state.decomposition:
+        try:
             server.state.sd = ll[ server.state.decompositions.index( decomposition ) ]
-            server.state.simulation_remote_path = Authentificator.get_cluster(
-                server.state.selected_cluster_name ).simulation_remote_path
-            server.state.simulation_dl_path = Authentificator.get_cluster(
-                server.state.selected_cluster_name ).simulation_dl_default_path
-        else:
+        except:
             server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
     @server.state.change( "simulation_xml_temp" )
@@ -43,15 +101,36 @@ def define_simulation_view( server: Server ) -> None:
         server.state.simulation_xml_filename = new_list
         server.state.simulation_xml_temp = []
 
+    @server.state.change("nunknowns")
+    def on_nunknowns_change( nunknowns : int , **_ : Any) -> None:
+        #re-gen list
+        if len(server.state.decomposition) > 0:
+            server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ),
+                                                            nunknowns ).to_list() 
+            server.state.decomposition = server.state.decompositions[0]
+        server.state.nunknowns = nunknowns
+
+    
     @server.state.change( "simulation_xml_filename" )
     def on_simfiles_change( simulation_xml_filename: list, **_: Any ) -> None:
         import re
-        pattern = re.compile( r"\.xml$", re.IGNORECASE )
-        has_xml = any(
-            pattern.search( file if isinstance( file, str ) else file.get( "name", "" ) )
-            for file in simulation_xml_filename )
-        server.state.is_valid_jobfiles = has_xml
+        has_xml = list([True if file.get( "type", "" ) == 'text/xml' else False
+            for file in simulation_xml_filename ])
+        
+        has_mesh = list([True if file.get( "name", "" ).endswith((".vtu",".vtm",".vtp"))  else False
+            for file in simulation_xml_filename ])
+        
+        server.state.is_valid_jobfiles = any(has_xml)
 
+        if any(has_mesh) and any(has_xml):
+            for i,_ in enumerate(has_mesh):
+                if has_mesh[i]:
+                    nc, np = _how_many_cells(simulation_xml_filename[i])
+                elif has_xml[i]:
+                    uc, up = _what_solver(simulation_xml_filename[i]) 
+            
+            server.state.nunknowns = uc*nc + up*np      
+        
     def kill_job( index_to_remove: int ) -> None:
         # for now just check there is an xml
         jid = list( server.state.job_ids )
@@ -117,7 +196,7 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Decomposition",
                                  items=( "decompositions", [] ),
-                                 v_model=( "decomposition", '' ) )
+                                 v_model=( "decomposition", 'No: 0x0' ) )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):

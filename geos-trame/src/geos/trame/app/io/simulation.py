@@ -53,6 +53,7 @@ class Simulation:
         self._sim_info_dir = sim_info_dir
         server.state.job_ids = []
         server.state.selected_cluster = None
+        server.state.nunknowns = 1
 
         server.state.status_colors = {
             "PENDING": "#4CAF50",  #PD
