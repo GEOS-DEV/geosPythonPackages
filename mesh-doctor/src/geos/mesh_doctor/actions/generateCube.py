@@ -13,6 +13,7 @@ from geos.mesh.io.vtkIO import VtkOutput, writeMesh
 from geos.mesh.utils.arrayModifiers import createConstantAttributeDataSet
 from geos.mesh_doctor.actions.generateGlobalIds import buildGlobalIds
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
+from geos.utils.pieceEnum import Piece
 
 
 @dataclass( frozen=True )
@@ -180,14 +181,14 @@ def addFields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtk
         vtkUnstructuredGrid: The mesh with added fields.
     """
     for fieldInfo in fields:
-        onPoints = fieldInfo.support == "POINTS"
+        piece: Piece = Piece.POINTS if fieldInfo.support == "POINTS" else Piece.CELLS
         # Create list of values (all 1.0) for each component
         listValues = [ 1.0 ] * fieldInfo.dimension
         # Use the robust createConstantAttributeDataSet function
         success = createConstantAttributeDataSet( dataSet=mesh,
                                                   listValues=listValues,
                                                   attributeName=fieldInfo.name,
-                                                  onPoints=onPoints,
+                                                  piece=piece,
                                                   logger=setupLogger )
         if not success:
             setupLogger.warning( f"Failed to create field {fieldInfo.name}" )

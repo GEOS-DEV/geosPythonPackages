@@ -198,6 +198,18 @@ class DeckViewer( vuetify.VCard ):
             value=perforation_radius,
         )
 
+        self.plotter.add_slider_widget(
+            self._on_change_zscale,
+            [ 1, 10 ],
+            title="Z exaggeration",
+            title_opacity=0.5,
+            pointa=( 0.02, 0.37 ),
+            pointb=( 0.30, 0.37 ),
+            title_color="black",
+            title_height=0.02,
+            value=1.,
+        )
+
     def _remove_slider( self ) -> None:
         """Create slider to control in the gui well parameters."""
         self.plotter.clear_slider_widgets()
@@ -211,6 +223,27 @@ class DeckViewer( vuetify.VCard ):
     def _on_change_perforation_size( self, value: float ) -> None:
         for _, perforation in self._perforations.items():
             perforation.update_perforation_radius( value )
+
+    def _on_change_zscale( self, value: float ) -> None:
+        self.state[ self.ZAMPLIFICATION ] = value
+        if self._mesh_actor is not None:
+            self._mesh_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+            for k, _ in self.box_engine.items():
+                if hasattr( self.box_engine[ k ], "_box_polydata_actor" ) and hasattr(
+                        self.box_engine[ k ], "_extracted_cells_actor" ):
+                    self.box_engine[ k ]._box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+                    self.box_engine[ k ]._extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+
+            if self.plotter.plane_widgets:
+                self.plotter.plane_widgets[ 0 ].PlaceWidget( list( self._mesh_actor.GetBounds() ) )
+                self.plotter.plane_widgets[ 0 ].SetPlaceFactor( self.state[ self.ZAMPLIFICATION ] )
+
+            # if self.well_engine._wells_actors:
+            #     for wa in self.well_engine._wells_actors:
+            #         wa.actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
+
+            self.plotter.renderer.Modified()
+        return
 
     def _get_perforation_size( self ) -> float | None:
         if len( self._perforations ) <= 0:
@@ -231,6 +264,7 @@ class DeckViewer( vuetify.VCard ):
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
+        tube_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
         self.well_engine.append_actor( path, tube_actor )
 
         self.ctrl.view_update()
@@ -246,6 +280,7 @@ class DeckViewer( vuetify.VCard ):
             return
 
         tube_actor = self.plotter.add_mesh( self.well_engine.get_tube( self.well_engine.get_last_mesh_idx() ) )
+        tube_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
         self.well_engine.append_actor( path, tube_actor )
 
         self.ctrl.view_update()
@@ -385,6 +420,8 @@ class DeckViewer( vuetify.VCard ):
         if box_polydata is not None and extracted_cell is not None:
             self._make_mesh_transparent( True )
             _box_polydata_actor = self.plotter.add_mesh( box_polydata, opacity=0.2 )
+            _box_polydata_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
             _extracted_cells_actor = self.plotter.add_mesh( extracted_cell, show_edges=True )
+            _extracted_cells_actor.SetScale( 1.0, 1.0, self.state[ self.ZAMPLIFICATION ] )
             self.box_engine[ active_block.name ].set_box_polydata_actor( _box_polydata_actor )
             self.box_engine[ active_block.name ].set_extracted_cells_actor( _extracted_cells_actor )
