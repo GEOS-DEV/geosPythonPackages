@@ -15,7 +15,7 @@ class SuggestDecomposition:
                  memory_per_unknown_bytes: int,
                  node_memory_gb: int,
                  cores_per_node: int,
-                 min_unknowns_per_rank: int = 10000,
+                 min_unknowns_per_rank: int = 10,
                  strong_scaling: bool = True ) -> list[ dict ]:
         """Suggests node/rank distribution for a cluster computation.
 

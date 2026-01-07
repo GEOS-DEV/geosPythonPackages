@@ -43,14 +43,14 @@ solvers_to_unknowns = {
 }
 
   # helpers
-def _what_solver(bcontent):
+def _what_solver(bcontent) -> int:
         import xml.etree
         sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
-        nunk = [solvers_to_unknowns.get(elt.tag,0) for elt in sim_xml.find('Solvers')]
+        nunk = [solvers_to_unknowns.get(elt.tag, 1) for elt in sim_xml.find('Solvers')]
         return max(nunk)
 
 
-def _how_many_cells( bcontent ):
+def _how_many_cells( bcontent ) -> tuple[int,int]:
         import vtk
         name = bcontent['name']
         if name.endswith(".vtp"):
@@ -67,6 +67,24 @@ def _how_many_cells( bcontent ):
         reader.Update()
         output = reader.GetOutput()
         return (output.GetNumberOfCells(), output.GetNumberOfPoints())
+
+def _has_internalMesh(bcontent) -> bool:
+        import xml.etree
+        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
+        return (sim_xml.find('Mesh/InternalMesh') is not None)
+
+def _what_internalMesh(bcontent) -> tuple[int,int]:
+        import xml.etree
+        import re
+        sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
+        nx = sim_xml.find('Mesh/InternalMesh').get('nx')
+        nx = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', nx)])
+        ny = sim_xml.find('Mesh/InternalMesh').get('ny')
+        ny = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', ny)])
+        nz = sim_xml.find('Mesh/InternalMesh').get('nz')
+        nz = sum([int(el) for el in re.findall(r'-?\d+(?:\.\d+)?', nz)])
+        return (nx*ny*nz, (nx+1)*(ny+1)*(nz+1))
+
 
 #TODO a class from it
 def define_simulation_view( server: Server ) -> None:
@@ -105,6 +123,7 @@ def define_simulation_view( server: Server ) -> None:
         if len(server.state.decompositions) > 0:
             server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ),
                                                             nunknowns ).get_sd()
+        print(f'unknowns changed : {server.state.nunknowns} -> {nunknowns}')
         server.state.nunknowns = nunknowns
 
     
@@ -114,19 +133,26 @@ def define_simulation_view( server: Server ) -> None:
         has_xml = list([True if file.get( "type", "" ) == 'text/xml' else False
             for file in simulation_xml_filename ])
         
-        has_mesh = list([True if file.get( "name", "" ).endswith((".vtu",".vtm",".vtp"))  else False
+        has_external_mesh = list([True if file.get( "name", "" ).endswith((".vtu",".vtm",".vtp"))  else False
             for file in simulation_xml_filename ])
         
-        server.state.is_valid_jobfiles = any(has_xml)
+        has_internal_mesh = False
+        for i,_ in enumerate(has_xml):
+            if has_xml[i]:
+                has_internal_mesh = _has_internalMesh(simulation_xml_filename[i])
 
-        if any(has_mesh) and any(has_xml):
-            for i,_ in enumerate(has_mesh):
-                if has_mesh[i]:
+        if any(has_xml):
+            for i,_ in enumerate(has_xml):
+                if has_external_mesh[i]:
                     nc, np = _how_many_cells(simulation_xml_filename[i])
                 elif has_xml[i]:
                     uc, up = _what_solver(simulation_xml_filename[i]) 
+                    if has_internal_mesh:
+                        nc,np = _what_internalMesh(simulation_xml_filename[i])
             
             server.state.nunknowns = uc*nc + up*np      
+        
+        server.state.is_valid_jobfiles = any(has_xml)
         
     def kill_job( index_to_remove: int ) -> None:
         # for now just check there is an xml
