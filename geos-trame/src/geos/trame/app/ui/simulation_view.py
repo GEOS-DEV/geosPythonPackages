@@ -76,7 +76,7 @@ def define_simulation_view( server: Server ) -> None:
     def on_cluster_change( selected_cluster_name: str, **_: Any ) -> None:
         print( selected_cluster_name )
         server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( selected_cluster_name ),
-                                                            server.state.nunknowns ).to_list()
+                                                            server.state.nunknowns ).get_sd()
         
         server.state.simulation_remote_path = Authentificator.get_cluster(
                 server.state.selected_cluster_name ).simulation_remote_path
@@ -84,14 +84,12 @@ def define_simulation_view( server: Server ) -> None:
         server.state.simulation_dl_path = Authentificator.get_cluster(
                 server.state.selected_cluster_name ).simulation_dl_default_path
 
-    @server.state.change( "decomposition" )
-    def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
-        ll = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), server.state.nunknowns ).get_sd()
-        # if server.state.decomposition:
-        try:
-            server.state.sd = ll[ server.state.decompositions.index( decomposition ) ]
-        except:
-            server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
+    # @server.state.change( "decomposition" )
+    # def on_decomposition_selected( decomposition: str, **_: Any ) -> None:
+    #      = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ), server.state.nunknowns ).get_sd()
+    #     # if server.state.decomposition:
+    #     except:
+    #         server.state.sd = { 'nodes': 0, 'total_ranks': 0 }
 
     @server.state.change( "simulation_xml_temp" )
     def on_temp_change( simulation_xml_temp: list, **_: Any ) -> None:
@@ -104,10 +102,9 @@ def define_simulation_view( server: Server ) -> None:
     @server.state.change("nunknowns")
     def on_nunknowns_change( nunknowns : int , **_ : Any) -> None:
         #re-gen list
-        if len(server.state.decomposition) > 0:
+        if len(server.state.decompositions) > 0:
             server.state.decompositions = SuggestDecomposition( Authentificator.get_cluster( server.state.selected_cluster_name ),
-                                                            nunknowns ).to_list() 
-            server.state.decomposition = server.state.decompositions[0]
+                                                            nunknowns ).get_sd()
         server.state.nunknowns = nunknowns
 
     
@@ -185,7 +182,7 @@ def define_simulation_view( server: Server ) -> None:
             server.state.simulation_xml_filename = []
             server.state.selected_cluster_names = [ cluster.name for cluster in Authentificator.sim_constants ]
             # server.state.decompositions = []
-            server.state.sd = None
+            # server.state.sd = None
 
             vuetify.VDivider( vertical=True, thickness=5, classes="mx-4" )
             with vuetify.VCol( cols=1 ):
@@ -196,13 +193,17 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=1 ):
                 vuetify.VSelect( label="Decomposition",
                                  items=( "decompositions", [] ),
-                                 v_model=( "decomposition", 'No: 0x0' ) )
+                                 v_model=( "decomposition", None ),
+                                item_title="label",
+                                item_value="id",
+                                return_object=True
+                                )
 
         with vuetify.VRow():
             with vuetify.VCol( cols=8 ):
                 vuetify.VTextField( v_model=(
                     "key_path",
-                    "~/.ssh/id_trame",
+                    "/users/$USER/.ssh/id_trame",
                 ),
                                     label="Path to ssh key",
                                     dense=True,

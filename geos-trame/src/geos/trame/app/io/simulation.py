@@ -83,7 +83,7 @@ class Simulation:
         def run_simulation() -> None:
 
             # if server.state.access_granted and server.state.sd and server.state.simulation_xml_filename:
-            if server.state.access_granted and server.state.simulation_xml_filename:
+            if server.state.access_granted and server.state.simulation_xml_filename and server.state.decomposition:
                 if Authentificator.ssh_client:
 
                     Authentificator._sftp_copy_tree( Authentificator.ssh_client,
@@ -98,8 +98,8 @@ class Simulation:
                         input_file=[
                             item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'
                         ][ 0 ].get( 'name' ),
-                        nodes=server.state.sd[ 'nodes' ],
-                        ntasks=server.state.sd[ 'total_ranks' ],
+                        nodes=server.state.decomposition[ 'nodes' ],
+                        ntasks=server.state.decomposition[ 'total_ranks' ],
                         geos_module=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_module,
                         geos_load_list=" ".join(
                             Authentificator.get_cluster( server.state.selected_cluster_name ).geos_load_list ),
