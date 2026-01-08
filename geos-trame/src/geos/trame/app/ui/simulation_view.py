@@ -262,7 +262,7 @@ def define_simulation_view( server: Server ) -> None:
                     hide_details=True,
                     # clearable=True,
                     multiple=True,
-                    filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt',
+                    filter_by_type='.xml,.vtu,.vtm,.pvtu,.pvtm,.dat,.csv,.txt,.geos',
                     # readonly=True,
                     disabled=( "!access_granted", ) )
             with vuetify.VCol( cols=4 ), vuetify.VList():
