@@ -3,7 +3,8 @@
 # SPDX-FileContributor: Lionel Untereiner, Jacques Franc
 from pathlib import Path
 from typing import Any
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv 
+import os
 
 from trame.app import get_server  # type: ignore
 from trame_server import Server
@@ -12,9 +13,8 @@ import sys
 sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-trame/src" )
 
 #do not override if existing
-assert load_dotenv( dotenv_path=Path( __file__ ).parent.parent / "assets/.env" )
 from geos.trame.app.core import GeosTrame
-
+from geos.trame.app.io.ssh_tools import Authentificator
 
 def main( server: Server = None, **kwargs: Any ) -> None:
     """Main function."""
@@ -34,6 +34,17 @@ def main( server: Server = None, **kwargs: Any ) -> None:
     parser.add_argument( "-e", "--env", help="dot_env file" , required=False )
 
     ( args, _unknown ) = parser.parse_known_args()
+    
+    if args.env:
+        assert load_dotenv( dotenv_path=Path(args.env) )
+    else:
+        assert load_dotenv( dotenv_path=Path( __file__ ).parent.parent / "assets/.env" )
+    
+    Authentificator.reload_simconstants()
+    
+    print(f"TEMPLATE_DIR .. {os.getenv('TEMPLATE_DIR')}")
+    print(f"ASSETS_DIR .. {os.getenv('ASSETS_DIR')}")
+   
 
     file_name = str( Path( args.input ).absolute() )
 

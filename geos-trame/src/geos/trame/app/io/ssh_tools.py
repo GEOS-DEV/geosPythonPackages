@@ -51,7 +51,14 @@ class Authentificator:
 
     ssh_client: Optional[ paramiko.SSHClient ] = None
 
-    sim_constants = [
+    sim_constants = []
+        # SimulationConstant( **item )
+        # for item in json.load( open( f'{os.getenv("ASSETS_DIR")}/cluster.json', 'r' ) )  # noqa: SIM115
+    # ]
+
+    @staticmethod
+    def reload_simconstants():
+        Authentificator.sim_constants = [
         SimulationConstant( **item )
         for item in json.load( open( f'{os.getenv("ASSETS_DIR")}/cluster.json', 'r' ) )  # noqa: SIM115
     ]
