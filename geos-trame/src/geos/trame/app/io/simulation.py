@@ -121,14 +121,14 @@ class Simulation:
                             item for item in server.state.simulation_xml_filename if item.get( 'type' ) == 'text/xml'
                         ][ 0 ].get( 'name' ),
                         nodes=server.state.decomposition[ 'nodes' ],
-                        ntasks=server.state.decomposition[ 'total_ranks' ],
+                        ntasks=server.state.decomposition[ 'nodes' ]*server.state.decomposition['ranks_per_node'],
                         geos_module=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_module,
                         geos_load_list=" ".join(
                             Authentificator.get_cluster( server.state.selected_cluster_name ).geos_load_list ),
                         geos_path=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_path,
                         mem="0",
                         comment_gr=server.state.slurm_comment,
-                        partition='p4_dev',
+                        partition='p4_general',
                         account='myaccount' )
 
                     Simulation.render_and_run( 'p4_copyback.jinja',

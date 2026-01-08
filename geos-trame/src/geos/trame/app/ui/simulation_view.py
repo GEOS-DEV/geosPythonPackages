@@ -46,7 +46,7 @@ solvers_to_unknowns = {
 def _what_solver(bcontent) -> int:
         import xml.etree
         sim_xml = xml.etree.ElementTree.fromstring(bcontent['content'])
-        nunk = [solvers_to_unknowns.get(elt.tag, 1) for elt in sim_xml.find('Solvers')]
+        nunk = [solvers_to_unknowns.get(elt.tag, (1,0)) for elt in sim_xml.find('Solvers')]
         return max(nunk)
 
 
