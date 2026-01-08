@@ -1,0 +1,15 @@
+#!/bin/sh
+#SBATCH --job-name="{{ job_name }}"
+#SBATCH --ntasks={{ ntasks }}
+#SBATCH --partition={{ partition }} 
+#SBATCH --comment={{ comment_gr }}
+#SBACTH --account={{ account }}
+#SBATCH --nodes={{ nodes }}
+#SBATCH --time={{ time | default('00:10:00') }}
+#SBATCH --mem={{ mem }}
+#SBATCH --output=job_GEOS_%j.out
+#SBATCH --err=job_GEOS_%j.err
+#SBATCH --dependency=afterok:{{ dep_job_id }}
+
+srun tar cfz {{ dep_job_id }}.tgz Outputs_{{ dep_job_id }}/ log_{{ dep_job_id }}.out 
+srun mkdir -p {{ target_dl_path }} && mv -v {{ dep_job_id }}.tgz {{ target_dl_path }}

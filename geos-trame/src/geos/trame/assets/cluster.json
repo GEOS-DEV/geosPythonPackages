@@ -1,0 +1,50 @@
+[
+  {
+  "name": "p4",
+  "host": "p4log01",
+  "port": 22,
+  "geos_path":"/workrd/users/$USER/GEOS/build-spack-generated-debug/bin/geosx",
+  "geos_module":"/workrd/users/$USER/modulesRHEL88",
+  "geos_load_list":["geos-daily-rhel88"],
+  "remote_home_base": "/users/$USER",
+  "simulation_default_filename": "geosDeck.xml",
+  "simulation_remote_path": "/workrd/users/$USER/Example",
+  "simulation_dl_default_path": "/users/$USER/Example",
+  "simulation_information_default_path": "/users/$USER/.trame-logs",
+  "n_nodes": 212,
+  "cores_per_node" : 192,
+  "mem_per_node": 747
+},
+  {
+  "name": "pine",
+  "host": "pine-1",
+  "port": 22,
+  "geos_path":"/workrd/users/$USER/GEOS/build-spack-generated-debug/bin/geosx",
+  "geos_module":"/apps/modules/modulefiles3",
+  "geos_load_list":["genesis","common","proxy","slurm","gcc/11.4.1","openmpi-gcc/5.0.5","cmake/3.27.9"],
+  "remote_home_base": "/home/$USER",
+  "simulation_default_filename": "geosDeck.xml",
+  "simulation_remote_path": "/shared/data1/Users/$USER/Example",
+  "simulation_dl_default_path": "/shared/data1/Users/$USER/Example",
+  "simulation_information_default_path": "/home/$USER/.trame-logs",
+  "n_nodes": 48,
+  "cores_per_node" : 64,
+  "mem_per_node": 768
+},
+ {
+  "name": "local",
+  "host": "127.0.0.1",
+  "port": 22,
+  "geos_path":"/opt/GEOS/build-spack-generated-debug/bin/geosx",
+  "geos_module":"/workrd/users/$USER/geos-generated",
+  "geos_load_list":["geos-toolchains"],
+  "remote_home_base": "/home/$USER",
+  "simulation_default_filename": "geosDeck.xml",
+  "simulation_remote_path": "/work/",
+  "simulation_dl_default_path": "/data/",
+  "simulation_information_default_path": "/home/.trame-logs",
+  "n_nodes": 1,
+  "cores_per_node" : 8,
+  "mem_per_node": 32
+}
+]

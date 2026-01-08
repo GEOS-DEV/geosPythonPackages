@@ -30,18 +30,19 @@ keywords = [
 ]
 
 dependencies = [
-    "typing-extensions==4.12.2",
     "trame==3.6.5",
-    "trame-vuetify==2.7.1",
+    "trame-vuetify==3.1.0",
     "trame-code==1.0.1",
     "trame-server==3.2.3",
-    "trame-client==3.5.0",
+    "trame-client==3.11.2",
     "trame-simput==2.4.3",
-    "trame-vtk>=2.8.14",
+    "trame-vtk==2.10.0",
     "matplotlib==3.9.4",
     "trame-matplotlib==2.0.3",
     "trame-components==2.4.2",
+    "python-dotenv>=1.2.1",
     "mpld3<0.5.11",
+    "paramiko==4.0.0",
     "xsdata==24.5",
     "xsdata-pydantic[lxml]==24.5",
     "pyvista==0.45.2",
@@ -50,7 +51,7 @@ dependencies = [
     "funcy==2.0",
     "pytz==2025.2",
     "typing_inspect==0.9.0",
-    "typing_extensions>=4.12",
+    "typing_extensions>=4.15.0",
     "PyYAML",
 ]
 
@@ -92,7 +93,7 @@ include-package-data = true
 # include = ['geos-trame*']
 
 [tool.setuptools.package-data]
-"*" = ["*.js", "*.css"]
+"*" = ["*.js", "*.css","assets/*","*.jinja","*.json",".env"]
 
 [tool.pytest.ini_options]
 addopts = [
