@@ -8,7 +8,12 @@ import requests
 
 
 def get_schema( commit_sha: str ) -> None:
-    """Fetch a file's raw bytes from a GitHub repository using the REST contents API."""
+    """Fetch a file's raw bytes from a GitHub repository using the REST contents API.
+
+    Args:
+        commit_sha (str): Commit sha corresponding to requested GEOS version.
+
+    """
     #  curl -s -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/GEOS-DEV/GEOS/contents/src/coreComponents/schema/schema.xsd?ref={8be64fb}" > schema_.xsd
     owner: str = "GEOS-DEV"
     repo: str = "GEOS"
@@ -45,8 +50,16 @@ def get_schema( commit_sha: str ) -> None:
     return
 
 
-def latest_commits( n: int ) -> list:
-    """Return the latest `n` commits on `branch` from the given GitHub repo."""
+def latest_commits( n: int ) -> list[ dict ]:
+    """Return the latest `n` commits on `branch` from the given GitHub repo.
+
+    Args:
+        n (int): Number of latest commits to retrieve.
+
+    Returns:
+        list[dict]: List of commits with sha, message, author date, url.
+
+    """
     owner: str = "GEOS-DEV"
     repo: str = "GEOS"
     url = f"https://api.github.com/repos/{owner}/{repo}/commits"

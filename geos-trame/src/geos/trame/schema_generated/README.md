@@ -18,7 +18,6 @@ the input file.
 
 ## How to generate a new file
 
-#### 1. Get GEOS validation schema file
 First, retrieve the `schema.xsd` corresponding to the GEOS version you want to use.
 
 > [!WARNING]
@@ -28,16 +27,16 @@ In a sourced virtual environement set for geos_trame,
 
 ```bash
 (venv) cd geosPythonPackages/geos-trame/src/geos/trame/schema_generated
-(venv) python generate_schema.py -g 
+(venv) python generate_schema.py -g
 (venv) mv schema_<GEOS-commit-sha>.xsd schema.xsd
 (venv) python generate_schema.py -v <GEOS-commit-sha>
 ```
 
-This two stage approach is defaulted: 
+This two stage approach is defaulted:
 
- 1. to take the latest commit on GEOS' `develop`. However, if a particular commit on `develop` is of interest,
+ 1. To take the latest commit on GEOS' `develop`. However, if a particular commit on `develop` is of interest,
 you can pass it through the option `-c <GEOS-commit-sha>`. It will generate `schema_<GEOS-commit-sha>.xsd`.
- 2. to generate the `schema_mod.py` packages, metadata-ing the commit number in the header.
+ 2. To generate the `schema_mod.py` packages, metadata-ing the commit number in the header.
 
 In any other case, `schema.xsd` can be found in [GEOS Github repository](https://github.com/GEOS-DEV/GEOS) under `GEOS/src/coreComponents/schema/schema.xsd`
 and the first step can be skipped.
