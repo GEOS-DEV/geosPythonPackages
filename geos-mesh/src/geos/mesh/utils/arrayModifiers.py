@@ -471,7 +471,7 @@ def createAttribute(
 
     # Check if the input mesh is inherited from vtkDataSet.
     if not isinstance( dataSet, vtkDataSet ):
-        raise TypeError( "Input datSet has to be inherited from vtkDataSet." )
+        raise TypeError( "Input dataSet has to be inherited from vtkDataSet." )
 
     # Check if the attribute already exist in the input mesh.
     if isAttributeInObjectDataSet( dataSet, attributeName, piece ):
@@ -557,8 +557,8 @@ def copyAttribute(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Error with the type of the mesh from or to.
-        ValueError: Error with the data of the meshes from and to.
+        TypeError: Error with the type of the source or final mesh.
+        ValueError: Error with the data of the source or final mesh.
         AttributeError: Error with the attribute attributeNameFrom or attributeNameTo.
     """
     # Check if an external logger is given.
@@ -567,19 +567,19 @@ def copyAttribute(
 
     # Check if the multiBlockDataSetFrom is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSetFrom, vtkMultiBlockDataSet ):
-        raise TypeError( "Input mesh from has to be inherited from vtkMultiBlockDataSet." )
+        raise TypeError( "Source mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the multiBlockDataSetTo is inherited from vtkMultiBlockDataSet.
     if not isinstance( multiBlockDataSetTo, vtkMultiBlockDataSet ):
-        raise TypeError( "Input mesh to has to be inherited from vtkMultiBlockDataSet." )
+        raise TypeError( "Final mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute exist in the multiBlockDataSetFrom.
     if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSetFrom, attributeNameFrom, piece ):
-        raise AttributeError( f"The attribute { attributeNameFrom } is not present in the mesh from." )
+        raise AttributeError( f"The attribute { attributeNameFrom } is not present in the source mesh." )
 
     # Check if the attribute already exist in the multiBlockDataSetTo.
     if isAttributeInObjectMultiBlockDataSet( multiBlockDataSetTo, attributeNameTo, piece ):
-        raise AttributeError( f"The attribute { attributeNameTo } is already present in the mesh to." )
+        raise AttributeError( f"The attribute { attributeNameTo } is already present in the final mesh." )
 
     # Check if the two multiBlockDataSets are similar.
     elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
@@ -619,7 +619,7 @@ def copyAttributeDataSet(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Error with the type of the mesh from.
+        TypeError: Error with the type of the source mesh.
         AttributeError: Error with the attribute attributeNameFrom.
     """
     # Check if an external logger is given.
@@ -628,11 +628,11 @@ def copyAttributeDataSet(
 
     # Check if the dataSetFrom is inherited from vtkDataSet.
     if not isinstance( dataSetFrom, vtkDataSet ):
-        raise TypeError( "Input mesh from has to be inherited from vtkDataSet." )
+        raise TypeError( "Source mesh has to be inherited from vtkDataSet." )
 
     # Check if the attribute exist in the dataSetFrom.
     if not isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, piece ):
-        raise AttributeError( f"The attribute { attributeNameFrom } is not in the input mesh from." )
+        raise AttributeError( f"The attribute { attributeNameFrom } is not in the source mesh." )
 
     npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, piece )
     componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, piece )
@@ -693,7 +693,7 @@ def transferAttributeToDataSetWithElementMap(
         raise ValueError( f"The attribute must be on { Piece.POINTS.value } or { Piece.CELLS.value }." )
 
     if not isinstance( dataSetTo, vtkDataSet ):
-        raise TypeError( "The mesh to has to be inherited from vtkDataSet." )
+        raise TypeError( "The final mesh has to be inherited from vtkDataSet." )
 
     if flatIdDataSetTo not in elementMap:
         raise ValueError(
@@ -706,13 +706,13 @@ def transferAttributeToDataSetWithElementMap(
         )
 
     if not isinstance( meshFrom, ( vtkDataSet, vtkMultiBlockDataSet ) ):
-        raise TypeError( "The mesh from has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
+        raise TypeError( "The source mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
     if not isAttributeInObject( meshFrom, attributeName, piece ):
-        raise AttributeError( f"The attribute { attributeName } is not in the mesh from." )
+        raise AttributeError( f"The attribute { attributeName } is not in the source mesh." )
 
     if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, piece ):
-        raise AttributeError( f"The attribute { attributeName } must be global in the mesh from." )
+        raise AttributeError( f"The attribute { attributeName } must be global in the source mesh." )
 
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
     nbComponents: int = len( componentNames )
@@ -802,7 +802,7 @@ def transferAttributeWithElementMap(
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Error with the type of the mesh to.
+        TypeError: Error with the type of the final mesh.
         AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
@@ -813,7 +813,7 @@ def transferAttributeWithElementMap(
         transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, piece, logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         if isAttributeInObjectMultiBlockDataSet( meshTo, attributeName, piece ):
-            raise AttributeError( f"The attribute { attributeName } is already in the mesh to." )
+            raise AttributeError( f"The attribute { attributeName } is already in the final mesh." )
 
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
@@ -826,7 +826,7 @@ def transferAttributeWithElementMap(
                                                       flatIdDataSetTo=flatIdDataSetTo,
                                                       logger=logger )
     else:
-        raise TypeError( "The mesh to has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
+        raise TypeError( "The final mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
     return
 
@@ -929,7 +929,7 @@ def createCellCenterAttribute(
     elif isinstance( mesh, vtkDataSet ):
         createCellCenterAttributeDataSet( mesh, cellCenterAttributeName, logger )
     else:
-        raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
+        raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
     return
 

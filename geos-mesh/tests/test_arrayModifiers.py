@@ -135,7 +135,7 @@ def test_fillPartialAttributesTypeError( dataSetTest: vtkDataSet, ) -> None:
 
 
 def test_fillPartialAttributesValueError( dataSetTest: vtkMultiBlockDataSet, ) -> None:
-    """Test the raises ValueError for the function fillPartialAttributes with to many values for the attribute."""
+    """Test the raises ValueError for the function fillPartialAttributes with too many values for the attribute."""
     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     with pytest.raises( ValueError ):
         arrayModifiers.fillPartialAttributes( mesh, "PORO", listValues=[ 42, 42 ] )
