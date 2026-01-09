@@ -7,7 +7,7 @@ from geos.xml_tools import xml_formatter
 def generate_test_xml_files( root_dir: str ) -> None:
     """Build example input/output xml files, which can be used to test the parser.
 
-     These are derived from a GEOSX integrated test xml.
+     These are derived from a GEOS integrated test xml.
 
     @param root_dir The folder to write the example xml files.
     """
