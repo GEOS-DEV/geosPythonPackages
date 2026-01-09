@@ -113,7 +113,7 @@ class DataLoader( AbstractElement ):
         self.well_viewer.add_mesh( well_polydata, path )
 
     def _update_internalwell( self, well: InternalWell, path: str, show: bool ) -> None:
-        """Used to control the visibility of the InternalWell.
+        """Used to control the visibility of the InternalWellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -134,7 +134,7 @@ class DataLoader( AbstractElement ):
 
     @staticmethod
     def __parse_polyline_property( polyline_property: str, dtype: Type[ Any ] ) -> np.ndarray:
-        """Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWell.
+        """Internal method used to parse and convert a property, such as polyline_node_coords, from an InternalWellType.
 
         This string always follow this for :
             "{ { 800, 1450, 395.646 }, { 800, 1450, -554.354 } }"

@@ -50,7 +50,8 @@ class DeckViewer( vuetify.VCard ):
         self._cell_data_array_names: list[ str ] = []
         self._source = source
         self._pl = pv.Plotter()
-        self._pl.iren.initialize()
+        if self._pl.iren:
+            self._pl.iren.initialize()
         self._mesh_actor: vtkActor | None = None
 
         self.CUT_PLANE = "on_cut_plane_visibility_change"
@@ -126,7 +127,7 @@ class DeckViewer( vuetify.VCard ):
     def update_viewer( self, active_block: BaseModel, path: str, show_obj: bool ) -> None:
         """Add from path the dataset given by the user.
 
-        Supported data type is: Vtkwell, Vtkmesh, InternalWell, Perforation, Box.
+        Supported data type is: VtkwellType, VtkmeshType, InternalWellType, PerforationType, BoxType.
 
         object_state  : array used to store path to the data and if we want to show it or not.
         """
@@ -253,7 +254,7 @@ class DeckViewer( vuetify.VCard ):
         return None
 
     def _update_internalwell( self, path: str, show: bool ) -> None:
-        """Used to control the visibility of the InternalWell.
+        """Used to control the visibility of the InternalWellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -269,7 +270,7 @@ class DeckViewer( vuetify.VCard ):
         self.ctrl.view_update()
 
     def _update_vtkwell( self, path: str, show: bool ) -> None:
-        """Used to control the visibility of the Vtkwell.
+        """Used to control the visibility of the VtkwellType.
 
         This method will create the mesh if it doesn't exist.
         """
@@ -308,7 +309,7 @@ class DeckViewer( vuetify.VCard ):
         self.ctrl.view_update()
 
     def _update_vtkmesh( self, show: bool ) -> None:
-        """Used to control the visibility of the Vtkmesh.
+        """Used to control the visibility of the VtkmeshType.
 
         This method will create the mesh if it doesn't exist.
 
