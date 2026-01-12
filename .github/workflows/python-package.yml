@@ -67,7 +67,6 @@ jobs:
           - geos-timehistory
           - geos-trame
           - geos-xml-tools
-          - geos-xml-viewer
           - mesh-doctor
           - hdf5-wrapper
           - pygeos-tools
@@ -227,7 +226,6 @@ jobs:
           "^geos-pv/"
           "^geos-timehistory/"
           "^geos-trame/"
-          "^geos-xml-viewer/"
         )
 
         # Check if any changed file affects GEOS-integrated packages
