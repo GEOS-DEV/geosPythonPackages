@@ -164,13 +164,10 @@ class GeosBlockMerge():
                                                            logger=self.logger )
 
             # Create index attribute keeping the index in initial mesh
-            if not createConstantAttribute( volumeMesh, [ blockIndex ],
-                                            PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
-                                            piece=Piece.CELLS,
-                                            logger=self.logger ):
-                raise ValueError(
-                    f"Something went wrong during the creation of the attribute { PostProcessingOutputsEnum.BLOCK_INDEX.attributeName }."
-                )
+            createConstantAttribute( volumeMesh, [ blockIndex ],
+                                     PostProcessingOutputsEnum.BLOCK_INDEX.attributeName,
+                                     piece=Piece.CELLS,
+                                     logger=self.logger )
 
             # Rename attributes
             self.renameAttributes( volumeMesh )
@@ -208,9 +205,9 @@ class GeosBlockMerge():
                     if suffix == "_density":
                         for phaseName in self.phaseNameDict[ PhaseTypeEnum.ROCK.type ]:
                             if phaseName in attributeName:
-                                renameAttribute( mesh, attributeName, newName, piece=Piece.CELLS )
+                                renameAttribute( mesh, attributeName, newName, Piece.CELLS, logger=self.logger )
                     else:
-                        renameAttribute( mesh, attributeName, newName, piece=Piece.CELLS )
+                        renameAttribute( mesh, attributeName, newName, Piece.CELLS, logger=self.logger )
 
         return
 

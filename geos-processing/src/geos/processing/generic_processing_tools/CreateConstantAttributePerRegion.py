@@ -155,7 +155,7 @@ class CreateConstantAttributePerRegion:
         """Create a constant attribute per region in the mesh.
 
         Raises:
-            ValueError: Errors with the input value for the region index or errors during the creation of the new attribute.
+            ValueError: Errors with the input value for the region index.
             AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
@@ -203,14 +203,12 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                if not createConstantAttributeMultiBlock( self.mesh,
-                                                          self.defaultValue,
-                                                          self.newAttributeName,
-                                                          componentNames=self.componentNames,
-                                                          piece=self.piece,
-                                                          logger=self.logger ):
-                    raise ValueError(
-                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+                createConstantAttributeMultiBlock( self.mesh,
+                                                   self.defaultValue,
+                                                   self.newAttributeName,
+                                                   componentNames=self.componentNames,
+                                                   piece=self.piece,
+                                                   logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -224,14 +222,12 @@ class CreateConstantAttributePerRegion:
 
                     regionArray = getArrayInObject( dataSet, self.regionName, self.piece )
                     newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                    if not createAttribute( dataSet,
-                                            newArray,
-                                            self.newAttributeName,
-                                            componentNames=self.componentNames,
-                                            piece=self.piece,
-                                            logger=self.logger ):
-                        raise ValueError(
-                            f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+                    createAttribute( dataSet,
+                                     newArray,
+                                     self.newAttributeName,
+                                     componentNames=self.componentNames,
+                                     piece=self.piece,
+                                     logger=self.logger )
 
         else:
             validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
@@ -243,14 +239,12 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                if not createConstantAttributeDataSet( self.mesh,
-                                                       self.defaultValue,
-                                                       self.newAttributeName,
-                                                       componentNames=self.componentNames,
-                                                       piece=self.piece,
-                                                       logger=self.logger ):
-                    raise ValueError(
-                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+                createConstantAttributeDataSet( self.mesh,
+                                                self.defaultValue,
+                                                self.newAttributeName,
+                                                componentNames=self.componentNames,
+                                                piece=self.piece,
+                                                logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -259,14 +253,12 @@ class CreateConstantAttributePerRegion:
 
                 regionArray = getArrayInObject( self.mesh, self.regionName, self.piece )
                 newArray = self._createArrayFromRegionArrayWithValueMap( regionArray )
-                if not createAttribute( self.mesh,
-                                        newArray,
-                                        self.newAttributeName,
-                                        componentNames=self.componentNames,
-                                        piece=self.piece,
-                                        logger=self.logger ):
-                    raise ValueError(
-                        f"Something went wrong with the creation of the attribute { self.newAttributeName }." )
+                createAttribute( self.mesh,
+                                 newArray,
+                                 self.newAttributeName,
+                                 componentNames=self.componentNames,
+                                 piece=self.piece,
+                                 logger=self.logger )
 
         # Log the output message.
         self._logOutputMessage( validIndexes )
