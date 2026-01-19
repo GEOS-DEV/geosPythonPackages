@@ -3,7 +3,7 @@
 #SBATCH --ntasks={{ ntasks }}
 #SBATCH --partition={{ partition }}
 #SBATCH --comment={{ comment_gr }}
-#SBACTH --account={{ account }}
+#SBATCH --account={{ account }}
 #SBATCH --nodes={{ nodes }}
 #SBATCH --time={{ time | default('00:10:00') }}
 #SBATCH --mem={{ mem }}
@@ -21,6 +21,7 @@ export HDF5_USE_FILE_LOCKING=FALSE
 export OMP_NUM_THREADS=1
 export EXEC={{ geos_path }}
 
+mkdir -p Outputs_${SLURM_JOBID} && touch log_${SLURM_JOBID}.out
 mpirun -mca coll_hcoll_enable 0 -x UCX_RNDV_THRESH=131072 \
     -n {{ ntasks }} ${EXEC} \
     -o Outputs_${SLURM_JOBID} \

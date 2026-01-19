@@ -112,8 +112,11 @@ class Simulation:
                                                      Simulation.gen_tree( server.state.simulation_xml_filename ),
                                                      server.state.simulation_remote_path )
 
+                    cluster_name =  Authentificator.get_cluster( server.state.selected_cluster_name ).name
+                    cluster_part =  Authentificator.get_cluster( server.state.selected_cluster_name ).partition
+                    cluster_trans_part =  Authentificator.get_cluster( server.state.selected_cluster_name ).partition_transfert
                     run_id: int = Simulation.render_and_run(
-                        'p4_slurm.jinja',
+                        f'{cluster_name}_slurm.jinja',
                         'job.slurm',
                         server,
                         job_name=server.state.simulation_job_name,
@@ -128,10 +131,10 @@ class Simulation:
                         geos_path=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_path,
                         mem="0",
                         comment_gr=server.state.slurm_comment,
-                        partition='p4_general',
-                        account='myaccount' )
+                        partition=cluter_part,
+                        account=server.state.slurm_comment)
 
-                    Simulation.render_and_run( 'p4_copyback.jinja',
+                    Simulation.render_and_run( f'{cluster_name}_copyback.jinja',
                                                'copyback.slurm',
                                                server,
                                                job_name=server.state.simulation_job_name,
@@ -145,8 +148,8 @@ class Simulation:
                                                dep_job_id=run_id,
                                                target_dl_path=server.state.simulation_dl_path,
                                                comment_gr=server.state.slurm_comment,
-                                               partition='p4_transfer',
-                                               account='myaccount' )
+                                               partition=cluster_trans_part,
+                                               account=server.stat.slurm_comment )
 
                     self._start_result_streams()
 

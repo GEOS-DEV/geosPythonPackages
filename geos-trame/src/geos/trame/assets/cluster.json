@@ -2,6 +2,8 @@
   {
   "name": "p4",
   "host": "p4log01",
+  "partition":"p4_general",
+  "partition_transfert":"p4_transfert",
   "port": 22,
   "geos_path":"/workrd/users/$USER/GEOS/build-spack-generated-debug/bin/geosx",
   "geos_module":"/workrd/users/$USER/modulesRHEL88",
@@ -18,8 +20,10 @@
   {
   "name": "pine",
   "host": "pine-1",
+  "partition":"pine",
+  "partition_transfert":"pine",
   "port": 22,
-  "geos_path":"/workrd/users/$USER/GEOS/build-spack-generated-debug/bin/geosx",
+  "geos_path":"/shared/data1/Users/$USER/codes/GEOS-2025-11-03/build-pine-1.pine.cluster-linux-rocky9-zen4-gcc@11.4.1-release/bin/geosx",
   "geos_module":"/apps/modules/modulefiles3",
   "geos_load_list":["genesis","common","proxy","slurm","gcc/11.4.1","openmpi-gcc/5.0.5","cmake/3.27.9"],
   "remote_home_base": "/home/$USER",
@@ -34,6 +38,8 @@
  {
   "name": "local",
   "host": "127.0.0.1",
+  "partition": "debug",
+  "partition_transfert": "debug",
   "port": 22,
   "geos_path":"/opt/GEOS/build-spack-generated-debug/bin/geosx",
   "geos_module":"/workrd/users/$USER/geos-generated",
