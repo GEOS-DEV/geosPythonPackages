@@ -15,7 +15,7 @@ class SimulationConstant:
     name: str
     host: str
     partition: str
-    partition_tranfert: str
+    partition_transfert: str
     port: int
     geos_path: str
     geos_module: str
