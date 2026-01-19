@@ -131,7 +131,7 @@ class Simulation:
                         geos_path=Authentificator.get_cluster( server.state.selected_cluster_name ).geos_path,
                         mem="0",
                         comment_gr=server.state.slurm_comment,
-                        partition=cluter_part,
+                        partition=cluster_part,
                         account=server.state.slurm_comment)
 
                     Simulation.render_and_run( f'{cluster_name}_copyback.jinja',
@@ -149,7 +149,7 @@ class Simulation:
                                                target_dl_path=server.state.simulation_dl_path,
                                                comment_gr=server.state.slurm_comment,
                                                partition=cluster_trans_part,
-                                               account=server.stat.slurm_comment )
+                                               account=server.state.slurm_comment )
 
                     self._start_result_streams()
 
