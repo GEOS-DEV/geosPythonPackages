@@ -742,8 +742,12 @@ class GeomechanicsCalculator:
             if attribute.nbComponent == 6:
                 componentNames = ComponentNameEnum.XYZ.value
 
-            createAttribute(
-                    self.output, array, attributeName, componentNames=componentNames, piece=piece, logger=self.logger )
+            createAttribute( self.output,
+                             array,
+                             attributeName,
+                             componentNames=componentNames,
+                             piece=piece,
+                             logger=self.logger )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
         self.logger.info( f"The filter { self.logger.name } succeeded." )
