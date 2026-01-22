@@ -343,8 +343,8 @@ class AttributesDiff:
                 else:
                     listBlockId: list[ int ] = getBlockElementIndexesFlatten( self.outputMesh )
                     l2Max: Any = 0
-                    for BlockId in listBlockId:
-                        dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( BlockId ) )
+                    for blockId in listBlockId:
+                        dataset: vtkDataSet = vtkDataSet.SafeDownCast( self.outputMesh.GetDataSet( blockId ) )
                         lToG: npt.NDArray[ Any ] = getArrayInObject( dataset, "localToGlobalMap", piece )
                         attributeArray = self.dictAttributesArray[ piece ][
                             lToG, attributeId, 0 ] - self.dictAttributesArray[ piece ][ lToG, attributeId, 1 ]
