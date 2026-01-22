@@ -17,9 +17,9 @@ from geos.utils.Logger import ( Logger, getLogger )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
-Attributes Diff is a vtk that compute L1 and L2 differences between attributes shared by two identical meshes.
+Attributes Diff is a vtk filter that computes L1 and L2 differences between attributes shared by two identical meshes.
 
-Input meshes cans be vtkDataSet or vtkMultiBlockDataSet.
+Input meshes can be vtkDataSet or vtkMultiBlockDataSet.
 
 To use the filter:
 
