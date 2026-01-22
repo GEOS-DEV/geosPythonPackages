@@ -129,8 +129,8 @@ def computeElementMapping(
                         coordElementTo.add( cellPointsTo.GetPoint( idPointTo ) )
 
                 idElementFrom: int = 0
-                ElementFromFund: bool = False
-                while idElementFrom < nbElementsFrom and not ElementFromFund:
+                elementFromFund: bool = False
+                while idElementFrom < nbElementsFrom and not elementFromFund:
                     # Test if the element of the source mesh is already mapped.
                     if idElementFrom not in idElementsFromFund:
                         typeElemFrom: int
@@ -161,23 +161,23 @@ def computeElementMapping(
 
                         if pointShared:
                             elementMap[ 0 ][ idElementTo ] = [ 0, idElementFrom ]
-                            ElementFromFund = True
+                            elementFromFund = True
                             idElementsFromFund.append( idElementFrom )
 
                     idElementFrom += 1
         elif isinstance( meshFrom, vtkMultiBlockDataSet ):
             listDataSetFromIds: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
-            for DataSetFromId in listDataSetFromIds:
-                dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( DataSetFromId ) )
+            for dataSetFromId in listDataSetFromIds:
+                dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( dataSetFromId ) )
                 DataSetFromMap: npt.NDArray = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
                 for idElementTo in range( nbElementsTo ):
                     if -1 in elementMap[ 0 ][ idElementTo ] and -1 not in DataSetFromMap[ idElementTo ]:
-                        elementMap[ 0 ][ idElementTo ] = [ DataSetFromId, DataSetFromMap[ idElementTo ][ 1 ] ]
+                        elementMap[ 0 ][ idElementTo ] = [ dataSetFromId, DataSetFromMap[ idElementTo ][ 1 ] ]
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         listDataSetToFlattenIds: list[ int ] = getBlockElementIndexesFlatten( meshTo )
-        for DataSetToFlattenId in listDataSetToFlattenIds:
-            dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( DataSetToFlattenId ) )
-            elementMap[ DataSetToFlattenId ] = computeElementMapping( meshFrom, dataSetTo, piece )[ 0 ]
+        for dataSetToFlattenId in listDataSetToFlattenIds:
+            dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( dataSetToFlattenId ) )
+            elementMap[ dataSetToFlattenId ] = computeElementMapping( meshFrom, dataSetTo, piece )[ 0 ]
 
     return elementMap
 
