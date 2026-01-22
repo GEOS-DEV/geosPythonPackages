@@ -39,7 +39,7 @@ The getter functions:
     - get the mapping between cells or points shared by two meshes
 
 The check functions:
-    - check of an attribute is on an mesh for a piece (one for dataset, one for multiblockDataset, one for the both and one for a list of attributes)
+    - check if an attribute is on a mesh (one for dataset, one for multiblockDataset, one for the both and one for a list of attributes)
     - check if an attribute is global (for multiblockDataset meshes)
     - check if a value is a value of an attribute (one for dataset and one for multiblockDataset)
 """
@@ -354,7 +354,7 @@ def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Pie
         piece (Piece): The piece of the attribute.
 
     Returns:
-        (set[str]): Set of attribute names present in input mesh.
+        set[str]: Set of attribute names present in input mesh.
     """
     attributeSet: set[ str ]
     if isinstance( mesh, vtkMultiBlockDataSet ):
