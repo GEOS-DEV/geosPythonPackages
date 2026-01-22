@@ -30,19 +30,19 @@ def test_AttributesDiff(
     AttributesDiffFilter: AttributesDiff = AttributesDiff()
     AttributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
     AttributesDiffFilter.logSharedAttributeInfo()
-    dicAttributesToCompare: dict[ Piece, set[ str ] ] = {
+    dictAttributesToCompare: dict[ Piece, set[ str ] ] = {
         Piece.CELLS: { "elementCenter", "localToGlobalMap" },
         Piece.POINTS: { "localToGlobalMap" }
     }
-    AttributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
+    AttributesDiffFilter.setDictAttributesToCompare( dictAttributesToCompare )
     AttributesDiffFilter.applyFilter()
     mesh: vtkDataSet | vtkMultiBlockDataSet = mesh1.NewInstance()
     mesh.ShallowCopy( AttributesDiffFilter.getOutput() )
-    dicAttributesDiffNames: dict[ Piece, set[ str ] ] = AttributesDiffFilter.getDicAttributesDiffNames()
+    dictAttributesDiffNames: dict[ Piece, set[ str ] ] = AttributesDiffFilter.getDictAttributesDiffNames()
     listFlattenIndexes = getBlockElementIndexesFlatten( mesh )
     for it in listFlattenIndexes:
         dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )  # type: ignore[union-attr]
-        for piece, listDiffAttributesName in dicAttributesDiffNames.items():
+        for piece, listDiffAttributesName in dictAttributesDiffNames.items():
             for diffAttributeName in listDiffAttributesName:
                 test = getArrayInObject( dataset, diffAttributeName, piece )
                 assert ( test == np.zeros( test.shape ) ).all()
