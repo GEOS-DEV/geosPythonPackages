@@ -17,6 +17,7 @@ from geos.utils.pieceEnum import Piece
 
 
 # TODO: Create meshes for test
+@pytest.mark.skip( "Add data for test" )
 @pytest.mark.parametrize( "mesh1Name, mesh2Name", [] )
 def test_AttributesDiff(
     dataSetTest: Any,
