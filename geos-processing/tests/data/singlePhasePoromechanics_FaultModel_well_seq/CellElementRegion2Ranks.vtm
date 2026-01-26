@@ -1,0 +1,19 @@
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64" compressor="vtkZLibDataCompressor">
+  <vtkMultiBlockDataSet>
+    <Block index="0" name="mesh1">
+      <Block index="0" name="Level0">
+        <Block index="0" name="CellElementRegion">
+          <Block index="0" name="Region">
+            <DataSet index="0" name="rank_0" file="CellElementRegion2Ranks/CellElementRegion2Ranks_0_0.vtu"/>
+            <DataSet index="1" name="rank_1" file="CellElementRegion2Ranks/CellElementRegion2Ranks_1_0.vtu"/>
+          </Block>
+        </Block>
+      </Block>
+    </Block>
+  </vtkMultiBlockDataSet>
+  <FieldData>
+    <DataArray type="Float64" Name="TimeValue" NumberOfTuples="1" format="binary" RangeMin="0" RangeMax="0">
+      AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
+    </DataArray>
+  </FieldData>
+</VTKFile>

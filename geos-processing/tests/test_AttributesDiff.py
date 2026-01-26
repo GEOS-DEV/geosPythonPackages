@@ -4,10 +4,8 @@
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator"
-import pytest
 import numpy as np
 
-from typing import Any
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 from geos.processing.generic_processing_tools.AttributesDiff import AttributesDiff
@@ -16,37 +14,34 @@ from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.pieceEnum import Piece
 
 
-# TODO: Create meshes for test
-@pytest.mark.skip( "Add data for test" )
-@pytest.mark.parametrize( "mesh1Name, mesh2Name", [] )
-def test_AttributesDiff(
-    dataSetTest: Any,
-    mesh1Name: str,
-    mesh2Name: str,
-) -> None:
+def test_AttributesDiff( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test the filter AttributesDiff."""
-    mesh1: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( mesh1Name )
-    mesh2: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( mesh2Name )
+    mesh1: vtkMultiBlockDataSet = dataSetTest( "2Ranks" )
+    mesh2: vtkMultiBlockDataSet = dataSetTest( "4Ranks" )
 
-    AttributesDiffFilter: AttributesDiff = AttributesDiff()
-    AttributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
-    AttributesDiffFilter.logSharedAttributeInfo()
+    attributesDiffFilter: AttributesDiff = AttributesDiff()
+    attributesDiffFilter.setMeshes( [ mesh1, mesh2 ] )
+    attributesDiffFilter.logSharedAttributeInfo()
     dictAttributesToCompare: dict[ Piece, set[ str ] ] = {
-        Piece.CELLS: { "elementCenter", "localToGlobalMap" },
-        Piece.POINTS: { "localToGlobalMap" }
+        Piece.POINTS: { 'totalDisplacement', 'localToGlobalMap', 'mass', 'externalForce' },
+        Piece.CELLS: {
+            'elementVolume', 'pressure', 'rock_bulkModulus', 'rockPorosity_referencePorosity', 'water_dInternalEnergy',
+            'water_dViscosity', 'water_viscosity', 'averageStrain', 'water_dEnthalpy', 'deltaPressure',
+            'rockPerm_permeability', 'rockPorosity_initialPorosity', 'localToGlobalMap', 'averagePlasticStrain',
+            'temperature', 'rock_density', 'averageStress', 'rockPorosity_porosity', 'rock_shearModulus',
+            'water_density', 'mass', 'water_internalEnergy', 'water_dDensity', 'rockPorosity_grainBulkModulus',
+            'elementCenter', 'water_enthalpy', 'rockPorosity_biotCoefficient'
+        },
     }
-    AttributesDiffFilter.setDictAttributesToCompare( dictAttributesToCompare )
-    AttributesDiffFilter.applyFilter()
+    attributesDiffFilter.setDictAttributesToCompare( dictAttributesToCompare )
+    attributesDiffFilter.applyFilter()
     mesh: vtkDataSet | vtkMultiBlockDataSet = mesh1.NewInstance()
-    mesh.ShallowCopy( AttributesDiffFilter.getOutput() )
-    dictAttributesDiffNames: dict[ Piece, set[ str ] ] = AttributesDiffFilter.getDictAttributesDiffNames()
+    mesh.ShallowCopy( attributesDiffFilter.getOutput() )
+    dictAttributesDiffNames: dict[ Piece, set[ str ] ] = attributesDiffFilter.getDictAttributesDiffNames()
     listFlattenIndexes = getBlockElementIndexesFlatten( mesh )
     for it in listFlattenIndexes:
         dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( it ) )  # type: ignore[union-attr]
         for piece, listDiffAttributesName in dictAttributesDiffNames.items():
             for diffAttributeName in listDiffAttributesName:
                 test = getArrayInObject( dataset, diffAttributeName, piece )
-                assert ( test == np.zeros( test.shape ) ).all()
-
-
-# TODO: Implement a test for checking the log of the inf norm
+                assert ( test < np.array( [ 0.0001 for _ in range( test.size ) ] ) ).all()
