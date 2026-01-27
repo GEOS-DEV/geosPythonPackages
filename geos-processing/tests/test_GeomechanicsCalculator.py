@@ -9,7 +9,9 @@ import pytest
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 from geos.mesh.utils.arrayHelpers import isAttributeInObject
-from geos.processing.post_processing.GeomechanicsCalculator import ( GeomechanicsCalculator, BASIC_PROPERTIES, ADVANCED_PROPERTIES, LITHOSTATIC_STRESS )
+from geos.processing.post_processing.GeomechanicsCalculator import ( GeomechanicsCalculator, BASIC_PROPERTIES,
+                                                                     ADVANCED_PROPERTIES, LITHOSTATIC_STRESS )
+
 
 @pytest.mark.parametrize( "computeAdvancedProperties", [
     ( False ),
@@ -28,7 +30,7 @@ def test_GeomechanicsCalculator(
     output: vtkUnstructuredGrid = geomechanicsCalculatorFilter.getOutput()
 
     for attribute in BASIC_PROPERTIES:
-        if attribute != LITHOSTATIC_STRESS: # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
+        if attribute != LITHOSTATIC_STRESS:  # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
             assert isAttributeInObject( output, attribute.attributeName, attribute.piece )
 
     if computeAdvancedProperties:

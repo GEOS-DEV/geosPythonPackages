@@ -15,6 +15,7 @@ from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
 from geos.utils.GeosOutputsConstants import getRockSuffixRenaming
 from geos.utils.pieceEnum import Piece
 
+
 @pytest.mark.parametrize( "extractFault, extractWell, convertFaultToSurface", [
     ( False, False, False ),
     ( True, False, False ),
