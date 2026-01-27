@@ -799,7 +799,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         """
         # Get effective stress array
         stressArray: npt.NDArray[ np.float64 ] = getArrayInObject( mesh,
-                                                                   GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
+                                                                   GeosMeshOutputsEnum.AVERAGE_STRESS.attributeName,
                                                                    Piece.CELLS )
         # Get stress convention
         stressConvention = StressConventionEnum.GEOS_STRESS_CONVENTION if self.useGeosStressConvention else StressConventionEnum.COMMON_STRESS_CONVENTION

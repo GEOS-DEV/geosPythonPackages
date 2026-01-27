@@ -155,7 +155,7 @@ class GeosMeshOutputsEnum( AttributeEnum ):
     BULK_MODULUS = ( "bulkModulus", 1, Piece.CELLS )
     GRAIN_BULK_MODULUS = ( "bulkModulusGrains", 1, Piece.CELLS )
     SHEAR_MODULUS = ( "shearModulus", 1, Piece.CELLS )
-    STRESS_EFFECTIVE = ( "averageStress", 6, Piece.CELLS )
+    AVERAGE_STRESS = ( "averageStress", 6, Piece.CELLS )
     TOTAL_DISPLACEMENT = ( "totalDisplacement", 4, Piece.POINTS )
 
     TRACTION = ( "traction", 3, Piece.CELLS )
@@ -200,7 +200,7 @@ class PostProcessingOutputsEnum( AttributeEnum ):
     STRESS_TOTAL_INITIAL = ( "stressTotalInitial", 6, Piece.CELLS )
     STRESS_TOTAL_RATIO_REAL = ( "stressTotalRatio_real", 1, Piece.CELLS )
     STRESS_TOTAL_DELTA = ( "deltaStressTotal", 6, Piece.CELLS )
-    STRAIN_ELASTIC = ( "averageStrain", 6, Piece.CELLS )
+    AVERAGE_STRAIN = ( "averageStrain", 6, Piece.CELLS )
     RSP_OED = ( "rsp_oed", 1, Piece.CELLS )
     RSP_REAL = ( "rsp_real", 6, Piece.CELLS )
 
@@ -314,7 +314,7 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
          names are values
     """
     return {
-        GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName:
+        GeosMeshOutputsEnum.AVERAGE_STRESS.attributeName:
         PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName,
         GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName:
         PostProcessingOutputsEnum.SHEAR_MODULUS_INITIAL.attributeName,
