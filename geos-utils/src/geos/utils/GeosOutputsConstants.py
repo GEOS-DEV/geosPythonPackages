@@ -89,8 +89,6 @@ class GeosMeshSuffixEnum( Enum ):
 
     # rock attributes suffix
     DENSITY_SUFFIX = "_density"
-    STRESS_SUFFIX = "_stress"
-    STRAIN_SUFFIX = "strain"
     PERMEABILITY_SUFFIX = "_permeability"
     POROSITY_SUFFIX = "_porosity"
     POROSITY_INIT_SUFFIX = "_initialPorosity"
@@ -157,7 +155,7 @@ class GeosMeshOutputsEnum( AttributeEnum ):
     BULK_MODULUS = ( "bulkModulus", 1, Piece.CELLS )
     GRAIN_BULK_MODULUS = ( "bulkModulusGrains", 1, Piece.CELLS )
     SHEAR_MODULUS = ( "shearModulus", 1, Piece.CELLS )
-    STRESS_EFFECTIVE = ( "stressEffective", 6, Piece.CELLS )
+    AVERAGE_STRESS = ( "averageStress", 6, Piece.CELLS )
     TOTAL_DISPLACEMENT = ( "totalDisplacement", 4, Piece.POINTS )
 
     TRACTION = ( "traction", 3, Piece.CELLS )
@@ -202,7 +200,7 @@ class PostProcessingOutputsEnum( AttributeEnum ):
     STRESS_TOTAL_INITIAL = ( "stressTotalInitial", 6, Piece.CELLS )
     STRESS_TOTAL_RATIO_REAL = ( "stressTotalRatio_real", 1, Piece.CELLS )
     STRESS_TOTAL_DELTA = ( "deltaStressTotal", 6, Piece.CELLS )
-    STRAIN_ELASTIC = ( "strainElastic", 6, Piece.CELLS )
+    AVERAGE_STRAIN = ( "averageStrain", 6, Piece.CELLS )
     RSP_OED = ( "rsp_oed", 1, Piece.CELLS )
     RSP_REAL = ( "rsp_real", 6, Piece.CELLS )
 
@@ -233,7 +231,6 @@ class PhaseTypeEnum( Enum ):
         "Rock",
         (
             GeosMeshSuffixEnum.DENSITY_SUFFIX.value,
-            GeosMeshSuffixEnum.STRESS_SUFFIX.value,
             GeosMeshSuffixEnum.PERMEABILITY_SUFFIX.value,
             GeosMeshSuffixEnum.POROSITY_SUFFIX.value,
             GeosMeshSuffixEnum.POROSITY_INIT_SUFFIX.value,
@@ -299,7 +296,6 @@ def getRockSuffixRenaming() -> dict[ str, str ]:
     """
     return {
         GeosMeshSuffixEnum.DENSITY_SUFFIX.value: GeosMeshOutputsEnum.ROCK_DENSITY.attributeName,
-#        GeosMeshSuffixEnum.STRESS_SUFFIX.value: GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName,
         GeosMeshSuffixEnum.PERMEABILITY_SUFFIX.value: GeosMeshOutputsEnum.PERMEABILITY.attributeName,
         GeosMeshSuffixEnum.POROSITY_SUFFIX.value: GeosMeshOutputsEnum.POROSITY.attributeName,
         GeosMeshSuffixEnum.POROSITY_REF_SUFFIX.value: GeosMeshOutputsEnum.POROSITY_INI.attributeName,
@@ -307,7 +303,6 @@ def getRockSuffixRenaming() -> dict[ str, str ]:
         GeosMeshSuffixEnum.SHEAR_MODULUS_SUFFIX.value: GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName,
         GeosMeshSuffixEnum.GRAIN_BULK_MODULUS_SUFFIX.value: GeosMeshOutputsEnum.GRAIN_BULK_MODULUS.attributeName,
         GeosMeshSuffixEnum.BIOT_COEFFICIENT_SUFFIX.value: PostProcessingOutputsEnum.BIOT_COEFFICIENT.attributeName,
-#        GeosMeshSuffixEnum.STRAIN_SUFFIX.value: PostProcessingOutputsEnum.STRAIN_ELASTIC.attributeName,
     }
 
 
@@ -319,7 +314,7 @@ def getAttributeToTransferFromInitialTime() -> dict[ str, str ]:
          names are values
     """
     return {
-        GeosMeshOutputsEnum.STRESS_EFFECTIVE.attributeName:
+        GeosMeshOutputsEnum.AVERAGE_STRESS.attributeName:
         PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL.attributeName,
         GeosMeshOutputsEnum.SHEAR_MODULUS.attributeName:
         PostProcessingOutputsEnum.SHEAR_MODULUS_INITIAL.attributeName,
