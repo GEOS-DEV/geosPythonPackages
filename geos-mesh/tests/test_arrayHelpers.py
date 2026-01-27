@@ -5,15 +5,16 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator, attr-defined"
 import pytest
-from typing import Tuple, Union, Any
+from typing import Union, Any
 
+import pandas as pd  # type: ignore[import-untyped]
 import numpy as np
 import numpy.typing as npt
 
 import vtkmodules.util.numpy_support as vnp
-import pandas as pd  # type: ignore[import-untyped]
 from vtkmodules.vtkCommonCore import vtkDoubleArray
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData,
+                                            vtkCellData )
 
 from geos.mesh.utils import arrayHelpers
 from geos.utils.pieceEnum import Piece
@@ -34,6 +35,13 @@ def test_getCellDimension(
     mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshName )
     cellDimObtained: set[ int ] = arrayHelpers.getCellDimension( mesh )
     assert cellDimObtained == cellDimExpected
+
+
+def test_getCellDimensionTypeError() -> None:
+    """Test getCellDimension TypeError raises."""
+    meshWrongType: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getCellDimension( meshWrongType )
 
 
 @pytest.mark.parametrize(
@@ -88,6 +96,13 @@ def test_computeElementMapping(
         assert np.all( elementMapComputed[ key ] == elementMapTest[ key ] )
 
 
+def test_computeElementMappingValueError() -> None:
+    """Test computeElementMapping ValueError raises."""
+    pieceWrongValue: Piece = Piece.BOTH
+    with pytest.raises( ValueError ):
+        arrayHelpers.computeElementMapping( vtkMultiBlockDataSet(), vtkMultiBlockDataSet(), pieceWrongValue )
+
+
 @pytest.mark.parametrize( "piece, expected", [ ( Piece.POINTS, {
     'GLOBAL_IDS_POINTS': 1,
     'collocated_nodes': 2,
@@ -128,6 +143,106 @@ def test_getAttributePieceInfo(
     assert pieceObtained == pieceTest
 
 
+def test_getNumpyGlobalIdsArray( dataSetTest: vtkDataSet ) -> None:
+    """Test the function getNumpyGlobalIdsArray."""
+    dataset: vtkDataSet = dataSetTest( "dataset" )
+    for piece in [ Piece.POINTS, Piece.CELLS ]:
+        fieldData: vtkPointData | vtkCellData = dataset.GetPointData(
+        ) if piece == Piece.POINTS else dataset.GetCellData()
+        nbElements: int = fieldData.GetNumberOfTuples()
+        npArrayExpected: npt.NDArray = np.array( list( range( nbElements ) ) )
+        npArrayObtained: npt.NDArray = arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+        assert ( npArrayObtained == npArrayExpected ).all()
+
+
+def test_getNumpyGlobalIdsArrayTypeError() -> None:
+    """Test getNumpyGlobalIdsArray TypeError raises."""
+    fieldData: vtkPolyData = vtkPolyData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+
+
+def test_getNumpyGlobalIdsArrayAttributeError() -> None:
+    """Test getNumpyGlobalIdsArray AttributeError raises."""
+    fieldData: vtkFieldData = vtkFieldData()
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+
+
+@pytest.mark.parametrize( "meshName, piece, expectedAttributeSet", [
+    ( "dataset", Piece.POINTS, { "GLOBAL_IDS_POINTS", "PointAttribute" } ),
+    ( "dataset", Piece.CELLS, { "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" } ),
+    ( "multiblock", Piece.CELLS, { "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" } ),
+] )
+def test_getAttributeSet(
+    dataSetTest: Any,
+    meshName: str,
+    piece: Piece,
+    expectedAttributeSet: set[ str ],
+) -> None:
+    """Test getAttributeSet function."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    obtainedAttributeSet: set[ str ] = arrayHelpers.getAttributeSet( mesh, piece )
+    assert obtainedAttributeSet == expectedAttributeSet
+
+
+def test_getAttributeSetTypeError() -> None:
+    """Test getAttributeSet TypeError raises."""
+    mesh: vtkFieldData = vtkFieldData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getAttributeSet( mesh, Piece.CELLS )
+
+
+@pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
+    ( "PORO", True, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
+    ( "PORO", False, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
+    ( "PointAttribute", False, Piece.POINTS, np.array( [ [ 12.4, 9.7, 10.5 ] for _ in range( 4092 ) ],
+                                                       dtype=np.float64 ) ),
+] )
+def test_getNumpyArrayByName(
+    dataSetTest: vtkDataSet,
+    arrayName: str,
+    sorted: bool,
+    piece: Piece,
+    expectedNpArray: npt.NDArray,
+) -> None:
+    """Test the function getNumpyGlobalIdsArray."""
+    dataset: vtkDataSet = dataSetTest( "dataset" )
+    fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
+    obtainedNpArray: npt.NDArray = arrayHelpers.getNumpyArrayByName( fieldData, arrayName, sorted )
+    assert ( obtainedNpArray == expectedNpArray ).all()
+
+
+def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
+    """Test getNumpyArrayByName AttributeError raises."""
+    dataset: vtkDataSet = dataSetTest( "dataset" )
+    fieldData: vtkCellData = dataset.GetCellData()
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getNumpyArrayByName( fieldData, "Attribute" )
+
+
+@pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
+    ( "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
+    ( "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
+] )
+def test_checkValidValuesInMultiBlock(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeName: str,
+    listValues: list[ Any ],
+    piece: Piece,
+    validValuesTest: list[ Any ],
+    invalidValuesTest: list[ Any ],
+) -> None:
+    """Test the function checkValidValuesInDataSet."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    validValues: list[ Any ]
+    invalidValues: list[ Any ]
+    validValues, invalidValues = arrayHelpers.checkValidValuesInMultiBlock( multiBlockDataSet, attributeName,
+                                                                            listValues, piece )
+    assert validValues == validValuesTest
+    assert invalidValues == invalidValuesTest
+
+
 @pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
     ( "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
     ( "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
@@ -166,6 +281,33 @@ def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, piece: Piece, expect
     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
     attributes: dict[ str, int ] = arrayHelpers.getAttributesFromDataSet( vtkDataSetTest, piece )
     assert attributes == expected
+
+
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "dataset", "Attribute", Piece.CELLS, False ),
+    ( "dataset", "GLOBAL_IDS_CELLS", Piece.CELLS, True ),
+    ( "dataset", "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
+    ( "multiblockGeosOutput", "TIME", Piece.FIELD, True ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.CELLS, True ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.POINTS, True ),
+] )
+def test_isAttributeInObject(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: bool,
+) -> None:
+    """Test the function isAttributeInObject."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    assert arrayHelpers.isAttributeInObject( mesh, attributeName, piece ) == expected
+
+
+def test_isAttributeInObjectTypeError() -> None:
+    """Test isAttributeInObject TypeError raises."""
+    mesh: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.isAttributeInObject( mesh, "Attribute", Piece.CELLS )
 
 
 @pytest.mark.parametrize( "attributeName, piece", [
@@ -228,6 +370,25 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     expected: npt.NDArray[ np.float64 ] = arrayExpected
 
     assert ( obtained == expected ).all()
+
+
+@pytest.mark.parametrize( "meshName, attributeName, piece, expectedVtkType", [
+    ( "dataset", "CellAttribute", Piece.CELLS, 11 ),
+    ( "dataset", "PointAttribute", Piece.POINTS, 11 ),
+    ( "multiblock", "collocated_nodes", Piece.POINTS, 12 ),
+] )
+def test_getVtkDataTypeInObject(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expectedVtkType: int,
+) -> None:
+    """Test the function getVtkDataTypeInObject."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    obtainedVtkType: int = arrayHelpers.getVtkDataTypeInObject( mesh, attributeName, piece )
+
+    assert obtainedVtkType == expectedVtkType
 
 
 @pytest.mark.parametrize( "attributeName, vtkDataType, piece", [
@@ -312,6 +473,30 @@ def test_getNumberOfComponentsMultiBlock(
     assert obtained == expected
 
 
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "dataset", "PORO", Piece.CELLS, 1 ),
+    ( "dataset", "PERM", Piece.CELLS, 3 ),
+    ( "multiblock", "PointAttribute", Piece.POINTS, 3 ),
+] )
+def test_getNumberOfComponents(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: int,
+) -> None:
+    """Test getting the number of components of an attribute from a multiblock."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
+
+
+def test_getNumberOfComponentsTypeError() -> None:
+    """Test getNumberOfComponents TypeError raises."""
+    mesh: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getNumberOfComponents( mesh, "attribute", Piece.CELLS )
+
+
 @pytest.mark.parametrize( "attributeName, piece, expected", [
     ( "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
     ( "PORO", Piece.CELLS, () ),
@@ -344,11 +529,34 @@ def test_getComponentNamesMultiBlock(
 @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
     ( ( "collocated_nodes", ), Piece.POINTS, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
 ] )
-def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: Tuple[ str, ...], piece: Piece,
-                                 expected_columns: Tuple[ str, ...] ) -> None:
+def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: tuple[ str, ...], piece: Piece,
+                                 expected_columns: tuple[ str, ...] ) -> None:
     """Test getting an attribute from a polydata as a dataframe."""
     polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
     data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
 
     obtained_columns = data.columns.values.tolist()
     assert obtained_columns == list( expected_columns )
+
+
+@pytest.mark.parametrize(
+    "attributeNames, expected",
+    [
+        ( [ "CellAttribute" ], True ),  # Attribute on cells
+        ( [ "PointAttribute" ], True ),  # Attribute on points
+        ( [ "attribute" ], False ),  # "attribute" is not on the mesh
+        ( [ "CellAttribute", "attribute" ], True ),  # "attribute" is not on the mesh
+    ] )
+def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expected: bool ) -> None:
+    """Test the function hasArray."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+
+
+def test_computeCellCenterCoordinates( dataSetTest: vtkMultiBlockDataSet ) -> None:
+    """Test the function computeCellCenterCoordinates."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+    dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( 5 ) )
+    expected: npt.NDArray = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( "elementCenter" ) )
+    obtained: npt.NDArray = vnp.vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( dataset ) )
+    assert ( obtained == expected ).all()
