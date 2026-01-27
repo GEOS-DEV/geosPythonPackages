@@ -44,8 +44,6 @@ def dataSetTest() -> Any:
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
             vtkFilename = "data/domain_res5_id_empty.vtu"
-        elif datasetType == "meshGeosExtractBlockTmp":
-            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
         elif datasetType == "singlePhasePoromechanicsVTKOutput":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/singlePhasePoromechanicsVTKOutput.vtm"
         elif datasetType == "extractAndMergeVolume":
