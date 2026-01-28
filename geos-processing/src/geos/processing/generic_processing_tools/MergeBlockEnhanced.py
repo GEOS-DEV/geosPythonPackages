@@ -6,7 +6,7 @@ import logging
 
 from typing_extensions import Self
 
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
@@ -91,6 +91,10 @@ class MergeBlockEnhanced:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -112,12 +116,18 @@ class MergeBlockEnhanced:
             VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )
         self.outputMesh = outputMesh
 
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 

@@ -6,7 +6,7 @@ from typing_extensions import Self
 from typing import Union, Any
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
 
@@ -98,6 +98,10 @@ class FillPartialArrays:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -121,8 +125,12 @@ class FillPartialArrays:
             ValueError: Error during the filling of the attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
+
         piece: Piece
-        for attributeName in self.dictAttributesValues:
+        mess: str = ""
+        for attributeName, values in self.dictAttributesValues.items():
             piece = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
             if piece == Piece.NONE:
                 raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
@@ -134,9 +142,19 @@ class FillPartialArrays:
             fillPartialAttributes( self.multiBlockDataSet,
                                    attributeName,
                                    piece=piece,
-                                   listValues=self.dictAttributesValues[ attributeName ],
+                                   listValues=values,
                                    logger=self.logger )
+            if values is None:
+                values = [ "the default value" ]
+            mess = f"{ mess }The attribute { attributeName } has been filled with { values }.\n"
 
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+        # Log the output message.
+        self.logger.info( mess )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return

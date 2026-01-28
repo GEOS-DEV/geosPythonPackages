@@ -9,7 +9,7 @@ from typing_extensions import Self, Union
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -111,6 +111,10 @@ class AttributeMapping:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -146,6 +150,9 @@ class AttributeMapping:
             AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         if len( self.attributeNames ) == 0:
             raise ValueError( "Please enter at least one attribute to transfer." )
@@ -185,13 +192,11 @@ class AttributeMapping:
                                              self.logger )
 
         # Log the output message.
-        self._logOutputMessage()
-
-        return
-
-    def _logOutputMessage( self: Self ) -> None:
-        """Create and log result messages of the filter."""
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
         self.logger.info(
-            f"The attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with the { self.piece.value } mapping."
+            f"The attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with a { self.piece.value } mapping.\n"
         )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
