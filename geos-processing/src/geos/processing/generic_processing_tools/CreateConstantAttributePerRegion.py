@@ -342,9 +342,6 @@ class CreateConstantAttributePerRegion:
         Args:
             trueIndexes (list[Any]): The list of the true region indexes use to create the attribute.
         """
-        # The Filter succeed.
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
-
         # Info about the created attribute.
         # The piece where the attribute is created.
         self.logger.info( f"The new attribute { self.newAttributeName } is created on { self.piece.value }." )
@@ -409,3 +406,11 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning( messValue )
                 else:
                     self.logger.info( messValue )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        return

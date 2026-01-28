@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, v
                                             VTK_POLYHEDRON, VTK_POLYGON )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
@@ -84,6 +84,10 @@ class SplitMesh():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -106,7 +110,10 @@ class SplitMesh():
             TypeError: Errors due to objects with the wrong type.
             AttributeError: Errors with cell data.
         """
-        self.logger.info( f"Applying filter { self.logger.name }." )
+        self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
+
         # Count the number of cells before splitting. Then we will be able to know how many new cells and points
         # to allocate because each cell type is splitted in a known number of new cells and points.
         nbCells: int = self.inputMesh.GetNumberOfCells()
@@ -170,7 +177,12 @@ class SplitMesh():
 
         # Transfer all cell arrays
         self._transferCellArrays( self.outputMesh )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 

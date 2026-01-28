@@ -16,7 +16,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDa
 from vtkmodules.vtkCommonTransforms import vtkLandmarkTransform
 from vtkmodules.vtkFiltersGeneral import vtkTransformFilter
 
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.genericHelpers import getMultiBlockBounds
 
 __doc__ = """
@@ -212,7 +212,7 @@ class ClipToMainFrameElement( vtkLandmarkTransform ):
         return ( sourcePts, targetPts )
 
 
-loggerTitle: str = "Clip mesh to main frame."
+loggerTitle: str = "Clip mesh to main frame"
 
 
 class ClipToMainFrame( vtkTransformFilter ):
@@ -236,8 +236,26 @@ class ClipToMainFrame( vtkTransformFilter ):
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
+    def Update( self ) -> None:  # type: ignore[override]
+        """Update the filter."""
+        super().Update()
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
+
         # dispatch to ClipToMainFrame depending on input type
         if isinstance( self.GetInput(), vtkMultiBlockDataSet ):
             # locate reference point
