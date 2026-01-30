@@ -334,6 +334,9 @@ class MeshQualityEnhanced():
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
         cellTypeCounterEnhancedFilter.applyFilter()
 
+        # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
+        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.counter.warningCount )
+
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:
             raise AttributeError( "CellTypeCounts is undefined" )

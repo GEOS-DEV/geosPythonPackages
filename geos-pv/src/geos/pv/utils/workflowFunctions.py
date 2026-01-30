@@ -40,6 +40,7 @@ def doExtractAndMerge(
         blockExtractor.setLoggerHandler( VTKHandler() )
 
     blockExtractor.applyFilter()
+    # Add to the warning counter the number of warning logged with the call of GeosBlockExtractor filter
     warningCounter.addExternalWarningCount( blockExtractor.counter.warningCount )
 
     # recover output objects from GeosBlockExtractor filter and merge internal blocks
@@ -84,7 +85,10 @@ def mergeBlocksFilter(
     if len( mergeBlockFilter.logger.handlers ) == 0:
         mergeBlockFilter.setLoggerHandler( VTKHandler() )
     mergeBlockFilter.applyFilter()
+    # Add to the warning counter the number of warning logged with the call of GeosBlockMerge filter
+    warningCounter.addExternalWarningCount( mergeBlockFilter.counter.warningCount )
+
     mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
     mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )
-    warningCounter.addExternalWarningCount( mergeBlockFilter.counter.warningCount )
+
     return mergedBlocks

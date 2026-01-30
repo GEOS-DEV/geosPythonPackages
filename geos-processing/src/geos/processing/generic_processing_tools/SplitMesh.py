@@ -201,6 +201,8 @@ class SplitMesh():
         if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
         cellTypeCounterEnhancedFilter.applyFilter()
+        # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
+        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.counter.warningCount )
         return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
