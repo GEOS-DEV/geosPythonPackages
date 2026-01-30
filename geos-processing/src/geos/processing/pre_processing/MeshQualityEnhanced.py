@@ -28,7 +28,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
                                                        getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -142,6 +142,10 @@ class MeshQualityEnhanced():
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -292,6 +296,8 @@ class MeshQualityEnhanced():
     def applyFilter( self: Self ) -> None:
         """Apply MeshQualityEnhanced filter."""
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         self._outputMesh.ShallowCopy( self.inputMesh )
         # Compute cell type counts
@@ -308,7 +314,11 @@ class MeshQualityEnhanced():
 
         self._outputMesh.Modified()
 
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 
@@ -356,6 +366,7 @@ class MeshQualityEnhanced():
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
         if arrayName in getAttributesFromDataSet( self._outputMesh, piece=Piece.CELLS ):
+            self.logger.warning( "test" )
             # Metric is already computed (by default computed for all cell types if applicable )
             return
 

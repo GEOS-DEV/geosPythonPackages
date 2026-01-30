@@ -9,7 +9,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 
 __doc__ = """
 CellTypeCounterEnhanced module is a vtk filter that computes cell type counts.
@@ -77,6 +77,10 @@ class CellTypeCounterEnhanced():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -99,6 +103,8 @@ class CellTypeCounterEnhanced():
             TypeError: Errors with the type of the cells.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         # Compute cell type counts
         self._counts.reset()
@@ -121,7 +127,12 @@ class CellTypeCounterEnhanced():
             array.SetNumberOfValues( 1 )
             array.SetValue( 0, self._counts.getTypeCount( cellType ) )
             self.outTable.AddColumn( array )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 
