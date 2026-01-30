@@ -105,6 +105,14 @@ class CountWarningHandler( logging.Handler ):
         super().__init__()
         self.warningCount = 0
 
+    def addExternalWarningCount( self: Self, externalWarningCount: int ) -> None:
+        """Add external warning count.
+
+        Args:
+            externalWarningCount (int): An external warning count to add to the internal one.
+        """
+        self.warningCount += externalWarningCount
+
     def emit( self: Self, record: logging.LogRecord ) -> None:
         """Count all the warnings logged.
 

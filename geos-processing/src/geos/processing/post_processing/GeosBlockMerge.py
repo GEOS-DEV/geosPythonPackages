@@ -8,7 +8,7 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
                                               getRockSuffixRenaming )
 
@@ -112,6 +112,10 @@ class GeosBlockMerge():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -140,6 +144,8 @@ class GeosBlockMerge():
             VTKError: Error raises during the call of VTK function.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         # Display phase names
         self.computePhaseNames()
@@ -184,7 +190,11 @@ class GeosBlockMerge():
             else:
                 self.outputMesh.SetBlock( newIndex, volumeMesh )
 
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 

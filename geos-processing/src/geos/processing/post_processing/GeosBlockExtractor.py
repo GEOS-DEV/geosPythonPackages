@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from typing_extensions import Self
 
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 from geos.mesh.utils.arrayHelpers import getCellDimension
 from geos.mesh.utils.multiblockHelpers import getBlockIndexFromName
@@ -193,6 +193,10 @@ class GeosBlockExtractor:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -216,6 +220,8 @@ class GeosBlockExtractor:
             TypeError: The mesh extracted has the wrong dimension.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         extractGeosDomain: GeosExtractDomainBlock = GeosExtractDomainBlock()
         extractGeosDomain.SetInputData( self.geosMesh )
@@ -229,6 +235,10 @@ class GeosBlockExtractor:
             domainNames.append( domain.value )
 
         self.logger.info( f"The GEOS domain { domainNames } have been extracted." )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
