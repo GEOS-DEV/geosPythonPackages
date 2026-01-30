@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 import numpy as np
 
 from pathlib import Path
@@ -22,6 +23,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.utils.Logger import CountWarningHandler
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
@@ -71,6 +73,8 @@ To use it:
 
 """
 
+loggerTitle: str = "Geomechanics Calculator"
+
 
 @SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Geomechanics Calculator",
@@ -88,6 +92,10 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         ## For advanced properties
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
+
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -252,6 +260,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
             try:
                 geomechanicsCalculatorFilter.applyFilter()
+                # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter (useful for the PVGeomechanicsWorkflow)
+                self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.counter.warningCount )
+
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
             except ( ValueError, AttributeError ) as e:
                 geomechanicsCalculatorFilter.logger.error(
@@ -261,6 +272,15 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
 
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
+            logger = logging.getLogger( loggerTitle )
+            logger.setLevel( logging.INFO )
+            logger.addHandler( VTKHandler() )
+            logger.propagate = False
+
+            logger.info( f"Apply plugin { logger.name }." )
+            # Add the handler to count warnings messages.
+            logger.addHandler( self.counter )
+
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
             for blockIndex in volumeBlockIndexes:
                 volumeBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(
@@ -285,6 +305,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
                 try:
                     geomechanicsCalculatorFilter.applyFilter()
+                    # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
+                    self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.counter.warningCount )
+
                     volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
                     volumeBlock.Modified()
                 except ( ValueError, AttributeError ) as e:
@@ -293,6 +316,12 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 except Exception as e:
                     mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
                     geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
+
+            result: str = f"The filter { logger.name } succeeded"
+            if self.counter.warningCount > 0:
+                logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+            else:
+                logger.info( f"{ result }." )
 
         outputMesh.Modified()
 

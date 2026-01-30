@@ -32,6 +32,7 @@ update_paths()
 
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import CountWarningHandler
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
 from geos.utils.Logger import CustomLoggerFormatter
@@ -180,6 +181,14 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
             handler.setFormatter( CustomLoggerFormatter( False ) )
 
             self.logger.addHandler( handler )
+
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
+        self.logger.info( f"Apply plugin { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
     @smproperty.xml( """
         <Property name="Refresh Data"
@@ -777,6 +786,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 )
                 Render()
 
+                result: str = f"The filter { self.logger.name } succeeded"
+                if self.counter.warningCount > 0:
+                    self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+                else:
+                    self.logger.info( f"{ result }." )
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
             self.logger.error( e )

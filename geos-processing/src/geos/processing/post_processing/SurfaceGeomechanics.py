@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, is
 from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_ROCK_COHESION )
 from geos.utils.GeosOutputsConstants import ( ComponentNameEnum, GeosMeshOutputsEnum, PostProcessingOutputsEnum )
 
@@ -88,12 +88,16 @@ To use the filter:
 
     Note that the dimension of the attributes to convert must be equal or greater than 3.
 """
-loggerTitle: str = "Surface Geomechanics"
 
 
 class SurfaceGeomechanics:
 
-    def __init__( self: Self, surfacicMesh: vtkPolyData, speHandler: bool = False ) -> None:
+    def __init__(
+        self: Self,
+        surfacicMesh: vtkPolyData,
+        loggerName: str = "Surface Geomechanics",
+        speHandler: bool = False,
+    ) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.
 
         Input and Output objects are a vtkPolydata with surfaces
@@ -101,17 +105,23 @@ class SurfaceGeomechanics:
 
         Args:
             surfacicMesh (vtkPolyData): The input surfacic mesh.
+            loggerName (str, optional): Name of the filter logger.
+                Defaults to "Surface Geomechanics".
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         # Logger
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerName, True )
         else:
-            self.logger = logging.getLogger( loggerTitle )
+            self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
 
         # Input surfacic mesh
         if not surfacicMesh.IsA( "vtkPolyData" ):
@@ -150,14 +160,6 @@ class SurfaceGeomechanics:
             self.logger.warning(
                 "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
             )
-
-    def SetSurfaceName( self: Self, name: str ) -> None:
-        """Set a name for the input surface. For logging purpose only.
-
-        Args:
-            name (str): The identifier for the surface.
-        """
-        self.name = name
 
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.
@@ -238,13 +240,9 @@ class SurfaceGeomechanics:
             AttributeError: Attributes must be on cell.
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
-        msg = f"Applying filter {self.logger.name}"
-        if self.name is not None:
-            msg += f" on surface : {self.name}."
-        else:
-            msg += "."
-
-        self.logger.info( msg )
+        self.logger.info( f"Applying filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -257,7 +255,11 @@ class SurfaceGeomechanics:
         # Compute shear capacity utilization
         self.computeShearCapacityUtilization()
 
-        self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 

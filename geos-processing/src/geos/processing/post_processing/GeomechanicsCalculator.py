@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
                                               PostProcessingOutputsEnum )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
@@ -712,6 +712,10 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh.
 
@@ -720,6 +724,8 @@ class GeomechanicsCalculator:
             ValueError: Something went wrong during the creation of an attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
 
         self._checkMandatoryProperties()
         self._computeBasicProperties()
@@ -750,7 +756,11 @@ class GeomechanicsCalculator:
                              logger=self.logger )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         return
 

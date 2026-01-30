@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 import numpy as np
 from typing_extensions import Self
@@ -21,6 +22,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 update_paths()
 
 from geos.utils.Errors import VTKError
+from geos.utils.Logger import CountWarningHandler
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -50,6 +52,8 @@ To use it:
 
 """
 
+loggerTitle: str = "Surface Geomechanics"
+
 
 @SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Surface Geomechanics",
@@ -65,6 +69,15 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         # friction angle (°)
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
+
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( VTKHandler() )
+        self.logger.propagate = False
+
+        # Warnings counter.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
 
     @smproperty.doublevector(
         name="RockCohesion",
@@ -115,14 +128,18 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             inputMesh (vtkMultiBlockDataSet): The input multiblock mesh with surfaces.
             outputMesh (vtkMultiBlockDataSet): The output multiblock mesh with converted attributes and SCU.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
+        # Add the handler to count warnings messages.
+        self.logger.addHandler( self.counter )
+
         outputMesh.ShallowCopy( inputMesh )
 
         surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( inputMesh )
         for blockIndex in surfaceBlockIndexes:
             surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( outputMesh, blockIndex ) )
 
-            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
-            sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
+            loggerName: str = f"Surface geomechanics for the blockIndex { blockIndex }"
+            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, loggerName, True )
             if len( sgFilter.logger.handlers ) == 0:
                 sgFilter.SetLoggerHandler( VTKHandler() )
 
@@ -131,6 +148,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             try:
                 sgFilter.applyFilter()
+                # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics filter
+                self.counter.addExternalWarningCount( sgFilter.counter.warningCount )
+
                 outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
                 # add attributes to output surface mesh
@@ -144,6 +164,12 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             except Exception as e:
                 mess: str = f"The filter { sgFilter.logger.name } failed due to:\n{ e }"
                 sgFilter.logger.critical( mess, exc_info=True )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
         outputMesh.Modified()
         return
