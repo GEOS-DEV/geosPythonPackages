@@ -114,7 +114,7 @@ class TetQualityAnalysis:
             maxDihedral = metrics['maxDihedral'][validMask]
             dihedralRange = metrics['dihedral_range'][validMask]
 
-            qualityScore = compute_quality_score(aspectRatio, shapeQuality, edgeRatio, minDihedral)
+            qualityScore = computeQualityScore(aspectRatio, shapeQuality, edgeRatio, minDihedral)
 
             # Store all values
             self.validMetrics[n] = { 'aspectRatio' : aspectRatio, 'radiusRatio': radiusRatio, 'flatnessRatio': flatnessRatio, 'volume': volume, 'shapeQuality': shapeQuality, 'minEdge': minEdge, 'maxEdge': maxEdge, 'edgeRatio': edgeRatio, 'minDihedral': minDihedral, 'maxDihedral': maxDihedral, 'dihedral_range': dihedralRange, 'qualityScore': qualityScore}
@@ -1184,8 +1184,18 @@ class TetQualityAnalysis:
 
 
 # Combined quality score
-def compute_quality_score(aspectRatio, shapeQuality, edgeRatio, minDihedralAngle):
-    """Compute combined quality score (0-100)."""
+def computeQualityScore(aspectRatio, shapeQuality, edgeRatio, minDihedralAngle):
+    """Compute combined quality score (0-100).
+
+    Args:
+        aspectRatio(npt.NDArray[np.float64]): Aspect ratio
+        shapeQuality(npt.NDArray[np.float64]): Shape quality
+        edgeRatio(npt.NDArray[np.float64]): Edge ratio
+        minDihedralAngle(npt.NDArray[np.float64]): Minimal edge ratio
+
+    Returns:
+        np.float64: Quality score
+    """
     aspectRatioNorm = np.clip(1.0 / (aspectRatio / 1.73), 0, 1)
     shapeQualityNorm = shapeQuality
     edgeRatioNorm = np.clip(1.0 / edgeRatio, 0, 1)
