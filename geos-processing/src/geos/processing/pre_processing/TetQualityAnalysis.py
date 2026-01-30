@@ -16,7 +16,6 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Rectangle
-import seaborn as sns
 
 __doc__ = """
 TetQualityAnalysis module is a filter that performs an an analysis of tetrahedras of one or several meshes and plot a summary.
@@ -33,11 +32,11 @@ class TetQualityAnalysis:
     ) -> None:
 
         self.meshes: dict[ str, vtkDataSet ] = meshes
-        # self.meshes = Set(  )
         self.analyzedMesh: dict[ Any ] = {}
         self.issues: dict[ Any ] = {}
-        self.overallQualityScore: dict[ Any] = {}
-        self.validMetrics: dict[Any] = {}
+        self.qualityScore: dict[ Any] = {}
+        self.validMetrics: dict[int, dict[str, np.float64]] = {}
+        self.medians: dict[ int, dict[str, np.float64 ]] = {}
         self.sample = {}
 
         # Logger.
@@ -72,94 +71,102 @@ class TetQualityAnalysis:
 
         self.__loggerSection( "MESH COMPARISON DASHBOARD" )
 
-        for n, (filename1, mesh1) in enumerate( self.meshes.items() ):
-            # print( n, filename1 )
-            coords1 = self.get_coordinates_double_precision(mesh1)
-            tet_ids1, tet_conn1 = self.extract_tet_connectivity(mesh1)
-            n_tets1 = len( tet_ids1 )
+        for n, (nfilename, mesh) in enumerate( self.meshes.items(), 1 ):
+            # print( n, nfilename )
+            coords = self.getCoordinatesDoublePrecision(mesh)
+            tetrahedraIds, tetrahedraConnectivity = self.extractTetConnectivity(mesh)
+            ntets = len( tetrahedraIds )
 
-            self.logger.info( f" Mesh {n} info: " )
-            self.logger.info( f"  Name: {filename1}" )
-            self.logger.info( f"  Total cells: {mesh1.GetNumberOfCells()}" )
-            self.logger.info( f"  Tetrahedra: {n_tets1}" )
-            self.logger.info( f"  Points: {mesh1.GetNumberOfPoints()}" )
+            self.logger.info( f" Mesh {n} info: \n" +
+                              f"  Name: {nfilename}\n" +
+                              f"  Total cells: {mesh.GetNumberOfCells()}\n" +
+                              f"  Tetrahedra: {ntets}\n" +
+                              f"  Points: {mesh.GetNumberOfPoints()}" +
+                              f"\n" + "-"*80 + "\n" )
 
             # Analyze both meshes
-            print(f"\nAnalyzing Mesh {n} (double precision)...")
-            # metrics1 = self.analyze_all_tets_vectorized(n, coords1, tet_conn1)
-            self.analyze_all_tets_vectorized(n, coords1, tet_conn1)
-            metrics1 = self.analyzedMesh[ n ]
-            self.analyzedMesh[n]["tet"] = n_tets1
+            self.analyzeAllTets(n, coords, tetrahedraConnectivity)
+            metrics = self.analyzedMesh[ n ]
+            self.analyzedMesh[n]["tet"] = ntets
 
             # Extract data with consistent filtering
-            ar_valid1 = np.isfinite(metrics1['aspect_ratio'])
-            rr_valid1 = np.isfinite(metrics1['radius_ratio'])
+            validAspectRatio = np.isfinite(metrics['aspectRatio'])
+            validRadiusRatio = np.isfinite(metrics['radiusRatio'])
 
             # Combined valid mask
-            valid1 = ar_valid1 & rr_valid1
+            validMask = validAspectRatio & validRadiusRatio
 
-            ar1 = metrics1['aspect_ratio'][valid1]
-            rr1 = metrics1['radius_ratio'][valid1]
-            fr1 = metrics1['flatness_ratio'][valid1]
-            vol1 = metrics1['volumes'][valid1]
-            sq1 = metrics1['shape_quality'][valid1]
+            aspectRatio = metrics['aspectRatio'][validMask]
+            radiusRatio = metrics['radiusRatio'][validMask]
+            flatnessRatio = metrics['flatnessRatio'][validMask]
+            volume = metrics['volumes'][validMask]
+            shapeQuality = metrics['shapeQuality'][validMask]
 
             # Edge length data
-            min_edge1 = metrics1['min_edge'][valid1]
-            max_edge1 = metrics1['max_edge'][valid1]
+            minEdge = metrics['minEdge'][validMask]
+            maxEdge = metrics['maxEdge'][validMask]
 
             # Edge length ratio
-            edge_ratio1 = max_edge1 / np.maximum(min_edge1, 1e-15)
+            edgeRatio = maxEdge / np.maximum(minEdge, 1e-15)
 
             # Dihedral angles
-            min_dih1 = metrics1['min_dihedral'][valid1]
-            max_dih1 = metrics1['max_dihedral'][valid1]
-            dih_range1 = metrics1['dihedral_range'][valid1]
+            minDihedral = metrics['minDihedral'][validMask]
+            maxDihedral = metrics['maxDihedral'][validMask]
+            dihedralRange = metrics['dihedral_range'][validMask]
 
-            score1 = compute_quality_score(ar1, sq1, edge_ratio1, min_dih1)
+            qualityScore = compute_quality_score(aspectRatio, shapeQuality, edgeRatio, minDihedral)
 
             # Store all values
-            self.validMetrics[n] = { 'aspect_ratio' : ar1, 'radius_ratio': rr1, 'flatness_ratio': fr1, 'volume': vol1, 'shape_quality': sq1, 'min_edge': min_edge1, 'max_edge': max_edge1, 'edge_ratio': edge_ratio1, 'min_dihedral': min_dih1, 'max_dihedral': max_dih1, 'dihedral_range': dih_range1, 'quality_score': score1}
+            self.validMetrics[n] = { 'aspectRatio' : aspectRatio, 'radiusRatio': radiusRatio, 'flatnessRatio': flatnessRatio, 'volume': volume, 'shapeQuality': shapeQuality, 'minEdge': minEdge, 'maxEdge': maxEdge, 'edgeRatio': edgeRatio, 'minDihedral': minDihedral, 'maxDihedral': maxDihedral, 'dihedral_range': dihedralRange, 'qualityScore': qualityScore}
 
             # # ==================== Print Distribution Statistics ====================
 
             # Problem element counts
 
-            high_ar1 = np.sum(ar1 > 100)
-            low_sq1 = np.sum(sq1 < 0.3)
-            low_flat1 = np.sum(fr1 < 0.01)
-            high_edge_ratio1 = np.sum(edge_ratio1 > 10)
-            critical_dih1 = np.sum(min_dih1 < 5)
-            critical_max_dih1 = np.sum(max_dih1 > 175)
-            problem1 = np.sum((ar1 > 100) & (sq1 < 0.3))
-            critical_combo1 = np.sum((ar1 > 100) & (sq1 < 0.3) & (min_dih1 < 5))
+            highAspectRatio = np.sum(aspectRatio > 100)
+            lowShapeQuality = np.sum(shapeQuality < 0.3)
+            lowFlatness = np.sum(flatnessRatio < 0.01)
+            highEdgeRatio = np.sum(edgeRatio > 10)
+            criticalMinDihedral = np.sum(minDihedral < 5)
+            criticalMaxDihedral = np.sum(maxDihedral > 175)
+            combined = np.sum((aspectRatio > 100) & (shapeQuality < 0.3))
+            criticalCombo = np.sum((aspectRatio > 100) & (shapeQuality < 0.3) & (minDihedral < 5))
 
-            self.issues[n] = { "high_aspect_ratio": high_ar1, "low_shape_quality": low_sq1, "low_flatness": low_flat1, "high_edge_ratio": high_edge_ratio1, "critical_dihedral": critical_dih1, "critical_max_dihedral": critical_max_dih1, "combined": problem1, "critical_combo": critical_combo1 }
+            self.issues[n] = { "highAspectRatio": highAspectRatio, "lowShapeQuality": lowShapeQuality, "lowFlatness": lowFlatness, "highEdgeRatio": highEdgeRatio, "criticalMinDihedral": criticalMinDihedral, "criticalMaxDihedral": criticalMaxDihedral, "combined": combined, "criticalCombo": criticalCombo }
 
             # Overall quality scores
 
-            excellent1 = np.sum(score1 > 80) / len(score1) * 100
-            good1 = np.sum((score1 > 60) & (score1 <= 80)) / len(score1) * 100
-            fair1 = np.sum((score1 > 30) & (score1 <= 60)) / len(score1) * 100
-            poor1 = np.sum(score1 <= 30) / len(score1) * 100
+            excellent = np.sum(qualityScore > 80) / len(qualityScore) * 100
+            good = np.sum((qualityScore > 60) & (qualityScore <= 80)) / len(qualityScore) * 100
+            fair = np.sum((qualityScore > 30) & (qualityScore <= 60)) / len(qualityScore) * 100
+            poor = np.sum(qualityScore <= 30) / len(qualityScore) * 100
 
-            self.overallQualityScore[n] = { 'excellent': excellent1, 'good': good1, 'fair': fair1, 'poor': poor1 }
+            self.qualityScore[n] = { 'excellent': excellent, 'good': good, 'fair': fair, 'poor': poor }
 
-            extreme_ar1 = ar1 > 1e4
-            self.issues[ n ][ "extreme_aspect_ratio" ] = extreme_ar1
+            extremeAspectRatio = aspectRatio > 1e4
+            self.issues[ n ][ "extremeAspectRatio" ] = extremeAspectRatio
 
             # Nearly degenerate elements
-            degenerate1 = (min_dih1 < 0.1) | (max_dih1 > 179.9)
-            self.issues[ n ][ "degenerate" ] = degenerate1
+            degenerateElements = (minDihedral < 0.1) | (maxDihedral > 179.9)
+            self.issues[ n ][ "degenerate" ] = degenerateElements
 
-            print("\n" + "="*80 + "\n")
+            self.medians[n] = {
+                "aspectRatio": np.median( self.validMetrics[n]["aspectRatio"] ),
+                "shapeQuality": np.median(self.validMetrics[n]["shapeQuality"] ),
+                "volume": np.median(self.validMetrics[n]["volume"]),
+                "minEdge": np.median(self.validMetrics[n]["minEdge"]),
+                "maxEdge": np.median(self.validMetrics[n]["maxEdge"]),
+                "edgeRatio": np.median(self.validMetrics[n]["edgeRatio"]),
+                "minDihedral": np.median( self.validMetrics[n]["minDihedral"]),
+                "maxDihedral": np.median( self.validMetrics[n]["maxDihedral"]),
+                "qualityScore": np.median( self.validMetrics[n]["qualityScore"]),
+            }
 
-            # ==================== Create Dashboard ====================
-
-        # ==================== Print Distribution Statistics ====================
-        self.__orderMeshes()
+        # ==================== Report ====================
 
         self.printDistributionStatistics()
+
+        self.__orderMeshes()
 
         # Percentile information
         self.printPercentileAnalysis()
@@ -169,45 +176,42 @@ class TetQualityAnalysis:
         self.printExtremeOutlierAnalysis()
 
         self.printComparisonSummary()
-        self.computeDeltasFromBest()
 
+        self.computeDeltasFromBest()
         self.createComparisonDashboard()
 
 
-    def get_coordinates_double_precision( self, mesh ):
+    def getCoordinatesDoublePrecision( self, mesh ):
         points = mesh.GetPoints()
-        n_points = points.GetNumberOfPoints()
+        npoints = points.GetNumberOfPoints()
 
-        coords = np.zeros((n_points, 3), dtype=np.float64)
-        for i in range(n_points):
+        coords = np.zeros((npoints, 3), dtype=np.float64)
+        for i in range(npoints):
             point = points.GetPoint(i)
             coords[i] = [point[0], point[1], point[2]]
 
         return coords
 
-    def extract_tet_connectivity( self, mesh ):
+    def extractTetConnectivity( self, mesh ):
         """Extract connectivity for all tetrahedra."""
-        n_cells = mesh.GetNumberOfCells()
-        tet_ids = []
-        tet_connectivity = []
+        ncells = mesh.GetNumberOfCells()
+        tetrahedraIds = []
+        tetrahedraConnectivity = []
 
-        for cell_id in range(n_cells):
-            if mesh.GetCellType(cell_id) == vtk.VTK_TETRA:
-                cell = mesh.GetCell(cell_id)
+        for cellID in range(ncells):
+            if mesh.GetCellType(cellID) == vtk.VTK_TETRA:
+                cell = mesh.GetCell(cellID)
                 point_ids = cell.GetPointIds()
                 conn = [point_ids.GetId(i) for i in range(4)]
-                tet_ids.append(cell_id)
-                tet_connectivity.append(conn)
+                tetrahedraIds.append(cellID)
+                tetrahedraConnectivity.append(conn)
 
-        return np.array(tet_ids), np.array(tet_connectivity)
-
-
+        return np.array(tetrahedraIds), np.array(tetrahedraConnectivity)
 
 
-
-    def analyze_all_tets_vectorized(self, n, coords, connectivity) -> dict:
+    def analyzeAllTets(self, n, coords, connectivity) -> dict:
         """Vectorized analysis of all tetrahedra."""
-        n_tets = connectivity.shape[0]
+        ntets = connectivity.shape[0]
 
         # Get coordinates for all vertices
         v0 = coords[connectivity[:, 0]]
@@ -231,39 +235,39 @@ class TetQualityAnalysis:
         l13 = np.linalg.norm(e13, axis=1)
         l23 = np.linalg.norm(e23, axis=1)
 
-        all_edges = np.stack([l01, l02, l03, l12, l13, l23], axis=1)
-        min_edge = np.min(all_edges, axis=1)
-        max_edge = np.max(all_edges, axis=1)
+        allEdges = np.stack([l01, l02, l03, l12, l13, l23], axis=1)
+        minEdge = np.min(allEdges, axis=1)
+        maxEdge = np.max(allEdges, axis=1)
 
         # Volumes
         cross_product = np.cross(e01, e02)
         volumes = np.abs(np.sum(cross_product * e03, axis=1) / 6.0)
 
         # Face areas
-        face_012 = 0.5 * np.linalg.norm(np.cross(e01, e02), axis=1)
-        face_013 = 0.5 * np.linalg.norm(np.cross(e01, e03), axis=1)
-        face_023 = 0.5 * np.linalg.norm(np.cross(e02, e03), axis=1)
-        face_123 = 0.5 * np.linalg.norm(np.cross(e12, e13), axis=1)
+        face012 = 0.5 * np.linalg.norm(np.cross(e01, e02), axis=1)
+        face013 = 0.5 * np.linalg.norm(np.cross(e01, e03), axis=1)
+        face023 = 0.5 * np.linalg.norm(np.cross(e02, e03), axis=1)
+        face123 = 0.5 * np.linalg.norm(np.cross(e12, e13), axis=1)
 
-        all_faces = np.stack([face_012, face_013, face_023, face_123], axis=1)
-        max_face_area = np.max(all_faces, axis=1)
-        total_surface_area = np.sum(all_faces, axis=1)
+        allFaces = np.stack([face012, face013, face023, face123], axis=1)
+        maxFaceArea = np.max(allFaces, axis=1)
+        totalSurfaceArea = np.sum(allFaces, axis=1)
 
         # Aspect ratio
-        min_altitude = 3.0 * volumes / np.maximum(max_face_area, 1e-15)
-        aspect_ratio = max_edge / np.maximum(min_altitude, 1e-15)
-        aspect_ratio[volumes < 1e-15] = np.inf
+        minAltitude = 3.0 * volumes / np.maximum(maxFaceArea, 1e-15)
+        aspectRatio = maxEdge / np.maximum(minAltitude, 1e-15)
+        aspectRatio[volumes < 1e-15] = np.inf
 
         # Radius ratio
-        inradius = 3.0 * volumes / np.maximum(total_surface_area, 1e-15)
-        circumradius = (max_edge ** 3) / np.maximum(24.0 * volumes, 1e-15)
+        inradius = 3.0 * volumes / np.maximum(totalSurfaceArea, 1e-15)
+        circumradius = (maxEdge ** 3) / np.maximum(24.0 * volumes, 1e-15)
         radius_ratio = circumradius / np.maximum(inradius, 1e-15)
 
         # Flatness ratio
-        flatness_ratio = volumes / np.maximum(max_face_area * min_edge, 1e-15)
+        flatness_ratio = volumes / np.maximum(maxFaceArea * minEdge, 1e-15)
 
         # Shape quality
-        sum_edge_sq = np.sum(all_edges ** 2, axis=1)
+        sum_edge_sq = np.sum(allEdges ** 2, axis=1)
         shape_quality = 12.0 * (3.0 * volumes) ** (2.0/3.0) / np.maximum(sum_edge_sq, 1e-15)
         shape_quality[volumes < 1e-15] = 0.0
 
@@ -300,95 +304,91 @@ class TetQualityAnalysis:
 
         self.analyzedMesh[ n ] = {
             'volumes': volumes,
-            'aspect_ratio': aspect_ratio,
-            'radius_ratio': radius_ratio,
-            'flatness_ratio': flatness_ratio,
-            'shape_quality': shape_quality,
-            'min_edge': min_edge,
-            'max_edge': max_edge,
-            'min_dihedral': min_dihedral,
-            'max_dihedral': max_dihedral,
+            'aspectRatio': aspectRatio,
+            'radiusRatio': radius_ratio,
+            'flatnessRatio': flatness_ratio,
+            'shapeQuality': shape_quality,
+            'minEdge': minEdge,
+            'maxEdge': maxEdge,
+            'minDihedral': min_dihedral,
+            'maxDihedral': max_dihedral,
             'dihedral_range': dihedral_range
         }
 
         return {
             'volumes': volumes,
-            'aspect_ratio': aspect_ratio,
-            'radius_ratio': radius_ratio,
-            'flatness_ratio': flatness_ratio,
-            'shape_quality': shape_quality,
-            'min_edge': min_edge,
-            'max_edge': max_edge,
-            'min_dihedral': min_dihedral,
-            'max_dihedral': max_dihedral,
+            'aspectRatio': aspectRatio,
+            'radiusRatio': radius_ratio,
+            'flatnessRatio': flatness_ratio,
+            'shapeQuality': shape_quality,
+            'minEdge': minEdge,
+            'maxEdge': maxEdge,
+            'minDihedral': min_dihedral,
+            'maxDihedral': max_dihedral,
             'dihedral_range': dihedral_range
         }
 
     def printDistributionStatistics( self: Self, fmt='.2e'):
         self.__loggerSection( "DISTRIBUTION STATISTICS (MIN / MEDIAN / MAX)" )
 
-        def print_metric_stats( metricName, dataName, fmt='.2e'):
+        def printMetricStats( metricName, dataName, fmt='.2e'):
             """Helper function to print min/median/max for a metric."""
-            # self.logger.info(f"\n{metricName}:")
-            self.logger.info(f"{metricName}:")
-            for n, _ in enumerate( self.meshes.items() ):
+            msg = f"{metricName}:\n"
+            for n, _ in enumerate( self.meshes.items(), 1 ):
                 data = self.validMetrics[ n ][ dataName ]
-                self.logger.info(f"  Mesh {n}: Min={data.min():{fmt}}  Median={np.median(data):{fmt}}  Max={data.max():{fmt}}")
+                msg += f"  Mesh{n:2}:  Min={data.min():<10{fmt}}Median={np.median(data):<10{fmt}}Max={data.max():<10{fmt}}\n"
+            self.logger.info( msg )
 
 
-        print_metric_stats( "Aspect Ratio", 'aspect_ratio' )
-        print_metric_stats( "Radius Ratio", 'radius_ratio' )
-        print_metric_stats( "Flatness Ratio", 'flatness_ratio' )
-        print_metric_stats( "Shape Quality", 'shape_quality', fmt='.4f' )
-        print_metric_stats( "Volume", 'volume' )
-        print_metric_stats( "Min Edge Length", 'min_edge' )
-        print_metric_stats( "Max Edge Length", 'max_edge' )
-        print_metric_stats( "Edge Length Ratio", 'edge_ratio', fmt='.2f' )
-        print_metric_stats( "Min Dihedral Angle (degrees)", 'min_dihedral', fmt='.2f' )
-        print_metric_stats( "Max Dihedral Angle (degrees)", 'max_dihedral', fmt='.2f' )
-        print_metric_stats( "Dihedral Range (degrees)", 'dihedral_range',fmt='.2f' )
-        print_metric_stats( "Overall Quality Score (0-100)", 'quality_score', fmt='.2f' )
+        printMetricStats( "Aspect Ratio", 'aspectRatio' )
+        printMetricStats( "Radius Ratio", 'radiusRatio' )
+        printMetricStats( "Flatness Ratio", 'flatnessRatio' )
+        printMetricStats( "Shape Quality", 'shapeQuality', fmt='.4f' )
+        printMetricStats( "Volume", 'volume' )
+        printMetricStats( "Min Edge Length", 'minEdge' )
+        printMetricStats( "Max Edge Length", 'maxEdge' )
+        printMetricStats( "Edge Length Ratio", 'edgeRatio', fmt='.2f' )
+        printMetricStats( "Min Dihedral Angle (degrees)", 'minDihedral', fmt='.2f' )
+        printMetricStats( "Max Dihedral Angle (degrees)", 'maxDihedral', fmt='.2f' )
+        printMetricStats( "Dihedral Range (degrees)", 'dihedral_range',fmt='.2f' )
+        printMetricStats( "Overall Quality Score (0-100)", 'qualityScore', fmt='.2f' )
 
 
     def printPercentileAnalysis( self: Self, fmt='.2f' ):
         self.__loggerSection( "PERCENTILE ANALYSIS (25th / 75th / 90th / 99th)" )
 
-        def print_percentiles(metricName, dataName, fmt='.2f'):
-            """Helper function to print percentiles."""
-            self.logger.info(f"{metricName}:")
-            # self.logger.info(f"\n{metricName}:")
-            for n, _ in enumerate( self.meshes.items() ):
-                data = self.validMetrics[ n ][ dataName ]
+        for metricName, name in zip(*[
+            ( "Aspect Ratio", "Shape Quality", "Edge Length Ratio", "Min Dihedral Angle (degrees)", "Overall Quality Score" ),
+            ( 'aspectRatio', 'shapeQuality', 'edgeRatio', 'minDihedral', 'qualityScore' )   ]):
+            msg = f"{metricName}:\n"
+            for n, _ in enumerate( self.meshes.items(), 1 ):
+                data = self.validMetrics[ n ][ name ]
                 p1 = np.percentile(data, [25, 75, 90, 99])
-                self.logger.info(f"  Mesh {n}: 25th={p1[0]:{fmt}}  75th={p1[1]:{fmt}}  90th={p1[2]:{fmt}}  99th={p1[3]:{fmt}}")
-
-        print_percentiles( "Aspect Ratio", 'aspect_ratio' )
-        print_percentiles( "Shape Quality", 'shape_quality' )
-        print_percentiles( "Edge Length Ratio", 'edge_ratio' )
-        print_percentiles( "Min Dihedral Angle (degrees)", 'min_dihedral' )
-        print_percentiles( "Overall Quality Score", 'quality_score' )
+                msg += f"  Mesh {n}: 25th = {p1[0]:<7,{fmt}}75th = {p1[1]:<7,{fmt}}90th = {p1[2]:<7,{fmt}}99th = {p1[3]:<7,{fmt}}\n"
+            self.logger.info( msg )
 
 
-    def printQualityIssueSummary( self: Self ):
+    def printQualityIssueSummary( self: Self ) -> None:
         self.__loggerSection( "QUALITY ISSUE SUMMARY" )
 
-        def print_issue(meshID, metricName, issueDataName, dataName ):
-            pb = self.issues[ meshID ][ issueDataName ]
-            m = len( self.validMetrics[ meshID ][ dataName ] )
-            fmt = '.2f'
-            self.logger.info(f"  {metricName:20}:        {pb:,} ({(pb/m*100):{fmt}}%)")
+        fmt = '.2f'
+        for n, _ in enumerate( self.meshes.items(), 1 ):
+            msg = f"Mesh {n} Issues:\n"
 
-        for n, _ in enumerate( self.meshes.items() ):
-            # self.logger.info( f"\nMesh {n} Issues:" )
-            self.logger.info( f"Mesh {n} Issues:" )
-            print_issue( n, "Aspect Ratio > 100", "high_aspect_ratio", 'aspect_ratio' )
-            print_issue( n, "Shape Quality < 0.3", "low_shape_quality", 'shape_quality' )
-            print_issue( n, "Flatness < 0.01", "low_flatness", "flatness_ratio" )
-            print_issue( n, "Edge Ratio > 10", "high_edge_ratio", "edge_ratio" )
-            print_issue( n, "Min Dihedral < 5°", "critical_dihedral", "min_dihedral" )
-            print_issue( n, "Max Dihedral > 175°", "critical_max_dihedral",'max_dihedral' )
-            print_issue( n, "Combined (AR>100 & Q<0.3)", "combined" ,'aspect_ratio' )
-            print_issue( n, "CRITICAL (AR>100 & Q<0.3 & MinDih<5°", "critical_combo", 'aspect_ratio' )
+            w = False
+            for issueType, name, reference in zip(*[
+                ( "Aspect Ratio > 100", "Shape Quality < 0.3", "Flatness < 0.01", "Edge Ratio > 10", "Min Dihedral < 5°", "Max Dihedral > 175°", "Combined (AR>100 & Q<0.3)", "CRITICAL (AR>100 & Q<0.3 & MinDih<5°"),
+                ( "highAspectRatio", "lowShapeQuality", "lowFlatness", "highEdgeRatio", "criticalMinDihedral", "criticalMaxDihedral", "combined", "criticalCombo" ),
+                ( 'aspectRatio', 'shapeQuality', "flatnessRatio", "edgeRatio", "minDihedral", 'maxDihedral', 'aspectRatio', 'aspectRatio' )
+                ]):
+                pb = self.issues[ n ][ name ]
+                m = len( self.validMetrics[ n ][ reference ] )
+                percent = pb/m*100
+                msg += f"  {f'{issueType}:':37}{pb:>8,} ({(pb/m*100):{fmt}}%)\n"
+                if pb != 0:
+                    w = True
+            self.logger.warning( msg ) if w else self.logger.info( msg )
+
 
         self.compareIssuesFromBest()
 
@@ -396,80 +396,81 @@ class TetQualityAnalysis:
 
 
     def printOverallQualityScore( self: Self ):
-        # self.logger.info( f"\nOverall Quality Score Distribution:" )
-        self.logger.info( f"Overall Quality Score Distribution:" )
-        for n, _ in enumerate( self.meshes.items() ):
-            qualityScore = self.overallQualityScore[ n ]
-            self.logger.info(f"  Mesh {n}: Excellent (>80): {qualityScore[ 'excellent' ]:.1f}%  Good (60-80): {qualityScore[ 'good' ]:.1f}%  Fair (30-60): {qualityScore[ 'fair' ]:.1f}%  Poor (≤30): {qualityScore[ 'poor' ]:.1f}%")
+        msg = f"Overall Quality Score Distribution:\n"
+        msg += f"   {f'Mesh n':10}{f'Excellent (>80)':20}{f'Good (60-80)':17}{f'Fair (30-60)':15}{f'Poor (≤30)':15}\n"
+
+        for n, _ in enumerate( self.meshes.items(), 1 ):
+            qualityScore = self.qualityScore[ n ]
+            msg += f"   {f'Mesh {n}':10}{qualityScore[ 'excellent' ]:10,.1f}%{qualityScore[ 'good' ]:15,.1f}%  {qualityScore[ 'fair' ]:15,.1f}%{qualityScore[ 'poor' ]:15,.1f}%\n"
+        self.logger.info( msg )
 
     def printExtremeOutlierAnalysis( self: Self ):
-        #TODO : info in warning if bad ?
         self.__loggerSection( "EXTREME OUTLIER ANALYSIS" )
 
         # self.logger.warning( f"\n🚨 Elements with Aspect Ratio > 10,000:" )
-        self.logger.warning( f"🚨 Elements with Aspect Ratio > 10,000:" )
-        for n, _ in enumerate( self.meshes ):
-            extreme_ar = self.issues[n][ 'extreme_aspect_ratio' ]
+        msg = f"Elements with Aspect Ratio > 10,000:\n"
+        msg2 = ""
+        w = False
+        w2 = False
+        for n, _ in enumerate( self.meshes, 1 ):
+            extremeAspectRatio = self.issues[n][ 'extremeAspectRatio' ]
             data = self.analyzedMesh[n]
-            ar1 = data[ 'aspect_ratio' ]
-            self.logger.info(f"  Mesh {n}: {np.sum(extreme_ar):,} elements ({np.sum(extreme_ar)/len(ar1)*100:.3f}%)")
+            aspectRatio = data[ 'aspectRatio' ]
 
-            if np.sum(extreme_ar) > 0:
-                vol1 = data[ "volume" ]
-                min_dih1 = data[ "min_dihedral" ]
-                sq1 = data[ "shape_quality" ]
-                self.logger.info(f"    Worst AR:        {ar1[extreme_ar].max():.2e}")
-                self.logger.info(f"    Avg volume:      {vol1[extreme_ar].mean():.2e}")
-                self.logger.info(f"    Min dihedral:    {min_dih1[extreme_ar].min():.2f}° - {min_dih1[extreme_ar].mean():.2f}° (avg)")
-                self.logger.info(f"    Shape quality:   {sq1[extreme_ar].min():.4f} - {sq1[extreme_ar].mean():.4f} (avg)")
+            if np.sum(extremeAspectRatio) > 0:
+                msg += f"  Mesh {n}: {np.sum(extremeAspectRatio):,} elements ({np.sum(extremeAspectRatio)/len(aspectRatio)*100:.3f}%)"
+                w = True
+                volume = data[ "volume" ]
+                minDihedral = data[ "minDihedral" ]
+                shapeQuality = data[ "shapeQuality" ]
 
-            if np.sum(extreme_ar) > 10:
-                # self.logger.warning(f"\n💡 Recommendation: Investigate/remove {np.sum(extreme_ar):,} extreme elements in Mesh {n}")
-                self.logger.warning(f"💡 Recommendation: Investigate/remove {np.sum(extreme_ar):,} extreme elements in Mesh {n}")
-                self.logger.warning(f"   These are likely artifacts from mesh generation or geometry issues.")
+                msg += f"    Worst AR:        {aspectRatio[extremeAspectRatio].max():.2e}\n"
+                msg += f"    Avg volume:      {volume[extremeAspectRatio].mean():.2e}\n"
+                msg += f"    Min dihedral:    {minDihedral[extremeAspectRatio].min():.2f}° - {minDihedral[extremeAspectRatio].mean():.2f}° (avg)\n"
+                msg += f"    Shape quality:   {shapeQuality[extremeAspectRatio].min():.4f} - {shapeQuality[extremeAspectRatio].mean():.4f} (avg)\n"
+
+                if np.sum(extremeAspectRatio) > 10:
+                    w2 = True
+                    msg2 += f" Recommendation: Investigate/remove {np.sum(extremeAspectRatio):,} extreme elements in Mesh {n}\n   These are likely artifacts from mesh generation or geometry issues.\n"
+
+        self.logger.warning( msg ) if w else self.logger.info( msg + "   N/A\n" )
+        if w2: self.logger.warning( msg2 )
 
         # Nearly degenerate elements
-        # self.logger.warning( f"\n🚨 Nearly Degenerate Elements (dihedral < 0.1° or > 179.9°):")
-        self.logger.warning( f"🚨 Nearly Degenerate Elements (dihedral < 0.1° or > 179.9°):")
-        for n, _ in enumerate( self.meshes ):
+        degMsg = f"Nearly Degenerate Elements (dihedral < 0.1° or > 179.9°):\n"
+        ww = False
+        for n, _ in enumerate( self.meshes, 1 ):
             degenerate = self.issues[ n ][ "degenerate" ]
-            data = self.validMetrics[ n ][ "min_dihedral" ]
-            self.logger.warning( f"  Mesh {n}: {np.sum(degenerate):,} elements ({np.sum(degenerate)/len(data)*100:.3f}%)")
+            data = self.validMetrics[ n ][ "minDihedral" ]
+            if np.sum(degenerate) > 0:
+                ww = True
+                degMsg += f"  Mesh {n}: {np.sum(degenerate):,} elements ({np.sum(degenerate)/len(data)*100:.3f}%)\n"
+
+        self.logger.warning( degMsg ) if ww else self.logger.info( degMsg + "   N/A\n" )
 
 
     def printComparisonSummary( self: Self):
         self.__loggerSection( "COMPARISON SUMMARY" )
 
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             name = f"Mesh {n}"
             if n == self.best:
                 name += " [BEST]"
             elif n == self.worst:
                 name += " [LEAST GOOD]"
 
-            ar1_med = np.median( self.validMetrics[n]["aspect_ratio"] )
-            sq1_med = np.median( self.validMetrics[n]["shape_quality"] )
-            vol1_med = np.median(self.validMetrics[n]["volume"] )
-            min_edge1_med = np.median(self.validMetrics[n]["min_edge"] )
-            max_edge1_med = np.median(self.validMetrics[n]["max_edge"] )
-            edge_ratio1_med = np.median(self.validMetrics[n]["edge_ratio"] )
-            min_dih1_med = np.median( self.validMetrics[n]["min_dihedral"] )
-            max_dih1_med = np.median( self.validMetrics[n]["max_dihedral"] )
-            score1_med = np.median( self.validMetrics[n]["quality_score"] )
+            msg = f"{name}\n"
 
-            self.logger.info(f"{name}")
-            self.logger.info(f"  Tetrahedra: {self.analyzedMesh[n]['tet']:,}")
-            self.logger.info(f"  Median Aspect Ratio: {ar1_med:.2f}")
-            self.logger.info(f"  Median Shape Quality: {sq1_med:.4f}")
-            self.logger.info(f"  Median Volume: {vol1_med:.2e}")
-            self.logger.info(f"  Median Min Edge: {min_edge1_med:.2e}")
-            self.logger.info(f"  Median Max Edge: {max_edge1_med:.2e}")
-            self.logger.info(f"  Median Edge Ratio: {edge_ratio1_med:.2f}")
-            self.logger.info(f"  Median Min Dihedral: {min_dih1_med:.1f}°")
-            self.logger.info(f"  Median Max Dihedral: {max_dih1_med:.1f}°")
-            self.logger.info(f"  Median Quality Score: {score1_med:.1f}/100")
-
-        self.logger.info("\n" + "="*80)
+            msg += f"  Tetrahedra: {self.analyzedMesh[n]['tet']:,}\n"
+            msg += f"  Median Aspect Ratio: {self.medians[n]['aspectRatio']:.2f}\n"
+            msg += f"  Median Shape Quality: {self.medians[n]['shapeQuality']:.4f}\n"
+            msg += f"  Median Volume: {self.medians[n]['volume']:.2e}\n"
+            msg += f"  Median Min Edge: {self.medians[n]['minEdge']:.2e}\n"
+            msg += f"  Median Max Edge: {self.medians[n]['maxEdge']:.2e}\n"
+            msg += f"  Median Edge Ratio: {self.medians[n]['edgeRatio']:.2f}\n"
+            msg += f"  Median Min Dihedral: {self.medians[n]['minDihedral']:.1f}°\n"
+            msg += f"  Median Max Dihedral: {self.medians[n]['maxDihedral']:.1f}°\n"
+            msg += f"  Median Quality Score: {self.medians[n]['qualityScore']:.1f}/100\n"
 
 
 
@@ -477,66 +478,64 @@ class TetQualityAnalysis:
         self.logger.info( f"Best mesh : Mesh {self.best}")
         self.deltas = {}
 
-        n_tets_best = self.analyzedMesh[self.best][ 'tet']
-        ar_med_best = np.median( self.validMetrics[self.best]["aspect_ratio"] )
-        sq_med_best = np.median(self.validMetrics[self.best]["shape_quality"])
-        vol_med_best = np.median(self.validMetrics[self.best]["volume"])
-        min_edge_med_best = np.median(self.validMetrics[self.best]["min_edge"])
-        max_edge_med_best = np.median(self.validMetrics[self.best]["max_edge"])
-        edge_ratio_med_best = np.median(self.validMetrics[self.best]["edge_ratio"])
+        ntetsBest = self.analyzedMesh[self.best][ 'tet']
+        aspectRatioBest = self.medians[self.best]["aspectRatio"]
+        shapeQualityBest = self.medians[self.best]["shapeQuality"]
+        volumeBest = self.medians[self.best]["volume"]
+        minEdgeBest = self.medians[self.best]["minEdge"]
+        maxEdgeBest = self.medians[self.best]["maxEdge"]
+        edgeRatioBest = self.medians[self.best]["edgeRatio"]
 
-        for n, _ in enumerate( self.meshes ):
-            n_tets = self.analyzedMesh[n][ 'tet']
-            ar_med = np.median( self.validMetrics[n]["aspect_ratio"] )
-            sq_med = np.median(self.validMetrics[n]["shape_quality"])
-            vol_med = np.median(self.validMetrics[n]["volume"])
-            min_edge_med = np.median(self.validMetrics[n]["min_edge"])
-            max_edge_med = np.median(self.validMetrics[n]["max_edge"])
-            edge_ratio_med = np.median(self.validMetrics[n]["edge_ratio"])
+        for n, _ in enumerate( self.meshes, 1 ):
+            self.deltas[n] = {}
+            ntets = self.analyzedMesh[n][ 'tet']
 
+            aspectRatio = np.median( self.validMetrics[n]["aspectRatio"] )
+            shapeQuality = np.median(self.validMetrics[n]["shapeQuality"])
+            volume = np.median(self.validMetrics[n]["volume"])
+            minEdge = np.median(self.validMetrics[n]["minEdge"])
+            maxEdge = np.median(self.validMetrics[n]["maxEdge"])
+            edgeRatio = np.median(self.validMetrics[n]["edgeRatio"])
 
-            delta_tets = ((n_tets - n_tets_best) / n_tets_best * 100) if n_tets_best > 0 else 0
-            delta_ar = ((ar_med - ar_med_best) / ar_med_best * 100) if ar_med_best > 0 else 0
-            delta_sq = ((sq_med - sq_med_best) / sq_med_best * 100) if sq_med_best > 0 else 0
-            delta_vol = ((vol_med - vol_med_best) / vol_med_best * 100) if vol_med_best > 0 else 0
-            delta_min_edge = ((min_edge_med - min_edge_med_best) / min_edge_med_best * 100) if min_edge_med_best > 0 else 0
-            delta_max_edge = ((max_edge_med - max_edge_med_best) / max_edge_med_best * 100) if max_edge_med_best > 0 else 0
-            delta_edge_ratio = ((edge_ratio_med - edge_ratio_med_best) / edge_ratio_med_best * 100) if edge_ratio_med_best > 0 else 0
-            self.deltas[ n ] = { "tetrahedra": delta_tets, "aspect_ratio": delta_ar, "shape_quality": delta_sq, "volume": delta_vol, "min_edge": delta_min_edge, "max_edge": delta_max_edge, "edge_ratio": delta_edge_ratio }
+            self.deltas[n]["tetrahedra"] =  ( ( self.analyzedMesh[n]["tet"] - self.analyzedMesh[self.best]["tet"]) / self.analyzedMesh[self.best]["tet"] * 100 ) if self.analyzedMesh[self.best]["tet"] > 0 else 0
+            for metric in ( "aspectRatio", "shapeQuality", "volume", "minEdge", "maxEdge", "edgeRatio" ):
+                value = self.medians[n][metric]
+                valueBest = self.medians[self.best][metric]
+                self.deltas[n][metric] = ( ( value - valueBest) / valueBest * 100 ) if valueBest > 0 else 0
 
 
-        dtets = [ f"{self.deltas[ n ][ 'tetrahedra' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        dar = [ f"{self.deltas[ n ][ 'aspect_ratio' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        dsq = [ f"{self.deltas[ n ][ 'shape_quality' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        dvol = [ f"{self.deltas[ n ][ 'volume' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        d_min_edge = [ f"{self.deltas[ n ][ 'min_edge' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        d_max_edge = [ f"{self.deltas[ n ][ 'max_edge' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        d_edge_ratio = [ f"{self.deltas[ n ][ 'edge_ratio' ]:+15,.1f}%" for n, _ in self.sorted[1:] ]
-        names = [ f"{f'Mesh {n}':16}" for n, _ in self.sorted[1:]]
+        dtets = [ f"{self.deltas[ n ][ 'tetrahedra' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        dar = [ f"{self.deltas[ n ][ 'aspectRatio' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        dsq = [ f"{self.deltas[ n ][ 'shapeQuality' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        dvol = [ f"{self.deltas[ n ][ 'volume' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        d_min_edge = [ f"{self.deltas[ n ][ 'minEdge' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        d_maxEdge = [ f"{self.deltas[ n ][ 'maxEdge' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        d_edge_ratio = [ f"{self.deltas[ n ][ 'edgeRatio' ]:>+12,.1f}%" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
+        names = [ f"{f'Mesh {n}':>13}" if n != self.best else "" for n, _ in enumerate( self.meshes, 1 ) ]
 
-        self.logger.info(f"Changes vs Mesh {self.best} [BEST]:")
-        self.logger.info(f"{'  Mesh:':25}{('').join( names )}")
-        self.logger.info(f"{'  Tetrahedra:':25} {('').join(dtets)}%")
-        self.logger.info(f"{'  Aspect Ratio:':25}{('').join(  dar)}%")
-        self.logger.info(f"{'  Shape Quality:':25}{('').join(  dsq)}%")
-        self.logger.info(f"{'  Volume:':25}{('').join(  dvol)}%")
-        self.logger.info(f"{'  Min Edge Length:':25}{('').join(  d_min_edge)}%")
-        self.logger.info(f"{'  Max Edge Length:':25}{('').join(  d_max_edge)}%")
-        self.logger.info(f"{'  Edge Length Ratio:':25}{('').join( d_edge_ratio)}%")
-
+        self.logger.info(f"Changes vs BEST [Mesh {self.best}]:\n"
+                        f"{'  Mesh:':<20}{('').join( names )}\n" +
+                        f"{'  Tetrahedra:':<20}{('').join(dtets)}\n" +
+                        f"{'  Aspect Ratio:':<20}{('').join(  dar)}\n" +
+                        f"{'  Shape Quality:':<20}{('').join(  dsq)}\n" +
+                        f"{'  Volume:':<20}{('').join(  dvol)}\n" +
+                        f"{'  Min Edge Length:':<20}{('').join(  d_min_edge)}\n" +
+                        f"{'  Max Edge Length:':<20}{('').join(  d_maxEdge)}\n" +
+                        f"{'  Edge Length Ratio:':<20}{('').join( d_edge_ratio)}\n"
+        )
 
 
     def createComparisonDashboard( self: Self ):
-        lbl = [ f'Mesh {n}' for n, _ in enumerate( self.meshes ) ]
+        lbl = [ f'Mesh {n}' for n, _ in enumerate( self.meshes, 1 ) ]
         # Determine smart plot limits
 
         ar_99 = []
-        for n, _ in enumerate( self.meshes ):
-            ar_99.append( np.percentile( self.validMetrics[n]["aspect_ratio"], 99 ) )
+        for n, _ in enumerate( self.meshes, 1 ):
+            ar_99.append( np.percentile( self.validMetrics[n]["aspectRatio"], 99 ) )
 
         ar_99_max = np.max( np.array( ar_99 ) )
 
-        # ar_99_1 = np.percentile(ar1, 99)
+        # ar_99_1 = np.percentile(aspectRatio, 99)
         # # ar_99_2 = np.percentile(ar2, 99)
         # # ar_99_max = max(ar_99_1, ar_99_2)
         # ar_99_max = ar_99_1
@@ -552,7 +551,6 @@ class TetQualityAnalysis:
         # print(f"Using AR plot limit: {ar_plot_limit} (99th percentiles: M1={ar_99_1:.1f}")
 
         # Set style
-        sns.set_style("whitegrid")
         plt.rcParams['figure.facecolor'] = 'white'
         plt.rcParams.update({
             'font.size': 9,
@@ -575,24 +573,14 @@ class TetQualityAnalysis:
                                     top=0.82, bottom=0.05, hspace=0.35, wspace=0.30)
 
         # Title
-        # mesh1_name = filename1.split('/')[-1]
-        # mesh2_name = filename2.split('/')[-1]
         suptitle = 'Mesh Quality Comparison Dashboard (Progressive Detail Layout)\n'
-        for n, _ in enumerate( self.meshes ):
-            # suptitle += f'Mesh {n}: {n_tets1:,} tets\t'
-            suptitle += f'Mesh {n}: tets\t'
+        for n, _ in enumerate( self.meshes, 1 ):
+            # suptitle += f'Mesh {n}: {ntets:,} tets\t'
+            suptitle += f'Mesh {n}: {self.analyzedMesh[n]["tet"]} tets - '
         fig.suptitle( suptitle,
                     fontsize=16, fontweight='bold', y=0.99)
-        # fig.suptitle(f'Mesh Quality Comparison Dashboard (Progressive Detail Layout)\n' +
-        #             f'Mesh 1: {mesh1_name} ({n_tets1:,} tets)',
-        #             # f'Mesh 1: {mesh1_name} ({n_tets1:,} tets)  vs  Mesh 2: {mesh2_name} ({n_tets2:,} tets)',
-        #             fontsize=16, fontweight='bold', y=0.99)
 
         # Color scheme
-        # color = matplotlib.colormaps[ 'tab20' ]
-        # def color[n]:
-        #     nn = np.linspace(0,20)
-        #     return matplotlib.colormaps[ 'tab20' ][nn]
         color = matplotlib.pyplot.cm.tab10( np.arange(20))
 
         # ==================== ROW 1: EXECUTIVE SUMMARY ====================
@@ -600,11 +588,11 @@ class TetQualityAnalysis:
         # 1. Overall Quality Score Distribution
         ax1 = fig.add_subplot(gs_row1[0, 0])
         bins = np.linspace(0, 100, 40)
-        for n, _ in enumerate( self.meshes ):
-            score1 = self.validMetrics[n][ 'quality_score' ]
-            ax1.hist(score1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
-            ax1.axvline(np.median(score1), color=color[n], linestyle='--', linewidth=2.5, alpha=0.9)
+        for n, _ in enumerate( self.meshes, 1 ):
+            qualityScore = self.validMetrics[n][ 'qualityScore' ]
+            ax1.hist(qualityScore, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
+            ax1.axvline(np.median(qualityScore), color=color[n-1], linestyle='--', linewidth=2.5, alpha=0.9)
 
         # Add quality zones
         ax1.axvspan(0, 30, alpha=0.15, color='red', zorder=0)
@@ -612,20 +600,15 @@ class TetQualityAnalysis:
         ax1.axvspan(60, 80, alpha=0.15, color='lightgreen', zorder=0)
         ax1.axvspan(80, 100, alpha=0.15, color='darkgreen', zorder=0)
 
-        # Add median lines
-        # ax1.axvline(np.median(score1), color=color1, linestyle='--', linewidth=2.5, alpha=0.9)
-        # ax1.axvline(np.median(score2), color=color2, linestyle='--', linewidth=2.5, alpha=0.9)
-
         # Add summary text   #### ONLY BEST AND WORST MESH?
-        # TODO
-        # ax1.text(0.98, 0.98,
-        #         f'Median Score:\nM1: {np.median(score1):.1f}\n\n' +
-        #         f'Excellent (>80):\nM1: {excellent1:.1f}%',
-        #         # f'Median Score:\nM1: {np.median(score1):.1f}\nM2: {np.median(score2):.1f}\n\n' +
-        #         # f'Excellent (>80):\nM1: {excellent1:.1f}%\nM2: {excellent2:.1f}%',
-        #         transform=ax1.transAxes, va='top', ha='right',
-        #         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9),
-        #         fontsize=9, fontweight='bold')
+        ax1.text(0.98, 0.98,
+                f'Median Score:\n{f"M{self.best}[+]:":<5}{np.median(self.validMetrics[self.best][ "qualityScore" ]):.1f}\n'+
+                f'{f"M{self.worst}[-]:":<5}{np.median(self.validMetrics[self.worst][ "qualityScore" ]):.1f}\n\n' +
+                f'Excellent (>80):\n{f"M{self.best}[+]:":<5}{self.qualityScore[self.best]["excellent"]:.1f}%\n'+
+                f'{f"M{self.worst}[-]:":<5}{self.qualityScore[self.worst]["excellent"]:.1f}%',
+                transform=ax1.transAxes, va='top', ha='right',
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9),
+                fontsize=9, fontweight='bold')
 
         ax1.set_xlabel('Combined Quality Score', fontweight='bold')
         ax1.set_ylabel('Count', fontweight='bold')
@@ -644,17 +627,17 @@ class TetQualityAnalysis:
         ax2 = fig.add_subplot(gs_row1[0, 1])
 
         # Create sample for plotting
-        for n, _ in enumerate( self.meshes ):
-            ar1 = self.validMetrics[n]["aspect_ratio"]
-            sq1 = self.validMetrics[n]["shape_quality"]
-            self.setSampleForPlot( ar1, n )
+        for n, _ in enumerate( self.meshes, 1 ):
+            aspectRatio = self.validMetrics[n]["aspectRatio"]
+            shapeQuality = self.validMetrics[n]["shapeQuality"]
+            self.setSampleForPlot( aspectRatio, n )
 
             idx = self.sample[n]
 
-            mask1_plot = ar1[idx] < ar_plot_limit
+            mask1_plot = aspectRatio[idx] < ar_plot_limit
 
-            ax2.scatter(ar1[idx][mask1_plot], sq1[idx][mask1_plot], alpha=0.4, s=5,
-                    color=color[n], label=f'Mesh {n}', edgecolors='none')
+            ax2.scatter(aspectRatio[idx][mask1_plot], shapeQuality[idx][mask1_plot], alpha=0.4, s=5,
+                    color=color[n-1], label=f'Mesh {n}', edgecolors='none')
 
         # Add quality threshold lines
         ax2.axhline(y=0.3, color='red', linestyle='--', linewidth=2,
@@ -670,22 +653,22 @@ class TetQualityAnalysis:
         ax2.add_patch(problem_zone)
 
         # Count ALL elements
-        problem1_all = np.sum((ar1 > 100) & (sq1 < 0.3))
-        extreme1 = np.sum(ar1 > ar_plot_limit)
+        problem1_all = np.sum((aspectRatio > 100) & (shapeQuality < 0.3))
+        extreme1 = np.sum(aspectRatio > ar_plot_limit)
 
         # Problem annotation
         #TODO
-        # ax2.text(0.98, 0.02,
-        #         f'PROBLEM ELEMENTS\n(AR>100 & Q<0.3):\n\n' +
-        #         f'M1: {problem1_all:,}\n\n',
-        #         # f'Change: {((problem2_all-problem1_all)/max(problem1_all,1)*100):+.1f}%',
-        #         # f'M1: {problem1_all:,}\nM2: {problem2_all:,}\n\n' +
-        #         transform=ax2.transAxes, va='bottom', ha='right',
-        #         bbox=dict(boxstyle='round', facecolor='#ffcccc', alpha=0.95,
-        #                 edgecolor='darkred', linewidth=2),
-        #         fontsize=9, fontweight='bold')
+        annotateIssues = ('\n').join([ f"{f'M{n}':4}{np.sum(self.issues[n]['combined']):,}" for n, _ in enumerate( self.meshes, 1 )])
 
-        # # Outlier warning
+        ax2.text(0.98, 0.02,
+                f'PROBLEM ELEMENTS\n(AR>100 & Q<0.3):\n\n' +
+                annotateIssues,
+                transform=ax2.transAxes, va='bottom', ha='right',
+                bbox=dict(boxstyle='round', facecolor='#ffcccc', alpha=0.95,
+                        edgecolor='darkred', linewidth=2),
+                fontsize=8, fontweight='bold')
+
+        # Outlier warning
         # if extreme1 + extreme2 > 100:
         #     ax2.text(0.02, 0.98,
         #             f'⚠️ AR > {ar_plot_limit}\n(not shown):\n' +
@@ -708,71 +691,72 @@ class TetQualityAnalysis:
         ax3 = fig.add_subplot(gs_row1[0, 2])
         ax3.axis('off')
 
-        summary_stats = []
-        summary_stats.append(['CRITICAL ISSUE', 'WORST', 'BEST', 'Change'])
-        summary_stats.append(['─' * 18, '─' * 10, '─' * 10, '─' * 10])
+        summaryStats = []
+        summaryStats.append(['CRITICAL ISSUE', 'WORST', 'BEST', 'Change'])
+        summaryStats.append(['─' * 18, '─' * 10, '─' * 10, '─' * 10])
 
-        critical_combo1 = self.issues[ self.best ][ "critical_combo" ]
-        critical_combo2 = self.issues[ self.worst ][ "critical_combo" ]
-        ar1 = self.validMetrics[self.best][ "aspect_ratio" ]
-        ar2 = self.validMetrics[self.worst][ "aspect_ratio" ]
+        criticalCombo = self.issues[ self.best ][ "criticalCombo" ]
+        critical_combo2 = self.issues[ self.worst ][ "criticalCombo" ]
 
-        high_ar1 = self.issues[ self.best ][ "high_aspect_ratio" ]
-        high_ar2 = self.issues[ self.worst ][ "high_aspect_ratio" ]
+        aspectRatio = self.validMetrics[self.best][ "aspectRatio" ]
+        ar2 = self.validMetrics[self.worst][ "aspectRatio" ]
 
-        low_sq1 = self.issues[self.best ][ "low_shape_quality" ]
-        low_sq2 = self.issues[self.worst][ "low_shape_quality" ]
+        highAspectRatio = self.issues[ self.best ][ "highAspectRatio" ]
+        high_ar2 = self.issues[ self.worst ][ "highAspectRatio" ]
 
-        critical_dih1 = self.issues[self.best]["critical_dihedral"]
-        critical_dih2 = self.issues[self.worst]["critical_dihedral"]
+        lowShapeQuality = self.issues[self.best ][ "lowShapeQuality" ]
+        low_sq2 = self.issues[self.worst][ "lowShapeQuality" ]
 
-        critical_max_dih1 = self.issues[self.best][ "critical_max_dihedral" ]
-        critical_max_dih2 = self.issues[self.worst][ "critical_max_dihedral" ]
+        criticalMinDihedral = self.issues[self.best]["criticalMinDihedral"]
+        critical_dih2 = self.issues[self.worst]["criticalMinDihedral"]
 
-        high_edge_ratio1 = self.issues[self.best][ "high_edge_ratio" ]
-        high_edge_ratio2 = self.issues[self.worst][ "high_edge_ratio" ]
+        criticalMaxDihedral = self.issues[self.best][ "criticalMaxDihedral" ]
+        critical_max_dih2 = self.issues[self.worst][ "criticalMaxDihedral" ]
+
+        highEdgeRatio = self.issues[self.best][ "highEdgeRatio" ]
+        highEdgeRatio2 = self.issues[self.worst][ "highEdgeRatio" ]
 
 
-        summary_stats.append(['CRITICAL Combo', f'{critical_combo1:,}', f'{critical_combo2:,}',
-                            f'{((critical_combo2-critical_combo1)/max(critical_combo1,1)*100):+.1f}%' if critical_combo1 > 0 else 'N/A'])
-        summary_stats.append(['(AR>100 & Q<0.3', f'({critical_combo1/len(ar1)*100:.2f}%)',
+        summaryStats.append(['CRITICAL Combo', f'{criticalCombo:,}', f'{critical_combo2:,}',
+                            f'{((critical_combo2-criticalCombo)/max(criticalCombo,1)*100):+.1f}%' if criticalCombo > 0 else 'N/A'])
+        summaryStats.append(['(AR>100 & Q<0.3', f'({criticalCombo/len(aspectRatio)*100:.2f}%)',
                             f'({critical_combo2/len(ar2)*100:.2f}%)', ''])
-        summary_stats.append([' & MinDih<5°)', '', '', ''])
+        summaryStats.append([' & MinDih<5°)', '', '', ''])
 
-        summary_stats.append(['', '', '', ''])
-        summary_stats.append(['AR > 100', f'{high_ar1:,}', f'{high_ar2:,}',
-                            f'{((high_ar2-high_ar1)/max(high_ar1,1)*100):+.1f}%'])
+        summaryStats.append(['', '', '', ''])
+        summaryStats.append(['AR > 100', f'{highAspectRatio:,}', f'{high_ar2:,}',
+                            f'{((high_ar2-highAspectRatio)/max(highAspectRatio,1)*100):+.1f}%'])
 
-        summary_stats.append(['Quality < 0.3', f'{low_sq1:,}', f'{low_sq2:,}',
-                            f'{((low_sq2-low_sq1)/max(low_sq1,1)*100):+.1f}%'])
+        summaryStats.append(['Quality < 0.3', f'{lowShapeQuality:,}', f'{low_sq2:,}',
+                            f'{((low_sq2-lowShapeQuality)/max(lowShapeQuality,1)*100):+.1f}%'])
 
-        summary_stats.append(['MinDih < 5°', f'{critical_dih1:,}', f'{critical_dih2:,}',
-                            f'{((critical_dih2-critical_dih1)/max(critical_dih1,1)*100):+.1f}%' if critical_dih1 > 0 else 'N/A'])
+        summaryStats.append(['MinDih < 5°', f'{criticalMinDihedral:,}', f'{critical_dih2:,}',
+                            f'{((critical_dih2-criticalMinDihedral)/max(criticalMinDihedral,1)*100):+.1f}%' if criticalMinDihedral > 0 else 'N/A'])
 
-        summary_stats.append(['MaxDih > 175°', f'{critical_max_dih1:,}', f'{critical_max_dih2:,}',
-                            f'{((critical_max_dih2-critical_max_dih1)/max(critical_max_dih1,1)*100):+.1f}%' if critical_max_dih1 > 0 else 'N/A'])
+        summaryStats.append(['MaxDih > 175°', f'{criticalMaxDihedral:,}', f'{critical_max_dih2:,}',
+                            f'{((critical_max_dih2-criticalMaxDihedral)/max(criticalMaxDihedral,1)*100):+.1f}%' if criticalMaxDihedral > 0 else 'N/A'])
 
-        summary_stats.append(['Edge Ratio > 10', f'{high_edge_ratio1:,}', f'{high_edge_ratio2:,}',
-                            f'{((high_edge_ratio2-high_edge_ratio1)/max(high_edge_ratio1,1)*100):+.1f}%'])
+        summaryStats.append(['Edge Ratio > 10', f'{highEdgeRatio:,}', f'{highEdgeRatio2:,}',
+                            f'{((highEdgeRatio2-highEdgeRatio)/max(highEdgeRatio,1)*100):+.1f}%'])
 
-        summary_stats.append(['─' * 18, '─' * 10, '─' * 10, '─' * 10])
-        summary_stats.append(['Quality Grade', '', '', ''])
-        excellent1 = self.overallQualityScore[self.best]["excellent"]
-        excellent2 = self.overallQualityScore[self.worst]["excellent"]
-        good1 = self.overallQualityScore[self.best]["good"]
-        good2 = self.overallQualityScore[self.worst]["good"]
-        poor1 = self.overallQualityScore[self.best]["poor"]
-        poor2 = self.overallQualityScore[self.worst]["poor"]
+        summaryStats.append(['─' * 18, '─' * 10, '─' * 10, '─' * 10])
+        summaryStats.append(['Quality Grade', '', '', ''])
+        excellent = self.qualityScore[self.best]["excellent"]
+        excellent2 = self.qualityScore[self.worst]["excellent"]
+        good = self.qualityScore[self.best]["good"]
+        good2 = self.qualityScore[self.worst]["good"]
+        poor = self.qualityScore[self.best]["poor"]
+        poor2 = self.qualityScore[self.worst]["poor"]
 
 
-        summary_stats.append(['  Excellent (>80)', f'{excellent1:.1f}%', f'{excellent2:.1f}%',
-                            f'{excellent2-excellent1:+.1f}%'])
-        summary_stats.append(['  Good (60-80)', f'{good1:.1f}%', f'{good2:.1f}%',
-                            f'{good2-good1:+.1f}%'])
-        summary_stats.append(['  Poor (≤30)', f'{poor1:.1f}%', f'{poor2:.1f}%',
-                            f'{poor2-poor1:+.1f}%'])
+        summaryStats.append(['  Excellent (>80)', f'{excellent:.1f}%', f'{excellent2:.1f}%',
+                            f'{excellent2-excellent:+.1f}%'])
+        summaryStats.append(['  Good (60-80)', f'{good:.1f}%', f'{good2:.1f}%',
+                            f'{good2-good:+.1f}%'])
+        summaryStats.append(['  Poor (≤30)', f'{poor:.1f}%', f'{poor2:.1f}%',
+                            f'{poor2-poor:+.1f}%'])
 
-        table = ax3.table(cellText=summary_stats, cellLoc='left',
+        table = ax3.table(cellText=summaryStats, cellLoc='left',
                         bbox=[0, 0, 1, 1], edges='open')
         table.auto_set_font_size(False)
         table.set_fontsize(8)
@@ -789,8 +773,8 @@ class TetQualityAnalysis:
 
         # Color code changes
         for row in [2, 6, 7, 8, 9, 10, 13, 14, 15]:
-            if row < len(summary_stats):
-                change_text = summary_stats[row][3]
+            if row < len(summaryStats):
+                change_text = summaryStats[row][3]
                 if '%' in change_text and change_text != 'N/A':
                     try:
                         val = float(change_text.replace('%', '').replace('+', ''))
@@ -815,10 +799,10 @@ class TetQualityAnalysis:
         # 4. Shape Quality Histogram
         ax4 = fig.add_subplot(gs_main[0, 0])
         bins = np.linspace(0, 1, 40)
-        for n, _ in enumerate( self.meshes ):
-            sq1 = self.validMetrics[n][ "shape_quality" ]
-            ax4.hist(sq1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            shapeQuality = self.validMetrics[n][ "shapeQuality" ]
+            ax4.hist(shapeQuality, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax4.set_xlabel('Shape Quality', fontweight='bold')
         ax4.set_ylabel('Count', fontweight='bold')
         ax4.set_title('Shape Quality Distribution', fontweight='bold')
@@ -827,14 +811,14 @@ class TetQualityAnalysis:
 
         # 5. Aspect Ratio Histogram
         ax5 = fig.add_subplot(gs_main[0, 1])
-        # bins = np.logspace(0, np.log10(min(ar_plot_limit, ar1.max(), ar2.max())), 40)
-        ar_max = np.array( [ self.validMetrics[n]["aspect_ratio"].max() for n, _ in enumerate( self.meshes )] )
+        # bins = np.logspace(0, np.log10(min(ar_plot_limit, aspectRatio.max(), ar2.max())), 40)
+        ar_max = np.array( [ self.validMetrics[n]["aspectRatio"].max() for n, _ in enumerate( self.meshes, 1 )] )
 
         bins = np.logspace(0, np.log10(min(ar_plot_limit, ar_max.max())), 40)
-        for n, _ in enumerate( self.meshes ):
-            ar1 = self.validMetrics[n]['aspect_ratio']
-            ax5.hist(ar1[ar1 < ar_plot_limit], bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            aspectRatio = self.validMetrics[n]['aspectRatio']
+            ax5.hist(aspectRatio[aspectRatio < ar_plot_limit], bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax5.set_xscale('log')
         ax5.set_xlabel('Aspect Ratio', fontweight='bold')
         ax5.set_ylabel('Count', fontweight='bold')
@@ -845,10 +829,10 @@ class TetQualityAnalysis:
         # 6. Min Dihedral Histogram
         ax6 = fig.add_subplot(gs_main[0, 2])
         bins = np.linspace(0, 90, 40)
-        for n, _ in enumerate( self.meshes ):
-            min_dih1 = self.validMetrics[ n ]["min_dihedral"]
-            ax6.hist(min_dih1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            minDihedral = self.validMetrics[ n ]["minDihedral"]
+            ax6.hist(minDihedral, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax6.axvline(5, color='red', linestyle='--', linewidth=1.5, alpha=0.7)
         ax6.set_xlabel('Min Dihedral Angle (degrees)', fontweight='bold')
         ax6.set_ylabel('Count', fontweight='bold')
@@ -859,10 +843,10 @@ class TetQualityAnalysis:
         # 7. Edge Ratio Histogram
         ax7 = fig.add_subplot(gs_main[0, 3])
         bins = np.logspace(0, 3, 40)
-        for n, _ in enumerate( self.meshes ):
-            edge_ratio1 = self.validMetrics[ n ][ "edge_ratio" ]
-            ax7.hist(edge_ratio1[edge_ratio1 < 1000], bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            edgeRatio = self.validMetrics[ n ][ "edgeRatio" ]
+            ax7.hist(edgeRatio[edgeRatio < 1000], bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax7.set_xscale('log')
         ax7.axvline(1, color='green', linestyle='--', linewidth=1.5, alpha=0.7)
         ax7.set_xlabel('Edge Length Ratio', fontweight='bold')
@@ -873,15 +857,15 @@ class TetQualityAnalysis:
 
         # 8. Volume Histogram
         ax8 = fig.add_subplot(gs_main[0, 4])
-        vol_min = np.array( [ self.validMetrics[n]["volume"].min() for n, _ in enumerate( self.meshes )] ).min()
-        vol_max = np.array( [ self.validMetrics[n]["volume"].max() for n, _ in enumerate( self.meshes )] ).max()
+        vol_min = np.array( [ self.validMetrics[n]["volume"].min() for n, _ in enumerate( self.meshes, 1 )] ).min()
+        vol_max = np.array( [ self.validMetrics[n]["volume"].max() for n, _ in enumerate( self.meshes, 1 )] ).max()
 
 
         bins = np.logspace(np.log10(vol_min), np.log10(vol_max), 40)
-        for n, _ in enumerate( self.meshes ):
-            vol1 = self.validMetrics[n][ "volume" ]
-            ax8.hist(vol1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            volume = self.validMetrics[n][ "volume" ]
+            ax8.hist(volume, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax8.set_xscale('log')
         ax8.set_xlabel('Volume', fontweight='bold')
         ax8.set_ylabel('Count', fontweight='bold')
@@ -893,7 +877,7 @@ class TetQualityAnalysis:
 
         # 9. Shape Quality Box Plot
         ax9 = fig.add_subplot(gs_main[1, 0])
-        sq = [ self.validMetrics[n][ "shape_quality" ] for n, _ in enumerate( self.meshes ) ]
+        sq = [ self.validMetrics[n][ "shapeQuality" ] for n, _ in enumerate( self.meshes, 1 ) ]
         bp1 = ax9.boxplot( sq, labels=lbl,
                 patch_artist=True, showfliers=False)
         ax9.set_ylabel('Shape Quality', fontweight='bold')
@@ -902,7 +886,7 @@ class TetQualityAnalysis:
 
         # 10. Aspect Ratio Box Plot
         ax10 = fig.add_subplot(gs_main[1, 1])
-        ar = [ self.validMetrics[n][ "aspect_ratio" ] for n, _ in enumerate( self.meshes ) ]
+        ar = [ self.validMetrics[n][ "aspectRatio" ] for n, _ in enumerate( self.meshes, 1 ) ]
         bp2 = ax10.boxplot( ar, labels=lbl,
                 patch_artist=True, showfliers=False)
         ax10.set_yscale('log')
@@ -912,8 +896,8 @@ class TetQualityAnalysis:
 
         # 11. Min Dihedral Box Plot
         ax11 = fig.add_subplot(gs_main[1, 2])
-        min_dih1 = [ self.validMetrics[n][ "min_dihedral" ] for n, _ in enumerate( self.meshes ) ]
-        bp3 = ax11.boxplot( min_dih1, labels=lbl,
+        minDihedral = [ self.validMetrics[n][ "minDihedral" ] for n, _ in enumerate( self.meshes, 1 ) ]
+        bp3 = ax11.boxplot( minDihedral, labels=lbl,
                         patch_artist=True, showfliers=False)
         ax11.set_ylabel('Min Dihedral Angle (degrees)', fontweight='bold')
         ax11.set_title('Min Dihedral Comparison', fontweight='bold')
@@ -921,7 +905,7 @@ class TetQualityAnalysis:
 
         # 12. Edge Ratio Box Plot
         ax12 = fig.add_subplot(gs_main[1, 3])
-        edge_ratio = [ self.validMetrics[n][ "edge_ratio" ] for n, _ in enumerate( self.meshes ) ]
+        edge_ratio = [ self.validMetrics[n][ "edgeRatio" ] for n, _ in enumerate( self.meshes, 1 ) ]
         bp4 = ax12.boxplot(edge_ratio, labels=lbl,
             patch_artist=True, showfliers=False)
         ax12.set_yscale('log')
@@ -931,7 +915,7 @@ class TetQualityAnalysis:
 
         # 13. Volume Box Plot
         ax13 = fig.add_subplot(gs_main[1, 4])
-        vol = [ self.validMetrics[n][ "volume" ] for n, _ in enumerate( self.meshes ) ]
+        vol = [ self.validMetrics[n][ "volume" ] for n, _ in enumerate( self.meshes, 1 ) ]
         bp5 = ax13.boxplot( vol, labels=lbl,
             patch_artist=True, showfliers=False)
         ax13.set_yscale('log')
@@ -939,17 +923,17 @@ class TetQualityAnalysis:
         ax13.set_title('Volume Comparison', fontweight='bold')
         ax13.grid(True, alpha=0.3, axis='y')
 
-        for n, _ in enumerate( self.meshes ):
-            bp1['boxes'][n].set_facecolor(color[n])
-            bp1['medians'][n].set_color("black")
-            bp2['boxes'][n].set_facecolor(color[n])
-            bp2['medians'][n].set_color("black")
-            bp3['boxes'][n].set_facecolor(color[n])
-            bp3['medians'][n].set_color("black")
-            bp4['boxes'][n].set_facecolor(color[n])
-            bp4['medians'][n].set_color("black")
-            bp5['boxes'][n].set_facecolor(color[n])
-            bp5['medians'][n].set_color("black")
+        for n, _ in enumerate( self.meshes, 1 ):
+            bp1['boxes'][n-1].set_facecolor(color[n-1])
+            bp1['medians'][n-1].set_color("black")
+            bp2['boxes'][n-1].set_facecolor(color[n-1])
+            bp2['medians'][n-1].set_color("black")
+            bp3['boxes'][n-1].set_facecolor(color[n-1])
+            bp3['medians'][n-1].set_color("black")
+            bp4['boxes'][n-1].set_facecolor(color[n-1])
+            bp4['medians'][n-1].set_color("black")
+            bp5['boxes'][n-1].set_facecolor(color[n-1])
+            bp5['medians'][n-1].set_color("black")
 
         # ==================== ROW 4: CORRELATION ANALYSIS (SCATTER PLOTS) ====================
 
@@ -957,13 +941,13 @@ class TetQualityAnalysis:
 
         # 14. Shape Quality vs Aspect Ratio (duplicate for detail)
         ax14 = fig.add_subplot(gs_main[2, 0])
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             idx = self.sample[n]
-            ar1 = self.validMetrics[n][ 'aspect_ratio']
-            sq1 = self.validMetrics[n][ 'shape_quality']
-            mask1 = ar1[idx] < ar_plot_limit
-            ax14.scatter(ar1[idx][mask1], sq1[idx][mask1], alpha=0.4, s=5,
-                    color=color[n], label=f'Mesh {n}', edgecolors='none')
+            aspectRatio = self.validMetrics[n][ 'aspectRatio']
+            shapeQuality = self.validMetrics[n][ 'shapeQuality']
+            mask1 = aspectRatio[idx] < ar_plot_limit
+            ax14.scatter(aspectRatio[idx][mask1], shapeQuality[idx][mask1], alpha=0.4, s=5,
+                    color=color[n-1], label=f'Mesh {n}', edgecolors='none')
         ax14.set_xscale('log')
         ax14.set_xlabel('Aspect Ratio', fontweight='bold')
         ax14.set_ylabel('Shape Quality', fontweight='bold')
@@ -975,13 +959,13 @@ class TetQualityAnalysis:
 
         # 15. Aspect Ratio vs Flatness
         ax15 = fig.add_subplot(gs_main[2, 1])
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             idx = self.sample[n]
-            ar1 = self.validMetrics[n]["aspect_ratio"]
-            fr1 = self.validMetrics[n][ 'flatness_ratio' ]
-            mask1 = ar1[idx] < ar_plot_limit
-            ax15.scatter(ar1[idx][mask1], fr1[idx][mask1], alpha=0.4, s=5,
-                color=color[n], label=f'Mesh {n}', edgecolors='none')
+            aspectRatio = self.validMetrics[n]["aspectRatio"]
+            flatnessRatio = self.validMetrics[n][ 'flatnessRatio' ]
+            mask1 = aspectRatio[idx] < ar_plot_limit
+            ax15.scatter(aspectRatio[idx][mask1], flatnessRatio[idx][mask1], alpha=0.4, s=5,
+                color=color[n-1], label=f'Mesh {n}', edgecolors='none')
         ax15.set_xscale('log')
         ax15.set_yscale('log')
         ax15.set_xlabel('Aspect Ratio', fontweight='bold')
@@ -993,13 +977,13 @@ class TetQualityAnalysis:
 
         # 16. Volume vs Aspect Ratio
         ax16 = fig.add_subplot(gs_main[2, 2])
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             idx = self.sample[n]
-            ar1 = self.validMetrics[n]["aspect_ratio"]
-            vol1 = self.validMetrics[n][ 'volume' ]
-            mask1 = ar1[idx] < ar_plot_limit
-            ax16.scatter(vol1[idx][mask1], ar1[idx][mask1], alpha=0.4, s=5,
-                    color=color[n], label=f'Mesh {n}', edgecolors='none')
+            aspectRatio = self.validMetrics[n]["aspectRatio"]
+            volume = self.validMetrics[n][ 'volume' ]
+            mask1 = aspectRatio[idx] < ar_plot_limit
+            ax16.scatter(volume[idx][mask1], aspectRatio[idx][mask1], alpha=0.4, s=5,
+                    color=color[n-1], label=f'Mesh {n}', edgecolors='none')
         ax16.set_xscale('log')
         ax16.set_yscale('log')
         ax16.set_xlabel('Volume', fontweight='bold')
@@ -1011,12 +995,12 @@ class TetQualityAnalysis:
 
         # 17. Volume vs Shape Quality
         ax17 = fig.add_subplot(gs_main[2, 3])
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             idx = self.sample[n]
-            vol1 = self.validMetrics[n][ 'volume' ]
-            sq1 = self.validMetrics[n][ 'shape_quality']
-            ax17.scatter(vol1[idx], sq1[idx], alpha=0.4, s=5,
-                    color=color[n], label=f'Mesh {n}', edgecolors='none')
+            volume = self.validMetrics[n][ 'volume' ]
+            shapeQuality = self.validMetrics[n][ 'shapeQuality']
+            ax17.scatter(volume[idx], shapeQuality[idx], alpha=0.4, s=5,
+                    color=color[n-1], label=f'Mesh {n}', edgecolors='none')
         ax17.set_xscale('log')
         ax17.set_xlabel('Volume', fontweight='bold')
         ax17.set_ylabel('Shape Quality', fontweight='bold')
@@ -1026,12 +1010,12 @@ class TetQualityAnalysis:
 
         # 18. Edge Ratio vs Volume
         ax18 = fig.add_subplot(gs_main[2, 4])
-        for n, _ in enumerate( self.meshes ):
+        for n, _ in enumerate( self.meshes, 1 ):
             idx = self.sample[n]
-            vol1 = self.validMetrics[n][ 'volume' ]
-            edge_ratio = self.validMetrics[n][ 'edge_ratio' ]
-            ax18.scatter(vol1[idx], edge_ratio[idx], alpha=0.4, s=5,
-                    color=color[n], label=f'Mesh {n}', edgecolors='none')
+            volume = self.validMetrics[n][ 'volume' ]
+            edge_ratio = self.validMetrics[n][ 'edgeRatio' ]
+            ax18.scatter(volume[idx], edge_ratio[idx], alpha=0.4, s=5,
+                    color=color[n-1], label=f'Mesh {n}', edgecolors='none')
         ax18.axhline(y=1, color='green', linestyle='--', linewidth=1.5, alpha=0.7)
         ax18.set_xscale('log')
         ax18.set_yscale('log')
@@ -1045,19 +1029,19 @@ class TetQualityAnalysis:
 
         # 19. Min Edge Length Histogram
         ax19 = fig.add_subplot(gs_main[3, 0])
-        edge_min = np.array( [ self.validMetrics[n]["min_edge"].min() for n,_ in enumerate( self.meshes ) ] ).min()
-        edge_max_min = np.array( [ self.validMetrics[n]["min_edge"].max() for n,_ in enumerate( self.meshes ) ] ).min()
+        edge_min = np.array( [ self.validMetrics[n]["minEdge"].min() for n,_ in enumerate( self.meshes, 1 ) ] ).min()
+        edge_max_min = np.array( [ self.validMetrics[n]["minEdge"].max() for n,_ in enumerate( self.meshes, 1 ) ] ).min()
 
         bins = np.logspace(np.log10(edge_min), np.log10(edge_max_min), 40)
 
-        for n, _ in enumerate( self.meshes ):
-        # edge_min = min(min_edge1.min(), min_edge2.min())
-        # edge_max_min = max(min_edge1.max(), min_edge2.max())
+        for n, _ in enumerate( self.meshes, 1 ):
+        # edge_min = min(minEdge.min(), min_edge2.min())
+        # edge_max_min = max(minEdge.max(), min_edge2.max())
         # bins = np.logspace(np.log10(edge_min), np.log10(edge_max_min), 40)
-            min_edge = self.validMetrics[n]['min_edge']
-            ax19.hist(min_edge, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
-            ax19.axvline(np.median(min_edge), color=color[n], linestyle=':', linewidth=2, alpha=0.8)
+            minEdge = self.validMetrics[n]['minEdge']
+            ax19.hist(minEdge, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
+            ax19.axvline(np.median(minEdge), color=color[n-1], linestyle=':', linewidth=2, alpha=0.8)
         ax19.set_xscale('log')
 
         ax19.set_xlabel('Minimum Edge Length', fontweight='bold')
@@ -1068,17 +1052,17 @@ class TetQualityAnalysis:
 
         # 20. Max Edge Length Histogram
         ax20 = fig.add_subplot(gs_main[3, 1])
-        edge_max = np.array( [ self.validMetrics[n]["max_edge"].max() for n,_ in enumerate( self.meshes ) ] ).max()
-        edge_min_max = np.array( [ self.validMetrics[n]["max_edge"].min() for n,_ in enumerate( self.meshes ) ] ).min()
+        edge_max = np.array( [ self.validMetrics[n]["maxEdge"].max() for n,_ in enumerate( self.meshes, 1 ) ] ).max()
+        edge_min_max = np.array( [ self.validMetrics[n]["maxEdge"].min() for n,_ in enumerate( self.meshes, 1 ) ] ).min()
 
-        # edge_max = max(max_edge1.max(), max_edge2.max())
-        # edge_min_max = min(max_edge1.min(), max_edge2.min())
+        # edge_max = max(maxEdge.max(), max_edge2.max())
+        # edge_min_max = min(maxEdge.min(), max_edge2.min())
         bins = np.logspace(np.log10(edge_min_max), np.log10(edge_max), 40)
-        for n, _ in enumerate( self.meshes ):
-            max_edge1 = self.validMetrics[n]["max_edge"]
-            ax20.hist(max_edge1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                    color=color[n], edgecolor='black', linewidth=0.5)
-            ax20.axvline(np.median(max_edge1), color=color[n], linestyle=':', linewidth=2, alpha=0.8)
+        for n, _ in enumerate( self.meshes, 1 ):
+            maxEdge = self.validMetrics[n]["maxEdge"]
+            ax20.hist(maxEdge, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                    color=color[n-1], edgecolor='black', linewidth=0.5)
+            ax20.axvline(np.median(maxEdge), color=color[n-1], linestyle=':', linewidth=2, alpha=0.8)
         ax20.set_xscale('log')
         ax20.set_xlabel('Maximum Edge Length', fontweight='bold')
         ax20.set_ylabel('Count', fontweight='bold')
@@ -1089,10 +1073,10 @@ class TetQualityAnalysis:
         # 21. Max Dihedral Histogram
         ax21 = fig.add_subplot(gs_main[3, 2])
         bins = np.linspace(90, 180, 40)
-        for n, _ in enumerate( self.meshes ):
-            max_dih1 = self.validMetrics[n][ "max_dihedral" ]
-            ax21.hist(max_dih1, bins=bins, alpha=0.6, label=f'Mesh {n}',
-                color=color[n], edgecolor='black', linewidth=0.5)
+        for n, _ in enumerate( self.meshes, 1 ):
+            maxDihedral = self.validMetrics[n][ "maxDihedral" ]
+            ax21.hist(maxDihedral, bins=bins, alpha=0.6, label=f'Mesh {n}',
+                color=color[n-1], edgecolor='black', linewidth=0.5)
         ax21.axvline(175, color='red', linestyle='--', linewidth=1.5, alpha=0.7)
         ax21.set_xlabel('Max Dihedral Angle (degrees)', fontweight='bold')
         ax21.set_ylabel('Count', fontweight='bold')
@@ -1104,15 +1088,16 @@ class TetQualityAnalysis:
         ax22 = fig.add_subplot(gs_main[3, 3])
         nmesh = len( self.meshes )
         positions = np.delete( np.arange( 1, nmesh*2+2 ), nmesh )
-        dih = [ self.validMetrics[n]["min_dihedral"] for n, _ in enumerate( self.meshes )] +  [ self.validMetrics[n]["max_dihedral"] for n, _ in enumerate( self.meshes )]
-        lbl_boxplot = [ f'M{n}Min' for n, _ in enumerate( self.meshes )] + [ f'M{n}Max' for n, _ in enumerate( self.meshes )]
-        boxplot_color = [ n for n, _ in enumerate( self.meshes ) ] + [ n for n, _ in enumerate( self.meshes ) ]
+        dih = [ self.validMetrics[n]["minDihedral"] for n, _ in enumerate( self.meshes, 1 )] +  [ self.validMetrics[n]["maxDihedral"] for n, _ in enumerate( self.meshes, 1 )]
+        lbl_boxplot = [ f'M{n}Min' for n, _ in enumerate( self.meshes, 1 )] + [ f'M{n}Max' for n, _ in enumerate( self.meshes, 1 )]
+        boxplot_color = [ n for n, _ in enumerate( self.meshes, 1 ) ] + [ n for n, _ in enumerate( self.meshes, ) ]
         bp_dih = ax22.boxplot(dih,
                             positions=positions,
                             labels=lbl_boxplot,
                             patch_artist=True, showfliers=False, widths=0.6)
         for m in range( len(self.meshes)*2 ):
             bp_dih['boxes'][m].set_facecolor( color[ boxplot_color[m] ])
+            bp_dih['medians'][m].set_color("black")
 
         ax22.axhline(5, color='red', linestyle='--', linewidth=1, alpha=0.5, zorder=0)
         ax22.axhline(175, color='red', linestyle='--', linewidth=1, alpha=0.5, zorder=0)
@@ -1123,11 +1108,11 @@ class TetQualityAnalysis:
 
         # 23. Shape Quality CDF
         ax23 = fig.add_subplot(gs_main[3, 4])
-        for n, _ in enumerate( self.meshes ):
-            sq1 = self.validMetrics[n][ "shape_quality"]
-            sorted_sq1 = np.sort(sq1)
+        for n, _ in enumerate( self.meshes, 1 ):
+            shapeQuality = self.validMetrics[n][ "shapeQuality"]
+            sorted_sq1 = np.sort(shapeQuality)
             cdf_sq1 = np.arange(1, len(sorted_sq1) + 1) / len(sorted_sq1) * 100
-            ax23.plot(sorted_sq1, cdf_sq1, color=color[n], linewidth=2, label=f'Mesh {n}')
+            ax23.plot(sorted_sq1, cdf_sq1, color=color[n-1], linewidth=2, label=f'Mesh {n}')
 
         ax23.axvline(0.3, color='red', linestyle='--', linewidth=1, alpha=0.5)
         ax23.axvline(0.7, color='green', linestyle='--', linewidth=1, alpha=0.5)
@@ -1139,7 +1124,7 @@ class TetQualityAnalysis:
         ax23.grid(True, alpha=0.3)
 
         # Save figure
-        output_png = 'mesh_comparison.png'
+        output_png = '/data/pau901/SIM_CS/04_WORKSPACE/USERS/PalomaMartinez/geosPythonPackages/TESST/mesh_comparison.png'
         print(f"\nSaving dashboard to: {output_png}")
         plt.savefig(output_png, dpi=300, bbox_inches='tight', facecolor='white')
         print(f"Dashboard saved successfully!")
@@ -1148,7 +1133,6 @@ class TetQualityAnalysis:
 
 
     def __loggerSection( self: Self, sectionName: str ):
-        # self.logger.info("\n" + "="*80)
         self.logger.info("="*80)
         self.logger.info( sectionName )
         self.logger.info("="*80)
@@ -1156,54 +1140,57 @@ class TetQualityAnalysis:
 
     def __orderMeshes( self: Self ):
         """Proposition of ordering as fonction of median quality score"""
-        self.logger.info( "Ordering the meshes" )
-        median_score = { n :  np.median( self.validMetrics[n]["quality_score"] )  for n, _ in enumerate (self.meshes) }
+        self.__loggerSection( "ORDERING MESHES (from median quality score)")
+        median_score = { n :  np.median( self.validMetrics[n]["qualityScore"] )  for n, _ in enumerate (self.meshes, 1) }
 
         sorted_meshes = sorted( median_score.items(), key=lambda x:x[1], reverse = True )
         self.sorted = sorted_meshes
         self.best = sorted_meshes[ 0 ][0]
         self.worst = sorted_meshes[ -1 ][0]
 
-        self.logger.info( f"Best Mesh: Mesh {self.best} vs worst Mesh [{self.worst}]")
-
         self.logger.info( f"Mesh order from median quality score:" )
         top = [ f"Mesh {m[0]} ({m[1]:.2f})" for m in sorted_meshes ]
         toprint = (" > ").join( top )
-        self.logger.info( " [+] " + toprint + " [-]" )
+        self.logger.info( " [+] " + toprint + " [-]\n" )
+
 
     def compareIssuesFromBest( self: Self ):
-        high_ar1 = self.issues[ self.best ][ "high_aspect_ratio" ]
-        critical_dih1 = self.issues[ self.best ]["critical_dihedral"]
-        low_sq1 = self.issues[ self.best ]["low_shape_quality"]
-        critical_combo1 = self.issues[ self.best ]["critical_combo"]
+        highAspectRatio = self.issues[ self.best ][ "highAspectRatio" ]
+        criticalMinDihedral = self.issues[ self.best ]["criticalMinDihedral"]
+        lowShapeQuality = self.issues[ self.best ]["lowShapeQuality"]
+        criticalCombo = self.issues[ self.best ]["criticalCombo"]
 
         def getPercentChangeFromBest( data, ref ):
             return (data - ref) / max( ref, 1)*100
 
-        self.logger.info (f"Change from BEST [Mesh {self.best}]" )
-        high_ar = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'high_aspect_ratio' ], high_ar1 ):+15,.1f}%" for n, _ in self.sorted ]
-        low_sq = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'low_shape_quality' ], low_sq1 ):+15,.1f}%" for n, _ in self.sorted ]
-        critical_dih = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'critical_dihedral' ], critical_dih1 ):+15,.1f}%" if critical_dih1 > 0 else f"{'N/A':16}" for n, _ in self.sorted]
-        critical_combo = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'critical_combo' ], critical_combo1 ):+15,.1f}%"  if critical_combo1 > 0 else f"{'N/A':16}" for n, _ in self.sorted]
+        msg = f"Change from BEST [Mesh {self.best}]\n"
+        msg += f"  {f'Mesh':20}"+ ("").join([f"{f'Mesh {n}':>16}" for n, _ in enumerate( self.meshes, 1 )]) + "\n"
+        highAspectRatio = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'highAspectRatio' ], highAspectRatio ):>+15,.1f}%" if n!= self.best else f"{'N/A':>16}" for n, _ in enumerate( self.meshes, 1 ) ]
+        lowShapeQuality = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'lowShapeQuality' ], lowShapeQuality ):>+15,.1f}%" if n!= self.best else f"{'N/A':>16}" for n, _ in enumerate( self.meshes, 1 ) ]
+        criticalMinDihedral = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'criticalMinDihedral' ], criticalMinDihedral ):>+15,.1f}%" if criticalMinDihedral > 0 and n!= self.best else f"{'N/A':>16}" for n, _ in enumerate( self.meshes, 1 )]
+        criticalCombo = [ f"{getPercentChangeFromBest( self.issues[ n ][ 'criticalCombo' ], criticalCombo ):>+15,.1f}%"  if criticalCombo > 0 and n!= self.best else f"{'N/A':>16}" for n, _ in enumerate( self.meshes, 1 )]
 
-        self.logger.info( f"{'  AR > 100:':25}{('').join( high_ar )}" )
-        self.logger.info( f"{'  Quality < 0.3:':25}{('').join( low_sq )}" )
-        self.logger.info( f"{'  MinDih < 5°:':25}{('').join( critical_dih )}" )
-        self.logger.info( f"{'  CRITICAL combo:':25}{('').join( critical_combo )}" )
+        msg += f"{'  AR > 100:':20}{('').join( highAspectRatio )}\n"
+        msg += f"{'  Quality < 0.3:':20}{('').join( lowShapeQuality )}\n"
+        msg += f"{'  MinDih < 5°:':20}{('').join( criticalMinDihedral )}\n"
+        msg += f"{'  CRITICAL combo:':20}{('').join( criticalCombo )}\n"
+
+        self.logger.info( msg )
 
 
     def setSampleForPlot( self: Self, data, n ):
         n_sample = min(10000, len( data ))
         self.sample[n] = np.random.choice(len(data), n_sample, replace=False)
 
+
 # Combined quality score
 def compute_quality_score(aspectRatio, shapeQuality, edgeRatio, minDihedralAngle):
     """Compute combined quality score (0-100)."""
-    ar_norm = np.clip(1.0 / (aspectRatio / 1.73), 0, 1)
-    sq_norm = shapeQuality
-    er_norm = np.clip(1.0 / edgeRatio, 0, 1)
-    dih_norm = np.clip(minDihedralAngle / 60.0, 0, 1)
-    score = (0.3 * ar_norm + 0.4 * sq_norm + 0.2 * er_norm + 0.1 * dih_norm) * 100
+    aspectRatioNorm = np.clip(1.0 / (aspectRatio / 1.73), 0, 1)
+    shapeQualityNorm = shapeQuality
+    edgeRatioNorm = np.clip(1.0 / edgeRatio, 0, 1)
+    dihedralMinNorm = np.clip(minDihedralAngle / 60.0, 0, 1)
+    score = (0.3 * aspectRatioNorm + 0.4 * shapeQualityNorm + 0.2 * edgeRatioNorm + 0.1 * dihedralMinNorm) * 100
     return score
 
 
