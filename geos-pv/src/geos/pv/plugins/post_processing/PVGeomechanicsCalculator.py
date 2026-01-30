@@ -93,10 +93,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     @smproperty.doublevector(
         name="GrainBulkModulus",
         label="Grain bulk modulus (Pa)",
@@ -240,6 +236,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             inputMesh (vtkUnstructuredGrid|vtkMultiBlockDataSet): A mesh to transform.
             outputMesh (vtkUnstructuredGrid|vtkMultiBlockDataSet): A mesh transformed.
         """
+        self.counter: CountWarningHandler
         geomechanicsCalculatorFilter: GeomechanicsCalculator
         outputMesh.ShallowCopy( inputMesh )
         mess: str
@@ -261,7 +258,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             try:
                 geomechanicsCalculatorFilter.applyFilter()
                 # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter (useful for the PVGeomechanicsWorkflow)
-                self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.counter.warningCount )
+                self.counter = geomechanicsCalculatorFilter.counter
 
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
             except ( ValueError, AttributeError ) as e:
@@ -278,7 +275,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             logger.propagate = False
 
             logger.info( f"Apply plugin { logger.name }." )
-            # Add the handler to count warnings messages.
+            # Add the handler to count warnings messages to the logger.
+            self.counter: CountWarningHandler = CountWarningHandler()
+            self.counter.setLevel( logging.INFO )
             logger.addHandler( self.counter )
 
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )

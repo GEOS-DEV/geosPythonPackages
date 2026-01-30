@@ -119,10 +119,6 @@ class SurfaceGeomechanics:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
         # Input surfacic mesh
         if not surfacicMesh.IsA( "vtkPolyData" ):
             self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
@@ -241,7 +237,9 @@ class SurfaceGeomechanics:
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         self.outputMesh = vtkPolyData()

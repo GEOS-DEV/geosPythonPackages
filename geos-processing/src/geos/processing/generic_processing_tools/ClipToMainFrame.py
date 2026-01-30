@@ -236,10 +236,6 @@ class ClipToMainFrame( vtkTransformFilter ):
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     def Update( self ) -> None:  # type: ignore[override]
         """Update the filter."""
         super().Update()
@@ -253,7 +249,9 @@ class ClipToMainFrame( vtkTransformFilter ):
     def ComputeTransform( self ) -> None:
         """Update the transformation."""
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         # dispatch to ClipToMainFrame depending on input type

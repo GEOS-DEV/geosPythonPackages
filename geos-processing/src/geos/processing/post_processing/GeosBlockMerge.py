@@ -112,10 +112,6 @@ class GeosBlockMerge():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -144,7 +140,9 @@ class GeosBlockMerge():
             VTKError: Error raises during the call of VTK function.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         # Display phase names

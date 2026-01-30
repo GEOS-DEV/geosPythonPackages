@@ -122,10 +122,6 @@ class CreateConstantAttributePerRegion:
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
         # Logger.
         self.logger: Logger
         if not speHandler:
@@ -159,8 +155,9 @@ class CreateConstantAttributePerRegion:
             AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         # Check the validity of the attribute region.

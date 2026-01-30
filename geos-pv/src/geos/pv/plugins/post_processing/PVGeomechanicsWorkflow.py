@@ -143,14 +143,6 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.logger.setLevel( logging.INFO )
         self.logger.addHandler( VTKHandler() )
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
-        self.logger.info( f"Apply plugin { self.logger.name }." )
-        # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
-
     @smproperty.doublevector(
         name="GrainBulkModulus",
         label="Grain bulk modulus (Pa)",
@@ -330,6 +322,12 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
+        self.logger.addHandler( self.counter )
+
         try:
             self.volumeMesh = self.GetOutputData( outInfoVec, 0 )
             self.faultMesh = self.GetOutputData( outInfoVec, 1 )

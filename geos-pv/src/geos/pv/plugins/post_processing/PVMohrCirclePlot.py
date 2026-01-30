@@ -176,19 +176,11 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # Logger
         self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
         self.logger.setLevel( logging.INFO )
-        if not self.logger.hasHandlers():
+        if len( self.logger.handlers ) == 0:
             handler = VTKHandler()
             handler.setFormatter( CustomLoggerFormatter( False ) )
 
             self.logger.addHandler( handler )
-
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
-        self.logger.info( f"Apply plugin { self.logger.name }." )
-        # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
 
     @smproperty.xml( """
         <Property name="Refresh Data"
@@ -756,6 +748,10 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
 
             if self.requestDataStep == 1:
                 self.logger.info( "Computing Mohr circles for requested time steps and cell Ids." )
+                # Add the handler to count warnings messages to the logger.
+                self.counter: CountWarningHandler = CountWarningHandler()
+                self.counter.setLevel( logging.INFO )
+                self.logger.addHandler( self.counter )
 
             if self.requestDataStep < len( self.timeSteps ):
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )  # type: ignore[no-any-return]

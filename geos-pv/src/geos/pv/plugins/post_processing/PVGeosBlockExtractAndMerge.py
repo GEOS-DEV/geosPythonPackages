@@ -134,14 +134,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         self.logger.addHandler( VTKHandler() )
         self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
-        self.logger.info( f"Apply plugin { self.logger.name }." )
-        # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
-
     def RequestDataObject(
         self: Self,
         request: vtkInformation,
@@ -279,6 +271,12 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         # First time step, compute the initial properties (useful for geomechanics analyses)
         if self.requestDataStep == 0:
+            self.logger.info( f"Apply plugin { self.logger.name }." )
+            # Add the handler to count warnings messages to the logger.
+            self.counter: CountWarningHandler = CountWarningHandler()
+            self.counter.setLevel( logging.INFO )
+            self.logger.addHandler( self.counter )
+
             self.logger.info(
                 f"Apply the plugin { self.logger.name } for the first time step to get the initial properties." )
             try:

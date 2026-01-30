@@ -75,10 +75,6 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.logger.addHandler( VTKHandler() )
         self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     @smproperty.doublevector(
         name="RockCohesion",
         label="Rock Cohesion (Pa)",
@@ -129,7 +125,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             outputMesh (vtkMultiBlockDataSet): The output multiblock mesh with converted attributes and SCU.
         """
         self.logger.info( f"Apply plugin { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         outputMesh.ShallowCopy( inputMesh )

@@ -91,10 +91,6 @@ class MergeBlockEnhanced:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -116,7 +112,9 @@ class MergeBlockEnhanced:
             VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         outputMesh: vtkUnstructuredGrid

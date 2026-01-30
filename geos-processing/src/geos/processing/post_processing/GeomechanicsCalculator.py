@@ -712,10 +712,6 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh.
 
@@ -724,7 +720,9 @@ class GeomechanicsCalculator:
             ValueError: Something went wrong during the creation of an attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages.
+        # Add the handler to count warnings messages to the logger.
+        self.counter: CountWarningHandler = CountWarningHandler()
+        self.counter.setLevel( logging.INFO )
         self.logger.addHandler( self.counter )
 
         self._checkMandatoryProperties()
