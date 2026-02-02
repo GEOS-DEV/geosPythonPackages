@@ -84,7 +84,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
     After a first application, select again cells and time steps to display, then
         * Apply again
         * Click on `Refresh Data` (you may have to click twice to refresh the Python view correctly).
-    To visualize the index of the cell used to calculate Mohr circle, use the ParaView tool 'Find Data':
+    To visualize the index of the cell(s) used to calculate Mohr circle, use the ParaView tool 'Find Data':
         * The attribute 'ActiveCellMask' allows to select only the right cells (equal to 1).
         * The attribute 'CellId' has to be used for the 'Selection Labels'.
 """
@@ -843,7 +843,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _filterMohrCircles( self: Self ) -> list[ MohrCircle ]:
         """Filter the list of all MohrCircle to get those to plot.
 
-        Mohr circles are sort by cell indexes first then by timesteps.
+        Mohr circles are sorted by cell indexes first, then by timesteps.
 
         Returns:
             list[MohrCircle]: list of MohrCircle to plot.
@@ -882,7 +882,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
     def _getCircleIds( self: Self ) -> list[ str ]:
         """Get circle ids to plot.
 
-        This list of circle indexes is sort by cell indexes first then by timesteps
+        This list of circle indexes is sorted by cell indexes first, then by timesteps
 
         Returns:
             list[str]: list of circle ids to plot.
