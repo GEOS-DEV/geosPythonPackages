@@ -56,7 +56,7 @@ To use it:
 class PVTetQualityAnalysis( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
-        """QC analysis of the tetrahedras from 2 meshes."""
+        """QC analysis of the tetrahedras from two meshes."""
         super().__init__( nInputPorts=2, inputType="vtkObject" )
 
         self._filename: Optional[ str ] = None
