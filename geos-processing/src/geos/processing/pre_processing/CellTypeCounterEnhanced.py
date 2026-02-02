@@ -9,7 +9,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 
 __doc__ = """
 CellTypeCounterEnhanced module is a vtk filter that computes cell type counts.
@@ -68,7 +68,7 @@ class CellTypeCounterEnhanced():
         self.outTable: vtkTable = vtkTable()
         self._counts: CellTypeCounts = CellTypeCounts()
 
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
             self.logger = getLogger( loggerTitle, True )
@@ -76,6 +76,18 @@ class CellTypeCounterEnhanced():
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -86,11 +98,10 @@ class CellTypeCounterEnhanced():
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not be added." )
 
     def applyFilter( self: Self ) -> None:
         """Apply CellTypeCounterEnhanced filter.
@@ -99,10 +110,6 @@ class CellTypeCounterEnhanced():
             TypeError: Errors with the type of the cells.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         # Compute cell type counts
         self._counts.reset()
@@ -131,6 +138,9 @@ class CellTypeCounterEnhanced():
             self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
         else:
             self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 

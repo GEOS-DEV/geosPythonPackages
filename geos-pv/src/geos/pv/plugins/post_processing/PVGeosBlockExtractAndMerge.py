@@ -23,7 +23,7 @@ from geos.mesh.utils.multiblockHelpers import getBlockNames
 
 from geos.utils.Errors import VTKError
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import CountWarningHandler
+from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNameEnum,
                                               getAttributeToTransferFromInitialTime )
 
@@ -129,10 +129,23 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         self.outputCellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
 
+        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( self.handler )
         self.logger.propagate = False
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def RequestDataObject(
         self: Self,
@@ -271,12 +284,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         # First time step, compute the initial properties (useful for geomechanics analyses)
         if self.requestDataStep == 0:
-            self.logger.info( f"Apply plugin { self.logger.name }." )
-            # Add the handler to count warnings messages to the logger.
-            self.counter: CountWarningHandler = CountWarningHandler()
-            self.counter.setLevel( logging.INFO )
-            self.logger.addHandler( self.counter )
-
             self.logger.info(
                 f"Apply the plugin { self.logger.name } for the first time step to get the initial properties." )
             try:
@@ -331,5 +338,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             except Exception as e:
                 mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
                 self.logger.critical( mess, exc_info=True )
+
+            self.nbWarnings = self.counter.warningCount
+            self.counter.resetWarningCount()
 
         return 1

@@ -23,7 +23,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Logger import CountWarningHandler
+from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
@@ -92,6 +92,24 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         ## For advanced properties
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
+
+        self.handler: logging.Handler = VTKHandler()
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( self.handler )
+        self.logger.propagate = False
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     @smproperty.doublevector(
         name="GrainBulkModulus",
@@ -236,7 +254,6 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             inputMesh (vtkUnstructuredGrid|vtkMultiBlockDataSet): A mesh to transform.
             outputMesh (vtkUnstructuredGrid|vtkMultiBlockDataSet): A mesh transformed.
         """
-        self.counter: CountWarningHandler
         geomechanicsCalculatorFilter: GeomechanicsCalculator
         outputMesh.ShallowCopy( inputMesh )
         mess: str
@@ -244,11 +261,12 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             geomechanicsCalculatorFilter = GeomechanicsCalculator(
                 outputMesh,
                 self.computeAdvancedProperties,
+                loggerName= "Geomechanics Calculators on the unstructured grid",
                 speHandler=True,
             )
 
-            if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
-                geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
+            if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
+                geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
             geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
@@ -258,7 +276,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
             try:
                 geomechanicsCalculatorFilter.applyFilter()
                 # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter (useful for the PVGeomechanicsWorkflow)
-                self.counter = geomechanicsCalculatorFilter.counter
+                self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
 
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
             except ( ValueError, AttributeError ) as e:
@@ -269,16 +287,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
 
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
-            logger = logging.getLogger( loggerTitle )
-            logger.setLevel( logging.INFO )
-            logger.addHandler( VTKHandler() )
-            logger.propagate = False
-
-            logger.info( f"Apply plugin { logger.name }." )
-            # Add the handler to count warnings messages to the logger.
-            self.counter: CountWarningHandler = CountWarningHandler()
-            self.counter.setLevel( logging.INFO )
-            logger.addHandler( self.counter )
+            self.logger.info( f"Apply plugin { self.logger.name }." )
 
             volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
             for blockIndex in volumeBlockIndexes:
@@ -294,8 +303,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     True,
                 )
 
-                if len( geomechanicsCalculatorFilter.logger.handlers ) == 0:
-                    geomechanicsCalculatorFilter.setLoggerHandler( VTKHandler() )
+                if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
+                    geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
 
                 geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
                 geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
@@ -305,7 +314,7 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 try:
                     geomechanicsCalculatorFilter.applyFilter()
                     # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
-                    self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.counter.warningCount )
+                    self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
 
                     volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
                     volumeBlock.Modified()
@@ -316,12 +325,14 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
                     geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
 
-            result: str = f"The filter { logger.name } succeeded"
+            result: str = f"The filter { self.logger.name } succeeded"
             if self.counter.warningCount > 0:
-                logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+                self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
             else:
-                logger.info( f"{ result }." )
+                self.logger.info( f"{ result }." )
 
         outputMesh.Modified()
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return

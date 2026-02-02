@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Raphaël Vinour, Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing import Union
 from typing_extensions import Self
@@ -27,6 +28,7 @@ from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkDataSet, vtkMu
 
 from geos.pv.utils.details import FilterCategory
 from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 AttributeMapping is a paraview plugin that transfers global attributes from a source mesh to a final mesh with same point/cell coordinates.
@@ -74,6 +76,7 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         self.piece: Piece = Piece.CELLS
         self.clearAttributeNames = True
         self.attributeNames: list[ str ] = []
+        self.handler: logging.Handler = VTKHandler()
 
     @smproperty.intvector(
         name="AttributePiece",
@@ -187,17 +190,18 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
                                                                      self.piece, True )
 
-        if len( attributeMappingFilter.logger.handlers ) == 0:
-            attributeMappingFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( self.handler, attributeMappingFilter.logger ):
+            attributeMappingFilter.setLoggerHandler( self.handler )
 
         try:
             attributeMappingFilter.applyFilter()
-            self.clearAttributeNames = True
         except ( ValueError, AttributeError ) as e:
             attributeMappingFilter.logger.error(
                 f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }" )
         except Exception as e:
             mess: str = f"The filter { attributeMappingFilter.logger.name } failed due to:\n{ e }"
             attributeMappingFilter.logger.critical( mess, exc_info=True )
+
+        self.clearAttributeNames = True
 
         return 1

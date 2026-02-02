@@ -105,8 +105,13 @@ class CountWarningHandler( logging.Handler ):
         super().__init__()
         self.warningCount = 0
 
-    def resetWarningCount( self: Self ) -> None:
-        """Reset the warning counter to 0."""
+    def resetWarningCount( self: Self, value: int = 0 ) -> None:
+        """Set the warning counter to a specific value.
+
+        Args:
+            value (optional, int): The value to set for the warning counter.
+                Defaults to 0.
+        """
         self.warningCount = 0
 
     def addExternalWarningCount( self: Self, externalWarningCount: int ) -> None:
@@ -125,6 +130,62 @@ class CountWarningHandler( logging.Handler ):
         """
         if record.levelno == logging.WARNING:
             self.warningCount += 1
+
+
+def getLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> logging.Handler:
+    """Get the logger handler with a certain type.
+
+    Args:
+        handlerType (type): The type of the handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        logging.Handler: The first logger handler with the correct type.
+
+    Raises:
+        ValueError: The logger has no handler with the wanted type.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    for loggerHandler in listLoggerHandlers:
+        if type( loggerHandler ) == handlerType:
+            return loggerHandler
+
+    raise ValueError( "The logger has no handler with the wanted type." )
+
+
+def hasLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> bool:
+    """Check if the logger has a handler with a certain type.
+
+    Args:
+        handlerType (type): The type of the handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        bool: True if the logger has a handler with the same type, False otherwise.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    for loggerHandler in listLoggerHandlers:
+        if type( loggerHandler ) == handlerType:
+            return True
+
+    return False
+
+def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> bool:
+    """Check if the handler is in the logger.
+
+    Args:
+        handler (logging.Handler): The handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        bool: True if the logger has the handler, False otherwise.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    for loggerHandler in listLoggerHandlers:
+        if type( handler ) == type( loggerHandler )  and loggerHandler.__dict__ == handler.__dict__:
+            return True
+
+    return False
 
 
 # Add the convenience method for the logger

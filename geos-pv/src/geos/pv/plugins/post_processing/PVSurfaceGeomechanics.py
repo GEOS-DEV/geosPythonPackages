@@ -22,7 +22,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 update_paths()
 
 from geos.utils.Errors import VTKError
-from geos.utils.Logger import CountWarningHandler
+from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -70,10 +70,23 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         # friction angle (°)
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
+        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( self.handler )
         self.logger.propagate = False
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     @smproperty.doublevector(
         name="RockCohesion",
@@ -125,10 +138,6 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             outputMesh (vtkMultiBlockDataSet): The output multiblock mesh with converted attributes and SCU.
         """
         self.logger.info( f"Apply plugin { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         outputMesh.ShallowCopy( inputMesh )
 
@@ -138,8 +147,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
 
             loggerName: str = f"Surface geomechanics for the blockIndex { blockIndex }"
             sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, loggerName, True )
-            if len( sgFilter.logger.handlers ) == 0:
-                sgFilter.SetLoggerHandler( VTKHandler() )
+
+            if not isHandlerInLogger( self.handler, sgFilter.logger ):
+                sgFilter.SetLoggerHandler( self.handler )
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
@@ -147,7 +157,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             try:
                 sgFilter.applyFilter()
                 # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics filter
-                self.counter.addExternalWarningCount( sgFilter.counter.warningCount )
+                self.counter.addExternalWarningCount( sgFilter.nbWarnings )
 
                 outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
@@ -170,6 +180,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             self.logger.info( f"{ result }." )
 
         outputMesh.Modified()
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
         return
 
     def _getFrictionAngle( self: Self ) -> float:

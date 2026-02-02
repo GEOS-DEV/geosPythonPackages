@@ -8,7 +8,7 @@ from typing_extensions import Self
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( PHASE_SEP, PhaseTypeEnum, FluidPrefixEnum, PostProcessingOutputsEnum,
                                               getRockSuffixRenaming )
 
@@ -95,7 +95,6 @@ class GeosBlockMerge():
         """
         self.inputMesh: vtkMultiBlockDataSet = inputMesh
         self.convertFaultToSurface: bool = convertFaultToSurface
-        self.handler: None | logging.Handler = None
 
         self.outputMesh: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
         self.phaseNameDict: dict[ str, set[ str ] ] = {
@@ -112,6 +111,18 @@ class GeosBlockMerge():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -120,13 +131,10 @@ class GeosBlockMerge():
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
-            self.handler = handler
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has this handler, it has not be added." )
 
     def getOutput( self: Self ) -> vtkMultiBlockDataSet:
         """Get the mesh with the composite blocks merged."""
@@ -140,10 +148,6 @@ class GeosBlockMerge():
             VTKError: Error raises during the call of VTK function.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         # Display phase names
         self.computePhaseNames()
@@ -193,6 +197,9 @@ class GeosBlockMerge():
             self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
         else:
             self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 

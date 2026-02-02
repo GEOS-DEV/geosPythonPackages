@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, is
 from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_ROCK_COHESION )
 from geos.utils.GeosOutputsConstants import ( ComponentNameEnum, GeosMeshOutputsEnum, PostProcessingOutputsEnum )
 
@@ -119,9 +119,21 @@ class SurfaceGeomechanics:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
         # Input surfacic mesh
         if not surfacicMesh.IsA( "vtkPolyData" ):
-            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
+            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a { type( surfacicMesh ) }." )
         self.inputMesh: vtkPolyData = surfacicMesh
         # Identification of the input surface (logging purpose)
         self.name: Union[ str, None ] = None
@@ -150,12 +162,10 @@ class SurfaceGeomechanics:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has this handler, it has not be added." )
 
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.
@@ -237,10 +247,6 @@ class SurfaceGeomechanics:
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         self.logger.info( f"Applying filter { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -258,6 +264,9 @@ class SurfaceGeomechanics:
             self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
         else:
             self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 

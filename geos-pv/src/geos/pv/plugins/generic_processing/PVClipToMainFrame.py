@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Jacques Franc
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase  # type: ignore[import-not-found]
@@ -21,6 +22,7 @@ update_paths()
 
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from geos.processing.generic_processing_tools.ClipToMainFrame import ClipToMainFrame
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 Clip the input mesh to the main frame applying the correct LandmarkTransform
@@ -43,8 +45,10 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame( speHandler=True )
-        if len( self._realFilter.logger.handlers ) == 0:
-            self._realFilter.SetLoggerHandler( VTKHandler() )
+        self.handler: logging.Handler = VTKHandler()
+
+        if not isHandlerInLogger( self.handler, self._realFilter.logger ):
+            self._realFilter.SetLoggerHandler( self.handler )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying CreateConstantAttributePerRegion filter.

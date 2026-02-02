@@ -9,7 +9,7 @@ from typing_extensions import Self, Union
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet
 from geos.mesh.utils.arrayModifiers import transferAttributeWithElementMap
 from geos.mesh.utils.arrayHelpers import ( computeElementMapping, getAttributeSet, isAttributeGlobal )
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -111,6 +111,18 @@ class AttributeMapping:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -120,11 +132,10 @@ class AttributeMapping:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not be added." )
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.
@@ -146,10 +157,6 @@ class AttributeMapping:
             AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         if len( self.attributeNames ) == 0:
             raise ValueError( "Please enter at least one attribute to transfer." )
@@ -188,6 +195,8 @@ class AttributeMapping:
             transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.piece,
                                              self.logger )
 
+        self.logger.warning( "test" )
+
         # Log the output message.
         self.logger.info(
             f"The attributes { self.attributeNames } have been transferred from the source mesh to the final mesh with a { self.piece.value } mapping.\n"
@@ -197,3 +206,8 @@ class AttributeMapping:
             self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
         else:
             self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return

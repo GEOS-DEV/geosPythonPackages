@@ -2,9 +2,10 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
+import logging
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
-from geos.utils.Logger import CountWarningHandler
+from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger )
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
@@ -36,12 +37,13 @@ def doExtractAndMerge(
                                                              extractFault=extractFault,
                                                              extractWell=extractWell,
                                                              speHandler=True )
-    if len( blockExtractor.logger.handlers ) == 0:
-        blockExtractor.setLoggerHandler( VTKHandler() )
+    handler: logging.Handler = VTKHandler()
+    if not isHandlerInLogger( handler, blockExtractor.logger ):
+        blockExtractor.setLoggerHandler( handler )
 
     blockExtractor.applyFilter()
     # Add to the warning counter the number of warning logged with the call of GeosBlockExtractor filter
-    warningCounter.addExternalWarningCount( blockExtractor.counter.warningCount )
+    warningCounter.addExternalWarningCount( blockExtractor.nbWarnings )
 
     # recover output objects from GeosBlockExtractor filter and merge internal blocks
     volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
@@ -82,11 +84,13 @@ def mergeBlocksFilter(
     """
     loggerName = f"GEOS Block Merge for the domain { domainToMerge }"
     mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True, loggerName )
-    if len( mergeBlockFilter.logger.handlers ) == 0:
-        mergeBlockFilter.setLoggerHandler( VTKHandler() )
+    handler: logging.Handler = VTKHandler()
+    if not isHandlerInLogger( handler, mergeBlockFilter.logger ):
+        mergeBlockFilter.setLoggerHandler( handler )
+
     mergeBlockFilter.applyFilter()
     # Add to the warning counter the number of warning logged with the call of GeosBlockMerge filter
-    warningCounter.addExternalWarningCount( mergeBlockFilter.counter.warningCount )
+    warningCounter.addExternalWarningCount( mergeBlockFilter.nbWarnings )
 
     mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
     mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )

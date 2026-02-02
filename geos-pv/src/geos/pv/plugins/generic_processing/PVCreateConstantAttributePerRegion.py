@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 import numpy as np
 from pathlib import Path
 
@@ -26,6 +27,7 @@ update_paths()
 
 from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 PVCreateConstantAttributePerRegion is a Paraview plugin that allows to create an attribute
@@ -70,6 +72,7 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
         # Use the handler of paraview for the log.
         self.speHandler: bool = True
+        self.handler: logging.Handler = VTKHandler()
 
     # Settings of the attribute with the region indexes:
     @smproperty.stringvector(
@@ -289,8 +292,8 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if len( createConstantAttributePerRegionFilter.logger.handlers ) == 0:
-            createConstantAttributePerRegionFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( self.handler, createConstantAttributePerRegionFilter.logger ):
+            createConstantAttributePerRegionFilter.setLoggerHandler( self.handler )
 
         try:
             createConstantAttributePerRegionFilter.applyFilter()

@@ -12,7 +12,7 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, v
                                             VTK_POLYHEDRON, VTK_POLYGON )
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
@@ -84,6 +84,18 @@ class SplitMesh():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
 
@@ -93,11 +105,10 @@ class SplitMesh():
             handler (logging.Handler): The handler to add.
         """
         self.handler = handler
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not be added." )
 
     def applyFilter( self: Self ) -> None:
         """Apply the filter SplitMesh.
@@ -107,10 +118,6 @@ class SplitMesh():
             AttributeError: Errors with cell data.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-        # Add the handler to count warnings messages to the logger.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-        self.logger.addHandler( self.counter )
 
         # Count the number of cells before splitting. Then we will be able to know how many new cells and points
         # to allocate because each cell type is splitted in a known number of new cells and points.
@@ -182,6 +189,9 @@ class SplitMesh():
         else:
             self.logger.info( f"{ result }." )
 
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
         return
 
     def getOutput( self: Self ) -> vtkUnstructuredGrid:
@@ -196,11 +206,13 @@ class SplitMesh():
         """
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
             self.inputMesh, self.speHandler )
-        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+        if self.speHandler and not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
+
         cellTypeCounterEnhancedFilter.applyFilter()
         # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
-        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.counter.warningCount )
+        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.nbWarnings )
+
         return cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
 
     def _addMidPoint( self: Self, ptA: int, ptB: int ) -> int:
