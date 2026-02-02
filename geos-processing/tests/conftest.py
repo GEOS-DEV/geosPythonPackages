@@ -46,6 +46,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/domain_res5_id_empty.vtu"
         elif datasetType == "meshGeosExtractBlockTmp":
             vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
+        elif datasetType == "meshtet1":
+            vtkFilename = "data/mesh1.vtu"
+        elif datasetType == "meshtet1b":
+            vtkFilename = "data/mesh1b.vtu"
 
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
