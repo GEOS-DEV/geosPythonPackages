@@ -436,19 +436,19 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     # For each 2D cell, find its adjacent 3D cell and copy the node mapping
     setupLogger.info("Building 2D cell mappings from adjacent 3D cells...")
     cell_2d_to_mapping: dict[ int, dict[ int, int ] ] = {}
-    
+
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Matching 2D to 3D cells" ):
         cell2d: vtkCell = oldMesh.GetCell( c )
         if cell2d.GetCellDimension() != 2:
             continue
-        
+
         # Get the point IDs of this 2D cell
         pointIds = cell2d.GetPointIds()
-        
+
         # Find a 3D cell neighbor
         neighborIds = vtkIdList()
         oldMesh.GetCellNeighbors( c, pointIds, neighborIds )
-        
+
         # Use the first 3D neighbor's mapping
         for i in range( neighborIds.GetNumberOfIds() ):
             neighborId = neighborIds.GetId( i )
@@ -458,9 +458,9 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
                 if neighborId in cellToNodeMapping:
                     cell_2d_to_mapping[ c ] = dict( cellToNodeMapping[ neighborId ] )
                 break
-    
+
     setupLogger.info(f"Found mappings for {len(cell_2d_to_mapping)} 2D cells")
-    
+
     # Merge 2D mappings into main mapping
     combined_mapping = dict( cellToNodeMapping )
     combined_mapping.update( cell_2d_to_mapping )
