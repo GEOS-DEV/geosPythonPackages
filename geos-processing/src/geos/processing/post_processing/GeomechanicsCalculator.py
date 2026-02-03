@@ -718,7 +718,7 @@ class GeomechanicsCalculator:
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
-        except:
+        except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
 

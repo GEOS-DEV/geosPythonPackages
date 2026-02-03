@@ -59,9 +59,7 @@ To use it:
 """
 
 
-@SISOFilter( category=FilterCategory.QC,
-             decoratedLabel="Mesh Quality Enhanced",
-             decoratedType="vtkUnstructuredGrid" )
+@SISOFilter( category=FilterCategory.QC, decoratedLabel="Mesh Quality Enhanced", decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:

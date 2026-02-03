@@ -112,7 +112,7 @@ class CountWarningHandler( logging.Handler ):
             value (optional, int): The value to set for the warning counter.
                 Defaults to 0.
         """
-        self.warningCount = 0
+        self.warningCount = value
 
     def addExternalWarningCount( self: Self, externalWarningCount: int ) -> None:
         """Add external warning count.
@@ -147,7 +147,7 @@ def getLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> logging
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
     for loggerHandler in listLoggerHandlers:
-        if type( loggerHandler ) == handlerType:
+        if isinstance( type( loggerHandler ), handlerType ):
             return loggerHandler
 
     raise ValueError( "The logger has no handler with the wanted type." )
@@ -164,11 +164,8 @@ def hasLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> bool:
         bool: True if the logger has a handler with the same type, False otherwise.
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
-    for loggerHandler in listLoggerHandlers:
-        if type( loggerHandler ) == handlerType:
-            return True
+    return any( isinstance( type( loggerHandler ), handlerType ) for loggerHandler in listLoggerHandlers )
 
-    return False
 
 def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> bool:
     """Check if the handler is in the logger.
@@ -182,7 +179,7 @@ def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> boo
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
     for loggerHandler in listLoggerHandlers:
-        if type( handler ) == type( loggerHandler )  and loggerHandler.__dict__ == handler.__dict__:
+        if isinstance( type( handler ), type( loggerHandler ) ) and loggerHandler.__dict__ == handler.__dict__:
             return True
 
     return False

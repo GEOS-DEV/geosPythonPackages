@@ -35,7 +35,7 @@ from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import CountWarningHandler
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
-from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
+from geos.utils.Logger import ( getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_FRICTION_ANGLE_RAD,
                                            DEFAULT_ROCK_COHESION )
 from geos.mesh.utils.arrayHelpers import getArrayInObject
@@ -193,7 +193,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
-        except:
+        except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
 
