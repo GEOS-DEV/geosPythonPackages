@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez, Romain Baville
-from copy import deepcopy
 import logging
 import numpy as np
 import numpy.typing as npt
@@ -19,13 +18,30 @@ from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
-ArrayHelpers module contains several utilities methods to get information on arrays in VTK datasets.
+ArrayHelpers module contains several utilities methods to get information on arrays in VTK meshes.
 
-These methods include:
-    - mesh element localization mapping by indexes
-    - array getters, with conversion into numpy array or pandas dataframe
-    - boolean functions to check whether an array is present in the dataset
-    - bounds getter for vtu and multiblock datasets
+There are two types of functions:
+    - Getters
+    - Checks
+
+The getter functions:
+    - get the array of an attribute (one for dataset, one for multiblockDataset, one for the both and one for fieldData)
+    - get the component names of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the number of components of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the piece of an attribute (for any meshes)
+    - get the values of an attribute as data frame (for polyData only)
+    - get the vtk type of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the set of attributes on one piece of a mesh (for any mesh)
+    - get the attribute and they number of component on one piece of a mesh (one for dataset, one for multiblockDataset and one for the both)
+    - get all the cells dimension of a mesh (for any meshes)
+    - get the GlobalIds array on one piece of a mesh (for any meshes)
+    - get the cell center coordinates of a mesh
+    - get the mapping between cells or points shared by two meshes
+
+The check functions:
+    - check if an attribute is on a mesh (one for dataset, one for multiblockDataset, one for the both and one for a list of attributes)
+    - check if an attribute is global (for multiblockDataset meshes)
+    - check if a value is a value of an attribute (one for dataset and one for multiblockDataset)
 """
 
 
@@ -38,46 +54,21 @@ def getCellDimension( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ] ) -> set[ 
     Returns:
         set[int]: The set of the different cells dimension in the input mesh.
     """
+    cellDim: set[ int ] = set()
     if isinstance( mesh, vtkDataSet ):
-        return getCellDimensionDataSet( mesh )
+        cellIter = mesh.NewCellIterator()
+        cellIter.InitTraversal()
+        while not cellIter.IsDoneWithTraversal():
+            cellDim.add( cellIter.GetCellDimension() )
+            cellIter.GoToNextCell()
     elif isinstance( mesh, vtkMultiBlockDataSet ):
-        return getCellDimensionMultiBlockDataSet( mesh )
+        listDataSetFlattenIds: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for dataSetFlattenId in listDataSetFlattenIds:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( dataSetFlattenId ) )
+            cellDim.update( getCellDimension( dataSet ) )
     else:
         raise TypeError( "The input mesh must be a vtkMultiBlockDataSet or a vtkDataSet." )
 
-
-def getCellDimensionMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet ) -> set[ int ]:
-    """Get the set of the different cells dimension of a multiBlockDataSet.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet): The input mesh with the cells dimension to get.
-
-    Returns:
-        set[int]: The set of the different cells dimension in the input multiBlockDataSet.
-    """
-    cellDim: set[ int ] = set()
-    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for flatIdDataSet in listFlatIdDataSet:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
-        cellDim = cellDim.union( getCellDimensionDataSet( dataSet ) )
-    return cellDim
-
-
-def getCellDimensionDataSet( dataSet: vtkDataSet ) -> set[ int ]:
-    """Get the set of the different cells dimension of a dataSet.
-
-    Args:
-        dataSet (vtkDataSet): The input mesh with the cells dimension to get.
-
-    Returns:
-        set[int]: The set of the different cells dimension in the input dataSet.
-    """
-    cellDim: set[ int ] = set()
-    cellIter = dataSet.NewCellIterator()
-    cellIter.InitTraversal()
-    while not cellIter.IsDoneWithTraversal():
-        cellDim.add( cellIter.GetCellDimension() )
-        cellIter.GoToNextCell()
     return cellDim
 
 
@@ -112,238 +103,83 @@ def computeElementMapping(
     Returns:
         elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells between the two meshes.
     """
+    if piece not in [ Piece.CELLS, Piece.POINTS ]:
+        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped." )
+
     elementMap: dict[ int, npt.NDArray ] = {}
     if isinstance( meshTo, vtkDataSet ):
-        UpdateElementMappingToDataSet( meshFrom, meshTo, elementMap, piece )
-    elif isinstance( meshTo, vtkMultiBlockDataSet ):
-        UpdateElementMappingToMultiBlockDataSet( meshFrom, meshTo, elementMap, piece )
+        nbElementsTo: int = meshTo.GetNumberOfPoints() if piece == Piece.POINTS else meshTo.GetNumberOfCells()
+        elementMap[ 0 ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
+        if isinstance( meshFrom, vtkDataSet ):
+            idElementsFromFund: list[ int ] = []
+            nbElementsFrom: int = meshFrom.GetNumberOfPoints() if piece == Piece.POINTS else meshFrom.GetNumberOfCells()
+            for idElementTo in range( nbElementsTo ):
+                typeElemTo: int
+                coordElementTo: set[ tuple[ float, ...] ] = set()
+                if piece == Piece.POINTS:
+                    typeElemTo = 0
+                    coordElementTo.add( meshTo.GetPoint( idElementTo ) )
+                else:
+                    cellTo: vtkCell = meshTo.GetCell( idElementTo )
+                    typeElemTo = cellTo.GetCellType()
+                    # Get the coordinates of each points of the cell.
+                    nbPointsTo: int = cellTo.GetNumberOfPoints()
+                    cellPointsTo: vtkPoints = cellTo.GetPoints()
+                    for idPointTo in range( nbPointsTo ):
+                        coordElementTo.add( cellPointsTo.GetPoint( idPointTo ) )
 
-    return elementMap
+                idElementFrom: int = 0
+                elementFromFund: bool = False
+                while idElementFrom < nbElementsFrom and not elementFromFund:
+                    # Test if the element of the source mesh is already mapped.
+                    if idElementFrom not in idElementsFromFund:
+                        typeElemFrom: int
+                        coordElementFrom: set[ tuple[ float, ...] ] = set()
+                        if piece == Piece.POINTS:
+                            typeElemFrom = 0
+                            coordElementFrom.add( meshFrom.GetPoint( idElementFrom ) )
+                        else:
+                            cellFrom: vtkCell = meshFrom.GetCell( idElementFrom )
+                            typeElemFrom = cellFrom.GetCellType()
+                            # Get the coordinates of each points of the face.
+                            nbPointsFrom: int = cellFrom.GetNumberOfPoints()
+                            cellPointsFrom: vtkPoints = cellFrom.GetPoints()
+                            for idPointFrom in range( nbPointsFrom ):
+                                coordElementFrom.add( cellPointsFrom.GetPoint( idPointFrom ) )
 
-
-def UpdateElementMappingToMultiBlockDataSet(
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-    multiBlockDataSetTo: vtkMultiBlockDataSet,
-    elementMap: dict[ int, npt.NDArray ],
-    piece: Piece,
-) -> None:
-    """Update the map of points/cells between the source mesh and the final mesh.
-
-    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
-
-    Add the mapping for of the final mesh:
-        - Keys are the flat index of all the datasets of the final mesh.
-        - Items are arrays of size (nb elements in datasets of the final mesh, 2).
-
-    For each element (idElementTo) of each dataset (flatIdDataSetTo) of final mesh,
-    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
-    are the same as the coordinates of the element of the final mesh,
-    elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom]
-    else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
-
-    For cells, the coordinates of the points in the cell are compared.
-    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
-
-    Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
-        multiBlockDataSetTo (vtkMultiBlockDataSet): The final mesh with the reference element coordinates.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update.
-        piece (Piece): The piece to map.
-    """
-    listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
-    for flatIdDataSetTo in listFlatIdDataSetTo:
-        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( flatIdDataSetTo ) )
-        UpdateElementMappingToDataSet( meshFrom, dataSetTo, elementMap, piece, flatIdDataSetTo=flatIdDataSetTo )
-
-
-def UpdateElementMappingToDataSet(
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-    dataSetTo: vtkDataSet,
-    elementMap: dict[ int, npt.NDArray ],
-    piece: Piece,
-    flatIdDataSetTo: int = 0,
-) -> None:
-    """Update the piece map of points/cells between the source mesh and the final mesh.
-
-    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
-
-    Add the mapping for the final mesh:
-        - The key is the flat index of the final mesh.
-        - The item is an array of size (nb elements in the final mesh, 2).
-
-    For each element (idElementTo) of the final mesh,
-    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
-    are the same as the coordinates of the element of the final mesh,
-    elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom]
-    else, elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
-
-    For cells, the coordinates of the points in the cell are compared.
-    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
-
-    Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the element to map.
-        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update.
-        piece (Piece): The piece to map.
-        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
-            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
-    """
-    nbElementsTo: int
-    if piece == Piece.POINTS:
-        nbElementsTo = dataSetTo.GetNumberOfPoints()
-    elif piece == Piece.CELLS:
-        nbElementsTo = dataSetTo.GetNumberOfCells()
-    else:
-        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped." )
-
-    elementMap[ flatIdDataSetTo ] = np.full( ( nbElementsTo, 2 ), -1, np.int64 )
-    if isinstance( meshFrom, vtkDataSet ):
-        UpdateDictElementMappingFromDataSetToDataSet( meshFrom,
-                                                      dataSetTo,
-                                                      elementMap,
-                                                      piece,
-                                                      flatIdDataSetTo=flatIdDataSetTo )
-    elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-        UpdateElementMappingFromMultiBlockDataSetToDataSet( meshFrom,
-                                                            dataSetTo,
-                                                            elementMap,
-                                                            piece,
-                                                            flatIdDataSetTo=flatIdDataSetTo )
-
-
-def UpdateElementMappingFromMultiBlockDataSetToDataSet(
-    multiBlockDataSetFrom: vtkMultiBlockDataSet,
-    dataSetTo: vtkDataSet,
-    elementMap: dict[ int, npt.NDArray ],
-    piece: Piece,
-    flatIdDataSetTo: int = 0,
-) -> None:
-    """Update the map of points/cells between the source mesh and the final mesh.
-
-    For each element (idElementTo) of the final mesh not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
-    if the coordinates of an element (idElementFrom) of one dataset (flatIdDataSetFrom) of the source mesh
-    are the same as the coordinates of the element of the final mesh,
-    the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
-
-    For cells, the coordinates of the points in the cell are compared.
-    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
-
-    Args:
-        multiBlockDataSetFrom (vtkMultiBlockDataSet): The source mesh with the element to map.
-        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update with;
-            The key is the flat index of the final mesh.
-            The item is an array of size (nb elements in the final mesh, 2).
-        piece (Piece): The piece to map.
-        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
-            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
-    """
-    listFlatIDataSetFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
-    for flatIdDataSetFrom in listFlatIDataSetFrom:
-        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( flatIdDataSetFrom ) )
-        UpdateDictElementMappingFromDataSetToDataSet( dataSetFrom,
-                                                      dataSetTo,
-                                                      elementMap,
-                                                      piece,
-                                                      flatIdDataSetFrom=flatIdDataSetFrom,
-                                                      flatIdDataSetTo=flatIdDataSetTo )
-
-
-def UpdateDictElementMappingFromDataSetToDataSet(
-    dataSetFrom: vtkDataSet,
-    dataSetTo: vtkDataSet,
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    piece: Piece,
-    flatIdDataSetFrom: int = 0,
-    flatIdDataSetTo: int = 0,
-) -> None:
-    """Update the map of points/cells between the source mesh and the final mesh.
-
-    For each element (idElementTo) of the final mesh not yet mapped (elementMap[flatIdDataSetTo][idElementTo] = [-1, -1]),
-    if the coordinates of an element (idElementFrom) of the source mesh
-    are the same as the coordinates of the element of the final mesh,
-    the map of points/cells is update: elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
-
-    For cells, the coordinates of the points in the cell are compared.
-    If one of the two meshes is a surface and the other a volume, all the points of the surface must be points of the volume.
-
-    Args:
-        dataSetFrom (vtkDataSet): The source mesh with the element to map.
-        dataSetTo (vtkDataSet): The final mesh with the reference element coordinates.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells to update with;
-            The key is the flat index of the final mesh.
-            The item is an array of size (nb elements in the final mesh, 2).
-        piece (Piece): The piece to map.
-        flatIdDataSetFrom (int, Optional): The flat index of the source mesh considered as a dataset of a vtkMultiblockDataSet.
-            Defaults to 0 for source meshes who are not datasets of vtkMultiBlockDataSet.
-        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
-            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
-    """
-    idElementsFromFund: list[ int ] = []
-    nbElementsTo: int = len( elementMap[ flatIdDataSetTo ] )
-    nbElementsFrom: int
-    if piece == Piece.POINTS:
-        nbElementsFrom = dataSetFrom.GetNumberOfPoints()
-    elif piece == Piece.CELLS:
-        nbElementsFrom = dataSetFrom.GetNumberOfCells()
-    else:
-        raise ValueError( f"Only { Piece.POINTS.value } or { Piece.CELLS.value } can be mapped." )
-
-    for idElementTo in range( nbElementsTo ):
-        # Test if the element of the final mesh is already mapped.
-        if -1 in elementMap[ flatIdDataSetTo ][ idElementTo ]:
-            typeElemTo: int
-            coordElementTo: set[ tuple[ float, ...] ] = set()
-            if piece == Piece.POINTS:
-                typeElemTo = 0
-                coordElementTo.add( dataSetTo.GetPoint( idElementTo ) )
-            elif piece == Piece.CELLS:
-                cellTo: vtkCell = dataSetTo.GetCell( idElementTo )
-                typeElemTo = cellTo.GetCellType()
-                # Get the coordinates of each points of the cell.
-                nbPointsTo: int = cellTo.GetNumberOfPoints()
-                cellPointsTo: vtkPoints = cellTo.GetPoints()
-                for idPointTo in range( nbPointsTo ):
-                    coordElementTo.add( cellPointsTo.GetPoint( idPointTo ) )
-
-            idElementFrom: int = 0
-            ElementFromFund: bool = False
-            while idElementFrom < nbElementsFrom and not ElementFromFund:
-                # Test if the element of the source mesh is already mapped.
-                if idElementFrom not in idElementsFromFund:
-                    typeElemFrom: int
-                    coordElementFrom: set[ tuple[ float, ...] ] = set()
-                    if piece == Piece.POINTS:
-                        typeElemFrom = 0
-                        coordElementFrom.add( dataSetFrom.GetPoint( idElementFrom ) )
-                    elif piece == Piece.CELLS:
-                        cellFrom: vtkCell = dataSetFrom.GetCell( idElementFrom )
-                        typeElemFrom = cellFrom.GetCellType()
-                        # Get the coordinates of each points of the face.
-                        nbPointsFrom: int = cellFrom.GetNumberOfPoints()
-                        cellPointsFrom: vtkPoints = cellFrom.GetPoints()
-                        for idPointFrom in range( nbPointsFrom ):
-                            coordElementFrom.add( cellPointsFrom.GetPoint( idPointFrom ) )
-
-                    pointShared: bool = True
-                    if typeElemTo == typeElemFrom:
-                        if coordElementTo != coordElementFrom:
-                            pointShared = False
-                    else:
-                        if nbPointsTo < nbPointsFrom:
-                            if not coordElementTo.issubset( coordElementFrom ):
+                        pointShared: bool = True
+                        if typeElemTo == typeElemFrom:
+                            if coordElementTo != coordElementFrom:
                                 pointShared = False
                         else:
-                            if not coordElementTo.issuperset( coordElementFrom ):
-                                pointShared = False
+                            if nbPointsTo < nbPointsFrom:
+                                if not coordElementTo.issubset( coordElementFrom ):
+                                    pointShared = False
+                            else:
+                                if not coordElementTo.issuperset( coordElementFrom ):
+                                    pointShared = False
 
-                    if pointShared:
-                        elementMap[ flatIdDataSetTo ][ idElementTo ] = [ flatIdDataSetFrom, idElementFrom ]
-                        ElementFromFund = True
-                        idElementsFromFund.append( idElementFrom )
+                        if pointShared:
+                            elementMap[ 0 ][ idElementTo ] = [ 0, idElementFrom ]
+                            elementFromFund = True
+                            idElementsFromFund.append( idElementFrom )
 
-                idElementFrom += 1
-    return
+                    idElementFrom += 1
+        elif isinstance( meshFrom, vtkMultiBlockDataSet ):
+            listDataSetFromIds: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
+            for dataSetFromId in listDataSetFromIds:
+                dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( dataSetFromId ) )
+                dataSetFromMap: npt.NDArray = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
+                for idElementTo in range( nbElementsTo ):
+                    if -1 in elementMap[ 0 ][ idElementTo ] and -1 not in dataSetFromMap[ idElementTo ]:
+                        elementMap[ 0 ][ idElementTo ] = [ dataSetFromId, dataSetFromMap[ idElementTo ][ 1 ] ]
+    elif isinstance( meshTo, vtkMultiBlockDataSet ):
+        listDataSetToFlattenIds: list[ int ] = getBlockElementIndexesFlatten( meshTo )
+        for dataSetToFlattenId in listDataSetToFlattenIds:
+            dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( dataSetToFlattenId ) )
+            elementMap[ dataSetToFlattenId ] = computeElementMapping( meshFrom, dataSetTo, piece )[ 0 ]
+
+    return elementMap
 
 
 def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
@@ -460,95 +296,29 @@ def checkValidValuesInDataSet(
     return ( validValues, invalidValues )
 
 
-def getFieldType( data: vtkFieldData ) -> str:
-    """Returns whether the data is "vtkFieldData", "vtkCellData" or "vtkPointData".
-
-    A vtk mesh can contain 3 types of field data:
-    - vtkFieldData (parent class)
-    - vtkCellData  (inheritance of vtkFieldData)
-    - vtkPointData (inheritance of vtkFieldData)
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-
-    Returns:
-        str: "vtkFieldData", "vtkCellData" or "vtkPointData"
-    """
-    if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
-    if data.IsA( "vtkCellData" ):
-        return "vtkCellData"
-    elif data.IsA( "vtkPointData" ):
-        return "vtkPointData"
-    else:
-        return "vtkFieldData"
-
-
-def getArrayNames( data: vtkFieldData ) -> list[ str ]:
-    """Get the names of all arrays stored in a "vtkFieldData", "vtkCellData" or "vtkPointData".
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-
-    Returns:
-        list[str]: The array names in the order that they are stored in the field data.
-    """
-    if not data.IsA( "vtkFieldData" ):
-        raise ValueError( f"data '{ data }' entered is not a vtkFieldData object." )
-    return [ data.GetArrayName( i ) for i in range( data.GetNumberOfArrays() ) ]
-
-
-def getArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
-    """Get the vtkDataArray corresponding to the given name.
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-        name (str): Array name.
-
-    Returns:
-        Optional[ vtkDataArray ]: The vtkDataArray associated with the name given. None if not found.
-    """
-    if data.HasArray( name ):
-        return data.GetArray( name )
-    logging.warning( f"No array named '{ name }' was found in '{ data }'." )
-    return None
-
-
-def getCopyArrayByName( data: vtkFieldData, name: str ) -> Optional[ vtkDataArray ]:
-    """Get the copy of a vtkDataArray corresponding to the given name.
-
-    Args:
-        data (vtkFieldData): Vtk field data.
-        name (str): Array name.
-
-    Returns:
-        Optional[ vtkDataArray ]: The copy of the vtkDataArray associated with the name given. None if not found.
-    """
-    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
-    if dataArray is not None:
-        return deepcopy( dataArray )
-    return None
-
-
-def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> Optional[ npt.NDArray[ np.int64 ] ]:
-    """Get a numpy array of the GlobalIds.
+def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.NDArray:
+    """Get a numpy array of the GlobalIds if it exist.
 
     Args:
         data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
 
     Returns:
-        Optional[ npt.NDArray[ np.int64 ] ]: The numpy array of GlobalIds.
+        (npt.NDArray): The numpy array of GlobalIds.
+
+    Raises:
+        TypeError: The data entered is not a vtkFieldDate object.
+        AttributeError: There is no GlobalIds in the given data.
     """
+    if not isinstance( data, vtkFieldData ):
+        raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
+
     global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
     if global_ids is None:
-        logging.warning( "No GlobalIds array was found." )
-        return None
+        raise AttributeError( "There is no GlobalIds in the given fieldData." )
     return vtk_to_numpy( global_ids )
 
 
-def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
-                         name: str,
-                         sorted: bool = False ) -> Optional[ npt.NDArray ]:
+def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ], name: str, sorted: bool = False ) -> npt.NDArray:
     """Get the numpy array of a given vtkDataArray found by its name.
 
     If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
@@ -560,38 +330,46 @@ def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ],
         sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
 
     Returns:
-        Optional[ npt.NDArray ]: Sorted array.
+        npt.NDArray: Sorted array.
+
+    Raises:
+        AttributeError: There is no array with the given name in the data.
     """
-    dataArray: Optional[ vtkDataArray ] = getArrayByName( data, name )
-    if dataArray is not None:
-        arr: npt.NDArray[ np.float64 ] = vtk_to_numpy( dataArray )
-        if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
-            sortArrayByGlobalIds( data, arr )
-        return arr
-    return None
+    if not data.HasArray( name ):
+        raise AttributeError( f"There is no array named { name } in the given fieldData." )
+
+    npArray: npt.NDArray = vtk_to_numpy( data.GetArray( name ) )
+    if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
+        globalids: npt.NDArray = getNumpyGlobalIdsArray( data )
+        npArray = npArray[ np.argsort( globalids ) ]
+
+    return npArray
 
 
 def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Piece ) -> set[ str ]:
     """Get the set of all attributes from an mesh on points or on cells.
 
     Args:
-        mesh (Any): Mesh where to find the attributes.
+        mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): Mesh where to find the attributes.
         piece (Piece): The piece of the attribute.
 
     Returns:
         set[str]: Set of attribute names present in input mesh.
     """
-    attributes: dict[ str, int ]
+    attributeSet: set[ str ]
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        attributes = getAttributesFromMultiBlockDataSet( mesh, piece )
+        listDataSetIds: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        attributeSet = set()
+        for dataSetId in listDataSetIds:
+            dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( dataSetId ) )
+            attributeSet.update( getAttributeSet( dataset, piece ) )
     elif isinstance( mesh, vtkDataSet ):
-        attributes = getAttributesFromDataSet( mesh, piece )
+        fieldData: vtkPointData | vtkCellData = mesh.GetPointData() if piece == Piece.POINTS else mesh.GetCellData()
+        attributeSet = { fieldData.GetArrayName( i ) for i in range( fieldData.GetNumberOfArrays() ) }
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
-    assert attributes is not None, "Attribute list is undefined."
-
-    return set( attributes.keys() ) if attributes is not None else set()
+    return attributeSet
 
 
 def getAttributesWithNumberOfComponents(
@@ -771,22 +549,21 @@ def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) ->
     return npArray
 
 
-def getVtkDataTypeInObject( multiBlockDataSet: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str,
-                            piece: Piece ) -> int:
+def getVtkDataTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str, piece: Piece ) -> int:
     """Return VTK type of requested array from input mesh.
 
     Args:
-        multiBlockDataSet (Union[vtkDataSet, vtkMultiBlockDataSet]): Input multiBlockDataSet.
+        mesh (Union[vtkDataSet, vtkMultiBlockDataSet]): Input multiBlockDataSet.
         attributeName (str): Name of the attribute.
         piece (Piece): The piece of the attribute.
 
     Returns:
         int: The type of the vtk array corresponding to input attribute name.
     """
-    if isinstance( multiBlockDataSet, vtkDataSet ):
-        return getVtkArrayTypeInObject( multiBlockDataSet, attributeName, piece )
+    if isinstance( mesh, vtkDataSet ):
+        return getVtkArrayTypeInObject( mesh, attributeName, piece )
     else:
-        return getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
+        return getVtkArrayTypeInMultiBlock( mesh, attributeName, piece )
 
 
 def getVtkArrayTypeInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> int:
@@ -873,7 +650,7 @@ def getNumberOfComponents(
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return getNumberOfComponentsMultiBlock( mesh, attributeName, piece )
     else:
-        raise AssertionError( "Object type is not managed." )
+        raise TypeError( "The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
 
 
 def getNumberOfComponentsDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> int:
@@ -935,7 +712,7 @@ def getComponentNames(
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         return getComponentNamesMultiBlock( mesh, attributeName, piece )
     else:
-        raise AssertionError( "Mesh type is not managed." )
+        raise TypeError( "Mesh type is not managed." )
 
 
 def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> tuple[ str, ...]:
@@ -1037,17 +814,3 @@ def computeCellCenterCoordinates( mesh: vtkDataSet ) -> vtkDataArray:
     pts: vtkPoints = output.GetPoints()
     assert pts is not None, "Cell center points are undefined."
     return pts.GetData()
-
-
-def sortArrayByGlobalIds( data: Union[ vtkCellData, vtkPointData ], arr: npt.NDArray[ np.float64 ] ) -> None:
-    """Sort an array following global Ids.
-
-    Args:
-        data (vtkFieldData): Global Ids array.
-        arr (npt.NDArray[ np.float64 ]): Array to sort.
-    """
-    globalids: Optional[ npt.NDArray[ np.int64 ] ] = getNumpyGlobalIdsArray( data )
-    if globalids is not None:
-        arr = arr[ np.argsort( globalids ) ]
-    else:
-        logging.warning( "No sorting was performed." )
