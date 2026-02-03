@@ -169,10 +169,10 @@ def computeElementMapping(
             listDataSetFromIds: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
             for dataSetFromId in listDataSetFromIds:
                 dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( dataSetFromId ) )
-                DataSetFromMap: npt.NDArray = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
+                dataSetFromMap: npt.NDArray = computeElementMapping( dataSetFrom, meshTo, piece )[ 0 ]
                 for idElementTo in range( nbElementsTo ):
-                    if -1 in elementMap[ 0 ][ idElementTo ] and -1 not in DataSetFromMap[ idElementTo ]:
-                        elementMap[ 0 ][ idElementTo ] = [ dataSetFromId, DataSetFromMap[ idElementTo ][ 1 ] ]
+                    if -1 in elementMap[ 0 ][ idElementTo ] and -1 not in dataSetFromMap[ idElementTo ]:
+                        elementMap[ 0 ][ idElementTo ] = [ dataSetFromId, dataSetFromMap[ idElementTo ][ 1 ] ]
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
         listDataSetToFlattenIds: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for dataSetToFlattenId in listDataSetToFlattenIds:
