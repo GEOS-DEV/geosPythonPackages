@@ -433,6 +433,38 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
                 collocatedNodes[ o ] = i
     collocatedNodes.flags.writeable = False
 
+    # For each 2D cell, find its adjacent 3D cell and copy the node mapping
+    setupLogger.info("Building 2D cell mappings from adjacent 3D cells...")
+    cell_2d_to_mapping: dict[ int, dict[ int, int ] ] = {}
+    
+    for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Matching 2D to 3D cells" ):
+        cell: vtkCell = oldMesh.GetCell( c )
+        if cell.GetCellDimension() != 2:
+            continue
+        
+        # Get the point IDs of this 2D cell
+        pointIds = cell.GetPointIds()
+        
+        # Find a 3D cell neighbor
+        neighborIds = vtkIdList()
+        oldMesh.GetCellNeighbors( c, pointIds, neighborIds )
+        
+        # Use the first 3D neighbor's mapping
+        for i in range( neighborIds.GetNumberOfIds() ):
+            neighborId = neighborIds.GetId( i )
+            neighborCell = oldMesh.GetCell( neighborId )
+            if neighborCell.GetCellDimension() == 3:
+                # This 3D cell has a mapping - use it for the 2D cell
+                if neighborId in cellToNodeMapping:
+                    cell_2d_to_mapping[ c ] = cellToNodeMapping[ neighborId ]
+                break
+    
+    setupLogger.info(f"Found mappings for {len(cell_2d_to_mapping)} 2D cells")
+    
+    # Merge 2D mappings into main mapping
+    combined_mapping = dict( cellToNodeMapping )
+    combined_mapping.update( cell_2d_to_mapping )
+
     # We are creating a new mesh.
     # The cells will be the same, except that their nodes may be duplicated or renumbered nodes.
     # In vtk, the polyhedron and the standard cells are managed differently.
@@ -446,7 +478,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     newMesh.Allocate( oldMesh.GetNumberOfCells() )
 
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
-        cellNodeMapping: IDMapping = cellToNodeMapping.get( c, {} )
+        cellNodeMapping: IDMapping = combined_mapping.get( c, {} )
         cell: vtkCell = oldMesh.GetCell( c )
         cellType: int = cell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
@@ -474,7 +506,6 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     __copyFieldsSplitMesh( oldMesh, newMesh, addedPointsWithOldId )
 
     return newMesh
-
 
 def __generateFractureMesh( oldMesh: vtkUnstructuredGrid, fractureInfo: FractureInfo,
                             cellToNodeMapping: Mapping[ int, IDMapping ] ) -> vtkUnstructuredGrid:
