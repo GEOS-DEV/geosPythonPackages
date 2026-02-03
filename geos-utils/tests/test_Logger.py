@@ -8,9 +8,10 @@ import logging
 
 import geos.utils.Logger as internLogger
 
+
 def test_CountWarningHandler() -> None:
     """Test the counter handler class and its methods."""
-    loggerTest: logging.Logger = logging.getLogger( "Test CountWarningHandler")
+    loggerTest: logging.Logger = logging.getLogger( "Test CountWarningHandler" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
@@ -38,7 +39,7 @@ def test_CountWarningHandler() -> None:
 
 def test_getLoggerHandlerType() -> None:
     """Test the function to get a logger's handler with a certain type."""
-    loggerTest: logging.Logger = logging.getLogger( "Test getLoggerHandlerType")
+    loggerTest: logging.Logger = logging.getLogger( "Test getLoggerHandlerType" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
@@ -69,7 +70,7 @@ def test_getLoggerHandlerType() -> None:
 
 def test_getLoggerHandlerTypeValueError() -> None:
     """Test the ValueError raises of the getLoggerHandlerType function."""
-    loggerTest: logging.Logger = logging.getLogger( "Test getLoggerHandlerType raises")
+    loggerTest: logging.Logger = logging.getLogger( "Test getLoggerHandlerType raises" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
@@ -79,7 +80,7 @@ def test_getLoggerHandlerTypeValueError() -> None:
 
     # Test with a empty logger
     with pytest.raises( ValueError ):
-        handlerTest1: logging.Handler = internLogger.getLoggerHandlerType( handlerType1, loggerTest )
+        internLogger.getLoggerHandlerType( handlerType1, loggerTest )
 
     loggerTest.addHandler( handler1 )
 
@@ -89,12 +90,12 @@ def test_getLoggerHandlerTypeValueError() -> None:
 
     # Test with a logger with an other type of handler
     with pytest.raises( ValueError ):
-        handlerTest2: logging.Handler = internLogger.getLoggerHandlerType( handlerType2, loggerTest )
+        internLogger.getLoggerHandlerType( handlerType2, loggerTest )
 
 
 def test_hasLoggerHandlerType() -> None:
     """Test the function to check if a logger has a handler of a certain type."""
-    loggerTest: logging.Logger = logging.getLogger( "Test hasLoggerHandlerType")
+    loggerTest: logging.Logger = logging.getLogger( "Test hasLoggerHandlerType" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
@@ -113,7 +114,7 @@ def test_hasLoggerHandlerType() -> None:
 
 def test_isHandlerInLogger() -> None:
     """Test the function to check if a logger has a handler."""
-    loggerTest: logging.Logger = logging.getLogger( "Test isHandlerInLogger")
+    loggerTest: logging.Logger = logging.getLogger( "Test isHandlerInLogger" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
