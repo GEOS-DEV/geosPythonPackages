@@ -147,7 +147,7 @@ def getLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> logging
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
     for loggerHandler in listLoggerHandlers:
-        if isinstance( type( loggerHandler ), handlerType ):
+        if type( loggerHandler ) is handlerType:
             return loggerHandler
 
     raise ValueError( "The logger has no handler with the wanted type." )
@@ -164,7 +164,7 @@ def hasLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> bool:
         bool: True if the logger has a handler with the same type, False otherwise.
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
-    return any( isinstance( type( loggerHandler ), handlerType ) for loggerHandler in listLoggerHandlers )
+    return any( type( loggerHandler ) is handlerType for loggerHandler in listLoggerHandlers )
 
 
 def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> bool:
@@ -179,7 +179,7 @@ def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> boo
     """
     listLoggerHandlers: list[ logging.Handler ] = logger.handlers
     for loggerHandler in listLoggerHandlers:
-        if isinstance( type( handler ), type( loggerHandler ) ) and loggerHandler.__dict__ == handler.__dict__:
+        if type( handler ) is type( loggerHandler ) and loggerHandler.__dict__ == handler.__dict__:
             return True
 
     return False
