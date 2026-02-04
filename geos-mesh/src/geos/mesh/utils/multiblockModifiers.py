@@ -64,8 +64,8 @@ def mergeBlocks(
     vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
 
     # Fill the partial attributes with default values to keep them during the merge.
-    if keepPartialAttributes and not fillAllPartialAttributes( inputMesh, logger ):
-        raise ValueError( "Failed to fill partial attributes. Merging without keeping partial attributes." )
+    if keepPartialAttributes:
+        fillAllPartialAttributes( inputMesh, logger )
 
     outputMesh: vtkUnstructuredGrid
 

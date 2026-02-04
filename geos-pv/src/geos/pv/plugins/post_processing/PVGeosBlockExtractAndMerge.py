@@ -307,7 +307,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
                 # Create elementCenter attribute in the volume mesh if needed
                 cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
-                createCellCenterAttribute( outputCells, cellCenterAttributeName )
+                if cellCenterAttributeName not in meshAttributes:
+                    createCellCenterAttribute( outputCells, cellCenterAttributeName, logger=self.logger )
 
                 # Stop the time step iteration
                 request.Remove( executive.CONTINUE_EXECUTING() )

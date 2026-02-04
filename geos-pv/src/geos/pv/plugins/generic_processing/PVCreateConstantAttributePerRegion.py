@@ -155,17 +155,17 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
         self.Modified()
 
     # Settings of the new attribute:
-    @smproperty.xml( """
-        <StringVectorProperty
-            name="AttributeName"
-            label="The name of the new attribute:"
-            default_values="newAttribute"
-            number_of_elements="1"
-            element_types="2">
-            <Documentation>
-                Name of the new attribute to create.
-            </Documentation>
-        </StringVectorProperty>
+    @smproperty.stringvector(
+        name="AttributeName",
+        label="The name of the new attribute:",
+        number_of_elements="1",
+        default_values="newAttribute",
+        panel_visibility="default",
+    )
+    @smdomain.xml( """
+        <Documentation>
+            Name of the new attribute to create.
+        </Documentation>
     """ )
     def setAttributeName( self: Self, newAttributeName: str ) -> None:
         """Set attribute name.

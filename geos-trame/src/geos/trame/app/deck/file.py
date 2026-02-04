@@ -14,7 +14,7 @@ from geos.trame.app.data_types.renderable import Renderable
 from geos.trame.app.geosTrameException import GeosTrameException
 from geos.trame.app.io.xml_parser import XMLParser
 from geos.trame.app.utils.file_utils import normalize_path
-from geos.trame.schema_generated.schema_mod import Problem
+from geos.trame.schema_generated.schema_mod import ProblemType
 
 
 class DeckFile( object ):
@@ -30,7 +30,7 @@ class DeckFile( object ):
 
         self.inspect_tree: dict[ Any, Any ] | None = None
         self.pb_dict: dict[ str, Any ] | None = None
-        self.problem: Problem | None = None
+        self.problem: ProblemType | None = None
         self.xml_parser: XMLParser | None = None
         self.root_node = None
         self.filename = normalize_path( filename )
@@ -79,7 +79,7 @@ class DeckFile( object ):
         )
         parser = XmlParser( context=context, config=ParserConfig() )
         try:
-            self.problem = parser.parse( simulation_deck, Problem )
+            self.problem = parser.parse( simulation_deck, ProblemType )
         except ElementTree.XMLSyntaxError as e:
             msg = "Failed to parse input file %s:\n%s\n" % ( filename, e )
             raise GeosTrameException( msg ) from e
