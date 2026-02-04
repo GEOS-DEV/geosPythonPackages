@@ -462,7 +462,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     setupLogger.info( f"Found mappings for {len(cell2dToMapping)} 2D cells" )
 
     # Merge 2D mappings into main mapping
-    combined_mapping = dict( cellToNodeMapping )
+    combinedMapping = dict( cellToNodeMapping )
     combined_mapping.update( cell_2d_to_mapping )
 
     # We are creating a new mesh.
