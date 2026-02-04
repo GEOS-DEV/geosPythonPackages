@@ -453,10 +453,18 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
         for i in range( neighborIds.GetNumberOfIds() ):
             neighborId = neighborIds.GetId( i )
             neighborCell = oldMesh.GetCell( neighborId )
-            if neighborCell.GetCellDimension() == 3:
+
+            if neighborCell.GetCellDimension() == 3 and neighborId in cellToNodeMapping:
                 # This 3D cell has a mapping - use it for the 2D cell
-                if neighborId in cellToNodeMapping:
-                    cell2dToMapping[ c ] = dict( cellToNodeMapping[ neighborId ] )
+                # Get the 2D cell's point IDs
+                cell2dPointIds = set( vtkIter( pointIds ) )
+
+                # Only copy mappings for nodes that belong to the 2D cell
+                neighborMapping = cellToNodeMapping[ neighborId ]
+                cell2dToMapping[ c ] = {
+                    node: newNode
+                    for node, newNode in neighborMapping.items() if node in cell2dPointIds
+                }
                 break
 
     setupLogger.info( f"Found mappings for {len(cell2dToMapping)} 2D cells" )
@@ -478,7 +486,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
     newMesh.Allocate( oldMesh.GetNumberOfCells() )
 
     for c in tqdm( range( oldMesh.GetNumberOfCells() ), desc="Performing the mesh split" ):
-        cellNodeMapping: IDMapping = combined_mapping.get( c, {} )
+        cellNodeMapping: IDMapping = combinedMapping.get( c, {} )
         cell: vtkCell = oldMesh.GetCell( c )
         cellType: int = cell.GetCellType()
         # For polyhedron, we'll manipulate the face stream directly.
