@@ -50,8 +50,8 @@ def test_AttributeMapping(
 @pytest.mark.parametrize(
     "meshFromName, meshToName, attributeNames",
     [
-        ( "extractAndMergeVolume", "emptydataset", { "Fault" } ),  # Attribute not in the mesh from
-        ( "extractAndMergeVolume", "extractAndMergeVolume", { "totalDisplacement" } ),  # Attribute on both meshes
+        ( "extractAndMergeVolume", "extractAndMergeFault", { "Fault" } ),  # Attribute not in the mesh from
+        ( "extractAndMergeVolume", "extractAndMergeFault", { "deltaPressure" } ),  # Attribute on both meshes
         ( "extractAndMergeVolumeWell1", "extractAndMergeFault", { "totalDisplacement" } ),  # Partial attribute in the mesh from
     ] )
 def test_AttributeMappingRaisesAttributeError(
