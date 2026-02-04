@@ -16,13 +16,12 @@ def getCoordinatesDoublePrecision( mesh: vtkDataSet ) -> npt.NDArray[ np.float64
 
     Returns:
         npt.NDArray[np.float64]: Coordinates
-
     """
     points = mesh.GetPoints()
-    npoints = points.GetNumberOfPoints()
+    nPoints = points.GetNumberOfPoints()
 
-    coords = np.zeros( ( npoints, 3 ), dtype=np.float64 )
-    for i in range( npoints ):
+    coords = np.zeros( ( nPoints, 3 ), dtype=np.float64 )
+    for i in range( nPoints ):
         point = points.GetPoint( i )
         coords[ i ] = [ point[ 0 ], point[ 1 ], point[ 2 ] ]
 
@@ -55,12 +54,14 @@ def extractTetConnectivity( mesh: vtkDataSet ) -> tuple[ npt.NDArray[ np.float64
     return np.array( tetrahedraIds ), np.array( tetrahedraConnectivity )
 
 
-def analyzeAllTets( n: int, coords: npt.NDArray[ np.float64 ],
+def analyzeAllTets( coords: npt.NDArray[ np.float64 ],
                     connectivity: npt.NDArray[ np.float64 ] ) -> dict[ str, dict[ str, Any ] ]:
     """Vectorized analysis of all tetrahedra.
 
+        This analysis computes the following metrics: volumes, aspect ratio, radius ratio, flatness ratio,shape quality, min and max edge, min and max dihedral angles, dihedral range.
+
+
     Args:
-        n (int): Mesh id.
         coords (npt.NDArray[np.float64]): Tetrahedra coordinates.
         connectivity (npt.NDArray[np.float64]): Connectivity.
 
@@ -136,7 +137,6 @@ def analyzeAllTets( n: int, coords: npt.NDArray[ np.float64 ],
 
         Returns:
             npt.NDArray[ np.float64 ]: Dihedral angle
-
         """
         n1Norm = normal1 / np.maximum( np.linalg.norm( normal1, axis=1, keepdims=True ), 1e-15 )
         n2Norm = normal2 / np.maximum( np.linalg.norm( normal2, axis=1, keepdims=True ), 1e-15 )
@@ -183,7 +183,13 @@ def analyzeAllTets( n: int, coords: npt.NDArray[ np.float64 ],
 def computeQualityScore( aspectRatio: npt.NDArray[ np.float64 ], shapeQuality: npt.NDArray[ np.float64 ],
                          edgeRatio: npt.NDArray[ np.float64 ],
                          minDihedralAngle: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
-    """Compute combined quality score (0-100).
+    """Compute combined quality score (0-100) from aspect ratio, shape quality, minimal dihedral angle and edge ratio.
+
+        The quality score can be interpreted with the following scale:
+            Excellent (>80)
+            Good (60-80)
+            Fair (30-60)
+            Poor (≤30)
 
     Args:
         aspectRatio(npt.NDArray[np.float64]): Aspect ratio

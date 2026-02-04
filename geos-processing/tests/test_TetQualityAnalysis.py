@@ -15,3 +15,17 @@ def test_TetQualityAnalysis( dataSetTest: vtkUnstructuredGrid ) -> None:
     tetQualityFilter: TetQualityAnalysis = TetQualityAnalysis( meshes )
 
     tetQualityFilter.applyFilter()
+
+
+def test_TetQualityAnalysisRaisePathError( dataSetTest: vtkUnstructuredGrid ) -> None:
+    """Test applying TetQualityAnalysis filter."""
+    meshes: dict[ str, vtkUnstructuredGrid ] = {
+        'mesh1': dataSetTest( "meshtet1" ),
+        'mesh1b': dataSetTest( "meshtet1b" )
+    }
+    tetQualityFilter: TetQualityAnalysis = TetQualityAnalysis( meshes )
+
+    tetQualityFilter.setFilename( "/qliuf/moidh/meshComparison.png" )
+
+    with pytest.raises( FileNotFoundError ):
+        tetQualityFilter.applyFilter()

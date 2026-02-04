@@ -80,7 +80,7 @@ class PVTetQualityAnalysis( VTKPythonAlgorithmBase ):
         """
         if self._filename != fname:
             self._filename = fname
-            self.Modified()
+        self.Modified()
 
     def RequestData(
         self: Self,

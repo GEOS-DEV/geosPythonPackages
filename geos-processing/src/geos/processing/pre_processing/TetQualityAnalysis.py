@@ -17,6 +17,9 @@ from geos.mesh.stats.tetrahedraAnalysisHelpers import ( getCoordinatesDoublePrec
 
 __doc__ = """
 TetQualityAnalysis module is a filter that performs an analysis of tetrahedras quality of one or several meshes and generates a plot as summary.
+Metrics computed include aspect ratio, shape quality, volume, min and max edges, edge ratio, min and max dihedral angles, quality score.
+
+The meshes are compared based on their median quality score and the change from the best one is evaluated for these metrics.
 
 Filter input should be vtkUnstructuredGrid.
 
@@ -38,17 +41,13 @@ To use the filter:
     tetQualityAnalysisFilter.setLoggerHandler( yourHandler )
 
     # Change output filename [optional]
-    tetQualityAnalysisFilter.SetFilename( filename )
-
+    tetQualityAnalysisFilter.setFilename( filename )
 
     # Do calculations
     try:
         tetQualityAnalysisFilter.applyFilter()
-    except ( ValueError, IndexError, TypeError, AttributeError ) as e:
-        tetQualityAnalysisFilter.logger.error( f"The filter { tetQualityAnalysisFilter.logger.name } failed due to: { e }" )
     except Exception as e:
-        mess: str = f"The filter { meshQualityEnhancedFilter.logger.name } failed due to: { e }"
-        tetQualityAnalysisFilter.logger.critical( mess, exc_info=True )
+        tetQualityAnalysisFilter.logger.error( f"The filter { tetQualityAnalysisFilter.logger.name } failed due to: { e }" )
 """
 
 loggerName: str = "Tetrahedra Quality Analysis"
@@ -115,7 +114,7 @@ class TetQualityAnalysis:
                               f"  Points: {mesh.GetNumberOfPoints()}" + "\n" + "-" * 80 + "\n" )
 
             # Analyze both meshes
-            self.analyzedMesh[ n ] = analyzeAllTets( n, coords, tetrahedraConnectivity )
+            self.analyzedMesh[ n ] = analyzeAllTets( coords, tetrahedraConnectivity )
             metrics = self.analyzedMesh[ n ]
             self.tets[ n ] = ntets
 
@@ -501,8 +500,6 @@ class TetQualityAnalysis:
         # Title
         suptitle = 'Mesh Quality Comparison Dashboard (Progressive Detail Layout)\n'
         suptitle += ( ' - ' ).join( [ f'Mesh {n}: {self.tets[n]} tets ' for n, _ in enumerate( self.meshes, 1 ) ] )
-        # for n, _ in enumerate( self.meshes, 1 ):
-        #     suptitle += f'Mesh {n}: {self.tets[n]:<15} tets '
         fig.suptitle( suptitle, fontsize=16, fontweight='bold', y=0.99 )
 
         # Color scheme
@@ -1141,11 +1138,10 @@ class TetQualityAnalysis:
         ax23.grid( True, alpha=0.3 )
 
         # Save figure
-
         plt.savefig( self.filename, dpi=300, bbox_inches='tight', facecolor='white' )
         self.logger.info( f"Dashboard saved successfully: {self.filename}" )
 
-    def setDashboardFilename( self: Self, filename: str ) -> None:
+    def setFilename( self: Self, filename: str ) -> None:
         """Set comparison dashboard output filename.
 
         Args:
