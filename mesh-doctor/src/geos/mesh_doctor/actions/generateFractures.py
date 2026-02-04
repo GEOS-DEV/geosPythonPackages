@@ -456,7 +456,7 @@ def __performSplit( oldMesh: vtkUnstructuredGrid, cellToNodeMapping: Mapping[ in
             if neighborCell.GetCellDimension() == 3:
                 # This 3D cell has a mapping - use it for the 2D cell
                 if neighborId in cellToNodeMapping:
-                    cell_2d_to_mapping[ c ] = dict( cellToNodeMapping[ neighborId ] )
+                    cell2dToMapping[ c ] = dict( cellToNodeMapping[ neighborId ] )
                 break
 
     setupLogger.info( f"Found mappings for {len(cell_2d_to_mapping)} 2D cells" )
