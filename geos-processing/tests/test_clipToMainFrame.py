@@ -132,7 +132,7 @@ def test_clipToMainFrame_polyhedron( expected: Expected ) -> None:
 
 def test_clipToMainFrame_generic( dataSetTest: vtkMultiBlockDataSet ) -> None:
     """Test the ClipToMainFrameFilter on a MultiBlockDataSet."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
     clipToMainFrameFilter = ClipToMainFrame()
     clipToMainFrameFilter.SetInputData( multiBlockDataSet )
     clipToMainFrameFilter.ComputeTransform()

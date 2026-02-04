@@ -44,10 +44,24 @@ def dataSetTest() -> Any:
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
             vtkFilename = "data/domain_res5_id_empty.vtu"
+        elif datasetType == "2Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion2Ranks.vtm"
+        elif datasetType == "4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion4Ranks.vtm"
         elif datasetType == "singlePhasePoromechanicsVTKOutput":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/singlePhasePoromechanicsVTKOutput.vtm"
         elif datasetType == "extractAndMergeVolume":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
+        elif datasetType == "extractAndMergeFault":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtu"
+        elif datasetType == "extractAndMergeFaultVtp":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtp"
+        elif datasetType == "extractAndMergeWell1":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeWell1.vtu"
+        elif datasetType == "extractAndMergeVolumeWell1":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolumeWell1.vtm"
+        elif datasetType == "extractAndMergeFaultWell1":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
 
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )

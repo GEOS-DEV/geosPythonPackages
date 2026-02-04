@@ -35,11 +35,11 @@ qualityMetrics_all: tuple[ tuple[ int, ...], ...] = (
 )
 # yapf: disable
 cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = (
-    ( 26324, 0, 0, 0, 0, 0, 26324, 0, ),
+    ( 126, 0, 0, 0, 0, 0, 126, 0, ),
     ( 0, 0, 8, 0, 0, 0, 0, 8,)
 )
 metricsSummary_all: tuple[ tuple[ tuple[ float, ...], ...], ...] = (
-    ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67, 26324.0 ) ),
+    ( ( 378.23, 305.04, 9.55, 693.11, 126.0 ), ( 0.01, 0.02, 0.0, 0.07, 126.0 ), ( 90.0, 0.0, 90.0, 90.0, 126.0 ) ),
     ( ( -0.28, 0.09, -0.49, -0.22, 8.0 ), ( 0.7, 0.1, 0.47, 0.79, 8.0 ), ( 0.8, 0.12, 0.58, 0.95, 8.0 ) ),
 )
 # yapf: enable
@@ -91,7 +91,7 @@ def __get_dataset( meshName: str ) -> vtkUnstructuredGrid:
     """
     if meshName == "polydata":
         reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-        vtkFilename: str = "data/triangulatedSurface.vtu"
+        vtkFilename: str = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFault.vtu"
 
     datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
     reader.SetFileName( datapath )
@@ -183,6 +183,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
         # test metric summary
         for j, metricIndex in enumerate( test_case.qualityMetrics ):
             subStats: pd.Series = stats.getStatsFromMetricAndCellType( metricIndex, cellType )
+            print(np.round( subStats, 2 ).tolist())
             assert np.round( subStats, 2 ).tolist() == list(
                 test_case.metricsSummary[ j ] ), f"Stats at metric index {j} are wrong."
 

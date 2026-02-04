@@ -14,32 +14,32 @@ from geos.processing.generic_processing_tools.FillPartialArrays import FillParti
 
 @pytest.mark.parametrize( "dictAttributesValues", [
     ( {
-        "PORO": None
+        "deltaPressure": None  # On cells
     } ),
     ( {
-        "PERM": None
+        "totalDisplacement": None  # On points
     } ),
     ( {
-        "PORO": None,
-        "PERM": None
+        "deltaPressure": None,
+        "totalDisplacement": None
     } ),
     ( {
-        "PORO": [ 4 ]
+        "deltaPressure": [ 4 ]
     } ),
     ( {
-        "PERM": [ 4, 4, 4 ]
+        "totalDisplacement": [ 4, 4, 4 ]
     } ),
     ( {
-        "PORO": [ 4 ],
-        "PERM": [ 4, 4, 4 ]
+        "deltaPressure": [ 4 ],
+        "totalDisplacement": [ 4, 4, 4 ]
     } ),
     ( {
-        "PORO": None,
-        "PERM": [ 4, 4, 4 ]
+        "deltaPressure": None,
+        "totalDisplacement": [ 4, 4, 4 ]
     } ),
     ( {
-        "PORO": [ 4 ],
-        "PERM": None
+        "deltaPressure": [ 4 ],
+        "totalDisplacement": None
     } ),
 ] )
 def test_FillPartialArrays(
@@ -47,15 +47,15 @@ def test_FillPartialArrays(
     dictAttributesValues: dict[ str, Any ],
 ) -> None:
     """Test FillPartialArrays vtk filter."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
 
     fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
     fillPartialArraysFilter.applyFilter()
 
 
 def test_FillPartialArraysRaises( dataSetTest: vtkMultiBlockDataSet, ) -> None:
-    """Test the raise of FillPartialArray."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    """Test the raises of FillPartialArray."""
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
     fillPartialArraysFilter: FillPartialArrays
 
     with pytest.raises( AttributeError ):
@@ -63,5 +63,5 @@ def test_FillPartialArraysRaises( dataSetTest: vtkMultiBlockDataSet, ) -> None:
         fillPartialArraysFilter.applyFilter()
 
     with pytest.raises( ValueError ):
-        fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "PORO": [ 4, 4, 4 ] } )
+        fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "deltaPressure": [ 4, 4, 4 ] } )
         fillPartialArraysFilter.applyFilter()

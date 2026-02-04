@@ -6,16 +6,25 @@ import pytest
 from typing import Union, Any
 from geos.mesh.utils.arrayModifiers import fillAllPartialAttributes
 from geos.processing.generic_processing_tools.AttributeMapping import AttributeMapping
+from geos.processing.generic_processing_tools.CreateConstantAttributePerRegion import CreateConstantAttributePerRegion
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 from geos.utils.pieceEnum import Piece
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeNames, piece", [
-    ( "fracture", "emptyFracture", { "collocatedNodes" }, Piece.POINTS ),
-    ( "multiblock", "emptyFracture", { "FAULT" }, Piece.CELLS ),
-    ( "multiblock", "emptymultiblock", { "FAULT" }, Piece.CELLS ),
-    ( "dataset", "emptymultiblock", { "FAULT" }, Piece.CELLS ),
-    ( "dataset", "emptydataset", { "FAULT" }, Piece.CELLS ),
+    ( "extractAndMergeWell1", "extractAndMergeWell1", { "newAttribute" }, Piece.CELLS ),
+    ( "extractAndMergeFaultVtp", "extractAndMergeVolume", { "deltaSlip" }, Piece.CELLS ),
+    ( "extractAndMergeFault", "extractAndMergeVolume", { "deltaSlip" }, Piece.CELLS ),
+    ( "extractAndMergeFault", "extractAndMergeVolume", { "Texture Coordinates" }, Piece.POINTS ),
+    ( "extractAndMergeFault", "extractAndMergeVolumeWell1", { "Texture Coordinates" }, Piece.POINTS ),
+    ( "extractAndMergeFaultVtp", "extractAndMergeVolumeWell1", { "Texture Coordinates" }, Piece.POINTS ),
+    ( "extractAndMergeVolume", "extractAndMergeFaultVtp", { "averageStrain" }, Piece.CELLS ),
+    ( "extractAndMergeVolume", "extractAndMergeFault", { "averageStrain" }, Piece.CELLS ),
+    ( "extractAndMergeVolume", "extractAndMergeFault", { "totalDisplacement" }, Piece.POINTS ),
+    ( "extractAndMergeVolume", "extractAndMergeFaultWell1", { "totalDisplacement" }, Piece.POINTS ),
+    ( "extractAndMergeFaultWell1", "extractAndMergeVolume", { "Texture Coordinates" }, Piece.POINTS ),
+    ( "extractAndMergeVolumeWell1", "extractAndMergeFault", { "totalDisplacement" }, Piece.POINTS ),
+    ( "extractAndMergeVolumeWell1", "extractAndMergeFaultVtp", { "totalDisplacement" }, Piece.POINTS ),
 ] )
 def test_AttributeMapping(
     dataSetTest: Any,
@@ -30,6 +39,10 @@ def test_AttributeMapping(
     if isinstance( meshFrom, vtkMultiBlockDataSet ):
         fillAllPartialAttributes( meshFrom )
 
+    if meshFromName == meshToName:
+        createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( meshFrom, "blockIndex", {}, "newAttribute" )
+        createConstantAttributePerRegionFilter.applyFilter()
+
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, piece )
     attributeMappingFilter.applyFilter()
 
@@ -37,9 +50,9 @@ def test_AttributeMapping(
 @pytest.mark.parametrize(
     "meshFromName, meshToName, attributeNames",
     [
-        ( "dataset", "emptydataset", { "Fault" } ),  # Attribute not in the mesh from
-        ( "dataset", "dataset", { "GLOBAL_IDS_CELLS" } ),  # Attribute on both meshes
-        ( "multiblock", "emptymultiblock", { "FAULT" } ),  # Partial attribute in the mesh from
+        ( "extractAndMergeVolume", "emptydataset", { "Fault" } ),  # Attribute not in the mesh from
+        ( "extractAndMergeVolume", "extractAndMergeVolume", { "totalDisplacement" } ),  # Attribute on both meshes
+        ( "extractAndMergeVolumeWell1", "extractAndMergeFault", { "totalDisplacement" } ),  # Partial attribute in the mesh from
     ] )
 def test_AttributeMappingRaisesAttributeError(
     dataSetTest: Any,
@@ -59,8 +72,8 @@ def test_AttributeMappingRaisesAttributeError(
 @pytest.mark.parametrize(
     "meshToName, attributeNames",
     [
-        ( "emptydataset", {} ),  # No attribute to map
-        ( "multiblockGeosOutput", { "FAULT" } ),  # Meshes with no common cells
+        ( "extractAndMergeFault", {} ),  # No attribute to map
+        ( "extractAndMergeWell1", { "mass" } ),  # Meshes with no common cells
     ] )
 def test_AttributeMappingRaisesValueError(
     dataSetTest: Any,
@@ -68,7 +81,7 @@ def test_AttributeMappingRaisesValueError(
     attributeNames: set[ str ],
 ) -> None:
     """Test the fails of the filter with input value issue."""
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( "dataset" )
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( "extractAndMergeVolume" )
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, Piece.CELLS )
 
