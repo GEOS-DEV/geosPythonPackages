@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator"
+import pytest
+
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from geos.processing.pre_processing.TetQualityAnalysis import TetQualityAnalysis
 
