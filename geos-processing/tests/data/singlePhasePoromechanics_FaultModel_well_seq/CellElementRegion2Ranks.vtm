@@ -11,9 +11,4 @@
       </Block>
     </Block>
   </vtkMultiBlockDataSet>
-  <FieldData>
-    <DataArray type="Float64" Name="TimeValue" NumberOfTuples="1" format="binary" RangeMin="0" RangeMax="0">
-      AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
-    </DataArray>
-  </FieldData>
 </VTKFile>
