@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
-# SPDX-FileContributor: Thomas Gazolla, Alexandre Benedicto
+# SPDX-FileContributor: Bertrand Denel
 from dataclasses import dataclass
 from typing import Optional
 import vtk
@@ -51,11 +51,14 @@ def getCellFacePoints( cell: vtk.vtkCell ) -> list[ tuple[ int, ...] ]:
     elif cellType == vtk.VTK_PYRAMID:
         # 1 quadrilateral + 4 triangular faces
         faces = [ [ 0, 1, 2, 3 ], [ 0, 1, 4 ], [ 1, 2, 4 ], [ 2, 3, 4 ], [ 3, 0, 4 ] ]
+      else:
+           raise NotImplementedError(f"Orphaned2d is not implemented for cell type {cellType}. It is supported for TETRAHEDRA ({vtk.VTK_TETRA}), HEXA {(vtk.VTK_HEXAHEDRON}), WEDGE ({vtk.VTK_WEDGE}) and PYRAMID ({vtk.VTK_PYRAMID})")
 
     # Convert local indices to global point IDs
     pointIds = cell.GetPointIds()
     globalFaces = []
     for face in faces:
+        #sort to make comparison permutation invariant
         globalFace = tuple( sorted( [ pointIds.GetId( i ) for i in face ] ) )
         globalFaces.append( globalFace )
 
