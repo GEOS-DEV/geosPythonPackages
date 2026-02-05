@@ -58,10 +58,17 @@ def test_FillPartialArraysRaises( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
     fillPartialArraysFilter: FillPartialArrays
 
+    # Attribute not in the mesh
     with pytest.raises( AttributeError ):
         fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "poro": None } )
         fillPartialArraysFilter.applyFilter()
 
+    # To many value given
     with pytest.raises( ValueError ):
         fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "deltaPressure": [ 4, 4, 4 ] } )
+        fillPartialArraysFilter.applyFilter()
+
+    # Not enough value given
+    with pytest.raises( ValueError ):
+        fillPartialArraysFilter = FillPartialArrays( multiBlockDataSet, { "totalDisplacement": [ 4, 4 ] } )
         fillPartialArraysFilter.applyFilter()
