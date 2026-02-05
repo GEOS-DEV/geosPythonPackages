@@ -142,6 +142,7 @@ def define_simulation_view( server: Server ) -> None:
                 has_internal_mesh = _has_internalMesh(simulation_xml_filename[i])
 
         if any(has_xml):
+            uc = up = nc = np = None
             for i,_ in enumerate(has_xml):
                 if has_external_mesh[i]:
                     nc, np = _how_many_cells(simulation_xml_filename[i])
@@ -150,7 +151,8 @@ def define_simulation_view( server: Server ) -> None:
                     if has_internal_mesh:
                         nc,np = _what_internalMesh(simulation_xml_filename[i])
             
-            server.state.nunknowns = uc*nc + up*np      
+            if all(i is not None  for i in (uc,nc,up,np)):
+                server.state.nunknowns = uc*nc + up*np      
         
         server.state.is_valid_jobfiles = any(has_xml)
         
