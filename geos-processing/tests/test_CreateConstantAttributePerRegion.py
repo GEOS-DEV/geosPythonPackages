@@ -88,7 +88,7 @@ def test_CreateConstantAttributePerRegion(
     "meshType, newAttributeName, regionName",
     [
         ( "extractAndMergeVolume", "newAttribute", "averageStrain" ),  # Region attribute has too many components
-        ( "singlePhasePoromechanicsVTKOutput", "newAttribute", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # Region attribute is partial
+        ( "geosOutput2Ranks", "newAttribute", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # Region attribute is partial
         ( "extractAndMergeVolume", "mass", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # The attribute name already exist in the mesh on the same piece
     ] )
 def test_CreateConstantAttributePerRegionRaisesAttributeError(

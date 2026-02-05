@@ -30,11 +30,11 @@ def dataSetTest() -> Any:
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
         if datasetType == "2Ranks":
-            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion2Ranks.vtm"
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
         elif datasetType == "4Ranks":
-            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion4Ranks.vtm"
-        elif datasetType == "singlePhasePoromechanicsVTKOutput":
-            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/singlePhasePoromechanicsVTKOutput.vtm"
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion4Ranks.vtm"
+        elif datasetType == "geosOutput2Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks.vtm"
         elif datasetType == "extractAndMergeVolume":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
         elif datasetType == "extractAndMergeFault":

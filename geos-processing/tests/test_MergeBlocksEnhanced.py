@@ -15,7 +15,7 @@ from packaging.version import Version
 
 def test_MergeBlocksEnhancedFilter( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test MergeBlockEnhanced vtk filter."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
     mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( multiBlockDataset )
     mergeBlockEnhancedFilter.applyFilter()
 

@@ -47,7 +47,7 @@ def test_FillPartialArrays(
     dictAttributesValues: dict[ str, Any ],
 ) -> None:
     """Test FillPartialArrays vtk filter."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
 
     fillPartialArraysFilter: FillPartialArrays = FillPartialArrays( multiBlockDataSet, dictAttributesValues )
     fillPartialArraysFilter.applyFilter()
@@ -55,7 +55,7 @@ def test_FillPartialArrays(
 
 def test_FillPartialArraysRaises( dataSetTest: vtkMultiBlockDataSet, ) -> None:
     """Test the raises of FillPartialArray."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
     fillPartialArraysFilter: FillPartialArrays
 
     with pytest.raises( AttributeError ):
