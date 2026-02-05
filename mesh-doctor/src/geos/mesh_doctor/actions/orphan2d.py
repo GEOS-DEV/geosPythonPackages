@@ -51,8 +51,10 @@ def getCellFacePoints( cell: vtk.vtkCell ) -> list[ tuple[ int, ...] ]:
     elif cellType == vtk.VTK_PYRAMID:
         # 1 quadrilateral + 4 triangular faces
         faces = [ [ 0, 1, 2, 3 ], [ 0, 1, 4 ], [ 1, 2, 4 ], [ 2, 3, 4 ], [ 3, 0, 4 ] ]
-      else:
-           raise NotImplementedError(f"Orphaned2d is not implemented for cell type {cellType}. It is supported for TETRAHEDRA ({vtk.VTK_TETRA}), HEXA {(vtk.VTK_HEXAHEDRON}), WEDGE ({vtk.VTK_WEDGE}) and PYRAMID ({vtk.VTK_PYRAMID})")
+    else:
+        raise NotImplementedError(
+            f"Orphan2d is not implemented for cell type {cellType}. It is supported for TETRAHEDRA ({vtk.VTK_TETRA}), HEXA ({vtk.VTK_HEXAHEDRON}), WEDGE ({vtk.VTK_WEDGE}) and PYRAMID ({vtk.VTK_PYRAMID})"
+        )
 
     # Convert local indices to global point IDs
     pointIds = cell.GetPointIds()
