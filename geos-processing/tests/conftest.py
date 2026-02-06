@@ -47,6 +47,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolumeWell1.vtm"
         elif datasetType == "extractAndMergeFaultWell1":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
+        elif datasetType == "quads2_tris4":
+            vtkFilename = "data/quads2_tris4.vtu"
+        elif datasetType == "hexs3_tets36_pyrs18":
+            vtkFilename = "data/hexs3_tets36_pyrs18.vtu"
 
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
