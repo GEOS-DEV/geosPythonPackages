@@ -1,16 +1,14 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-from matplotlib.figure import Figure
-from dataclasses import dataclass
-import numpy as np
-import numpy.typing as npt
-import pandas as pd
 import pytest
-from typing import Iterator, Optional
+import numpy as np
+import pandas as pd
+from typing import Optional, Any
+from dataclasses import dataclass
 
-from geos.mesh.utils.genericHelpers import createMultiCellMesh
+from matplotlib.figure import Figure
+
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypesExtended
 from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
@@ -18,31 +16,49 @@ from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellData, vtkFieldData, vtkCellTypes, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 
 # input data
 meshName_all: tuple[ str, ...] = (
-    "polydata",
-    "tetra_mesh",
+    "extractAndMergeVolume",
+    "extractAndMergeFault",
+    "hexs3_tets36_pyrs18",
+    "quads2_tris4",
 )
-cellTypes_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_TETRA )
+cellTypes_all: tuple[ tuple[ int, ...], ...] = (
+    ( VTK_HEXAHEDRON, ),
+    ( VTK_TRIANGLE, ),
+    ( VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID ),
+    ( VTK_TRIANGLE, VTK_QUAD ),
+)
 qualityMetrics_all: tuple[ tuple[ int, ...], ...] = (
+    ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
+      int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
+      int( vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX ) ),
     ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
     ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
       int( vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX ) ),
+    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
+      int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
 )
-# yapf: disable
 cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = (
-    ( 26324, 0, 0, 0, 0, 0, 26324, 0, ),
-    ( 0, 0, 8, 0, 0, 0, 0, 8,)
+    ( 0, 0, 0, 0, 0, 6000, 0, 6000 ),
+    ( 126, 0, 0, 0, 0, 0, 126, 0 ),
+    ( 0, 0, 36, 18, 0, 3, 0, 57 ),
+    ( 4, 2, 0, 0, 0, 0, 6, 0 ),
 )
 metricsSummary_all: tuple[ tuple[ tuple[ float, ...], ...], ...] = (
-    ( ( 1.07, 0.11, 1.0, 1.94, 26324.0 ), ( 0.91, 0.1, 0.53, 1.0, 26324.0 ), ( 64.59, 6.73, 60.00, 110.67, 26324.0 ) ),
-    ( ( -0.28, 0.09, -0.49, -0.22, 8.0 ), ( 0.7, 0.1, 0.47, 0.79, 8.0 ), ( 0.8, 0.12, 0.58, 0.95, 8.0 ) ),
+    ( ( 1.0, 0.0, 1.0, 1.0, 6000.0 ), ( 0.0, 0.0, 0.0, 0.0, 6000.0 ), ( 0.0, 0.0, 0.0, 0.0, 6000.0 ) ),
+    ( ( 378.23, 305.04, 9.55, 693.11, 126.0 ), ( 0.01, 0.02, 0.0, 0.07, 126.0 ), ( 90.0, 0.0, 90.0, 90.0, 126.0 ) ),
+    ( ( 0.58, 0.0, 0.58, 0.58, 36.0 ), ( 0.45, 0.0, 0.45, 0.45, 36.0 ), ( 0.7, 0.0, 0.7, 0.7, 36.0 ),
+      ( 0.82, 0.0, 0.82, 0.82, 18.0 ), ( 0.09, 0.0, 0.09, 0.09, 18.0 ), ( 0.61, 0.0, 0.61, 0.61, 18.0 ),
+      ( 1.0, 0.0, 1.0, 1.0, 3.0 ), ( 0.0, 0.0, 0.0, 0.0, 3.0 ), ( 0.0, 0.0, 0.0, 0.0, 3.0 ),
+      ( 0.68, 0.13, 0.58, 1.0, 57.0 ), ( 0.31, 0.18, 0.0, 0.45, 57.0 ), ( 0.63, 0.15, 0.0, 0.7, 57.0 ) ),
+    ( ( 1.39, 0.0, 1.39, 1.39, 4.0 ), ( 0.82, 0.0, 0.82, 0.82, 4.0 ), ( 90.0, 0.0, 90.0, 90.0, 4.0 ),
+      ( 1.0, 0.0, 1.0, 1.0, 2.0 ), ( 1.0, 0.0, 1.0, 1.0, 2.0 ), ( 90.0, 0.0, 90.0, 90.0, 2.0 ),
+      ( 1.26, 0.19, 1.0, 1.39, 6.0 ), ( 0.88, 0.09, 0.82, 1.0, 6.0 ), ( 90.0, 0.0, 90.0, 90.0, 6.0 ) ),
 )
-# yapf: enable
 
 
 @dataclass( frozen=True )
@@ -51,96 +67,35 @@ class TestCase:
     __test__ = False
     #: mesh
     mesh: vtkUnstructuredGrid
-    cellType: int
+    cellType: tuple[ int, ...]
     qualityMetrics: tuple[ int, ...]
     cellTypeCounts: tuple[ int, ...]
     metricsSummary: tuple[ tuple[ float, ...], ...]
 
 
-def __get_tetra_dataset() -> vtkUnstructuredGrid:
-    """Extract tetrahedra dataset from csv and add some deformations."""
-    # Get tetra mesh
-    data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
-    filename: str = "tetra_mesh.csv"
-    nbPtsCell: int = 4
-
-    ptsCoord: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, filename ), dtype=float, delimiter=',' )
-
-    # Intentional deformation of the mesh
-    ptsCoord[ :, 0 ][ ptsCoord[ :, 0 ] == 0.5 ] = 0.2
-    ptsCoord[ :, 2 ][ ptsCoord[ :, 2 ] == 0.5 ] = 0.7
-
-    cellPtsCoords: list[ npt.NDArray[ np.float64 ] ] = [
-        ptsCoord[ i:i + nbPtsCell ] for i in range( 0, ptsCoord.shape[ 0 ], nbPtsCell )
-    ]
-    nbCells: int = int( ptsCoord.shape[ 0 ] / nbPtsCell )
-    cellTypes = nbCells * [ VTK_TETRA ]
-    mesh: vtkUnstructuredGrid = createMultiCellMesh( cellTypes, cellPtsCoords )
-
-    return mesh
-
-
-def __get_dataset( meshName: str ) -> vtkUnstructuredGrid:
-    """Get the dataset from external vtk file.
-
-    Args:
-        meshName (str): The name of the mesh
-
-    Returns:
-        vtkUnstructuredGrid: The dataset.
-    """
-    if meshName == "polydata":
-        reader: vtkXMLUnstructuredGridReader = vtkXMLUnstructuredGridReader()
-        vtkFilename: str = "data/triangulatedSurface.vtu"
-
-    datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
-    reader.SetFileName( datapath )
-    reader.Update()
-
-    return reader.GetOutput()
-
-
-def __generate_test_data() -> Iterator[ TestCase ]:
-    """Generate test cases.
-
-    Yields:
-        Iterator[ TestCase ]: Iterator on test cases
-    """
-    for meshName, cellType, qualityMetrics, cellTypeCounts, metricsSummary in zip( meshName_all,
-                                                                                   cellTypes_all,
-                                                                                   qualityMetrics_all,
-                                                                                   cellTypeCounts_all,
-                                                                                   metricsSummary_all,
-                                                                                   strict=True ):
-        mesh: vtkUnstructuredGrid
-        mesh = __get_tetra_dataset() if meshName == "tetra_mesh" else __get_dataset( meshName )
-
-        yield TestCase( mesh, cellType, qualityMetrics, cellTypeCounts, metricsSummary )
-
-
-ids: list[ str ] = [ os.path.splitext( name )[ 0 ] for name in meshName_all ]
-
-
-@pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
-def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
-    """Test of MeshQualityEnhanced filter.
-
-    Args:
-        test_case (TestCase): Test case
-    """
-    mesh = test_case.mesh
+@pytest.mark.parametrize( "case", [
+    ( 0 ),
+    ( 1 ),
+    ( 2 ),
+    ( 3 ),
+] )
+def test_MeshQualityEnhanced( dataSetTest: Any, case: int ) -> None:
+    """Test of MeshQualityEnhanced filter."""
+    test_case: TestCase = TestCase( dataSetTest( meshName_all[ case ] ), cellTypes_all[ case ],
+                                    qualityMetrics_all[ case ], cellTypeCounts_all[ case ], metricsSummary_all[ case ] )
+    mesh: vtkUnstructuredGrid = test_case.mesh
     meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( mesh )
-    if test_case.cellType == VTK_TRIANGLE:
+    if VTK_TRIANGLE in test_case.cellType:
         meshQualityEnhancedFilter.SetTriangleMetrics( test_case.qualityMetrics )
-    elif test_case.cellType == VTK_QUAD:
+    if VTK_QUAD in test_case.cellType:
         meshQualityEnhancedFilter.SetQuadMetrics( test_case.qualityMetrics )
-    elif test_case.cellType == VTK_TETRA:
+    if VTK_TETRA in test_case.cellType:
         meshQualityEnhancedFilter.SetTetraMetrics( test_case.qualityMetrics )
-    elif test_case.cellType == VTK_PYRAMID:
+    if VTK_PYRAMID in test_case.cellType:
         meshQualityEnhancedFilter.SetPyramidMetrics( test_case.qualityMetrics )
-    elif test_case.cellType == VTK_WEDGE:
+    if VTK_WEDGE in test_case.cellType:
         meshQualityEnhancedFilter.SetWedgeMetrics( test_case.qualityMetrics )
-    elif test_case.cellType == VTK_HEXAHEDRON:
+    if VTK_HEXAHEDRON in test_case.cellType:
         meshQualityEnhancedFilter.SetHexaMetrics( test_case.qualityMetrics )
     meshQualityEnhancedFilter.applyFilter()
 
@@ -148,7 +103,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     for i, cellType in enumerate( getAllCellTypesExtended() ):
         metrics: Optional[ set[ int ] ] = meshQualityEnhancedFilter.getComputedMetricsFromCellType( cellType )
         if test_case.cellTypeCounts[ i ] > 0:
-            assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."
+            assert metrics is not None, f"Metrics from { vtkCellTypes.GetClassNameFromTypeId( cellType ) } cells is undefined."
 
     # test attributes
     outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
@@ -157,7 +112,8 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
 
     nbMetrics: int = len( test_case.qualityMetrics )
     nbCellArrayExp: int = mesh.GetCellData().GetNumberOfArrays() + nbMetrics
-    assert cellData.GetNumberOfArrays() == nbCellArrayExp, f"Number of cell arrays is expected to be {nbCellArrayExp}."
+    assert cellData.GetNumberOfArrays(
+    ) == nbCellArrayExp, f"Number of cell arrays is expected to be { nbCellArrayExp }."
 
     # test field data
     fieldData: vtkFieldData = outputMesh.GetFieldData()
@@ -170,21 +126,25 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     nbFieldArrayExp: int = mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * ( nbPolygon +
                                                                                                   nbPolyhedra )
     assert fieldData.GetNumberOfArrays(
-    ) == nbFieldArrayExp, f"Number of field data arrays is expected to be {nbFieldArrayExp}."
+    ) == nbFieldArrayExp, f"Number of field data arrays is expected to be { nbFieldArrayExp }."
 
     stats: QualityMetricSummary = meshQualityEnhancedFilter.GetQualityMetricSummary()
+    cpt: int = 0
     for i, cellType in enumerate( getAllCellTypesExtended() ):
         # test Counts
         assert stats.getCellTypeCountsOfCellType( cellType ) == test_case.cellTypeCounts[
-            i ], f"Number of {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is expected to be {test_case.cellTypeCounts[i]}"
+            i ], f"Number of { vtkCellTypes.GetClassNameFromTypeId( cellType ) } cells is expected to be { test_case.cellTypeCounts[ i ] }"
         if stats.getCellTypeCountsOfCellType( cellType ) == 0:
             continue
 
         # test metric summary
         for j, metricIndex in enumerate( test_case.qualityMetrics ):
             subStats: pd.Series = stats.getStatsFromMetricAndCellType( metricIndex, cellType )
+            if len( test_case.cellType ) > 1:  # for meshes with multiple cell type
+                j = cpt
+                cpt += 1
             assert np.round( subStats, 2 ).tolist() == list(
-                test_case.metricsSummary[ j ] ), f"Stats at metric index {j} are wrong."
+                test_case.metricsSummary[ j ] ), f"Stats at metric index { j } are wrong."
 
     fig: Figure = stats.plotSummaryFigure()
     assert len( fig.get_axes() ) == 6, "Number of Axes is expected to be 6."
