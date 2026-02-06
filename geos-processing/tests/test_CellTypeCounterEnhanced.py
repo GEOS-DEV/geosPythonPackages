@@ -18,13 +18,12 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypes, v
 
 data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
 
-filename_all: tuple[ str, ...] = ( "triangle_cell.csv", "quad_cell.csv", "tetra_cell.csv", "pyramid_cell.csv",
-                                   "hexa_cell.csv" )
-cellType_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON )
+filename_all: tuple[ str, ...] = ( "quad_cell.csv", "tetra_cell.csv", "pyramid_cell.csv" )
+cellType_all: tuple[ int, ...] = ( VTK_QUAD, VTK_TETRA, VTK_PYRAMID )
 
-filename_all2: tuple[ str, ...] = ( "tetra_mesh.csv", "hexa_mesh.csv" )
-cellType_all2: tuple[ int, ...] = ( VTK_TETRA, VTK_HEXAHEDRON )
-nbPtsCell_all2: tuple[ int, ...] = ( 4, 8 )
+filename_all2: tuple[ str, ...] = ( "tetra_mesh.csv", )
+cellType_all2: tuple[ int, ...] = ( VTK_TETRA, )
+nbPtsCell_all2: tuple[ int, ...] = ( 4, )
 
 
 @dataclass( frozen=True )
@@ -143,3 +142,41 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     assert int( countsObs.getTypeCount( VTK_POLYGON ) ) == nbPolygon, f"The number of faces should be {nbPolygon}."
     assert int(
         countsObs.getTypeCount( VTK_POLYHEDRON ) ) == nbPolyhedra, f"The number of polyhedra should be {nbPolyhedra}."
+
+
+@pytest.mark.parametrize( "meshName", [
+    ( "extractAndMergeVolume" ),
+    ( "extractAndMergeFault" ),
+])
+def test_CellTypeCounterEnhancedRealCase(
+    dataSetTest: vtkUnstructuredGrid,
+    meshName: str,
+ ) -> None:
+    """Test of CellTypeCounterEnhanced filter."""
+    mesh : vtkUnstructuredGrid = dataSetTest( meshName )
+    cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( mesh )
+    cellTypeCounterEnhancedFilter.applyFilter()
+    countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
+    assert countsObs is not None, "CellTypeCounts is undefined"
+
+    assert countsObs.getTypeCount( VTK_VERTEX ) == mesh.GetNumberOfPoints(
+    ), f"Number of vertices should be { mesh.GetNumberOfPoints() }"
+
+    # compute counts for each type of cell
+    elementTypes: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
+    counts: npt.NDArray[ np.int64 ] = np.zeros( len( elementTypes ), dtype=int )
+    for i in range( mesh.GetNumberOfCells() ):
+        cell: vtkCell = mesh.GetCell( i )
+        index: int = elementTypes.index( cell.GetCellType() )
+        counts[ index ] += 1
+    # check cell type counts
+    for i, elementType in enumerate( elementTypes ):
+        assert int(
+            countsObs.getTypeCount( elementType )
+        ) == counts[ i ], f"The number of { vtkCellTypes.GetClassNameFromTypeId( elementType ) } should be { counts[ i ] }."
+
+    nbPolygon: int = counts[ 0 ] + counts[ 1 ]
+    nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )
+    assert int( countsObs.getTypeCount( VTK_POLYGON ) ) == nbPolygon, f"The number of faces should be { nbPolygon }."
+    assert int(
+        countsObs.getTypeCount( VTK_POLYHEDRON ) ) == nbPolyhedra, f"The number of polyhedra should be { nbPolyhedra }."
