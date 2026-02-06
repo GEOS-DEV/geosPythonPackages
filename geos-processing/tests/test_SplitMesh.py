@@ -1,24 +1,26 @@
 # SPDX-FileContributor: Martin Lemay
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import pytest
-from typing import Iterator
+from typing import Iterator, Any
+from dataclasses import dataclass
+
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCellTypes, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList, vtkDataArray
+
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
-
 
 ###############################################################
 #                  create single tetra mesh                   #
 ###############################################################
 tetra_cell_type: int = VTK_TETRA
-tetraPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0 ], [ 0.0, 1.0, 0.0 ] ] )
+tetraPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0 ],
+                                                           [ 0.0, 1.0, 0.0 ] ] )
 
 # expected results
 tetra_points_out: npt.NDArray[ np.float64 ] = np.array(
@@ -31,7 +33,9 @@ tetra_cells_out: list[ list[ int ] ] = [ [ 0, 4, 6, 7 ], [ 7, 9, 8, 3 ], [ 9, 4,
 #                  create single hexa mesh                    #
 ###############################################################
 hexa_cell_type: int = VTK_HEXAHEDRON
-hexaPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ], [ 1.0, 0.0, 1.0 ], [ 1.0, 1.0, 1.0 ], [ 0.0, 1.0, 1.0 ] ] )
+hexaPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                          [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ], [ 1.0, 0.0, 1.0 ],
+                                                          [ 1.0, 1.0, 1.0 ], [ 0.0, 1.0, 1.0 ] ] )
 
 # expected results
 hexa_points_out: npt.NDArray[ np.float64 ] = np.array(
@@ -49,7 +53,8 @@ hexa_cells_out: list[ list[ int ] ] = [ [ 10, 21, 26, 22, 4, 16, 25, 17 ], [ 21,
 #                 create single pyramid mesh                  #
 ###############################################################
 pyramid_cell_type: int = VTK_PYRAMID
-pyrPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ], [ 0.0, 1.0, 0.0 ], [ 0.5, 0.5, 1.0 ] ] )
+pyrPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                         [ 0.0, 1.0, 0.0 ], [ 0.5, 0.5, 1.0 ] ] )
 
 # expected results
 pyramid_points_out: npt.NDArray[ np.float64 ] = np.array(
@@ -76,7 +81,8 @@ triangle_cells_out: list[ list[ int ] ] = [ [ 0, 3, 5 ], [ 3, 1, 4 ], [ 5, 4, 2 
 #                   create single quad mesh                   #
 ###############################################################
 quad_cell_type: int = VTK_QUAD
-quadPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ], [ 0.0, 1.0, 0.0 ] ] )
+quadPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                          [ 0.0, 1.0, 0.0 ] ] )
 
 # expected results
 quad_points_out: npt.NDArray[ np.float64 ] = np.array(
@@ -111,10 +117,10 @@ def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
         Iterator[ TestCase ]: iterator on test cases
     """
     for cellType, ptsCoord, pointsExp, cellsExp in zip( cell_types_all,
-                                                         pointsCoordsAll,
-                                                         points_out_all,
-                                                         cells_out_all,
-                                                         strict=True ):
+                                                        pointsCoordsAll,
+                                                        points_out_all,
+                                                        cells_out_all,
+                                                        strict=True ):
         mesh: vtkUnstructuredGrid = createSingleCellMesh( cellType, ptsCoord )
         yield TestCase( cellType, mesh, pointsExp, cellsExp )
 
@@ -193,14 +199,16 @@ def test_splitMeshOnCell( test_case: TestCase ) -> None:
     assert nbArraySplitted == nbArrayInput + 1, f"Number of arrays should be {nbArrayInput + 1}"
 
 
-@pytest.mark.parametrize( "meshName", [
-    ( "quads2_tris4" ),  # Quad and Tri mesh
-    ( "hexs3_tets36_pyrs18" ),  # Hex, Tet and Pyr mesh
-    ( "extractAndMergeVolume" ),  # Tri mesh
-    ( "extractAndMergeFault" ),  # Hex mesh
-] )
+@pytest.mark.parametrize(
+    "meshName",
+    [
+        ( "quads2_tris4" ),  # Quad and Tri mesh
+        ( "hexs3_tets36_pyrs18" ),  # Hex, Tet and Pyr mesh
+        ( "extractAndMergeVolume" ),  # Tri mesh
+        ( "extractAndMergeFault" ),  # Hex mesh
+    ] )
 def test_splitMesh(
-    dataSetTest: vtkUnstructuredGrid,
+    dataSetTest: Any,
     meshName: str,
 ) -> None:
     """Test splitting a mesh.
@@ -216,6 +224,7 @@ def test_splitMesh(
     mesh: vtkUnstructuredGrid = dataSetTest( meshName )
     assert mesh is not None, "Input mesh should be loaded successfully."
 
+    cellType: int
     # Count cells by type in input mesh
     nbHex: int = 0
     nbTet: int = 0
@@ -223,7 +232,7 @@ def test_splitMesh(
     nbQuad: int = 0
     nbTri: int = 0
     for idCell in range( mesh.GetNumberOfCells() ):
-        cellType: int = mesh.GetCellType( idCell )
+        cellType = mesh.GetCellType( idCell )
         if cellType == VTK_HEXAHEDRON:
             nbHex += 1
         elif cellType == VTK_TETRA:
@@ -253,7 +262,7 @@ def test_splitMesh(
     nbQuadOut: int = 0
     nbTriOut: int = 0
     for idCell in range( output.GetNumberOfCells() ):
-        cellType: int = output.GetCellType( idCell )
+        cellType = output.GetCellType( idCell )
         if cellType == VTK_HEXAHEDRON:
             nbHexOut += 1
         elif cellType == VTK_TETRA:

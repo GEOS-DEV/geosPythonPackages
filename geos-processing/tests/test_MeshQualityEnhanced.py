@@ -1,12 +1,13 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-from matplotlib.figure import Figure
-from dataclasses import dataclass
+import pytest
 import numpy as np
 import pandas as pd
-from typing import Optional
-import pytest
+from typing import Optional, Any
+from dataclasses import dataclass
+
+from matplotlib.figure import Figure
 
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypesExtended
 from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanced
@@ -24,31 +25,28 @@ meshName_all: tuple[ str, ...] = (
     "quads2_tris4",
 )
 cellTypes_all: tuple[ tuple[ int, ...], ...] = (
-    { VTK_HEXAHEDRON, },
-    { VTK_TRIANGLE, },
-    { VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID },
-    { VTK_TRIANGLE, VTK_QUAD },
+    ( VTK_HEXAHEDRON, ),
+    ( VTK_TRIANGLE, ),
+    ( VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID ),
+    ( VTK_TRIANGLE, VTK_QUAD ),
 )
 qualityMetrics_all: tuple[ tuple[ int, ...], ...] = (
     ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
       int( vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX ) ),
-    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ),
-      int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
+    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
     ( int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW ),
       int( vtkMeshQuality.QualityMeasureTypes.SQUISH_INDEX ) ),
-    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ),
-      int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
+    ( int( vtkMeshQuality.QualityMeasureTypes.ASPECT_RATIO ), int( vtkMeshQuality.QualityMeasureTypes.SCALED_JACOBIAN ),
       int( vtkMeshQuality.QualityMeasureTypes.MAX_ANGLE ) ),
 )
-# yapf: disable
 cellTypeCounts_all: tuple[ tuple[ int, ...], ...] = (
-    ( 0, 0, 0, 0, 0, 6000, 0, 6000, ),
-    ( 126, 0, 0, 0, 0, 0, 126, 0, ),
-    ( 0, 0, 36, 18, 0, 3, 0, 57, ),
-    ( 4, 2, 0, 0, 0, 0, 6, 0, ),
+    ( 0, 0, 0, 0, 0, 6000, 0, 6000 ),
+    ( 126, 0, 0, 0, 0, 0, 126, 0 ),
+    ( 0, 0, 36, 18, 0, 3, 0, 57 ),
+    ( 4, 2, 0, 0, 0, 0, 6, 0 ),
 )
 metricsSummary_all: tuple[ tuple[ tuple[ float, ...], ...], ...] = (
     ( ( 1.0, 0.0, 1.0, 1.0, 6000.0 ), ( 0.0, 0.0, 0.0, 0.0, 6000.0 ), ( 0.0, 0.0, 0.0, 0.0, 6000.0 ) ),
@@ -61,7 +59,6 @@ metricsSummary_all: tuple[ tuple[ tuple[ float, ...], ...], ...] = (
       ( 1.0, 0.0, 1.0, 1.0, 2.0 ), ( 1.0, 0.0, 1.0, 1.0, 2.0 ), ( 90.0, 0.0, 90.0, 90.0, 2.0 ),
       ( 1.26, 0.19, 1.0, 1.39, 6.0 ), ( 0.88, 0.09, 0.82, 1.0, 6.0 ), ( 90.0, 0.0, 90.0, 90.0, 6.0 ) ),
 )
-# yapf: enable
 
 
 @dataclass( frozen=True )
@@ -82,9 +79,10 @@ class TestCase:
     ( 2 ),
     ( 3 ),
 ] )
-def test_MeshQualityEnhanced( dataSetTest: vtkUnstructuredGrid, case: int ) -> None:
+def test_MeshQualityEnhanced( dataSetTest: Any, case: int ) -> None:
     """Test of MeshQualityEnhanced filter."""
-    test_case: TestCase = TestCase( dataSetTest( meshName_all[ case ] ), cellTypes_all[ case ], qualityMetrics_all[ case ], cellTypeCounts_all[ case ], metricsSummary_all[ case ] )
+    test_case: TestCase = TestCase( dataSetTest( meshName_all[ case ] ), cellTypes_all[ case ],
+                                    qualityMetrics_all[ case ], cellTypeCounts_all[ case ], metricsSummary_all[ case ] )
     mesh: vtkUnstructuredGrid = test_case.mesh
     meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( mesh )
     if VTK_TRIANGLE in test_case.cellType:
@@ -114,7 +112,8 @@ def test_MeshQualityEnhanced( dataSetTest: vtkUnstructuredGrid, case: int ) -> N
 
     nbMetrics: int = len( test_case.qualityMetrics )
     nbCellArrayExp: int = mesh.GetCellData().GetNumberOfArrays() + nbMetrics
-    assert cellData.GetNumberOfArrays() == nbCellArrayExp, f"Number of cell arrays is expected to be { nbCellArrayExp }."
+    assert cellData.GetNumberOfArrays(
+    ) == nbCellArrayExp, f"Number of cell arrays is expected to be { nbCellArrayExp }."
 
     # test field data
     fieldData: vtkFieldData = outputMesh.GetFieldData()
@@ -125,7 +124,7 @@ def test_MeshQualityEnhanced( dataSetTest: vtkUnstructuredGrid, case: int ) -> N
     nbPolyhedra: int = np.sum( tmp[ 2:6 ].astype( int ) )
     nbPolyhedra = 0 if nbPolyhedra == 0 else nbPolyhedra + 1
     nbFieldArrayExp: int = mesh.GetFieldData().GetNumberOfArrays() + tmp.size + 4 * nbMetrics * ( nbPolygon +
-                                                                                                nbPolyhedra )
+                                                                                                  nbPolyhedra )
     assert fieldData.GetNumberOfArrays(
     ) == nbFieldArrayExp, f"Number of field data arrays is expected to be { nbFieldArrayExp }."
 
@@ -141,12 +140,11 @@ def test_MeshQualityEnhanced( dataSetTest: vtkUnstructuredGrid, case: int ) -> N
         # test metric summary
         for j, metricIndex in enumerate( test_case.qualityMetrics ):
             subStats: pd.Series = stats.getStatsFromMetricAndCellType( metricIndex, cellType )
-            if len( test_case.cellType ) > 1: # for meshes with multiple cell type
-                j= cpt
+            if len( test_case.cellType ) > 1:  # for meshes with multiple cell type
+                j = cpt
                 cpt += 1
             assert np.round( subStats, 2 ).tolist() == list(
                 test_case.metricsSummary[ j ] ), f"Stats at metric index { j } are wrong."
-
 
     fig: Figure = stats.plotSummaryFigure()
     assert len( fig.get_axes() ) == 6, "Number of Axes is expected to be 6."

@@ -12,36 +12,38 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
 
-@pytest.mark.parametrize( "dictAttributesValues", [
-    ( {
-        "deltaPressure": None  # On cells
-    } ),
-    ( {
-        "totalDisplacement": None  # On points
-    } ),
-    ( {
-        "deltaPressure": None,
-        "totalDisplacement": None
-    } ),
-    ( {
-        "deltaPressure": [ 4 ]
-    } ),
-    ( {
-        "totalDisplacement": [ 4, 4, 4 ]
-    } ),
-    ( {
-        "deltaPressure": [ 4 ],
-        "totalDisplacement": [ 4, 4, 4 ]
-    } ),
-    ( {
-        "deltaPressure": None,
-        "totalDisplacement": [ 4, 4, 4 ]
-    } ),
-    ( {
-        "deltaPressure": [ 4 ],
-        "totalDisplacement": None
-    } ),
-] )
+@pytest.mark.parametrize(
+    "dictAttributesValues",
+    [
+        ( {
+            "deltaPressure": None  # On cells
+        } ),
+        ( {
+            "totalDisplacement": None  # On points
+        } ),
+        ( {
+            "deltaPressure": None,
+            "totalDisplacement": None
+        } ),
+        ( {
+            "deltaPressure": [ 4 ]
+        } ),
+        ( {
+            "totalDisplacement": [ 4, 4, 4 ]
+        } ),
+        ( {
+            "deltaPressure": [ 4 ],
+            "totalDisplacement": [ 4, 4, 4 ]
+        } ),
+        ( {
+            "deltaPressure": None,
+            "totalDisplacement": [ 4, 4, 4 ]
+        } ),
+        ( {
+            "deltaPressure": [ 4 ],
+            "totalDisplacement": None
+        } ),
+    ] )
 def test_FillPartialArrays(
     dataSetTest: vtkMultiBlockDataSet,
     dictAttributesValues: dict[ str, Any ],

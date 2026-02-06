@@ -40,7 +40,8 @@ def test_AttributeMapping(
         fillAllPartialAttributes( meshFrom )
 
     if meshFromName == meshToName:
-        createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion( meshFrom, "blockIndex", {}, "newAttribute" )
+        createConstantAttributePerRegionFilter: CreateConstantAttributePerRegion = CreateConstantAttributePerRegion(
+            meshFrom, "blockIndex", {}, "newAttribute" )
         createConstantAttributePerRegionFilter.applyFilter()
 
     attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, meshTo, attributeNames, piece )
@@ -52,7 +53,8 @@ def test_AttributeMapping(
     [
         ( "extractAndMergeVolume", "extractAndMergeFault", { "Fault" } ),  # Attribute not in the mesh from
         ( "extractAndMergeVolume", "extractAndMergeFault", { "deltaPressure" } ),  # Attribute on both meshes
-        ( "extractAndMergeVolumeWell1", "extractAndMergeFault", { "totalDisplacement" } ),  # Partial attribute in the mesh from
+        ( "extractAndMergeVolumeWell1", "extractAndMergeFault", { "totalDisplacement"
+                                                                 } ),  # Partial attribute in the mesh from
     ] )
 def test_AttributeMappingRaisesAttributeError(
     dataSetTest: Any,

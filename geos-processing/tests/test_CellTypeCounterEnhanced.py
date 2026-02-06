@@ -4,6 +4,7 @@
 import numpy as np
 import numpy.typing as npt
 import pytest
+from typing import Any
 
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
@@ -13,25 +14,27 @@ from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypes, v
                                             VTK_HEXAHEDRON, VTK_WEDGE )
 
 
-@pytest.mark.parametrize( "meshName", [
-    ( "extractAndMergeVolume" ),  # Tri mesh
-    ( "extractAndMergeFault" ),  # Hex mesh
-    ( "quads2_tris4" ),  # Quad and Tri mesh
-    ( "hexs3_tets36_pyrs18" ),  # Hex, Tet and Pyr mesh
-])
+@pytest.mark.parametrize(
+    "meshName",
+    [
+        ( "extractAndMergeVolume" ),  # Tri mesh
+        ( "extractAndMergeFault" ),  # Hex mesh
+        ( "quads2_tris4" ),  # Quad and Tri mesh
+        ( "hexs3_tets36_pyrs18" ),  # Hex, Tet and Pyr mesh
+    ] )
 def test_CellTypeCounterEnhancedRealCase(
-    dataSetTest: vtkUnstructuredGrid,
+    dataSetTest: Any,
     meshName: str,
- ) -> None:
+) -> None:
     """Test of CellTypeCounterEnhanced filter."""
-    mesh : vtkUnstructuredGrid = dataSetTest( meshName )
+    mesh: vtkUnstructuredGrid = dataSetTest( meshName )
     cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( mesh )
     cellTypeCounterEnhancedFilter.applyFilter()
     countsObs: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
-    assert countsObs is not None, "CellTypeCounts is undefined"
 
-    assert countsObs.getTypeCount( VTK_VERTEX ) == mesh.GetNumberOfPoints(
-    ), f"Number of vertices should be { mesh.GetNumberOfPoints() }"
+    assert countsObs is not None, "CellTypeCounts is undefined"
+    assert countsObs.getTypeCount(
+        VTK_VERTEX ) == mesh.GetNumberOfPoints(), f"Number of vertices should be { mesh.GetNumberOfPoints() }"
 
     # compute counts for each type of cell
     elementTypes: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE )
@@ -42,9 +45,8 @@ def test_CellTypeCounterEnhancedRealCase(
         counts[ index ] += 1
     # check cell type counts
     for i, elementType in enumerate( elementTypes ):
-        assert int(
-            countsObs.getTypeCount( elementType )
-        ) == counts[ i ], f"The number of { vtkCellTypes.GetClassNameFromTypeId( elementType ) } should be { counts[ i ] }."
+        assert int( countsObs.getTypeCount( elementType ) ) == counts[
+            i ], f"The number of { vtkCellTypes.GetClassNameFromTypeId( elementType ) } should be { counts[ i ] }."
 
     nbPolygon: int = counts[ 0 ] + counts[ 1 ]
     nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )

@@ -4,12 +4,13 @@
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
 import pytest
+from typing import Any
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 
 
-def test_SurfaceGeomechanics( dataSetTest: vtkPolyData ) -> None:
+def test_SurfaceGeomechanics( dataSetTest: Any ) -> None:
     """Test SurfaceGeomechanics vtk filter."""
     surface: vtkPolyData = dataSetTest( "extractAndMergeFaultVtp" )
 

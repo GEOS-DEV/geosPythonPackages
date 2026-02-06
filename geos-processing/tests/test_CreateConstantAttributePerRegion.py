@@ -17,17 +17,24 @@ import numpy as np
     [
         # Test the piece of the region attribute.
         ## For vtkDataSet.
-        ( "extractAndMergeVolume", "fractureMechSolver_totalDisplacement_dofIndex", {}, (), (), np.float32 ),  # on Points
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.float32 ),  # on Cells
+        ( "extractAndMergeVolume", "fractureMechSolver_totalDisplacement_dofIndex", {}, (),
+          (), np.float32 ),  # on Points
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (),
+          (), np.float32 ),  # on Cells
         ## For vtkMultiBlockDataSet
         ( "2Ranks", "fractureMechSolver_totalDisplacement_dofIndex", {}, (), (), np.float32 ),
         ( "2Ranks", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.float32 ),
         # Test the component name
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ), (), np.float32 ),
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), ( "Component0", "Component1" ), np.float32 ),
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ), ( "Component0", "Component1" ), np.float32 ),
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y" ), ( "X", "Y" ), np.float32 ),
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y", "Z" ), ( "X", "Y" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ),
+          (), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (),
+          ( "Component0", "Component1" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X" ),
+          ( "Component0", "Component1" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y" ),
+          ( "X", "Y" ), np.float32 ),
+        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, ( "X", "Y", "Z" ),
+          ( "X", "Y" ), np.float32 ),
         # Test the type of value
         ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int8 ),
         ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {}, (), (), np.int16 ),
@@ -47,14 +54,26 @@ import numpy as np
             30: [ 0, 0 ],
         }, (), ( "Component0", "Component1" ), np.float32 ),
         ## with also incorrect indexes
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {
-            30: [ 0 ],
-            0: [ 1 ],  # 0 is not an index of the region attribute
-        }, (), (), np.float32 ),
-        ( "extractAndMergeVolume", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex", {
-            30: [ 0, 0 ],
-            0: [ 1, 1 ],  # 0 is not an index of the region attribute
-        }, (), ( "Component0", "Component1" ), np.float32 ),
+        (
+            "extractAndMergeVolume",
+            "reservoirAndWellsSolver_singlePhaseVariables_dofIndex",
+            {
+                30: [ 0 ],
+                0: [ 1 ],  # 0 is not an index of the region attribute
+            },
+            (),
+            (),
+            np.float32 ),
+        (
+            "extractAndMergeVolume",
+            "reservoirAndWellsSolver_singlePhaseVariables_dofIndex",
+            {
+                30: [ 0, 0 ],
+                0: [ 1, 1 ],  # 0 is not an index of the region attribute
+            },
+            (),
+            ( "Component0", "Component1" ),
+            np.float32 ),
     ] )
 def test_CreateConstantAttributePerRegion(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
@@ -88,8 +107,10 @@ def test_CreateConstantAttributePerRegion(
     "meshType, newAttributeName, regionName",
     [
         ( "extractAndMergeVolume", "newAttribute", "averageStrain" ),  # Region attribute has too many components
-        ( "geosOutput2Ranks", "newAttribute", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # Region attribute is partial
-        ( "extractAndMergeVolume", "mass", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # The attribute name already exist in the mesh on the same piece
+        ( "geosOutput2Ranks", "newAttribute",
+          "reservoirAndWellsSolver_singlePhaseVariables_dofIndex" ),  # Region attribute is partial
+        ( "extractAndMergeVolume", "mass", "reservoirAndWellsSolver_singlePhaseVariables_dofIndex"
+         ),  # The attribute name already exist in the mesh on the same piece
     ] )
 def test_CreateConstantAttributePerRegionRaisesAttributeError(
     dataSetTest: Union[ vtkMultiBlockDataSet, vtkDataSet ],
