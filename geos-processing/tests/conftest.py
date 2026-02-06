@@ -29,12 +29,15 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
+        # Meshes from the GEOS integrated test singlePhasePoromechanics_FaultModel_well_seq
         if datasetType == "2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
         elif datasetType == "4Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion4Ranks.vtm"
         elif datasetType == "geosOutput2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks.vtm"
+        elif datasetType == "singlePhasePoromechanicsVTKOutput":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/singlePhasePoromechanicsVTKOutput.vtm"
         elif datasetType == "extractAndMergeVolume":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
         elif datasetType == "extractAndMergeFault":
@@ -47,10 +50,15 @@ def dataSetTest() -> Any:
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolumeWell1.vtm"
         elif datasetType == "extractAndMergeFaultWell1":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
+        # Small useful meshes
         elif datasetType == "quads2_tris4":
             vtkFilename = "data/quads2_tris4.vtu"
         elif datasetType == "hexs3_tets36_pyrs18":
             vtkFilename = "data/hexs3_tets36_pyrs18.vtu"
+        elif datasetType == "meshtet1":
+            vtkFilename = "data/mesh1.vtu"
+        elif datasetType == "meshtet1b":
+            vtkFilename = "data/mesh1b.vtu"
 
         datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
         reader.SetFileName( datapath )
