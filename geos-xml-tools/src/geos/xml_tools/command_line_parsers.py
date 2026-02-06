@@ -1,5 +1,29 @@
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 import argparse
-from typing import Tuple, Iterable
+from typing import Iterable
+
+__doc__ = """
+Command Line Argument Parsers for geos-xml-tools.
+
+This module provides reusable argument parsers for all command-line tools in the package, including:
+* XML preprocessing
+* VTK deck building
+* XML formatting
+* Attribute coverage and redundancy analysis
+
+Import and use these parsers to ensure consistent CLI behavior across all tools.
+"""
 
 
 def build_preprocessor_input_parser() -> argparse.ArgumentParser:
@@ -16,7 +40,7 @@ def build_preprocessor_input_parser() -> argparse.ArgumentParser:
                          type=str,
                          help='Compiled xml file name (otherwise, it is randomly genrated)',
                          default='' )
-    parser.add_argument( '-s', '--schema', type=str, help='GEOSX schema to use for validation', default='' )
+    parser.add_argument( '-s', '--schema', type=str, help='GEOS schema to use for validation', default='' )
     parser.add_argument( '-v', '--verbose', type=int, help='Verbosity of outputs', default=0 )
     parser.add_argument( '-p',
                          '--parameters',
@@ -28,21 +52,31 @@ def build_preprocessor_input_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_xml_preprocessor_arguments() -> Tuple[ argparse.Namespace, Iterable[ str ] ]:
+def parse_xml_preprocessor_arguments() -> tuple[ argparse.Namespace, Iterable[ str ] ]:
     """Parse user arguments.
-
-    Args:
-        -i/--input (str): Input file name (multiple allowed)
-        -c/--compiled-name (str): Compiled xml file name
-        -s/--schema (str): Path to schema to use for validation
-        -v/--verbose (int): Verbosity of outputs
-        -p/--parameters (str): Parameter overrides (name and value, multiple allowed)
 
     Returns:
         list: The remaining unparsed argument strings
     """
     parser = build_preprocessor_input_parser()
     return parser.parse_known_args()
+
+
+def build_vtk_parser() -> argparse.ArgumentParser:
+    """Build VTK parser for help display.
+
+    Returns:
+        argparse.ArgumentParser: the parser instance
+    """
+    parser = argparse.ArgumentParser( description="Build VTK deck from XML configuration" )
+    parser.add_argument( 'input', type=str, help='Input XML file' )
+    parser.add_argument( '-a',
+                         '--attribute',
+                         type=str,
+                         default='Region',
+                         help='Cell attribute name to use as region marker' )
+    parser.add_argument( '-o', '--output', type=str, help='Output VTK file (optional)' )
+    return parser
 
 
 def build_xml_formatter_input_parser() -> argparse.ArgumentParser:
@@ -69,7 +103,7 @@ def build_attribute_coverage_input_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: parser instance
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
+    parser.add_argument( '-r', '--root', type=str, help='GEOS root', default='' )
     parser.add_argument( '-o', '--output', type=str, help='Output file name', default='attribute_test.xml' )
     return parser
 
@@ -81,5 +115,5 @@ def build_xml_redundancy_input_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: parser instance
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument( '-r', '--root', type=str, help='GEOSX root', default='' )
+    parser.add_argument( '-r', '--root', type=str, help='GEOS root', default='' )
     return parser

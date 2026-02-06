@@ -1,4 +1,5 @@
 geos-geomechanics
 geos-mesh
 geos-utils
+geos-xml-tools
 geos-processing
