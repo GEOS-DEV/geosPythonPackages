@@ -26,7 +26,7 @@ There are two types of functions:
 
 The getter functions:
     - get the array of an attribute (one for dataset, one for multiblockDataset, one for the both and one for fieldData)
-    - get the component names of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the component names of an attribute
     - get the number of components of an attribute (one for dataset, one for multiblockDataset and one for the both)
     - get the piece of an attribute (for any meshes)
     - get the values of an attribute as data frame (for polyData only)
@@ -699,7 +699,7 @@ def getComponentNames(
     attributeName: str,
     piece: Piece,
 ) -> tuple[ str, ...]:
-    """Get the name of the components of attribute attributeName in dataSet.
+    """Get the name of the components of the attribute 'attributeName' in a mesh.
 
     Args:
         mesh (vtkDataSet | vtkMultiBlockDataSet | vtkCompositeDataSet | vtkDataObject): Mesh where the attribute is.
@@ -708,6 +708,10 @@ def getComponentNames(
 
     Returns:
         tuple[str,...]: Names of the components.
+
+    Raises:
+        AttributeError: The attribute 'attributeName' is not in the mesh for the given piece.
+        TypeError: The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet.
     """
     if isinstance( mesh, vtkDataSet ):
         array: vtkDataArray = getVtkArrayInObject( mesh, attributeName, piece )
@@ -722,9 +726,9 @@ def getComponentNames(
                 return getComponentNames( dataSet, attributeName, piece )
             except:
                 continue
-        raise AttributeError( f"{ attributeName } is not in input mesh.")
+        raise AttributeError( f"The attribute '{ attributeName }' is not in the mesh for the given piece { piece }.")
     else:
-        raise TypeError( "Mesh type is not managed." )
+        raise TypeError( "The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
 
     return tuple( componentNames )
 
