@@ -29,7 +29,6 @@ from vtkmodules.vtkFiltersCore import (
 from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
-    getComponentNamesDataSet,
     getAttributesWithNumberOfComponents,
     getArrayInObject,
     isAttributeInObject,
@@ -635,7 +634,7 @@ def copyAttributeDataSet(
         raise AttributeError( f"The attribute { attributeNameFrom } is not in the source mesh." )
 
     npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, piece )
-    componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, piece )
+    componentNames: tuple[ str, ...] = getComponentNames( dataSetFrom, attributeNameFrom, piece )
     vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, piece )
 
     createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, piece, vtkArrayType, logger )

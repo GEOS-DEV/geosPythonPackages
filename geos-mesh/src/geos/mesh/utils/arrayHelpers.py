@@ -615,7 +615,9 @@ def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece )
     Returns:
         vtkDataArray: The vtk array corresponding to input attribute name.
     """
-    assert isAttributeInObject( dataSet, attributeName, piece ), f"{attributeName} is not in input mesh."
+    if not isAttributeInObject( dataSet, attributeName, piece ):
+        raise AttributeError( f"{ attributeName } is not in input mesh." )
+
     dataArray: vtkDataArray
     if piece == Piece.POINTS:
         dataArray = dataSet.GetPointData().GetArray( attributeName )
@@ -708,53 +710,23 @@ def getComponentNames(
         tuple[str,...]: Names of the components.
     """
     if isinstance( mesh, vtkDataSet ):
-        return getComponentNamesDataSet( mesh, attributeName, piece )
+        array: vtkDataArray = getVtkArrayInObject( mesh, attributeName, piece )
+        componentNames: list[ str ] = []
+        if array.GetNumberOfComponents() > 1:
+            componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     elif isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        return getComponentNamesMultiBlock( mesh, attributeName, piece )
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
+            try:
+                return getComponentNames( dataSet, attributeName, piece )
+            except:
+                continue
+        raise AttributeError( f"{ attributeName } is not in input mesh.")
     else:
         raise TypeError( "Mesh type is not managed." )
 
-
-def getComponentNamesDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> tuple[ str, ...]:
-    """Get the name of the components of attribute attributeName in dataSet.
-
-    Args:
-        dataSet (vtkDataSet): DataSet where the attribute is.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        tuple[str,...]: Names of the components.
-    """
-    array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, piece )
-    componentNames: list[ str ] = []
-
-    if array.GetNumberOfComponents() > 1:
-        componentNames += [ array.GetComponentName( i ) for i in range( array.GetNumberOfComponents() ) ]
     return tuple( componentNames )
-
-
-def getComponentNamesMultiBlock(
-    multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-    attributeName: str,
-    piece: Piece,
-) -> tuple[ str, ...]:
-    """Get the name of the components of attribute in MultiBlockDataSet.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): DataSet where the attribute is.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        tuple[str,...]: Names of the components.
-    """
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for blockIndex in elementaryBlockIndexes:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if isAttributeInObject( dataSet, attributeName, piece ):
-            return getComponentNamesDataSet( dataSet, attributeName, piece )
-    return ()
 
 
 def getAttributeValuesAsDF( surface: vtkPolyData,

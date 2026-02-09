@@ -497,33 +497,37 @@ def test_getNumberOfComponentsTypeError() -> None:
         arrayHelpers.getNumberOfComponents( mesh, "attribute", Piece.CELLS )
 
 
-@pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-    ( "PORO", Piece.CELLS, () ),
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "dataset", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
+    ( "dataset", "PORO", Piece.CELLS, () ),
+    ( "multiblock", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
+    ( "multiblock", "PORO", Piece.CELLS, () ),
 ] )
-def test_getComponentNamesDataSet( dataSetTest: vtkDataSet, attributeName: str, piece: Piece,
-                                   expected: tuple[ str, ...] ) -> None:
-    """Test getting the component names of an attribute from a dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    obtained: tuple[ str, ...] = arrayHelpers.getComponentNamesDataSet( vtkDataSetTest, attributeName, piece )
-    assert obtained == expected
-
-
-@pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-    ( "PORO", Piece.CELLS, () ),
-] )
-def test_getComponentNamesMultiBlock(
-    dataSetTest: vtkMultiBlockDataSet,
+def test_getComponentNames(
+    dataSetTest: Any,
+    meshName: str,
     attributeName: str,
     piece: Piece,
-    expected: tuple[ str, ...],
+    expected: tuple[ str, ...] ) -> None:
+    """Test getting the component names of an attribute from a mesh."""
+    vtkDataSetTest: Any = dataSetTest( meshName )
+    obtained: tuple[ str, ...] = arrayHelpers.getComponentNames( vtkDataSetTest, attributeName, piece )
+    assert obtained == expected
+
+
+def test_getComponentNamesRaises(
+    dataSetTest: Any,
 ) -> None:
     """Test getting the component names of an attribute from a multiblock."""
-    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    obtained: tuple[ str, ...] = arrayHelpers.getComponentNamesMultiBlock( vtkMultiBlockDataSetTest, attributeName,
-                                                                           piece )
-    assert obtained == expected
+    # TypeError
+    meshWrongType: vtkFieldData = vtkFieldData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
+
+    # AttributeError
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
 
 
 @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
