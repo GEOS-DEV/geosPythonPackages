@@ -38,7 +38,7 @@ from geos.mesh.utils.arrayHelpers import (
     getVtkArrayTypeInObject,
     getVtkArrayTypeInMultiBlock,
     getVtkDataTypeInObject,
-    getNumberOfComponentsMultiBlock,
+    getNumberOfComponents,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Errors import VTKError
@@ -105,7 +105,7 @@ def fillPartialAttributes(
 
     # Get information of the attribute to fill.
     vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
-    nbComponents: int = getNumberOfComponentsMultiBlock( multiBlockDataSet, attributeName, piece )
+    nbComponents: int = getNumberOfComponents( multiBlockDataSet, attributeName, piece )
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, piece )
