@@ -450,7 +450,7 @@ def getAttributesFromDataSet( dataSet: vtkDataSet, piece: Piece ) -> dict[ str, 
 
 
 def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attributeName: str, piece: Piece ) -> bool:
-    """Check if an attribute is in the input object.
+    """Check if an attribute is in the input mesh for the given piece.
 
     Args:
         mesh (vtkMultiBlockDataSet | vtkDataSet): Input mesh.
@@ -458,60 +458,32 @@ def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attrib
         piece (Piece): The piece of the attribute.
 
     Returns:
-        bool: True if the attribute is in the table, False otherwise.
+        bool: True if the attribute is on the mesh, False otherwise.
+
+    Raises:
+        TypeError: The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet.
     """
-    if isinstance( mesh, vtkMultiBlockDataSet ):
-        return isAttributeInObjectMultiBlockDataSet( mesh, attributeName, piece )
-    elif isinstance( mesh, vtkDataSet ):
-        return isAttributeInObjectDataSet( mesh, attributeName, piece )
+    if isinstance( mesh, vtkDataSet ):
+        if piece == Piece.FIELD:
+            return bool( mesh.GetFieldData().HasArray( attributeName ) )
+        elif piece == Piece.POINTS:
+            return bool( mesh.GetPointData().HasArray( attributeName ) )
+        elif piece == Piece.CELLS:
+            return bool( mesh.GetCellData().HasArray( attributeName ) )
+        elif piece == Piece.BOTH:
+            onPoints: int = mesh.GetPointData().HasArray( attributeName )
+            onCells: int = mesh.GetCellData().HasArray( attributeName )
+            return onCells == onPoints == 1
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
+            if isAttributeInObject( dataSet, attributeName, piece ):
+                return True
     else:
         raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
 
-
-def isAttributeInObjectMultiBlockDataSet( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str,
-                                          piece: Piece ) -> bool:
-    """Check if an attribute is in the input object.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet): Input multiBlockDataSet.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        bool: True if the attribute is in the table, False otherwise.
-    """
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for blockIndex in elementaryBlockIndexes:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if isAttributeInObjectDataSet( dataSet, attributeName, piece ):
-            return True
-
     return False
-
-
-def isAttributeInObjectDataSet( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> bool:
-    """Check if an attribute is in the input object for the input piece.
-
-    Args:
-        dataSet (vtkDataSet): Input dataSet.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        bool: True if the attribute is in the table, False otherwise.
-    """
-    if piece == Piece.FIELD:
-        return bool( dataSet.GetFieldData().HasArray( attributeName ) )
-    elif piece == Piece.POINTS:
-        return bool( dataSet.GetPointData().HasArray( attributeName ) )
-    elif piece == Piece.CELLS:
-        return bool( dataSet.GetCellData().HasArray( attributeName ) )
-    elif piece == Piece.BOTH:
-        onPoints: int = dataSet.GetPointData().HasArray( attributeName )
-        onCells: int = dataSet.GetCellData().HasArray( attributeName )
-        return onCells == onPoints == 1
-    else:
-        return False
 
 
 def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, piece: Piece ) -> bool:
@@ -528,7 +500,7 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not isAttributeInObjectDataSet( dataSet, attributeName, piece ):
+        if not isAttributeInObject( dataSet, attributeName, piece ):
             return False
     return True
 

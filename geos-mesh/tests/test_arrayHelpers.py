@@ -310,33 +310,6 @@ def test_isAttributeInObjectTypeError() -> None:
         arrayHelpers.isAttributeInObject( mesh, "Attribute", Piece.CELLS )
 
 
-@pytest.mark.parametrize( "attributeName, piece", [
-    ( "rockPorosity_referencePorosity", Piece.CELLS ),
-    ( "ghostRank", Piece.POINTS ),
-    ( "TIME", Piece.FIELD ),
-    ( "ghostRank", Piece.BOTH ),
-] )
-def test_isAttributeInObjectMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, attributeName: str,
-                                               piece: Piece ) -> None:
-    """Test presence of attribute in a multiblock."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-    obtained: bool = arrayHelpers.isAttributeInObjectMultiBlockDataSet( multiBlockDataset, attributeName, piece )
-    assert obtained
-
-
-@pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PointAttribute", Piece.POINTS, True ),
-    ( "PORO", Piece.CELLS, True ),
-    ( "PORO", Piece.POINTS, False ),
-] )
-def test_isAttributeInObjectDataSet( dataSetTest: vtkDataSet, attributeName: str, piece: Piece,
-                                     expected: bool ) -> None:
-    """Test presence of attribute in a dataset."""
-    vtkDataset: vtkDataSet = dataSetTest( "dataset" )
-    obtained: bool = arrayHelpers.isAttributeInObjectDataSet( vtkDataset, attributeName, piece )
-    assert obtained == expected
-
-
 @pytest.mark.parametrize( "attributeName, piece, expected", [
     ( "PORO", Piece.CELLS, False ),
     ( "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
@@ -468,15 +441,13 @@ def test_getNumberOfComponentsRaises(
         arrayHelpers.getNumberOfComponents( meshWrongType, "PORO", Piece.CELLS )
 
     # AttributeError
-    mesh: vtkDataSet = dataSetTest( "dataset" )
+    mesh: vtkDataSet = dataSetTest( "multiblockGeosOutput" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
 
-    # TODO
-    # # ValueError
-    # with pytest.raises( ValueError ):
-    #     arrayHelpers.getNumberOfComponents( mesh, "mass", Piece.BOTH )
-
+    # ValueError
+    with pytest.raises( ValueError ):
+        arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
@@ -507,14 +478,13 @@ def test_getComponentNamesRaises(
         arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
 
     # AttributeError
-    mesh: vtkDataSet = dataSetTest( "dataset" )
+    mesh: vtkDataSet = dataSetTest( "multiblockGeosOutput" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
 
-    # TODO
-    # # ValueError
-    # with pytest.raises( ValueError ):
-    #     arrayHelpers.getComponentNames( mesh, "mass", Piece.BOTH )
+    # ValueError
+    with pytest.raises( ValueError ):
+        arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
 
 
 @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
