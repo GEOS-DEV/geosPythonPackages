@@ -34,7 +34,7 @@ from geos.mesh.utils.arrayHelpers import (
     isAttributeInObject,
     isAttributeGlobal,
     getVtkArrayTypeInObject,
-    getVtkDataTypeInObject,
+    getVtkArrayInObject,
     getNumberOfComponents,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
@@ -713,7 +713,7 @@ def transferAttributeToDataSetWithElementMap(
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
     nbComponents: int = len( componentNames )
 
-    vtkDataType: int = getVtkDataTypeInObject( meshFrom, attributeName, piece )
+    vtkDataType: int = getVtkArrayTypeInObject( meshFrom, attributeName, piece )
     defaultValue: Any
     if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
         defaultValue = np.nan

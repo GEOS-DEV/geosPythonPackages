@@ -25,11 +25,11 @@ There are two types of functions:
     - Checks
 
 The getter functions:
-    - get the array of an attribute (one for dataset, one for multiblockDataset, one for the both and one for fieldData)
+    - get the vtk or array data of an attribute (dataset and vtkFieldData only)
     - get the component names of an attribute
     - get the number of components of an attribute
     - get the piece of an attribute
-    - get the values of an attribute as data frame (for polyData only)
+    - get the values of an attribute as data frame (polyData only)
     - get the vtk type of an attribute
     - get the set of attributes on one piece of a mesh
     - get the attribute and they number of component on one piece of a mesh
@@ -39,9 +39,10 @@ The getter functions:
     - get the mapping between cells or points shared by two meshes
 
 The check functions:
-    - check if an attribute is on a mesh (one for dataset, one for multiblockDataset, one for the both and one for a list of attributes)
-    - check if an attribute is global (for multiblockDataset meshes)
-    - check if a value is a value of an attribute (one for dataset and one for multiblockDataset)
+    - check if an attribute is on a mesh
+    - check if at least one attribute from a list of attributes is on a mesh (dataset only)
+    - check if an attribute is global (multiblock dataset only)
+    - check if a value is a value of an attribute
 """
 
 
@@ -192,15 +193,12 @@ def hasArray( mesh: vtkUnstructuredGrid, arrayNames: list[ str ] ) -> bool:
     Returns:
         bool: True if at least one array is found, else False.
     """
-    # Check the cell data fields
-    data: Union[ vtkFieldData, None ]
-    for data in ( mesh.GetCellData(), mesh.GetFieldData(), mesh.GetPointData() ):
-        if data is None:
-            continue  # type: ignore[unreachable]
+    for piece in [ Piece.CELLS, Piece.POINTS, Piece.FIELD ]:
         for arrayName in arrayNames:
-            if data.HasArray( arrayName ):
-                logging.error( f"The mesh contains the array named '{arrayName}'." )
+            if isAttributeInObject( mesh, arrayName, piece ):
+                logging.error( f"The mesh contains the array named '{ arrayName }'." )
                 return True
+
     return False
 
 
@@ -303,6 +301,7 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.ND
     global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
     if global_ids is None:
         raise AttributeError( "There is no GlobalIds in the given fieldData." )
+
     return vtk_to_numpy( global_ids )
 
 
@@ -454,6 +453,7 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObject( dataSet, attributeName, piece ):
             return False
+
     return True
 
 

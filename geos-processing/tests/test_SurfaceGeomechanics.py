@@ -80,5 +80,5 @@ def test_failingSurfaceGeomechanics() -> None:
     """Test failing of SurfaceGeomechanics due to absence of attributes in the mesh."""
     failingCase: TriangulatedSurfaceTestCase = TriangulatedSurfaceTestCase( pointsCoords, triangles, None )
     sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( failingCase.mesh )
-    with pytest.raises( AssertionError ):
+    with pytest.raises( AttributeError ):
         sgFilter.applyFilter()
