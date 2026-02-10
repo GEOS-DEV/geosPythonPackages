@@ -16,8 +16,7 @@ from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )
-from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
-                                             createConstantAttributeMultiBlock )
+from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttribute )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 
 __doc__ = """
@@ -203,7 +202,7 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                createConstantAttributeMultiBlock( self.mesh,
+                createConstantAttribute( self.mesh,
                                                    self.defaultValue,
                                                    self.newAttributeName,
                                                    componentNames=self.componentNames,
@@ -239,7 +238,7 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                createConstantAttributeDataSet( self.mesh,
+                createConstantAttribute( self.mesh,
                                                 self.defaultValue,
                                                 self.newAttributeName,
                                                 componentNames=self.componentNames,

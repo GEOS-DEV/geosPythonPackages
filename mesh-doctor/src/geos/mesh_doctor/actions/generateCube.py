@@ -10,7 +10,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import ( vtkCellArray, vtkHexahedron, vtkRectilinearGrid, vtkUnstructuredGrid,
                                             VTK_HEXAHEDRON )
 from geos.mesh.io.vtkIO import VtkOutput, writeMesh
-from geos.mesh.utils.arrayModifiers import createConstantAttributeDataSet
+from geos.mesh.utils.arrayModifiers import createConstantAttribute
 from geos.mesh_doctor.actions.generateGlobalIds import buildGlobalIds
 from geos.mesh_doctor.parsing.cliParsing import setupLogger
 from geos.utils.pieceEnum import Piece
@@ -184,8 +184,8 @@ def addFields( mesh: vtkUnstructuredGrid, fields: Iterable[ FieldInfo ] ) -> vtk
         piece: Piece = Piece.POINTS if fieldInfo.support == "POINTS" else Piece.CELLS
         # Create list of values (all 1.0) for each component
         listValues = [ 1.0 ] * fieldInfo.dimension
-        # Use the robust createConstantAttributeDataSet function
-        createConstantAttributeDataSet( dataSet=mesh,
+        # Use the robust createConstantAttribute function
+        createConstantAttribute( dataSet=mesh,
                                         listValues=listValues,
                                         attributeName=fieldInfo.name,
                                         piece=piece,
