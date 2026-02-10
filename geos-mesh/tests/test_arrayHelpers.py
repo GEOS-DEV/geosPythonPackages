@@ -229,48 +229,42 @@ def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
         arrayHelpers.getNumpyArrayByName( fieldData, "Attribute" )
 
 
-@pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
-    ( "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
-    ( "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
+@pytest.mark.parametrize( "meshName, attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
+    ( "multiblock", "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
+    ( "multiblock", "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
+    ( "dataset", "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
+    ( "dataset", "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
+    ( "dataset", "FAULT", [ 0, 100, 101, 2 ], Piece.CELLS, [ 0, 100, 101 ], [ 2 ] ),
 ] )
-def test_checkValidValuesInMultiBlock(
-    dataSetTest: vtkMultiBlockDataSet,
+def test_checkValidValuesInObject(
+    dataSetTest: Any,
+    meshName: str,
     attributeName: str,
     listValues: list[ Any ],
     piece: Piece,
     validValuesTest: list[ Any ],
     invalidValuesTest: list[ Any ],
 ) -> None:
-    """Test the function checkValidValuesInDataSet."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    """Test the function checkValidValuesInObject."""
+    mesh: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshName )
     validValues: list[ Any ]
     invalidValues: list[ Any ]
-    validValues, invalidValues = arrayHelpers.checkValidValuesInMultiBlock( multiBlockDataSet, attributeName,
+    validValues, invalidValues = arrayHelpers.checkValidValuesInObject( mesh, attributeName,
                                                                             listValues, piece )
     assert validValues == validValuesTest
     assert invalidValues == invalidValuesTest
 
 
-@pytest.mark.parametrize( "attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
-    ( "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
-    ( "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
-    ( "FAULT", [ 0, 100, 101, 2 ], Piece.CELLS, [ 0, 100, 101 ], [ 2 ] ),
-] )
-def test_checkValidValuesInDataSet(
-    dataSetTest: vtkDataSet,
-    attributeName: str,
-    listValues: list[ Any ],
-    piece: Piece,
-    validValuesTest: list[ Any ],
-    invalidValuesTest: list[ Any ],
-) -> None:
-    """Test the function checkValidValuesInDataSet."""
-    dataSet: vtkDataSet = dataSetTest( "dataset" )
-    validValues: list[ Any ]
-    invalidValues: list[ Any ]
-    validValues, invalidValues = arrayHelpers.checkValidValuesInDataSet( dataSet, attributeName, listValues, piece )
-    assert validValues == validValuesTest
-    assert invalidValues == invalidValuesTest
+def test_checkValidValuesInObjectRaises( dataSetTest: Any ) -> None:
+    """Test the fails of checkValidValuesInObject."""
+    # AttributeError
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.checkValidValuesInObject( mesh, "PORO", [], Piece.CELLS )
+
+    # TypeError
+    with pytest.raises( TypeError ):
+        arrayHelpers.checkValidValuesInObject( vtkCellData(), "AttributeName", [], Piece.CELLS )
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [

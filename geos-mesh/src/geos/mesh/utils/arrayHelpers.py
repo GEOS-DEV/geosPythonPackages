@@ -229,69 +229,57 @@ def getAttributePieceInfo(
         return Piece.NONE
 
 
-def checkValidValuesInMultiBlock(
-    multiBlockDataSet: vtkMultiBlockDataSet,
+def checkValidValuesInObject(
+    mesh: vtkMultiBlockDataSet | vtkDataSet,
     attributeName: str,
     listValues: list[ Any ],
     piece: Piece,
 ) -> tuple[ list[ Any ], list[ Any ] ]:
-    """Check if each value is valid , ie if that value is a data of the attribute in at least one dataset of the multiblock.
+    """Check if each value is valid, ie if that value is a data of the mesh's attribute.
 
     Args:
-        multiBlockDataSet (vtkMultiBlockDataSet): The multiblock dataset mesh to check.
+        mesh (vtkMultiBlockDataSet | vtkDataSet): The mesh to check.
         attributeName (str): The name of the attribute with the data.
         listValues (list[Any]): The list of values to check.
         piece (Piece): The piece of the attribute.
 
     Returns:
         tuple[list[Any], list[Any]]: Tuple containing the list of valid values and the list of the invalid ones.
+
+    Raises:
+        TypeError: The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet.
+        AttributeError: The attribute must be global for multiblock dataset.
     """
     validValues: list[ Any ] = []
     invalidValues: list[ Any ] = []
-    listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for flatIdDataSet in listFlatIdDataSet:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( flatIdDataSet ) )
-        # Get the valid values of the dataset.
-        validValuesDataSet: list[ Any ] = checkValidValuesInDataSet( dataSet, attributeName, listValues, piece )[ 0 ]
-
-        # Keep the new true values.
-        for value in validValuesDataSet:
-            if value not in validValues:
+    if isinstance( mesh, vtkDataSet ):
+        attributeNpArray = getArrayInObject( mesh, attributeName, piece )
+        for value in listValues:
+            if value in attributeNpArray:
                 validValues.append( value )
+            else:
+                invalidValues.append( value )
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        if not isAttributeGlobal( mesh, attributeName, piece ):
+            raise AttributeError( f"The attribute { attributeName } must be global." )
 
-    # Get the false indexes.
-    for value in listValues:
-        if value not in validValues:
-            invalidValues.append( value )
+        listFlatIdDataSet: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for flatIdDataSet in listFlatIdDataSet:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( flatIdDataSet ) )
+            # Get the valid values of the dataset.
+            validValuesDataSet: list[ Any ] = checkValidValuesInObject( dataSet, attributeName, listValues, piece )[ 0 ]
 
-    return ( validValues, invalidValues )
+            # Keep the new true values.
+            for value in validValuesDataSet:
+                if value not in validValues:
+                    validValues.append( value )
 
-
-def checkValidValuesInDataSet(
-    dataSet: vtkDataSet,
-    attributeName: str,
-    listValues: list[ Any ],
-    piece: Piece,
-) -> tuple[ list[ Any ], list[ Any ] ]:
-    """Check if each value is valid , ie if that value is a data of the attribute in the dataset.
-
-    Args:
-        dataSet (vtkDataSet): The dataset mesh to check.
-        attributeName (str): The name of the attribute with the data.
-        listValues (list[Any]): The list of values to check.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        tuple[list[Any], list[Any]]: Tuple containing the list of valid values and the list of the invalid ones.
-    """
-    attributeNpArray = getArrayInObject( dataSet, attributeName, piece )
-    validValues: list[ Any ] = []
-    invalidValues: list[ Any ] = []
-    for value in listValues:
-        if value in attributeNpArray:
-            validValues.append( value )
-        else:
-            invalidValues.append( value )
+        # Get the false indexes.
+        for value in listValues:
+            if value not in validValues:
+                invalidValues.append( value )
+    else:
+        raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
     return ( validValues, invalidValues )
 
@@ -445,7 +433,7 @@ def isAttributeInObject( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], attrib
             if isAttributeInObject( dataSet, attributeName, piece ):
                 return True
     else:
-        raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
+        raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
 
     return False
 
@@ -470,7 +458,7 @@ def isAttributeGlobal( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: s
 
 
 def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> npt.NDArray[ Any ]:
-    """Return the numpy array corresponding to input attribute name in table.
+    """Return the numpy array corresponding to input attribute name in the mesh.
 
     Args:
         dataSet (vtkDataSet): Input dataSet.
@@ -478,10 +466,11 @@ def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) ->
         piece (Piece): The piece of the attribute.
 
     Returns:
-        ArrayLike[Any]: The numpy array corresponding to input attribute name.
+        NDArray[Any]: The numpy array corresponding to input attribute name.
     """
     vtkArray: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, piece )
     npArray: npt.NDArray[ Any ] = vnp.vtk_to_numpy( vtkArray )  # type: ignore[no-untyped-call]
+
     return npArray
 
 
@@ -518,17 +507,18 @@ def getVtkArrayTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], at
 
 
 def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> vtkDataArray:
-    """Return the array corresponding to input attribute name in table.
+    """Return the array corresponding to input attribute name in the mesh.
 
     Args:
-        dataSet (vtkDataSet): Input dataSet.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
+        dataSet (vtkDataSet): Input mesh with the attribute to get.
+        attributeName (str): Name of the attribute to get.
+        piece (Piece): The piece of the attribute to get.
 
     Returns:
         vtkDataArray: The vtk array corresponding to input attribute name.
 
     Raises:
+        ValueError: The piece must be cells, points or fields.
         AttributeError: The attribute 'attributeName' is not in the mesh.
     """
     if not isAttributeInObject( dataSet, attributeName, piece ):

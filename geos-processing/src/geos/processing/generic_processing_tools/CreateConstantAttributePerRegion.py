@@ -15,7 +15,7 @@ from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
                                            getVtkArrayTypeInObject, isAttributeGlobal, getAttributePieceInfo,
-                                           checkValidValuesInDataSet, checkValidValuesInMultiBlock )
+                                           checkValidValuesInObject )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
                                              createConstantAttributeMultiBlock )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
@@ -185,17 +185,12 @@ class CreateConstantAttributePerRegion:
                 )
 
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
-        validIndexes: list[ Any ] = []
-        invalidIndexes: list[ Any ] = []
+        validIndexes: list[ Any ]
+        invalidIndexes: list[ Any ]
+        validIndexes, invalidIndexes = checkValidValuesInObject( self.mesh, self.regionName, listIndexes, self.piece )
         regionArray: npt.NDArray[ Any ]
         newArray: npt.NDArray[ Any ]
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
-            # Check if the attribute region is global.
-            if not isAttributeGlobal( self.mesh, self.regionName, self.piece ):
-                raise AttributeError( f"The region attribute { self.regionName } has to be global." )
-
-            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                         self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
@@ -230,8 +225,6 @@ class CreateConstantAttributePerRegion:
                                      logger=self.logger )
 
         else:
-            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                      self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
