@@ -351,23 +351,13 @@ def getAttributeSet( mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ], piece: Pie
 
     Args:
         mesh (Union[vtkMultiBlockDataSet, vtkDataSet]): Mesh where to find the attributes.
-        piece (Piece): The piece of the attribute.
+        piece (Piece): The piece of the attributes to get.
 
     Returns:
         set[str]: Set of attribute names present in input mesh.
     """
-    attributeSet: set[ str ]
-    if isinstance( mesh, vtkMultiBlockDataSet ):
-        listDataSetIds: list[ int ] = getBlockElementIndexesFlatten( mesh )
-        attributeSet = set()
-        for dataSetId in listDataSetIds:
-            dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( dataSetId ) )
-            attributeSet.update( getAttributeSet( dataset, piece ) )
-    elif isinstance( mesh, vtkDataSet ):
-        fieldData: vtkPointData | vtkCellData = mesh.GetPointData() if piece == Piece.POINTS else mesh.GetCellData()
-        attributeSet = { fieldData.GetArrayName( i ) for i in range( fieldData.GetNumberOfArrays() ) }
-    else:
-        raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
+    dictAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( mesh, piece )
+    attributeSet: set[ str ] = set( dictAttributes.keys() )
 
     return attributeSet
 

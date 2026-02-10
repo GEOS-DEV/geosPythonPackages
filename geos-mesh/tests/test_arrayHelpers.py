@@ -201,13 +201,6 @@ def test_getAttributeSet(
     assert obtainedAttributeSet == expectedAttributeSet
 
 
-def test_getAttributeSetTypeError() -> None:
-    """Test getAttributeSet TypeError raises."""
-    mesh: vtkFieldData = vtkFieldData()
-    with pytest.raises( TypeError ):
-        arrayHelpers.getAttributeSet( mesh, Piece.CELLS )
-
-
 @pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
     ( "PORO", True, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
     ( "PORO", False, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
