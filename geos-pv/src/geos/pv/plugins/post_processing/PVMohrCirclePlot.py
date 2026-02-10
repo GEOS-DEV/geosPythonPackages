@@ -821,7 +821,7 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 outputMesh.GetCellData().AddArray( activeCellMask )
                 outputMesh.Modified()
 
-                result: str = f"The filter { self.logger.name } succeeded"
+                result: str = f"The plugin { self.logger.name } succeeded"
                 if self.counter.warningCount > 0:
                     self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
                 else:

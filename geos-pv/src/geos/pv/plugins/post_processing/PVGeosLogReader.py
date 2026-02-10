@@ -567,6 +567,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
         try:
             # we choose which dataframe to build and get it
             idsToUse = self.getIdsToUse()
@@ -592,7 +593,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                 newAttr.SetName( column )
                 output.AddColumn( newAttr )
 
-            result: str = f"The filter { self.logger.name } succeeded"
+            result: str = f"The plugin { self.logger.name } succeeded"
             if self.counter.warningCount > 0:
                 self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
             else:

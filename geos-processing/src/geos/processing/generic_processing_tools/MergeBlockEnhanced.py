@@ -114,7 +114,7 @@ class MergeBlockEnhanced:
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def applyFilter( self: Self ) -> None:
         """Merge the blocks of a multiblock dataset mesh.
@@ -122,7 +122,7 @@ class MergeBlockEnhanced:
         Raises:
             VTKError (geos.utils.Errors): Errors captured if any from the VTK log.
         """
-        self.logger.info( f"Applying filter { self.logger.name }." )
+        self.logger.info( f"Apply filter { self.logger.name }." )
 
         outputMesh: vtkUnstructuredGrid
         outputMesh = mergeBlocks( self.inputMesh, keepPartialAttributes=True, logger=self.logger )

@@ -165,7 +165,7 @@ class SurfaceGeomechanics:
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.
@@ -246,7 +246,7 @@ class SurfaceGeomechanics:
             AttributeError: Attributes must be on cell.
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
-        self.logger.info( f"Applying filter { self.logger.name }." )
+        self.logger.info( f"Apply filter { self.logger.name }." )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )

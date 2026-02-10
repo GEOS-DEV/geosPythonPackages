@@ -135,7 +135,7 @@ class AttributeMapping:
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def getElementMap( self: Self ) -> dict[ int, npt.NDArray[ np.int64 ] ]:
         """Getter of the element mapping dictionary.
@@ -194,8 +194,6 @@ class AttributeMapping:
         for attributeName in self.attributeNames:
             transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.piece,
                                              self.logger )
-
-        self.logger.warning( "test" )
 
         # Log the output message.
         self.logger.info(

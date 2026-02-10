@@ -296,7 +296,7 @@ class ClipToMainFrame( vtkTransformFilter ):
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def __locate_reference_point( self, multiBlockDataSet: vtkMultiBlockDataSet ) -> int:
         """Locate the block to use as reference for the transformation.

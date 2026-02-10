@@ -349,7 +349,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
             if self.extractFault:
                 self.applyPVSurfaceGeomechanics()
 
-            result: str = f"The filter { self.logger.name } succeeded"
+            result: str = f"The plugin { self.logger.name } succeeded"
             if self.counter.warningCount > 0:
                 self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
             else:
@@ -358,7 +358,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
             self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
         except Exception as e:
-            mess: str = f"The filter { self.logger.name } failed due to:\n{ e }"
+            mess: str = f"The plugin { self.logger.name } failed due to:\n{ e }"
             self.logger.critical( mess, exc_info=True )
 
         self.nbWarnings = self.counter.warningCount

@@ -216,7 +216,7 @@ class GeosBlockExtractor:
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def applyFilter( self: Self ) -> None:
         """Extract the volume, the fault or the well domain of the mesh from GEOS.

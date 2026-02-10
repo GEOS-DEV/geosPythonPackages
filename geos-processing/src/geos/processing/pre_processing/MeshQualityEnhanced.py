@@ -167,7 +167,7 @@ class MeshQualityEnhanced():
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def GetQualityMetricSummary( self: Self ) -> QualityMetricSummary:
         """Get QualityMetricSummary object.
@@ -378,7 +378,6 @@ class MeshQualityEnhanced():
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
         if arrayName in getAttributesFromDataSet( self._outputMesh, piece=Piece.CELLS ):
-            self.logger.warning( "test" )
             # Metric is already computed (by default computed for all cell types if applicable )
             return
 

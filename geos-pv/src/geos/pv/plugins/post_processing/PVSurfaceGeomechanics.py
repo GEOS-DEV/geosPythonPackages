@@ -173,7 +173,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                 mess: str = f"The filter { sgFilter.logger.name } failed due to:\n{ e }"
                 sgFilter.logger.critical( mess, exc_info=True )
 
-        result: str = f"The filter { self.logger.name } succeeded"
+        result: str = f"The plugin { self.logger.name } succeeded"
         if self.counter.warningCount > 0:
             self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
         else:

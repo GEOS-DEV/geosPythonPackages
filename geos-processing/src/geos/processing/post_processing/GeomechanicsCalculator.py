@@ -792,7 +792,7 @@ class GeomechanicsCalculator:
         if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has this handler, it has not be added." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def getOutputType( self: Self ) -> str:
         """Get output object type.
