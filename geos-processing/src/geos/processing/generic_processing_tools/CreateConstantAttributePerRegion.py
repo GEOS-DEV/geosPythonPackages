@@ -14,8 +14,7 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
-                                           getVtkArrayTypeInObject, isAttributeGlobal, getAttributePieceInfo,
-                                           checkValidValuesInObject )
+                                           getVtkArrayTypeInObject, getAttributePieceInfo, checkValidValuesInObject )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
                                              createConstantAttributeMultiBlock )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten

@@ -387,12 +387,12 @@ def getAttributesWithNumberOfComponents(
 
         nbAttributes: int = data.GetNumberOfArrays()
         for i in range( nbAttributes ):
-            attributeName: str = data.GetArrayName( i )
+            attributeName = data.GetArrayName( i )
             attribute: vtkDataArray = data.GetArray( attributeName )
             if attribute is None:
                 raise AttributeError( f"The attribute { attributeName } is null" )
 
-            nbComponents: int = attribute.GetNumberOfComponents()
+            nbComponents = attribute.GetNumberOfComponents()
             attributes[ attributeName ] = nbComponents
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
@@ -499,7 +499,7 @@ def getVtkArrayTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], at
             dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
             try:
                 return getVtkArrayTypeInObject( dataSet, attributeName, piece )
-            except:
+            except Exception:
                 continue
         raise AttributeError( f"The attribute { attributeName } is not in input mesh." )
     else:
@@ -572,7 +572,7 @@ def getNumberOfComponents(
                 raise e
             except AttributeError:
                 continue
-        raise AttributeError( f"The attribute '{ attributeName }' is not in the mesh for the given piece { piece }.")
+        raise AttributeError( f"The attribute '{ attributeName }' is not in the mesh for the given piece { piece }." )
     else:
         raise TypeError( "The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
 
@@ -614,7 +614,7 @@ def getComponentNames(
                 raise e
             except AttributeError:
                 continue
-        raise AttributeError( f"The attribute '{ attributeName }' is not in the mesh for the given piece { piece }.")
+        raise AttributeError( f"The attribute '{ attributeName }' is not in the mesh for the given piece { piece }." )
     else:
         raise TypeError( "The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet." )
 

@@ -104,17 +104,34 @@ def test_computeElementMappingValueError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, piece, expected", [
-    ( "multiblock", Piece.POINTS, { 'GLOBAL_IDS_POINTS': 1, 'collocated_nodes': 2, 'PointAttribute': 3 } ),
-    ( "multiblock", Piece.CELLS, { 'CELL_MARKERS': 1, 'PERM': 3, 'PORO': 1, 'FAULT': 1, 'GLOBAL_IDS_CELLS': 1, 'CellAttribute': 3 } ),
-    ( "dataset", Piece.POINTS, { 'GLOBAL_IDS_POINTS': 1, 'PointAttribute': 3 } ),
-    ( "dataset", Piece.CELLS, { 'CELL_MARKERS': 1, 'PERM': 3, 'PORO': 1, 'FAULT': 1, 'GLOBAL_IDS_CELLS': 1, 'CellAttribute': 3 } ),
+    ( "multiblock", Piece.POINTS, {
+        'GLOBAL_IDS_POINTS': 1,
+        'collocated_nodes': 2,
+        'PointAttribute': 3
+    } ),
+    ( "multiblock", Piece.CELLS, {
+        'CELL_MARKERS': 1,
+        'PERM': 3,
+        'PORO': 1,
+        'FAULT': 1,
+        'GLOBAL_IDS_CELLS': 1,
+        'CellAttribute': 3
+    } ),
+    ( "dataset", Piece.POINTS, {
+        'GLOBAL_IDS_POINTS': 1,
+        'PointAttribute': 3
+    } ),
+    ( "dataset", Piece.CELLS, {
+        'CELL_MARKERS': 1,
+        'PERM': 3,
+        'PORO': 1,
+        'FAULT': 1,
+        'GLOBAL_IDS_CELLS': 1,
+        'CellAttribute': 3
+    } ),
 ] )
-def test_getAttributesWithNumberOfComponents(
-    dataSetTest: Any,
-    meshName: str,
-    piece: Piece,
-    expected: dict[ str, int ]
-) -> None:
+def test_getAttributesWithNumberOfComponents( dataSetTest: Any, meshName: str, piece: Piece,
+                                              expected: dict[ str, int ] ) -> None:
     """Test getting attribute list as dict from a mesh."""
     mesh: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshName )
     attributes: dict[ str, int ] = arrayHelpers.getAttributesWithNumberOfComponents( mesh, piece )
@@ -232,8 +249,10 @@ def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
 @pytest.mark.parametrize( "meshName, attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
     ( "multiblock", "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
     ( "multiblock", "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
-    ( "dataset", "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ] ], [ [ 0, 0, 0 ] ] ),
-    ( "dataset", "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ] ], [ [ 0, 0, 0 ] ] ),
+    ( "dataset", "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ]
+                                                                                        ], [ [ 0, 0, 0 ] ] ),
+    ( "dataset", "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ]
+                                                                                     ], [ [ 0, 0, 0 ] ] ),
     ( "dataset", "FAULT", [ 0, 100, 101, 2 ], Piece.CELLS, [ 0, 100, 101 ], [ 2 ] ),
 ] )
 def test_checkValidValuesInObject(
@@ -249,8 +268,7 @@ def test_checkValidValuesInObject(
     mesh: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshName )
     validValues: list[ Any ]
     invalidValues: list[ Any ]
-    validValues, invalidValues = arrayHelpers.checkValidValuesInObject( mesh, attributeName,
-                                                                            listValues, piece )
+    validValues, invalidValues = arrayHelpers.checkValidValuesInObject( mesh, attributeName, listValues, piece )
     assert validValues == validValuesTest
     assert invalidValues == invalidValuesTest
 
@@ -397,9 +415,7 @@ def test_getNumberOfComponents(
     assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
 
 
-def test_getNumberOfComponentsRaises(
-    dataSetTest: Any,
-) -> None:
+def test_getNumberOfComponentsRaises( dataSetTest: Any, ) -> None:
     """Test getNumberOfComponents fails."""
     # TypeError
     meshWrongType: vtkCellData = vtkCellData()
@@ -422,21 +438,15 @@ def test_getNumberOfComponentsRaises(
     ( "multiblock", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
     ( "multiblock", "PORO", Piece.CELLS, () ),
 ] )
-def test_getComponentNames(
-    dataSetTest: Any,
-    meshName: str,
-    attributeName: str,
-    piece: Piece,
-    expected: tuple[ str, ...] ) -> None:
+def test_getComponentNames( dataSetTest: Any, meshName: str, attributeName: str, piece: Piece,
+                            expected: tuple[ str, ...] ) -> None:
     """Test getting the component names of an attribute from a mesh."""
     vtkDataSetTest: Any = dataSetTest( meshName )
     obtained: tuple[ str, ...] = arrayHelpers.getComponentNames( vtkDataSetTest, attributeName, piece )
     assert obtained == expected
 
 
-def test_getComponentNamesRaises(
-    dataSetTest: Any,
-) -> None:
+def test_getComponentNamesRaises( dataSetTest: Any, ) -> None:
     """Test getting the component names fails."""
     # TypeError
     meshWrongType: vtkFieldData = vtkFieldData()

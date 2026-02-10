@@ -34,7 +34,6 @@ from geos.mesh.utils.arrayHelpers import (
     isAttributeInObject,
     isAttributeGlobal,
     getVtkArrayTypeInObject,
-    getVtkArrayInObject,
     getNumberOfComponents,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
