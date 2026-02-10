@@ -48,6 +48,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion2Ranks.vtm"
         elif datasetType == "4Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion4Ranks.vtm"
+        elif datasetType == "meshtet1":
+            vtkFilename = "data/mesh1.vtu"
+        elif datasetType == "meshtet1b":
+            vtkFilename = "data/mesh1b.vtu"
         elif datasetType == "singlePhasePoromechanicsVTKOutput":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/singlePhasePoromechanicsVTKOutput.vtm"
         elif datasetType == "extractAndMergeVolume":
