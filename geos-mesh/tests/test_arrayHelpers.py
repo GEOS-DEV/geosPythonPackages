@@ -103,25 +103,40 @@ def test_computeElementMappingValueError() -> None:
         arrayHelpers.computeElementMapping( vtkMultiBlockDataSet(), vtkMultiBlockDataSet(), pieceWrongValue )
 
 
-@pytest.mark.parametrize( "piece, expected", [ ( Piece.POINTS, {
-    'GLOBAL_IDS_POINTS': 1,
-    'collocated_nodes': 2,
-    'PointAttribute': 3,
-} ), ( Piece.CELLS, {
-    'CELL_MARKERS': 1,
-    'PERM': 3,
-    'PORO': 1,
-    'FAULT': 1,
-    'GLOBAL_IDS_CELLS': 1,
-    'CellAttribute': 3,
-} ) ] )
-def test_getAttributeFromMultiBlockDataSet( dataSetTest: vtkMultiBlockDataSet, piece: Piece,
-                                            expected: dict[ str, int ] ) -> None:
-    """Test getting attribute list as dict from multiblock."""
-    multiBlockTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    attributes: dict[ str, int ] = arrayHelpers.getAttributesFromMultiBlockDataSet( multiBlockTest, piece )
+@pytest.mark.parametrize( "meshName, piece, expected", [
+    ( "multiblock", Piece.POINTS, { 'GLOBAL_IDS_POINTS': 1, 'collocated_nodes': 2, 'PointAttribute': 3 } ),
+    ( "multiblock", Piece.CELLS, { 'CELL_MARKERS': 1, 'PERM': 3, 'PORO': 1, 'FAULT': 1, 'GLOBAL_IDS_CELLS': 1, 'CellAttribute': 3 } ),
+    ( "dataset", Piece.POINTS, { 'GLOBAL_IDS_POINTS': 1, 'PointAttribute': 3 } ),
+    ( "dataset", Piece.CELLS, { 'CELL_MARKERS': 1, 'PERM': 3, 'PORO': 1, 'FAULT': 1, 'GLOBAL_IDS_CELLS': 1, 'CellAttribute': 3 } ),
+] )
+def test_getAttributesWithNumberOfComponents(
+    dataSetTest: Any,
+    meshName: str,
+    piece: Piece,
+    expected: dict[ str, int ]
+) -> None:
+    """Test getting attribute list as dict from a mesh."""
+    mesh: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshName )
+    attributes: dict[ str, int ] = arrayHelpers.getAttributesWithNumberOfComponents( mesh, piece )
 
     assert attributes == expected
+
+
+def test_getAttributesWithNumberOfComponentsRaises() -> None:
+    """Test the fails of the function getAttributesWithNumberOfComponents."""
+    # ValueError
+    with pytest.raises( ValueError ):
+        arrayHelpers.getAttributesWithNumberOfComponents( vtkPolyData(), Piece.BOTH )
+
+    # AttributeError
+    mesh: vtkPolyData = vtkPolyData()
+    mesh.GetCellData().AddArray( vtkDoubleArray() )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getAttributesWithNumberOfComponents( mesh, Piece.CELLS )
+
+    # TypeError
+    with pytest.raises( TypeError ):
+        arrayHelpers.getAttributesWithNumberOfComponents( vtkCellData(), Piece.CELLS )
 
 
 @pytest.mark.parametrize( "meshName, attributeName, pieceTest", [
@@ -263,24 +278,6 @@ def test_checkValidValuesInDataSet(
     validValues, invalidValues = arrayHelpers.checkValidValuesInDataSet( dataSet, attributeName, listValues, piece )
     assert validValues == validValuesTest
     assert invalidValues == invalidValuesTest
-
-
-@pytest.mark.parametrize( "piece, expected", [ ( Piece.POINTS, {
-    'GLOBAL_IDS_POINTS': 1,
-    'PointAttribute': 3,
-} ), ( Piece.CELLS, {
-    'CELL_MARKERS': 1,
-    'PERM': 3,
-    'PORO': 1,
-    'FAULT': 1,
-    'GLOBAL_IDS_CELLS': 1,
-    'CellAttribute': 3,
-} ) ] )
-def test_getAttributesFromDataSet( dataSetTest: vtkDataSet, piece: Piece, expected: dict[ str, int ] ) -> None:
-    """Test getting attribute list as dict from dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    attributes: dict[ str, int ] = arrayHelpers.getAttributesFromDataSet( vtkDataSetTest, piece )
-    assert attributes == expected
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [

@@ -28,13 +28,13 @@ The getter functions:
     - get the array of an attribute (one for dataset, one for multiblockDataset, one for the both and one for fieldData)
     - get the component names of an attribute
     - get the number of components of an attribute
-    - get the piece of an attribute (for any meshes)
+    - get the piece of an attribute
     - get the values of an attribute as data frame (for polyData only)
     - get the vtk type of an attribute (one for dataset, one for multiblockDataset and one for the both)
-    - get the set of attributes on one piece of a mesh (for any mesh)
-    - get the attribute and they number of component on one piece of a mesh (one for dataset, one for multiblockDataset and one for the both)
-    - get all the cells dimension of a mesh (for any meshes)
-    - get the GlobalIds array on one piece of a mesh (for any meshes)
+    - get the set of attributes on one piece of a mesh
+    - get the attribute and they number of component on one piece of a mesh
+    - get all the cells dimension of a mesh
+    - get the GlobalIds array on one piece of a mesh
     - get the cell center coordinates of a mesh
     - get the mapping between cells or points shared by two meshes
 
@@ -379,73 +379,47 @@ def getAttributesWithNumberOfComponents(
     """Get the dictionary of all attributes from object on points or cells.
 
     Args:
-        mesh (Any): Mesh where to find the attributes.
-        piece (Piece): The piece of the attribute.
+        mesh (vtkMultiBlockDataSet | vtkDataSet): Mesh where to find the attributes.
+        piece (Piece): The piece of the attributes to get.
 
     Returns:
         dict[str, int]: Dictionary where keys are the names of the attributes and values the number of components.
+
+    Raises:
+        ValueError: The piece must be cells or points only
+        AttributeError: One attribute one the mesh is null.
+        TypeError: Input mesh must be a vtkDataSet or vtkMultiBlockDataSet.
     """
-    attributes: dict[ str, int ]
+    attributes: dict[ str, int ] = {}
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
-        attributes = getAttributesFromMultiBlockDataSet( mesh, piece )
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
+            blockAttributes: dict[ str, int ] = getAttributesWithNumberOfComponents( dataSet, piece )
+            for attributeName, nbComponents in blockAttributes.items():
+                if attributeName not in attributes:
+                    attributes[ attributeName ] = nbComponents
     elif isinstance( mesh, vtkDataSet ):
-        attributes = getAttributesFromDataSet( mesh, piece )
+        data: Union[ vtkPointData, vtkCellData ]
+        if piece == Piece.POINTS:
+            data = mesh.GetPointData()
+        elif piece == Piece.CELLS:
+            data = mesh.GetCellData()
+        else:
+            raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }." )
+
+        nbAttributes: int = data.GetNumberOfArrays()
+        for i in range( nbAttributes ):
+            attributeName: str = data.GetArrayName( i )
+            attribute: vtkDataArray = data.GetArray( attributeName )
+            if attribute is None:
+                raise AttributeError( f"The attribute { attributeName } is null" )
+
+            nbComponents: int = attribute.GetNumberOfComponents()
+            attributes[ attributeName ] = nbComponents
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
-    return attributes
 
-
-def getAttributesFromMultiBlockDataSet( multiBlockDataSet: Union[ vtkMultiBlockDataSet, vtkCompositeDataSet ],
-                                        piece: Piece ) -> dict[ str, int ]:
-    """Get the dictionary of all attributes of object on points or on cells.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet | vtkCompositeDataSet): multiBlockDataSet where to find the attributes.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        dict[str, int]: Dictionary of the names of the attributes as keys, and number of components as values.
-    """
-    attributes: dict[ str, int ] = {}
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for blockIndex in elementaryBlockIndexes:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        blockAttributes: dict[ str, int ] = getAttributesFromDataSet( dataSet, piece )
-        for attributeName, nbComponents in blockAttributes.items():
-            if attributeName not in attributes:
-                attributes[ attributeName ] = nbComponents
-
-    return attributes
-
-
-def getAttributesFromDataSet( dataSet: vtkDataSet, piece: Piece ) -> dict[ str, int ]:
-    """Get the dictionary of all attributes of a vtkDataSet on points or cells.
-
-    Args:
-        dataSet (vtkDataSet): DataSet where to find the attributes.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        dict[str, int]: List of the names of the attributes.
-    """
-    attributes: dict[ str, int ] = {}
-    data: Union[ vtkPointData, vtkCellData ]
-    if piece == Piece.POINTS:
-        data = dataSet.GetPointData()
-    elif piece == Piece.CELLS:
-        data = dataSet.GetCellData()
-    else:
-        raise ValueError( f"The attribute piece must be { Piece.POINTS.value } or { Piece.CELLS.value }." )
-
-    assert data is not None, f"Data on { piece.value } was not recovered."
-
-    nbAttributes: int = data.GetNumberOfArrays()
-    for i in range( nbAttributes ):
-        attributeName: str = data.GetArrayName( i )
-        attribute: vtkDataArray = data.GetArray( attributeName )
-        assert attribute is not None, f"Attribute { attributeName } is null"
-        nbComponents: int = attribute.GetNumberOfComponents()
-        attributes[ attributeName ] = nbComponents
     return attributes
 
 
