@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 from geos.utils.pieceEnum import Piece
 from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
-                                           getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
+                                           getVtkArrayTypeInObject, isAttributeGlobal, getAttributePieceInfo,
                                            checkValidValuesInDataSet, checkValidValuesInMultiBlock )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
                                              createConstantAttributeMultiBlock )
@@ -273,7 +273,7 @@ class CreateConstantAttributePerRegion:
         """
         # Get the numpy type from the vtk typecode.
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        regionVtkType: int = getVtkDataTypeInObject( self.mesh, self.regionName, self.piece )
+        regionVtkType: int = getVtkArrayTypeInObject( self.mesh, self.regionName, self.piece )
         regionNpType: type = dictType[ regionVtkType ]
 
         # Set the correct type of values and region index.

@@ -278,8 +278,7 @@ def test_checkValidValuesInDataSet(
     ( "dataset", "GLOBAL_IDS_CELLS", Piece.CELLS, True ),
     ( "dataset", "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
     ( "multiblockGeosOutput", "TIME", Piece.FIELD, True ),
-    ( "multiblockGeosOutput", "ghostRank", Piece.CELLS, True ),
-    ( "multiblockGeosOutput", "ghostRank", Piece.POINTS, True ),
+    ( "multiblockGeosOutput", "ghostRank", Piece.BOTH, True ),
 ] )
 def test_isAttributeInObject(
     dataSetTest: Any,
@@ -340,47 +339,30 @@ def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.ND
     ( "dataset", "PointAttribute", Piece.POINTS, 11 ),
     ( "multiblock", "collocated_nodes", Piece.POINTS, 12 ),
 ] )
-def test_getVtkDataTypeInObject(
+def test_getVtkArrayTypeInObject(
     dataSetTest: Any,
     meshName: str,
     attributeName: str,
     piece: Piece,
     expectedVtkType: int,
 ) -> None:
-    """Test the function getVtkDataTypeInObject."""
+    """Test the function getVtkArrayTypeInObject."""
     mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
-    obtainedVtkType: int = arrayHelpers.getVtkDataTypeInObject( mesh, attributeName, piece )
+    obtainedVtkType: int = arrayHelpers.getVtkArrayTypeInObject( mesh, attributeName, piece )
 
     assert obtainedVtkType == expectedVtkType
 
 
-@pytest.mark.parametrize( "attributeName, vtkDataType, piece", [
-    ( "CellAttribute", 11, Piece.CELLS ),
-    ( "PointAttribute", 11, Piece.POINTS ),
-    ( "collocated_nodes", 12, Piece.POINTS ),
-] )
-def test_getVtkArrayTypeInMultiBlock( dataSetTest: vtkMultiBlockDataSet, attributeName: str, vtkDataType: int,
-                                      piece: Piece ) -> None:
-    """Test getting the type of the vtk array of an attribute from multiBlockDataSet."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+def test_getVtkArrayTypeInObjectRaises( dataSetTest: Any ) -> None:
+    """Test the fails of the function getVtkArrayTypeInObject."""
+    # AttributeError
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getVtkArrayTypeInObject( mesh, "attributeName", Piece.CELLS )
 
-    vtkDataTypeTest: int = arrayHelpers.getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
-
-    assert ( vtkDataTypeTest == vtkDataType )
-
-
-@pytest.mark.parametrize( "attributeName, piece", [
-    ( "CellAttribute", Piece.CELLS ),
-    ( "PointAttribute", Piece.POINTS ),
-] )
-def test_getVtkArrayTypeInObject( dataSetTest: vtkDataSet, attributeName: str, piece: Piece ) -> None:
-    """Test getting the type of the vtk array of an attribute from dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-
-    obtained: int = arrayHelpers.getVtkArrayTypeInObject( vtkDataSetTest, attributeName, piece )
-    expected: int = 11
-
-    assert ( obtained == expected )
+    # TypeError
+    with pytest.raises( TypeError ):
+        arrayHelpers.getVtkArrayTypeInObject( vtkCellData(), "PORO", Piece.CELLS )
 
 
 @pytest.mark.parametrize( "arrayExpected, piece", [

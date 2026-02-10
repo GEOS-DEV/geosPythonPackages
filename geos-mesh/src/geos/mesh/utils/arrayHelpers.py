@@ -30,7 +30,7 @@ The getter functions:
     - get the number of components of an attribute
     - get the piece of an attribute
     - get the values of an attribute as data frame (for polyData only)
-    - get the vtk type of an attribute (one for dataset, one for multiblockDataset and one for the both)
+    - get the vtk type of an attribute
     - get the set of attributes on one piece of a mesh
     - get the attribute and they number of component on one piece of a mesh
     - get all the cells dimension of a mesh
@@ -485,59 +485,36 @@ def getArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) ->
     return npArray
 
 
-def getVtkDataTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str, piece: Piece ) -> int:
+def getVtkArrayTypeInObject( mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ], attributeName: str, piece: Piece ) -> int:
     """Return VTK type of requested array from input mesh.
 
     Args:
-        mesh (Union[vtkDataSet, vtkMultiBlockDataSet]): Input multiBlockDataSet.
+        mesh (Union[vtkDataSet, vtkMultiBlockDataSet]): Input mesh.
         attributeName (str): Name of the attribute.
         piece (Piece): The piece of the attribute.
 
     Returns:
         int: The type of the vtk array corresponding to input attribute name.
+
+    Raises:
+        AttributeError: The attribute 'attributeName' is not in the mesh.
+        TypeError: The mesh has to be inherited from vtkMultiBlockDataSet or vtkDataSet.
     """
     if isinstance( mesh, vtkDataSet ):
-        return getVtkArrayTypeInObject( mesh, attributeName, piece )
+        array: vtkDataArray = getVtkArrayInObject( mesh, attributeName, piece )
+        vtkArrayType: int = array.GetDataType()
+        return vtkArrayType
+    elif isinstance( mesh, vtkMultiBlockDataSet ):
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
+            try:
+                return getVtkArrayTypeInObject( dataSet, attributeName, piece )
+            except:
+                continue
+        raise AttributeError( f"The attribute { attributeName } is not in input mesh." )
     else:
-        return getVtkArrayTypeInMultiBlock( mesh, attributeName, piece )
-
-
-def getVtkArrayTypeInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> int:
-    """Return VTK type of requested array from dataset input.
-
-    Args:
-        dataSet (vtkDataSet): Input dataSet.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        int: The type of the vtk array corresponding to input attribute name.
-    """
-    array: vtkDataArray = getVtkArrayInObject( dataSet, attributeName, piece )
-    vtkArrayType: int = array.GetDataType()
-
-    return vtkArrayType
-
-
-def getVtkArrayTypeInMultiBlock( multiBlockDataSet: vtkMultiBlockDataSet, attributeName: str, piece: Piece ) -> int:
-    """Return VTK type of requested array from multiblock dataset input, if existing.
-
-    Args:
-        multiBlockDataSet (vtkMultiBlockDataSet): Input multiBlockDataSet.
-        attributeName (str): Name of the attribute.
-        piece (Piece): The piece of the attribute.
-
-    Returns:
-        int: Type of the requested vtk array if existing in input multiblock dataset.
-    """
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
-    for blockIndex in elementaryBlockIndexes:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        listAttributes: set[ str ] = getAttributeSet( dataSet, piece )
-        if attributeName in listAttributes:
-            return getVtkArrayTypeInObject( dataSet, attributeName, piece )
-
-    raise AssertionError( "The vtkMultiBlockDataSet has no attribute with the name " + attributeName + "." )
+        raise TypeError( "Input object must be a vtkDataSet or vtkMultiBlockDataSet." )
 
 
 def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece ) -> vtkDataArray:
@@ -550,9 +527,12 @@ def getVtkArrayInObject( dataSet: vtkDataSet, attributeName: str, piece: Piece )
 
     Returns:
         vtkDataArray: The vtk array corresponding to input attribute name.
+
+    Raises:
+        AttributeError: The attribute 'attributeName' is not in the mesh.
     """
     if not isAttributeInObject( dataSet, attributeName, piece ):
-        raise AttributeError( f"{ attributeName } is not in input mesh." )
+        raise AttributeError( f"The attribute { attributeName } is not in input mesh." )
 
     dataArray: vtkDataArray
     if piece == Piece.POINTS:

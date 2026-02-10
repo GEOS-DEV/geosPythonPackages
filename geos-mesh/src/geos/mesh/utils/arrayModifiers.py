@@ -34,7 +34,6 @@ from geos.mesh.utils.arrayHelpers import (
     isAttributeInObject,
     isAttributeGlobal,
     getVtkArrayTypeInObject,
-    getVtkArrayTypeInMultiBlock,
     getVtkDataTypeInObject,
     getNumberOfComponents,
 )
@@ -102,7 +101,7 @@ def fillPartialAttributes(
         raise AttributeError( f"The attribute { attributeName } is already global." )
 
     # Get information of the attribute to fill.
-    vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
+    vtkDataType: int = getVtkArrayTypeInObject( multiBlockDataSet, attributeName, piece )
     nbComponents: int = getNumberOfComponents( multiBlockDataSet, attributeName, piece )
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
