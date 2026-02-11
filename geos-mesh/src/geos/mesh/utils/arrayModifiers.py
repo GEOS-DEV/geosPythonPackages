@@ -27,7 +27,11 @@ from vtkmodules.vtkFiltersCore import (
     vtkCellCenters,
     vtkPointDataToCellData,
 )
-from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger, )
+from vtkmodules.vtkCommonCore import (
+    vtkDataArray,
+    vtkPoints,
+    vtkLogger,
+)
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
     getComponentNamesDataSet,
@@ -156,8 +160,7 @@ def fillPartialAttributes(
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
         if not isAttributeInObjectDataSet( dataSet, attributeName, piece ):
-            createConstantAttribute( dataSet, listValues, attributeName, componentNames, piece, vtkDataType,
-                                            logger )
+            createConstantAttribute( dataSet, listValues, attributeName, componentNames, piece, vtkDataType, logger )
 
     return
 
@@ -307,7 +310,8 @@ def createConstantAttribute(
             logger.warning(
                 f"During the creation of the constant attribute { attributeName }, values have been converted from { valueType } to { npType }."
             )
-            logger.warning( "To avoid any issue with the conversion, please use directly numpy scalar type for the values" )
+            logger.warning(
+                "To avoid any issue with the conversion, please use directly numpy scalar type for the values" )
             valueType = npType
 
         # Check the consistency between the given value type and the vtk array type if it exists.
@@ -483,8 +487,8 @@ def copyAttribute(
 
     if isinstance( meshTo, vtkDataSet ) and isinstance( meshFrom, vtkDataSet ):
         # Small check to check if the two meshes are similar.
-        coordElementTo: set[ tuple[ int, ...] ] = set()
-        coordElementFrom: set[ tuple[ int, ...] ] = set()
+        coordElementTo: set[ tuple[ float, ...] ] = set()
+        coordElementFrom: set[ tuple[ float, ...] ] = set()
         if piece == Piece.POINTS:
             coordElementTo.add( meshTo.GetPoint( 0 ) )
             coordElementFrom.add( meshFrom.GetPoint( 0 ) )
@@ -495,7 +499,7 @@ def copyAttribute(
             nbPointsTo: int = cellTo.GetNumberOfPoints()
             nbPointsFrom: int = cellTo.GetNumberOfPoints()
             if nbPointsTo != nbPointsFrom:
-                raise ValueError( "The two meshes have not the same cells dimension.")
+                raise ValueError( "The two meshes have not the same cells dimension." )
 
             cellPointsTo: vtkPoints = cellTo.GetPoints()
             cellPointsFrom: vtkPoints = cellFrom.GetPoints()
@@ -503,10 +507,9 @@ def copyAttribute(
                 coordElementTo.add( cellPointsTo.GetPoint( idPoint ) )
                 coordElementFrom.add( cellPointsFrom.GetPoint( idPoint ) )
         else:
-            raise ValueError( "The piece of the attribute to copy must be cells or points.")
-        print(coordElementTo, coordElementFrom)
+            raise ValueError( "The piece of the attribute to copy must be cells or points." )
         if coordElementTo != coordElementFrom:
-            raise ValueError( "The two meshes have not the same element indexation.")
+            raise ValueError( "The two meshes have not the same element indexation." )
 
         npArray: npt.NDArray[ Any ] = getArrayInObject( meshFrom, attributeNameFrom, piece )
         componentNames: tuple[ str, ...] = getComponentNamesDataSet( meshFrom, attributeNameFrom, piece )
@@ -621,7 +624,7 @@ def transferAttributeWithElementMap(
         elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ):
             defaultValue = -1
         elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
-                            VTK_UNSIGNED_LONG_LONG ):
+                              VTK_UNSIGNED_LONG_LONG ):
             defaultValue = 0
         else:
             raise AttributeError( f"The attribute { attributeName } has an unknown type." )
@@ -670,12 +673,12 @@ def transferAttributeWithElementMap(
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
             transferAttributeWithElementMap( meshFrom,
-                                                      dataSetTo,
-                                                      elementMap,
-                                                      attributeName,
-                                                      piece,
-                                                      flatIdDataSetTo=flatIdDataSetTo,
-                                                      logger=logger )
+                                             dataSetTo,
+                                             elementMap,
+                                             attributeName,
+                                             piece,
+                                             flatIdDataSetTo=flatIdDataSetTo,
+                                             logger=logger )
     else:
         raise TypeError( "The final mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
 
