@@ -20,13 +20,14 @@ from vtkmodules.vtkCommonDataModel import (
     vtkDataObject,
     vtkPointData,
     vtkCellData,
+    vtkCell,
 )
 from vtkmodules.vtkFiltersCore import (
     vtkArrayRename,
     vtkCellCenters,
     vtkPointDataToCellData,
 )
-from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger )
+from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger, )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
     getComponentNamesDataSet,
@@ -447,20 +448,25 @@ def createAttribute(
 
 
 def copyAttribute(
-    multiBlockDataSetFrom: vtkMultiBlockDataSet,
-    multiBlockDataSetTo: vtkMultiBlockDataSet,
+    meshFrom: vtkMultiBlockDataSet | vtkDataSet,
+    meshTo: vtkMultiBlockDataSet | vtkDataSet,
     attributeNameFrom: str,
     attributeNameTo: str,
     piece: Piece = Piece.CELLS,
     logger: Union[ Logger, None ] = None,
 ) -> None:
-    """Copy an attribute from a multiBlockDataSet to a similar one on the same piece.
+    """Copy an attribute from a mesh to a similar one on the same piece.
+
+    The similarity of two meshes means that the two mesh have the same number of elements (cells and points) located in the same coordinates and with the same indexation. Testing this similarity is time consuming therefore, only few metric are compared:
+        - the block indexation for multiblock dataset
+        - the number of the element where the attribute is located, for multiblock dataset it is done for each block
+        - the coordinates of the first element, for multiblock dataset it is done for each block
 
     Args:
-        multiBlockDataSetFrom (vtkMultiBlockDataSet): MultiBlockDataSet from which to copy the attribute.
-        multiBlockDataSetTo (vtkMultiBlockDataSet): MultiBlockDataSet where to copy the attribute.
-        attributeNameFrom (str): Attribute name in multiBlockDataSetFrom.
-        attributeNameTo (str): Attribute name in multiBlockDataSetTo. It will be a new attribute of multiBlockDataSetTo.
+        meshFrom (vtkMultiBlockDataSet | vtkDataSet): mesh from which to copy the attribute.
+        meshTo (vtkMultiBlockDataSet | vtkDataSet): mesh where to copy the attribute.
+        attributeNameFrom (str): Attribute name in meshFrom.
+        attributeNameTo (str): Attribute name to set in meshTo.
         piece (Piece): The piece of the attribute.
             Defaults to Piece.CELLS
         logger (Union[Logger, None], optional): A logger to manage the output messages.
@@ -468,87 +474,69 @@ def copyAttribute(
 
     Raises:
         TypeError: Error with the type of the source or final mesh.
-        ValueError: Error with the data of the source or final mesh.
+        ValueError: Error with the data of the source or final mesh or the piece.
         AttributeError: Error with the attribute attributeNameFrom or attributeNameTo.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "copyAttribute", True )
 
-    # Check if the multiBlockDataSetFrom is inherited from vtkMultiBlockDataSet.
-    if not isinstance( multiBlockDataSetFrom, vtkMultiBlockDataSet ):
-        raise TypeError( "Source mesh has to be inherited from vtkMultiBlockDataSet." )
+    if isinstance( meshTo, vtkDataSet ) and isinstance( meshFrom, vtkDataSet ):
+        # Small check to check if the two meshes are similar.
+        coordElementTo: set[ tuple[ int, ...] ] = set()
+        coordElementFrom: set[ tuple[ int, ...] ] = set()
+        if piece == Piece.POINTS:
+            coordElementTo.add( meshTo.GetPoint( 0 ) )
+            coordElementFrom.add( meshFrom.GetPoint( 0 ) )
+        elif piece == Piece.CELLS:
+            cellTo: vtkCell = meshTo.GetCell( 0 )
+            cellFrom: vtkCell = meshFrom.GetCell( 0 )
+            # Get the coordinates of each points of the cell.
+            nbPointsTo: int = cellTo.GetNumberOfPoints()
+            nbPointsFrom: int = cellTo.GetNumberOfPoints()
+            if nbPointsTo != nbPointsFrom:
+                raise ValueError( "The two meshes have not the same cells dimension.")
 
-    # Check if the multiBlockDataSetTo is inherited from vtkMultiBlockDataSet.
-    if not isinstance( multiBlockDataSetTo, vtkMultiBlockDataSet ):
-        raise TypeError( "Final mesh has to be inherited from vtkMultiBlockDataSet." )
+            cellPointsTo: vtkPoints = cellTo.GetPoints()
+            cellPointsFrom: vtkPoints = cellFrom.GetPoints()
+            for idPoint in range( nbPointsTo ):
+                coordElementTo.add( cellPointsTo.GetPoint( idPoint ) )
+                coordElementFrom.add( cellPointsFrom.GetPoint( idPoint ) )
+        else:
+            raise ValueError( "The piece of the attribute to copy must be cells or points.")
+        print(coordElementTo, coordElementFrom)
+        if coordElementTo != coordElementFrom:
+            raise ValueError( "The two meshes have not the same element indexation.")
 
-    # Check if the attribute exist in the multiBlockDataSetFrom.
-    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSetFrom, attributeNameFrom, piece ):
-        raise AttributeError( f"The attribute { attributeNameFrom } is not present in the source mesh." )
+        npArray: npt.NDArray[ Any ] = getArrayInObject( meshFrom, attributeNameFrom, piece )
+        componentNames: tuple[ str, ...] = getComponentNamesDataSet( meshFrom, attributeNameFrom, piece )
+        vtkArrayType: int = getVtkArrayTypeInObject( meshFrom, attributeNameFrom, piece )
 
-    # Check if the attribute already exist in the multiBlockDataSetTo.
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSetTo, attributeNameTo, piece ):
-        raise AttributeError( f"The attribute { attributeNameTo } is already present in the final mesh." )
+        createAttribute( meshTo, npArray, attributeNameTo, componentNames, piece, vtkArrayType, logger )
+    elif isinstance( meshTo, vtkMultiBlockDataSet ) and isinstance( meshFrom, vtkMultiBlockDataSet ):
+        # Check if the attribute exist in the meshFrom.
+        if not isAttributeInObject( meshFrom, attributeNameFrom, piece ):
+            raise AttributeError( f"The attribute { attributeNameFrom } is not present in the source mesh." )
 
-    # Check if the two multiBlockDataSets are similar.
-    elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTo )
-    elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
-    if elementaryBlockIndexesTo != elementaryBlockIndexesFrom:
-        raise ValueError( "The two meshes do not have the same block indexes." )
+        # Check if the attribute already exist in the meshTo.
+        if isAttributeInObject( meshTo, attributeNameTo, piece ):
+            raise AttributeError( f"The attribute { attributeNameTo } is already present in the final mesh." )
 
-    # Parse blocks of the two mesh to copy the attribute.
-    for idBlock in elementaryBlockIndexesTo:
-        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( idBlock ) )
-        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( idBlock ) )
+        # Check if the two multiBlockDataSets are similar.
+        elementaryBlockIndexesTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
+        elementaryBlockIndexesFrom: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
+        if elementaryBlockIndexesTo != elementaryBlockIndexesFrom:
+            raise ValueError( "The two meshes do not have the same block indexes." )
 
-        if isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, piece ):
-            copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, piece, logger )
+        # Parse blocks of the two mesh to copy the attribute.
+        for idBlock in elementaryBlockIndexesTo:
+            dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( idBlock ) )
+            dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( idBlock ) )
 
-    return
-
-
-def copyAttributeDataSet(
-    dataSetFrom: vtkDataSet,
-    dataSetTo: vtkDataSet,
-    attributeNameFrom: str,
-    attributeNameTo: str,
-    piece: Piece = Piece.CELLS,
-    logger: Union[ Logger, Any ] = None,
-) -> None:
-    """Copy an attribute from a dataSet to a similar one on the same piece.
-
-    Args:
-        dataSetFrom (vtkDataSet): DataSet from which to copy the attribute.
-        dataSetTo (vtkDataSet): DataSet where to copy the attribute.
-        attributeNameFrom (str): Attribute name in dataSetFrom.
-        attributeNameTo (str): Attribute name in dataSetTo. It will be a new attribute of dataSetTo.
-        piece (Piece): The piece of the attribute.
-            Defaults to Piece.CELLS
-        logger (Union[Logger, None], optional): A logger to manage the output messages.
-            Defaults to None, an internal logger is used.
-
-    Raises:
-        TypeError: Error with the type of the source mesh.
-        AttributeError: Error with the attribute attributeNameFrom.
-    """
-    # Check if an external logger is given.
-    if logger is None:
-        logger = getLogger( "copyAttributeDataSet", True )
-
-    # Check if the dataSetFrom is inherited from vtkDataSet.
-    if not isinstance( dataSetFrom, vtkDataSet ):
-        raise TypeError( "Source mesh has to be inherited from vtkDataSet." )
-
-    # Check if the attribute exist in the dataSetFrom.
-    if not isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, piece ):
-        raise AttributeError( f"The attribute { attributeNameFrom } is not in the source mesh." )
-
-    npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, piece )
-    componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, piece )
-    vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, piece )
-
-    createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, piece, vtkArrayType, logger )
+            if isAttributeInObject( dataSetFrom, attributeNameFrom, piece ):
+                copyAttribute( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, piece, logger )
+    else:
+        raise TypeError( "Input meshes must be both inherited from vtkMultiBlockDataSet or vtkDataSet." )
 
     return
 
