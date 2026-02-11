@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import pyvista as pv
 from typing_extensions import Any, Self
 
-from geos.processing.post_processing.FaultStabilityAnalysis import ( Config, MohrCoulomb )
+from geos.processing.post_processing.MohrCoulomb import (  MohrCoulomb )
+
 from geos.processing.post_processing.ProfileExtractor import ProfileExtractor
 
 
@@ -21,18 +22,18 @@ class SensitivityAnalyzer:
     """Performs sensitivity analysis on Mohr-Coulomb parameters."""
 
     # -------------------------------------------------------------------
-    def __init__( self: Self, config: Config ) -> None:
+    def __init__( self: Self, outputDir: str = ".", showPlots: bool = True ) -> None:
         """Init."""
-        self.config = config
-        self.outputDir = Path( config.SENSITIVITY_OUTPUT_DIR )
+        self.outputDir = Path( outputDir )
         self.outputDir.mkdir( exist_ok=True )
         self.results: list[ dict[ str, Any ] ] = []
+        self.showPlots = showPlots
 
     # -------------------------------------------------------------------
-    def runAnalysis( self: Self, surfaceWithStress: pv.DataSet, time: float ) -> list[ dict[ str, Any ] ]:
+    def runAnalysis( self: Self, surfaceWithStress: pv.DataSet, time: float, sensitivityFrictionAngles: list[float], sensitivityCohesions: list[float], profileStartPoints: list[tuple[float]], profileSearchRadius: list[tuple[float]] ) -> list[ dict[ str, Any ] ]:
         """Run sensitivity analysis for multiple friction angles and cohesions."""
-        frictionAngles = self.config.SENSITIVITY_FRICTION_ANGLES
-        cohesions = self.config.SENSITIVITY_COHESIONS
+        frictionAngles = sensitivityFrictionAngles
+        cohesions = sensitivityCohesions
 
         print( "\n" + "=" * 60 )
         print( "SENSITIVITY ANALYSIS" )
@@ -50,7 +51,6 @@ class SensitivityAnalyzer:
                 surfaceCopy = surfaceWithStress.copy()
 
                 surfaceAnalyzed = MohrCoulomb.analyze(
-                    # surfaceCopy, cohesion, frictionAngle, time, verbose=False)
                     surfaceCopy,
                     cohesion,
                     frictionAngle,
@@ -69,7 +69,7 @@ class SensitivityAnalyzer:
         self._plotSensitivityResults( results, time )
 
         # Plot SCU vs depth
-        self._plotSCUDepthProfiles( results, time, surfaceWithStress )
+        self._plotSCUDepthProfiles( results, time, surfaceWithStress, profileStartPoints, profileSearchRadius )
 
         return results
 
@@ -121,7 +121,7 @@ class SensitivityAnalyzer:
         plt.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         print( f"\n📊 Sensitivity plot saved: {filename}" )
 
-        if self.config.SHOW_PLOTS:
+        if self.showPlots:
             plt.show()
         else:
             plt.close()
@@ -153,7 +153,8 @@ class SensitivityAnalyzer:
 
     # -------------------------------------------------------------------
     def _plotSCUDepthProfiles( self: Self, results: list[ dict[ str, Any ] ], time: float,
-                               surfaceWithStress: pv.DataSet ) -> None:
+                               surfaceWithStress: pv.DataSet, profileStartPoints=None, profileSearchRadius=None,
+                               maxDepthProfiles=None ) -> None:
         """Plot SCU depth profiles for all parameter combinations.
 
         Each (cohesion, friction) pair gets a unique color
@@ -166,7 +167,6 @@ class SensitivityAnalyzer:
         centers[ :, 2 ]
 
         # Get profile points from config
-        profileStartPoints = self.config.PROFILE_START_POINTS
 
         # Auto-generate if not provided
         if profileStartPoints is None:
@@ -189,7 +189,6 @@ class SensitivityAnalyzer:
             profileStartPoints = [ ( xPos, yPos ) ]
 
         # Get search radius from config or auto-compute
-        searchRadius = getattr( self.config, 'PROFILE_SEARCH_RADIUS', None )
         if searchRadius is None:
             xMin, xMax = np.min( centers[ :, 0 ] ), np.max( centers[ :, 0 ] )
             yMin, yMax = np.min( centers[ :, 1 ] ), np.max( centers[ :, 1 ] )
@@ -271,8 +270,8 @@ class SensitivityAnalyzer:
             ax.set_xlim( left=0 )
 
             # Change verticale scale
-            if hasattr( self.config, 'MAX_DEPTH_PROFILES' ) and self.config.MAX_DEPTH_PROFILES is not None:
-                ax.set_ylim( bottom=self.config.MAX_DEPTH_PROFILES )
+            if maxDepthProfiles is not None:
+                ax.set_ylim( bottom=maxDepthProfiles )
 
             # Légende en dehors à droite
             ax.legend( loc='center left', bbox_to_anchor=( 1, 0.5 ), fontsize=9, ncol=1 )
@@ -290,7 +289,7 @@ class SensitivityAnalyzer:
         plt.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         print( f"\n  💾 SCU sensitivity profiles saved: {filename}" )
 
-        if self.config.SHOW_PLOTS:
+        if self.showPlots:
             plt.show()
         else:
             plt.close()

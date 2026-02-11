@@ -12,7 +12,9 @@ import pyvista as pv
 from typing_extensions import Self
 
 from geos.processing.post_processing.ProfileExtractor import ProfileExtractor
-from geos.processing.post_processing.FaultStabilityAnalysis import Config
+# from geos.processing.post_processing.FaultStabilityAnalysis import Config
+
+# from geos.processing.tools.Config import Config
 
 
 # ============================================================================
@@ -22,9 +24,18 @@ class Visualizer:
     """Visualization utilities."""
 
     # -------------------------------------------------------------------
-    def __init__( self, config: Config ) -> None:
+    # def __init__( self, config: Config ) -> None:
+    def __init__( self, profileSearchRadius: float| None = None,
+                        minDepthProfiles: float | None = None,
+                        maxDepthProfiles: float | None = None,
+                        showPlots: bool = True, savePlots:bool = True  ) -> None:
         """Init."""
-        self.config = config
+        self.profileSearchRadius = profileSearchRadius
+        self.minDepthProfiles = minDepthProfiles
+        self.maxDepthProfiles = maxDepthProfiles
+        # self.config = config
+        self.savePlots = savePlots
+        self.showPlots = showPlots
 
     # -------------------------------------------------------------------
     @staticmethod
@@ -265,15 +276,18 @@ class Visualizer:
         return result
 
     # -------------------------------------------------------------------
-    @staticmethod
-    def plotDepthProfiles( surface: pv.PolyData,
+    def plotDepthProfiles( self,
+                        surface: pv.PolyData,
                            time: float,
                            path: Path,
                            show: bool = True,
                            save: bool = True,
                            profileStartPoints: list[ tuple[ float, float ] ] | None = None,
                            maxProfilePoints: int = 1000,
-                           referenceProfileId: int = 1 ) -> None:
+                           referenceProfileId: int = 1,
+                        #    profileSearchRadius: float | None = None,
+                           showProfileExtractor: bool = True,
+                         ) -> None:
         """Plot vertical profiles along the fault showing stress and SCU vs depth."""
         print( "  📊 Creating depth profiles " )
 
@@ -320,8 +334,8 @@ class Visualizer:
         yRange = yMax - yMin
         zMax - zMin
 
-        if self.config.PROFILE_SEARCH_RADIUS is not None:
-            searchRadius = self.config.PROFILE_SEARCH_RADIUS
+        if self.profileSearchRadius is not None:
+            searchRadius = self.profileSearchRadius
         else:
             searchRadius = min( xRange, yRange ) * 0.15
 
@@ -365,18 +379,6 @@ class Visualizer:
         for i, ( xPos, yPos, zPos ) in enumerate( profileStartPoints ):
             print( f"     → Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f}, {zPos:.1f})" )
 
-            # depthsSigma, profileSigmaN, PathXSigma, PathYSigma = ProfileExtractor.extractVerticalProfileTopologyBased(
-            #         surface, 'sigmaNEffective', xPos, yPos, zPos, verbose=True)
-
-            # depthsTau, profileTau, _, _ = ProfileExtractor.extractVerticalProfileTopologyBased(
-            #         surface, 'tauEffective', xPos, yPos, zPos, verbose=False)
-
-            # depthsSCU, profileSCU, _, _ = ProfileExtractor.extractVerticalProfileTopologyBased(
-            #         surface, 'SCU', xPos, yPos, zPos, verbose=False)
-
-            # depthsDeltaSCU, profileDeltaSCU, _, _ = ProfileExtractor.extractVerticalProfileTopologyBased(
-            #         surface, 'deltaSCU', xPos, yPos, zPos, verbose=False)
-
             depthsSigma, profileSigmaN, PathXSigma, PathYSigma = ProfileExtractor.extractAdaptiveProfile(
                 centers, sigmaN, xPos, yPos, searchRadius )
 
@@ -397,7 +399,7 @@ class Visualizer:
                     f"        Path length: {pathLength:.1f}m (horizontal displacement: {np.abs(PathXSigma[-1] - PathXSigma[0]):.1f}m)"
                 )
 
-                if self.config.SHOW_PROFILE_EXTRACTOR:
+                if showProfileExtractor:
                     ProfileExtractor.plotProfilePath3D( surface=surface,
                                                         pathX=PathXSigma,
                                                         pathY=PathYSigma,
@@ -571,13 +573,13 @@ class Visualizer:
         axes[ 3 ].set_xlim( left=0, right=2 )
 
         # Change verticale scale
-        if self.config.MAX_DEPTH_PROFILES is not None:
+        if self.maxDepthProfiles is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( bottom=self.config.MAX_DEPTH_PROFILES )
+                axes[ i ].set_ylim( bottom=self.maxDepthProfiles )
 
-        if self.config.MIN_DEPTH_PROFILES is not None:
+        if self.minDepthProfiles is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( top=self.config.MIN_DEPTH_PROFILES )
+                axes[ i ].set_ylim( top=self.minDepthProfiles )
 
         # Overall title
         years = time / ( 365.25 * 24 * 3600 )
@@ -606,7 +608,11 @@ class Visualizer:
                                   show: bool = True,
                                   save: bool = True,
                                   profileStartPoints: list[ tuple[ float, float, float ] ] | None = None,
-                                  maxProfilePoints: int = 1000 ) -> None:
+                                  maxProfilePoints: int = 1000,
+                                #   profileSearchRadius: float | None = None,
+                                #   maxDepthProfile: float | None = None,
+                                #   minDepthProfile: float | None = None
+                                ) -> None:
         """Plot stress profiles in volume cells adjacent to the fault.
 
         Extracts profiles through contributing cells on BOTH sides of the fault
@@ -703,8 +709,8 @@ class Visualizer:
         zMax - zMin
 
         # Search radius (pour extractAdaptiveProfile sur volumes)
-        if self.config.PROFILE_SEARCH_RADIUS is not None:
-            searchRadius = self.config.PROFILE_SEARCH_RADIUS
+        if self.profileSearchRadius is not None:
+            searchRadius = self.profileSearchRadius
         else:
             searchRadius = min( xRange, yRange ) * 0.2
 
@@ -1034,13 +1040,13 @@ class Visualizer:
         axes[ 4 ].legend( handles=customLines, loc='best', fontsize=fsize - 3, ncol=1 )
 
         # Change verticale scale
-        if self.config.MAX_DEPTH_PROFILES is not None:
+        if self.maxDepthProfile is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( bottom=self.config.MAX_DEPTH_PROFILES )
+                axes[ i ].set_ylim( bottom=self.maxDepthProfiles )
 
-        if self.config.MIN_DEPTH_PROFILES is not None:
+        if self.minDepthProfiles is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( top=self.config.MIN_DEPTH_PROFILES )
+                axes[ i ].set_ylim( top=self.minDepthProfiles )
 
         # Overall title
         years = time / ( 365.25 * 24 * 3600 )
@@ -1072,7 +1078,11 @@ class Visualizer:
                                              show: bool = True,
                                              save: bool = True,
                                              profileStartPoints: list[ tuple[ int, int, int ] ] | None = None,
-                                             referenceProfileId: int = 1 ) -> None:
+                                             referenceProfileId: int = 1,
+                                            #  profileSearchRadius: float| None = None,
+                                            #  minDepthProfile: float | None = None,
+                                            #  maxDepthProfile: float | None = None,
+                                              ) -> None:
         """Plot comparison between analytical fault stresses (Anderson formulas) and numerical tensor projection - COMBINED PLOTS ONLY.
 
         Parameters
@@ -1195,8 +1205,8 @@ class Visualizer:
         yRange = yMax - yMin
 
         # Search radius
-        if self.config.PROFILE_SEARCH_RADIUS is not None:
-            searchRadius = self.config.PROFILE_SEARCH_RADIUS
+        if self.profileSearchRadius is not None:
+            searchRadius = self.profileSearchRadius
         else:
             searchRadius = min( xRange, yRange ) * 0.2
 
@@ -1563,13 +1573,13 @@ class Visualizer:
                       y=0.995 )
 
         # Change verticale scale
-        if self.config.MAX_DEPTH_PROFILES is not None:
+        if self.maxDepthProfiles is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( bottom=self.config.MAX_DEPTH_PROFILES )
+                axes[ i ].set_ylim( bottom=self.maxDepthProfiles )
 
-        if self.config.MIN_DEPTH_PROFILES is not None:
+        if self.minDepthProfiles is not None:
             for i in range( len( axes ) ):
-                axes[ i ].set_ylim( top=self.config.MIN_DEPTH_PROFILES )
+                axes[ i ].set_ylim( top=self.minDepthProfiles )
 
         plt.tight_layout( rect=( 0, 0, 1, 0.99 ) )
 

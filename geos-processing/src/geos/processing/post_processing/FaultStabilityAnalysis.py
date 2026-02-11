@@ -4,177 +4,13 @@
 from pathlib import Path
 import numpy as np
 import pyvista as pv
-import pyfiglet
 from typing_extensions import Self
 
 from geos.processing.post_processing.FaultGeometry import FaultGeometry
-from geos.processing.post_processing.Visualizer import Visualizer
+from geos.processing.tools.FaultVisualizer import Visualizer
 from geos.processing.post_processing.SensitivityAnalyzer import SensitivityAnalyzer
 from geos.processing.post_processing.StressProjector import StressProjector
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
-
-
-class Config:
-    """Configuration parameters for fault analysis."""
-
-    # Mechanical parameters
-    FRICTION_ANGLE: float = 12  # [degrees]
-    COHESION: float = 0  # [bar]
-
-    # Normal orientation
-    ROTATE_NORMALS: bool = False  # Rotate normals and tangents from 180°
-
-    # Sensitivity analysis
-    RUN_SENSITIVITY: bool = True  # Enable sensitivity analysis
-    SENSITIVITY_FRICTION_ANGLES: list[ float ] = [ 12, 15, 18, 20, 22, 25 ]  # degrees
-    SENSITIVITY_COHESIONS: list[ float ] = [ 0, 1, 2, 5, 10 ]  # bar
-
-    # Visualization
-    Z_SCALE = 1.0
-    SHOW_NORMAL_PLOTS = True  # Show the mesh grid and normals at fault planes
-    SHOW_CONTRIBUTION_VIZ = True  # Show volume contribution visualization (first timestep only)
-    SHOW_DEPTH_PROFILES = True  # Active les profils verticaux
-    N_DEPTH_PROFILES = 1  # Nombre de lignes verticales
-
-    MIN_DEPTH_PROFILES = None
-    MAX_DEPTH_PROFILES = None
-    SHOW_PLOTS = True  # Set to False to skip interactive plots
-    SAVE_PLOTS = True  # Set to False to skip saving plots
-    SAVE_CONTRIBUTION_CELLS = True  # Save vtu contributive cells
-    WEIGHTING_SCHEME = "arithmetic"
-
-    COMPUTE_PRINCIPAL_STRESS = False
-    SHOW_PROFILE_EXTRACTOR = True
-
-    PROFILE_START_POINTS = [ ( 2282.61, 1040, 0 ) ]  # Profile Fault 1
-
-    PROFILE_SEARCH_RADIUS = None
-
-    # Time series - List of time indices to process (None = all)
-    TIME_INDEX = [ 0, -1 ]
-
-    # File paths
-    PATH = ""
-    GRID_FILE = "mesh_faulted_reservoir_60_mod.vtu"
-    PVD_FILE = "faultModel.pvd"
-
-    # Variable names
-    STRESS_NAME = "averageStress"
-    BIOT_NAME = "rockPorosity_biotCoefficient"
-
-    # Faults attributes
-    FAULT_ATTRIBUTE = "Fault"
-    FAULT_VALUES = [ 1 ]
-
-    # Output
-    OUTPUT_DIR = "Processed_Fault_Analysis"
-    SENSITIVITY_OUTPUT_DIR = "Processed_Fault_Analysis/Sensitivity_Analysis"
-
-
-# ============================================================================
-# MOHR COULOMB
-# ============================================================================
-class MohrCoulomb:
-    """Mohr-Coulomb failure criterion analysis."""
-
-    @staticmethod
-    # def analyze( surface: pv.DataSet, cohesion: float, frictionAngleDeg: float, time=0, verbose=True ):
-    def analyze( surface: pv.DataSet, cohesion: float, frictionAngleDeg: float, verbose: bool = True ) -> pv.DataSet:
-        """Perform Mohr-Coulomb stability analysis.
-
-        Parameters:
-            surface: fault surface with stress data
-            cohesion: cohesion in bar
-            frictionAngleDeg: friction angle in degrees
-            verbose: print statistics
-        """
-        mu = np.tan( np.radians( frictionAngleDeg ) )
-
-        # Extract stress components
-        sigmaN = surface.cell_data[ "sigmaNEffective" ]
-        tau = surface.cell_data[ "tauEffective" ]
-        surface.cell_data[ 'deltaSigmaNEffective' ]
-        surface.cell_data[ 'deltaTauEffective' ]
-
-        # Mohr-Coulomb failure envelope
-        tauCritical = cohesion - sigmaN * mu
-
-        # Coulomb Failure Stress
-        CFS = tau - mu * sigmaN
-        # deltaCFS = deltaTau - mu * deltaSigmaN
-
-        # Shear Capacity Utilization: SCU = τ / τ_crit
-        SCU = np.divide( tau, tauCritical, out=np.zeros_like( tau ), where=tauCritical != 0 )
-
-        if "SCUInitial" not in surface.cell_data:
-            # First timestep: store as initial reference
-            SCUInitial = SCU.copy()
-            CFSInitial = CFS.copy()
-            deltaSCU = np.zeros_like( SCU )
-            deltaCFS = np.zeros_like( CFS )
-
-            surface.cell_data[ "SCUInitial" ] = SCUInitial
-            surface.cell_data[ "CFSInitial" ] = CFSInitial
-
-            isInitial = True
-        else:
-            # Subsequent timesteps: calculate change from initial
-            SCUInitial = surface.cell_data[ "SCUInitial" ]
-            CFSInitial = surface.cell_data[ 'CFSInitial' ]
-            deltaSCU = SCU - SCUInitial
-            deltaCFS = CFS - CFSInitial
-            isInitial = False
-
-        # Stability classification
-        stability = np.zeros_like( tau, dtype=int )
-        stability[ SCU >= 0.8 ] = 1  # Critical
-        stability[ SCU >= 1.0 ] = 2  # Unstable
-
-        # Failure probability (sigmoid)
-        k = 10.0
-        failureProba = 1.0 / ( 1.0 + np.exp( -k * ( SCU - 1.0 ) ) )
-
-        # Safety margin
-        safety = tauCritical - tau
-
-        # Store results
-        surface.cell_data.update( {
-            "mohrCohesion": np.full( surface.n_cells, cohesion ),
-            "mohrFrictionAngle": np.full( surface.n_cells, frictionAngleDeg ),
-            "mohrFrictionCoefficient": np.full( surface.n_cells, mu ),
-            "mohr_critical_shear_stress": tauCritical,
-            "SCU": SCU,
-            "deltaSCU": deltaSCU,
-            "CFS": CFS,
-            "deltaCFS": deltaCFS,
-            "safetyMargin": safety,
-            "stabilityState": stability,
-            "failureProbability": failureProba
-        } )
-
-        if verbose:
-            nStable = np.sum( stability == 0 )
-            nCritical = np.sum( stability == 1 )
-            nUnstable = np.sum( stability == 2 )
-
-            # Additional info on deltaSCU
-            if not isInitial:
-                meanDelta = np.mean( np.abs( deltaSCU ) )
-                maxIncrease = np.max( deltaSCU )
-                maxDecrease = np.min( deltaSCU )
-                print( f"  ✅ Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical, "
-                       f"{nStable} stable cells" )
-                print( f"     ΔSCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, "
-                       f"maxDecrease={maxDecrease:.3f}" )
-            else:
-                print( f"  ✅ Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, "
-                       f"{nStable} stable cells" )
-
-        return surface
-
+from geos.processing.post_processing.MohrCoulomb import MohrCoulomb
 
 # ============================================================================
 # TIME SERIES PROCESSING
@@ -183,14 +19,16 @@ class TimeSeriesProcessor:
     """Process multiple time steps from PVD file."""
 
     # -------------------------------------------------------------------
-    def __init__( self: Self, config: Config ) -> None:
+    def __init__( self: Self, outputDir: str = ".", showPlots: bool = True, savePlots: bool = True ) -> None:
         """Init."""
-        self.config = config
-        self.outputDir = Path( config.OUTPUT_DIR )
+        self.outputDir = Path( outputDir )
         self.outputDir.mkdir( exist_ok=True )
 
+        self.showPlots: bool = showPlots
+        self.savePlots: bool = savePlots
+
     # -------------------------------------------------------------------
-    def process( self: Self, path: Path, faultGeometry: FaultGeometry, pvdFile: str ) -> pv.DataSet:
+    def process( self: Self, path: Path, faultGeometry: FaultGeometry, pvdFile: str, timeIndexes: list[ int ] = [], weightingScheme: str = "arithmetic", cohesion: float = 0, frictionAngle: float = 10, runSensitivity: bool = True, profileStartPoints: list[tuple[ float, ...]] = [], computePrincipalStress: bool = True, showDepthProfiles: bool = True, stressName: str = "averageStress", biotCoefficient: str = "rockPorosity_biotCoefficient", profileSearchRadius=None, minDepthProfiles=None, maxDepthProfiles=None ) -> pv.DataSet:
         """Process all time steps using pre-computed fault geometry.
 
         Parameters:
@@ -199,10 +37,10 @@ class TimeSeriesProcessor:
             pvdFile: PVD file name
         """
         pvdReader = pv.PVDReader( path / pvdFile )
-        timeValues = np.array( pvdReader.timeValues )
+        timeValues = np.array( pvdReader.time_values )
 
-        if self.config.TIME_INDEX:
-            timeValues = timeValues[ self.config.TIME_INDEX ]
+        if timeIndexes:
+            timeValues = timeValues[ timeIndexes ]
 
         outputFiles = []
         dataInitial = None
@@ -213,7 +51,7 @@ class TimeSeriesProcessor:
         geometricProperties = faultGeometry.getGeometricProperties()
 
         # Initialize projector with pre-computed topology
-        projector = StressProjector( self.config, adjacencyMapping, geometricProperties )
+        projector = StressProjector( adjacencyMapping, geometricProperties, self.outputDir )
 
         print( '\n' )
         print( "=" * 60 )
@@ -224,7 +62,7 @@ class TimeSeriesProcessor:
             print( f"\n→ Step {i+1}/{len(timeValues)}: {time/(365.25*24*3600):.2f} years" )
 
             # Read time step
-            idx = self.config.TIME_INDEX[ i ] if self.config.TIME_INDEX else i
+            idx = timeIndexes[ i ] if timeIndexes else i
             pvdReader.set_active_time_point( idx )
             dataset = pvdReader.read()
 
@@ -244,25 +82,28 @@ class TimeSeriesProcessor:
                 surface,
                 time=timeValues[ i ],  # Simulation time
                 timestep=i,  # Timestep index
-                weightingScheme=self.config.WEIGHTING_SCHEME )
+                stressName=stressName,
+                biotName=biotCoefficient,
+                weightingScheme=weightingScheme )
 
             # -----------------------------------
             # Mohr-Coulomb analysis
             # -----------------------------------
-            cohesion = self.config.COHESION
-            frictionAngle = self.config.FRICTION_ANGLE
+            cohesion = cohesion
+            frictionAngle = frictionAngle
             surfaceResult = MohrCoulomb.analyze( surfaceResult, cohesion, frictionAngle )  #, time )
 
             # -----------------------------------
             # Visualize
             # -----------------------------------
-            self._plotResults( surfaceResult, contributingCells, time, self.outputDir )
+            self._plotResults( surfaceResult, contributingCells, time, self.outputDir, profileStartPoints, computePrincipalStress, showDepthProfiles,
+            profileSearchRadius, minDepthProfiles, maxDepthProfiles )
 
             # -----------------------------------
             # Sensitivity analysis
             # -----------------------------------
-            if self.config.RUN_SENSITIVITY:
-                analyzer = SensitivityAnalyzer( self.config )
+            if runSensitivity:
+                analyzer = SensitivityAnalyzer( self.outputDir, self.showPlots )
                 analyzer.runAnalysis( surfaceResult, time )
 
             # Save
@@ -277,7 +118,8 @@ class TimeSeriesProcessor:
         return surfaceResult
 
     # -------------------------------------------------------------------
-    def _mergeBlocks( self, dataset: pv.DataSet ) -> pv.DataSet:
+    @staticmethod
+    def _mergeBlocks( dataset: pv.DataSet ) -> pv.UnstructuredGrid:
         """Merge multi-block dataset - descente automatique jusqu'aux données."""
 
         # -----------------------------------------------
@@ -336,43 +178,49 @@ class TimeSeriesProcessor:
         return combined
 
     # -------------------------------------------------------------------
-    def _plotResults( self, surface: pv.DataSet, contributingCells: pv.DataSet, time: list[ int ],
-                      path: str ) -> None:  # TODO check type surface
+    def _plotResults( self, surface: pv.PolyData, contributingCells: pv.DataSet, time: list[ int ],
+                      path: str, profileStartPoints: list[tuple[float, ...]], computePrincipalStress: bool = True, showDepthProfiles:bool = True,
+                      profileSearchRadius: float|None=None, minDepthProfiles: float | None = None,
+                                             maxDepthProfiles: float | None = None,  ) -> None:  # TODO check type surface
         Visualizer.plotMohrCoulombDiagram( surface,
                                            time,
                                            path,
-                                           show=self.config.SHOW_PLOTS,
-                                           save=self.config.SAVE_PLOTS )
+                                           show=self.showPlots,
+                                           save=self.savePlots, )
+
 
         # Profils verticaux automatiques
-        if self.config.SHOW_DEPTH_PROFILES:
-            Visualizer.plotDepthProfiles( self,
-                                          surface,
-                                          time,
-                                          path,
-                                          show=self.config.SHOW_PLOTS,
-                                          save=self.config.SAVE_PLOTS,
-                                          profileStartPoints=self.config.PROFILE_START_POINTS )
+        if showDepthProfiles:
+            Visualizer( profileSearchRadius).plotDepthProfiles( surface=surface,
+                                          time=time,
+                                          path=path,
+                                          show=self.showPlots,
+                                          save=self.savePlots,
+                                          profileStartPoints=profileStartPoints)
 
-        visualizer = Visualizer( self.config )
 
-        if self.config.COMPUTE_PRINCIPAL_STRESS:
+        visualizer = Visualizer( profileSearchRadius,
+                                minDepthProfiles,
+                                maxDepthProfiles,
+                                showPlots = self.showPlots, savePlots = self.savePlots )
+
+        if computePrincipalStress:
 
             # Plot principal stress from volume cells
             visualizer.plotVolumeStressProfiles( volumeMesh=contributingCells,
                                                  faultSurface=surface,
                                                  time=time,
                                                  path=path,
-                                                 profileStartPoints=self.config.PROFILE_START_POINTS )
+                                                 profileStartPoints=profileStartPoints )
 
             # Visualize comparison analytical/numerical
             visualizer.plotAnalyticalVsNumericalComparison( volumeMesh=contributingCells,
                                                             faultSurface=surface,
                                                             time=time,
                                                             path=path,
-                                                            show=self.config.SHOW_PLOTS,
-                                                            save=self.config.SAVE_PLOTS,
-                                                            profileStartPoints=self.config.PROFILE_START_POINTS )
+                                                            show=self.showPlots,
+                                                            save=self.savePlots,
+                                                            profileStartPoints=profileStartPoints )
 
     # -------------------------------------------------------------------
     def _createPVD( self, outputFiles: list[ tuple[ int, str ] ] ) -> None:
@@ -388,54 +236,3 @@ class TimeSeriesProcessor:
         print( f"\n✅ PVD created: {pvdPath}" )
 
 
-# ============================================================================
-# MAIN
-# ============================================================================
-def main() -> None:
-    """Main execution function."""
-    config = Config()
-
-    print( "=" * 62 )
-    ascii_banner = pyfiglet.figlet_format( "Fault Analysis" )
-    print( ascii_banner )
-    print( "=" * 62 )
-
-    path = Path( config.PATH )
-
-    # Load fault geometry
-    mesh = pv.read( path / config.GRID_FILE )
-    print( f"✅ Mesh loaded: {config.GRID_FILE} | {mesh.n_cells} cells" )
-
-    # Read first volume dataset
-    pvdReader = pv.PVDReader( path / config.PVD_FILE )
-    pvdReader.set_active_time_point( 0 )
-    dataset = pvdReader.read()
-
-    # IMPORTANT : Utiliser le même merge que dans la boucle
-    processor = TimeSeriesProcessor( config )
-    volumeMesh = processor._mergeBlocks( dataset )
-    print( f"✅ Volume mesh extracted: {volumeMesh.n_cells} cells" )
-
-    # Initialize fault geometry with topology pre-computation
-    print( "\n📐 Initialize fault geometry" )
-    faultGeometry = FaultGeometry( config=config,
-                                   mesh=mesh,
-                                   faultValues=config.FAULT_VALUES,
-                                   faultAttribute=config.FAULT_ATTRIBUTE,
-                                   volumeMesh=volumeMesh )
-
-    # Compute normals and adjacency topology (done once!)
-    print( "🔧 Computing normals and adjacency topology" )
-    faultSurface, adjacencyMapping = faultGeometry.initialize( scaleFactor=50.0 )
-
-    # Process time series
-    processor = TimeSeriesProcessor( config )
-    processor.process( path, faultGeometry, config.PVD_FILE )
-
-    print( "\n" + "=" * 60 )
-    print( "✅ ANALYSIS COMPLETE" )
-    print( "=" * 60 )
-
-
-if __name__ == "__main__":
-    main()

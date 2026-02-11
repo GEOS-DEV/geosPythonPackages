@@ -9,24 +9,27 @@ import numpy as np
 from pathlib import Path
 from typing_extensions import Self, Any
 from vtkmodules.vtkCommonDataModel import vtkCellLocator
-from vtkmodules.vtkCommonDataModel import vtkIdList
+# from vtkmodules.vtkCommonDataModel import vtkIdList
 import numpy.typing as npt
 from scipy.spatial import cKDTree
 
-from geos.processing.FaultStabilityAnalysis import Config
+
+__doc__="""
+
+
+"""
 
 
 class FaultGeometry:
     """Handles fault surface extraction and normal computation with optimizations."""
 
     # -------------------------------------------------------------------
-    def __init__( self: Self, config: Config, mesh: pv.DataSet, faultValues: list[ int ], faultAttribute: str,
-                  volumeMesh: pv.DataSet ) -> None:
+    def __init__( self: Self, mesh: pv.DataSet, faultValues: list[ int ], faultAttribute: str,
+                  volumeMesh: pv.DataSet, outputDir: str = "." ) -> None:
         """Initialize fault geometry with pre-computed topology.
 
         Args:
-            config (Config):
-            mesh (pv.DataSet): pv.read(path / config.GRID_FILE) -> "mesh_faulted_reservoir_60_mod.vtu"
+            mesh (pv.DataSet):
             faultValues (list[int]): Config.FAULT_VALUES
             faultAttribute (str): Config.FAULT_ATTRIBUTES
             volumeMesh (pv.DataSet): processor._merge_blocks(dataset)
@@ -51,17 +54,23 @@ class FaultGeometry:
         self.faultTree = None  # KDTree for fault surface
 
         # Config
-        self.config = config
+        # self.config = config
+        self.outputDir = Path( outputDir )
+        self.outputDir.mkdir( parents=True, exist_ok=True )
 
     # -------------------------------------------------------------------
     def initialize( self: Self,
                     scaleFactor: float = 50.0,
-                    processFaultsSeparately: bool = True ) -> tuple[ pv.DataSet, dict[ int, pv.DataSet ] ]:
+                    processFaultsSeparately: bool = True,
+                    showPlot: bool = True,
+                    zscale: float = 1.0,
+                    showContributionViz: bool = True,
+                    saveContributionCells:bool = True ) -> tuple[ pv.DataSet, dict[ int, pv.DataSet ] ]:
         """One-time initialization: compute normals, adjacency topology, and geometric properties."""
         # Extract and compute normals
-        self.faultSurface, self.surfaces = self._extractAndComputeNormals( showPlot=self.config.SHOW_NORMAL_PLOTS,
+        self.faultSurface, self.surfaces = self._extractAndComputeNormals( showPlot=showPlot,
                                                                            scaleFactor=scaleFactor,
-                                                                           zScale=self.config.Z_SCALE )
+                                                                           zScale=zscale )
 
         # Pre-compute adjacency mapping
         print( "\n🔍 Pre-computing volume-fault adjacency topology" )
@@ -71,7 +80,7 @@ class FaultGeometry:
             processFaultsSeparately=processFaultsSeparately )
 
         # Mark and optionally save contributing cells
-        self._markContributingCells()
+        self._markContributingCells( saveContributionCells )
 
         # NEW: Pre-compute geometric properties
         self._precomputeGeometricProperties()
@@ -85,13 +94,13 @@ class FaultGeometry:
         print( f"   - {nWithBoth} cells have neighbors on both sides" )
 
         # Visualize contributions if requested
-        if self.config.SHOW_CONTRIBUTION_VIZ:
+        if showContributionViz:
             self._visualizeContributions()
 
         return self.faultSurface, self.adjacencyMapping
 
     # -------------------------------------------------------------------
-    def _markContributingCells( self: Self ) -> None:
+    def _markContributingCells( self: Self, saveContributionCells: bool = True ) -> None:
         """Mark volume cells that contribute to fault stress projection."""
         print( "\n📦 Marking contributing volume cells..." )
 
@@ -143,7 +152,7 @@ class FaultGeometry:
         print( f"      Both sides:      {nBoth} cells" )
 
         # Save to files if requested
-        if self.config.SAVE_CONTRIBUTION_CELLS:
+        if saveContributionCells:
             self._saveContributingCells()
 
     # -------------------------------------------------------------------
@@ -153,8 +162,7 @@ class FaultGeometry:
         Saves three files: all, plus side, minus side.
         """
         # Create output directory if it doesn't exist
-        outputDir = Path( self.config.OUTPUT_DIR ) if hasattr( self.config, 'OUTPUT_DIR' ) else Path( '.' )
-        outputDir.mkdir( parents=True, exist_ok=True )
+        outputDir = self.outputDir
 
         # Save all contributing cells
         filenameAll = outputDir / "contributing_cells_all.vtu"
@@ -360,10 +368,7 @@ class FaultGeometry:
 
     # -------------------------------------------------------------------
     def _testEpsilon( self: Self, faultSurface: pv.DataSet, locator: vtkCellLocator, epsilon: list[ float ],
-                      faultCenters, faultNormals: npt.NDArray[ np.float64 ], volCenters ) -> tuple[ dict[
-                          int,
-                          dict[ str, list[ vtkIdList ] ],
-                      ], dict[ str, Any ] ]:
+                      faultCenters, faultNormals: npt.NDArray[ np.float64 ], volCenters ):
         """Test a specific epsilon value and return mapping + statistics.
 
         Statistics include:
@@ -391,7 +396,7 @@ class FaultGeometry:
             # Search on PLUS side
             pointPlus = fcenter + epsilon * fnormal
             cellIdPlus = locator.FindCell( pointPlus )
-            print( cellIdPlus )
+            # print( cellIdPlus )
             if cellIdPlus >= 0:
                 plusCells.append( cellIdPlus )
 
@@ -430,7 +435,7 @@ class FaultGeometry:
         return mapping, stats
 
     # -------------------------------------------------------------------
-    def _visualizeContributions( self ) -> None:
+    def _visualizeContributions( self: Self, zscale: float = 1.0, showPlots:bool = True ) -> None:
         """Unified visualization of volume contributions to fault surfaces.
 
         4-panel view combining full context, side classification, clip, and slice.
@@ -452,7 +457,7 @@ class FaultGeometry:
 
         plotter.add_legend( loc="upper left" )
         plotter.add_axes()
-        plotter.set_scale( zscale=self.config.Z_SCALE )
+        plotter.set_scale( zscale=zscale )
 
         # ========== PLOT 2: Contributing cells by side (top-right) ==========
         plotter.subplot( 0, 1 )
@@ -480,7 +485,7 @@ class FaultGeometry:
 
         plotter.add_legend( loc='upper right' )
         plotter.add_axes()
-        plotter.set_scale( zscale=self.config.Z_SCALE )
+        plotter.set_scale( zscale=zscale )
 
         # ========== PLOT 3: Clipped view (bottom-left) ==========
         plotter.subplot( 1, 0 )
@@ -506,7 +511,7 @@ class FaultGeometry:
 
         plotter.add_legend( loc='upper left' )
         plotter.add_axes()
-        plotter.set_scale( zscale=self.config.Z_SCALE )
+        plotter.set_scale( zscale=zscale )
 
         # ========== PLOT 4: Slice view (bottom-right) ==========
         plotter.subplot( 1, 1 )
@@ -562,20 +567,18 @@ class FaultGeometry:
 
         plotter.add_legend( loc='upper right' )
         plotter.add_axes()
-        plotter.set_scale( zscale=self.config.Z_SCALE )
+        plotter.set_scale( zscale=zscale )
         plotter.view_xy()
 
         # Link all views for synchronized rotation
         plotter.link_views()
 
         # Show or save
-        if self.config.SHOW_PLOTS:
+        if showPlots:
             plotter.show()
         else:
             # Save screenshot
-
-            outputDir = Path( self.config.OUTPUT_DIR ) if hasattr( self.config, 'OUTPUT_DIR' ) else Path( '.' )
-            outputDir.mkdir( parents=True, exist_ok=True )
+            outputDir = self.outputDir
             screenshot_path = outputDir / "contribution_visualization.png"
             plotter.screenshot( str( screenshot_path ) )
             print( f"   💾 Visualization saved: {screenshot_path}" )
@@ -622,7 +625,7 @@ class FaultGeometry:
         return merged, surfaces
 
     # -------------------------------------------------------------------
-    def _orientNormals( self: Self, surf: pv.DataSet ) -> pv.DataSet:
+    def _orientNormals( self: Self, surf: pv.PolyData, rotateNormals: bool = False ) -> pv.DataSet:
         """Ensure normals point in consistent direction within the fault."""
         normals = surf.cell_data[ 'Normals' ]
         meanNormal = np.mean( normals, axis=0 )
@@ -638,7 +641,7 @@ class FaultGeometry:
             if np.dot( normal, meanNormal ) < 0:
                 normals[ i ] = -normal
 
-            if self.config.ROTATE_NORMALS:
+            if rotateNormals:
                 normals[ i ] = -normal
 
             # Compute orthogonal tangents

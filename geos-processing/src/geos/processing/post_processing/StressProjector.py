@@ -10,7 +10,6 @@ from xml.etree.ElementTree import ElementTree, Element, SubElement
 import pyvista as pv
 
 from geos.geomechanics.model.StressTensor import StressTensor
-from geos.geomechanics.model.FaultStabilityAnalysis import Config
 
 
 # ============================================================================
@@ -20,8 +19,9 @@ class StressProjector:
     """Projects volume stress onto fault surfaces and tracks principal stresses in VTU."""
 
     # -------------------------------------------------------------------
-    def __init__( self: Self, config: Config, adjacencyMapping: dict[ int, list[ pv.DataSet ] ],
-                  geometricProperties: dict[ str, Any ] ) -> None:
+    def __init__( self: Self, adjacencyMapping: dict[ int, list[ pv.DataSet ] ],
+                  geometricProperties: dict[ str, Any ],
+                  outputDir: str = ".",  ) -> None:
         """Initialize with pre-computed adjacency mapping and geometric properties.
 
         Parameters
@@ -36,7 +36,7 @@ class StressProjector:
             - 'distances': distances to fault
             - 'faultTree': KDTree for fault
         """
-        self.config = config
+        # self.config = config
         self.adjacencyMapping = adjacencyMapping
 
         # Store pre-computed geometric properties
@@ -52,7 +52,7 @@ class StressProjector:
         self.monitoredCells: set[ int ] | None = None
 
         # Output directory for VTU files
-        self.vtuOutputDir = Path( self.config.OUTPUT_DIR ) / "principal_stresses"
+        self.vtuOutputDir = Path( outputDir ) / "principal_stresses"
 
     # -------------------------------------------------------------------
     def setMonitoredCells( self: Self, cellIndices: list[ int ] | None = None ) -> None:
@@ -72,14 +72,15 @@ class StressProjector:
             faultSurface: pv.PolyData,
             time: float | None = None,
             timestep: int | None = None,
-            weightingScheme: str = "arithmetic" ) -> tuple[ pv.PolyData, pv.UnstructuredGrid, pv.UnstructuredGrid ]:
+            weightingScheme: str = "arithmetic",
+            stressName: str = "averageStress",
+            biotName: str = "rockPorosity_biotCoefficient",
+            computePrincipalStresses: bool = False,
+            frictionAngle: float = 10, cohesion: float = 0 ) -> tuple[ pv.PolyData, pv.UnstructuredGrid, pv.UnstructuredGrid ]:
         """Project stress and save principal stresses to VTU.
 
         Now uses pre-computed geometric properties for efficiency
         """
-        stressName = self.config.STRESS_NAME
-        biotName = self.config.BIOT_NAME
-
         if stressName not in volumeData.array_names:
             raise ValueError( f"No stress data '{stressName}' in dataset" )
 
@@ -102,7 +103,6 @@ class StressProjector:
         # =====================================================================
         # 2. USE PRE-COMPUTED ADJACENCY
         # =====================================================================
-        # mapping = self.adjacencyMapping
 
         # =====================================================================
         # 3. PREPARE FAULT GEOMETRY
@@ -119,11 +119,10 @@ class StressProjector:
         # =====================================================================
         # 4. COMPUTE PRINCIPAL STRESSES FOR CONTRIBUTING CELLS
         # =====================================================================
-        if self.config.COMPUTE_PRINCIPAL_STRESS and timestep is not None:
+        if computePrincipalStresses and timestep is not None:
 
             # Collect all unique contributing cells
             allContributingCells = set()
-            # for _faultIdx, neighbors in mapping.items():
             for _faultIdx, neighbors in self.adjacencyMapping.items():
                 allContributingCells.update( neighbors[ 'plus' ] )
                 allContributingCells.update( neighbors[ 'minus' ] )
@@ -138,8 +137,8 @@ class StressProjector:
 
             # Create mesh with only contributing cells
             contributingMesh = self._createVolumicContribMesh( volumeData, faultSurface, cellsToTrack,
-                                                               self.adjacencyMapping )
-            # contributingMesh = self._createVolumicContribMesh( volumeData, faultSurface, cellsToTrack, mapping )
+                                                               self.adjacencyMapping, biotName=biotName, computePrincipalStresses=computePrincipalStresses,
+                                                               frictionAngle=frictionAngle, cohesion=cohesion )
 
             self._savePrincipalStressVTU( contributingMesh, time, timestep )
 
@@ -315,7 +314,8 @@ class StressProjector:
 
     # -------------------------------------------------------------------
     def _createVolumicContribMesh( self: Self, volumeData: pv.UnstructuredGrid, faultSurface: pv.PolyData,
-                                   cellsToTrack: set[ int ], mapping: dict[ int, list[ pv.DataSet ] ] ) -> pv.DataSet:
+                                   cellsToTrack: set[ int ], mapping: dict[ int, list[ pv.DataSet ] ], biotName: str = "rockPorosity_biotCoefficient",
+            computePrincipalStresses: bool = False, frictionAngle : float = 10, cohesion: float = 0 ) -> pv.DataSet:
         """Create a mesh containing only contributing cells with principal stress data and compute analytical normal/shear stresses based on fault dip angle.
 
         Parameters
@@ -332,8 +332,6 @@ class StressProjector:
         # ===================================================================
         # EXTRACT STRESS DATA FROM VOLUME
         # ===================================================================
-        stressName = self.config.STRESS_NAME
-        biotName = self.config.BIOT_NAME
 
         if stressName not in volumeData.array_names:
             raise ValueError( f"No stress data '{stressName}' in volume dataset" )
@@ -559,26 +557,23 @@ class StressProjector:
         # ===================================================================
         # COMPUTE SCU ANALYTICALLY (Mohr-Coulomb)
         # ===================================================================
-        if hasattr( self.config, 'FRICTION_ANGLE' ) and hasattr( self.config, 'COHESION' ):
-            mu = np.tan( np.radians( self.config.FRICTION_ANGLE ) )
-            cohesion = self.config.COHESION
+        mu = np.tan( np.radians( frictionAngle ) )
 
-            # τ_crit = C - σ_n * μ
-            # Note: σ_n is negative (compression), so -σ_n * μ is positive
-            tauCriticalArr = cohesion - sigmaNAnalyticalArr * mu
+        # τ_crit = C - σ_n * μ
+        # Note: σ_n is negative (compression), so -σ_n * μ is positive
+        tauCriticalArr = cohesion - sigmaNAnalyticalArr * mu
+        # SCU = τ / τ_crit
+        SCUAnalyticalArr = np.divide( tauAnalyticalArr,
+                                      tauCriticalArr,
+                                      out=np.zeros_like( tauAnalyticalArr ),
+                                      where=tauCriticalArr != 0 )
+        subsetMesh.cell_data[ 'tauCriticalAnalytical' ] = tauCriticalArr
+        subsetMesh.cell_data[ 'SCUAnalytical' ] = SCUAnalyticalArr
+        # CFS (Coulomb Failure Stress)
+        CFSAnalyticalArr = tauAnalyticalArr - mu * ( -sigmaNAnalyticalArr )
+        subsetMesh.cell_data[ 'CFSAnalytical' ] = CFSAnalyticalArr
 
-            # SCU = τ / τ_crit
-            SCUAnalyticalArr = np.divide( tauAnalyticalArr,
-                                          tauCriticalArr,
-                                          out=np.zeros_like( tauAnalyticalArr ),
-                                          where=tauCriticalArr != 0 )
 
-            subsetMesh.cell_data[ 'tauCriticalAnalytical' ] = tauCriticalArr
-            subsetMesh.cell_data[ 'SCUAnalytical' ] = SCUAnalyticalArr
-
-            # CFS (Coulomb Failure Stress)
-            CFSAnalyticalArr = tauAnalyticalArr - mu * ( -sigmaNAnalyticalArr )
-            subsetMesh.cell_data[ 'CFSAnalytical' ] = CFSAnalyticalArr
 
         subsetMesh.cell_data[ 'side' ] = sideArr
         subsetMesh.cell_data[ 'nFaultCells' ] = nFaultCellsArr
@@ -597,14 +592,14 @@ class StressProjector:
             print( f"        τ range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar" )
             print( f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°" )
 
-            if hasattr( self.config, 'FRICTION_ANGLE' ) and hasattr( self.config, 'COHESION' ):
-                print(
-                    f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
-                )
-                nCritical = np.sum( ( SCUAnalyticalArr >= 0.8 ) & ( SCUAnalyticalArr < 1.0 ) )
-                nUnstable = np.sum( SCUAnalyticalArr >= 1.0 )
-                print( f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)" )
-                print( f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
+            # if hasattr( self.config, 'FRICTION_ANGLE' ) and hasattr( self.config, 'COHESION' ):
+            print(
+                f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
+            )
+            nCritical = np.sum( ( SCUAnalyticalArr >= 0.8 ) & ( SCUAnalyticalArr < 1.0 ) )
+            nUnstable = np.sum( SCUAnalyticalArr >= 1.0 )
+            print( f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)" )
+            print( f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
         else:
             print( "     ⚠️  No analytical stresses computed (no fault mapping)" )
 
