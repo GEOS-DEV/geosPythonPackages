@@ -816,83 +816,51 @@ def createCellCenterAttribute(
     if logger is None:
         logger = getLogger( "createCellCenterAttribute", True )
 
-    if isinstance( mesh, vtkMultiBlockDataSet ):
-        if isAttributeInObjectMultiBlockDataSet( mesh, cellCenterAttributeName, Piece.CELLS ):
-            raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
+    if isAttributeInObject( mesh, cellCenterAttributeName, Piece.CELLS ):
+        raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
 
+    if isinstance( mesh, vtkMultiBlockDataSet ):
         elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
         for blockIndex in elementaryBlockIndexes:
             dataSet: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) )
-            createCellCenterAttributeDataSet( dataSet, cellCenterAttributeName, logger )
+            createCellCenterAttribute( dataSet, cellCenterAttributeName, logger )
     elif isinstance( mesh, vtkDataSet ):
-        createCellCenterAttributeDataSet( mesh, cellCenterAttributeName, logger )
+        vtkErrorLogger: Logger = logging.getLogger( f"{ logger.name } vtkError Logger" )
+        vtkErrorLogger.setLevel( logging.INFO )
+        vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
+        vtkErrorLogger.propagate = False
+        vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
+        vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
+        with VTKCaptureLog() as capturedLog:
+            # apply ElementCenter filter
+            cellCenterFilter: vtkCellCenters = vtkCellCenters()
+            cellCenterFilter.SetInputData( mesh )
+            cellCenterFilter.Update()
+
+            capturedLog.seek( 0 )
+            captured = capturedLog.read().decode()
+
+        if captured != "":
+            vtkErrorLogger.error( captured.strip() )
+
+        output: vtkPointSet = cellCenterFilter.GetOutputDataObject( 0 )
+        if output is None:
+            raise VTKError( "Something went wrong with VTK cell center filter." )
+
+        # transfer output to output arrays
+        centers: vtkPoints = output.GetPoints()
+        if centers is None:
+            raise VTKError( "Something went wrong with VTK cell center filter." )
+
+        centerCoords: vtkDataArray = centers.GetData()
+        if centerCoords is None:
+            raise VTKError( "Something went wrong with VTK cell center filter." )
+
+        centerCoords.SetName( cellCenterAttributeName )
+        mesh.GetCellData().AddArray( centerCoords )
+        mesh.Modified()
     else:
         raise TypeError( "Input mesh must be a vtkDataSet or vtkMultiBlockDataSet." )
-
-    return
-
-
-def createCellCenterAttributeDataSet(
-    block: vtkDataSet,
-    cellCenterAttributeName: str,
-    logger: Union[ Logger, Any ] = None,
-) -> None:
-    """Create cellElementCenter attribute in a vtkDataSet if it does not exist.
-
-    Args:
-        block (vtkDataSet): Input mesh that must be a vtkDataSet.
-        cellCenterAttributeName (str): Name of the attribute.
-        logger (Union[Logger, None], optional): A logger to manage the output messages.
-            Defaults to None, an internal logger is used.
-
-    Raises:
-        TypeError: Error with the type of the mesh.
-        AttributeError: Error with the attribute cellCenterAttributeName.
-        VTKError: Error with a VTK function.
-    """
-    if logger is None:
-        logger = getLogger( "createCellCenterAttributeDataSet", True )
-
-    if not isinstance( block, vtkDataSet ):
-        raise TypeError( "Input mesh has to be inherited from vtkDataSet." )
-
-    if isAttributeInObject( block, cellCenterAttributeName, Piece.CELLS ):
-        raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
-
-    vtkErrorLogger: Logger = logging.getLogger( f"{ logger.name } vtkError Logger" )
-    vtkErrorLogger.setLevel( logging.INFO )
-    vtkErrorLogger.addHandler( logger.handlers[ 0 ] )
-    vtkErrorLogger.propagate = False
-    vtkLogger.SetStderrVerbosity( vtkLogger.VERBOSITY_ERROR )
-    vtkErrorLogger.addFilter( RegexExceptionFilter() )  # will raise VTKError if captured VTK Error
-    with VTKCaptureLog() as capturedLog:
-        # apply ElementCenter filter
-        cellCenterFilter: vtkCellCenters = vtkCellCenters()
-        cellCenterFilter.SetInputData( block )
-        cellCenterFilter.Update()
-
-        capturedLog.seek( 0 )
-        captured = capturedLog.read().decode()
-
-    if captured != "":
-        vtkErrorLogger.error( captured.strip() )
-
-    output: vtkPointSet = cellCenterFilter.GetOutputDataObject( 0 )
-    if output is None:
-        raise VTKError( "Something went wrong with VTK cell center filter." )
-
-    # transfer output to output arrays
-    centers: vtkPoints = output.GetPoints()
-    if centers is None:
-        raise VTKError( "Something went wrong with VTK cell center filter." )
-
-    centerCoords: vtkDataArray = centers.GetData()
-    if centerCoords is None:
-        raise VTKError( "Something went wrong with VTK cell center filter." )
-
-    centerCoords.SetName( cellCenterAttributeName )
-    block.GetCellData().AddArray( centerCoords )
-    block.Modified()
 
     return
 
