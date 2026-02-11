@@ -541,136 +541,13 @@ def copyAttribute(
     return
 
 
-def transferAttributeToDataSetWithElementMap(
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
-    dataSetTo: vtkDataSet,
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    attributeName: str,
-    piece: Piece,
-    flatIdDataSetTo: int = 0,
-    logger: Union[ Logger, Any ] = None,
-) -> None:
-    """Transfer attributes from the source mesh to the final mesh using a map of points/cells.
-
-    If the source mesh is a vtkDataSet, its flat index (flatIdDataSetFrom) is set to 0.
-
-    The map of points/cells used to transfer the attribute is a dictionary where:
-        - The key is the flat index of the final mesh.
-        - The item is an array of size (nb elements in the final mesh, 2).
-
-    If an element (idElementTo) of the final mesh is mapped with no element of the source mesh:
-        - elementMap[flatIdDataSetTo][idElementTo] = [-1, -1].
-        - The value of the attribute for this element depends of the type of the value of the attribute (0 for unit, -1 for int, nan for float).
-
-    If an element (idElementTo) of the final mesh is mapped with an element (idElementFrom) of one of the dataset (flatIdDataSetFrom) of the source mesh:
-        - elementMap[flatIdDataSetTo][idElementTo] = [flatIdDataSetFrom, idElementFrom].
-        - The value of the attribute for this element is the value of the element (idElementFrom) of the dataset (flatIdDataSetFrom) of the source mesh.
-
-    Args:
-        meshFrom (Union[vtkDataSet, vtkMultiBlockDataSet]): The source mesh with the attribute to transfer.
-        dataSetTo (vtkDataSet): The final mesh where to transfer the attribute.
-        elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells.
-        attributeName (str): The name of the attribute to transfer.
-        piece (Piece): The piece of the attribute.
-        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
-            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
-        logger (Union[Logger, None], optional): A logger to manage the output messages.
-            Defaults to None, an internal logger is used.
-
-    Raises:
-        TypeError: Error with the type of the mesh to or the mesh from.
-        ValueError: Error with the values of the map elementMap.
-        AttributeError: Error with the attribute AttributeName.
-    """
-    # Check if an external logger is given.
-    if logger is None:
-        logger = getLogger( "transferAttributeToDataSetWithElementMap", True )
-
-    # Check the piece.
-    if piece not in [ Piece.POINTS, Piece.CELLS ]:
-        raise ValueError( f"The attribute must be on { Piece.POINTS.value } or { Piece.CELLS.value }." )
-
-    if not isinstance( dataSetTo, vtkDataSet ):
-        raise TypeError( "The final mesh has to be inherited from vtkDataSet." )
-
-    if flatIdDataSetTo not in elementMap:
-        raise ValueError(
-            f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
-
-    nbElementsTo: int = dataSetTo.GetNumberOfPoints() if piece == Piece.POINTS else dataSetTo.GetNumberOfCells()
-    if len( elementMap[ flatIdDataSetTo ] ) != nbElementsTo:
-        raise ValueError(
-            f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo }) but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map."
-        )
-
-    if not isinstance( meshFrom, ( vtkDataSet, vtkMultiBlockDataSet ) ):
-        raise TypeError( "The source mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
-
-    if not isAttributeInObject( meshFrom, attributeName, piece ):
-        raise AttributeError( f"The attribute { attributeName } is not in the source mesh." )
-
-    if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, piece ):
-        raise AttributeError( f"The attribute { attributeName } must be global in the source mesh." )
-
-    componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
-    nbComponents: int = len( componentNames )
-
-    vtkDataType: int = getVtkDataTypeInObject( meshFrom, attributeName, piece )
-    defaultValue: Any
-    if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
-        defaultValue = np.nan
-    elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ):
-        defaultValue = -1
-    elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
-                          VTK_UNSIGNED_LONG_LONG ):
-        defaultValue = 0
-    else:
-        raise AttributeError( f"The attribute { attributeName } has an unknown type." )
-
-    typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
-    valueType: type = typeMapping[ vtkDataType ]
-
-    arrayTo: npt.NDArray[ Any ]
-    if nbComponents > 1:
-        defaultValue = [ defaultValue ] * nbComponents
-        arrayTo = np.full( ( nbElementsTo, nbComponents ), defaultValue, dtype=valueType )
-    else:
-        arrayTo = np.array( [ defaultValue for _ in range( nbElementsTo ) ], dtype=valueType )
-
-    for idElementTo in range( nbElementsTo ):
-        valueToTransfer: Any = defaultValue
-        idElementFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ] )
-        if idElementFrom != -1:
-            dataFrom: Union[ vtkPointData, vtkCellData ]
-            if isinstance( meshFrom, vtkDataSet ):
-                dataFrom = meshFrom.GetPointData() if piece == Piece.POINTS else meshFrom.GetCellData()
-            elif isinstance( meshFrom, vtkMultiBlockDataSet ):
-                flatIdDataSetFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ] )
-                dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
-                dataFrom = dataSetFrom.GetPointData() if piece == Piece.POINTS else dataSetFrom.GetCellData()
-
-            arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
-            valueToTransfer = arrayFrom[ idElementFrom ]
-
-        arrayTo[ idElementTo ] = valueToTransfer
-
-    createAttribute( dataSetTo,
-                     arrayTo,
-                     attributeName,
-                     componentNames,
-                     piece=piece,
-                     vtkDataType=vtkDataType,
-                     logger=logger )
-
-    return
-
-
 def transferAttributeWithElementMap(
     meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ],
     elementMap: dict[ int, npt.NDArray[ np.int64 ] ],
     attributeName: str,
     piece: Piece,
+    flatIdDataSetTo: int = 0,
     logger: Union[ Logger, Any ] = None,
 ) -> None:
     """Transfer attributes from the source mesh to the final mesh using a map of points/cells.
@@ -696,27 +573,103 @@ def transferAttributeWithElementMap(
         elementMap (dict[int, npt.NDArray[np.int64]]): The map of points/cells.
         attributeName (str): The name of the attribute to transfer.
         piece (Piece): The piece of the attribute.
+        flatIdDataSetTo (int, Optional): The flat index of the final mesh considered as a dataset of a vtkMultiblockDataSet.
+            Defaults to 0 for final meshes who are not datasets of vtkMultiBlockDataSet.
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
     Raises:
-        TypeError: Error with the type of the final mesh.
+        TypeError: Error with the type of the mesh to or the mesh from.
+        ValueError: Error with the values of the map elementMap.
         AttributeError: Error with the attribute attributeName.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "transferAttributeWithElementMap", True )
 
+    # Check the piece.
+    if piece not in [ Piece.POINTS, Piece.CELLS ]:
+        raise ValueError( f"The attribute must be on { Piece.POINTS.value } or { Piece.CELLS.value }." )
+
+    # Check the attribute to transfer.
+    ## it is in the meshFrom
+    if not isAttributeInObject( meshFrom, attributeName, piece ):
+        raise AttributeError( f"The attribute { attributeName } is not in the source mesh." )
+    ## it is global
+    if isinstance( meshFrom, vtkMultiBlockDataSet ) and not isAttributeGlobal( meshFrom, attributeName, piece ):
+        raise AttributeError( f"The attribute { attributeName } must be global in the source mesh." )
+
+    # Transfer the attribute
     if isinstance( meshTo, vtkDataSet ):
-        transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, piece, logger=logger )
+        if flatIdDataSetTo not in elementMap:
+            raise ValueError(
+                f"The map is incomplete, there is no data for the final mesh (flat index { flatIdDataSetTo })." )
+
+        nbElementsTo: int = meshTo.GetNumberOfPoints() if piece == Piece.POINTS else meshTo.GetNumberOfCells()
+        if len( elementMap[ flatIdDataSetTo ] ) != nbElementsTo:
+            raise ValueError(
+                f"The map is wrong, there is { nbElementsTo } elements in the final mesh (flat index { flatIdDataSetTo }) but { len( elementMap[ flatIdDataSetTo ] ) } elements in the map."
+            )
+
+        componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
+        nbComponents: int = len( componentNames )
+
+        vtkDataType: int = getVtkDataTypeInObject( meshFrom, attributeName, piece )
+        defaultValue: Any
+        if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
+            defaultValue = np.nan
+        elif vtkDataType in ( VTK_CHAR, VTK_SIGNED_CHAR, VTK_SHORT, VTK_LONG, VTK_INT, VTK_LONG_LONG, VTK_ID_TYPE ):
+            defaultValue = -1
+        elif vtkDataType in ( VTK_BIT, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_LONG, VTK_UNSIGNED_INT,
+                            VTK_UNSIGNED_LONG_LONG ):
+            defaultValue = 0
+        else:
+            raise AttributeError( f"The attribute { attributeName } has an unknown type." )
+
+        typeMapping: dict[ int, type ] = vnp.get_vtk_to_numpy_typemap()
+        valueType: type = typeMapping[ vtkDataType ]
+
+        arrayTo: npt.NDArray[ Any ]
+        if nbComponents > 1:
+            defaultValue = [ defaultValue ] * nbComponents
+            arrayTo = np.full( ( nbElementsTo, nbComponents ), defaultValue, dtype=valueType )
+        else:
+            arrayTo = np.array( [ defaultValue for _ in range( nbElementsTo ) ], dtype=valueType )
+
+        for idElementTo in range( nbElementsTo ):
+            valueToTransfer: Any = defaultValue
+            idElementFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 1 ] )
+            if idElementFrom != -1:
+                dataFrom: Union[ vtkPointData, vtkCellData ]
+                if isinstance( meshFrom, vtkDataSet ):
+                    dataFrom = meshFrom.GetPointData() if piece == Piece.POINTS else meshFrom.GetCellData()
+                elif isinstance( meshFrom, vtkMultiBlockDataSet ):
+                    flatIdDataSetFrom: int = int( elementMap[ flatIdDataSetTo ][ idElementTo ][ 0 ] )
+                    dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( flatIdDataSetFrom ) )
+                    dataFrom = dataSetFrom.GetPointData() if piece == Piece.POINTS else dataSetFrom.GetCellData()
+                else:
+                    raise TypeError( "The source mesh has to be inherited from vtkDataSet or vtkMultiBlockDataSet." )
+
+                arrayFrom: npt.NDArray[ Any ] = vnp.vtk_to_numpy( dataFrom.GetArray( attributeName ) )
+                valueToTransfer = arrayFrom[ idElementFrom ]
+
+            arrayTo[ idElementTo ] = valueToTransfer
+
+        createAttribute( meshTo,
+                         arrayTo,
+                         attributeName,
+                         componentNames,
+                         piece=piece,
+                         vtkDataType=vtkDataType,
+                         logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
-        if isAttributeInObjectMultiBlockDataSet( meshTo, attributeName, piece ):
+        if isAttributeInObject( meshTo, attributeName, piece ):
             raise AttributeError( f"The attribute { attributeName } is already in the final mesh." )
 
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
         for flatIdDataSetTo in listFlatIdDataSetTo:
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( flatIdDataSetTo ) )
-            transferAttributeToDataSetWithElementMap( meshFrom,
+            transferAttributeWithElementMap( meshFrom,
                                                       dataSetTo,
                                                       elementMap,
                                                       attributeName,

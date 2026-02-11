@@ -182,7 +182,7 @@ class AttributeMapping:
 
         for attributeName in self.attributeNames:
             transferAttributeWithElementMap( self.meshFrom, self.meshTo, self.ElementMap, attributeName, self.piece,
-                                             self.logger )
+                                             logger=self.logger )
 
         # Log the output message.
         self._logOutputMessage()
