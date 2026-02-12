@@ -5,7 +5,7 @@ import logging
 
 from typing_extensions import Self
 from vtkmodules.vtkCommonCore import vtkIntArray
-from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypes, VTK_VERTEX
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCell, vtkTable, vtkCellTypeUtilities, VTK_VERTEX
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.stats.meshQualityMetricHelpers import getAllCellTypes
@@ -116,7 +116,7 @@ class CellTypeCounterEnhanced():
         # Create columns per types
         for cellType in getAllCellTypes():
             array: vtkIntArray = vtkIntArray()
-            array.SetName( vtkCellTypes.GetClassNameFromTypeId( cellType ) )
+            array.SetName( vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ) )
             array.SetNumberOfComponents( 1 )
             array.SetNumberOfValues( 1 )
             array.SetValue( 0, self._counts.getTypeCount( cellType ) )

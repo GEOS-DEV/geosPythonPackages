@@ -16,7 +16,7 @@ from geos.processing.pre_processing.MeshQualityEnhanced import MeshQualityEnhanc
 from geos.mesh.model.QualityMetricSummary import QualityMetricSummary
 
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellData, vtkFieldData, vtkCellTypes, VTK_TRIANGLE,
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellData, vtkFieldData, vtkCellTypeUtilities, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON )
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 
@@ -148,7 +148,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     for i, cellType in enumerate( getAllCellTypesExtended() ):
         metrics: Optional[ set[ int ] ] = meshQualityEnhancedFilter.getComputedMetricsFromCellType( cellType )
         if test_case.cellTypeCounts[ i ] > 0:
-            assert metrics is not None, f"Metrics from {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is undefined."
+            assert metrics is not None, f"Metrics from {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType)} cells is undefined."
 
     # test attributes
     outputMesh: vtkUnstructuredGrid = meshQualityEnhancedFilter.getOutput()
@@ -176,7 +176,7 @@ def test_MeshQualityEnhanced( test_case: TestCase ) -> None:
     for i, cellType in enumerate( getAllCellTypesExtended() ):
         # test Counts
         assert stats.getCellTypeCountsOfCellType( cellType ) == test_case.cellTypeCounts[
-            i ], f"Number of {vtkCellTypes.GetClassNameFromTypeId(cellType)} cells is expected to be {test_case.cellTypeCounts[i]}"
+            i ], f"Number of {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType)} cells is expected to be {test_case.cellTypeCounts[i]}"
         if stats.getCellTypeCountsOfCellType( cellType ) == 0:
             continue
 

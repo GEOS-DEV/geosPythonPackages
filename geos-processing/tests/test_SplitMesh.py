@@ -8,7 +8,7 @@ import numpy.typing as npt
 import pytest
 from typing import Iterator
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCellTypes, VTK_TRIANGLE,
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellData, vtkCellTypes, vtkCellTypeUtilities, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList, vtkDataArray
 from geos.mesh.io.vtkIO import readUnstructuredGrid
@@ -131,7 +131,7 @@ def __generate_split_mesh_test_data() -> Iterator[ TestCase ]:
         yield TestCase( cellType, mesh, pointsExp, cellsExp )
 
 
-ids = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellType in cell_types_all ]
+ids = [ vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ) for cellType in cell_types_all ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_split_mesh_test_data(), ids=ids )
@@ -141,7 +141,7 @@ def test_single_cell_split( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): test case
     """
-    cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
+    cellTypeName: str = vtkCellTypeUtilities.GetClassNameFromTypeId( test_case.cellType )
     splitMeshFilter: SplitMesh = SplitMesh( test_case.mesh )
     splitMeshFilter.applyFilter()
     output: vtkUnstructuredGrid = splitMeshFilter.getOutput()
@@ -160,7 +160,7 @@ def test_single_cell_split( test_case: TestCase ) -> None:
         test_case.cellsExp ), f"Number of cells is expected to be {len(test_case.cellsExp)}."
     # check cell types
     types: vtkCellTypes = vtkCellTypes()
-    output.GetCellTypes( types )
+    output.GetDistinctCellTypes( types )
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
 

@@ -77,6 +77,7 @@ tetQualityMeasureExp: set[ int ] = {
     vtkMeshQuality.QualityMeasureTypes.EDGE_RATIO,
     vtkMeshQuality.QualityMeasureTypes.EQUIANGLE_SKEW,
     vtkMeshQuality.QualityMeasureTypes.EQUIVOLUME_SKEW,
+    vtkMeshQuality.QualityMeasureTypes.INRADIUS,
     vtkMeshQuality.QualityMeasureTypes.JACOBIAN,
     vtkMeshQuality.QualityMeasureTypes.MEAN_RATIO,
     vtkMeshQuality.QualityMeasureTypes.MIN_ANGLE,
@@ -167,6 +168,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
 def test_CellQualityMetricEnum_Order() -> None:
     """Test VtkCellQualityMetricEnum ordering is correct."""
     for i, metric in enumerate( list( VtkCellQualityMetricEnum ) ):
+        print(metric.metricIndex)
         assert metric.metricIndex == i
 
 

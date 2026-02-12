@@ -153,7 +153,7 @@ def test_createMultiCellMesh( test_case: TestCase ) -> None:
 
     # check cell types
     types: vtkCellTypes = vtkCellTypes()
-    output.GetCellTypes( types )
+    output.GetDistinctCellTypes( types )
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
     assert ( typesArray.size == 1 ) and ( typesArray[ 0 ] == test_case.cellTypes[ 0 ] ), "Cell types are wrong"

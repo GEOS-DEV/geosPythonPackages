@@ -13,7 +13,7 @@ from geos.mesh.utils.genericHelpers import createSingleCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellTypes, VTK_TRIANGLE, VTK_QUAD,
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellTypeUtilities, vtkCellTypes, VTK_TRIANGLE, VTK_QUAD,
                                             VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 
 from vtkmodules.vtkCommonCore import (
@@ -50,7 +50,7 @@ def __generate_test_data() -> Iterator[ TestCase ]:
         yield TestCase( cellType, cell )
 
 
-ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellType in cell_type_all ]
+ids: list[ str ] = [ vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ) for cellType in cell_type_all ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
@@ -60,7 +60,7 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     Args:
         test_case (TestCase): test case
     """
-    cellTypeName: str = vtkCellTypes.GetClassNameFromTypeId( test_case.cellType )
+    cellTypeName: str = vtkCellTypeUtilities.GetClassNameFromTypeId( test_case.cellType )
     output: vtkUnstructuredGrid = createSingleCellMesh( test_case.cellType, test_case.cellPoints )
 
     assert output is not None, "Output mesh is undefined."
@@ -78,7 +78,7 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     assert cellsOut.GetNumberOfCells() == 1, "Number of cells is expected to be 1."
     # check cell types
     types: vtkCellTypes = vtkCellTypes()
-    output.GetCellTypes( types )
+    output.GetDistinctCellTypes( types )
     assert types is not None, "Cell types must be defined"
     typesArray: npt.NDArray[ np.int64 ] = vtk_to_numpy( types.GetCellTypesArray() )
 

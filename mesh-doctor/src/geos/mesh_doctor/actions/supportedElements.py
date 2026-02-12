@@ -9,7 +9,7 @@ from tqdm import tqdm
 from typing import Iterable, Mapping, Optional
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkCommonCore import vtkIdList
-from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypeUtilities, vtkUnstructuredGrid, VTK_HEXAGONAL_PRISM, VTK_HEXAHEDRON,
                                             VTK_LINE, VTK_PENTAGONAL_PRISM, VTK_POLYGON, VTK_POLYHEDRON, VTK_PYRAMID,
                                             VTK_QUAD, VTK_TETRA, VTK_TRIANGLE, VTK_VERTEX, VTK_VOXEL, VTK_WEDGE )
 from geos.mesh_doctor.actions.vtkPolyhedron import buildFaceToFaceConnectivityThroughEdges, FaceStream
@@ -140,11 +140,11 @@ def findUnsupportedStdElementsTypes( mesh: vtkUnstructuredGrid ) -> list[ str ]:
     if hasattr( mesh, "GetDistinctCellTypesArray" ):  # For more recent versions of vtk.
         uniqueCellTypes = set( vtk_to_numpy( mesh.GetDistinctCellTypesArray() ) )
     else:
-        _vtkCellTypes = vtkCellTypes()
-        mesh.GetCellTypes( _vtkCellTypes )
-        uniqueCellTypes = set( vtkIter( _vtkCellTypes ) )
+        _vtkCellTypeUtilities = vtkCellTypeUtilities()
+        mesh.GetCellTypes( _vtkCellTypeUtilities )
+        uniqueCellTypes = set( vtkIter( _vtkCellTypeUtilities ) )
     resultValues: set[ int ] = uniqueCellTypes - supportedCellTypes
-    results = [ f"Type {i}: {vtkCellTypes.GetClassNameFromTypeId( i )}" for i in frozenset( resultValues ) ]
+    results = [ f"Type {i}: {vtkCellTypeUtilities.GetClassNameFromTypeId( i )}" for i in frozenset( resultValues ) ]
     return results
 
 

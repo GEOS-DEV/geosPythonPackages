@@ -43,7 +43,7 @@ def isTriangulate( dataSet: vtkUnstructuredGrid ) -> bool:
         bool: True if the mesh is triangulate only, False otherwise.
     """
     cellTypes: vtkCellTypes = vtkCellTypes()
-    dataSet.GetCellTypes( cellTypes )
+    dataSet.GetDistinctCellTypes( cellTypes )
 
     return all( cellTypes.GetCellType( cell ) == VTK_TRIANGLE for cell in range( cellTypes.GetNumberOfTypes() ) )
 

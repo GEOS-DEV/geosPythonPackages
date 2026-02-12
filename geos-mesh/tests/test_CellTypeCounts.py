@@ -8,7 +8,7 @@ from typing import (
 
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
-from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypeUtilities, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_VERTEX )
 
 # inputs
@@ -77,10 +77,10 @@ def __get_expected_counts(
             nbTri,
             nbQuad,
     ), strict=True ):
-        countsExp += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(nb):12} |\n"
+        countsExp += f"| **Total Number of {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType):<13}** | {int(nb):12} |\n"
     for cellType, nb in zip( ( VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON ), ( nbTetra, nbPyr, nbWed, nbHexa ),
                              strict=True ):
-        countsExp += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(nb):12} |\n"
+        countsExp += f"| **Total Number of {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType):<13}** | {int(nb):12} |\n"
     return countsExp
 
 

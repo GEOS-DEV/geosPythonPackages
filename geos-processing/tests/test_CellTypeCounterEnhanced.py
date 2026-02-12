@@ -12,7 +12,7 @@ from geos.mesh.utils.genericHelpers import ( createSingleCellMesh, createMultiCe
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 
-from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypes, vtkCell, VTK_TRIANGLE, VTK_QUAD,
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellTypeUtilities, vtkCell, VTK_TRIANGLE, VTK_QUAD,
                                             VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON, VTK_POLYGON, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE )
 
@@ -49,7 +49,7 @@ def __generate_test_data_single_cell() -> Iterator[ TestCase ]:
         yield TestCase( mesh )
 
 
-ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellType in cellType_all ]
+ids: list[ str ] = [ vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ) for cellType in cellType_all ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data_single_cell(), ids=ids )
@@ -78,7 +78,7 @@ def test_CellTypeCounterEnhanced_single( test_case: TestCase ) -> None:
     for i, elementType in enumerate( elementTypes ):
         assert int(
             countsObs.getTypeCount( elementType )
-        ) == counts[ i ], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
+        ) == counts[ i ], f"The number of {vtkCellTypeUtilities.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[ 0 ] + counts[ 1 ]
     nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )
@@ -136,7 +136,7 @@ def test_CellTypeCounterEnhanced_multi( test_case: TestCase ) -> None:
     for i, elementType in enumerate( elementTypes ):
         assert int(
             countsObs.getTypeCount( elementType )
-        ) == counts[ i ], f"The number of {vtkCellTypes.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
+        ) == counts[ i ], f"The number of {vtkCellTypeUtilities.GetClassNameFromTypeId(elementType)} should be {counts[i]}."
 
     nbPolygon: int = counts[ 0 ] + counts[ 1 ]
     nbPolyhedra: int = np.sum( counts[ 2: ], dtype=int )

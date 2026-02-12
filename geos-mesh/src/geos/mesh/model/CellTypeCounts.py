@@ -4,7 +4,7 @@
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
-from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON,
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypeUtilities, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_VERTEX, VTK_POLYHEDRON,
                                             VTK_POLYGON, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE,
                                             VTK_NUMBER_OF_CELL_TYPES )
 
@@ -116,9 +116,9 @@ class CellTypeCounts():
             cellType (int): cell type
             count (int): count increment
         """
-        if ( cellType != VTK_POLYGON ) and ( vtkCellTypes.GetDimension( cellType ) == 2 ):
+        if ( cellType != VTK_POLYGON ) and ( vtkCellTypeUtilities.GetDimension( cellType ) == 2 ):
             self._counts[ VTK_POLYGON ] += count
-        if ( cellType != VTK_POLYHEDRON ) and ( vtkCellTypes.GetDimension( cellType ) == 3 ):
+        if ( cellType != VTK_POLYHEDRON ) and ( vtkCellTypeUtilities.GetDimension( cellType ) == 3 ):
             self._counts[ VTK_POLYHEDRON ] += count
 
     def print( self: Self ) -> str:
@@ -136,7 +136,7 @@ class CellTypeCounts():
         card += f"| **Total Number of Cells**         | {int(self.getTotalCount()):12} |\n"
         card += "|               -                   |       -      |\n"
         for cellType in ( VTK_TRIANGLE, VTK_QUAD ):
-            card += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
+            card += f"| **Total Number of {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
         for cellType in ( VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON ):
-            card += f"| **Total Number of {vtkCellTypes.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
+            card += f"| **Total Number of {vtkCellTypeUtilities.GetClassNameFromTypeId(cellType):<13}** | {int(self._counts[cellType]):12} |\n"
         return card

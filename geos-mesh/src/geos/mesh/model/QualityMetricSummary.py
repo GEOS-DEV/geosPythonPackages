@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
-from vtkmodules.vtkCommonDataModel import ( vtkCellTypes, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
+from vtkmodules.vtkCommonDataModel import ( vtkCellTypeUtilities, VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID,
                                             VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON, VTK_POLYHEDRON )
 from geos.mesh.stats.meshQualityMetricHelpers import ( QUALITY_METRIC_OTHER_START_INDEX, getAllCellTypesExtended,
                                                        getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
@@ -149,7 +149,7 @@ class QualityMetricSummary():
     _CELL_TYPES_PLOT: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_WEDGE, VTK_HEXAHEDRON,
                                            VTK_POLYGON, VTK_POLYHEDRON )
     _CELL_TYPES_NAME: list[ str ] = [
-        vtkCellTypes.GetClassNameFromTypeId( cellType ).removeprefix( "vtk" ) for cellType in _CELL_TYPES_PLOT
+        vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ).removeprefix( "vtk" ) for cellType in _CELL_TYPES_PLOT
     ]
 
     def __init__( self: Self ) -> None:

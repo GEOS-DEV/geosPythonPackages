@@ -11,7 +11,7 @@ from vtkmodules.vtkFiltersVerdict import vtkMeshQuality
 from vtkmodules.vtkCommonCore import ( vtkIdList, vtkPoints, vtkDataArray, vtkIntArray, vtkDoubleArray, vtkIdTypeArray,
                                        vtkMath )
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData, vtkCellData, vtkPointData, vtkFieldData,
-                                            vtkCell, vtkCell3D, vtkTetra, vtkCellTypes, vtkPolygon, VTK_TRIANGLE,
+                                            vtkCell, vtkCell3D, vtkTetra, vtkCellTypeUtilities, vtkPolygon, VTK_TRIANGLE,
                                             VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON, VTK_WEDGE, VTK_POLYGON,
                                             VTK_POLYHEDRON )
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
@@ -605,7 +605,7 @@ class MeshQualityEnhanced():
             count: int = self._qualityMetricSummary.getCellTypeCountsOfCellType( cellType )
             metrics: Optional[ set[ int ] ] = self.getComputedMetricsFromCellType( cellType )
             # Create count array
-            name = "_".join( ( vtkCellTypes.GetClassNameFromTypeId( cellType ), StatTypes.COUNT.getString() ) )
+            name = "_".join( ( vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ), StatTypes.COUNT.getString() ) )
             countArray: vtkIntArray = vtkIntArray()
             countArray.SetName( name )
             countArray.SetNumberOfValues( 1 )
@@ -641,7 +641,7 @@ class MeshQualityEnhanced():
         Returns:
             str: Array name
         """
-        return "_".join( ( vtkCellTypes.GetClassNameFromTypeId( cellType ),
+        return "_".join( ( vtkCellTypeUtilities.GetClassNameFromTypeId( cellType ),
                            getQualityMeasureNameFromIndex( metricIndex ).replace( " ", "" ), statType.getString() ) )
 
     def _computeAdditionalMetricsCell( self: Self, metricIndex: int, cell: vtkCell ) -> float:

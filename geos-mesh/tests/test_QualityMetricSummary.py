@@ -144,7 +144,7 @@ def test_QualityMetricSummary_init() -> None:
     stats: QualityMetricSummary = QualityMetricSummary()
     assert stats.getAllCellStats() is not None, "Stats member is undefined."
     assert ( stats.getAllCellStats().shape[ 0 ]
-             == 5 ) and stats.getAllCellStats().shape[ 1 ] == 122, "Stats shape is wrong."
+             == 5 ) and stats.getAllCellStats().shape[ 1 ] == 123, "Stats shape is wrong."
 
 
 @pytest.mark.parametrize( "test_case", __generate_failed_test_data() )

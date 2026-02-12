@@ -435,6 +435,8 @@ class VtkCellQualityMetricEnum( CellQualityMetricEnum ):
                      ( False, False, True, True, True, True ), ( None, None,
                                                                  QualityRange( ( 0.0, 0.3 ), ( 0.0, 0.9 ),
                                                                                ( 0.0, 1.0 ) ), None, None, None ) )
+    #: the radius of the largest sphere that fits snugly inside it
+    INRADIUS = ( vtkMeshQuality.QualityMeasureTypes.INRADIUS, "Inradius", ( False, False, True, False, False, False ), ( None, None, None, None, None, None ) )
     #: no metric
     NONE = ( vtkMeshQuality.QualityMeasureTypes.NONE, "None", ( False, False, False, False, False, False ),
              ( None, None, None, None, None, None ) )
