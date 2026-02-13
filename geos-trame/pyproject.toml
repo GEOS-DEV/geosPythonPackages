@@ -67,6 +67,7 @@ dev = [
     "pre-commit"
 ]
 test = [
+    "setuptools",
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",
