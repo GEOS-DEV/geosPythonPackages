@@ -108,8 +108,7 @@ jobs:
       # working-directory: ./${{ matrix.package-name }}
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pytest yapf toml
-        python -m pip install --upgrade pip setuptools pytest-html
+        python -m pip install pytest yapf toml "pytest-html>=4.0.0"
 
         DEPS="${{ matrix.dependencies || '' }}"
 
