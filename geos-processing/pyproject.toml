@@ -44,6 +44,7 @@ Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geosp
 Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
 
+
 [project.optional-dependencies]
 build = [
   "build ~= 1.2"
