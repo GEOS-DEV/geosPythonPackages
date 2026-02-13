@@ -109,6 +109,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest yapf toml
+        python -m pip install --upgrade pip setuptools pytest-html
 
         DEPS="${{ matrix.dependencies || '' }}"
 
@@ -130,7 +131,7 @@ jobs:
       run:
       # python -m pytest ./${{ matrix.package-name }} --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html |
       # wrap pytest to avoid error when no tests in the package
-        sh -c 'python -m pytest -p no:html ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
+        sh -c 'python -m pytest ./${{ matrix.package-name }}; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
 
   # check if GEOS has label for testing GEOS integration
   check_integration_label:
