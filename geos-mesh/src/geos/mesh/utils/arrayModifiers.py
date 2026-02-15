@@ -29,17 +29,12 @@ from vtkmodules.vtkFiltersCore import (
 from vtkmodules.vtkCommonCore import ( vtkDataArray, vtkPoints, vtkLogger )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
-    getComponentNamesDataSet,
     getAttributesWithNumberOfComponents,
     getArrayInObject,
     isAttributeInObject,
-    isAttributeInObjectDataSet,
-    isAttributeInObjectMultiBlockDataSet,
     isAttributeGlobal,
     getVtkArrayTypeInObject,
-    getVtkArrayTypeInMultiBlock,
-    getVtkDataTypeInObject,
-    getNumberOfComponentsMultiBlock,
+    getNumberOfComponents,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Errors import VTKError
@@ -97,7 +92,7 @@ def fillPartialAttributes(
         raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute exist in the input mesh.
-    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, piece ):
+    if not isAttributeInObject( multiBlockDataSet, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
 
     # Check if the attribute is partial.
@@ -105,8 +100,8 @@ def fillPartialAttributes(
         raise AttributeError( f"The attribute { attributeName } is already global." )
 
     # Get information of the attribute to fill.
-    vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
-    nbComponents: int = getNumberOfComponentsMultiBlock( multiBlockDataSet, attributeName, piece )
+    vtkDataType: int = getVtkArrayTypeInObject( multiBlockDataSet, attributeName, piece )
+    nbComponents: int = getNumberOfComponents( multiBlockDataSet, attributeName, piece )
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, piece )
@@ -154,7 +149,7 @@ def fillPartialAttributes(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not isAttributeInObjectDataSet( dataSet, attributeName, piece ):
+        if not isAttributeInObject( dataSet, attributeName, piece ):
             createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece, vtkDataType,
                                             logger )
 
@@ -333,7 +328,7 @@ def createConstantAttributeMultiBlock(
         raise ValueError( f"The attribute must be created on { Piece.POINTS.value } or { Piece.CELLS.value }." )
 
     # Check if the attribute already exist in the input mesh.
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, piece ):
+    if isAttributeInObject( multiBlockDataSet, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Parse the multiBlockDataSet to create the constant attribute on each blocks.
@@ -474,12 +469,12 @@ def createAttribute(
         raise TypeError( "Input dataSet has to be inherited from vtkDataSet." )
 
     # Check if the attribute already exist in the input mesh.
-    if isAttributeInObjectDataSet( dataSet, attributeName, piece ):
+    if isAttributeInObject( dataSet, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
     oppositePiece: Piece = Piece.CELLS if piece == Piece.POINTS else Piece.POINTS
-    if isAttributeInObjectDataSet( dataSet, attributeName, oppositePiece ):
+    if isAttributeInObject( dataSet, attributeName, oppositePiece ):
         logger.warning( f"The attribute { attributeName } exist on the opposite piece { oppositePiece.value }." )
 
     # Check the coherency between the given array type and the vtk array type if it exist.
@@ -574,11 +569,11 @@ def copyAttribute(
         raise TypeError( "Final mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute exist in the multiBlockDataSetFrom.
-    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSetFrom, attributeNameFrom, piece ):
+    if not isAttributeInObject( multiBlockDataSetFrom, attributeNameFrom, piece ):
         raise AttributeError( f"The attribute { attributeNameFrom } is not present in the source mesh." )
 
     # Check if the attribute already exist in the multiBlockDataSetTo.
-    if isAttributeInObjectMultiBlockDataSet( multiBlockDataSetTo, attributeNameTo, piece ):
+    if isAttributeInObject( multiBlockDataSetTo, attributeNameTo, piece ):
         raise AttributeError( f"The attribute { attributeNameTo } is already present in the final mesh." )
 
     # Check if the two multiBlockDataSets are similar.
@@ -592,7 +587,7 @@ def copyAttribute(
         dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( idBlock ) )
         dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( idBlock ) )
 
-        if isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, piece ):
+        if isAttributeInObject( dataSetFrom, attributeNameFrom, piece ):
             copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, piece, logger )
 
     return
@@ -631,11 +626,11 @@ def copyAttributeDataSet(
         raise TypeError( "Source mesh has to be inherited from vtkDataSet." )
 
     # Check if the attribute exist in the dataSetFrom.
-    if not isAttributeInObjectDataSet( dataSetFrom, attributeNameFrom, piece ):
+    if not isAttributeInObject( dataSetFrom, attributeNameFrom, piece ):
         raise AttributeError( f"The attribute { attributeNameFrom } is not in the source mesh." )
 
     npArray: npt.NDArray[ Any ] = getArrayInObject( dataSetFrom, attributeNameFrom, piece )
-    componentNames: tuple[ str, ...] = getComponentNamesDataSet( dataSetFrom, attributeNameFrom, piece )
+    componentNames: tuple[ str, ...] = getComponentNames( dataSetFrom, attributeNameFrom, piece )
     vtkArrayType: int = getVtkArrayTypeInObject( dataSetFrom, attributeNameFrom, piece )
 
     createAttribute( dataSetTo, npArray, attributeNameTo, componentNames, piece, vtkArrayType, logger )
@@ -717,7 +712,7 @@ def transferAttributeToDataSetWithElementMap(
     componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
     nbComponents: int = len( componentNames )
 
-    vtkDataType: int = getVtkDataTypeInObject( meshFrom, attributeName, piece )
+    vtkDataType: int = getVtkArrayTypeInObject( meshFrom, attributeName, piece )
     defaultValue: Any
     if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
         defaultValue = np.nan
@@ -812,7 +807,7 @@ def transferAttributeWithElementMap(
     if isinstance( meshTo, vtkDataSet ):
         transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName, piece, logger=logger )
     elif isinstance( meshTo, vtkMultiBlockDataSet ):
-        if isAttributeInObjectMultiBlockDataSet( meshTo, attributeName, piece ):
+        if isAttributeInObject( meshTo, attributeName, piece ):
             raise AttributeError( f"The attribute { attributeName } is already in the final mesh." )
 
         listFlatIdDataSetTo: list[ int ] = getBlockElementIndexesFlatten( meshTo )
@@ -919,7 +914,7 @@ def createCellCenterAttribute(
         logger = getLogger( "createCellCenterAttribute", True )
 
     if isinstance( mesh, vtkMultiBlockDataSet ):
-        if isAttributeInObjectMultiBlockDataSet( mesh, cellCenterAttributeName, Piece.CELLS ):
+        if isAttributeInObject( mesh, cellCenterAttributeName, Piece.CELLS ):
             raise AttributeError( f"The attribute { cellCenterAttributeName } in already in the mesh." )
 
         elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
