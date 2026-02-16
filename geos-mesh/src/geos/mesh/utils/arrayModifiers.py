@@ -531,7 +531,7 @@ def copyAttribute(
         if elementaryBlockIndexesTo != elementaryBlockIndexesFrom:
             raise ValueError( "The two meshes do not have the same block indexes." )
 
-        # Parse blocks of the two mesh to copy the attribute.
+        # Parse blocks of the two meshes to copy the attribute.
         for idBlock in elementaryBlockIndexesTo:
             dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( idBlock ) )
             dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( meshTo.GetDataSet( idBlock ) )
@@ -559,7 +559,7 @@ def transferAttributeWithElementMap(
     If the final mesh is a vtkDataSet, its flat index (flatIdDataSetTo) is set to 0.
 
     The map of points/cells used to transfer the attribute is a dictionary where:
-        - Keys are the flat index of all the datasets of the final mesh.
+        - Keys are the flat indexes of all the datasets of the final mesh.
         - Items are arrays of size (nb elements in datasets of the final mesh, 2).
 
     If an element (idElementTo) of one dataset (flatIdDataSetTo) of the final mesh is mapped with no element of the source mesh:

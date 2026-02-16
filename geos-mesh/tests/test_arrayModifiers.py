@@ -342,15 +342,16 @@ def test_createConstantAttributeRaiseTypeError(
         arrayModifiers.createConstantAttribute( mesh, listValues, "newAttribute", vtkDataType=vtkDataType )
 
 
-def test_createConstantAttributeRaiseValueError( dataSetTest: vtkDataSet, ) -> None:
-    """Test the raises ValueError for the function createConstantAttribute with wrong values."""
+def test_createConstantAttributeRaiseValueErrorVTKDataType( dataSetTest: vtkDataSet, ) -> None:
+    """Test the raises ValueError for the function createConstantAttribute with wrong values for the vtk data type."""
     mesh: vtkDataSet = dataSetTest( "dataset" )
-
-    # Wrong vtk type
     with pytest.raises( ValueError ):
         arrayModifiers.createConstantAttribute( mesh, [ np.int32( 42 ) ], "newAttribute", vtkDataType=64 )
 
-    # Wrong piece
+
+def test_createConstantAttributeRaiseValueErrorPiece( dataSetTest: vtkDataSet, ) -> None:
+    """Test the raises ValueError for the function createConstantAttribute with wrong values for the piece."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
     with pytest.raises( ValueError ):
         arrayModifiers.createConstantAttribute( mesh, [ np.int32( 42 ) ], "newAttribute", piece=Piece.BOTH )
 
