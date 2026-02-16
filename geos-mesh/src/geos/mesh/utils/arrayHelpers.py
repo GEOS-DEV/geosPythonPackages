@@ -25,7 +25,7 @@ There are two types of functions:
     - Checks
 
 The getter functions:
-    - get the vtk or array data of an attribute (dataset and vtkFieldData only)
+    - get the vtk or data array of an attribute (dataset and vtkFieldData only)
     - get the component names of an attribute
     - get the number of components of an attribute
     - get the piece of an attribute
@@ -233,7 +233,7 @@ def checkValidValuesInObject(
     listValues: list[ Any ],
     piece: Piece,
 ) -> tuple[ list[ Any ], list[ Any ] ]:
-    """Check if each value is valid, ie if that value is a data of the mesh's attribute.
+    """Check if each value is valid, ie if that value is a data of the mesh attribute.
 
     Args:
         mesh (vtkMultiBlockDataSet | vtkDataSet): The mesh to check.
@@ -364,7 +364,7 @@ def getAttributesWithNumberOfComponents(
 
     Raises:
         ValueError: The piece must be cells or points only
-        AttributeError: One attribute one the mesh is null.
+        AttributeError: One attribute of the mesh is null.
         TypeError: Input mesh must be a vtkDataSet or vtkMultiBlockDataSet.
     """
     attributes: dict[ str, int ] = {}

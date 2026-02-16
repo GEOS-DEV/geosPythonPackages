@@ -139,19 +139,22 @@ def test_getAttributesWithNumberOfComponents( dataSetTest: Any, meshName: str, p
     assert attributes == expected
 
 
-def test_getAttributesWithNumberOfComponentsRaises() -> None:
-    """Test the fails of the function getAttributesWithNumberOfComponents."""
-    # ValueError
+def test_getAttributesWithNumberOfComponentsValueError() -> None:
+    """Test fails of the function getAttributesWithNumberOfComponents with a value error."""
     with pytest.raises( ValueError ):
         arrayHelpers.getAttributesWithNumberOfComponents( vtkPolyData(), Piece.BOTH )
 
-    # AttributeError
+
+def test_getAttributesWithNumberOfComponentsAttributeError() -> None:
+    """Test fails of the function getAttributesWithNumberOfComponents with an attribute error."""
     mesh: vtkPolyData = vtkPolyData()
     mesh.GetCellData().AddArray( vtkDoubleArray() )
     with pytest.raises( AttributeError ):
         arrayHelpers.getAttributesWithNumberOfComponents( mesh, Piece.CELLS )
 
-    # TypeError
+
+def test_getAttributesWithNumberOfComponentsTypeError() -> None:
+    """Test fails of the function getAttributesWithNumberOfComponents with a type error."""
     with pytest.raises( TypeError ):
         arrayHelpers.getAttributesWithNumberOfComponents( vtkCellData(), Piece.CELLS )
 
@@ -273,14 +276,15 @@ def test_checkValidValuesInObject(
     assert invalidValues == invalidValuesTest
 
 
-def test_checkValidValuesInObjectRaises( dataSetTest: Any ) -> None:
-    """Test the fails of checkValidValuesInObject."""
-    # AttributeError
+def test_checkValidValuesInObjectAttributeError( dataSetTest: Any ) -> None:
+    """Test fails of checkValidValuesInObject with an attribute error."""
     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
     with pytest.raises( AttributeError ):
         arrayHelpers.checkValidValuesInObject( mesh, "PORO", [], Piece.CELLS )
 
-    # TypeError
+
+def test_checkValidValuesInObjectTypeError() -> None:
+    """Test fails of checkValidValuesInObject with a type error."""
     with pytest.raises( TypeError ):
         arrayHelpers.checkValidValuesInObject( vtkCellData(), "AttributeName", [], Piece.CELLS )
 
@@ -365,14 +369,15 @@ def test_getVtkArrayTypeInObject(
     assert obtainedVtkType == expectedVtkType
 
 
-def test_getVtkArrayTypeInObjectRaises( dataSetTest: Any ) -> None:
-    """Test the fails of the function getVtkArrayTypeInObject."""
-    # AttributeError
+def test_getVtkArrayTypeInObjectAttributeError( dataSetTest: Any ) -> None:
+    """Test fails of the function getVtkArrayTypeInObject with an attribute error."""
     mesh: vtkDataSet = dataSetTest( "dataset" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getVtkArrayTypeInObject( mesh, "attributeName", Piece.CELLS )
 
-    # TypeError
+
+def test_getVtkArrayTypeInObjectTypeError() -> None:
+    """Test fails of the function getVtkArrayTypeInObject with a type error."""
     with pytest.raises( TypeError ):
         arrayHelpers.getVtkArrayTypeInObject( vtkCellData(), "PORO", Piece.CELLS )
 
@@ -415,19 +420,23 @@ def test_getNumberOfComponents(
     assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
 
 
-def test_getNumberOfComponentsRaises( dataSetTest: Any, ) -> None:
-    """Test getNumberOfComponents fails."""
-    # TypeError
+def test_getNumberOfComponentsTypeError() -> None:
+    """Test getNumberOfComponents fails with a type error."""
     meshWrongType: vtkCellData = vtkCellData()
     with pytest.raises( TypeError ):
         arrayHelpers.getNumberOfComponents( meshWrongType, "PORO", Piece.CELLS )
 
-    # AttributeError
-    mesh: vtkDataSet = dataSetTest( "multiblockGeosOutput" )
+
+def test_getNumberOfComponentsAttributeError( dataSetTest: Any, ) -> None:
+    """Test getNumberOfComponents fails with an attribute error."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
 
-    # ValueError
+
+def test_getNumberOfComponentsValueError( dataSetTest: Any, ) -> None:
+    """Test getNumberOfComponents fails with a value error."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     with pytest.raises( ValueError ):
         arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
 
@@ -446,19 +455,23 @@ def test_getComponentNames( dataSetTest: Any, meshName: str, attributeName: str,
     assert obtained == expected
 
 
-def test_getComponentNamesRaises( dataSetTest: Any, ) -> None:
-    """Test getting the component names fails."""
-    # TypeError
+def test_getComponentNamesTypeError() -> None:
+    """Test getting the component names fails with a type error."""
     meshWrongType: vtkFieldData = vtkFieldData()
     with pytest.raises( TypeError ):
         arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
 
-    # AttributeError
-    mesh: vtkDataSet = dataSetTest( "multiblockGeosOutput" )
+
+def test_getComponentNamesAttributeError( dataSetTest: Any, ) -> None:
+    """Test getting the component names fails with an attribute error."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
 
-    # ValueError
+
+def test_getComponentNamesValueError( dataSetTest: Any, ) -> None:
+    """Test getting the component names fails with a value error."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
     with pytest.raises( ValueError ):
         arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
 
