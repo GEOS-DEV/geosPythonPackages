@@ -51,7 +51,7 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
             self._realFilter.SetLoggerHandler( self.handler )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
-        """Is applying CreateConstantAttributePerRegion filter.
+        """Is applying clipToMainFrame filter.
 
         Args:
             inputMesh : A mesh to transform.
