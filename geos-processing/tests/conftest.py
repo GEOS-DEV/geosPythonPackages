@@ -44,6 +44,10 @@ def dataSetTest() -> Any:
             vtkFilename = "data/domain_res5_id.vtu"
         elif datasetType == "emptydataset":
             vtkFilename = "data/domain_res5_id_empty.vtu"
+        elif datasetType == "2Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion2Ranks.vtm"
+        elif datasetType == "4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/CellElementRegion4Ranks.vtm"
         elif datasetType == "meshtet1":
             vtkFilename = "data/mesh1.vtu"
         elif datasetType == "meshtet1b":
