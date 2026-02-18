@@ -107,6 +107,7 @@ class PVTetQualityAnalysis( VTKPythonAlgorithmBase ):
             tetQualityAnalysisFilter.setLoggerHandler( VTKHandler() )
 
         try:
+            tetQualityAnalysisFilter.setFilename( self._filename )
             tetQualityAnalysisFilter.applyFilter()
         except Exception as e:
             tetQualityAnalysisFilter.logger.error( f' FATAL ERROR due to:\n{e}' )
