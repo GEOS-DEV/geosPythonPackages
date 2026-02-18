@@ -32,9 +32,10 @@ update_paths()
 
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import CountWarningHandler
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
-from geos.utils.Logger import CustomLoggerFormatter
+from geos.utils.Logger import ( getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_FRICTION_ANGLE_RAD,
                                            DEFAULT_ROCK_COHESION )
 from geos.mesh.utils.arrayHelpers import getArrayInObject
@@ -89,6 +90,8 @@ If you start from a raw GEOS output, execute the following steps before moving o
         * The attribute 'ActiveCellMask' allows to select only the right cells (equal to 1).
         * The attribute 'CellId' has to be used for the 'Selection Labels'.
 """
+
+loggerTitle: str = "Mohr Circle"
 
 
 @smproxy.filter( name="PVMohrCirclePlot", label="Plot Mohr's Circles" )
@@ -178,14 +181,23 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # Request data processing step - incremented each time RequestUpdateExtent is called
         self.requestDataStep: int = -1
 
-        # Logger
-        self.logger: logging.Logger = logging.getLogger( "MohrCircle" )
+        self.handler: logging.Handler = VTKHandler()
+        self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        if not self.logger.hasHandlers():
-            handler = VTKHandler()
-            handler.setFormatter( CustomLoggerFormatter( False ) )
+        self.logger.addHandler( self.handler )
+        self.logger.propagate = False
 
-            self.logger.addHandler( handler )
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     @smproperty.xml( """
         <Property name="Refresh Data"
@@ -808,10 +820,20 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
                 outputMesh.GetCellData().AddArray( cellId )
                 outputMesh.GetCellData().AddArray( activeCellMask )
                 outputMesh.Modified()
+
+                result: str = f"The plugin { self.logger.name } succeeded"
+                if self.counter.warningCount > 0:
+                    self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+                else:
+                    self.logger.info( f"{ result }." )
         except Exception as e:
             self.logger.error( "Mohr circles cannot be plotted due to:" )
             self.logger.error( e )
             return 0
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
         return 1
 
     def _createMohrCirclesAtTimeStep(

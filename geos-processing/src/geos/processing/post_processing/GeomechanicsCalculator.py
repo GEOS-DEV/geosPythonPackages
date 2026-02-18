@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
                                               PostProcessingOutputsEnum )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
@@ -712,6 +712,18 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh.
 
@@ -750,7 +762,14 @@ class GeomechanicsCalculator:
                              logger=self.logger )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 
@@ -770,12 +789,10 @@ class GeomechanicsCalculator:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def getOutputType( self: Self ) -> str:
         """Get output object type.
