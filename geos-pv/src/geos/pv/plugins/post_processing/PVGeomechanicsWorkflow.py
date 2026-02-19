@@ -148,9 +148,11 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         counter: CountWarningHandler = CountWarningHandler()
         self.counter: CountWarningHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -355,7 +357,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
             else:
                 self.logger.info( f"{ result }." )
 
-        except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+        except ChildProcessError as e:
             self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
         except Exception as e:
             mess: str = f"The plugin { self.logger.name } failed due to:\n{ e }"
@@ -363,6 +365,9 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
 
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
+
+        self.nbErrors = self.counter.errorCount
+        self.counter.resetErrorCount()
 
         return 1
 
@@ -402,6 +407,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         geomechanicsCalculatorPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator plugin
         self.counter.addExternalWarningCount( geomechanicsCalculatorPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeomechanicsCalculator plugin
+        self.counter.addExternalErrorCount( geomechanicsCalculatorPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeomechanicsCalculators." )
 
         self.volumeMesh.ShallowCopy( geomechanicsCalculatorPlugin.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()

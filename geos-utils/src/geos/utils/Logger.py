@@ -103,7 +103,8 @@ class CountWarningHandler( logging.Handler ):
     def __init__( self: Self ) -> None:
         """Init the handler."""
         super().__init__()
-        self.warningCount = 0
+        self.warningCount: int = 0
+        self.errorCount: int = 0
 
     def resetWarningCount( self: Self, value: int = 0 ) -> None:
         """Set the warning counter to a specific value.
@@ -114,6 +115,15 @@ class CountWarningHandler( logging.Handler ):
         """
         self.warningCount = value
 
+    def resetErrorCount( self: Self, value: int = 0 ) -> None:
+        """Set the error counter to a specific value.
+
+        Args:
+            value (optional, int): The value to set for the error counter.
+                Defaults to 0.
+        """
+        self.errorCount = value
+
     def addExternalWarningCount( self: Self, externalWarningCount: int ) -> None:
         """Add external warning count.
 
@@ -121,6 +131,14 @@ class CountWarningHandler( logging.Handler ):
             externalWarningCount (int): An external warning count to add to the internal one.
         """
         self.warningCount += externalWarningCount
+
+    def addExternalErrorCount( self: Self, externalErrorCount: int ) -> None:
+        """Add external error count.
+
+        Args:
+            externalErrorCount (int): An external error count to add to the internal one.
+        """
+        self.errorCount += externalErrorCount
 
     def emit( self: Self, record: logging.LogRecord ) -> None:
         """Count all the warnings logged.
@@ -130,6 +148,9 @@ class CountWarningHandler( logging.Handler ):
         """
         if record.levelno == logging.WARNING:
             self.warningCount += 1
+
+        if record.levelno >= logging.ERROR:
+            self.errorCount += 1
 
 
 def getLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> logging.Handler:
