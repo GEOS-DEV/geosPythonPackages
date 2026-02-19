@@ -3,8 +3,11 @@
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
 from pathlib import Path
 import numpy as np
-import pyvista as pv
 from typing_extensions import Self
+
+from geos.mesh.utils.multiblockModifiers import mergeBlocks
+from geos.mesh.io.vtkIO import PVDReader
+from geos.mesh.utils.arrayHelpers import (isAttributeInObject, getAttributeSet)
 
 from geos.processing.post_processing.FaultGeometry import FaultGeometry
 from geos.processing.tools.FaultVisualizer import Visualizer
@@ -12,6 +15,7 @@ from geos.processing.post_processing.SensitivityAnalyzer import SensitivityAnaly
 from geos.processing.post_processing.StressProjector import StressProjector
 from geos.processing.post_processing.MohrCoulomb import MohrCoulomb
 
+from geos.utils.pieceEnum import Piece
 # ============================================================================
 # TIME SERIES PROCESSING
 # ============================================================================
@@ -28,7 +32,25 @@ class TimeSeriesProcessor:
         self.savePlots: bool = savePlots
 
     # -------------------------------------------------------------------
-    def process( self: Self, path: Path, faultGeometry: FaultGeometry, pvdFile: str, timeIndexes: list[ int ] = [], weightingScheme: str = "arithmetic", cohesion: float = 0, frictionAngle: float = 10, runSensitivity: bool = True, profileStartPoints: list[tuple[ float, ...]] = [], computePrincipalStress: bool = True, showDepthProfiles: bool = True, stressName: str = "averageStress", biotCoefficient: str = "rockPorosity_biotCoefficient", profileSearchRadius=None, minDepthProfiles=None, maxDepthProfiles=None ) -> pv.DataSet:
+    def process( self: Self,
+        path: Path,
+        faultGeometry: FaultGeometry,
+        pvdFile: str,
+        timeIndexes: list[ int ] = [],
+        weightingScheme: str = "arithmetic",
+        cohesion: float = 0,
+        frictionAngle: float = 10,
+        runSensitivity: bool = True,
+        profileStartPoints: list[tuple[ float, ...]] = [],
+        computePrincipalStress: bool = False,
+        showDepthProfiles: bool = True,
+        stressName: str = "averageStress",
+        biotCoefficient: str = "rockPorosity_biotCoefficient",
+        profileSearchRadius=None,
+        minDepthProfiles=None,
+        maxDepthProfiles=None,
+        sensitivityFrictionAngles=None,
+        sensitivityCohesions=None ):
         """Process all time steps using pre-computed fault geometry.
 
         Parameters:
@@ -36,8 +58,8 @@ class TimeSeriesProcessor:
             faultGeometry: FaultGeometry object with initialized topology
             pvdFile: PVD file name
         """
-        pvdReader = pv.PVDReader( path / pvdFile )
-        timeValues = np.array( pvdReader.time_values )
+        reader = PVDReader( path / pvdFile )
+        timeValues = reader.getAllTimestepsValues()
 
         if timeIndexes:
             timeValues = timeValues[ timeIndexes ]
@@ -63,14 +85,14 @@ class TimeSeriesProcessor:
 
             # Read time step
             idx = timeIndexes[ i ] if timeIndexes else i
-            pvdReader.set_active_time_point( idx )
-            dataset = pvdReader.read()
+            dataset = reader.getDataSetAtTimeIndex( idx )
 
             # Merge blocks
-            volumeData = self._mergeBlocks( dataset )
+            volumeData = mergeBlocks( dataset, keepPartialAttributes=True )
 
             if dataInitial is None:
                 dataInitial = volumeData
+
 
             # -----------------------------------
             # Projection using pre-computed topology
@@ -104,11 +126,13 @@ class TimeSeriesProcessor:
             # -----------------------------------
             if runSensitivity:
                 analyzer = SensitivityAnalyzer( self.outputDir, self.showPlots )
-                analyzer.runAnalysis( surfaceResult, time )
+                if sensitivityFrictionAngles is None or sensitivityCohesions is None:
+                    raise ValueError( "sensitivity friction angles and cohesions required if runSensitivity is set to True" )
+                analyzer.runAnalysis( surfaceResult, time, sensitivityFrictionAngles, sensitivityCohesions, profileStartPoints, profileSearchRadius )
 
             # Save
             filename = f'fault_analysis_{i:04d}.vtu'
-            surfaceResult.save( self.outputDir / filename )
+            # surfaceResult.save( self.outputDir / filename )
             outputFiles.append( ( time, filename ) )
             print( f"  💾 Saved: {filename}" )
 
@@ -116,70 +140,9 @@ class TimeSeriesProcessor:
         self._createPVD( outputFiles )
 
         return surfaceResult
-
     # -------------------------------------------------------------------
-    @staticmethod
-    def _mergeBlocks( dataset: pv.DataSet ) -> pv.UnstructuredGrid:
-        """Merge multi-block dataset - descente automatique jusqu'aux données."""
-
-        # -----------------------------------------------
-        def extractLeafBlocks(
-                block: pv.DataSet,
-                path: str = "",
-                depth: float = 0
-        ) -> list[ tuple[ pv.DataSet, str, tuple[ float, float, float, float, float, float ] ] ]:
-            """Descend récursivement dans la structure MultiBlock jusqu'aux feuilles avec données.
-
-            Returns:
-                list of (block, path, bounds) tuples
-            """
-            leaves = []
-
-            # Cas 1: C'est un MultiBlock avec des sous-blocs
-            if hasattr( block, 'n_blocks' ) and block.n_blocks > 0:
-                for i in range( block.n_blocks ):
-                    subBlock = block.GetBlock( i )
-                    blockName = block.get_block_name( i ) if hasattr( block, 'get_block_name' ) else f"Block{i}"
-                    newPath = f"{path}/{blockName}" if path else blockName
-
-                    if subBlock is not None:
-                        # Récursion
-                        leaves.extend( extractLeafBlocks( subBlock, newPath, depth + 1 ) )
-
-            # Cas 2: C'est un dataset final (feuille)
-            elif hasattr( block, 'n_cells' ) and block.n_cells > 0:
-                bounds = block.bounds
-                leaves.append( ( block, path, bounds ) )
-
-            return leaves
-
-        print( "  📦 Extracting volume blocks" )
-
-        # Extraire toutes les feuilles
-        allBlocks = extractLeafBlocks( dataset )
-
-        # Filtrer et afficher
-        merged = []
-        blocksWithPressure = 0
-        blocksWithoutPressure = 0
-
-        for block, _path, _bounds in allBlocks:
-            hasPressure = 'pressure' in block.cell_data
-
-            if hasPressure:
-                blocksWithPressure += 1
-                merged.append( block )
-            else:
-                blocksWithoutPressure += 1
-
-        # Combiner
-        combined = pv.MultiBlock( merged ).combine()
-
-        return combined
-
-    # -------------------------------------------------------------------
-    def _plotResults( self, surface: pv.PolyData, contributingCells: pv.DataSet, time: list[ int ],
-                      path: str, profileStartPoints: list[tuple[float, ...]], computePrincipalStress: bool = True, showDepthProfiles:bool = True,
+    def _plotResults( self, surface, contributingCells, time: list[ int ],
+                      path: str, profileStartPoints: list[tuple[float, ...]], computePrincipalStress: bool = False, showDepthProfiles:bool = True,
                       profileSearchRadius: float|None=None, minDepthProfiles: float | None = None,
                                              maxDepthProfiles: float | None = None,  ) -> None:  # TODO check type surface
         Visualizer.plotMohrCoulombDiagram( surface,
@@ -205,7 +168,6 @@ class TimeSeriesProcessor:
                                 showPlots = self.showPlots, savePlots = self.savePlots )
 
         if computePrincipalStress:
-
             # Plot principal stress from volume cells
             visualizer.plotVolumeStressProfiles( volumeMesh=contributingCells,
                                                  faultSurface=surface,
@@ -234,5 +196,4 @@ class TimeSeriesProcessor:
             f.write( '  </Collection>\n' )
             f.write( '</VTKFile>\n' )
         print( f"\n✅ PVD created: {pvdPath}" )
-
 

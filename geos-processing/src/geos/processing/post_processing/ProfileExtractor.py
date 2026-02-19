@@ -5,6 +5,8 @@ import numpy as np
 import pyvista as pv
 import numpy.typing as npt
 
+from vtkmodules.vtkCommonDataModel import vtkCellData, vtkDataSet
+from vtkmodules.util.numpy_support import vtk_to_numpy
 
 # ============================================================================
 # PROFILE EXTRACTOR
@@ -24,7 +26,7 @@ class ProfileExtractor:
         stepSize: float = 20.0,
         maxSteps: float = 500,
         verbose: bool = True,
-        cellData: dict[ str, npt.NDArray ] | None = None
+        cellData: vtkCellData = None
     ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                 npt.NDArray[ np.float64 ] ]:
         """Extraction de profil vertical par COUCHES DE PROFONDEUR avec détection automatique de faille.
@@ -114,8 +116,9 @@ class ProfileExtractor:
             faultFieldNames = [ 'attribute', 'FaultMask', 'faultId', 'region' ]
 
             for fieldName in faultFieldNames:
-                if fieldName in cellData:
-                    faultIds = np.asarray( cellData[ fieldName ] )
+                if cellData.HasArray( fieldName ):
+                    faultIds = vtk_to_numpy( cellData[ fieldName ] )
+
 
                     if len( faultIds ) != len( centers ):
                         if verbose:
@@ -305,7 +308,7 @@ class ProfileExtractor:
 
         # Trier par profondeur décroissante (haut → bas)
         sortOrder = np.argsort( -centers[ profileIndicesArr, 2 ] )
-        profileIndicesArr = profileIndices[ sortOrder ]
+        profileIndicesArr = profileIndicesArr[ sortOrder ]
 
         # Extraire résultats
         depths = centers[ profileIndicesArr, 2 ]

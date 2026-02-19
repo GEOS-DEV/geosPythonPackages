@@ -4,15 +4,26 @@
 # ============================================================================
 # FAULT GEOMETRY
 # ============================================================================
+import sys
 import pyvista as pv
 import numpy as np
 from pathlib import Path
 from typing_extensions import Self, Any
-from vtkmodules.vtkCommonDataModel import vtkCellLocator
-# from vtkmodules.vtkCommonDataModel import vtkIdList
+from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkMultiBlockDataSet
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
+
 import numpy.typing as npt
 from scipy.spatial import cKDTree
 
+from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+
+from geos.mesh.utils.arrayModifiers import createAttribute
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, computeCellCenterCoordinates )
+from geos.mesh.utils.multiblockModifiers import ( mergeBlocks )
+from geos.mesh.utils.genericHelpers import ( extractCellSelection, extractSurface, computeNormals, getNormalVectors, computeCellVolumes )
+from geos.utils.pieceEnum import Piece
+
+from geos.mesh.io.vtkIO import writeMesh, VtkOutput
 
 __doc__="""
 
@@ -29,10 +40,10 @@ class FaultGeometry:
         """Initialize fault geometry with pre-computed topology.
 
         Args:
-            mesh (pv.DataSet):
+            mesh (pv.DataSet): Input mesh
             faultValues (list[int]): Config.FAULT_VALUES
             faultAttribute (str): Config.FAULT_ATTRIBUTES
-            volumeMesh (pv.DataSet): processor._merge_blocks(dataset)
+            volumeMesh (pv.DataSet): PVD mesh
         """
         self.mesh = mesh
         self.faultValues = faultValues
@@ -90,12 +101,12 @@ class FaultGeometry:
                          if len( m[ 'plus' ] ) > 0 and len( m[ 'minus' ] ) > 0 )
 
         print( "\n✅ Adjacency topology computed:" )
-        print( f"   - {nMapped}/{self.faultSurface.n_cells} fault cells mapped" )
+        print( f"   - {nMapped}/{self.faultSurface.GetNumberOfCells()} fault cells mapped" )
         print( f"   - {nWithBoth} cells have neighbors on both sides" )
 
         # Visualize contributions if requested
-        if showContributionViz:
-            self._visualizeContributions()
+        # if showContributionViz:
+        #     self._visualizeContributions()
 
         return self.faultSurface, self.adjacencyMapping
 
@@ -104,7 +115,7 @@ class FaultGeometry:
         """Mark volume cells that contribute to fault stress projection."""
         print( "\n📦 Marking contributing volume cells..." )
 
-        nVolume = self.volumeMesh.n_cells
+        nVolume = self.volumeMesh.GetNumberOfCells()
 
         # Collect contributing cells by side
         allPlus = set()
@@ -126,18 +137,20 @@ class FaultGeometry:
                 contributionSide[ idx ] += 2
 
         # Add classification to volume mesh
-        self.volumeMesh.cell_data[ "contributionSide" ] = contributionSide
         contribMask = contributionSide > 0
-        self.volumeMesh.cell_data[ "contribution_to_faults" ] = contribMask.astype( int )
+        contribMask = contribMask.astype( int )
+
+        createAttribute( self.volumeMesh, contributionSide, "contributionSide" )
+        createAttribute( self.volumeMesh, contribMask, "contributionToFaults" )
 
         # Extract subsets
-        maskAll = contribMask
-        maskPlus = ( contributionSide == 1 ) | ( contributionSide == 3 )
-        maskMinus = ( contributionSide == 2 ) | ( contributionSide == 3 )
+        maskAll = np.where( contribMask )[0]
+        maskPlus = np.where( ( contributionSide == 1 ) | ( contributionSide == 3 ) )[0]
+        maskMinus = np.where( ( contributionSide == 2 ) | ( contributionSide == 3 ) )[0]
 
-        self.contributingCells = self.volumeMesh.extract_cells( maskAll )
-        self.contributingCellsPlus = self.volumeMesh.extract_cells( maskPlus )
-        self.contributingCellsMinus = self.volumeMesh.extract_cells( maskMinus )
+        self.contributingCells = extractCellSelection( self.volumeMesh, maskAll )
+        self.contributingCellsPlus = extractCellSelection( self.volumeMesh, maskPlus )
+        self.contributingCellsMinus = extractCellSelection( self.volumeMesh, maskMinus )
 
         # Statistics
         nContrib = np.sum( maskAll )
@@ -166,21 +179,25 @@ class FaultGeometry:
 
         # Save all contributing cells
         filenameAll = outputDir / "contributing_cells_all.vtu"
-        self.contributingCells.save( str( filenameAll ) )
+
+        writeMesh( mesh=self.contributingCells, vtkOutput=VtkOutput(filenameAll), canOverwrite=True )
+        # self.contributingCells.save( str( filenameAll ) )
         print( f"\n   💾 All contributing cells saved: {filenameAll}" )
-        print( f"      ({self.contributingCells.n_cells} cells, {self.contributingCells.n_points} points)" )
+        print( f"      ({self.contributingCells.GetNumberOfCells()} cells, {self.contributingCells.GetNumberOfPoints} points)" )
 
         # Save plus side
-        outputDir / "contributingCellsPlus.vtu"
+        filenamePlus = outputDir / "contributingCellsPlus.vtu"
         # self.contributingCellsPlus.save(str(filenamePlus))
         # print(f"   💾 Plus side cells saved: {filenamePlus}")
-        print( f"      ({self.contributingCellsPlus.n_cells} cells, {self.contributingCellsPlus.n_points} points)" )
+        writeMesh( mesh=self.contributingCellsPlus, vtkOutput=VtkOutput(filenamePlus), canOverwrite=True )
+        print( f"      ({self.contributingCellsPlus.GetNumberOfCells()} cells, {self.contributingCellsPlus.GetNumberOfPoints} points)" )
 
         # Save minus side
-        outputDir / "contributingCellsMinus.vtu"
+        filenameMinus = outputDir / "contributingCellsMinus.vtu"
         # self.contributingCellsMinus.save(str(filenameMinus))
         # print(f"   💾 Minus side cells saved: {filenameMinus}")
-        print( f"      ({self.contributingCellsMinus.n_cells} cells, {self.contributingCellsMinus.n_points} points)" )
+        writeMesh( mesh=self.contributingCellsMinus, vtkOutput=VtkOutput(filenameMinus), canOverwrite=True )
+        print( f"      ({self.contributingCellsMinus.GetNumberOfCells()} cells, {self.contributingCellsMinus.GetNumberOfPoints} points)" )
 
     # -------------------------------------------------------------------
     def getContributingCells( self: Self, side: str = 'all' ) -> pv.UnstructuredGrid:
@@ -227,7 +244,7 @@ class FaultGeometry:
         }
 
     # -------------------------------------------------------------------
-    def _precomputeGeometricProperties( self: Self ) -> None:
+    def _precomputeGeometricProperties( self: Self ) -> None:   # TODO
         """Pre-compute geometric properties of volume mesh for efficient stress projection.
 
         Computes:
@@ -238,16 +255,16 @@ class FaultGeometry:
         """
         print( "\n📐 Pre-computing geometric properties..." )
 
-        nVolume = self.volumeMesh.n_cells
+        nVolume = self.volumeMesh.GetNumberOfCells()
 
         # 1. Compute volume centers
         print( "   Computing cell centers..." )
-        self.volumeCenters = self.volumeMesh.cell_centers().points
+        self.volumeCenters = vtk_to_numpy( computeCellCenterCoordinates( self.volumeMesh ) )
 
         # 2. Compute cell volumes
         print( "   Computing cell volumes..." )
-        volumeWithSizes = self.volumeMesh.compute_cell_sizes( length=False, area=False, volume=True )
-        self.volumeCellVolumes = volumeWithSizes.cell_data[ 'Volume' ]
+        volumeWithSizes = computeCellVolumes( self.volumeMesh )
+        self.volumeCellVolumes = getArrayInObject( volumeWithSizes, 'Volume', Piece.CELLS )
 
         print( f"      Volume range: [{np.min(self.volumeCellVolumes):.1e}, "
                f"{np.max(self.volumeCellVolumes):.1e}] m³" )
@@ -255,7 +272,7 @@ class FaultGeometry:
         # 3. Build KDTree for fault surface (for fast distance queries)
         print( "   Building KDTree for fault surface..." )
 
-        faultCenters = self.faultSurface.cell_centers().points
+        faultCenters = computeCellCenterCoordinates( self.faultSurface )
         self.faultTree = cKDTree( faultCenters )
 
         # 4. Compute distance from each volume cell to nearest fault cell
@@ -270,8 +287,8 @@ class FaultGeometry:
                f"{np.max(self.distanceToFault):.1f}] m" )
 
         # 5. Add these properties to volume mesh for reference
-        self.volumeMesh.cell_data[ 'cellVolume' ] = self.volumeCellVolumes  # TODO FIX
-        self.volumeMesh.cell_data[ 'distanceToFault' ] = self.distanceToFault
+        createAttribute ( self.volumeMesh, self.volumeCellVolumes, 'cellVolume', Piece.CELLS )
+        createAttribute ( self.volumeMesh, self.distanceToFault, 'distanceToFault', Piece.CELLS )
 
         print( "   ✅ Geometric properties computed and cached" )
 
@@ -282,16 +299,16 @@ class FaultGeometry:
 
         Uses adaptive epsilon optimization.
         """
-        faultIds = np.unique( self.faultSurface.cell_data[ self.faultAttribute ] )
+        faultIds = np.unique( getArrayInObject ( self.faultSurface, self.faultAttribute, Piece.CELLS ) )
         nFaults = len( faultIds )
         print( f"  📋 Processing {nFaults} separate faults: {faultIds}" )
 
         allMappings = {}
 
         for faultId in faultIds:
-            mask = self.faultSurface.cell_data[ self.faultAttribute ] == faultId
+            mask = getArrayInObject( self.faultSurface, self.faultAttribute, Piece.CELLS ) == faultId
             indices = np.where( mask )[ 0 ]
-            singleFault = self.faultSurface.extract_cells( indices )
+            singleFault = extractCellSelection( self.faultSurface, indices )
 
             print( f"  🔧 Mapping Fault {faultId}..." )
 
@@ -306,15 +323,15 @@ class FaultGeometry:
         return allMappings
 
     # -------------------------------------------------------------------
-    def _findFaceSharingCells( self: Self, faultSurface: pv.DataSet ) -> pv.DataSet:
+    def _findFaceSharingCells( self: Self, faultSurface ) -> pv.DataSet:
         """Find volume cells that share a FACE with fault cells.
 
         Uses FindCell with adaptive epsilon to maximize cells with both neighbors
         """
         volMesh = self.volumeMesh
-        volCenters = volMesh.cell_centers().points
-        faultNormals = faultSurface.cell_data[ "Normals" ]
-        faultCenters = faultSurface.cell_centers().points
+        volCenters = vtk_to_numpy( computeCellCenterCoordinates( volMesh ) )
+        faultNormals = vtk_to_numpy( faultSurface.GetCellData().GetNormals() )
+        faultCenters = vtk_to_numpy( computeCellCenterCoordinates( faultSurface ) )
 
         # Determine base epsilon based on mesh size
         volBounds = volMesh.bounds
@@ -386,7 +403,7 @@ class FaultGeometry:
         nFoundNone = 0
         totalNeighbors = 0
 
-        for fid in range( faultSurface.n_cells ):
+        for fid in range( faultSurface.GetNumberOfCells() ):
             fcenter = faultCenters[ fid ]
             fnormal = faultNormals[ fid ]
 
@@ -419,7 +436,7 @@ class FaultGeometry:
             else:
                 nFoundNone += 1
 
-        nCells = faultSurface.n_cells
+        nCells = faultSurface.GetNumberOfCells()
         avgNeighbors = totalNeighbors / nCells if nCells > 0 else 0
 
         stats = {
@@ -593,41 +610,45 @@ class FaultGeometry:
                                    zScale: float = 1.0 ) -> tuple[ pv.DataSet, list[ pv.DataSet ] ]:
         """Extract fault surfaces and compute oriented normals/tangents."""
         surfaces = []
+        mb = vtkMultiBlockDataSet()
+        mb.SetNumberOfBlocks( len( self.faultValues ) )
 
-        for faultId in self.faultValues:
+        for i, faultId in enumerate( self.faultValues ):
             # Extract fault cells
-            faultMask = self.mesh.cell_data[ self.faultAttribute ] == faultId
-            faultCells = self.mesh.extract_cells( faultMask )
+            faultMask = np.where( getArrayInObject( self.mesh, self.faultAttribute, piece=Piece.CELLS ) == faultId )[0]
+            faultCells = extractCellSelection( self.mesh, ids=faultMask )
 
-            if faultCells.n_cells == 0:
+            if faultCells.GetNumberOfCells() == 0:
                 print( f"⚠️  No cells for fault {faultId}" )
                 continue
 
             # Extract surface
-            surf = faultCells.extract_surface()
-            if surf.n_cells == 0:
+            surf = extractSurface( faultCells )
+            if surf.GetNumberOfCells() == 0:
                 continue
 
             # Compute normals
-            surf.compute_normals( cell_normals=True, point_normals=True, inplace=True )
+            surf = computeNormals( surf, pointNormals=True )
 
             # Orient normals consistently within the fault
             surf = self._orientNormals( surf )
 
+            mb.SetBlock( i, surf)
             surfaces.append( surf )
 
-        merged = pv.MultiBlock( surfaces ).combine()
-        print( f"✅ Normals computed for {merged.n_cells} fault cells" )
+        merged = mergeBlocks( mb, keepPartialAttributes=True)
+        # merged = pv.MultiBlock( surfaces ).combine()
+        print( f"✅ Normals computed for {merged.GetNumberOfCells()} fault cells" )
 
-        if showPlot:
-            self.plotGeometry( merged, scaleFactor, zScale )
+        # if showPlot:
+        #     self.plotGeometry( merged, scaleFactor, zScale )
 
         return merged, surfaces
 
     # -------------------------------------------------------------------
     def _orientNormals( self: Self, surf: pv.PolyData, rotateNormals: bool = False ) -> pv.DataSet:
         """Ensure normals point in consistent direction within the fault."""
-        normals = surf.cell_data[ 'Normals' ]
+        normals = vtk_to_numpy( surf.GetCellData().GetNormals() )
         meanNormal = np.mean( normals, axis=0 )
         meanNormal /= np.linalg.norm( meanNormal )
 
@@ -658,14 +679,16 @@ class FaultGeometry:
             tangents1[ i ] = t1
             tangents2[ i ] = t2
 
-        surf.cell_data[ 'Normals' ] = normals
-        surf.cell_data[ 'tangent1' ] = tangents1
-        surf.cell_data[ 'tangent2' ] = tangents2
+        surf.GetCellData().SetNormals( numpy_to_vtk( normals.ravel() ) )
 
-        dip_angles, strike_angles = self.computeDipStrikeFromCellBase( normals, tangents1, tangents2 )
+        createAttribute( surf, tangents1, "Tangents1" )
+        createAttribute( surf, tangents2, "Tangents2" )
+        surf.GetCellData().SetActiveTangents( "Tangents1" )
 
-        surf.cell_data[ 'dipAngle' ] = dip_angles
-        surf.cell_data[ 'strikeAngle' ] = strike_angles
+        dipAngles, strikeAngles = self.computeDipStrikeFromCellBase( normals, tangents1, tangents2 )
+
+        createAttribute( surf, dipAngles, "dipAngle" )
+        createAttribute( surf, strikeAngles, "strikeAngle" )
 
         return surf
 
@@ -741,9 +764,9 @@ class FaultGeometry:
         print( "\n🔍 DIAGNOSTIC DES NORMALES" )
         print( "=" * 60 )
 
-        normals = surface.cell_data[ 'Normals' ]
-        tangent1 = surface.cell_data[ 'tangent1' ]
-        tangent2 = surface.cell_data[ 'tangent2' ]
+        normals = surface.GetCellData().GetNormals()
+        tangent1 = surface.GetCellData().GetTangents()
+        tangent2 = surface.GetCellData().GetArray( "Tangents2" )
 
         nCells = len( normals )
 
@@ -804,39 +827,39 @@ class FaultGeometry:
         print( "=" * 60 )
 
         # Visualization
-        plotter = pv.Plotter( shape=( 1, 2 ) )
+        # plotter = pv.Plotter( shape=( 1, 2 ) )
 
-        # Plot 1: Surface with normals
-        plotter.subplot( 0, 0 )
-        plotter.add_mesh( surface, color='lightgray', show_edges=True, opacity=0.8 )
+        # # Plot 1: Surface with normals
+        # plotter.subplot( 0, 0 )
+        # plotter.add_mesh( surface, color='lightgray', show_edges=True, opacity=0.8 )
 
-        centers = surface.cell_centers()
-        arrowsNorm = centers.glyph( orient='Normals', scale=False, factor=scaleFactor )
-        plotter.add_mesh( arrowsNorm, color='red', label='Normals' )
+        # centers = surface.cell_centers()
+        # arrowsNorm = centers.glyph( orient='Normals', scale=False, factor=scaleFactor )
+        # plotter.add_mesh( arrowsNorm, color='red', label='Normals' )
 
-        plotter.add_legend()
-        plotter.add_axes()
-        plotter.add_text( "Normales (Rouge)", position='upper_edge' )
-        plotter.set_scale( zscale=zScale )
+        # plotter.add_legend()
+        # plotter.add_axes()
+        # plotter.add_text( "Normales (Rouge)", position='upper_edge' )
+        # plotter.set_scale( zscale=zScale )
 
-        # Plot 2: All vectors
-        plotter.subplot( 0, 1 )
-        plotter.add_mesh( surface, color='lightgray', show_edges=True, opacity=0.5 )
+        # # Plot 2: All vectors
+        # plotter.subplot( 0, 1 )
+        # plotter.add_mesh( surface, color='lightgray', show_edges=True, opacity=0.5 )
 
-        arrowsNorm = centers.glyph( orient='Normals', scale=False, factor=scaleFactor )
-        arrowsT1 = centers.glyph( orient='tangent1', scale=False, factor=scaleFactor )
-        arrowsT2 = centers.glyph( orient='tangent2', scale=False, factor=scaleFactor )
+        # arrowsNorm = centers.glyph( orient='Normals', scale=False, factor=scaleFactor )
+        # arrowsT1 = centers.glyph( orient='tangent1', scale=False, factor=scaleFactor )
+        # arrowsT2 = centers.glyph( orient='tangent2', scale=False, factor=scaleFactor )
 
-        plotter.add_mesh( arrowsNorm, color='red', label='Normal' )
-        plotter.add_mesh( arrowsT1, color='green', label='Tangent1' )
-        plotter.add_mesh( arrowsT2, color='blue', label='Tangent2' )
+        # plotter.add_mesh( arrowsNorm, color='red', label='Normal' )
+        # plotter.add_mesh( arrowsT1, color='green', label='Tangent1' )
+        # plotter.add_mesh( arrowsT2, color='blue', label='Tangent2' )
 
-        plotter.add_legend()
-        plotter.add_axes()
-        plotter.add_text( "Système complet (R,G,B)", position='upper_edge' )
-        plotter.set_scale( zscale=zScale )
+        # plotter.add_legend()
+        # plotter.add_axes()
+        # plotter.add_text( "Système complet (R,G,B)", position='upper_edge' )
+        # plotter.set_scale( zscale=zScale )
 
-        plotter.link_views()
-        plotter.show()
+        # plotter.link_views()
+        # plotter.show()
 
         return surface

@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 import pyvista as pv
 from typing_extensions import Self
 
-from geos.processing.post_processing.ProfileExtractor import ProfileExtractor
-# from geos.processing.post_processing.FaultStabilityAnalysis import Config
+from vtkmodules.vtkCommonDataModel import vtkPolyData
 
-# from geos.processing.tools.Config import Config
+from geos.processing.post_processing.ProfileExtractor import ProfileExtractor
+from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getArrayInObject )
+from geos.utils.pieceEnum import Piece
 
 
 # ============================================================================
@@ -39,20 +40,20 @@ class Visualizer:
 
     # -------------------------------------------------------------------
     @staticmethod
-    def plotMohrCoulombDiagram( surface: pv.PolyData,
+    def plotMohrCoulombDiagram( surface: vtkPolyData,
                                 time: float,
                                 path: Path,
                                 show: bool = True,
                                 save: bool = True ) -> None:
         """Create Mohr-Coulomb diagram with depth coloring."""
-        sigmaN = -surface.cell_data[ "sigmaNEffective" ]
-        tau = np.abs( surface.cell_data[ "tauEffective" ] )
-        SCU = np.abs( surface.cell_data[ "SCU" ] )
-        depth = surface.cell_data[ 'elementCenter' ][ :, 2 ]
+        sigmaN = - getArrayInObject( surface, "sigmaNEffective", Piece.CELLS )
+        tau = np.abs( getArrayInObject( surface, "tauEffective", Piece.CELLS ) )
+        SCU = np.abs( getArrayInObject( surface, "SCU", Piece.CELLS ) )
+        depth =  getArrayInObject( surface, 'elementCenter', Piece.CELLS )[ :, 2 ]
 
-        cohesion = surface.cell_data[ "mohrCohesion" ][ 0 ]
-        mu = surface.cell_data[ "mohrFrictionCoefficient" ][ 0 ]
-        phi = surface.cell_data[ 'mohrFrictionAngle' ][ 0 ]
+        cohesion = getArrayInObject( surface, "mohrCohesion", Piece.CELLS )[ 0 ]
+        mu = getArrayInObject( surface, "mohrFrictionCoefficient" , Piece.CELLS )[ 0 ]
+        phi = getArrayInObject( surface, 'mohrFrictionAngle' , Piece.CELLS )[ 0 ]
 
         fig, axes = plt.subplots( 1, 2, figsize=( 16, 8 ) )
 
@@ -632,28 +633,28 @@ class Visualizer:
         requiredFields = [ 'sigma1', 'sigma2', 'sigma3', 'side', 'elementCenter' ]
 
         for field in requiredFields:
-            if field not in volumeMesh.cell_data:
+            if isAttributeInObject( volumeMesh, field, Piece.CELLS ):
                 print( f"  ⚠️  Missing required field: {field}" )
                 return
 
         # Check for pressure
-        if 'pressure_bar' in volumeMesh.cell_data:
+        if isAttributeInObject( volumeMesh, 'pressure_bar', Piece.CELLS):
             pressureField = 'pressure_bar'
-            pressure = volumeMesh.cell_data[ pressureField ]
-        elif 'pressure' in volumeMesh.cell_data:
+            pressure = getArrayInObject( volumeMesh, pressureField, Piece.CELLS )
+        elif isAttributeInObject( volumeMesh, 'pressure', Piece.CELLS ):
             pressureField = 'pressure'
-            pressure = volumeMesh.cell_data[ pressureField ] / 1e5
+            pressure = getArrayInObject( volumeMesh, pressureField, Piece.CELLS ) / 1e5
             print( "  ℹ️  Converting pressure from Pa to bar" )
         else:
             print( "  ⚠️  No pressure field found" )
             pressure = None
 
         # Extract volume data
-        centers = volumeMesh.cell_data[ 'elementCenter' ]
-        sigma1 = volumeMesh.cell_data[ 'sigma1' ]
-        sigma2 = volumeMesh.cell_data[ 'sigma2' ]
-        sigma3 = volumeMesh.cell_data[ 'sigma3' ]
-        sideData = volumeMesh.cell_data[ 'side' ]
+        centers = getArrayInObject( volumeMesh, 'elementCenter', Piece.CELLS )
+        sigma1 = getArrayInObject( volumeMesh, 'sigma1', Piece.CELLS )
+        sigma2 = getArrayInObject( volumeMesh, 'sigma2', Piece.CELLS )
+        sigma3 = getArrayInObject( volumeMesh, 'sigma3', Piece.CELLS )
+        sideData = getArrayInObject( volumeMesh, 'side', Piece.CELLS )
 
         # ===================================================================
         # FILTER CELLS BY SIDE (BOTH PLUS AND MINUS)
@@ -668,11 +669,6 @@ class Visualizer:
         if pressure is not None:
             pressurePlus = pressure[ maskPlus ]
 
-        # Créer subset de cellData pour le côté plus
-        cellDataPlus = {}
-        for key in volumeMesh.cell_data:
-            cellDataPlus[ key ] = volumeMesh.cell_data[ key ][ maskPlus ]
-
         # Minus side (side = 2 or 3)
         maskMinus = ( sideData == 2 ) | ( sideData == 3 )
         centersMinus = centers[ maskMinus ]
@@ -682,10 +678,13 @@ class Visualizer:
         if pressure is not None:
             pressureMinus = pressure[ maskMinus ]
 
-        # Créer subset de cellData pour le côté minus
+        # Créer subset de cellData pour le côté plus
+        cellDataPlus = {}
         cellDataMinus = {}
-        for key in volumeMesh.cell_data:
-            cellDataMinus[ key ] = volumeMesh.cell_data[ key ][ maskMinus ]
+        for key in volumeMesh.GetCellData().items():
+            cellDataPlus[ key ] = getArrayInObject( volumeMesh, key )[ maskPlus ]
+            cellDataMinus[ key ] = getArrayInObject( volumeMesh, key )[ maskMinus ]
+
 
         print( f"  📍 Plus side: {len(centersPlus):,} cells" )
         print( f"  📍 Minus side: {len(centersMinus):,} cells" )

@@ -10,12 +10,16 @@ import numpy as np
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
-import pyvista as pv
 from typing_extensions import Any, Self
 
+
+from vtkmodules.vtkCommonDataModel import vtkCellData, vtkDataSet, vtkPolyData, vtkUnstructuredGrid
+
+from geos.utils.pieceEnum import Piece
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject )
 from geos.processing.post_processing.MohrCoulomb import (  MohrCoulomb )
 
-from geos.processing.post_processing.ProfileExtractor import ProfileExtractor
+from geos.processing.post_processing.ProfileExtractor import ( ProfileExtractor )
 
 
 class SensitivityAnalyzer:
@@ -30,7 +34,7 @@ class SensitivityAnalyzer:
         self.showPlots = showPlots
 
     # -------------------------------------------------------------------
-    def runAnalysis( self: Self, surfaceWithStress: pv.DataSet, time: float, sensitivityFrictionAngles: list[float], sensitivityCohesions: list[float], profileStartPoints: list[tuple[float]], profileSearchRadius: list[tuple[float]] ) -> list[ dict[ str, Any ] ]:
+    def runAnalysis( self: Self, surfaceWithStress, time: float, sensitivityFrictionAngles: list[float], sensitivityCohesions: list[float], profileStartPoints: list[tuple[float]], profileSearchRadius: list[tuple[float]] ) -> list[ dict[ str, Any ] ]:
         """Run sensitivity analysis for multiple friction angles and cohesions."""
         frictionAngles = sensitivityFrictionAngles
         cohesions = sensitivityCohesions
@@ -43,12 +47,12 @@ class SensitivityAnalyzer:
         print( f"Total combinations: {len(frictionAngles) * len(cohesions)}" )
 
         results = []
-
         for frictionAngle in frictionAngles:
             for cohesion in cohesions:
                 print( f"\n→ Testing φ={frictionAngle}°, C={cohesion} bar" )
 
-                surfaceCopy = surfaceWithStress.copy()
+                surfaceCopy = type(surfaceWithStress)()
+                surfaceCopy.DeepCopy( surfaceWithStress )
 
                 surfaceAnalyzed = MohrCoulomb.analyze(
                     surfaceCopy,
@@ -74,24 +78,27 @@ class SensitivityAnalyzer:
         return results
 
     # -------------------------------------------------------------------
-    def _extractStatistics( self: Self, surface: pv.DataSet, frictionAngle: float,
+    def _extractStatistics( self: Self, surface: vtkPolyData, frictionAngle: float,
                             cohesion: float ) -> dict[ str, Any ]:
         """Extract statistical metrics from analyzed surface."""
-        stability = surface.cell_data[ "stabilityState" ]
-        SCU = surface.cell_data[ "SCU" ]
-        failureProba = surface.cell_data[ "failureProbability" ]
-        safetyMargin = surface.cell_data[ "safetyMargin" ]
+        stability = getArrayInObject( surface, "stabilityState", Piece.CELLS )
+        SCU = getArrayInObject( surface, "SCU", Piece.CELLS )
+        failureProba = getArrayInObject( surface, "failureProbability", Piece.CELLS )
+        safetyMargin = getArrayInObject( surface, "safetyMargin", Piece.CELLS )
+
+        nCells = surface.GetNumberOfCells()
+
 
         stats = {
             'frictionAngle': frictionAngle,
             'cohesion': cohesion,
-            'nCells': surface.n_cells,
+            'nCells': nCells,
             'nStable': np.sum( stability == 0 ),
             'nCritical': np.sum( stability == 1 ),
             'nUnstable': np.sum( stability == 2 ),
-            'pctUnstable': np.sum( stability == 2 ) / surface.n_cells * 100,
-            'pctCritical': np.sum( stability == 1 ) / surface.n_cells * 100,
-            'pctStable': np.sum( stability == 0 ) / surface.n_cells * 100,
+            'pctUnstable': np.sum( stability == 2 ) / nCells * 100,
+            'pctCritical': np.sum( stability == 1 ) / nCells * 100,
+            'pctStable': np.sum( stability == 0 ) / nCells * 100,
             'meanSCU': np.mean( SCU ),
             'maxSCU': np.max( SCU ),
             'meanFailureProb': np.mean( failureProba ),
@@ -114,17 +121,15 @@ class SensitivityAnalyzer:
         self._plotHeatMap( df, 'meanSCU', 'Mean SCU [-]', axes[ 1, 0 ] )
         self._plotHeatMap( df, 'meanSafetyMargin', 'Mean Safety Margin [bar]', axes[ 1, 1 ] )
 
-        plt.tight_layout()
+        fig.tight_layout()
 
         years = time / ( 365.25 * 24 * 3600 )
         filename = f'sensitivity_analysis_{years:.0f}y.png'
-        plt.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
+        fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         print( f"\n📊 Sensitivity plot saved: {filename}" )
 
         if self.showPlots:
-            plt.show()
-        else:
-            plt.close()
+            fig.show()
 
     # -------------------------------------------------------------------
     def _plotHeatMap( self: Self, df: pd.DataFrame, column: str, title: str, ax: plt.Axes ) -> None:
@@ -153,17 +158,16 @@ class SensitivityAnalyzer:
 
     # -------------------------------------------------------------------
     def _plotSCUDepthProfiles( self: Self, results: list[ dict[ str, Any ] ], time: float,
-                               surfaceWithStress: pv.DataSet, profileStartPoints=None, profileSearchRadius=None,
+                               surfaceWithStress: vtkDataSet, profileStartPoints=None, profileSearchRadius=None,
                                maxDepthProfiles=None ) -> None:
         """Plot SCU depth profiles for all parameter combinations.
 
         Each (cohesion, friction) pair gets a unique color
-        Uses profile points from config.PROFILE_START_POINTS.
         """
         print( "\n  📊 Creating SCU sensitivity depth profiles..." )
 
         # Extract depth data
-        centers = surfaceWithStress.cell_data[ 'elementCenter' ]
+        centers = getArrayInObject( surfaceWithStress, 'elementCenter', Piece.CELLS )
         centers[ :, 2 ]
 
         # Get profile points from config
@@ -189,12 +193,14 @@ class SensitivityAnalyzer:
             profileStartPoints = [ ( xPos, yPos ) ]
 
         # Get search radius from config or auto-compute
-        if searchRadius is None:
+        if profileSearchRadius is None:
             xMin, xMax = np.min( centers[ :, 0 ] ), np.max( centers[ :, 0 ] )
             yMin, yMax = np.min( centers[ :, 1 ] ), np.max( centers[ :, 1 ] )
             xRange = xMax - xMin
             yRange = yMax - yMin
             searchRadius = min( xRange, yRange ) * 0.15
+        else:
+            searchRadius = profileSearchRadius
 
         print( f"  📍 Using {len(profileStartPoints)} profile point(s) from config" )
         print( f"     Search radius: {searchRadius:.1f}m" )
@@ -225,16 +231,16 @@ class SensitivityAnalyzer:
                 cohesion = params[ 'cohesion' ]
 
                 # Re-analyze surface with these parameters
-                surfaceCopy = surfaceWithStress.copy()
+                surfaceCopy = type(surfaceWithStress)()
+                surfaceCopy.DeepCopy( surfaceWithStress )
                 surfaceAnalyzed = MohrCoulomb.analyze(
-                    # surfaceCopy, cohesion, frictionAngle, time, verbose=False
                     surfaceCopy,
                     cohesion,
                     frictionAngle,
                     verbose=False )
 
                 # Extract SCU
-                SCU = np.abs( surfaceAnalyzed.cell_data[ "SCU" ] )
+                SCU = np.abs( getArrayInObject( surfaceAnalyzed, "SCU", Piece.CELLS ) )
 
                 # Extract profile using adaptive method
                 # depthsSCU, profileSCU, _, _ = ProfileExtractor.extractVerticalProfileTopologyBased(
@@ -282,14 +288,12 @@ class SensitivityAnalyzer:
         years = time / ( 365.25 * 24 * 3600 )
         fig.suptitle( 'SCU Depth Profiles - Sensitivity Analysis', fontsize=16, weight='bold', y=0.98 )
 
-        plt.tight_layout( rect=( 0, 0, 1, 0.96 ) )
+        fig.tight_layout( rect=( 0, 0, 1, 0.96 ) )
 
         # Save
         filename = f'sensitivity_scu_profiles_{years:.0f}y.png'
-        plt.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
+        fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         print( f"\n  💾 SCU sensitivity profiles saved: {filename}" )
 
         if self.showPlots:
-            plt.show()
-        else:
-            plt.close()
+            fig.show()

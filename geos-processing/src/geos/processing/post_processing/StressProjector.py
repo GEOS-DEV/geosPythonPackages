@@ -9,7 +9,15 @@ from scipy.spatial import cKDTree
 from xml.etree.ElementTree import ElementTree, Element, SubElement
 import pyvista as pv
 
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData )
+from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+
 from geos.geomechanics.model.StressTensor import StressTensor
+from geos.mesh.utils.genericHelpers import ( extractCellSelection, getLocalBasisVectors )
+from geos.mesh.utils.arrayHelpers import (isAttributeInObject, getArrayInObject, computeCellCenterCoordinates)
+from geos.mesh.utils.arrayModifiers import (createAttribute, updateAttribute)
+from geos.utils.pieceEnum import Piece
+from geos.mesh.io.vtkIO import writeMesh, VtkOutput
 
 
 # ============================================================================
@@ -67,33 +75,33 @@ class StressProjector:
     # -------------------------------------------------------------------
     def projectStressToFault(
             self: Self,
-            volumeData: pv.UnstructuredGrid,
-            volumeInitial: pv.UnstructuredGrid,
-            faultSurface: pv.PolyData,
+            volumeData: vtkUnstructuredGrid,
+            volumeInitial: vtkUnstructuredGrid,
+            faultSurface: vtkPolyData,
             time: float | None = None,
             timestep: int | None = None,
             weightingScheme: str = "arithmetic",
             stressName: str = "averageStress",
             biotName: str = "rockPorosity_biotCoefficient",
             computePrincipalStresses: bool = False,
-            frictionAngle: float = 10, cohesion: float = 0 ) -> tuple[ pv.PolyData, pv.UnstructuredGrid, pv.UnstructuredGrid ]:
+            frictionAngle: float = 10, cohesion: float = 0 ) -> tuple[ vtkPolyData, vtkUnstructuredGrid, vtkUnstructuredGrid ]:
         """Project stress and save principal stresses to VTU.
 
         Now uses pre-computed geometric properties for efficiency
         """
-        if stressName not in volumeData.array_names:
+        if not isAttributeInObject ( volumeData, stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{stressName}' in dataset" )
 
         # =====================================================================
         # 1. EXTRACT STRESS DATA
         # =====================================================================
-        pressure = volumeData[ "pressure" ] / 1e5
-        pressureFault = volumeInitial[ "pressure" ] / 1e5
-        pressureInitial = volumeInitial[ "pressure" ] / 1e5
-        biot = volumeData[ biotName ]
+        pressure = getArrayInObject( volumeData, "pressure", Piece.CELLS ) / 1e5
+        pressureFault = getArrayInObject( volumeInitial, "pressure", Piece.CELLS ) / 1e5
+        pressureInitial = getArrayInObject( volumeInitial, "pressure", Piece.CELLS ) / 1e5
+        biot = getArrayInObject( volumeData, biotName, Piece.CELLS )
 
-        stressEffective = StressTensor.buildFromArray( volumeData[ stressName ] / 1e5 )
-        stressEffectiveInitial = StressTensor.buildFromArray( volumeInitial[ stressName ] / 1e5 )
+        stressEffective = StressTensor.buildFromArray( getArrayInObject( volumeData, stressName, Piece.CELLS ) / 1e5 )
+        stressEffectiveInitial = StressTensor.buildFromArray( getArrayInObject( volumeInitial, stressName, Piece.CELLS ) / 1e5 )
 
         # Convert effective stress to total stress
         arrI = np.eye( 3 )[ None, :, : ]
@@ -107,14 +115,24 @@ class StressProjector:
         # =====================================================================
         # 3. PREPARE FAULT GEOMETRY
         # =====================================================================
-        normals = faultSurface.cell_data[ "Normals" ]
-        tangent1 = faultSurface.cell_data[ "tangent1" ]
-        tangent2 = faultSurface.cell_data[ "tangent2" ]
+        # TODO fix
+        normalsXX, tangent1XX, tangent2XX = getLocalBasisVectors( faultSurface )
+        # normals = faultSurface.cell_data[ "Normals" ]
+        # tangent1 = faultSurface.cell_data[ "tangent1" ]
+        # tangent2 = faultSurface.cell_data[ "tangent2" ]
+        normals = vtk_to_numpy( faultSurface.GetCellData().GetNormals() )
+        tangent1 = vtk_to_numpy( faultSurface.GetCellData().GetArray( "Tangents1") )
+        tangent2 = vtk_to_numpy( faultSurface.GetCellData().GetArray( "Tangents2") )
 
-        faultCenters = faultSurface.cell_centers().points
-        faultSurface.cell_data[ 'elementCenter' ] = faultCenters
+        print( (normalsXX - normals ).max() )
+        print( (tangent1XX - tangent1 ).max() )
+        print( (tangent2XX - tangent2 ).max() )
 
-        nFault = faultSurface.n_cells
+        faultCenters = computeCellCenterCoordinates( faultSurface )
+        fcenters = faultSurface.GetCellData().GetArray( 'elementCenter' )
+        fcenters = faultCenters
+
+        nFault = faultSurface.GetNumberOfCells()
 
         # =====================================================================
         # 4. COMPUTE PRINCIPAL STRESSES FOR CONTRIBUTING CELLS
@@ -166,13 +184,6 @@ class StressProjector:
             volPlus = self.adjacencyMapping[ faultIdx ][ 'plus' ]
             volMinus = self.adjacencyMapping[ faultIdx ][ 'minus' ]
             allVol = volPlus + volMinus
-            # for faultIdx in range( nFault ):
-            #     if faultIdx not in mapping:
-            #         continue
-
-            #     volPlus = mapping[ faultIdx ][ 'plus' ]
-            #     volMinus = mapping[ faultIdx ][ 'minus' ]
-            #     allVol = volPlus + volMinus
 
             if len( allVol ) == 0:
                 continue
@@ -258,12 +269,11 @@ class StressProjector:
         # =====================================================================
         # 7. STORE RESULTS ON FAULT SURFACE
         # =====================================================================
-        faultSurface.cell_data[ "sigmaNEffective" ] = sigmaNArr
-        faultSurface.cell_data[ "tauEffective" ] = tauDipArr
-        faultSurface.cell_data[ "tauStrike" ] = tauStrikeArr
-        faultSurface.cell_data[ "tauDip" ] = tauDipArr
-        faultSurface.cell_data[ "deltaSigmaNEffective" ] = deltaSigmaNArr
-        faultSurface.cell_data[ "deltaTauEffective" ] = deltaTauArr
+        for attributeName, value in zip(
+            [ "sigmaNEffective", "tauEffective", "tauStrike", "tauDip", "deltaSigmaNEffective", "deltaTauEffective" ],
+            [ sigmaNArr, tauDipArr, tauStrikeArr, tauDipArr, deltaSigmaNArr, deltaTauArr ]
+        ):
+            updateAttribute( faultSurface, value, attributeName, Piece.CELLS )
 
         # =====================================================================
         # 8. STATISTICS
@@ -333,16 +343,16 @@ class StressProjector:
         # EXTRACT STRESS DATA FROM VOLUME
         # ===================================================================
 
-        if stressName not in volumeData.array_names:
+        if not isAttributeInObject( volumeData, stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{stressName}' in volume dataset" )
 
         print( f"  📊 Extracting stress from field: '{stressName}'" )
 
         # Extract effective stress and pressure
-        pressure = volumeData[ "pressure" ] / 1e5  # Convert to bar
-        biot = volumeData[ biotName ]
+        pressure = getArrayInObject( volumeData, "pressure", Piece.CELLS ) / 1e5  # Convert to bar
+        biot = getArrayInObject( volumeData, biotName, Piece.CELLS )
 
-        stressEffective = StressTensor.buildFromArray( volumeData[ stressName ] / 1e5 )
+        stressEffective = StressTensor.buildFromArray( getArrayInObject( volumeData, stressName, Piece.CELLS ) / 1e5 )
 
         # Convert effective stress to total stress
         arrI = np.eye( 3 )[ None, :, : ]
@@ -352,21 +362,21 @@ class StressProjector:
         # EXTRACT SUBSET OF CELLS
         # ===================================================================
         cellIndices = sorted( cellsToTrack )
-        cellMask = np.zeros( volumeData.n_cells, dtype=bool )
+        cellMask = np.zeros( volumeData.GetNumberOfCells(), dtype=bool )
         cellMask[ cellIndices ] = True
 
-        subsetMesh = volumeData.extract_cells( cellMask )
+        subsetMesh = extractCellSelection ( cellMask )
 
         # ===================================================================
         # REBUILD MAPPING: subsetIdx -> originalIdx
         # ===================================================================
-        originalCenters = volumeData.cell_centers().points[ cellIndices ]
-        subsetCenters = subsetMesh.cell_centers().points
+        originalCenters = vtk_to_numpy( computeCellCenterCoordinates( volumeData ) )[ cellIndices ]
+        subsetCenters = vtk_to_numpy( computeCellCenterCoordinates( subsetMesh ) )
 
         tree = cKDTree( originalCenters )
 
-        subsetToOriginal = np.zeros( subsetMesh.n_cells, dtype=int )
-        for subsetIdx in range( subsetMesh.n_cells ):
+        subsetToOriginal = np.zeros( subsetMesh.GetNumberOfCells(), dtype=int )
+        for subsetIdx in range( subsetMesh.GetNumberOfCells() ):
             dist, idx = tree.query( subsetCenters[ subsetIdx ] )
             if dist > 1e-6:
                 print( f"        WARNING: Cell {subsetIdx} not matched (dist={dist})" )
@@ -386,17 +396,17 @@ class StressProjector:
         if 'strikeAngle' not in faultSurface.cell_data:
             print( "        ⚠️ WARNING: 'strikeAngle' not found in faultSurface" )
 
-        # Create mapping: volume_cell_id -> [dip_angles, strike_angles]
+        # Create mapping: volume_cell_id -> [dipAngles, strikeAngles]
         volumeToDip: dict[ int, npt.NDArray[ np.float64 ] ] = {}
         volumeToStrike: dict[ int, npt.NDArray[ np.float64 ] ] = {}
 
         for faultIdx, neighbors in mapping.items():
             # Get dip and strike angle from fault cell
-            faultDip = faultSurface.cell_data[ 'dipAngle' ][ faultIdx ]
+            faultDip = getArrayInObject( faultSurface, 'dipAngle', Piece.CELLS )[ faultIdx ]
 
             # Strike is optional
-            if 'strikeAngle' in faultSurface.cell_data:
-                faultStrike = faultSurface.cell_data[ 'strikeAngle' ][ faultIdx ]
+            if isAttributeInObject ( faultSurface, 'strikeAngle', Piece.CELLS):
+                faultStrike = getArrayInObject( faultSurface, 'strikeAngle', Piece.CELLS )[ faultIdx ]
             else:
                 faultStrike = np.nan
 
@@ -422,7 +432,7 @@ class StressProjector:
         # ===================================================================
         # COMPUTE PRINCIPAL STRESSES AND ANALYTICAL FAULT STRESSES
         # ===================================================================
-        nCells = subsetMesh.n_cells
+        nCells = subsetMesh.GetNumberOfCells()
 
         sigma1Arr = np.zeros( nCells )
         sigma2Arr = np.zeros( nCells )
@@ -536,23 +546,23 @@ class StressProjector:
         # ===================================================================
         # ADD DATA TO MESH
         # ===================================================================
-        subsetMesh.cell_data[ 'sigma1' ] = sigma1Arr
-        subsetMesh.cell_data[ 'sigma2' ] = sigma2Arr
-        subsetMesh.cell_data[ 'sigma3' ] = sigma3Arr
-        subsetMesh.cell_data[ 'meanStress' ] = meanStressArr
-        subsetMesh.cell_data[ 'deviatoricStress' ] = deviatoricStressArr
-        subsetMesh.cell_data[ 'pressure_bar' ] = pressureArr
-
-        subsetMesh.cell_data[ 'sigma1Direction' ] = direction1Arr
-        subsetMesh.cell_data[ 'sigma2Direction' ] = direction2Arr
-        subsetMesh.cell_data[ 'sigma3Direction' ] = direction3Arr
-
-        # Analytical fault stresses
-        subsetMesh.cell_data[ 'sigmaNAnalytical' ] = sigmaNAnalyticalArr
-        subsetMesh.cell_data[ 'tauAnalytical' ] = tauAnalyticalArr
-        subsetMesh.cell_data[ 'dipAngle' ] = dipAngleArr
-        subsetMesh.cell_data[ 'strikeAngle' ] = strikeAngleArr
-        subsetMesh.cell_data[ 'deltaAngle' ] = deltaArr
+        for attributeName, attributeArray in zip([
+            ( 'sigma1' , sigma1Arr ),
+            ( 'sigma2' , sigma2Arr ),
+            ( 'sigma3' , sigma3Arr ),
+            ( 'meanStress' , meanStressArr ),
+            ( 'deviatoricStress' , deviatoricStressArr ),
+            ( 'pressure_bar' , pressureArr ),
+            ( 'sigma1Direction' , direction1Arr ),
+            ( 'sigma2Direction' , direction2Arr ),
+            ( 'sigma3Direction' , direction3Arr ),
+            ( 'sigmaNAnalytical', sigmaNAnalyticalArr ),
+            ( 'tauAnalytical', tauAnalyticalArr ),
+            ( 'dipAngle', dipAngleArr ),
+            ( 'strikeAngle', strikeAngleArr ),
+            ( 'deltaAngle', deltaArr ),
+        ]):
+            updateAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS )
 
         # ===================================================================
         # COMPUTE SCU ANALYTICALLY (Mohr-Coulomb)
@@ -567,17 +577,18 @@ class StressProjector:
                                       tauCriticalArr,
                                       out=np.zeros_like( tauAnalyticalArr ),
                                       where=tauCriticalArr != 0 )
-        subsetMesh.cell_data[ 'tauCriticalAnalytical' ] = tauCriticalArr
-        subsetMesh.cell_data[ 'SCUAnalytical' ] = SCUAnalyticalArr
+
         # CFS (Coulomb Failure Stress)
         CFSAnalyticalArr = tauAnalyticalArr - mu * ( -sigmaNAnalyticalArr )
-        subsetMesh.cell_data[ 'CFSAnalytical' ] = CFSAnalyticalArr
 
-
-
-        subsetMesh.cell_data[ 'side' ] = sideArr
-        subsetMesh.cell_data[ 'nFaultCells' ] = nFaultCellsArr
-        subsetMesh.cell_data[ 'originalCellId' ] = subsetToOriginal
+        for attributeName, attributeArray in zip([
+            ( 'tauCriticalAnalytical', tauCriticalArr ),
+            ( 'SCUAnalytical', SCUAnalyticalArr ),
+            ( 'side', sideArr ),
+            ( 'nFaultCells', nFaultCellsArr ),
+            ( 'originalCellIds', subsetToOriginal )
+        ]):
+            createAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS )
 
         # ===================================================================
         # STATISTICS
@@ -622,7 +633,7 @@ class StressProjector:
         vtuPath = self.vtuOutputDir / vtuFilename
 
         # Save mesh
-        mesh.save( str( vtuPath ) )
+        writeMesh( mesh=mesh, vtkOutput=VtkOutput( vtuPath ) )
 
         # Store metadata for PVD
         self.timestepInfo.append( {

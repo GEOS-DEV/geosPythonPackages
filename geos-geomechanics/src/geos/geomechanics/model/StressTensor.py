@@ -39,8 +39,8 @@ class StressTensor:
                             tangent2: npt.NDArray[ np.float64 ] ) -> dict[ str, Any ]:
         """Rotate stress tensor to fault local coordinate system."""
         # Verify orthonormality
-        assert np.abs( np.linalg.norm( tangent1 ) - 1.0 ) < 1e-10
-        assert np.abs( np.linalg.norm( tangent2 ) - 1.0 ) < 1e-10
+        assert np.abs( np.linalg.norm( tangent1 ) - 1.0 ) < 1e-10, f"T1 - {np.abs( np.linalg.norm( tangent1 ) - 1.0 )}"
+        assert np.abs( np.linalg.norm( tangent2 ) - 1.0 ) < 1e-10, f"T2 - {np.abs( np.linalg.norm( tangent2 ) - 1.0 )}"
         assert np.abs( np.dot( normal, tangent1 ) ) < 1e-10
         assert np.abs( np.dot( normal, tangent2 ) ) < 1e-10
 

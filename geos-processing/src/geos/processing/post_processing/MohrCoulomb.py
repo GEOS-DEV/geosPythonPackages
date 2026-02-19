@@ -1,5 +1,10 @@
 import numpy as np
-import pyvista as pv
+from vtkmodules.vtkCommonDataModel import (
+    vtkDataSet )
+from vtkmodules.util.numpy_support import numpy_to_vtk
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
+from geos.mesh.utils.arrayModifiers import ( createAttribute, updateAttribute )
+from geos.utils.pieceEnum import Piece
 # ============================================================================
 # MOHR COULOMB
 # ============================================================================
@@ -7,7 +12,7 @@ class MohrCoulomb:
     """Mohr-Coulomb failure criterion analysis."""
 
     @staticmethod
-    def analyze( surface: pv.DataSet, cohesion: float, frictionAngleDeg: float, verbose: bool = True ) -> pv.DataSet:
+    def analyze( surface: vtkDataSet, cohesion: float, frictionAngleDeg: float, verbose: bool = True ) -> vtkDataSet:
         """Perform Mohr-Coulomb stability analysis.
 
         Parameters:
@@ -19,10 +24,10 @@ class MohrCoulomb:
         mu = np.tan( np.radians( frictionAngleDeg ) )
 
         # Extract stress components
-        sigmaN = surface.cell_data[ "sigmaNEffective" ]
-        tau = surface.cell_data[ "tauEffective" ]
-        surface.cell_data[ 'deltaSigmaNEffective' ]
-        surface.cell_data[ 'deltaTauEffective' ]
+        sigmaN = getArrayInObject( surface, "sigmaNEffective", Piece.CELLS )
+        tau = getArrayInObject( surface, "tauEffective", Piece.CELLS )
+        deltaSigmaN = getArrayInObject( surface, 'deltaSigmaNEffective', Piece.CELLS )
+        deltaTau = getArrayInObject( surface, 'deltaTauEffective', Piece.CELLS )
 
         # Mohr-Coulomb failure envelope
         tauCritical = cohesion - sigmaN * mu
@@ -34,21 +39,22 @@ class MohrCoulomb:
         # Shear Capacity Utilization: SCU = τ / τ_crit
         SCU = np.divide( tau, tauCritical, out=np.zeros_like( tau ), where=tauCritical != 0 )
 
-        if "SCUInitial" not in surface.cell_data:
+        # if "SCUInitial" not in surface.cell_data:
+        if not isAttributeInObject( surface, "SCUInitial", Piece.CELLS ):
             # First timestep: store as initial reference
             SCUInitial = SCU.copy()
             CFSInitial = CFS.copy()
             deltaSCU = np.zeros_like( SCU )
             deltaCFS = np.zeros_like( CFS )
 
-            surface.cell_data[ "SCUInitial" ] = SCUInitial
-            surface.cell_data[ "CFSInitial" ] = CFSInitial
+            createAttribute( surface, SCUInitial, "SCUInitial" )
+            createAttribute( surface, CFSInitial, "CFSInitial" )
 
             isInitial = True
         else:
             # Subsequent timesteps: calculate change from initial
-            SCUInitial = surface.cell_data[ "SCUInitial" ]
-            CFSInitial = surface.cell_data[ 'CFSInitial' ]
+            SCUInitial = getArrayInObject( surface, "SCUInitial", Piece.CELLS )
+            CFSInitial = getArrayInObject( surface, "CFSInitial", Piece.CELLS )
             deltaSCU = SCU - SCUInitial
             deltaCFS = CFS - CFSInitial
             isInitial = False
@@ -66,19 +72,22 @@ class MohrCoulomb:
         safety = tauCritical - tau
 
         # Store results
-        surface.cell_data.update( {
-            "mohrCohesion": np.full( surface.n_cells, cohesion ),
-            "mohrFrictionAngle": np.full( surface.n_cells, frictionAngleDeg ),
-            "mohrFrictionCoefficient": np.full( surface.n_cells, mu ),
-            "mohr_critical_shear_stress": tauCritical,
-            "SCU": SCU,
-            "deltaSCU": deltaSCU,
-            "CFS": CFS,
-            "deltaCFS": deltaCFS,
-            "safetyMargin": safety,
-            "stabilityState": stability,
-            "failureProbability": failureProba
-        } )
+        attributes = { "mohrCohesion": np.full( surface.GetNumberOfCells(), cohesion ),
+                       "mohrFrictionAngle": np.full( surface.GetNumberOfCells(), frictionAngleDeg ),
+                       "mohrFrictionCoefficient": np.full( surface.GetNumberOfCells(), mu ),
+                       "mohr_critical_shear_stress": tauCritical,
+                       "SCU": SCU,
+                       "deltaSCU": deltaSCU,
+                       "CFS": CFS,
+                       "deltaCFS": deltaCFS,
+                       "safetyMargin": safety,
+                       "stabilityState": stability,
+                       "failureProbability": failureProba }
+
+        cdata = surface.GetCellData()
+        for attributeName, value in attributes.items():
+            updateAttribute( surface, value, attributeName, Piece.CELLS )
+
 
         if verbose:
             nStable = np.sum( stability == 0 )
