@@ -34,17 +34,12 @@ from vtkmodules.vtkCommonCore import (
 )
 from geos.mesh.utils.arrayHelpers import (
     getComponentNames,
-    getComponentNamesDataSet,
     getAttributesWithNumberOfComponents,
     getArrayInObject,
     isAttributeInObject,
-    isAttributeInObjectDataSet,
-    isAttributeInObjectMultiBlockDataSet,
     isAttributeGlobal,
     getVtkArrayTypeInObject,
-    getVtkArrayTypeInMultiBlock,
-    getVtkDataTypeInObject,
-    getNumberOfComponentsMultiBlock,
+    getNumberOfComponents,
 )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 from geos.utils.Errors import VTKError
@@ -102,7 +97,7 @@ def fillPartialAttributes(
         raise TypeError( "Input mesh has to be inherited from vtkMultiBlockDataSet." )
 
     # Check if the attribute exist in the input mesh.
-    if not isAttributeInObjectMultiBlockDataSet( multiBlockDataSet, attributeName, piece ):
+    if not isAttributeInObject( multiBlockDataSet, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
 
     # Check if the attribute is partial.
@@ -110,8 +105,8 @@ def fillPartialAttributes(
         raise AttributeError( f"The attribute { attributeName } is already global." )
 
     # Get information of the attribute to fill.
-    vtkDataType: int = getVtkArrayTypeInMultiBlock( multiBlockDataSet, attributeName, piece )
-    nbComponents: int = getNumberOfComponentsMultiBlock( multiBlockDataSet, attributeName, piece )
+    vtkDataType: int = getVtkArrayTypeInObject( multiBlockDataSet, attributeName, piece )
+    nbComponents: int = getNumberOfComponents( multiBlockDataSet, attributeName, piece )
     componentNames: tuple[ str, ...] = ()
     if nbComponents > 1:
         componentNames = getComponentNames( multiBlockDataSet, attributeName, piece )
@@ -159,7 +154,7 @@ def fillPartialAttributes(
     elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSet )
     for blockIndex in elementaryBlockIndexes:
         dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSet.GetDataSet( blockIndex ) )
-        if not isAttributeInObjectDataSet( dataSet, attributeName, piece ):
+        if not isAttributeInObject( dataSet, attributeName, piece ):
             createConstantAttribute( dataSet, listValues, attributeName, componentNames, piece, vtkDataType, logger )
 
     return
@@ -282,7 +277,7 @@ def createConstantAttribute(
     # Deals with multiBlocksDataSets.
     if isinstance( mesh, ( vtkMultiBlockDataSet, vtkCompositeDataSet ) ):
         # Check if the attribute already exist in the input mesh.
-        if isAttributeInObjectMultiBlockDataSet( mesh, attributeName, piece ):
+        if isAttributeInObject( mesh, attributeName, piece ):
             raise AttributeError( f"The attribute { attributeName } is already on the mesh." )
 
         # Parse the multiBlockDataSet to create the constant attribute on each blocks.
@@ -389,12 +384,12 @@ def createAttribute(
         raise TypeError( "Input dataSet has to be inherited from vtkDataSet." )
 
     # Check if the attribute already exist in the input mesh.
-    if isAttributeInObjectDataSet( dataSet, attributeName, piece ):
+    if isAttributeInObject( dataSet, attributeName, piece ):
         raise AttributeError( f"The attribute { attributeName } is already present in the mesh." )
 
     # Check if an attribute with the same name exist on the opposite piece (points or cells) on the input mesh.
     oppositePiece: Piece = Piece.CELLS if piece == Piece.POINTS else Piece.POINTS
-    if isAttributeInObjectDataSet( dataSet, attributeName, oppositePiece ):
+    if isAttributeInObject( dataSet, attributeName, oppositePiece ):
         logger.warning( f"The attribute { attributeName } exist on the opposite piece { oppositePiece.value }." )
 
     # Check the coherency between the given array type and the vtk array type if it exist.
@@ -512,7 +507,7 @@ def copyAttribute(
             raise ValueError( "The two meshes have not the same element indexation." )
 
         npArray: npt.NDArray[ Any ] = getArrayInObject( meshFrom, attributeNameFrom, piece )
-        componentNames: tuple[ str, ...] = getComponentNamesDataSet( meshFrom, attributeNameFrom, piece )
+        componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeNameFrom, piece )
         vtkArrayType: int = getVtkArrayTypeInObject( meshFrom, attributeNameFrom, piece )
 
         createAttribute( meshTo, npArray, attributeNameTo, componentNames, piece, vtkArrayType, logger )
@@ -617,7 +612,7 @@ def transferAttributeWithElementMap(
         componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeName, piece )
         nbComponents: int = len( componentNames )
 
-        vtkDataType: int = getVtkDataTypeInObject( meshFrom, attributeName, piece )
+        vtkDataType: int = getVtkArrayTypeInObject( meshFrom, attributeName, piece )
         defaultValue: Any
         if vtkDataType in ( VTK_FLOAT, VTK_DOUBLE ):
             defaultValue = np.nan

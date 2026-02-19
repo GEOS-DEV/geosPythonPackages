@@ -25,7 +25,6 @@ def test_SurfaceGeomechanics( dataSetTest: Any ) -> None:
 
 def test_failingSurfaceGeomechanics() -> None:
     """Test failing of SurfaceGeomechanics due to absence of attributes in the mesh."""
-    # failingCase: TriangulatedSurfaceTestCase = TriangulatedSurfaceTestCase( pointsCoords, triangles, None )
     sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( vtkPolyData() )
-    with pytest.raises( AssertionError ):
+    with pytest.raises( AttributeError ):
         sgFilter.applyFilter()
