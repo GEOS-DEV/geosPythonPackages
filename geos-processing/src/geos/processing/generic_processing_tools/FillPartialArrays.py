@@ -6,7 +6,7 @@ from typing_extensions import Self
 from typing import Union, Any
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.mesh.utils.arrayModifiers import fillPartialAttributes
 from geos.mesh.utils.arrayHelpers import getAttributePieceInfo
 
@@ -89,7 +89,7 @@ class FillPartialArrays:
         self.multiBlockDataSet: vtkMultiBlockDataSet = multiBlockDataSet
         self.dictAttributesValues: dict[ str, Union[ list[ Any ], None ] ] = dictAttributesValues
 
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
             self.logger = getLogger( loggerTitle, True )
@@ -97,6 +97,18 @@ class FillPartialArrays:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -107,11 +119,10 @@ class FillPartialArrays:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
@@ -121,8 +132,10 @@ class FillPartialArrays:
             ValueError: Error during the filling of the attribute.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+
         piece: Piece
-        for attributeName in self.dictAttributesValues:
+        mess: str = ""
+        for attributeName, values in self.dictAttributesValues.items():
             piece = getAttributePieceInfo( self.multiBlockDataSet, attributeName )
             if piece == Piece.NONE:
                 raise AttributeError( f"The attribute { attributeName } is not in the mesh." )
@@ -134,9 +147,22 @@ class FillPartialArrays:
             fillPartialAttributes( self.multiBlockDataSet,
                                    attributeName,
                                    piece=piece,
-                                   listValues=self.dictAttributesValues[ attributeName ],
+                                   listValues=values,
                                    logger=self.logger )
+            if values is None:
+                values = [ "the default value" ]
+            mess = f"{ mess }The attribute { attributeName } has been filled with { values }.\n"
 
-        self.logger.info( f"The filter { self.logger.name } succeed." )
+        # Log the output message.
+        self.logger.info( mess )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
