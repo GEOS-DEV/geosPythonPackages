@@ -747,6 +747,32 @@ def renameAttribute(
     return
 
 
+def updateAttribute( mesh: vtkDataSet, newValue: npt.NDArray[ Any ], attributeName: str, piece: Piece = Piece.CELLS, logger: Union[ Logger, None ] = None ) -> None:
+    """Update the value of an attribute. Creates the attribute if it is not already in the dataset.
+
+    Args:
+        mesh (vtkDataSet): Input mesh.
+        attributeName (str): Name of the attribute.
+        newValue (vtkDataArray):
+    """
+    # Check if an external logger is given.
+    if logger is None:
+        logger = getLogger( "updateAttribute", True )
+
+    if isAttributeInObject( mesh, attributeName, piece ):
+        if piece == Piece.CELLS:
+            data = mesh.GetCellData()
+        elif piece == Piece.POINTS:
+            data = mesh.GetPointData()
+        else:
+            raise ValueError( "Only point and cell data handled." )
+        data.RemoveArray( attributeName )
+
+    createAttribute( mesh, newValue, attributeName, piece=piece, logger=logger )
+
+    return
+
+
 def createCellCenterAttribute(
     mesh: Union[ vtkMultiBlockDataSet, vtkDataSet ],
     cellCenterAttributeName: str,

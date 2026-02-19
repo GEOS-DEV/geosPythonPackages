@@ -15,6 +15,15 @@ from vtkmodules.vtkFiltersCore import ( vtk3DLinearGridPlaneCutter, vtkPolyDataN
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkFiltersGeneral import vtkDataSetTriangleFilter
+from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
+from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
+from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
+from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
+from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
+                                            vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData, vtkPolyData,
+                                            vtkCell,  , vtkSelection )
+from typing import cast
+
 
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
@@ -515,6 +524,7 @@ def getLocalBasisVectors(
 
 def computeNormals(
     surface: vtkPolyData,
+    pointNormals: bool = False,
     logger: Union[ Logger, None ] = None,
 ) -> vtkPolyData:
     """Compute and set the normals of a given surface.
@@ -665,3 +675,41 @@ def computeSurfaceTextureCoordinates(
         vtkErrorLogger.error( captured.strip() )
 
     return textureFilter.GetOutput()
+
+
+def extractCellSelection( mesh: vtkUnstructuredGrid, ids: list[ int ]) -> vtkUnstructuredGrid:
+
+    selectionNode: vtkSelectionNode = vtkSelectionNode()
+    selectionNode.SetFieldType( vtkSelectionNode.CELL )
+    selectionNode.SetContentType( vtkSelectionNode.INDICES )
+    selectionNode.SetSelectionList( numpy_to_vtkIdTypeArray (np.asarray( ids ).astype( np.int64 ) ) )
+
+    selection: vtkSelection = vtkSelection()
+    selection.AddNode( selectionNode )
+
+    extractCells = vtkExtractSelection()
+    extractCells.SetInputData(0, mesh )
+    extractCells.SetInputData(1, selection )
+    extractCells.Update()
+
+    # TODO raiseError
+    return vtkUnstructuredGrid.SafeDownCast( extractCells.GetOutputDataObject( 0 ) )
+
+
+def extractSurface( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    geomFilter: vtkGeometryFilter = vtkGeometryFilter()
+    geomFilter.SetInputData( mesh )
+
+    geomFilter.Update()
+
+    return geomFilter.GetOutput()
+
+
+
+def computeCellVolumes( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    volFilter: vtkCellSizeFilter = vtkCellSizeFilter()
+    volFilter.SetInputData( mesh )
+    volFilter.SetComputeVolume( True )
+    volFilter.Update()
+
+    return volFilter.GetOutput()

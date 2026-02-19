@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Type, TypeAlias
+from xml.etree import ElementTree as ET
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
 from vtkmodules.vtkIOCore import vtkWriter
 from vtkmodules.vtkIOLegacy import vtkDataReader, vtkUnstructuredGridWriter, vtkUnstructuredGridReader
@@ -266,3 +267,31 @@ def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = Fal
     except ( ValueError, RuntimeError ) as e:
         ioLogger.error( e )
         raise
+
+
+class PVDReader:
+    def __init__( self, filename ):
+        self.filename = filename
+        self.dir = Path( filename ).parent
+        self.datasets = {}
+        self._read()
+
+    def _read( self ):
+        tree = ET.parse( self.filename )
+        root = tree.getroot()
+        datasets = root[0].findall( 'DataSet' )
+
+        n: int = 0
+        for dataset in datasets:
+            timestep = float( dataset.attrib.get( 'timestep', 0 ) )
+            datasetFile = Path( dataset.attrib.get( 'file' ) )
+            # self.datasets.update( ( n, timestep ): datasetFile )
+            self.datasets[ n ] = ( timestep, datasetFile )
+            n += 1
+
+
+    def getDataSetAtTimeIndex( self, timeIndex: int):
+        return readMesh(  self.dir / self.datasets[ timeIndex ][ 1 ] )
+
+    def getAllTimestepsValues( self ) -> list[ float ]:
+        return list( [ value[0] for _, value in self.datasets.items() ] )
