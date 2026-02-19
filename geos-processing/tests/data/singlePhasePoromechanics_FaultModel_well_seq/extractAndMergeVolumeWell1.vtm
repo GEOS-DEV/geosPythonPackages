@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64" compressor="vtkZLibDataCompressor">
+    <vtkMultiBlockDataSet>
+        <Block name="Volume">
+            <DataSet name="Volume" file="extractAndMergeVolume.vtu"/>
+        </Block>
+        <Block name="Wells">
+            <DataSet name="Well1" file="extractAndMergeWell1.vtu"/>
+        </Block>
+    </vtkMultiBlockDataSet>
+</VTKFile>
