@@ -1147,7 +1147,8 @@ class TetQualityAnalysis:
         Args:
             filename (str): Output filename.
         """
-        self.filename = filename
+        if filename != "None":
+            self.filename = filename
 
     def __loggerSection( self: Self, sectionName: str ) -> None:
         self.logger.info( "=" * 80 )
