@@ -138,9 +138,11 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         counter: CountWarningHandler = CountWarningHandler()
         self.counter: CountWarningHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -333,7 +335,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                     self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
                 else:
                     self.logger.info( f"{ result }." )
-            except ( ValueError, VTKError ) as e:
+            except ChildProcessError as e:
                 self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
             except Exception as e:
                 mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
@@ -341,5 +343,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
             self.nbWarnings = self.counter.warningCount
             self.counter.resetWarningCount()
+
+            self.nbErrors = self.counter.errorCount
+            self.counter.resetErrorCount()
 
         return 1

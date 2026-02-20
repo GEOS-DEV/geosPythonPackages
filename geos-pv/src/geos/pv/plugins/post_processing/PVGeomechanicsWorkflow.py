@@ -378,6 +378,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         extractAndMergeFilter.Update()
         # Add to the warning counter the number of warning logged with the call of GeosBlockExtractAndMerge plugin
         self.counter.addExternalWarningCount( extractAndMergeFilter.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeosBlockExtractAndMerge plugin
+        self.counter.addExternalErrorCount( extractAndMergeFilter.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeosBlockExtractAndMerge." )
 
         self.volumeMesh.ShallowCopy( extractAndMergeFilter.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()
