@@ -277,18 +277,20 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
             try:
                 geomechanicsCalculatorFilter.applyFilter()
-                # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter (useful for the PVGeomechanicsWorkflow)
+                # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
                 self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
 
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
             except ( ValueError, AttributeError ) as e:
                 geomechanicsCalculatorFilter.logger.error(
                     f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
-                self.counter.addExternalErrorCount( geomechanicsCalculatorFilter.nbErrors )
+                # The logger of the filter is used to log the error, the CountVerbosityHandler of the plugin must be updated
+                self.counter.addExternalErrorCount( 1 )
             except Exception as e:
                 mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
                 geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
-                self.counter.addExternalErrorCount( geomechanicsCalculatorFilter.nbErrors )
+                # The logger of the filter is used to log the error, the CountVerbosityHandler of the plugin must be updated
+                self.counter.addExternalErrorCount( 1 )
 
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
             self.logger.info( f"Apply plugin { self.logger.name }." )
@@ -344,10 +346,13 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 self.logger.critical( mess, exc_info=True )
 
         outputMesh.Modified()
-        self.nbWarnings = self.counter.warningCount
-        self.counter.resetWarningCount()
 
+        # Keep number of verbosity logged during the plugin application
+        self.nbWarnings = self.counter.warningCount
         self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
+        self.counter.resetWarningCount()
         self.counter.resetErrorCount()
 
         return

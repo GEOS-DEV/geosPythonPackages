@@ -169,7 +169,7 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                         surfaceBlock.GetCellData().AddArray( attr )
                         surfaceBlock.GetCellData().Modified()
                     surfaceBlock.Modified()
-                except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+                except ( ValueError, VTKError, AttributeError, AssertionError, TypeError ) as e:
                     sgFilter.logger.error( f"The filter { loggerName } failed due to:\n{ e }" )
                     raise ChildProcessError( f"Error during the processing of: { loggerName }." )
                 except Exception as e:
@@ -189,11 +189,12 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
             self.logger.critical( mess, exc_info=True )
 
-        outputMesh.Modified()
+        # Keep number of verbosity logged during the plugin application
         self.nbWarnings = self.counter.warningCount
-        self.counter.resetWarningCount()
-
         self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
+        self.counter.resetWarningCount()
         self.counter.resetErrorCount()
 
         return

@@ -291,12 +291,17 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
             try:
                 doExtractAndMerge( inputMesh, self.outputCellsT0, vtkMultiBlockDataSet(), vtkMultiBlockDataSet(),
                                    self.extractFault, self.extractWell, self.counter )
+                # Initialize time step iteration
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )
             except ( ValueError, VTKError ) as e:
                 self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
+                self.resetPlugin()
+                return 1
             except Exception as e:
                 mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
                 self.logger.critical( mess, exc_info=True )
+                self.resetPlugin()
+                return 1
 
         # Current time step, extract, merge, rename and transfer properties
         if self.requestDataStep == self.currentTimeStepIndex:
@@ -324,12 +329,6 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 if cellCenterAttributeName not in meshAttributes:
                     createCellCenterAttribute( outputCells, cellCenterAttributeName, logger=self.logger )
 
-                # Stop the time step iteration
-                request.Remove( executive.CONTINUE_EXECUTING() )
-
-                # Set to -2 in case time changes on Paraview
-                self.requestDataStep = -2
-
                 result: str = f"The plugin { self.logger.name } succeeded"
                 if self.counter.warningCount > 0:
                     self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
@@ -341,10 +340,23 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
                 self.logger.critical( mess, exc_info=True )
 
-            self.nbWarnings = self.counter.warningCount
-            self.counter.resetWarningCount()
-
-            self.nbErrors = self.counter.errorCount
-            self.counter.resetErrorCount()
+            # Stop the time step iteration
+            request.Remove( executive.CONTINUE_EXECUTING() )
+            self.resetPlugin()
 
         return 1
+
+    def resetPlugin( self: Self ) -> None:
+        """Reset the plugin variable to be apply again."""
+        # Set to -2 in case time changes on Paraview
+        self.requestDataStep = -2
+
+        # Keep number of verbosity logged during the plugin application
+        self.nbWarnings = self.counter.warningCount
+        self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
+        self.counter.resetWarningCount()
+        self.counter.resetErrorCount()
+
+        return

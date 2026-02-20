@@ -31,7 +31,7 @@ def doExtractAndMerge(
         outputWells (vtkMultiBlockDataSet): Output well mesh
         extractFault (bool): True if SurfaceElementRegion needs to be extracted, False otherwise.
         extractWell (bool): True if WellElementRegion needs to be extracted, False otherwise.
-        verbosityCounter (logging.Handler): The plugin Handler to update with the number of warning log during the call of the extract and merge filters.
+        verbosityCounter (logging.Handler): The plugin Handler to update with the number of verbosity logged during the call of the extract and merge filters.
 
     Raises:
         ChildProcessError: Error during the call of GeosBlockMerge or GeosBlockExtractor filter.
@@ -86,7 +86,7 @@ def mergeBlocksFilter(
 
     Args:
         mesh (vtkMultiBlockDataSet): Mesh to merge.
-        verbosityCounter (logging.Handler): The plugin Handler to update with the number of warning log during the call of the extract and merge filters.
+        verbosityCounter (logging.Handler): The plugin Handler to update with the number of verbosity logged during the call of the  merge filters.
         convertSurfaces (bool, optional): True to convert surface from vtkUnstructuredGrid to vtkPolyData.
             Defaults to False.
         domainToMerge (str, optional): The name of the GEOS domain processed.

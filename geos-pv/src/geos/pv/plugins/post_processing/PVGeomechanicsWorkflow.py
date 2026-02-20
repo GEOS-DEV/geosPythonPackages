@@ -15,7 +15,6 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Errors import VTKError
 from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
@@ -363,10 +362,12 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
             mess: str = f"The plugin { self.logger.name } failed due to:\n{ e }"
             self.logger.critical( mess, exc_info=True )
 
+        # Keep number of verbosity logged during the plugin application
         self.nbWarnings = self.counter.warningCount
-        self.counter.resetWarningCount()
-
         self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
+        self.counter.resetWarningCount()
         self.counter.resetErrorCount()
 
         return 1

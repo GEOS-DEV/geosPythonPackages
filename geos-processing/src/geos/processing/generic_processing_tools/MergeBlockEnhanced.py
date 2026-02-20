@@ -134,6 +134,7 @@ class MergeBlockEnhanced:
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is apply again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 

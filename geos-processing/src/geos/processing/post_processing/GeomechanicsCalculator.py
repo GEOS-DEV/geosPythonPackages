@@ -715,11 +715,9 @@ class GeomechanicsCalculator:
         counter: CountVerbosityHandler = CountVerbosityHandler()
         self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
-        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
-            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -770,11 +768,9 @@ class GeomechanicsCalculator:
         else:
             self.logger.info( f"{ result }." )
 
+        # Keep number of warnings logged during the filter application and reset the CountVerbosityHandler in case the filter is apply again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
-
-        self.nbErrors = self.counter.errorCount
-        self.counter.resetErrorCount()
 
         return
 
