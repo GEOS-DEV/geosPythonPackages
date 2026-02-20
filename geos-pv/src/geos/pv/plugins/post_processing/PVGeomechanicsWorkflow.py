@@ -15,8 +15,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Errors import VTKError
-from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 
@@ -145,12 +144,14 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -355,14 +356,19 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
             else:
                 self.logger.info( f"{ result }." )
 
-        except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+        except ChildProcessError as e:
             self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
         except Exception as e:
             mess: str = f"The plugin { self.logger.name } failed due to:\n{ e }"
             self.logger.critical( mess, exc_info=True )
 
+        # Keep number of verbosity logged during the plugin application
         self.nbWarnings = self.counter.warningCount
+        self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
         self.counter.resetWarningCount()
+        self.counter.resetErrorCount()
 
         return 1
 
@@ -373,6 +379,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         extractAndMergeFilter.Update()
         # Add to the warning counter the number of warning logged with the call of GeosBlockExtractAndMerge plugin
         self.counter.addExternalWarningCount( extractAndMergeFilter.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeosBlockExtractAndMerge plugin
+        self.counter.addExternalErrorCount( extractAndMergeFilter.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeosBlockExtractAndMerge." )
 
         self.volumeMesh.ShallowCopy( extractAndMergeFilter.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()
@@ -402,6 +412,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         geomechanicsCalculatorPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator plugin
         self.counter.addExternalWarningCount( geomechanicsCalculatorPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of GeomechanicsCalculator plugin
+        self.counter.addExternalErrorCount( geomechanicsCalculatorPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVGeomechanicsCalculators." )
 
         self.volumeMesh.ShallowCopy( geomechanicsCalculatorPlugin.GetOutputDataObject( 0 ) )
         self.volumeMesh.Modified()
@@ -418,6 +432,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         surfaceGeomechanicsPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics plugin
         self.counter.addExternalWarningCount( surfaceGeomechanicsPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of SurfaceGeomechanics plugin
+        self.counter.addExternalErrorCount( surfaceGeomechanicsPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVSurfaceGeomechanics." )
 
         self.faultMesh.ShallowCopy( surfaceGeomechanicsPlugin.GetOutputDataObject( 0 ) )
         self.faultMesh.Modified()

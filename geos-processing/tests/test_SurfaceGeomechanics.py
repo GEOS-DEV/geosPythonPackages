@@ -6,7 +6,7 @@
 import pytest
 from typing import Any
 
-from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 
 
@@ -23,7 +23,14 @@ def test_SurfaceGeomechanics( dataSetTest: Any ) -> None:
     assert mesh.GetCellData().HasArray( "displacementJump_XYZ" )
 
 
-def test_failingSurfaceGeomechanics() -> None:
+def test_SurfaceGeomechanicsTypeError() -> None:
+    """Test failing of SurfaceGeomechanics with a vtkUnstructuredGrid as input mesh."""
+    sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( vtkUnstructuredGrid() )
+    with pytest.raises( TypeError ):
+        sgFilter.applyFilter()
+
+
+def test_SurfaceGeomechanicsAttributeError() -> None:
     """Test failing of SurfaceGeomechanics due to absence of attributes in the mesh."""
     sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( vtkPolyData() )
     with pytest.raises( AttributeError ):

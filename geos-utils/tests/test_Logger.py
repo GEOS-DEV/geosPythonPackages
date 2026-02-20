@@ -10,12 +10,12 @@ import geos.utils.Logger as internLogger
 
 
 def test_CountWarningHandler() -> None:
-    """Test the counter handler class and its methods."""
+    """Test the verbosity counter handler class and its methods for the verbosity warning."""
     loggerTest: logging.Logger = logging.getLogger( "Test CountWarningHandler" )
     loggerTest.setLevel( logging.INFO )
     loggerTest.propagate = False
 
-    countWarningHandler: internLogger.CountWarningHandler = internLogger.CountWarningHandler()
+    countWarningHandler: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
     countWarningHandler.setLevel( logging.INFO )
 
     loggerTest.addHandler( countWarningHandler )
@@ -37,6 +37,37 @@ def test_CountWarningHandler() -> None:
     assert countWarningHandler.warningCount == resetValue + 1
 
 
+def test_CountErrorHandler() -> None:
+    """Test the verbosity counter handler class and its methods for the verbosity error and higher."""
+    loggerTest: logging.Logger = logging.getLogger( "Test CountErrorHandler" )
+    loggerTest.setLevel( logging.INFO )
+    loggerTest.propagate = False
+
+    countErrorHandler: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
+    countErrorHandler.setLevel( logging.INFO )
+
+    loggerTest.addHandler( countErrorHandler )
+
+    nbErrors: int = random.randint( 0, 10 )
+    for error in range( nbErrors ):
+        loggerTest.error( f"Error number { error }." )
+    assert countErrorHandler.errorCount == nbErrors
+
+    additionalErrors: int = random.randint( 1, 10 )
+    countErrorHandler.addExternalErrorCount( additionalErrors )
+    assert countErrorHandler.errorCount == nbErrors + additionalErrors
+
+    resetValue: int = random.randint( 0, 10 )
+    countErrorHandler.resetErrorCount( resetValue )
+    assert countErrorHandler.errorCount == resetValue
+
+    loggerTest.error( "Add an error after the handler reset." )
+    assert countErrorHandler.errorCount == resetValue + 1
+
+    loggerTest.critical( "Add a critical error, higher than error but style an error." )
+    assert countErrorHandler.errorCount == resetValue + 2
+
+
 def test_getLoggerHandlerType() -> None:
     """Test the function to get a logger's handler with a certain type."""
     loggerTest: logging.Logger = logging.getLogger( "Test getLoggerHandlerType" )
@@ -48,7 +79,7 @@ def test_getLoggerHandlerType() -> None:
     handlerType1: type = type( handler1 )
     loggerTest.addHandler( handler1 )
 
-    handler2: internLogger.CountWarningHandler = internLogger.CountWarningHandler()
+    handler2: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
     handler2.setLevel( logging.INFO )
     handlerType2: type = type( handler2 )
     loggerTest.addHandler( handler2 )
@@ -84,7 +115,7 @@ def test_getLoggerHandlerTypeValueError() -> None:
 
     loggerTest.addHandler( handler1 )
 
-    handler2: internLogger.CountWarningHandler = internLogger.CountWarningHandler()
+    handler2: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
     handler2.setLevel( logging.INFO )
     handlerType2: type = type( handler2 )
 
@@ -104,7 +135,7 @@ def test_hasLoggerHandlerType() -> None:
     handlerType1: type = type( handler1 )
     loggerTest.addHandler( handler1 )
 
-    handler2: internLogger.CountWarningHandler = internLogger.CountWarningHandler()
+    handler2: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
     handler2.setLevel( logging.INFO )
     handlerType2: type = type( handler2 )
 
@@ -122,7 +153,7 @@ def test_isHandlerInLogger() -> None:
     handler1.setLevel( logging.INFO )
     loggerTest.addHandler( handler1 )
 
-    handler2: internLogger.CountWarningHandler = internLogger.CountWarningHandler()
+    handler2: internLogger.CountVerbosityHandler = internLogger.CountVerbosityHandler()
     handler2.setLevel( logging.INFO )
 
     handler3: logging.Handler = logging.Handler()

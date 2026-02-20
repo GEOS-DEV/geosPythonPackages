@@ -23,7 +23,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
@@ -99,12 +99,14 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
@@ -275,64 +277,82 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
 
             try:
                 geomechanicsCalculatorFilter.applyFilter()
-                # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter (useful for the PVGeomechanicsWorkflow)
+                # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
                 self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
 
                 outputMesh.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
             except ( ValueError, AttributeError ) as e:
                 geomechanicsCalculatorFilter.logger.error(
                     f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
+                # The logger of the filter is used to log the error, the CountVerbosityHandler of the plugin must be updated
+                self.counter.addExternalErrorCount( 1 )
             except Exception as e:
                 mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
                 geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
+                # The logger of the filter is used to log the error, the CountVerbosityHandler of the plugin must be updated
+                self.counter.addExternalErrorCount( 1 )
 
         elif isinstance( outputMesh, vtkMultiBlockDataSet ):
             self.logger.info( f"Apply plugin { self.logger.name }." )
 
-            volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
-            for blockIndex in volumeBlockIndexes:
-                volumeBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(
-                    outputMesh.GetDataSet( blockIndex ) )
-                volumeBlockName: str = getBlockNameFromIndex( outputMesh, blockIndex )
-                filterName: str = f"Geomechanics Calculator for the block { volumeBlockName }"
+            try:
+                volumeBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( outputMesh )
+                for blockIndex in volumeBlockIndexes:
+                    volumeBlock: vtkUnstructuredGrid = vtkUnstructuredGrid.SafeDownCast(
+                        outputMesh.GetDataSet( blockIndex ) )
+                    volumeBlockName: str = getBlockNameFromIndex( outputMesh, blockIndex )
+                    filterName: str = f"Geomechanics Calculator for the block { volumeBlockName }"
 
-                geomechanicsCalculatorFilter = GeomechanicsCalculator(
-                    volumeBlock,
-                    self.computeAdvancedProperties,
-                    filterName,
-                    True,
-                )
+                    geomechanicsCalculatorFilter = GeomechanicsCalculator(
+                        volumeBlock,
+                        self.computeAdvancedProperties,
+                        filterName,
+                        True,
+                    )
 
-                if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
-                    geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
+                    if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
+                        geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
 
-                geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
-                geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
-                geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
-                geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
+                    geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
+                    geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
+                    geomechanicsCalculatorFilter.physicalConstants.rockCohesion = self.rockCohesion
+                    geomechanicsCalculatorFilter.physicalConstants.frictionAngle = self.frictionAngle
 
-                try:
-                    geomechanicsCalculatorFilter.applyFilter()
-                    # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
-                    self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
+                    try:
+                        geomechanicsCalculatorFilter.applyFilter()
+                        # Add to the warning counter the number of warning logged with the call of GeomechanicsCalculator filter
+                        self.counter.addExternalWarningCount( geomechanicsCalculatorFilter.nbWarnings )
 
-                    volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
-                    volumeBlock.Modified()
-                except ( ValueError, AttributeError ) as e:
-                    geomechanicsCalculatorFilter.logger.error(
-                        f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
-                except Exception as e:
-                    mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
-                    geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
+                        volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
+                        volumeBlock.Modified()
+                    except ( ValueError, AttributeError ) as e:
+                        geomechanicsCalculatorFilter.logger.error( f"The filter { filterName } failed due to:\n{ e }" )
+                        raise ChildProcessError( f"Error during the processing of: { filterName }." ) from e
+                    except Exception as e:
+                        mess = f"The filter { filterName } failed due to:\n{ e }"
+                        geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
+                        raise ChildProcessError( f"Critical error during the processing of: { filterName }." ) from e
 
-            result: str = f"The filter { self.logger.name } succeeded"
-            if self.counter.warningCount > 0:
-                self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
-            else:
-                self.logger.info( f"{ result }." )
+                result: str = f"The plugin { self.logger.name } succeeded"
+                if self.counter.warningCount > 0:
+                    self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+                else:
+                    self.logger.info( f"{ result }." )
+
+            except ChildProcessError as e:
+                self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
+            except Exception as e:
+                mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
+                self.logger.critical( mess, exc_info=True )
 
         outputMesh.Modified()
+
+        # Keep number of verbosity logged during the plugin application
         self.nbWarnings = self.counter.warningCount
+        self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is apply again
         self.counter.resetWarningCount()
+        self.counter.resetErrorCount()
 
         return
