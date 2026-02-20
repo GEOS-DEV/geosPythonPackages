@@ -122,18 +122,17 @@ class SurfaceGeomechanics:
         counter: CountWarningHandler = CountWarningHandler()
         self.counter: CountWarningHandler
         self.nbWarnings: int = 0
+        self.nbErrors: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
             self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
         except ValueError:
             self.counter = counter
             self.counter.setLevel( logging.INFO )
 
         self.logger.addHandler( self.counter )
 
-        # Input surfacic mesh
-        if not surfacicMesh.IsA( "vtkPolyData" ):
-            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a { type( surfacicMesh ) }." )
         self.inputMesh: vtkPolyData = surfacicMesh
         # Identification of the input surface (logging purpose)
         self.name: Union[ str, None ] = None
@@ -241,12 +240,17 @@ class SurfaceGeomechanics:
         """Compute Geomechanical properties on input surface.
 
         Raises:
+            TypeError: Error With the type of the input mesh.
             ValueError: Errors during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
             AttributeError: Attributes must be on cell.
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
+
+        # Input surfacic mesh
+        if not self.inputMesh.IsA( "vtkPolyData" ):
+            raise TypeError( f"Input surface is expected to be a vtkPolyData, not a { type( self.inputMesh ) }." )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -267,6 +271,9 @@ class SurfaceGeomechanics:
 
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
+
+        self.nbErrors = self.counter.errorCount
+        self.counter.resetErrorCount()
 
         return
 
@@ -352,6 +359,9 @@ class SurfaceGeomechanics:
 
         Returns:
             npt.NDArray[np.float64]: Vector of new coordinates of the attribute.
+
+        Raises:
+            ValueError: Error with the shape of attrArray or the computation of the attribute coordinate.
         """
         attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
@@ -369,16 +379,12 @@ class SurfaceGeomechanics:
             attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
-            self.logger.error( "Attribute new coordinate calculation failed." )
+            raise ValueError( "Attribute new coordinate calculation failed." )
 
         return attrXYZ
 
     def computeShearCapacityUtilization( self: Self ) -> None:
         """Compute the shear capacity utilization (SCU) on surface.
-
-        Raises:
-            ValueError: Something went wrong during the creation of an attribute.
-            AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 

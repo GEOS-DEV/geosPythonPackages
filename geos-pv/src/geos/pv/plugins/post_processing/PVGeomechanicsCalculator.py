@@ -324,10 +324,10 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                         volumeBlock.ShallowCopy( geomechanicsCalculatorFilter.getOutput() )
                         volumeBlock.Modified()
                     except ( ValueError, AttributeError ) as e:
-                        geomechanicsCalculatorFilter.logger.error( f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }" )
+                        geomechanicsCalculatorFilter.logger.error( f"The filter { filterName } failed due to:\n{ e }" )
                         raise ChildProcessError( f"Error during the processing of: { filterName }." )
                     except Exception as e:
-                        mess = f"The filter { geomechanicsCalculatorFilter.logger.name } failed due to:\n{ e }"
+                        mess = f"The filter { filterName } failed due to:\n{ e }"
                         geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
                         raise ChildProcessError( f"Critical error during the processing of: { filterName }." )
 

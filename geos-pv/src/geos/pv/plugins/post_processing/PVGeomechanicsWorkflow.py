@@ -427,6 +427,10 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         surfaceGeomechanicsPlugin.Update()
         # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics plugin
         self.counter.addExternalWarningCount( surfaceGeomechanicsPlugin.nbWarnings )
+        # Add to the error counter the number of error logged with the call of SurfaceGeomechanics plugin
+        self.counter.addExternalErrorCount( surfaceGeomechanicsPlugin.nbErrors )
+        if self.counter.errorCount != 0:
+            raise ChildProcessError( "Error during the processing of the plugin PVSurfaceGeomechanics." )
 
         self.faultMesh.ShallowCopy( surfaceGeomechanicsPlugin.GetOutputDataObject( 0 ) )
         self.faultMesh.Modified()
