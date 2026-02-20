@@ -49,11 +49,11 @@ def doExtractAndMerge(
         blockExtractor.applyFilter()
     except ( ValueError, TypeError ) as e:
         blockExtractor.logger.error( f"The filter { blockExtractor.logger.name } failed due to: { e }." )
-        raise ChildProcessError( f"Error during the processing of: { blockExtractor.logger.name }." )
+        raise ChildProcessError( f"Error during the processing of: { blockExtractor.logger.name }." ) from e
     except Exception as e:
         mess: str = f"The filter { blockExtractor.logger.name } failed du to: { e }"
         blockExtractor.logger.critical( mess, exc_info=True )
-        raise ChildProcessError( f"Critical error during the processing of: { blockExtractor.logger.name }." )
+        raise ChildProcessError( f"Critical error during the processing of: { blockExtractor.logger.name }." ) from e
 
     # Add to the warning count the number of warning logged with the call of GeosBlockExtractor filter
     verbosityCounter.addExternalWarningCount( blockExtractor.nbWarnings )
@@ -108,11 +108,11 @@ def mergeBlocksFilter(
         mergeBlockFilter.applyFilter()
     except ( ValueError, VTKError ) as e:
         mergeBlockFilter.logger.error( f"The filter { mergeBlockFilter.logger.name } failed due to: { e }" )
-        raise ChildProcessError( f"Error during the processing of: { loggerName }." )
+        raise ChildProcessError( f"Error during the processing of: { loggerName }." ) from e
     except Exception as e:
         mess: str = f"The filter { mergeBlockFilter.logger.name } failed due to: { e }"
         mergeBlockFilter.logger.critical( mess, exc_info=True )
-        raise ChildProcessError( f"Critical error during the processing of: { loggerName }." )
+        raise ChildProcessError( f"Critical error during the processing of: { loggerName }." ) from e
 
     # Add to the warning count the number of warning logged with the call of GeosBlockMerge filter
     verbosityCounter.addExternalWarningCount( mergeBlockFilter.nbWarnings )

@@ -171,11 +171,11 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
                     surfaceBlock.Modified()
                 except ( ValueError, VTKError, AttributeError, AssertionError, TypeError ) as e:
                     sgFilter.logger.error( f"The filter { loggerName } failed due to:\n{ e }" )
-                    raise ChildProcessError( f"Error during the processing of: { loggerName }." )
+                    raise ChildProcessError( f"Error during the processing of: { loggerName }." ) from e
                 except Exception as e:
                     mess: str = f"The filter { loggerName } failed due to:\n{ e }"
                     sgFilter.logger.critical( mess, exc_info=True )
-                    raise ChildProcessError( f"Critical error during the processing of: { loggerName }." )
+                    raise ChildProcessError( f"Critical error during the processing of: { loggerName }." ) from e
 
             result: str = f"The plugin { self.logger.name } succeeded"
             if self.counter.warningCount > 0:

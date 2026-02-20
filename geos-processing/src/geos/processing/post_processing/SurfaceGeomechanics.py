@@ -380,8 +380,7 @@ class SurfaceGeomechanics:
         return attrXYZ
 
     def computeShearCapacityUtilization( self: Self ) -> None:
-        """Compute the shear capacity utilization (SCU) on surface.
-        """
+        """Compute the shear capacity utilization (SCU) on surface."""
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
         if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributePiece ):

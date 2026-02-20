@@ -36,6 +36,7 @@ def test_CountWarningHandler() -> None:
     loggerTest.warning( "Add a warning after the handler reset." )
     assert countWarningHandler.warningCount == resetValue + 1
 
+
 def test_CountErrorHandler() -> None:
     """Test the verbosity counter handler class and its methods for the verbosity error and higher."""
     loggerTest: logging.Logger = logging.getLogger( "Test CountErrorHandler" )

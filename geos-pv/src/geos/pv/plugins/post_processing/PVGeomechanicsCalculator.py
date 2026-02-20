@@ -327,11 +327,11 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                         volumeBlock.Modified()
                     except ( ValueError, AttributeError ) as e:
                         geomechanicsCalculatorFilter.logger.error( f"The filter { filterName } failed due to:\n{ e }" )
-                        raise ChildProcessError( f"Error during the processing of: { filterName }." )
+                        raise ChildProcessError( f"Error during the processing of: { filterName }." ) from e
                     except Exception as e:
                         mess = f"The filter { filterName } failed due to:\n{ e }"
                         geomechanicsCalculatorFilter.logger.critical( mess, exc_info=True )
-                        raise ChildProcessError( f"Critical error during the processing of: { filterName }." )
+                        raise ChildProcessError( f"Critical error during the processing of: { filterName }." ) from e
 
                 result: str = f"The plugin { self.logger.name } succeeded"
                 if self.counter.warningCount > 0:
