@@ -22,7 +22,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 update_paths()
 
 from geos.utils.Errors import VTKError
-from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -76,8 +76,8 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         self.nbErrors: int = 0
         try:

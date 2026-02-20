@@ -32,7 +32,7 @@ update_paths()
 
 from geos.geomechanics.model.MohrCircle import MohrCircle
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import CountWarningHandler
+from geos.utils.Logger import CountVerbosityHandler
 from geos.utils.enumUnits import Pressure, enumerationDomainUnit
 from geos.utils.GeosOutputsConstants import ( FAILURE_ENVELOPE, GeosMeshOutputsEnum )
 from geos.utils.Logger import ( getLoggerHandlerType )
@@ -187,8 +187,8 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )

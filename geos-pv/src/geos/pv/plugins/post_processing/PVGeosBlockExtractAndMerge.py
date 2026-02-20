@@ -23,7 +23,7 @@ from geos.mesh.utils.multiblockHelpers import getBlockNames
 
 from geos.utils.Errors import VTKError
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNameEnum,
                                               getAttributeToTransferFromInitialTime )
 
@@ -135,8 +135,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         self.nbErrors: int = 0
         try:

@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from typing_extensions import Self
 
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import GeosDomainNameEnum
 from geos.mesh.utils.arrayHelpers import getCellDimension
 from geos.mesh.utils.multiblockHelpers import getBlockIndexFromName
@@ -193,8 +193,8 @@ class GeosBlockExtractor:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         self.nbErrors: int = 0
         try:

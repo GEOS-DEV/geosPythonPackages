@@ -97,8 +97,8 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
             os.close( savedStderrFd )
 
 
-class CountWarningHandler( logging.Handler ):
-    """Create an handler to count the warnings logged."""
+class CountVerbosityHandler( logging.Handler ):
+    """Create an handler to count verbosity logged."""
 
     def __init__( self: Self ) -> None:
         """Init the handler."""
@@ -141,7 +141,7 @@ class CountWarningHandler( logging.Handler ):
         self.errorCount += externalErrorCount
 
     def emit( self: Self, record: logging.LogRecord ) -> None:
-        """Count all the warnings logged.
+        """Count all verbosity (warning, error and higher) logged.
 
         Args:
             record (logging.LogRecord): Record.

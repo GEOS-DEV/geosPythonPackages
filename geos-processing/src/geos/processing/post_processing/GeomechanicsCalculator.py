@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
                                               PostProcessingOutputsEnum )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
@@ -712,8 +712,8 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         self.nbErrors: int = 0
         try:

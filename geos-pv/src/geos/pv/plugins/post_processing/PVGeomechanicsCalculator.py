@@ -23,7 +23,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
-from geos.utils.Logger import ( CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_GRAIN_BULK_MODULUS,
                                            DEFAULT_ROCK_COHESION, WATER_DENSITY )
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockNameFromIndex )
@@ -99,8 +99,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.logger.addHandler( self.handler )
         self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         self.nbErrors: int = 0
         try:

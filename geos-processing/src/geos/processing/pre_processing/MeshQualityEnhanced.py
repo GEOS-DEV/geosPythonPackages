@@ -28,7 +28,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
                                                        getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -142,8 +142,8 @@ class MeshQualityEnhanced():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        counter: CountWarningHandler = CountWarningHandler()
-        self.counter: CountWarningHandler
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
         self.nbWarnings: int = 0
         try:
             self.counter = getLoggerHandlerType( type( counter ), self.logger )
