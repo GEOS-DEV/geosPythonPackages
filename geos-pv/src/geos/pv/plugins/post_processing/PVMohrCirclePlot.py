@@ -91,6 +91,7 @@ If you start from a raw GEOS output, execute the following steps before moving o
         * The attribute 'CellId' has to be used for the 'Selection Labels'.
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Mohr Circle"
 
 
@@ -181,10 +182,9 @@ class PVMohrCirclePlot( VTKPythonAlgorithmBase ):
         # Request data processing step - incremented each time RequestUpdateExtent is called
         self.requestDataStep: int = -1
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountWarningHandler = CountWarningHandler()

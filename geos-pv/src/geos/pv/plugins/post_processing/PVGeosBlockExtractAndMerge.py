@@ -82,6 +82,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Extract & Merge GEOS Block"
 
 
@@ -129,10 +130,9 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         self.outputCellsT0: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountWarningHandler = CountWarningHandler()

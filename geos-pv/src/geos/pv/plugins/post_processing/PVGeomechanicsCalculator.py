@@ -73,6 +73,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 loggerTitle: str = "Geomechanics Calculator"
 
 
@@ -93,10 +95,9 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountWarningHandler = CountWarningHandler()
@@ -265,8 +266,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                 speHandler=True,
             )
 
-            if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
-                geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
+            if not isHandlerInLogger( HANDLER, geomechanicsCalculatorFilter.logger ):
+                geomechanicsCalculatorFilter.setLoggerHandler( HANDLER )
 
             geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
             geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity
@@ -303,8 +304,8 @@ class PVGeomechanicsCalculator( VTKPythonAlgorithmBase ):
                     True,
                 )
 
-                if not isHandlerInLogger( self.handler, geomechanicsCalculatorFilter.logger ):
-                    geomechanicsCalculatorFilter.setLoggerHandler( self.handler )
+                if not isHandlerInLogger( HANDLER, geomechanicsCalculatorFilter.logger ):
+                    geomechanicsCalculatorFilter.setLoggerHandler( HANDLER )
 
                 geomechanicsCalculatorFilter.physicalConstants.grainBulkModulus = self.grainBulkModulus
                 geomechanicsCalculatorFilter.physicalConstants.specificDensity = self.specificDensity

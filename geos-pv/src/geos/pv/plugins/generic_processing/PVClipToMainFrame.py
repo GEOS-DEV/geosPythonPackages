@@ -36,6 +36,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Clip to the main frame",
@@ -45,10 +47,9 @@ class PVClipToMainFrame( VTKPythonAlgorithmBase ):
     def __init__( self ) -> None:
         """Init motherclass, filter and logger."""
         self._realFilter = ClipToMainFrame( speHandler=True )
-        self.handler: logging.Handler = VTKHandler()
 
-        if not isHandlerInLogger( self.handler, self._realFilter.logger ):
-            self._realFilter.SetLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, self._realFilter.logger ):
+            self._realFilter.SetLoggerHandler( HANDLER )
 
     def ApplyFilter( self, inputMesh: vtkMultiBlockDataSet, outputMesh: vtkMultiBlockDataSet ) -> None:
         """Is applying clipToMainFrame filter.
