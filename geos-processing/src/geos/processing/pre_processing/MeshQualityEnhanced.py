@@ -132,6 +132,7 @@ class MeshQualityEnhanced():
         self._allCellTypesExtended: tuple[ int, ...] = getAllCellTypesExtended()
         self._allCellTypes: tuple[ int, ...] = getAllCellTypes()
         self.speHandler: bool = speHandler
+        self.handler: logging.Handler
 
         # Logger
         self.logger: Logger
@@ -141,6 +142,11 @@ class MeshQualityEnhanced():
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+            handlers: list[ logging.Handler ] = self.logger.handlers
+            for handler in handlers:
+                if not type( handler ) is type( CountWarningHandler() ):
+                    self.handler = handler
+                    break
 
         counter: CountWarningHandler = CountWarningHandler()
         self.counter: CountWarningHandler
