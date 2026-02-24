@@ -16,6 +16,11 @@ GENERATE_GLOBAL_IDS = "generateGlobalIds"
 NON_CONFORMAL = "nonConformal"
 SELF_INTERSECTING_ELEMENTS = "selfIntersectingElements"
 SUPPORTED_ELEMENTS = "supportedElements"
+<<<<<<< Updated upstream
+=======
+ORPHAN_2D = "orphan2d"
+CHECK_INTERNAL_TAGS = "checkInternalTags"
+>>>>>>> Stashed changes
 
 
 @dataclass( frozen=True )
