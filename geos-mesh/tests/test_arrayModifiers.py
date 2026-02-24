@@ -15,6 +15,7 @@ from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPointData, vtkCellData )
 
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
+from geos.mesh.utils.arrayHelpers import isAttributeInObject
 
 from vtk import (  # type: ignore[import-untyped]
     VTK_UNSIGNED_CHAR, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_INT, VTK_UNSIGNED_LONG_LONG, VTK_CHAR, VTK_SIGNED_CHAR,
@@ -210,90 +211,58 @@ def test_createEmptyAttributeValueError() -> None:
 
 
 @pytest.mark.parametrize(
-    "attributeName, piece",
+    "meshName, listValues, componentNames, componentNamesTest, piece, vtkDataType, vtkDataTypeTest, attributeName",
     [
-        # Test to create a new attribute on points and on cells.
-        ( "newAttribute", Piece.CELLS ),
-        ( "newAttribute", Piece.POINTS ),
-    ] )
-def test_createConstantAttributeMultiBlock(
-    dataSetTest: vtkMultiBlockDataSet,
-    attributeName: str,
-    piece: Piece,
-) -> None:
-    """Test creation of constant attribute in multiblock dataset."""
-    multiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    values: list[ float ] = [ np.nan ]
-    arrayModifiers.createConstantAttributeMultiBlock( multiBlockDataSetTest, values, attributeName, piece=piece )
-
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetTest )
-    for blockIndex in elementaryBlockIndexes:
-        dataSet: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTest.GetDataSet( blockIndex ) )
-        data: Union[ vtkPointData, vtkCellData ]
-        data = dataSet.GetPointData() if piece == Piece.POINTS else dataSet.GetCellData()
-
-        attributeWellCreated: int = data.HasArray( attributeName )
-        assert attributeWellCreated == 1
-
-
-def test_createConstantAttributeMultiBlockRaiseTypeError( dataSetTest: vtkDataSet, ) -> None:
-    """Test the raises TypeError for the function createConstantAttributeMultiBlock with a wrong mesh type."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
-    with pytest.raises( TypeError ):
-        arrayModifiers.createConstantAttributeMultiBlock( mesh, [ np.int32( 42 ) ], "newAttribute" )
-
-
-def test_createConstantAttributeMultiBlockRaiseAttributeError( dataSetTest: vtkMultiBlockDataSet, ) -> None:
-    """Test the raises AttributeError for the function createConstantAttributeMultiBlock with a wrong attributeName."""
-    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    with pytest.raises( AttributeError ):
-        arrayModifiers.createConstantAttributeMultiBlock( mesh, [ np.int32( 42 ) ], "PORO" )
-
-
-@pytest.mark.parametrize(
-    "listValues, componentNames, componentNamesTest, piece, vtkDataType, vtkDataTypeTest, attributeName",
-    [
-        # Test attribute names.
-        ## Test with a new attributeName on cells and on points.
-        ( [ np.float32( 42 ) ], (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-        ( [ np.float32( 42 ) ], (), (), Piece.CELLS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        # Test mesh types.
+        ( "dataset", [ np.float32( 42 ) ], (), (), Piece.CELLS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( "dataset", [ np.float32( 42 ) ], (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( "multiblock", [ np.float32( 42 ) ], (), (), Piece.CELLS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( "multiblock", [ np.float32( 42 ) ], (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        # Test with an attribute name that exist on the opposite piece.
+        ( "dataset", [ np.float32( 42 ) ], (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "PORO" ),
+        ( "multiblock", [ np.float32( 42 ) ], (), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "PORO" ),  # Partial
+        ( "multiblock", [ np.float32( 42 ) ], (),
+          (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "GLOBAL_IDS_CELLS" ),  # Global
         # Test the number of components and their names.
-        ( [ np.float32( 42 ) ], ( "X" ), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-        ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y" ),
+        ( "dataset", [ np.float32( 42 ) ], ( "X" ), (), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
+        ( "dataset", [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y" ),
           ( "X", "Y" ), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-        ( [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y", "Z" ),
+        ( "dataset", [ np.float32( 42 ), np.float32( 42 ) ], ( "X", "Y", "Z" ),
           ( "X", "Y" ), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
-        ( [ np.float32( 42 ), np.float32( 42 ) ], (),
+        ( "dataset", [ np.float32( 42 ), np.float32( 42 ) ], (),
           ( "Component0", "Component1" ), Piece.POINTS, VTK_FLOAT, VTK_FLOAT, "newAttribute" ),
         # Test the type of the values.
         ## With numpy scalar type.
-        ( [ np.int8( 42 ) ], (), (), Piece.POINTS, None, VTK_SIGNED_CHAR, "newAttribute" ),
-        ( [ np.int8( 42 ) ], (), (), Piece.POINTS, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "newAttribute" ),
-        ( [ np.int16( 42 ) ], (), (), Piece.POINTS, None, VTK_SHORT, "newAttribute" ),
-        ( [ np.int16( 42 ) ], (), (), Piece.POINTS, VTK_SHORT, VTK_SHORT, "newAttribute" ),
-        ( [ np.int32( 42 ) ], (), (), Piece.POINTS, None, VTK_INT, "newAttribute" ),
-        ( [ np.int32( 42 ) ], (), (), Piece.POINTS, VTK_INT, VTK_INT, "newAttribute" ),
-        ( [ np.int64( 42 ) ], (), (), Piece.POINTS, None, VTK_LONG_LONG, "newAttribute" ),
-        ( [ np.int64( 42 ) ], (), (), Piece.POINTS, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
-        ( [ np.uint8( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_CHAR, "newAttribute" ),
-        ( [ np.uint8( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "newAttribute" ),
-        ( [ np.uint16( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_SHORT, "newAttribute" ),
-        ( [ np.uint16( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "newAttribute" ),
-        ( [ np.uint32( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_INT, "newAttribute" ),
-        ( [ np.uint32( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "newAttribute" ),
-        ( [ np.uint64( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
-        ( [ np.uint64( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
-        ( [ np.float32( 42 ) ], (), (), Piece.POINTS, None, VTK_FLOAT, "newAttribute" ),
-        ( [ np.float64( 42 ) ], (), (), Piece.POINTS, None, VTK_DOUBLE, "newAttribute" ),
-        ( [ np.float64( 42 ) ], (), (), Piece.POINTS, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+        ( "dataset", [ np.int8( 42 ) ], (), (), Piece.POINTS, None, VTK_SIGNED_CHAR, "newAttribute" ),
+        ( "dataset", [ np.int8( 42 ) ], (), (), Piece.POINTS, VTK_SIGNED_CHAR, VTK_SIGNED_CHAR, "newAttribute" ),
+        ( "dataset", [ np.int16( 42 ) ], (), (), Piece.POINTS, None, VTK_SHORT, "newAttribute" ),
+        ( "dataset", [ np.int16( 42 ) ], (), (), Piece.POINTS, VTK_SHORT, VTK_SHORT, "newAttribute" ),
+        ( "dataset", [ np.int32( 42 ) ], (), (), Piece.POINTS, None, VTK_INT, "newAttribute" ),
+        ( "dataset", [ np.int32( 42 ) ], (), (), Piece.POINTS, VTK_INT, VTK_INT, "newAttribute" ),
+        ( "dataset", [ np.int64( 42 ) ], (), (), Piece.POINTS, None, VTK_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ np.int64( 42 ) ], (), (), Piece.POINTS, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ np.uint8( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_CHAR, "newAttribute" ),
+        ( "dataset", [ np.uint8( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_CHAR, VTK_UNSIGNED_CHAR, "newAttribute" ),
+        ( "dataset", [ np.uint16( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_SHORT, "newAttribute" ),
+        ( "dataset", [ np.uint16( 42 ) ], (),
+          (), Piece.POINTS, VTK_UNSIGNED_SHORT, VTK_UNSIGNED_SHORT, "newAttribute" ),
+        ( "dataset", [ np.uint32( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_INT, "newAttribute" ),
+        ( "dataset", [ np.uint32( 42 ) ], (), (), Piece.POINTS, VTK_UNSIGNED_INT, VTK_UNSIGNED_INT, "newAttribute" ),
+        ( "dataset", [ np.uint64( 42 ) ], (), (), Piece.POINTS, None, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ np.uint64( 42 ) ], (),
+          (), Piece.POINTS, VTK_UNSIGNED_LONG_LONG, VTK_UNSIGNED_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ np.float32( 42 ) ], (), (), Piece.POINTS, None, VTK_FLOAT, "newAttribute" ),
+        ( "dataset", [ np.float64( 42 ) ], (), (), Piece.POINTS, None, VTK_DOUBLE, "newAttribute" ),
+        ( "dataset", [ np.float64( 42 ) ], (), (), Piece.POINTS, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
         ## With python scalar type.
-        ( [ 42 ], (), (), Piece.POINTS, None, VTK_LONG_LONG, "newAttribute" ),
-        ( [ 42 ], (), (), Piece.POINTS, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
-        ( [ 42. ], (), (), Piece.POINTS, None, VTK_DOUBLE, "newAttribute" ),
-        ( [ 42. ], (), (), Piece.POINTS, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
+        ( "dataset", [ 42 ], (), (), Piece.POINTS, None, VTK_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ 42 ], (), (), Piece.POINTS, VTK_LONG_LONG, VTK_LONG_LONG, "newAttribute" ),
+        ( "dataset", [ 42. ], (), (), Piece.POINTS, None, VTK_DOUBLE, "newAttribute" ),
+        ( "dataset", [ 42. ], (), (), Piece.POINTS, VTK_DOUBLE, VTK_DOUBLE, "newAttribute" ),
     ] )
-def test_createConstantAttributeDataSet(
-    dataSetTest: vtkDataSet,
+def test_createConstantAttribute(
+    dataSetTest: Any,
+    meshName: str,
     listValues: list[ Any ],
     componentNames: tuple[ str, ...],
     componentNamesTest: tuple[ str, ...],
@@ -302,71 +271,107 @@ def test_createConstantAttributeDataSet(
     vtkDataTypeTest: int,
     attributeName: str,
 ) -> None:
-    """Test constant attribute creation in dataset."""
-    dataSet: vtkDataSet = dataSetTest( "dataset" )
+    """Test constant attribute creation."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
 
-    # Create the new constant attribute in the dataSet.
-    arrayModifiers.createConstantAttributeDataSet( dataSet, listValues, attributeName, componentNames, piece,
-                                                   vtkDataType )
+    # Create the new constant attribute in the mesh.
+    arrayModifiers.createConstantAttribute( mesh, listValues, attributeName, componentNames, piece, vtkDataType )
 
-    # Get the created attribute.
-    data: Union[ vtkPointData, vtkCellData ]
-    nbElements: int
-    if piece == Piece.POINTS:
-        data = dataSet.GetPointData()
-        nbElements = dataSet.GetNumberOfPoints()
+    listDataSet: list[ vtkDataSet ] = []
+    if isinstance( mesh, vtkDataSet ):
+        listDataSet.append( mesh )
     else:
-        data = dataSet.GetCellData()
-        nbElements = dataSet.GetNumberOfCells()
-    attributeCreated: vtkDataArray = data.GetArray( attributeName )
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( mesh )
+        for blockIndex in elementaryBlockIndexes:
+            listDataSet.append( vtkDataSet.SafeDownCast( mesh.GetDataSet( blockIndex ) ) )
 
-    # Test the number of components and their names if multiple.
-    nbComponentsTest: int = len( listValues )
-    nbComponentsCreated: int = attributeCreated.GetNumberOfComponents()
-    assert nbComponentsCreated == nbComponentsTest
-    if nbComponentsTest > 1:
-        componentNamesCreated: tuple[ str, ...] = tuple(
-            attributeCreated.GetComponentName( i ) for i in range( nbComponentsCreated ) )
-        assert componentNamesCreated, componentNamesTest
+    for dataSet in listDataSet:
+        # Get the created attribute.
+        data: Union[ vtkPointData, vtkCellData ]
+        nbElements: int
+        if piece == Piece.POINTS:
+            data = dataSet.GetPointData()
+            nbElements = dataSet.GetNumberOfPoints()
+        else:
+            data = dataSet.GetCellData()
+            nbElements = dataSet.GetNumberOfCells()
+        attributeCreated: vtkDataArray = data.GetArray( attributeName )
 
-    # Test values and their types.
-    ## Create the constant array test from values in the list values.
-    npArrayTest: npt.NDArray[ Any ]
-    if len( listValues ) > 1:
-        npArrayTest = np.array( [ listValues for _ in range( nbElements ) ] )
-    else:
-        npArrayTest = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ] )
+        # Test the number of components and their names if multiple.
+        nbComponentsTest: int = len( listValues )
+        nbComponentsCreated: int = attributeCreated.GetNumberOfComponents()
+        assert nbComponentsCreated == nbComponentsTest
+        if nbComponentsTest > 1:
+            componentNamesCreated: tuple[ str, ...] = tuple(
+                attributeCreated.GetComponentName( i ) for i in range( nbComponentsCreated ) )
+            assert componentNamesCreated, componentNamesTest
 
-    npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCreated )
-    assert npArrayCreated.dtype == npArrayTest.dtype
-    assert ( npArrayCreated == npArrayTest ).all()
+        # Test values and their types.
+        ## Create the constant array test from values in the list values.
+        npArrayTest: npt.NDArray[ Any ]
+        if len( listValues ) > 1:
+            npArrayTest = np.array( [ listValues for _ in range( nbElements ) ] )
+        else:
+            npArrayTest = np.array( [ listValues[ 0 ] for _ in range( nbElements ) ] )
 
-    vtkDataTypeCreated: int = attributeCreated.GetDataType()
-    assert vtkDataTypeCreated == vtkDataTypeTest
+        npArrayCreated: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCreated )
+        assert npArrayCreated.dtype == npArrayTest.dtype
+        assert ( npArrayCreated == npArrayTest ).all()
+
+        vtkDataTypeCreated: int = attributeCreated.GetDataType()
+        assert vtkDataTypeCreated == vtkDataTypeTest
 
 
 @pytest.mark.parametrize(
-    "listValues, vtkDataType",
+    "meshName, listValues, vtkDataType",
     [
-        ( [ np.int32( 42 ), np.int64( 42 ) ], VTK_DOUBLE ),  # All the values in the listValues are not the same
-        ( [ np.int32( 42 ) ], VTK_DOUBLE ),  # The type of the value is not coherent with the vtkDataType
+        ( "dataset", [ np.int32( 42 ), np.int64( 42 )
+                      ], VTK_DOUBLE ),  # All the values in the listValues are not the same
+        ( "dataset", [ np.int32( 42 ) ], VTK_DOUBLE ),  # The type of the value is not coherent with the vtkDataType
+        ( "other", [ np.int64( 42 ) ], VTK_DOUBLE ),  # The type of the mesh is wrong
     ] )
-def test_createConstantAttributeDataSetRaiseTypeError(
+def test_createConstantAttributeRaiseTypeError(
     dataSetTest: vtkDataSet,
+    meshName: str,
     listValues: list[ Any ],
     vtkDataType: int,
 ) -> None:
-    """Test the raises TypeError for the function createConstantAttributeDataSet."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
+    """Test the raises TypeError for the function createConstantAttribute."""
+    mesh: vtkCellData | vtkDataSet = vtkCellData() if meshName == "other" else dataSetTest( meshName )
     with pytest.raises( TypeError ):
-        arrayModifiers.createConstantAttributeDataSet( mesh, listValues, "newAttribute", vtkDataType=vtkDataType )
+        arrayModifiers.createConstantAttribute( mesh, listValues, "newAttribute", vtkDataType=vtkDataType )
 
 
-def test_createConstantAttributeDataSetRaiseValueError( dataSetTest: vtkDataSet, ) -> None:
-    """Test the raises ValueError for the function createConstantAttributeDataSet with a wrong vtkDataType."""
+def test_createConstantAttributeRaiseValueErrorVTKDataType( dataSetTest: vtkDataSet, ) -> None:
+    """Test the raises ValueError for the function createConstantAttribute with wrong values for the vtk data type."""
     mesh: vtkDataSet = dataSetTest( "dataset" )
     with pytest.raises( ValueError ):
-        arrayModifiers.createConstantAttributeDataSet( mesh, [ np.int32( 42 ) ], "newAttribute", vtkDataType=64 )
+        arrayModifiers.createConstantAttribute( mesh, [ np.int32( 42 ) ], "newAttribute", vtkDataType=64 )
+
+
+def test_createConstantAttributeRaiseValueErrorPiece( dataSetTest: vtkDataSet, ) -> None:
+    """Test the raises ValueError for the function createConstantAttribute with wrong values for the piece."""
+    mesh: vtkDataSet = dataSetTest( "dataset" )
+    with pytest.raises( ValueError ):
+        arrayModifiers.createConstantAttribute( mesh, [ np.int32( 42 ) ], "newAttribute", piece=Piece.BOTH )
+
+
+@pytest.mark.parametrize(
+    "meshName, attributeName",
+    [
+        ( "multiblock", "PORO" ),  # Partial
+        ( "multiblock", "GLOBAL_IDS_CELLS" ),  # Global
+        ( "dataset", "PORO" ),
+    ] )
+def test_createConstantAttributeRaiseAttributeError(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+) -> None:
+    """Test the raises ValueError for the function createConstantAttribute with a wrong AttributeName."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    with pytest.raises( AttributeError ):
+        arrayModifiers.createConstantAttribute( mesh, [ np.int32( 42 ) ], attributeName )
 
 
 @pytest.mark.parametrize(
@@ -506,34 +511,50 @@ def test_createAttributeRaiseAttributeError(
 
 
 @pytest.mark.parametrize(
-    "attributeNameFrom, attributeNameTo, piece",
+    "meshFromName, meshToName, attributeNameFrom, attributeNameTo, piece",
     [
-        # Test with global attributes.
-        ( "GLOBAL_IDS_POINTS", "GLOBAL_IDS_POINTS_To", Piece.POINTS ),
-        ( "GLOBAL_IDS_CELLS", 'GLOBAL_IDS_CELLS_To', Piece.CELLS ),
-        # Test with partial attributes.
-        ( "CellAttribute", "CellAttributeTo", Piece.CELLS ),
-        ( "PointAttribute", "PointAttributeTo", Piece.POINTS ),
+        # Test multiblock.
+        ## Test with global attributes.
+        ( "multiblock", "emptymultiblock", "GLOBAL_IDS_POINTS", "newAttribute", Piece.POINTS ),
+        ( "multiblock", "emptymultiblock", "GLOBAL_IDS_CELLS", 'newAttribute', Piece.CELLS ),
+        ## Test with partial attributes.
+        ( "multiblock", "emptymultiblock", "CellAttribute", "newAttribute", Piece.CELLS ),
+        ( "multiblock", "emptymultiblock", "PointAttribute", "newAttribute", Piece.POINTS ),
+        # Test dataset.
+        ( "dataset", "emptydataset", "CellAttribute", "newAttribute", Piece.CELLS ),
+        ( "dataset", "emptydataset", "PointAttribute", "newAttributes", Piece.POINTS ),
+        # Test attribute names. The copy attribute name is a name of an attribute on the other piece.
+        ( "multiblock", "multiblock", "GLOBAL_IDS_POINTS", "GLOBAL_IDS_CELLS", Piece.POINTS ),
+        ( "multiblock", "multiblock", "CellAttribute", "PointAttribute", Piece.CELLS ),
+        ( "dataset", "dataset", "CellAttribute", "PointAttribute", Piece.CELLS ),
     ] )
 def test_copyAttribute(
-    dataSetTest: vtkMultiBlockDataSet,
+    dataSetTest: Any,
+    meshFromName: str,
+    meshToName: str,
     attributeNameFrom: str,
     attributeNameTo: str,
     piece: Piece,
 ) -> None:
     """Test copy of cell attribute from one multiblock to another."""
-    multiBlockDataSetFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    multiBlockDataSetTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
+    meshFrom: Any = dataSetTest( meshFromName )
+    meshTo: Any = dataSetTest( meshToName )
 
-    # Copy the attribute from the multiBlockDataSetFrom to the multiBlockDataSetTo.
-    arrayModifiers.copyAttribute( multiBlockDataSetFrom, multiBlockDataSetTo, attributeNameFrom, attributeNameTo,
-                                  piece )
+    # Copy the attribute from the meshFrom to the meshTo.
+    arrayModifiers.copyAttribute( meshFrom, meshTo, attributeNameFrom, attributeNameTo, piece )
 
-    # Parse the two multiBlockDataSet and test if the attribute has been copied.
-    elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( multiBlockDataSetFrom )
-    for blockIndex in elementaryBlockIndexes:
-        dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetFrom.GetDataSet( blockIndex ) )
-        dataSetTo: vtkDataSet = vtkDataSet.SafeDownCast( multiBlockDataSetTo.GetDataSet( blockIndex ) )
+    listDataSets: list[ list[ vtkDataSet ] ] = []
+    if isinstance( meshFrom, vtkDataSet ):
+        listDataSets.append( [ meshFrom, meshTo ] )
+    else:
+        elementaryBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( meshFrom )
+        for blockIndex in elementaryBlockIndexes:
+            dataSetFrom: vtkDataSet = vtkDataSet.SafeDownCast( meshFrom.GetDataSet( blockIndex ) )
+            if isAttributeInObject( dataSetFrom, attributeNameFrom, piece ):
+                listDataSets.append( [ dataSetFrom, vtkDataSet.SafeDownCast( meshTo.GetDataSet( blockIndex ) ) ] )
+
+    for dataSetFrom, dataSetTo in listDataSets:
+        # Get the tested attribute and its copy.
         dataFrom: Union[ vtkPointData, vtkCellData ]
         dataTo: Union[ vtkPointData, vtkCellData ]
         if piece == Piece.POINTS:
@@ -542,14 +563,34 @@ def test_copyAttribute(
         else:
             dataFrom = dataSetFrom.GetCellData()
             dataTo = dataSetTo.GetCellData()
+        attributeTest: vtkDataArray = dataFrom.GetArray( attributeNameFrom )
+        attributeCopied: vtkDataArray = dataTo.GetArray( attributeNameTo )
 
-        attributeExistTest: int = dataFrom.HasArray( attributeNameFrom )
-        attributeExistCopied: int = dataTo.HasArray( attributeNameTo )
-        assert attributeExistCopied == attributeExistTest
+        # Test the number of components and their names if multiple.
+        nbComponentsTest: int = attributeTest.GetNumberOfComponents()
+        nbComponentsCopied: int = attributeCopied.GetNumberOfComponents()
+        assert nbComponentsCopied == nbComponentsTest
+        if nbComponentsTest > 1:
+            componentsNamesTest: tuple[ str, ...] = tuple(
+                attributeTest.GetComponentName( i ) for i in range( nbComponentsTest ) )
+            componentsNamesCopied: tuple[ str, ...] = tuple(
+                attributeCopied.GetComponentName( i ) for i in range( nbComponentsCopied ) )
+            assert componentsNamesCopied == componentsNamesTest
+
+        # Test values and their types.
+        npArrayTest: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeTest )
+        npArrayCopied: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCopied )
+        assert npArrayCopied.dtype == npArrayTest.dtype
+        assert ( npArrayCopied == npArrayTest ).all()
+
+        vtkDataTypeTest: int = attributeTest.GetDataType()
+        vtkDataTypeCopied: int = attributeCopied.GetDataType()
+        assert vtkDataTypeCopied == vtkDataTypeTest
 
 
 @pytest.mark.parametrize( "meshNameFrom, meshNameTo", [
-    ( "dataset", "emptydataset" ),
+    ( "dataset", "other" ),
+    ( "other", "emptydataset" ),
     ( "dataset", "emptymultiblock" ),
     ( "multiblock", "emptydataset" ),
 ] )
@@ -559,169 +600,59 @@ def test_copyAttributeTypeError(
     meshNameTo: str,
 ) -> None:
     """Test the raises TypeError for the function copyAttribute."""
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshNameFrom )
-    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshNameTo )
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCellData ]
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCellData ]
+    meshFrom = vtkCellData() if meshNameFrom == "other" else dataSetTest( meshNameFrom )
+    meshTo = vtkCellData() if meshNameTo == "other" else dataSetTest( meshNameTo )
+
     with pytest.raises( TypeError ):
         arrayModifiers.copyAttribute( meshFrom, meshTo, "PORO", "PORO" )
 
 
-def test_copyAttributeValueError( dataSetTest: vtkMultiBlockDataSet, ) -> None:
-    """Test the raises ValueError for the function copyAttribute with two meshes with different block architecture."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "meshGeosExtractBlockTmp" )
-    meshTo: vtkMultiBlockDataSet = dataSetTest( "emptymultiblock" )
+# TODO: Create two meshes similar but with two different element indexation
+@pytest.mark.parametrize(
+    "meshNameFrom, meshNameTo, piece",
+    [
+        ( "dataset", "emptydataset", Piece.BOTH ),  # The piece is wrong
+        ( "dataset", "well", Piece.CELLS ),  # Two meshes with different cells dimension
+        ( "multiblock", "multiblockGeosOutput", Piece.CELLS ),  # Two meshes with different blocks indexation
+    ] )
+def test_copyAttributeValueError(
+    dataSetTest: Any,
+    meshNameFrom: str,
+    meshNameTo: str,
+    piece: Piece,
+) -> None:
+    """Test the raises ValueError for the function copyAttribute."""
+    meshFrom: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameFrom )
+    meshTo: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameTo )
     with pytest.raises( ValueError ):
-        arrayModifiers.copyAttribute( meshFrom, meshTo, "PORO", "PORO" )
+        arrayModifiers.copyAttribute( meshFrom, meshTo, "GLOBAL_IDS_CELLS", "newAttribute", piece=piece )
 
 
 @pytest.mark.parametrize(
-    "attributeNameFrom, attributeNameTo",
+    "meshNameFrom, meshNameTo, attributeNameFrom, attributeNameTo",
     [
-        ( "PORO", "PORO" ),  # An attribute PORO is already present in the mesh to
-        ( "newAttribute", "newAttribute" ),  # newAttribute is not in the mesh from
+        # The copy attribute name is already an attribute on the mesh to
+        ( "dataset", "dataset", "PORO", "PORO" ),
+        ( "multiblock", "multiblock", "PORO", "PORO" ),
+        ( "multiblock", "multiblock", "PORO", "GLOBAL_IDS_CELLS" ),
+        # The attribute to copy is not in the mesh From
+        # ( "dataset", "emptydataset", "newAttribute", "newAttribute" ),  TODO: activate when the PR 223 is merged
+        ( "multiblock", "emptymultiblock", "newAttribute", "newAttribute" ),
     ] )
 def test_copyAttributeAttributeError(
-    dataSetTest: vtkMultiBlockDataSet,
+    dataSetTest: Any,
+    meshNameFrom: str,
+    meshNameTo: str,
     attributeNameFrom: str,
     attributeNameTo: str,
 ) -> None:
     """Test the raises AttributeError for the function copyAttribute."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    meshTo: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    meshFrom: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameFrom )
+    meshTo: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameTo )
     with pytest.raises( AttributeError ):
         arrayModifiers.copyAttribute( meshFrom, meshTo, attributeNameFrom, attributeNameTo )
-
-
-@pytest.mark.parametrize( "attributeNameFrom, attributeNameTo, piece", [
-    ( "CellAttribute", "CellAttributeTo", Piece.CELLS ),
-    ( "PointAttribute", "PointAttributeTo", Piece.POINTS ),
-] )
-def test_copyAttributeDataSet(
-    dataSetTest: vtkDataSet,
-    attributeNameFrom: str,
-    attributeNameTo: str,
-    piece: Piece,
-) -> None:
-    """Test copy of an attribute from one dataset to another."""
-    dataSetFrom: vtkDataSet = dataSetTest( "dataset" )
-    dataSetTo: vtkDataSet = dataSetTest( "emptydataset" )
-
-    # Copy the attribute from the dataSetFrom to the dataSetTo.
-    arrayModifiers.copyAttributeDataSet( dataSetFrom, dataSetTo, attributeNameFrom, attributeNameTo, piece )
-
-    # Get the tested attribute and its copy.
-    dataFrom: Union[ vtkPointData, vtkCellData ]
-    dataTo: Union[ vtkPointData, vtkCellData ]
-    if piece == Piece.POINTS:
-        dataFrom = dataSetFrom.GetPointData()
-        dataTo = dataSetTo.GetPointData()
-    else:
-        dataFrom = dataSetFrom.GetCellData()
-        dataTo = dataSetTo.GetCellData()
-    attributeTest: vtkDataArray = dataFrom.GetArray( attributeNameFrom )
-    attributeCopied: vtkDataArray = dataTo.GetArray( attributeNameTo )
-
-    # Test the number of components and their names if multiple.
-    nbComponentsTest: int = attributeTest.GetNumberOfComponents()
-    nbComponentsCopied: int = attributeCopied.GetNumberOfComponents()
-    assert nbComponentsCopied == nbComponentsTest
-    if nbComponentsTest > 1:
-        componentsNamesTest: tuple[ str, ...] = tuple(
-            attributeTest.GetComponentName( i ) for i in range( nbComponentsTest ) )
-        componentsNamesCopied: tuple[ str, ...] = tuple(
-            attributeCopied.GetComponentName( i ) for i in range( nbComponentsCopied ) )
-        assert componentsNamesCopied == componentsNamesTest
-
-    # Test values and their types.
-    npArrayTest: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeTest )
-    npArrayCopied: npt.NDArray[ Any ] = vnp.vtk_to_numpy( attributeCopied )
-    assert npArrayCopied.dtype == npArrayTest.dtype
-    assert ( npArrayCopied == npArrayTest ).all()
-
-    vtkDataTypeTest: int = attributeTest.GetDataType()
-    vtkDataTypeCopied: int = attributeCopied.GetDataType()
-    assert vtkDataTypeCopied == vtkDataTypeTest
-
-
-def test_copyAttributeDataSetTypeError( dataSetTest: Any, ) -> None:
-    """Test the raises TypeError for the function copyAttributeDataSet with a mesh from with a wrong type."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    meshTo: vtkDataSet = dataSetTest( "emptydataset" )
-    with pytest.raises( TypeError ):
-        arrayModifiers.copyAttributeDataSet( meshFrom, meshTo, "PORO", "PORO" )
-
-
-def test_copyAttributeDataSetAttributeError( dataSetTest: vtkDataSet, ) -> None:
-    """Test the raises AttributeError for the function copyAttributeDataSet with an attributeNameFrom not in the mesh From."""
-    meshFrom: vtkDataSet = dataSetTest( "dataset" )
-    meshTo: vtkDataSet = dataSetTest( "emptydataset" )
-    with pytest.raises( AttributeError ):
-        arrayModifiers.copyAttributeDataSet( meshFrom, meshTo, "newAttribute", "newAttribute" )
-
-
-@pytest.mark.parametrize(
-    "isMeshFrom, meshToName",
-    [
-        ( True, "emptymultiblock" ),  # The mesh to is not a vtkDataSet.
-        ( False, "emptyFracture" ),  # The mesh from is not a mesh.
-    ] )
-def test_transferAttributeToDataSetWithElementMapTypeError(
-    dataSetTest: Any,
-    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    isMeshFrom: bool,
-    meshToName: str,
-) -> None:
-    """Test the raises TypeError for the function transferAttributeToDataSetWithElementMap."""
-    meshFrom: Union[ bool, vtkMultiBlockDataSet ] = dataSetTest( "multiblock" ) if isMeshFrom else False
-    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", meshToName, Piece.CELLS )
-    with pytest.raises( TypeError ):
-        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, "FAULT", Piece.CELLS )
-
-
-@pytest.mark.parametrize(
-    "attributeName",
-    [
-        ( "PORO" ),  # The attribute is partial.
-        ( "newAttribute" ),  # The attribute is not in the mesh from.
-    ] )
-def test_transferAttributeToDataSetWithElementMapAttributeError(
-    dataSetTest: vtkMultiBlockDataSet,
-    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    attributeName: str,
-) -> None:
-    """Test the raises AttributeError for the function transferAttributeToDataSetWithElementMap."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    meshTo: vtkMultiBlockDataSet = dataSetTest( "emptyFracture" )
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptyFracture", Piece.CELLS )
-    with pytest.raises( AttributeError ):
-        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom, meshTo, elementMap, attributeName,
-                                                                 Piece.CELLS )
-
-
-@pytest.mark.parametrize(
-    "meshToNameTransfer, meshToNameMap, flatIdDataSetTo",
-    [
-        ( "emptyFracture", "emptymultiblock", 0 ),  # The map is wrong.
-        ( "emptyFracture", "emptyFracture", 1 ),  # The flatIdDataSetTo is wrong.
-    ] )
-def test_transferAttributeToDataSetWithElementMapValueError(
-    dataSetTest: vtkDataSet,
-    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    meshToNameTransfer: str,
-    meshToNameMap: str,
-    flatIdDataSetTo: int,
-) -> None:
-    """Test the raises ValueError for the function transferAttributeToDataSetWithElementMap."""
-    meshFrom: vtkDataSet = dataSetTest( "dataset" )
-    meshTo: vtkDataSet = dataSetTest( meshToNameTransfer )
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "dataset", meshToNameMap, False )
-    with pytest.raises( ValueError ):
-        arrayModifiers.transferAttributeToDataSetWithElementMap( meshFrom,
-                                                                 meshTo,
-                                                                 elementMap,
-                                                                 "FAULT",
-                                                                 False,
-                                                                 flatIdDataSetTo=flatIdDataSetTo )
 
 
 @pytest.mark.parametrize( "meshFromName, meshToName, attributeName, piece, defaultValueTest", [
@@ -777,28 +708,75 @@ def test_transferAttributeWithElementMap(
                 assert np.all( arrayTo[ idElementTo ] == arrayFrom[ idElementFrom ] )
 
 
+@pytest.mark.parametrize( "meshNameFrom, meshNameTo", [
+    ( "dataset", "other" ),
+    ( "other", "emptydataset" ),
+    ( "other", "other" ),
+] )
 def test_transferAttributeWithElementMapTypeError(
-    dataSetTest: vtkMultiBlockDataSet,
-    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    dataSetTest: Any,
+    meshNameFrom: str,
+    meshNameTo: str,
 ) -> None:
-    """Test the raises TypeError for the function transferAttributeWithElementMap with the mesh to with a wrong type."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    meshTo: bool = False
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptymultiblock", Piece.CELLS )
+    """Test the raises TypeError for the function transferAttributeWithElementMap."""
+    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCellData ]
+    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet, vtkCellData ]
+    meshFrom = vtkCellData() if meshNameFrom == "other" else dataSetTest( meshNameFrom )
+    meshTo = vtkCellData() if meshNameTo == "other" else dataSetTest( meshNameTo )
+
     with pytest.raises( TypeError ):
-        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, "FAULT", Piece.CELLS )
+        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, {}, "GLOBAL_IDS_CELLS", Piece.CELLS )
 
 
+@pytest.mark.parametrize(
+    "meshNameFrom, meshNameTo, attributeName",
+    [
+        ( "multiblock", "emptymultiblock", "PORO" ),  # The attribute is partial in the mesh From
+        ( "dataset", "emptydataset", "newAttribute" ),  # The attribute is not in the mesh From
+        ( "dataset", "emptydataset", "GLOBAL_IDS_CELLS" ),  # The attribute is already in the mesh to
+        ( "multiblock", "emptymultiblock", "GLOBAL_IDS_CELLS" ),  # The attribute is already in the mesh to
+    ] )
 def test_transferAttributeWithElementMapAttributeError(
     dataSetTest: vtkMultiBlockDataSet,
     getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    meshNameFrom: str,
+    meshNameTo: str,
+    attributeName: str,
 ) -> None:
     """Test the raises AttributeError for the function transferAttributeWithElementMap with an attribute already in the mesh to."""
-    meshFrom: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    meshTo: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
-    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "multiblock", "emptymultiblock", Piece.CELLS )
+    meshFrom: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameFrom )
+    meshTo: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshNameTo )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshNameFrom, meshNameTo, Piece.CELLS )
     with pytest.raises( AttributeError ):
-        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, "FAULT", Piece.CELLS )
+        arrayModifiers.transferAttributeWithElementMap( meshFrom, meshTo, elementMap, attributeName, Piece.CELLS )
+
+
+@pytest.mark.parametrize(
+    "meshNameTo, meshNameToMap, flatIdDataSetTo, piece",
+    [
+        ( "emptyFracture", "emptyFracture", 0, Piece.BOTH ),  # The piece is wrong.
+        ( "emptyFracture", "emptyFracture", 1, Piece.CELLS ),  # The flatIdDataSetTo is wrong.
+        ( "emptyFracture", "emptymultiblock", 0, Piece.CELLS ),  # The map is wrong.
+    ] )
+def test_transferAttributeWithElementMapValueError(
+    dataSetTest: vtkDataSet,
+    getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
+    meshNameTo: str,
+    meshNameToMap: str,
+    flatIdDataSetTo: int,
+    piece: Piece,
+) -> None:
+    """Test the raises ValueError for the function transferAttributeWithElementMap."""
+    meshFrom: vtkDataSet = dataSetTest( "dataset" )
+    meshTo: vtkDataSet = dataSetTest( meshNameTo )
+    elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( "dataset", meshNameToMap, False )
+    with pytest.raises( ValueError ):
+        arrayModifiers.transferAttributeWithElementMap( meshFrom,
+                                                        meshTo,
+                                                        elementMap,
+                                                        "FAULT",
+                                                        piece,
+                                                        flatIdDataSetTo=flatIdDataSetTo )
 
 
 @pytest.mark.parametrize( "attributeName, piece", [

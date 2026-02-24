@@ -39,6 +39,7 @@ from geos.pv.geosLogReaderUtils.GeosLogReaderFlow import GeosLogReaderFlow
 from geos.pv.geosLogReaderUtils.GeosLogReaderWells import GeosLogReaderWells
 from geos.utils.enumUnits import ( Mass, MassRate, Pressure, Time, Unit, Volume, VolumetricRate, enumerationDomainUnit )
 from geos.utils.UnitRepository import UnitRepository
+from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import strListToEnumerationDomainXml
 
@@ -58,6 +59,8 @@ To use it:
 * In the "Open data with..." window, Select PVGeosLogReader reader.
 
 """
+
+loggerTitle: str = "Geos Log Reader"
 
 
 @smproxy.reader(
@@ -147,12 +150,23 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         for prop in propsSolvers:
             self.m_convergence.AddArray( prop )
 
-        self.logger: logging.Logger = logging.getLogger( "Geos Log Reader" )
+        self.handler: logging.Handler = VTKHandler()
+        self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        if len( self.logger.handlers ) == 0:
-            self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( self.handler )
         self.logger.propagate = False
-        self.logger.info( f"Apply plugin { self.logger.name }." )
+
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     @smproperty.stringvector( name="DataFilepath", default_values="Enter a filepath to your data" )
     @smdomain.filelist()
@@ -553,6 +567,7 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         Returns:
             int: 1 if calculation successfully ended, 0 otherwise.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
         try:
             # we choose which dataframe to build and get it
             idsToUse = self.getIdsToUse()
@@ -577,8 +592,17 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
                                                             array_type=VTK_DOUBLE )  # type: ignore[no-untyped-call]
                 newAttr.SetName( column )
                 output.AddColumn( newAttr )
-            self.logger.info( f"The plugin { self.logger.name } succeeded." )
+
+            result: str = f"The plugin { self.logger.name } succeeded"
+            if self.counter.warningCount > 0:
+                self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+            else:
+                self.logger.info( f"{ result }." )
         except Exception as e:
             self.logger.error( f"The plugin { self.logger.name } failed.\n{ e }" )
             return 0
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
         return 1

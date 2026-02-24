@@ -30,6 +30,7 @@ keywords = [
 ]
 
 dependencies = [
+    "setuptools",
     "typing-extensions==4.12.2",
     "trame==3.6.5",
     "trame-vuetify==2.7.1",
@@ -66,6 +67,7 @@ dev = [
     "pre-commit"
 ]
 test = [
+    "setuptools",
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",

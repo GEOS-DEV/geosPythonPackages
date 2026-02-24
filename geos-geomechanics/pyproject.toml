@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies=[
     "geos-utils",
-    "vtk >= 9.3",
+    "vtk >= 9.3, < 9.6",
     "numpy >= 2.2",
     "pandas >= 2.2",
     "typing_extensions >= 4.12",

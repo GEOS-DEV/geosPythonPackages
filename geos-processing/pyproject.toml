@@ -32,7 +32,7 @@ dependencies = [
     "geos-geomechanics",
     "geos-utils",
     "geos-mesh",
-    "vtk >= 9.3",
+    "vtk >= 9.3, < 9.6",
     "numpy >= 2.2",
     "typing_extensions >= 4.12",
 ]
@@ -43,6 +43,7 @@ Homepage = "https://github.com/GEOS-DEV/geosPythonPackages"
 Documentation = "https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/"
 Repository = "https://github.com/GEOS-DEV/geosPythonPackages.git"
 "Bug Tracker" = "https://github.com/GEOS-DEV/geosPythonPackages/issues"
+
 
 [project.optional-dependencies]
 build = [

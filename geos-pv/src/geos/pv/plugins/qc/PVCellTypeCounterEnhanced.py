@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing_extensions import Self
 from typing import Optional
@@ -26,6 +27,7 @@ update_paths()
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.pv.utils.details import FilterCategory
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 The ``Cell Type Counter Enhanced`` filter computes cell type counts. Counts can be exported into a file easily.
@@ -57,6 +59,8 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         self._saveToFile: bool = True
         # used to concatenate results if vtkMultiBlockDataSet
         self._countsAll: CellTypeCounts = CellTypeCounts()
+
+        self.handler: logging.Handler = VTKHandler()
 
     @smproperty.intvector(
         name="SetSaveToFile",
@@ -137,8 +141,8 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert outputTable is not None, "Output pipeline is null."
 
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
-        if len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
-            cellTypeCounterEnhancedFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
+            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
 
         try:
             cellTypeCounterEnhancedFilter.applyFilter()
