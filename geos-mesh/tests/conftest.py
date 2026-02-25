@@ -17,16 +17,6 @@ from geos.mesh.utils.genericHelpers import createMultiCellMesh
 
 
 @pytest.fixture
-def arrayExpected( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
-    """Get an array from a file."""
-    reference_data = "data/data.npz"
-    reference_data_path = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), reference_data )
-    data = np.load( reference_data_path )
-
-    return data[ request.param ]
-
-
-@pytest.fixture
 def arrayTest( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
     """Get a random array of float64."""
     np.random.seed( 42 )
@@ -218,28 +208,43 @@ def dataSetTest() -> Any:
 def internMeshTest() -> Any:
     """Get an intern mesh.
 
-    Returns
+    Returns:
         mesh (vtkUnstructuredGrid | vtkMultiBlockDataSet): An internal mesh.
     """
     ## mesh 3D
-    coordPts3D: list[ np.float64 ] = [ [ -1., 0., 0. ], [ 0., 0., 0. ], [ 0., 1., 0. ], [ -1., 1., 0. ], [ -1., 0., 1. ], [ 0., 0., 1. ], [ 0., 1., 1. ], [ -1., 1., 1. ], [ 1., 0., 0. ], [ 1., 1., 0. ], [ 1., 0., 1. ], [ 1., 1., 1. ], [ 2., 0., 0. ], [ 2., 1., 0. ], [ 2., 0., 1. ], [ 2., 1., 1. ] ]
-    cellsMesh3D: list[ tuple[ int, ...] ] = [ ( 0, 1, 2, 3, 4, 5, 6, 7 ), ( 1, 8, 9, 2, 5, 10, 11, 6 ), ( 8, 12, 13, 9, 10, 14, 15, 11 ) ]
-    coordCells3D: list[ npt.NDArray[ np.float64 ] ] = [ np.array( [ coordPts3D[ i ] for i in cellMesh3D ] ) for cellMesh3D in cellsMesh3D ]
+    coordPts3D: list[ list[ float ] ] = [ [ -1., 0., 0. ], [ 0., 0., 0. ], [ 0., 1., 0. ], [ -1., 1., 0. ],
+                                          [ -1., 0., 1. ], [ 0., 0., 1. ], [ 0., 1., 1. ], [ -1., 1., 1. ],
+                                          [ 1., 0., 0. ], [ 1., 1., 0. ], [ 1., 0., 1. ], [ 1., 1., 1. ],
+                                          [ 2., 0., 0. ], [ 2., 1., 0. ], [ 2., 0., 1. ], [ 2., 1., 1. ] ]
+    cellsMesh3D: list[ tuple[ int, ...] ] = [ ( 0, 1, 2, 3, 4, 5, 6, 7 ), ( 1, 8, 9, 2, 5, 10, 11, 6 ),
+                                              ( 8, 12, 13, 9, 10, 14, 15, 11 ) ]
+    coordCells3D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts3D[ i ] for i in cellMesh3D ] ) for cellMesh3D in cellsMesh3D
+    ]
     list3DCellType: list[ int ] = [ VTK_HEXAHEDRON, VTK_HEXAHEDRON, VTK_HEXAHEDRON ]
 
     ## mesh 2D
-    coordPts2D: list[ np.float64 ] = [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 1., 0., 1. ], [ 0., 0., 1. ], [ 2., 0., 0. ], [ 2., 0., 1. ], [ 3., 0., 0. ], [ 3., 0., 1. ] ]
+    coordPts2D: list[ list[ float ] ] = [ [ 0., 0., 0. ], [ 1., 0., 0. ], [ 1., 0., 1. ], [ 0., 0., 1. ],
+                                          [ 2., 0., 0. ], [ 2., 0., 1. ], [ 3., 0., 0. ], [ 3., 0., 1. ] ]
     cellsMesh2D: list[ tuple[ int, ...] ] = [ ( 0, 1, 2, 3 ), ( 1, 4, 5, 2 ), ( 4, 6, 7, 5 ) ]
-    coordCells2D: list[ npt.NDArray[ np.float64 ] ] = [ np.array( [ coordPts2D[ i ] for i in cellMesh2D ] ) for cellMesh2D in cellsMesh2D ]
+    coordCells2D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts2D[ i ] for i in cellMesh2D ] ) for cellMesh2D in cellsMesh2D
+    ]
     list2DCellType: list[ int ] = [ VTK_QUAD, VTK_QUAD, VTK_QUAD ]
 
     ## mesh 1D
-    coordPts1D: list[ np.float64 ] = [ [ 1., 0., 0. ], [ 1., 0., 1. ], [ 1.5, 0., 0. ], [ 1.5, 0., 1. ] ]
+    coordPts1D: list[ list[ float ] ] = [ [ 1., 0., 0. ], [ 1., 0., 1. ], [ 1.5, 0., 0. ], [ 1.5, 0., 1. ] ]
     cellsMesh1D: list[ tuple[ int, ...] ] = [ ( 0, 1 ), ( 2, 3 ) ]
-    coordCells1D: list[ npt.NDArray[ np.float64 ] ] = [ np.array( [ coordPts1D[ i ] for i in cellMesh1D ] ) for cellMesh1D in cellsMesh1D ]
+    coordCells1D: list[ npt.NDArray[ np.float64 ] ] = [
+        np.array( [ coordPts1D[ i ] for i in cellMesh1D ] ) for cellMesh1D in cellsMesh1D
+    ]
     list1DCellType: list[ int ] = [ VTK_LINE, VTK_LINE ]
 
-    testCase: dict[ str, tuple[ list[ npt.NDArray[ np.float64 ] ], list[ int ] ] ] = { "vtu1D": ( coordCells1D, list1DCellType ), "vtu2D": ( coordCells2D, list2DCellType ), "vtu3D": ( coordCells3D, list3DCellType ) }
+    testCase: dict[ str, tuple[ list[ npt.NDArray[ np.float64 ] ], list[ int ] ] ] = {
+        "vtu1D": ( coordCells1D, list1DCellType ),
+        "vtu2D": ( coordCells2D, list2DCellType ),
+        "vtu3D": ( coordCells3D, list3DCellType )
+    }
 
     def _get_mesh( meshType: str ) -> vtkUnstructuredGrid | vtkMultiBlockDataSet:
         """Create and return a mesh with the right type.
@@ -286,11 +291,20 @@ def getElementMap() -> Any:
         Returns:
             elementMap (dict[int, npt.NDArray[np.int64]]): The element mapping dictionary.
         """
-        sharedElem2D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = { Piece.CELLS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64, ), Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 8 ], [ 2, 10 ], [ 3, 5 ], [ 4, 12 ], [ 5, 14 ] ], dtype=np.int64 ) }
+        sharedElem2D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 8 ], [ 2, 10 ], [ 3, 5 ], [ 4, 12 ], [ 5, 14 ] ], dtype=np.int64 )
+        }
 
-        sharedElem1D2DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = { Piece.CELLS: np.array( [ [ 0, 0 ] ], dtype=np.int64 ), Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64 ) }
+        sharedElem1D2DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 0 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 1 ], [ 1, 2 ] ], dtype=np.int64 )
+        }
 
-        sharedElem1D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = { Piece.CELLS: np.array( [ [ 0, 1 ] ], dtype=np.int64 ), Piece.POINTS: np.array( [ [ 0, 8 ], [ 1, 10 ] ], dtype=np.int64 ) }
+        sharedElem1D3DIds: dict[ Piece, npt.NDArray[ np.int64 ] ] = {
+            Piece.CELLS: np.array( [ [ 0, 1 ] ], dtype=np.int64 ),
+            Piece.POINTS: np.array( [ [ 0, 8 ], [ 1, 10 ] ], dtype=np.int64 )
+        }
 
         elementMap: dict[ int, npt.NDArray[ np.int64 ] ] = {}
         nbElements: tuple[ int, int, int ] = ( 16, 8, 4 ) if piece == Piece.POINTS else ( 3, 3, 2 )

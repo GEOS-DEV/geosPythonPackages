@@ -55,7 +55,6 @@ def test_getCellDimensionTypeError() -> None:
         ( "vtu1D", "vtu3D", Piece.POINTS ),  # 1D vtu -> 3D vtu onPoints
         ( "vtu1D", "vtm", Piece.CELLS ),  # 1D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
         ( "vtu1D", "vtm", Piece.POINTS ),  # 1D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
-
         ( "vtu2D", "vtu2D", Piece.CELLS ),  # 2D vtu -> 2D vtu onCells
         ( "vtu2D", "vtu2D", Piece.POINTS ),  # 2D vtu -> 2D vtu onPoints
         ( "vtu2D", "vtu1D", Piece.CELLS ),  # 2D vtu -> 1D vtu onCells
@@ -64,7 +63,6 @@ def test_getCellDimensionTypeError() -> None:
         ( "vtu2D", "vtu3D", Piece.POINTS ),  # 2D vtu -> 3D vtu onPoints
         ( "vtu2D", "vtm", Piece.CELLS ),  # 2D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
         ( "vtu2D", "vtm", Piece.POINTS ),  # 2D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
-
         ( "vtu3D", "vtu3D", Piece.CELLS ),  # 3D vtu -> 3D vtu onCells
         ( "vtu3D", "vtu3D", Piece.POINTS ),  # 3D vtu -> 3D vtu onPoints
         ( "vtu3D", "vtu1D", Piece.CELLS ),  # 3D vtu -> 1D vtu onCells
@@ -73,7 +71,6 @@ def test_getCellDimensionTypeError() -> None:
         ( "vtu3D", "vtu2D", Piece.POINTS ),  # 3D vtu -> 2D vtu onPoints
         ( "vtu3D", "vtm", Piece.CELLS ),  # 3D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
         ( "vtu3D", "vtm", Piece.POINTS ),  # 3D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
-
         ( "vtm", "vtm", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> vtm( 1D, 2D & 3D vtu ) onCells
         ( "vtm", "vtm", Piece.POINTS ),  # vtm( 1D, 2D & 3D vtu ) -> vtm( 1D, 2D & 3D vtu ) onPoints
         ( "vtm", "vtu1D", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> 1D vtu onCells
@@ -113,13 +110,115 @@ def test_computeElementMappingValueError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, piece, expected", [
-    ( "geosOutput2Ranks", Piece.POINTS, { 'localToGlobalMap': 1, 'ghostRank': 1, 'totalDisplacement': 3, 'mass': 1, 'externalForce': 3, 'fractureMechSolver_totalDisplacement_dofIndex': 1    } ),
-    ( "geosOutput2Ranks", Piece.CELLS, { 'rockPerm_permeability': 3, 'water_internalEnergy': 1, 'rock_bulkModulus': 1, 'water_dInternalEnergy': 1, 'rock_shearModulus': 1, 'water_density': 1, 'water_dViscosity': 1, 'water_dDensity': 1, 'water_viscosity': 1, 'rockPorosity_initialPorosity': 1, 'water_enthalpy': 1, 'rockPorosity_porosity': 1, 'water_dEnthalpy': 1, 'rock_density': 1, 'rockPorosity_referencePorosity': 1, 'rockPorosity_biotCoefficient': 1, 'rockPorosity_grainBulkModulus': 1, 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1, 'deltaPressure': 1, 'mass': 1, 'pressure': 1, 'ghostRank': 1, 'temperature': 1, 'localToGlobalMap': 1, 'averageStrain': 6, 'elementCenter': 3, 'averageStress': 6, 'elementVolume': 1, 'averagePlasticStrain': 6, 'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex': 1, 'connectionRate': 1, 'fracturePorosity_referencePorosity': 1, 'fracturePorosity_initialPorosity': 1, 'fracturePorosity_porosity': 1, 'fracturePerm_permeability': 3, 'fractureMechSolver_traction_dofIndex': 1, 'massCreated': 1, 'hydraulicAperture': 1, 'elementArea': 1, 'traction': 3, 'slip': 1, 'elementAperture': 1, 'tangentVector1': 3, 'displacementJump': 3, 'normalVector': 3, 'fractureState': 1, 'tangentVector2': 3, 'deltaSlip': 2, 'tangentialTraction': 1 } ),
-    ( "extractAndMergeVolume", Piece.POINTS, { 'externalForce': 3, 'fractureMechSolver_totalDisplacement_dofIndex': 1, 'ghostRank': 1, 'localToGlobalMap': 1, 'mass': 1, 'totalDisplacement': 3 } ),
-    ( "extractAndMergeVolume", Piece.CELLS, { 'averagePlasticStrain': 6, 'averageStrain': 6, 'averageStress': 6, 'deltaPressure': 1, 'elementCenter': 3, 'elementVolume': 1, 'ghostRank': 1, 'localToGlobalMap': 1, 'mass': 1, 'pressure': 1, 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1, 'rockPorosity_initialPorosity': 1, 'temperature': 1, 'water_dDensity': 1, 'water_dEnthalpy': 1, 'water_dInternalEnergy': 1, 'water_dViscosity': 1, 'water_density': 1, 'water_enthalpy': 1, 'water_internalEnergy': 1, 'water_viscosity': 1, 'blockIndex': 1, 'bulkModulus': 1, 'porosityInitial': 1, 'permeability': 3, 'porosity': 1, 'density': 1, 'shearModulus': 1, 'bulkModulusGrains': 1, 'biotCoefficient': 1, 'stressEffectiveInitial': 6, 'shearModulusInitial': 1, 'bulkModulusInitial': 1 } ),
+    ( "geosOutput2Ranks", Piece.POINTS, {
+        'localToGlobalMap': 1,
+        'ghostRank': 1,
+        'totalDisplacement': 3,
+        'mass': 1,
+        'externalForce': 3,
+        'fractureMechSolver_totalDisplacement_dofIndex': 1
+    } ),
+    ( "geosOutput2Ranks", Piece.CELLS, {
+        'rockPerm_permeability': 3,
+        'water_internalEnergy': 1,
+        'rock_bulkModulus': 1,
+        'water_dInternalEnergy': 1,
+        'rock_shearModulus': 1,
+        'water_density': 1,
+        'water_dViscosity': 1,
+        'water_dDensity': 1,
+        'water_viscosity': 1,
+        'rockPorosity_initialPorosity': 1,
+        'water_enthalpy': 1,
+        'rockPorosity_porosity': 1,
+        'water_dEnthalpy': 1,
+        'rock_density': 1,
+        'rockPorosity_referencePorosity': 1,
+        'rockPorosity_biotCoefficient': 1,
+        'rockPorosity_grainBulkModulus': 1,
+        'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1,
+        'deltaPressure': 1,
+        'mass': 1,
+        'pressure': 1,
+        'ghostRank': 1,
+        'temperature': 1,
+        'localToGlobalMap': 1,
+        'averageStrain': 6,
+        'elementCenter': 3,
+        'averageStress': 6,
+        'elementVolume': 1,
+        'averagePlasticStrain': 6,
+        'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex': 1,
+        'connectionRate': 1,
+        'fracturePorosity_referencePorosity': 1,
+        'fracturePorosity_initialPorosity': 1,
+        'fracturePorosity_porosity': 1,
+        'fracturePerm_permeability': 3,
+        'fractureMechSolver_traction_dofIndex': 1,
+        'massCreated': 1,
+        'hydraulicAperture': 1,
+        'elementArea': 1,
+        'traction': 3,
+        'slip': 1,
+        'elementAperture': 1,
+        'tangentVector1': 3,
+        'displacementJump': 3,
+        'normalVector': 3,
+        'fractureState': 1,
+        'tangentVector2': 3,
+        'deltaSlip': 2,
+        'tangentialTraction': 1
+    } ),
+    ( "extractAndMergeVolume", Piece.POINTS, {
+        'externalForce': 3,
+        'fractureMechSolver_totalDisplacement_dofIndex': 1,
+        'ghostRank': 1,
+        'localToGlobalMap': 1,
+        'mass': 1,
+        'totalDisplacement': 3
+    } ),
+    ( "extractAndMergeVolume", Piece.CELLS, {
+        'averagePlasticStrain': 6,
+        'averageStrain': 6,
+        'averageStress': 6,
+        'deltaPressure': 1,
+        'elementCenter': 3,
+        'elementVolume': 1,
+        'ghostRank': 1,
+        'localToGlobalMap': 1,
+        'mass': 1,
+        'pressure': 1,
+        'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1,
+        'rockPorosity_initialPorosity': 1,
+        'temperature': 1,
+        'water_dDensity': 1,
+        'water_dEnthalpy': 1,
+        'water_dInternalEnergy': 1,
+        'water_dViscosity': 1,
+        'water_density': 1,
+        'water_enthalpy': 1,
+        'water_internalEnergy': 1,
+        'water_viscosity': 1,
+        'blockIndex': 1,
+        'bulkModulus': 1,
+        'porosityInitial': 1,
+        'permeability': 3,
+        'porosity': 1,
+        'density': 1,
+        'shearModulus': 1,
+        'bulkModulusGrains': 1,
+        'biotCoefficient': 1,
+        'stressEffectiveInitial': 6,
+        'shearModulusInitial': 1,
+        'bulkModulusInitial': 1
+    } ),
 ] )
-def test_getAttributesWithNumberOfComponents( dataSetTest: Any, meshName: str, piece: Piece,
-                                              expected: dict[ str, int ] ) -> None:
+def test_getAttributesWithNumberOfComponents(
+    dataSetTest: Any,
+    meshName: str,
+    piece: Piece,
+    expected: dict[ str, int ],
+) -> None:
     """Test getting attribute list as dict from a mesh."""
     mesh: vtkMultiBlockDataSet | vtkDataSet = dataSetTest( meshName )
     attributes: dict[ str, int ] = arrayHelpers.getAttributesWithNumberOfComponents( mesh, piece )
@@ -197,10 +296,36 @@ def test_getNumpyGlobalIdsArrayAttributeError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, piece, expectedAttributeSet", [
-    ( "extractAndMergeVolume", Piece.POINTS, { 'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'externalForce', 'mass', 'ghostRank' } ),
-    ( "extractAndMergeVolume", Piece.CELLS, { 'deltaPressure', 'averageStrain', 'water_dInternalEnergy', 'localToGlobalMap', 'blockIndex', 'bulkModulusInitial', 'averageStress', 'permeability', 'bulkModulusGrains', 'water_density', 'porosity', 'pressure', 'ghostRank', 'temperature', 'elementCenter', 'water_viscosity', 'stressEffectiveInitial', 'water_dViscosity', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex', 'averagePlasticStrain', 'biotCoefficient', 'water_internalEnergy', 'rockPorosity_initialPorosity', 'shearModulus', 'elementVolume', 'density', 'mass', 'porosityInitial', 'bulkModulus', 'water_dEnthalpy', 'shearModulusInitial', 'water_dDensity', 'water_enthalpy' } ),
-    ( "geosOutput2Ranks", Piece.POINTS, { 'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'mass', 'externalForce', 'ghostRank' } ),
-    ( "geosOutput2Ranks", Piece.CELLS, { 'averageStress', 'fractureMechSolver_traction_dofIndex', 'temperature', 'averagePlasticStrain', 'elementArea', 'rockPorosity_initialPorosity', 'tangentVector2', 'fracturePerm_permeability', 'fractureState', 'fracturePorosity_referencePorosity', 'ghostRank', 'rock_shearModulus', 'rockPorosity_biotCoefficient', 'rockPorosity_grainBulkModulus', 'pressure', 'traction', 'tangentialTraction', 'rock_bulkModulus', 'rockPerm_permeability', 'mass', 'tangentVector1', 'water_density', 'elementVolume', 'water_dInternalEnergy', 'connectionRate', 'normalVector', 'water_internalEnergy', 'displacementJump', 'fracturePorosity_initialPorosity', 'massCreated', 'elementCenter', 'water_dEnthalpy', 'deltaPressure', 'hydraulicAperture', 'elementAperture', 'averageStrain', 'water_dDensity', 'rock_density', 'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex', 'rockPorosity_porosity', 'water_viscosity', 'fracturePorosity_porosity', 'slip', 'localToGlobalMap', 'water_enthalpy', 'deltaSlip', 'water_dViscosity', 'rockPorosity_referencePorosity' } ),
+    ( "extractAndMergeVolume", Piece.POINTS, {
+        'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'externalForce',
+        'mass', 'ghostRank'
+    } ),
+    ( "extractAndMergeVolume", Piece.CELLS, {
+        'deltaPressure', 'averageStrain', 'water_dInternalEnergy', 'localToGlobalMap', 'blockIndex',
+        'bulkModulusInitial', 'averageStress', 'permeability', 'bulkModulusGrains', 'water_density', 'porosity',
+        'pressure', 'ghostRank', 'temperature', 'elementCenter', 'water_viscosity', 'stressEffectiveInitial',
+        'water_dViscosity', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex', 'averagePlasticStrain',
+        'biotCoefficient', 'water_internalEnergy', 'rockPorosity_initialPorosity', 'shearModulus', 'elementVolume',
+        'density', 'mass', 'porosityInitial', 'bulkModulus', 'water_dEnthalpy', 'shearModulusInitial', 'water_dDensity',
+        'water_enthalpy'
+    } ),
+    ( "geosOutput2Ranks", Piece.POINTS, {
+        'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'mass',
+        'externalForce', 'ghostRank'
+    } ),
+    ( "geosOutput2Ranks", Piece.CELLS, {
+        'averageStress', 'fractureMechSolver_traction_dofIndex', 'temperature', 'averagePlasticStrain', 'elementArea',
+        'rockPorosity_initialPorosity', 'tangentVector2', 'fracturePerm_permeability', 'fractureState',
+        'fracturePorosity_referencePorosity', 'ghostRank', 'rock_shearModulus', 'rockPorosity_biotCoefficient',
+        'rockPorosity_grainBulkModulus', 'pressure', 'traction', 'tangentialTraction', 'rock_bulkModulus',
+        'rockPerm_permeability', 'mass', 'tangentVector1', 'water_density', 'elementVolume', 'water_dInternalEnergy',
+        'connectionRate', 'normalVector', 'water_internalEnergy', 'displacementJump',
+        'fracturePorosity_initialPorosity', 'massCreated', 'elementCenter', 'water_dEnthalpy', 'deltaPressure',
+        'hydraulicAperture', 'elementAperture', 'averageStrain', 'water_dDensity', 'rock_density',
+        'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex',
+        'rockPorosity_porosity', 'water_viscosity', 'fracturePorosity_porosity', 'slip', 'localToGlobalMap',
+        'water_enthalpy', 'deltaSlip', 'water_dViscosity', 'rockPorosity_referencePorosity'
+    } ),
 ] )
 def test_getAttributeSet(
     dataSetTest: Any,
@@ -216,8 +341,8 @@ def test_getAttributeSet(
 
 @pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
     ( "blockIndex", False, Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
-    ( "localToGlobalMap", True, Piece.CELLS, np.array( [ i for i in range( 6000 ) ], dtype=np.int64 ) ),
-    ( "localToGlobalMap", True, Piece.POINTS, np.array( [ i for i in range( 7381 ) ], dtype=np.int64 ) ),
+    ( "localToGlobalMap", True, Piece.CELLS, np.array( list( range( 6000 ) ), dtype=np.int64 ) ),
+    ( "localToGlobalMap", True, Piece.POINTS, np.array( list( range( 7381 ) ), dtype=np.int64 ) ),
 ] )
 def test_getNumpyArrayByName(
     dataSetTest: vtkDataSet,
@@ -233,7 +358,7 @@ def test_getNumpyArrayByName(
     assert ( obtainedNpArray == expectedNpArray ).all()
 
 
-def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
+def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet, ) -> None:
     """Test getNumpyArrayByName AttributeError raises."""
     dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     fieldData: vtkCellData = dataset.GetCellData()
@@ -246,7 +371,8 @@ def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
     ( "2Ranks", "localToGlobalMap", [ 0, 42, 8000 ], Piece.POINTS, [ 0, 42 ], [ 8000 ] ),
     ( "extractAndMergeVolume", "localToGlobalMap", [ 0, 42, 7000 ], Piece.CELLS, [ 0, 42 ], [ 7000 ] ),
     ( "extractAndMergeVolume", "localToGlobalMap", [ 0, 42, 8000 ], Piece.POINTS, [ 0, 42 ], [ 8000 ] ),
-    ( "extractAndMergeVolume", "averagePlasticStrain", [ [ 0, 0, 0, 0, 0 ,0 ], [ 1, 1, 1, 1, 1, 1 ] ], Piece.CELLS, [ [ 0, 0, 0, 0, 0 ,0 ] ], [ [ 1, 1, 1, 1, 1, 1 ] ] ),
+    ( "extractAndMergeVolume", "averagePlasticStrain", [ [ 0, 0, 0, 0, 0, 0 ], [ 1, 1, 1, 1, 1, 1 ] ], Piece.CELLS,
+      [ [ 0, 0, 0, 0, 0, 0 ] ], [ [ 1, 1, 1, 1, 1, 1 ] ] ),
 ] )
 def test_checkValidValuesInObject(
     dataSetTest: Any,
@@ -266,10 +392,12 @@ def test_checkValidValuesInObject(
     assert invalidValues == invalidValuesTest
 
 
-@pytest.mark.parametrize( "attributeName, piece", [
-    ( "attributeName", Piece.CELLS ),  # The attribute is not on the mesh
-    ( "ghostRank", Piece.POINTS ),  # The attribute is not global
-] )
+@pytest.mark.parametrize(
+    "attributeName, piece",
+    [
+        ( "attributeName", Piece.CELLS ),  # The attribute is not on the mesh
+        ( "ghostRank", Piece.POINTS ),  # The attribute is not global
+    ] )
 def test_checkValidValuesInObjectAttributeError(
     dataSetTest: vtkMultiBlockDataSet,
     attributeName: str,
@@ -338,7 +466,7 @@ def test_isAttributeGlobal(
 
 
 @pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "externalForce", Piece.POINTS, np.array( [ [0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
+    ( "externalForce", Piece.POINTS, np.array( [ [ 0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
     ( "biotCoefficient", Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
     ( "TIME", Piece.FIELD, np.array( [ 30000000. ], dtype=np.float64 ) ),
 ] )
@@ -346,7 +474,8 @@ def test_getArrayInObject(
     dataSetTest: vtkDataSet,
     attributeName: str,
     piece: Piece,
-    expected: npt.NDArray[ Any ], ) -> None:
+    expected: npt.NDArray[ Any ],
+) -> None:
     """Test getting numpy array of an attribute from dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     obtained: npt.NDArray[ Any ] = arrayHelpers.getArrayInObject( vtkDataSetTest, attributeName, piece )
@@ -384,7 +513,7 @@ def test_getVtkArrayTypeInObject(
     assert obtainedVtkType == expectedVtkType
 
 
-def test_getVtkArrayTypeInObjectAttributeError( dataSetTest: Any ) -> None:
+def test_getVtkArrayTypeInObjectAttributeError( dataSetTest: vtkDataSet, ) -> None:
     """Test fails of the function getVtkArrayTypeInObject with an attribute error."""
     mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     with pytest.raises( AttributeError ):
@@ -398,7 +527,7 @@ def test_getVtkArrayTypeInObjectTypeError() -> None:
 
 
 @pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "externalForce", Piece.POINTS, np.array( [ [0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
+    ( "externalForce", Piece.POINTS, np.array( [ [ 0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
     ( "biotCoefficient", Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
     ( "TIME", Piece.FIELD, np.array( [ 30000000. ], dtype=np.float64 ) ),
 ] )
@@ -406,7 +535,8 @@ def test_getVtkArrayInObject(
     dataSetTest: vtkDataSet,
     attributeName: str,
     piece: Piece,
-    expected: npt.NDArray[ Any ], ) -> None:
+    expected: npt.NDArray[ Any ],
+) -> None:
     """Test getting Vtk Array from a dataset."""
     vtkDataSetTest: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
 
@@ -506,14 +636,15 @@ def test_getComponentNamesValueError( dataSetTest: vtkMultiBlockDataSet, ) -> No
 @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
     ( ( "Texture Coordinates", ), Piece.POINTS, ( "Texture Coordinates_0", "Texture Coordinates_1" ) ),
     ( ( "Normals", ), Piece.CELLS, ( "Normals_0", "Normals_1", "Normals_2" ) ),
-    ( ( "Normals", "Tangents" ), Piece.CELLS, ( "Normals_0", "Normals_1", "Normals_2", "Tangents_0", "Tangents_1", "Tangents_2" ) ),
+    ( ( "Normals", "Tangents" ), Piece.CELLS,
+      ( "Normals_0", "Normals_1", "Normals_2", "Tangents_0", "Tangents_1", "Tangents_2" ) ),
 ] )
 def test_getAttributeValuesAsDF(
     dataSetTest: vtkPolyData,
     attributeNames: tuple[ str, ...],
     piece: Piece,
     expected_columns: tuple[ str, ...],
- ) -> None:
+) -> None:
     """Test getting an attribute from a polydata as a dataframe."""
     polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "extractAndMergeFaultVtp" ) )
     data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
@@ -541,7 +672,7 @@ def test_hasArray(
     assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
 
 
-def test_computeCellCenterCoordinates( dataSetTest: vtkDataSet ) -> None:
+def test_computeCellCenterCoordinates( dataSetTest: vtkDataSet, ) -> None:
     """Test the function computeCellCenterCoordinates."""
     mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     expected: npt.NDArray = vtk_to_numpy( mesh.GetCellData().GetArray( "elementCenter" ) )
