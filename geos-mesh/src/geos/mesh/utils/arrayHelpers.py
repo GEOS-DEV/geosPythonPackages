@@ -285,6 +285,8 @@ def checkValidValuesInObject(
 def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.NDArray:
     """Get a numpy array of the GlobalIds if it exist.
 
+    Note that for some cases (GEOS simulations), the attribute "localToGlobalMap" is the GlobalIds.
+
     Args:
         data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
 
@@ -298,11 +300,11 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ] ) -> npt.ND
     if not isinstance( data, vtkFieldData ):
         raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
 
-    global_ids: Optional[ vtkDataArray ] = data.GetGlobalIds()
-    if global_ids is None:
+    globalIds: vtkDataArray = data.GetGlobalIds() if data.GetGlobalIds() is not None else data.GetArray( "localToGlobalMap" )
+    if globalIds is None:
         raise AttributeError( "There is no GlobalIds in the given fieldData." )
 
-    return vtk_to_numpy( global_ids )
+    return vtk_to_numpy( globalIds )
 
 
 def getNumpyArrayByName( data: Union[ vtkCellData, vtkPointData ], name: str, sorted: bool = False ) -> npt.NDArray:
