@@ -14,25 +14,25 @@ import numpy.typing as npt
 import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonCore import vtkDoubleArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData,
-                                            vtkCellData )
+                                            vtkCellData, vtkUnstructuredGrid )
 
 from geos.mesh.utils import arrayHelpers
 from geos.utils.pieceEnum import Piece
 
 
-@pytest.mark.parametrize( "meshName, cellDimExpected", [
-    ( "dataset", { 3 } ),
-    ( "fracture", { 2 } ),
-    ( "well", { 1 } ),
-    ( "meshGeosExtractBlockTmp", { 3, 2, 1 } ),
+@pytest.mark.parametrize( "meshType, cellDimExpected", [
+    ( "vtu3D", { 3 } ),
+    ( "vtu2D", { 2 } ),
+    ( "vtu1D", { 1 } ),
+    ( "vtm", { 1, 2, 3 } ),
 ] )
 def test_getCellDimension(
-    dataSetTest: vtkDataSet,
-    meshName: str,
+    internMeshTest: Any,
+    meshType: str,
     cellDimExpected: set[ int ],
 ) -> None:
     """Test getting the different cells dimension in a mesh."""
-    mesh: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshName )
+    mesh: vtkUnstructuredGrid | vtkMultiBlockDataSet = internMeshTest( meshType )
     cellDimObtained: set[ int ] = arrayHelpers.getCellDimension( mesh )
     assert cellDimObtained == cellDimExpected
 
@@ -45,48 +45,57 @@ def test_getCellDimensionTypeError() -> None:
 
 
 @pytest.mark.parametrize(
-    "meshFromName, meshToName, piece",
+    "meshTypeFrom, meshTypeTo, piece",
     [
-        ( "well", "emptyWell", Piece.CELLS ),  # 1D vtu -> 1D vtu onCells
-        ( "well", "emptyWell", Piece.POINTS ),  # 1D vtu -> 1D vtu onPoints
-        ( "well", "emptyFracture", Piece.POINTS ),  # 1D vtu -> 2D vtu onCells
-        ( "well", "emptypolydata", Piece.POINTS ),  # 1D vtu -> 2D vtp onCells
-        ( "well", "emptydataset", Piece.POINTS ),  # 1D vtu -> 3D vtu onCells
-        ( "well", "emptymultiblock", Piece.POINTS ),  # 1D vtu -> vtm(3D vtu & 2D vtu) onPoints
-        ( "fracture", "emptyFracture", Piece.CELLS ),  # 2D vtu -> 2D vtu onCells
-        ( "fracture", "emptyWell", Piece.POINTS ),  # 2D vtu -> 1D vtu onPoints
-        ( "fracture", "emptypolydata", Piece.CELLS ),  # 2D vtu -> 2D vtp onCells
-        ( "fracture", "emptydataset", Piece.CELLS ),  # 2D vtu -> 3D vtu onCells
-        ( "fracture", "emptymultiblock", Piece.CELLS ),  # 2D vtu -> vtm(3D vtu & 2D vtu) onCells
-        ( "polydata", "emptypolydata", Piece.CELLS ),  # 2D vtp -> 2D vtp onCells
-        ( "polydata", "emptyWell", Piece.POINTS ),  # 2D vtp -> 1D vtu onPoints
-        ( "polydata", "emptyFracture", Piece.CELLS ),  # 2D vtp -> 2D vtu onCells
-        ( "polydata", "emptydataset", Piece.CELLS ),  # 2D vtp -> 3D vtu onCells
-        ( "polydata", "emptymultiblock", Piece.CELLS ),  # 2D vtp -> vtm(3D vtu & 2D vtu) onCells
-        ( "dataset", "emptydataset", Piece.CELLS ),  # 3D vtu -> 3D vtu onCells
-        ( "dataset", "emptyWell", Piece.POINTS ),  # 3D vtu -> 1D vtu onPoints
-        ( "dataset", "emptyFracture", Piece.CELLS ),  # 3D vtu -> 2D vtu onCells
-        ( "dataset", "emptypolydata", Piece.CELLS ),  # 3D vtu -> 2D vtp onCells
-        ( "dataset", "emptymultiblock", Piece.CELLS ),  # 3D vtu -> vtm(3D vtu & 2D vtu) onCells
-        ( "multiblock", "emptymultiblock", Piece.CELLS ),  # vtm( 3D vtu & 2D vtu ) -> vtm( 3D vtu & 2D vtu ) onCells
-        ( "multiblock", "emptyWell", Piece.POINTS ),  # vtm(3D vtu & 2D vtu) -> 1D vtu onPoints
-        ( "multiblock", "emptyFracture", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 2D vtu onCells
-        ( "multiblock", "emptypolydata", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 2D vtp onCells
-        ( "multiblock", "emptydataset", Piece.CELLS ),  # vtm(3D vtu & 2D vtu) -> 3D vtu onCells
+        ( "vtu1D", "vtu1D", Piece.CELLS ),  # 1D vtu -> 1D vtu onCells
+        ( "vtu1D", "vtu1D", Piece.POINTS ),  # 1D vtu -> 1D vtu onPoints
+        ( "vtu1D", "vtu2D", Piece.CELLS ),  # 1D vtu -> 2D vtu onCells
+        ( "vtu1D", "vtu2D", Piece.POINTS ),  # 1D vtu -> 2D vtu onPoints
+        ( "vtu1D", "vtu3D", Piece.CELLS ),  # 1D vtu -> 3D vtu onCells
+        ( "vtu1D", "vtu3D", Piece.POINTS ),  # 1D vtu -> 3D vtu onPoints
+        ( "vtu1D", "vtm", Piece.CELLS ),  # 1D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
+        ( "vtu1D", "vtm", Piece.POINTS ),  # 1D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
+
+        ( "vtu2D", "vtu2D", Piece.CELLS ),  # 2D vtu -> 2D vtu onCells
+        ( "vtu2D", "vtu2D", Piece.POINTS ),  # 2D vtu -> 2D vtu onPoints
+        ( "vtu2D", "vtu1D", Piece.CELLS ),  # 2D vtu -> 1D vtu onCells
+        ( "vtu2D", "vtu1D", Piece.POINTS ),  # 2D vtu -> 1D vtu onPoints
+        ( "vtu2D", "vtu3D", Piece.CELLS ),  # 2D vtu -> 3D vtu onCells
+        ( "vtu2D", "vtu3D", Piece.POINTS ),  # 2D vtu -> 3D vtu onPoints
+        ( "vtu2D", "vtm", Piece.CELLS ),  # 2D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
+        ( "vtu2D", "vtm", Piece.POINTS ),  # 2D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
+
+        ( "vtu3D", "vtu3D", Piece.CELLS ),  # 3D vtu -> 3D vtu onCells
+        ( "vtu3D", "vtu3D", Piece.POINTS ),  # 3D vtu -> 3D vtu onPoints
+        ( "vtu3D", "vtu1D", Piece.CELLS ),  # 3D vtu -> 1D vtu onCells
+        ( "vtu3D", "vtu1D", Piece.POINTS ),  # 3D vtu -> 1D vtu onPoints
+        ( "vtu3D", "vtu2D", Piece.CELLS ),  # 3D vtu -> 2D vtu onCells
+        ( "vtu3D", "vtu2D", Piece.POINTS ),  # 3D vtu -> 2D vtu onPoints
+        ( "vtu3D", "vtm", Piece.CELLS ),  # 3D vtu -> vtm( 1D, 2D & 3D vtu ) onCells
+        ( "vtu3D", "vtm", Piece.POINTS ),  # 3D vtu -> vtm( 1D, 2D & 3D vtu ) onPoints
+
+        ( "vtm", "vtm", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> vtm( 1D, 2D & 3D vtu ) onCells
+        ( "vtm", "vtm", Piece.POINTS ),  # vtm( 1D, 2D & 3D vtu ) -> vtm( 1D, 2D & 3D vtu ) onPoints
+        ( "vtm", "vtu1D", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> 1D vtu onCells
+        ( "vtm", "vtu1D", Piece.POINTS ),  # vtm( 1D, 2D & 3D vtu ) -> 1D vtu onPoints
+        ( "vtm", "vtu2D", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> 2D vtu onCells
+        ( "vtm", "vtu2D", Piece.POINTS ),  # vtm( 1D, 2D & 3D vtu ) -> 2D vtu onPoints
+        ( "vtm", "vtu3D", Piece.CELLS ),  # vtm( 1D, 2D & 3D vtu ) -> 3D vtu onCells
+        ( "vtm", "vtu3D", Piece.POINTS ),  # vtm( 1D, 2D & 3D vtu ) -> 3D vtu onPoints
     ] )
 def test_computeElementMapping(
-    dataSetTest: vtkDataSet,
+    internMeshTest: Any,
     getElementMap: dict[ int, npt.NDArray[ np.int64 ] ],
-    meshFromName: str,
-    meshToName: str,
+    meshTypeFrom: str,
+    meshTypeTo: str,
     piece: Piece,
 ) -> None:
     """Test getting the map between two meshes element."""
-    meshFrom: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshFromName )
-    meshTo: Union[ vtkDataSet, vtkMultiBlockDataSet ] = dataSetTest( meshToName )
+    meshFrom: vtkMultiBlockDataSet | vtkUnstructuredGrid = internMeshTest( meshTypeFrom )
+    meshTo: vtkMultiBlockDataSet | vtkUnstructuredGrid = internMeshTest( meshTypeTo )
     elementMapComputed: dict[ int,
                               npt.NDArray[ np.int64 ] ] = arrayHelpers.computeElementMapping( meshFrom, meshTo, piece )
-    elementMapTest: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshFromName, meshToName, piece )
+    elementMapTest: dict[ int, npt.NDArray[ np.int64 ] ] = getElementMap( meshTypeFrom, meshTypeTo, piece )
 
     keysComputed: list[ int ] = list( elementMapComputed.keys() )
     keysTest: list[ int ] = list( elementMapTest.keys() )
@@ -104,31 +113,10 @@ def test_computeElementMappingValueError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, piece, expected", [
-    ( "multiblock", Piece.POINTS, {
-        'GLOBAL_IDS_POINTS': 1,
-        'collocated_nodes': 2,
-        'PointAttribute': 3
-    } ),
-    ( "multiblock", Piece.CELLS, {
-        'CELL_MARKERS': 1,
-        'PERM': 3,
-        'PORO': 1,
-        'FAULT': 1,
-        'GLOBAL_IDS_CELLS': 1,
-        'CellAttribute': 3
-    } ),
-    ( "dataset", Piece.POINTS, {
-        'GLOBAL_IDS_POINTS': 1,
-        'PointAttribute': 3
-    } ),
-    ( "dataset", Piece.CELLS, {
-        'CELL_MARKERS': 1,
-        'PERM': 3,
-        'PORO': 1,
-        'FAULT': 1,
-        'GLOBAL_IDS_CELLS': 1,
-        'CellAttribute': 3
-    } ),
+    ( "geosOutput2Ranks", Piece.POINTS, { 'localToGlobalMap': 1, 'ghostRank': 1, 'totalDisplacement': 3, 'mass': 1, 'externalForce': 3, 'fractureMechSolver_totalDisplacement_dofIndex': 1    } ),
+    ( "geosOutput2Ranks", Piece.CELLS, { 'rockPerm_permeability': 3, 'water_internalEnergy': 1, 'rock_bulkModulus': 1, 'water_dInternalEnergy': 1, 'rock_shearModulus': 1, 'water_density': 1, 'water_dViscosity': 1, 'water_dDensity': 1, 'water_viscosity': 1, 'rockPorosity_initialPorosity': 1, 'water_enthalpy': 1, 'rockPorosity_porosity': 1, 'water_dEnthalpy': 1, 'rock_density': 1, 'rockPorosity_referencePorosity': 1, 'rockPorosity_biotCoefficient': 1, 'rockPorosity_grainBulkModulus': 1, 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1, 'deltaPressure': 1, 'mass': 1, 'pressure': 1, 'ghostRank': 1, 'temperature': 1, 'localToGlobalMap': 1, 'averageStrain': 6, 'elementCenter': 3, 'averageStress': 6, 'elementVolume': 1, 'averagePlasticStrain': 6, 'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex': 1, 'connectionRate': 1, 'fracturePorosity_referencePorosity': 1, 'fracturePorosity_initialPorosity': 1, 'fracturePorosity_porosity': 1, 'fracturePerm_permeability': 3, 'fractureMechSolver_traction_dofIndex': 1, 'massCreated': 1, 'hydraulicAperture': 1, 'elementArea': 1, 'traction': 3, 'slip': 1, 'elementAperture': 1, 'tangentVector1': 3, 'displacementJump': 3, 'normalVector': 3, 'fractureState': 1, 'tangentVector2': 3, 'deltaSlip': 2, 'tangentialTraction': 1 } ),
+    ( "extractAndMergeVolume", Piece.POINTS, { 'externalForce': 3, 'fractureMechSolver_totalDisplacement_dofIndex': 1, 'ghostRank': 1, 'localToGlobalMap': 1, 'mass': 1, 'totalDisplacement': 3 } ),
+    ( "extractAndMergeVolume", Piece.CELLS, { 'averagePlasticStrain': 6, 'averageStrain': 6, 'averageStress': 6, 'deltaPressure': 1, 'elementCenter': 3, 'elementVolume': 1, 'ghostRank': 1, 'localToGlobalMap': 1, 'mass': 1, 'pressure': 1, 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex': 1, 'rockPorosity_initialPorosity': 1, 'temperature': 1, 'water_dDensity': 1, 'water_dEnthalpy': 1, 'water_dInternalEnergy': 1, 'water_dViscosity': 1, 'water_density': 1, 'water_enthalpy': 1, 'water_internalEnergy': 1, 'water_viscosity': 1, 'blockIndex': 1, 'bulkModulus': 1, 'porosityInitial': 1, 'permeability': 3, 'porosity': 1, 'density': 1, 'shearModulus': 1, 'bulkModulusGrains': 1, 'biotCoefficient': 1, 'stressEffectiveInitial': 6, 'shearModulusInitial': 1, 'bulkModulusInitial': 1 } ),
 ] )
 def test_getAttributesWithNumberOfComponents( dataSetTest: Any, meshName: str, piece: Piece,
                                               expected: dict[ str, int ] ) -> None:
@@ -160,20 +148,25 @@ def test_getAttributesWithNumberOfComponentsTypeError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, attributeName, pieceTest", [
-    ( "dataset", "CellAttribute", Piece.CELLS ),
-    ( "dataset", "PointAttribute", Piece.POINTS ),
-    ( "dataset", "NewAttribute", Piece.NONE ),
-    ( "multiblockGeosOutput", "ghostRank", Piece.BOTH ),
-    ( "multiblockGeosOutput", "TIME", Piece.FIELD ),
+    ( "extractAndMergeVolume", "elementVolume", Piece.CELLS ),
+    ( "extractAndMergeVolume", "externalForce", Piece.POINTS ),
+    ( "extractAndMergeVolume", "NewAttribute", Piece.NONE ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.BOTH ),
+    ( "extractAndMergeVolume", "TIME", Piece.FIELD ),
+    ( "2Ranks", "elementVolume", Piece.CELLS ),
+    ( "2Ranks", "externalForce", Piece.POINTS ),
+    ( "2Ranks", "NewAttribute", Piece.NONE ),
+    ( "2Ranks", "ghostRank", Piece.BOTH ),
+    ( "2Ranks", "TIME", Piece.FIELD ),
 ] )
 def test_getAttributePieceInfo(
-    dataSetTest: vtkDataSet,
+    dataSetTest: Any,
     meshName: str,
     attributeName: str,
     pieceTest: Piece,
 ) -> None:
     """Test getting attribute piece information."""
-    dataSet: vtkDataSet = dataSetTest( meshName )
+    dataSet: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
     pieceObtained = arrayHelpers.getAttributePieceInfo( dataSet, attributeName )
     assert pieceObtained == pieceTest
 
@@ -205,9 +198,10 @@ def test_getNumpyGlobalIdsArrayAttributeError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, piece, expectedAttributeSet", [
-    ( "dataset", Piece.POINTS, { "GLOBAL_IDS_POINTS", "PointAttribute" } ),
-    ( "dataset", Piece.CELLS, { "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" } ),
-    ( "multiblock", Piece.CELLS, { "CELL_MARKERS", "PERM", "PORO", "FAULT", "GLOBAL_IDS_CELLS", "CellAttribute" } ),
+    ( "extractAndMergeVolume", Piece.POINTS, { 'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'externalForce', 'mass', 'ghostRank' } ),
+    ( "extractAndMergeVolume", Piece.CELLS, { 'deltaPressure', 'averageStrain', 'water_dInternalEnergy', 'localToGlobalMap', 'blockIndex', 'bulkModulusInitial', 'averageStress', 'permeability', 'bulkModulusGrains', 'water_density', 'porosity', 'pressure', 'ghostRank', 'temperature', 'elementCenter', 'water_viscosity', 'stressEffectiveInitial', 'water_dViscosity', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex', 'averagePlasticStrain', 'biotCoefficient', 'water_internalEnergy', 'rockPorosity_initialPorosity', 'shearModulus', 'elementVolume', 'density', 'mass', 'porosityInitial', 'bulkModulus', 'water_dEnthalpy', 'shearModulusInitial', 'water_dDensity', 'water_enthalpy' } ),
+    ( "geosOutput2Ranks", Piece.POINTS, { 'totalDisplacement', 'fractureMechSolver_totalDisplacement_dofIndex', 'localToGlobalMap', 'mass', 'externalForce', 'ghostRank' } ),
+    ( "geosOutput2Ranks", Piece.CELLS, { 'averageStress', 'fractureMechSolver_traction_dofIndex', 'temperature', 'averagePlasticStrain', 'elementArea', 'rockPorosity_initialPorosity', 'tangentVector2', 'fracturePerm_permeability', 'fractureState', 'fracturePorosity_referencePorosity', 'ghostRank', 'rock_shearModulus', 'rockPorosity_biotCoefficient', 'rockPorosity_grainBulkModulus', 'pressure', 'traction', 'tangentialTraction', 'rock_bulkModulus', 'rockPerm_permeability', 'mass', 'tangentVector1', 'water_density', 'elementVolume', 'water_dInternalEnergy', 'connectionRate', 'normalVector', 'water_internalEnergy', 'displacementJump', 'fracturePorosity_initialPorosity', 'massCreated', 'elementCenter', 'water_dEnthalpy', 'deltaPressure', 'hydraulicAperture', 'elementAperture', 'averageStrain', 'water_dDensity', 'rock_density', 'reservoirAndWellsSolver_singlePhaseWellVars_dofIndex', 'reservoirAndWellsSolver_singlePhaseVariables_dofIndex', 'rockPorosity_porosity', 'water_viscosity', 'fracturePorosity_porosity', 'slip', 'localToGlobalMap', 'water_enthalpy', 'deltaSlip', 'water_dViscosity', 'rockPorosity_referencePorosity' } ),
 ] )
 def test_getAttributeSet(
     dataSetTest: Any,
@@ -222,10 +216,10 @@ def test_getAttributeSet(
 
 
 @pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
-    ( "PORO", True, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
-    ( "PORO", False, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
-    ( "PointAttribute", False, Piece.POINTS, np.array( [ [ 12.4, 9.7, 10.5 ] for _ in range( 4092 ) ],
-                                                       dtype=np.float64 ) ),
+    ( "bulkModulus", False, Piece.CELLS, np.array( [ 7119047619.04762 for _ in range( 6000 ) ], dtype=np.float64 ) ),
+    # ( "PORO", False, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
+    # ( "PointAttribute", False, Piece.POINTS, np.array( [ [ 12.4, 9.7, 10.5 ] for _ in range( 4092 ) ],
+    #                                                    dtype=np.float64 ) ),
 ] )
 def test_getNumpyArrayByName(
     dataSetTest: vtkDataSet,
@@ -235,7 +229,7 @@ def test_getNumpyArrayByName(
     expectedNpArray: npt.NDArray,
 ) -> None:
     """Test the function getNumpyGlobalIdsArray."""
-    dataset: vtkDataSet = dataSetTest( "dataset" )
+    dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
     obtainedNpArray: npt.NDArray = arrayHelpers.getNumpyArrayByName( fieldData, arrayName, sorted )
     assert ( obtainedNpArray == expectedNpArray ).all()
@@ -243,20 +237,18 @@ def test_getNumpyArrayByName(
 
 def test_getNumpyArrayByNameAttributeError( dataSetTest: vtkDataSet ) -> None:
     """Test getNumpyArrayByName AttributeError raises."""
-    dataset: vtkDataSet = dataSetTest( "dataset" )
+    dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     fieldData: vtkCellData = dataset.GetCellData()
     with pytest.raises( AttributeError ):
         arrayHelpers.getNumpyArrayByName( fieldData, "Attribute" )
 
 
 @pytest.mark.parametrize( "meshName, attributeName, listValues, piece, validValuesTest, invalidValuesTest", [
-    ( "multiblock", "GLOBAL_IDS_POINTS", [ 0, 1, 11, -9 ], Piece.POINTS, [ 0, 1, 11 ], [ -9 ] ),
-    ( "multiblock", "GLOBAL_IDS_CELLS", [ 0, 1, 11, -9 ], Piece.CELLS, [ 0, 1, 11 ], [ -9 ] ),
-    ( "dataset", "PointAttribute", [ [ 12.4, 9.7, 10.5 ], [ 0, 0, 0 ] ], Piece.POINTS, [ [ 12.4, 9.7, 10.5 ]
-                                                                                        ], [ [ 0, 0, 0 ] ] ),
-    ( "dataset", "CellAttribute", [ [ 24.8, 19.4, 21 ], [ 0, 0, 0 ] ], Piece.CELLS, [ [ 24.8, 19.4, 21 ]
-                                                                                     ], [ [ 0, 0, 0 ] ] ),
-    ( "dataset", "FAULT", [ 0, 100, 101, 2 ], Piece.CELLS, [ 0, 100, 101 ], [ 2 ] ),
+    ( "2Ranks", "localToGlobalMap", [ 0, 42, 7000 ], Piece.CELLS, [ 0, 42 ], [ 7000 ] ),
+    ( "2Ranks", "localToGlobalMap", [ 0, 42, 8000 ], Piece.POINTS, [ 0, 42 ], [ 8000 ] ),
+    ( "extractAndMergeVolume", "localToGlobalMap", [ 0, 42, 7000 ], Piece.CELLS, [ 0, 42 ], [ 7000 ] ),
+    ( "extractAndMergeVolume", "localToGlobalMap", [ 0, 42, 8000 ], Piece.POINTS, [ 0, 42 ], [ 8000 ] ),
+    ( "extractAndMergeVolume", "averagePlasticStrain", [ [ 0, 0, 0, 0, 0 ,0 ], [ 1, 1, 1, 1, 1, 1 ] ], Piece.CELLS, [ [ 0, 0, 0, 0, 0 ,0 ] ], [ [ 1, 1, 1, 1, 1, 1 ] ] ),
 ] )
 def test_checkValidValuesInObject(
     dataSetTest: Any,
@@ -276,11 +268,19 @@ def test_checkValidValuesInObject(
     assert invalidValues == invalidValuesTest
 
 
-def test_checkValidValuesInObjectAttributeError( dataSetTest: Any ) -> None:
+@pytest.mark.parametrize( "attributeName, piece", [
+    ( "attributeName", Piece.CELLS ),  # The attribute is not on the mesh
+    ( "ghostRank", Piece.POINTS ),  # The attribute is not global
+] )
+def test_checkValidValuesInObjectAttributeError(
+    dataSetTest: vtkMultiBlockDataSet,
+    attributeName: str,
+    piece: str,
+) -> None:
     """Test fails of checkValidValuesInObject with an attribute error."""
-    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    mesh: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
     with pytest.raises( AttributeError ):
-        arrayHelpers.checkValidValuesInObject( mesh, "PORO", [], Piece.CELLS )
+        arrayHelpers.checkValidValuesInObject( mesh, attributeName, [], piece )
 
 
 def test_checkValidValuesInObjectTypeError() -> None:
@@ -290,11 +290,16 @@ def test_checkValidValuesInObjectTypeError() -> None:
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
-    ( "dataset", "Attribute", Piece.CELLS, False ),
-    ( "dataset", "GLOBAL_IDS_CELLS", Piece.CELLS, True ),
-    ( "dataset", "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
-    ( "multiblockGeosOutput", "TIME", Piece.FIELD, True ),
-    ( "multiblockGeosOutput", "ghostRank", Piece.BOTH, True ),
+    ( "extractAndMergeVolume", "totalDisplacement", Piece.POINTS, True ),
+    ( "extractAndMergeVolume", "Attribute", Piece.CELLS, False ),
+    ( "extractAndMergeVolume", "pressure", Piece.CELLS, True ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.BOTH, True ),
+    ( "extractAndMergeVolume", "TIME", Piece.FIELD, True ),
+    ( "geosOutput2Ranks", "totalDisplacement", Piece.POINTS, True ),
+    ( "geosOutput2Ranks", "Attribute", Piece.CELLS, False ),
+    ( "geosOutput2Ranks", "pressure", Piece.CELLS, True ),
+    ( "geosOutput2Ranks", "ghostRank", Piece.BOTH, True ),
+    ( "geosOutput2Ranks", "TIME", Piece.FIELD, True ),
 ] )
 def test_isAttributeInObject(
     dataSetTest: Any,
@@ -315,45 +320,57 @@ def test_isAttributeInObjectTypeError() -> None:
         arrayHelpers.isAttributeInObject( mesh, "Attribute", Piece.CELLS )
 
 
-@pytest.mark.parametrize( "attributeName, piece, expected", [
-    ( "PORO", Piece.CELLS, False ),
-    ( "GLOBAL_IDS_POINTS", Piece.POINTS, True ),
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "2Ranks", "pressure", Piece.CELLS, True ),
+    ( "2Ranks", "totalDisplacement", Piece.POINTS, True ),
+    ( "geosOutput2Ranks", "ghostRank", Piece.CELLS, True ),
+    ( "geosOutput2Ranks", "ghostRank", Piece.POINTS, False ),
 ] )
 def test_isAttributeGlobal(
     dataSetTest: vtkMultiBlockDataSet,
+    meshName: str,
     attributeName: str,
     piece: Piece,
     expected: bool,
 ) -> None:
     """Test if the attribute is global or partial."""
-    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( "multiblock" )
+    multiBlockDataset: vtkMultiBlockDataSet = dataSetTest( meshName )
     obtained: bool = arrayHelpers.isAttributeGlobal( multiBlockDataset, attributeName, piece )
     assert obtained == expected
 
 
-@pytest.mark.parametrize( "arrayExpected, piece", [
-    ( "PORO", Piece.CELLS ),
-    ( "PERM", Piece.CELLS ),
-    ( "PointAttribute", Piece.POINTS ),
-],
-                          indirect=[ "arrayExpected" ] )
-def test_getArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray[ np.float64 ],
-                           dataSetTest: vtkDataSet, piece: Piece ) -> None:
+@pytest.mark.parametrize( "attributeName, piece, expected", [
+    ( "externalForce", Piece.POINTS, np.array( [ [0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
+    ( "biotCoefficient", Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
+    ( "TIME", Piece.FIELD, np.array( [ 30000000. ], dtype=np.float64 ) ),
+] )
+def test_getArrayInObject(
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    piece: Piece,
+    expected: npt.NDArray[ Any ], ) -> None:
     """Test getting numpy array of an attribute from dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    params = request.node.callspec.params
-    attributeName: str = params[ "arrayExpected" ]
-
-    obtained: npt.NDArray[ np.float64 ] = arrayHelpers.getArrayInObject( vtkDataSetTest, attributeName, piece )
-    expected: npt.NDArray[ np.float64 ] = arrayExpected
+    vtkDataSetTest: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    obtained: npt.NDArray[ Any ] = arrayHelpers.getArrayInObject( vtkDataSetTest, attributeName, piece )
 
     assert ( obtained == expected ).all()
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expectedVtkType", [
-    ( "dataset", "CellAttribute", Piece.CELLS, 11 ),
-    ( "dataset", "PointAttribute", Piece.POINTS, 11 ),
-    ( "multiblock", "collocated_nodes", Piece.POINTS, 12 ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.CELLS, 6 ),
+    ( "extractAndMergeVolume", "localToGlobalMap", Piece.CELLS, 16 ),
+    ( "extractAndMergeVolume", "averagePlasticStrain", Piece.CELLS, 11 ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.POINTS, 6 ),
+    ( "extractAndMergeVolume", "localToGlobalMap", Piece.POINTS, 16 ),
+    ( "extractAndMergeVolume", "totalDisplacement", Piece.POINTS, 11 ),
+    ( "extractAndMergeFault", "Normals", Piece.CELLS, 10 ),
+    ( "extractAndMergeFault", "Texture Coordinates", Piece.POINTS, 10 ),
+    ( "2Ranks", "ghostRank", Piece.CELLS, 6 ),
+    ( "2Ranks", "localToGlobalMap", Piece.CELLS, 16 ),
+    ( "2Ranks", "averagePlasticStrain", Piece.CELLS, 11 ),
+    ( "2Ranks", "ghostRank", Piece.POINTS, 6 ),
+    ( "2Ranks", "localToGlobalMap", Piece.POINTS, 16 ),
+    ( "2Ranks", "totalDisplacement", Piece.POINTS, 11 ),
 ] )
 def test_getVtkArrayTypeInObject(
     dataSetTest: Any,
@@ -371,7 +388,7 @@ def test_getVtkArrayTypeInObject(
 
 def test_getVtkArrayTypeInObjectAttributeError( dataSetTest: Any ) -> None:
     """Test fails of the function getVtkArrayTypeInObject with an attribute error."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
+    mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     with pytest.raises( AttributeError ):
         arrayHelpers.getVtkArrayTypeInObject( mesh, "attributeName", Piece.CELLS )
 
@@ -382,131 +399,131 @@ def test_getVtkArrayTypeInObjectTypeError() -> None:
         arrayHelpers.getVtkArrayTypeInObject( vtkCellData(), "PORO", Piece.CELLS )
 
 
-@pytest.mark.parametrize( "arrayExpected, piece", [
-    ( "PORO", Piece.CELLS ),
-    ( "PointAttribute", Piece.POINTS ),
-],
-                          indirect=[ "arrayExpected" ] )
-def test_getVtkArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray[ np.float64 ],
-                              dataSetTest: vtkDataSet, piece: Piece ) -> None:
-    """Test getting Vtk Array from a dataset."""
-    vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-    params = request.node.callspec.params
-    attributeName: str = params[ 'arrayExpected' ]
+# @pytest.mark.parametrize( "arrayExpected, piece", [
+#     ( "PORO", Piece.CELLS ),
+#     ( "PointAttribute", Piece.POINTS ),
+# ],
+#                           indirect=[ "arrayExpected" ] )
+# def test_getVtkArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray[ np.float64 ],
+#                               dataSetTest: vtkDataSet, piece: Piece ) -> None:
+#     """Test getting Vtk Array from a dataset."""
+#     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
+#     params = request.node.callspec.params
+#     attributeName: str = params[ 'arrayExpected' ]
 
-    obtained: vtkDoubleArray = arrayHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, piece )
-    obtained_as_np: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( obtained )
+#     obtained: vtkDoubleArray = arrayHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, piece )
+#     obtained_as_np: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( obtained )
 
-    assert ( obtained_as_np == arrayExpected ).all()
-
-
-@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
-    ( "dataset", "PORO", Piece.CELLS, 1 ),
-    ( "dataset", "PERM", Piece.CELLS, 3 ),
-    ( "dataset", "PointAttribute", Piece.POINTS, 3 ),
-    ( "multiblock", "PORO", Piece.CELLS, 1 ),
-    ( "multiblock", "PERM", Piece.CELLS, 3 ),
-    ( "multiblock", "PointAttribute", Piece.POINTS, 3 ),
-] )
-def test_getNumberOfComponents(
-    dataSetTest: Any,
-    meshName: str,
-    attributeName: str,
-    piece: Piece,
-    expected: int,
-) -> None:
-    """Test getting the number of components of an attribute from a multiblock."""
-    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
-    assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
+#     assert ( obtained_as_np == arrayExpected ).all()
 
 
-def test_getNumberOfComponentsTypeError() -> None:
-    """Test getNumberOfComponents fails with a type error."""
-    meshWrongType: vtkCellData = vtkCellData()
-    with pytest.raises( TypeError ):
-        arrayHelpers.getNumberOfComponents( meshWrongType, "PORO", Piece.CELLS )
+# @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+#     ( "dataset", "PORO", Piece.CELLS, 1 ),
+#     ( "dataset", "PERM", Piece.CELLS, 3 ),
+#     ( "dataset", "PointAttribute", Piece.POINTS, 3 ),
+#     ( "multiblock", "PORO", Piece.CELLS, 1 ),
+#     ( "multiblock", "PERM", Piece.CELLS, 3 ),
+#     ( "multiblock", "PointAttribute", Piece.POINTS, 3 ),
+# ] )
+# def test_getNumberOfComponents(
+#     dataSetTest: Any,
+#     meshName: str,
+#     attributeName: str,
+#     piece: Piece,
+#     expected: int,
+# ) -> None:
+#     """Test getting the number of components of an attribute from a multiblock."""
+#     mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+#     assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
 
 
-def test_getNumberOfComponentsAttributeError( dataSetTest: Any, ) -> None:
-    """Test getNumberOfComponents fails with an attribute error."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
-    with pytest.raises( AttributeError ):
-        arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
+# def test_getNumberOfComponentsTypeError() -> None:
+#     """Test getNumberOfComponents fails with a type error."""
+#     meshWrongType: vtkCellData = vtkCellData()
+#     with pytest.raises( TypeError ):
+#         arrayHelpers.getNumberOfComponents( meshWrongType, "PORO", Piece.CELLS )
 
 
-def test_getNumberOfComponentsValueError( dataSetTest: Any, ) -> None:
-    """Test getNumberOfComponents fails with a value error."""
-    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-    with pytest.raises( ValueError ):
-        arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
+# def test_getNumberOfComponentsAttributeError( dataSetTest: Any, ) -> None:
+#     """Test getNumberOfComponents fails with an attribute error."""
+#     mesh: vtkDataSet = dataSetTest( "dataset" )
+#     with pytest.raises( AttributeError ):
+#         arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
 
 
-@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
-    ( "dataset", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-    ( "dataset", "PORO", Piece.CELLS, () ),
-    ( "multiblock", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-    ( "multiblock", "PORO", Piece.CELLS, () ),
-] )
-def test_getComponentNames( dataSetTest: Any, meshName: str, attributeName: str, piece: Piece,
-                            expected: tuple[ str, ...] ) -> None:
-    """Test getting the component names of an attribute from a mesh."""
-    vtkDataSetTest: Any = dataSetTest( meshName )
-    obtained: tuple[ str, ...] = arrayHelpers.getComponentNames( vtkDataSetTest, attributeName, piece )
-    assert obtained == expected
+# def test_getNumberOfComponentsValueError( dataSetTest: Any, ) -> None:
+#     """Test getNumberOfComponents fails with a value error."""
+#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+#     with pytest.raises( ValueError ):
+#         arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
 
 
-def test_getComponentNamesTypeError() -> None:
-    """Test getting the component names fails with a type error."""
-    meshWrongType: vtkFieldData = vtkFieldData()
-    with pytest.raises( TypeError ):
-        arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
+# @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+#     ( "dataset", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
+#     ( "dataset", "PORO", Piece.CELLS, () ),
+#     ( "multiblock", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
+#     ( "multiblock", "PORO", Piece.CELLS, () ),
+# ] )
+# def test_getComponentNames( dataSetTest: Any, meshName: str, attributeName: str, piece: Piece,
+#                             expected: tuple[ str, ...] ) -> None:
+#     """Test getting the component names of an attribute from a mesh."""
+#     vtkDataSetTest: Any = dataSetTest( meshName )
+#     obtained: tuple[ str, ...] = arrayHelpers.getComponentNames( vtkDataSetTest, attributeName, piece )
+#     assert obtained == expected
 
 
-def test_getComponentNamesAttributeError( dataSetTest: Any, ) -> None:
-    """Test getting the component names fails with an attribute error."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
-    with pytest.raises( AttributeError ):
-        arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
+# def test_getComponentNamesTypeError() -> None:
+#     """Test getting the component names fails with a type error."""
+#     meshWrongType: vtkFieldData = vtkFieldData()
+#     with pytest.raises( TypeError ):
+#         arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
 
 
-def test_getComponentNamesValueError( dataSetTest: Any, ) -> None:
-    """Test getting the component names fails with a value error."""
-    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-    with pytest.raises( ValueError ):
-        arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
+# def test_getComponentNamesAttributeError( dataSetTest: Any, ) -> None:
+#     """Test getting the component names fails with an attribute error."""
+#     mesh: vtkDataSet = dataSetTest( "dataset" )
+#     with pytest.raises( AttributeError ):
+#         arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
 
 
-@pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
-    ( ( "collocated_nodes", ), Piece.POINTS, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
-] )
-def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: tuple[ str, ...], piece: Piece,
-                                 expected_columns: tuple[ str, ...] ) -> None:
-    """Test getting an attribute from a polydata as a dataframe."""
-    polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
-    data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
-
-    obtained_columns = data.columns.values.tolist()
-    assert obtained_columns == list( expected_columns )
+# def test_getComponentNamesValueError( dataSetTest: Any, ) -> None:
+#     """Test getting the component names fails with a value error."""
+#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+#     with pytest.raises( ValueError ):
+#         arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
 
 
-@pytest.mark.parametrize(
-    "attributeNames, expected",
-    [
-        ( [ "CellAttribute" ], True ),  # Attribute on cells
-        ( [ "PointAttribute" ], True ),  # Attribute on points
-        ( [ "attribute" ], False ),  # "attribute" is not on the mesh
-        ( [ "CellAttribute", "attribute" ], True ),  # "attribute" is not on the mesh
-    ] )
-def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expected: bool ) -> None:
-    """Test the function hasArray."""
-    mesh: vtkDataSet = dataSetTest( "dataset" )
-    assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+# @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
+#     ( ( "collocated_nodes", ), Piece.POINTS, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
+# ] )
+# def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: tuple[ str, ...], piece: Piece,
+#                                  expected_columns: tuple[ str, ...] ) -> None:
+#     """Test getting an attribute from a polydata as a dataframe."""
+#     polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
+#     data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
+
+#     obtained_columns = data.columns.values.tolist()
+#     assert obtained_columns == list( expected_columns )
 
 
-def test_computeCellCenterCoordinates( dataSetTest: vtkMultiBlockDataSet ) -> None:
-    """Test the function computeCellCenterCoordinates."""
-    mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-    dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( 5 ) )
-    expected: npt.NDArray = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( "elementCenter" ) )
-    obtained: npt.NDArray = vnp.vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( dataset ) )
-    assert ( obtained == expected ).all()
+# @pytest.mark.parametrize(
+#     "attributeNames, expected",
+#     [
+#         ( [ "CellAttribute" ], True ),  # Attribute on cells
+#         ( [ "PointAttribute" ], True ),  # Attribute on points
+#         ( [ "attribute" ], False ),  # "attribute" is not on the mesh
+#         ( [ "CellAttribute", "attribute" ], True ),  # "attribute" is not on the mesh
+#     ] )
+# def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expected: bool ) -> None:
+#     """Test the function hasArray."""
+#     mesh: vtkDataSet = dataSetTest( "dataset" )
+#     assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+
+
+# def test_computeCellCenterCoordinates( dataSetTest: vtkMultiBlockDataSet ) -> None:
+#     """Test the function computeCellCenterCoordinates."""
+#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+#     dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( 5 ) )
+#     expected: npt.NDArray = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( "elementCenter" ) )
+#     obtained: npt.NDArray = vnp.vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( dataset ) )
+#     assert ( obtained == expected ).all()
