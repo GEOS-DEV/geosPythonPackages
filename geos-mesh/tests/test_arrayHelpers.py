@@ -5,14 +5,14 @@
 # ruff: noqa: E402 # disable Module level import not at top of file
 # mypy: disable-error-code="operator, attr-defined"
 import pytest
-from typing import Union, Any
+from typing import Any
 
 import pandas as pd  # type: ignore[import-untyped]
 import numpy as np
 import numpy.typing as npt
 
-import vtkmodules.util.numpy_support as vnp
-from vtkmodules.vtkCommonCore import vtkDoubleArray
+from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtkmodules.vtkCommonCore import vtkDataArray
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkFieldData, vtkPointData,
                                             vtkCellData, vtkUnstructuredGrid )
 
@@ -136,7 +136,7 @@ def test_getAttributesWithNumberOfComponentsValueError() -> None:
 def test_getAttributesWithNumberOfComponentsAttributeError() -> None:
     """Test fails of the function getAttributesWithNumberOfComponents with an attribute error."""
     mesh: vtkPolyData = vtkPolyData()
-    mesh.GetCellData().AddArray( vtkDoubleArray() )
+    mesh.GetCellData().AddArray( numpy_to_vtk( np.array( [], dtype=np.int64 ) ) )  # Add an empty attribute
     with pytest.raises( AttributeError ):
         arrayHelpers.getAttributesWithNumberOfComponents( mesh, Piece.CELLS )
 
@@ -173,12 +173,11 @@ def test_getAttributePieceInfo(
 
 def test_getNumpyGlobalIdsArray( dataSetTest: vtkDataSet ) -> None:
     """Test the function getNumpyGlobalIdsArray."""
-    dataset: vtkDataSet = dataSetTest( "dataset" )
+    dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     for piece in [ Piece.POINTS, Piece.CELLS ]:
         fieldData: vtkPointData | vtkCellData = dataset.GetPointData(
         ) if piece == Piece.POINTS else dataset.GetCellData()
-        nbElements: int = fieldData.GetNumberOfTuples()
-        npArrayExpected: npt.NDArray = np.array( list( range( nbElements ) ) )
+        npArrayExpected: npt.NDArray = vtk_to_numpy( fieldData.GetArray( "localToGlobalMap" ) )
         npArrayObtained: npt.NDArray = arrayHelpers.getNumpyGlobalIdsArray( fieldData )
         assert ( npArrayObtained == npArrayExpected ).all()
 
@@ -216,10 +215,9 @@ def test_getAttributeSet(
 
 
 @pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
-    ( "bulkModulus", False, Piece.CELLS, np.array( [ 7119047619.04762 for _ in range( 6000 ) ], dtype=np.float64 ) ),
-    # ( "PORO", False, Piece.CELLS, np.array( [ 0.20000000298 for _ in range( 1740 ) ], dtype=np.float32 ) ),
-    # ( "PointAttribute", False, Piece.POINTS, np.array( [ [ 12.4, 9.7, 10.5 ] for _ in range( 4092 ) ],
-    #                                                    dtype=np.float64 ) ),
+    ( "blockIndex", False, Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
+    ( "localToGlobalMap", True, Piece.CELLS, np.array( [ i for i in range( 6000 ) ], dtype=np.int64 ) ),
+    ( "localToGlobalMap", True, Piece.POINTS, np.array( [ i for i in range( 7381 ) ], dtype=np.int64 ) ),
 ] )
 def test_getNumpyArrayByName(
     dataSetTest: vtkDataSet,
@@ -399,131 +397,153 @@ def test_getVtkArrayTypeInObjectTypeError() -> None:
         arrayHelpers.getVtkArrayTypeInObject( vtkCellData(), "PORO", Piece.CELLS )
 
 
-# @pytest.mark.parametrize( "arrayExpected, piece", [
-#     ( "PORO", Piece.CELLS ),
-#     ( "PointAttribute", Piece.POINTS ),
-# ],
-#                           indirect=[ "arrayExpected" ] )
-# def test_getVtkArrayInObject( request: pytest.FixtureRequest, arrayExpected: npt.NDArray[ np.float64 ],
-#                               dataSetTest: vtkDataSet, piece: Piece ) -> None:
-#     """Test getting Vtk Array from a dataset."""
-#     vtkDataSetTest: vtkDataSet = dataSetTest( "dataset" )
-#     params = request.node.callspec.params
-#     attributeName: str = params[ 'arrayExpected' ]
+@pytest.mark.parametrize( "attributeName, piece, expected", [
+    ( "externalForce", Piece.POINTS, np.array( [ [0, 0, 0 ] for _ in range( 7381 ) ], dtype=np.int64 ) ),
+    ( "biotCoefficient", Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
+    ( "TIME", Piece.FIELD, np.array( [ 30000000. ], dtype=np.float64 ) ),
+] )
+def test_getVtkArrayInObject(
+    dataSetTest: vtkDataSet,
+    attributeName: str,
+    piece: Piece,
+    expected: npt.NDArray[ Any ], ) -> None:
+    """Test getting Vtk Array from a dataset."""
+    vtkDataSetTest: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
 
-#     obtained: vtkDoubleArray = arrayHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, piece )
-#     obtained_as_np: npt.NDArray[ np.float64 ] = vnp.vtk_to_numpy( obtained )
+    obtained: vtkDataArray = arrayHelpers.getVtkArrayInObject( vtkDataSetTest, attributeName, piece )
+    obtained_as_np: npt.NDArray[ np.float64 ] = vtk_to_numpy( obtained )
 
-#     assert ( obtained_as_np == arrayExpected ).all()
-
-
-# @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
-#     ( "dataset", "PORO", Piece.CELLS, 1 ),
-#     ( "dataset", "PERM", Piece.CELLS, 3 ),
-#     ( "dataset", "PointAttribute", Piece.POINTS, 3 ),
-#     ( "multiblock", "PORO", Piece.CELLS, 1 ),
-#     ( "multiblock", "PERM", Piece.CELLS, 3 ),
-#     ( "multiblock", "PointAttribute", Piece.POINTS, 3 ),
-# ] )
-# def test_getNumberOfComponents(
-#     dataSetTest: Any,
-#     meshName: str,
-#     attributeName: str,
-#     piece: Piece,
-#     expected: int,
-# ) -> None:
-#     """Test getting the number of components of an attribute from a multiblock."""
-#     mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
-#     assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
+    assert ( obtained_as_np == expected ).all()
 
 
-# def test_getNumberOfComponentsTypeError() -> None:
-#     """Test getNumberOfComponents fails with a type error."""
-#     meshWrongType: vtkCellData = vtkCellData()
-#     with pytest.raises( TypeError ):
-#         arrayHelpers.getNumberOfComponents( meshWrongType, "PORO", Piece.CELLS )
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "extractAndMergeVolume", "TIME", Piece.FIELD, 1 ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.CELLS, 1 ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.POINTS, 1 ),
+    ( "extractAndMergeVolume", "averageStress", Piece.CELLS, 6 ),
+    ( "2Ranks", "TIME", Piece.FIELD, 1 ),
+    ( "2Ranks", "ghostRank", Piece.CELLS, 1 ),
+    ( "2Ranks", "ghostRank", Piece.POINTS, 1 ),
+    ( "2Ranks", "averageStress", Piece.CELLS, 6 ),
+] )
+def test_getNumberOfComponents(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: int,
+) -> None:
+    """Test getting the number of components of an attribute from a mesh."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    assert arrayHelpers.getNumberOfComponents( mesh, attributeName, piece ) == expected
 
 
-# def test_getNumberOfComponentsAttributeError( dataSetTest: Any, ) -> None:
-#     """Test getNumberOfComponents fails with an attribute error."""
-#     mesh: vtkDataSet = dataSetTest( "dataset" )
-#     with pytest.raises( AttributeError ):
-#         arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
+def test_getNumberOfComponentsTypeError() -> None:
+    """Test getNumberOfComponents fails with a type error."""
+    meshWrongType: vtkCellData = vtkCellData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getNumberOfComponents( meshWrongType, "ghostRank", Piece.CELLS )
 
 
-# def test_getNumberOfComponentsValueError( dataSetTest: Any, ) -> None:
-#     """Test getNumberOfComponents fails with a value error."""
-#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-#     with pytest.raises( ValueError ):
-#         arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
+def test_getNumberOfComponentsAttributeError( dataSetTest: vtkDataSet, ) -> None:
+    """Test getNumberOfComponents fails with an attribute error."""
+    mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getNumberOfComponents( mesh, "attributeName", Piece.POINTS )
 
 
-# @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
-#     ( "dataset", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-#     ( "dataset", "PORO", Piece.CELLS, () ),
-#     ( "multiblock", "PERM", Piece.CELLS, ( "AX1", "AX2", "AX3" ) ),
-#     ( "multiblock", "PORO", Piece.CELLS, () ),
-# ] )
-# def test_getComponentNames( dataSetTest: Any, meshName: str, attributeName: str, piece: Piece,
-#                             expected: tuple[ str, ...] ) -> None:
-#     """Test getting the component names of an attribute from a mesh."""
-#     vtkDataSetTest: Any = dataSetTest( meshName )
-#     obtained: tuple[ str, ...] = arrayHelpers.getComponentNames( vtkDataSetTest, attributeName, piece )
-#     assert obtained == expected
+def test_getNumberOfComponentsValueError( dataSetTest: vtkMultiBlockDataSet, ) -> None:
+    """Test getNumberOfComponents fails with a value error."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "2Ranks" )
+    with pytest.raises( ValueError ):
+        arrayHelpers.getNumberOfComponents( mesh, "ghostRank", Piece.BOTH )
 
 
-# def test_getComponentNamesTypeError() -> None:
-#     """Test getting the component names fails with a type error."""
-#     meshWrongType: vtkFieldData = vtkFieldData()
-#     with pytest.raises( TypeError ):
-#         arrayHelpers.getComponentNames( meshWrongType, "PORO", Piece.CELLS )
+@pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "extractAndMergeVolume", "externalForce", Piece.POINTS, ( None, None, None ) ),
+    ( "extractAndMergeVolume", "elementCenter", Piece.CELLS, ( None, None, None ) ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.POINTS, () ),
+    ( "extractAndMergeVolume", "ghostRank", Piece.CELLS, () ),
+    ( "2Ranks", "externalForce", Piece.POINTS, ( None, None, None ) ),
+    ( "2Ranks", "elementCenter", Piece.CELLS, ( None, None, None ) ),
+    ( "2Ranks", "ghostRank", Piece.POINTS, () ),
+    ( "2Ranks", "ghostRank", Piece.CELLS, () ),
+] )
+def test_getComponentNames(
+    dataSetTest: Any,
+    meshName: str,
+    attributeName: str,
+    piece: Piece,
+    expected: tuple[ Any, ...],
+) -> None:
+    """Test getting the component names of an attribute from a mesh."""
+    mesh: vtkDataSet | vtkMultiBlockDataSet = dataSetTest( meshName )
+    obtained: tuple[ Any, ...] = arrayHelpers.getComponentNames( mesh, attributeName, piece )
+    assert obtained == expected
 
 
-# def test_getComponentNamesAttributeError( dataSetTest: Any, ) -> None:
-#     """Test getting the component names fails with an attribute error."""
-#     mesh: vtkDataSet = dataSetTest( "dataset" )
-#     with pytest.raises( AttributeError ):
-#         arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
+def test_getComponentNamesTypeError() -> None:
+    """Test getting the component names fails with a type error."""
+    meshWrongType: vtkFieldData = vtkFieldData()
+    with pytest.raises( TypeError ):
+        arrayHelpers.getComponentNames( meshWrongType, "ghostRank", Piece.CELLS )
 
 
-# def test_getComponentNamesValueError( dataSetTest: Any, ) -> None:
-#     """Test getting the component names fails with a value error."""
-#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-#     with pytest.raises( ValueError ):
-#         arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
+def test_getComponentNamesAttributeError( dataSetTest: vtkDataSet, ) -> None:
+    """Test getting the component names fails with an attribute error."""
+    mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    with pytest.raises( AttributeError ):
+        arrayHelpers.getComponentNames( mesh, "attributeName", Piece.POINTS )
 
 
-# @pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
-#     ( ( "collocated_nodes", ), Piece.POINTS, ( "collocated_nodes_0", "collocated_nodes_1" ) ),
-# ] )
-# def test_getAttributeValuesAsDF( dataSetTest: vtkPolyData, attributeNames: tuple[ str, ...], piece: Piece,
-#                                  expected_columns: tuple[ str, ...] ) -> None:
-#     """Test getting an attribute from a polydata as a dataframe."""
-#     polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "polydata" ) )
-#     data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
-
-#     obtained_columns = data.columns.values.tolist()
-#     assert obtained_columns == list( expected_columns )
+def test_getComponentNamesValueError( dataSetTest: vtkMultiBlockDataSet, ) -> None:
+    """Test getting the component names fails with a value error."""
+    mesh: vtkMultiBlockDataSet = dataSetTest( "2Ranks" )
+    with pytest.raises( ValueError ):
+        arrayHelpers.getComponentNames( mesh, "ghostRank", Piece.BOTH )
 
 
-# @pytest.mark.parametrize(
-#     "attributeNames, expected",
-#     [
-#         ( [ "CellAttribute" ], True ),  # Attribute on cells
-#         ( [ "PointAttribute" ], True ),  # Attribute on points
-#         ( [ "attribute" ], False ),  # "attribute" is not on the mesh
-#         ( [ "CellAttribute", "attribute" ], True ),  # "attribute" is not on the mesh
-#     ] )
-# def test_hasArray( dataSetTest: vtkDataSet, attributeNames: list[ str ], expected: bool ) -> None:
-#     """Test the function hasArray."""
-#     mesh: vtkDataSet = dataSetTest( "dataset" )
-#     assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+@pytest.mark.parametrize( "attributeNames, piece, expected_columns", [
+    ( ( "Texture Coordinates", ), Piece.POINTS, ( "Texture Coordinates_0", "Texture Coordinates_1" ) ),
+    ( ( "Normals", ), Piece.CELLS, ( "Normals_0", "Normals_1", "Normals_2" ) ),
+    ( ( "Normals", "Tangents" ), Piece.CELLS, ( "Normals_0", "Normals_1", "Normals_2", "Tangents_0", "Tangents_1", "Tangents_2" ) ),
+] )
+def test_getAttributeValuesAsDF(
+    dataSetTest: vtkPolyData,
+    attributeNames: tuple[ str, ...],
+    piece: Piece,
+    expected_columns: tuple[ str, ...],
+ ) -> None:
+    """Test getting an attribute from a polydata as a dataframe."""
+    polydataset: vtkPolyData = vtkPolyData.SafeDownCast( dataSetTest( "extractAndMergeFaultVtp" ) )
+    data: pd.DataFrame = arrayHelpers.getAttributeValuesAsDF( polydataset, attributeNames, piece )
+
+    obtained_columns = data.columns.values.tolist()
+    assert obtained_columns == list( expected_columns )
 
 
-# def test_computeCellCenterCoordinates( dataSetTest: vtkMultiBlockDataSet ) -> None:
-#     """Test the function computeCellCenterCoordinates."""
-#     mesh: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
-#     dataset: vtkDataSet = vtkDataSet.SafeDownCast( mesh.GetDataSet( 5 ) )
-#     expected: npt.NDArray = vnp.vtk_to_numpy( dataset.GetCellData().GetArray( "elementCenter" ) )
-#     obtained: npt.NDArray = vnp.vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( dataset ) )
-#     assert ( obtained == expected ).all()
+@pytest.mark.parametrize(
+    "attributeNames, expected",
+    [
+        ( [ "TIME" ], True ),  # Attribute on fields
+        ( [ "elementCenter" ], True ),  # Attribute on cells
+        ( [ "totalDisplacement" ], True ),  # Attribute on points
+        ( [ "attribute" ], False ),  # "attribute" is not on the mesh
+        ( [ "elementCenter", "attribute" ], True ),  # "attribute" is not on the mesh but "ghostRank" is
+    ] )
+def test_hasArray(
+    dataSetTest: vtkDataSet,
+    attributeNames: list[ str ],
+    expected: bool,
+) -> None:
+    """Test the function hasArray."""
+    mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    assert arrayHelpers.hasArray( mesh, attributeNames ) == expected
+
+
+def test_computeCellCenterCoordinates( dataSetTest: vtkDataSet ) -> None:
+    """Test the function computeCellCenterCoordinates."""
+    mesh: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    expected: npt.NDArray = vtk_to_numpy( mesh.GetCellData().GetArray( "elementCenter" ) )
+    obtained: npt.NDArray = vtk_to_numpy( arrayHelpers.computeCellCenterCoordinates( mesh ) )
+    assert ( obtained == expected ).all()
