@@ -54,7 +54,7 @@ To use the filter:
 
     # Set the attributes to compare:
     dictAttributesToCompare: dict[ Piece, set[ str ] ]
-    attributesDiffFilter.setDicAttributesToCompare( dicAttributesToCompare )
+    attributesDiffFilter.setDictAttributesToCompare( dictAttributesToCompare )
 
     # Set the inf norm computation (if wanted):
     computeInfNorm: bool
@@ -146,11 +146,11 @@ class AttributesDiff:
         if listMeshes[ 0 ].GetClassName() != listMeshes[ 1 ].GetClassName():
             raise TypeError( f"The meshes must have the same type. {listMeshes[0].GetClassName()} and {listMeshes[1].GetClassName()}" )
 
-        dicMeshesMaxElementId: dict[ Piece, list[ int ] ] = {}
+        dictMeshesMaxElementId: dict[ Piece, list[ int ] ] = {}
         if self.computeCells:
-            dicMeshesMaxElementId.update({ Piece.CELLS: [ 0, 0 ]})
+            dictMeshesMaxElementId.update({ Piece.CELLS: [ 0, 0 ]})
         if self.computePoints:
-            dicMeshesMaxElementId.update({ Piece.POINTS: [ 0, 0 ]})
+            dictMeshesMaxElementId.update({ Piece.POINTS: [ 0, 0 ]})
 
         if isinstance( listMeshes[ 0 ], vtkDataSet ):
             for meshId, mesh in enumerate( listMeshes ):
@@ -180,9 +180,9 @@ class AttributesDiff:
 
         self.listMeshes = listMeshes
         if self.computeCells:
-            self.dicNbElements[ Piece.CELLS ] = dicMeshesMaxElementId[ Piece.CELLS ][ 0 ] + 1
+            self.dictNbElements[ Piece.CELLS ] = dictMeshesMaxElementId[ Piece.CELLS ][ 0 ] + 1
         if self.computePoints:
-            self.dicNbElements[ Piece.POINTS ] = dicMeshesMaxElementId[ Piece.POINTS ][ 0 ] + 1
+            self.dictNbElements[ Piece.POINTS ] = dictMeshesMaxElementId[ Piece.POINTS ][ 0 ] + 1
         self.outputMesh = listMeshes[ 0 ].NewInstance()
         self.outputMesh.ShallowCopy( listMeshes[ 0 ] )
         self._computeDictSharedAttributes()
@@ -229,8 +229,8 @@ class AttributesDiff:
         Raises:
             ValueError: At least one attribute to compare is not a shared attribute.
         """
-        assert not ((Piece.CELLS in dicAttributesToCompare) ^ (self.computeCells))
-        assert not ((Piece.POINTS in dicAttributesToCompare) ^ (self.computePoints))
+        assert not ((Piece.CELLS in dictAttributesToCompare) ^ (self.computeCells))
+        assert not ((Piece.POINTS in dictAttributesToCompare) ^ (self.computePoints))
 
         for piece, setSharedAttributesToCompare in dictAttributesToCompare.items():
             if not setSharedAttributesToCompare.issubset( self.dictSharedAttributes[ piece ] ):
