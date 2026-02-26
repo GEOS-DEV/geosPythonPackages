@@ -180,8 +180,12 @@ def dataSetTest() -> Any:
 
         if datasetType == "2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
+        elif datasetType == "4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion4Ranks.vtm"
         elif datasetType == "geosOutput2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/geosOutput2Ranks.vtm"
+        elif datasetType == "extractAndMergeVolume4Ranks":
+            vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume4Ranks.vtu"
         elif datasetType == "extractAndMergeVolume":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeVolume.vtu"
         elif datasetType == "extractAndMergeFault":
