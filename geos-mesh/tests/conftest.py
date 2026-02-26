@@ -9,7 +9,8 @@ from typing import Union, Any
 import numpy as np
 import numpy.typing as npt
 
-from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid, VTK_LINE, VTK_QUAD, VTK_HEXAHEDRON
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid,
+                                            VTK_LINE, VTK_QUAD, VTK_HEXAHEDRON )
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader
 
 from geos.utils.pieceEnum import Piece
@@ -152,32 +153,6 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
-        if datasetType == "multiblock":
-            vtkFilename = "data/displacedFault.vtm"
-        elif datasetType == "emptymultiblock":
-            vtkFilename = "data/displacedFaultempty.vtm"
-        elif datasetType == "multiblockGeosOutput":
-            # adapted from example GEOS/inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
-            vtkFilename = "data/simpleReservoirViz_small_000478.vtm"
-        elif datasetType == "fracture":
-            vtkFilename = "data/fracture_res5_id.vtu"
-        elif datasetType == "emptyFracture":
-            vtkFilename = "data/fracture_res5_id_empty.vtu"
-        elif datasetType == "dataset":
-            vtkFilename = "data/domain_res5_id.vtu"
-        elif datasetType == "emptydataset":
-            vtkFilename = "data/domain_res5_id_empty.vtu"
-        elif datasetType == "polydata":
-            vtkFilename = "data/fracture_res5_id.vtp"
-        elif datasetType == "emptypolydata":
-            vtkFilename = "data/fracture_res5_id_empty.vtp"
-        elif datasetType == "meshGeosExtractBlockTmp":
-            vtkFilename = "data/meshGeosExtractBlockTmp.vtm"
-        elif datasetType == "well":
-            vtkFilename = "data/well.vtu"
-        elif datasetType == "emptyWell":
-            vtkFilename = "data/well_empty.vtu"
-
         if datasetType == "2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
         elif datasetType == "4Ranks":
