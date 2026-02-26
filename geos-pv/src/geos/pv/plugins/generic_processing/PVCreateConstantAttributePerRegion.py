@@ -50,6 +50,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
              decoratedLabel="Create Constant Attribute Per Region",
@@ -72,7 +74,6 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
 
         # Use the handler of paraview for the log.
         self.speHandler: bool = True
-        self.handler: logging.Handler = VTKHandler()
 
     # Settings of the attribute with the region indexes:
     @smproperty.stringvector(
@@ -292,8 +293,8 @@ class PVCreateConstantAttributePerRegion( VTKPythonAlgorithmBase ):
             self.speHandler,
         )
 
-        if not isHandlerInLogger( self.handler, createConstantAttributePerRegionFilter.logger ):
-            createConstantAttributePerRegionFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, createConstantAttributePerRegionFilter.logger ):
+            createConstantAttributePerRegionFilter.setLoggerHandler( HANDLER )
 
         try:
             createConstantAttributePerRegionFilter.applyFilter()

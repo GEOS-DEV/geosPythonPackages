@@ -39,13 +39,14 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Split mesh cells."""
-        self.handler: logging.Handler = VTKHandler()
 
     def ApplyFilter( self: Self, inputMesh: vtkPointSet, outputMesh: vtkPointSet ) -> None:
         """Apply vtk filter.
@@ -55,8 +56,8 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             outputMesh: Output mesh.
         """
         splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
-        if not isHandlerInLogger( self.handler, splitMeshFilter.logger ):
-            splitMeshFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, splitMeshFilter.logger ):
+            splitMeshFilter.setLoggerHandler( HANDLER )
 
         try:
             splitMeshFilter.applyFilter()

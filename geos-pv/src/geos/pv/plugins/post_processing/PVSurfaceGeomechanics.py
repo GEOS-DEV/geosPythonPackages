@@ -52,6 +52,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Surface Geomechanics"
 
 
@@ -70,10 +71,9 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         # friction angle (°)
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountWarningHandler = CountWarningHandler()
@@ -148,8 +148,8 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             loggerName: str = f"Surface geomechanics for the blockIndex { blockIndex }"
             sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, loggerName, True )
 
-            if not isHandlerInLogger( self.handler, sgFilter.logger ):
-                sgFilter.SetLoggerHandler( self.handler )
+            if not isHandlerInLogger( HANDLER, sgFilter.logger ):
+                sgFilter.SetLoggerHandler( HANDLER )
 
             sgFilter.SetRockCohesion( self._getRockCohesion() )
             sgFilter.SetFrictionAngle( self._getFrictionAngle() )
