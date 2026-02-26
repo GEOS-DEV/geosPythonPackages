@@ -18,17 +18,6 @@ from geos.mesh.utils.genericHelpers import createMultiCellMesh
 
 
 @pytest.fixture
-def arrayTest( request: pytest.FixtureRequest ) -> npt.NDArray[ np.float64 ]:
-    """Get a random array of float64."""
-    np.random.seed( 42 )
-    array: npt.NDArray[ np.float64 ] = np.random.rand(
-        request.param,
-        3,
-    )
-    return array
-
-
-@pytest.fixture
 def getArrayWithSpeTypeValue() -> Any:
     """Get a random array of input type with the function _getarray().
 
