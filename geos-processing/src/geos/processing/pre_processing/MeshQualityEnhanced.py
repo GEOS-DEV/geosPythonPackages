@@ -143,7 +143,7 @@ class MeshQualityEnhanced():
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
             handlers: list[ logging.Handler ] = self.logger.handlers
-            # Get the handler to specify if the logger already exist and have it
+            # Get the handler to specify if the logger already exist and has it
             for handler in handlers:
                 # The CountWarningHandler can't be the handler to specify
                 if type( handler ) is not type( CountWarningHandler() ):
