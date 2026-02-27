@@ -11,10 +11,9 @@ from dataclasses import dataclass
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonCore import  vtkPoints, vtkIdList
+from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellTypes, VTK_TRIANGLE, VTK_QUAD,
                                             VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
-
 
 tetraCellType: int = VTK_TETRA
 tetraPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0 ],
@@ -36,7 +35,8 @@ quadCellType: int = VTK_QUAD
 quadPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
                                                           [ 0.0, 1.0, 0.0 ] ] )
 
-pointsCoordsAll: tuple[ npt.NDArray[ np.float64 ] ] = ( tetraPointsCoords, hexaPointsCoords, pyrPointsCoords, triPointsCoords, quadPointsCoords )
+pointsCoordsAll: tuple[ npt.NDArray[ np.float64 ], ...] = ( tetraPointsCoords, hexaPointsCoords, pyrPointsCoords,
+                                                        triPointsCoords, quadPointsCoords )
 cellTypesAll: tuple[ int, ...] = ( tetraCellType, hexaCellType, pyramidCellType, triangleCellType, quadCellType )
 
 
@@ -82,8 +82,6 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     assert np.array_equal( pointCoords.ravel(), test_case.cellPoints.ravel() ), "Points coordinates are wrong."
 
     cellsOut: vtkCellArray = output.GetCells()
-    typesArray0: npt.NDArray[ np.int64 ] = vtk_to_numpy( output.GetDistinctCellTypesArray() )
-
     assert cellsOut is not None, "Cells from output mesh are undefined."
     assert cellsOut.GetNumberOfCells() == 1, "Number of cells is expected to be 1."
     # check cell types

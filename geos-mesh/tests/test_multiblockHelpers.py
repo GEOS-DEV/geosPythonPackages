@@ -11,7 +11,10 @@ from geos.mesh.utils import multiblockHelpers
 
 
 @pytest.mark.parametrize( "meshName,listBlockNamesTest", [
-    ( "geosOutput2Ranks", [ 'mesh1', 'Level0', 'CellElementRegion', 'Region', 'rank_0', 'rank_1', 'WellElementRegion', 'wellRegion1', 'rank_0', 'wellRegion2', 'rank_0', 'SurfaceElementRegion', 'Fault', 'rank_0', 'rank_1' ] ),
+    ( "geosOutput2Ranks", [
+        'mesh1', 'Level0', 'CellElementRegion', 'Region', 'rank_0', 'rank_1', 'WellElementRegion', 'wellRegion1',
+        'rank_0', 'wellRegion2', 'rank_0', 'SurfaceElementRegion', 'Fault', 'rank_0', 'rank_1'
+    ] ),
     ( "extractAndMergeVolumeWell1", [ 'Volume', 'Volume', 'Wells', 'Well1' ] ),
     ( "2Ranks", [ 'mesh1', 'Level0', 'CellElementRegion', 'Region', 'rank_0', 'rank_1' ] ),
 ] )
@@ -65,8 +68,16 @@ def test_getBlockIndexFromName(
 
 
 @pytest.mark.parametrize( "meshName, dictCompositeBlocksTest", [
-    ( "geosOutput2Ranks", {'Region': 4, 'wellRegion1': 8, 'wellRegion2': 10, 'Fault': 13 } ),
-    ( "extractAndMergeVolumeWell1", {'Volume': 1, 'Wells': 3 } ),
+    ( "geosOutput2Ranks", {
+        'Region': 4,
+        'wellRegion1': 8,
+        'wellRegion2': 10,
+        'Fault': 13
+    } ),
+    ( "extractAndMergeVolumeWell1", {
+        'Volume': 1,
+        'Wells': 3
+    } ),
 ] )
 def test_getElementaryCompositeBlockIndexes(
     dataSetTest: vtkMultiBlockDataSet,
