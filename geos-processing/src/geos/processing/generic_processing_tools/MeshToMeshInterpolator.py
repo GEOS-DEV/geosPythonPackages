@@ -85,6 +85,110 @@ def _vectorize_fields_in(fieldnames, fieldnc,  mesh, fp,  piece):
 
     return fp
 
+def _filter_volume_cells(mesh, save_surfaces=True, output_prefix=""):
+    """Keep only 3D volume cells; optionally save 2D cells to VTU."""
+    print(f"  Input mesh: {mesh.GetNumberOfCells()} cells")
+
+    volume_ids  = vtk.vtkIdTypeArray()
+    surface_ids = vtk.vtkIdTypeArray()
+    n_volume = n_surface = n_other = 0
+
+    for i in range(mesh.GetNumberOfCells()):
+        dim = mesh.GetCell(i).GetCellDimension()
+        if   dim == 3: volume_ids.InsertNextValue(i);  n_volume  += 1
+        elif dim == 2: surface_ids.InsertNextValue(i); n_surface += 1
+        else:                                          n_other   += 1
+
+    print(f"  Cell types: {n_volume} volume (3D) | "
+          f"{n_surface} surface (2D) | {n_other} other")
+
+    if n_surface > 0 and save_surfaces:
+        sn = vtk.vtkSelectionNode()
+        sn.SetFieldType(vtk.vtkSelectionNode.CELL)
+        sn.SetContentType(vtk.vtkSelectionNode.INDICES)
+        sn.SetSelectionList(surface_ids)
+        sel = vtk.vtkSelection(); sel.AddNode(sn)
+        ext = vtk.vtkExtractSelection()
+        ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
+        surf = vtk.vtkUnstructuredGrid(); surf.ShallowCopy(ext.GetOutput())
+        fname = f"{output_prefix}_surfaces_only.vtu" if output_prefix else "surfaces_only.vtu"
+        w = vtk.vtkXMLUnstructuredGridWriter()
+        w.SetFileName(fname); w.SetInputData(surf); w.Write()
+        print(f"  💾 Saved surface cells → {fname}")
+
+    if n_surface == 0 and n_other == 0:
+        print("  ✅ No filtering needed (all cells are 3D)")
+        return mesh
+
+    sn = vtk.vtkSelectionNode()
+    sn.SetFieldType(vtk.vtkSelectionNode.CELL)
+    sn.SetContentType(vtk.vtkSelectionNode.INDICES)
+    sn.SetSelectionList(volume_ids)
+    sel = vtk.vtkSelection(); sel.AddNode(sn)
+    ext = vtk.vtkExtractSelection()
+    ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
+    out = vtk.vtkUnstructuredGrid(); out.ShallowCopy(ext.GetOutput())
+    print(f"  ✅ Filtered → {out.GetNumberOfCells()} cells "
+          f"(removed {n_surface + n_other})")
+    return out
+
+
+# ============================================================
+# REGION EXTRACTION HELPER
+# ============================================================
+
+def _extract_region(mesh, attr_name, region_ids):
+    """
+    Return a sub-mesh containing only cells whose integer attribute
+    value is in *region_ids*, together with the original cell indices.
+
+    Parameters
+    ----------
+    mesh       : vtkUnstructuredGrid
+    attr_name  : str    name of the integer cell-data attribute
+    region_ids : list[int]
+
+    Returns
+    -------
+    sub_mesh      : vtkUnstructuredGrid  (shallow copy)
+    orig_indices  : numpy (N_sub,) int   original cell indices in *mesh*
+    """
+    if not mesh.GetCellData().HasArray(attr_name):
+        available = [mesh.GetCellData().GetArrayName(i)
+                     for i in range(mesh.GetCellData().GetNumberOfArrays())]
+        raise KeyError(
+            f"Attribute '{attr_name}' not found.\n"
+            f"  Available arrays: {available}")
+
+    attr   = vtk_to_numpy(mesh.GetCellData().GetArray(attr_name)).astype(np.int64)
+    mask   = np.zeros(len(attr), dtype=bool)
+    for rid in region_ids:
+        mask |= (attr == rid)
+
+    orig_indices = np.where(mask)[0]
+
+    if len(orig_indices) == 0:
+        return None, orig_indices
+
+    # Build vtkIdTypeArray of selected indices
+    id_arr = vtk.vtkIdTypeArray()
+    for idx in orig_indices:
+        id_arr.InsertNextValue(int(idx))
+
+    sn = vtk.vtkSelectionNode()
+    sn.SetFieldType(vtk.vtkSelectionNode.CELL)
+    sn.SetContentType(vtk.vtkSelectionNode.INDICES)
+    sn.SetSelectionList(id_arr)
+    sel = vtk.vtkSelection(); sel.AddNode(sn)
+
+    ext = vtk.vtkExtractSelection()
+    ext.SetInputData(0, mesh); ext.SetInputData(1, sel); ext.Update()
+
+    sub = vtk.vtkUnstructuredGrid()
+    sub.ShallowCopy(ext.GetOutput())
+
+    return sub, orig_indices
+
 def main():
 
     reader = vtk.vtkXMLUnstructuredGridReader()
@@ -115,9 +219,68 @@ def main():
     c_fieldnames = [('Porosity','mapped_POROSITY'), ('PERM','mapped_PERM')] # for GNL test
     # pt_fieldnames = [('','')]
     c_source_vec, c_fieldnc = _vectorize_fields_out(c_fieldnames,source_mesh, PIECE.ONCELL)
+    
+    # ----------------------------------------------------------------
+    # REGION-BASED MAPPING
+    # ----------------------------------------------------------------
+    section = 'Mapping (KD-tree, per region)'
+    print(f"[{section}]")
+    start = time.perf_counter()
+
+    # Prepare output array (same shape as target, initialised to previous fields)
+    N_tgt         = target_mesh.GetNumberOfCells()
+    # c_target_vec  = np.zeros((N_tgt, len(FIELD_NAMES), 9), dtype=float)
+    c_target_vec, _ = _vectorize_fields_out(FIELD_NAMES, target_mesh, PIECE.ONCELL)
+
+    for src_ids, tgt_id in REGION_MAP:
+
+        print(f"\n  ── Region: source {src_ids} → target [{tgt_id}] ──")
+
+        # Extract source sub-mesh for this region
+        src_sub, src_orig_idx = _extract_region(source_mesh, ATTRIBUTE_NAME,
+                                                src_ids)
+        if src_sub is None:
+            print(f"No source cells found for ids {src_ids} — skipping.")
+            continue
+        print(f"     Source cells : {len(src_orig_idx)}")
+
+        # Extract target sub-mesh for this region
+        tgt_sub, tgt_orig_idx = _extract_region(target_mesh, ATTRIBUTE_NAME,
+                                                [tgt_id])
+        if tgt_sub is None:
+            print(f"No target cells found for id {tgt_id} — skipping.")
+            continue
+        print(f"     Target cells : {len(tgt_orig_idx)}")
+
+        # KD-tree mapping on sub-meshes (original clamp_interpolate logic)
+        raw = clamp_interpolate(src_sub, tgt_sub,
+                                lambda m: _get_cellCenters(m))
+        # local_s2t: index within src_sub → map back to src_orig_idx
+        local_s2t = reduce(raw)
+
+        # local_s2t[i] is an index within src_sub  (0..N_src_sub-1)
+        # src_orig_idx[local_s2t[i]] is the original index in source_mesh
+        global_s2t = src_orig_idx[np.array(local_s2t, dtype=np.int64)]
+
+        # Transfer: for each target sub-cell i, copy from global source index
+        c_target_vec[tgt_orig_idx] = c_source_vec[global_s2t]
+
+        # Quick value check
+        for j, (fname, _) in enumerate(FIELD_NAMES):
+            vals = c_target_vec[tgt_orig_idx, j, 0]
+            print(f"     {fname:20s} range = [{vals.min():.4g}, {vals.max():.4g}]")
+
+    print(f"\n  Elapsed time: {time.perf_counter() - start:.6f} s")
+    print("")
+    
+    
+    section = 'Field transfer'
+    print(f"[{section}]")
+    start = time.perf_counter()
     _vectorize_fields_in(c_fieldnames, c_fieldnc, target_mesh, c_source_vec[c_s2t,:,:],  PIECE.ONCELL)
     end = time.perf_counter()
     print(f"[{section}] Elapsed time: {end - start:.6f} seconds")
+
 
     section = 'Writing'
     start = time.perf_counter()
