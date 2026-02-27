@@ -3,11 +3,12 @@
 # SPDX-FileContributor: Paloma Martinez, Romain Baville
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
 import pytest
-from typing import Union, Any
 import numpy as np
 import numpy.typing as npt
+
+from pathlib import Path
+from typing import Any
 
 from vtkmodules.vtkCommonDataModel import ( vtkDataSet, vtkMultiBlockDataSet, vtkPolyData, vtkUnstructuredGrid,
                                             VTK_LINE, VTK_QUAD, VTK_HEXAHEDRON )
@@ -132,7 +133,7 @@ def dataSetTest() -> Any:
         (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
     """
 
-    def _get_dataset( datasetType: str ) -> Union[ vtkMultiBlockDataSet, vtkPolyData, vtkDataSet ]:
+    def _get_dataset( datasetType: str ) -> vtkMultiBlockDataSet | vtkPolyData | vtkDataSet:
         """Get a vtkObject from a file.
 
         Args:
@@ -142,6 +143,7 @@ def dataSetTest() -> Any:
             (vtkMultiBlockDataSet, vtkPolyData, vtkDataSet): The vtk object.
         """
         reader: vtkXMLGenericDataObjectReader = vtkXMLGenericDataObjectReader()
+        # Meshes from the GEOS integrated test singlePhasePoromechanics_FaultModel_well_seq
         if datasetType == "2Ranks":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/cellElementRegion2Ranks.vtm"
         elif datasetType == "4Ranks":
@@ -163,7 +165,7 @@ def dataSetTest() -> Any:
         elif datasetType == "extractAndMergeFaultWell1":
             vtkFilename = "data/singlePhasePoromechanics_FaultModel_well_seq/extractAndMergeFaultWell1.vtm"
 
-        datapath: str = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), vtkFilename )
+        datapath: str = str( Path( __file__ ).parent / vtkFilename )
         reader.SetFileName( datapath )
         reader.Update()
 
