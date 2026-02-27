@@ -155,6 +155,7 @@ def define_simulation_view( server: Server ) -> None:
                 server.state.nunknowns = uc*nc + up*np      
         
         server.state.is_valid_jobfiles = any(has_xml)
+        server.state.all_req_files = all(req_files)
         
     def kill_job( index_to_remove: int ) -> None:
         # for now just check there is an xml
@@ -310,7 +311,7 @@ def define_simulation_view( server: Server ) -> None:
             with vuetify.VCol( cols=1 ):
                 vuetify.VBtn( "Run",
                               click="trigger('run_simulation')",
-                              disabled=( "!is_valid_jobfiles", ),
+                              disabled=( "!is_valid_jobfiles && !all_req_files", ),
                               classes="ml-auto" ),  # type: ignore
 
         vuetify.VDivider( thickness=5, classes="my-4" )
