@@ -238,7 +238,7 @@ class SurfaceGeomechanics:
         """Compute Geomechanical properties on input surface.
 
         Raises:
-            TypeError: Error With the type of the input mesh.
+            TypeError: Error with the type of the input mesh.
             ValueError: Errors during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
             AttributeError: Attributes must be on cell.
@@ -267,7 +267,7 @@ class SurfaceGeomechanics:
         else:
             self.logger.info( f"{ result }." )
 
-        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is apply again.
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
         self.nbWarnings = self.counter.warningCount
         self.counter.resetWarningCount()
 
@@ -357,7 +357,7 @@ class SurfaceGeomechanics:
             npt.NDArray[np.float64]: Vector of new coordinates of the attribute.
 
         Raises:
-            ValueError: Error with the shape of attrArray or the computation of the attribute coordinate.
+            ValueError: Error with the shape of attrArray or the computation of the attribute coordinates.
         """
         attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
@@ -375,7 +375,7 @@ class SurfaceGeomechanics:
             attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
-            raise ValueError( "Attribute new coordinate calculation failed." )
+            raise ValueError( "Attribute new coordinates calculation failed." )
 
         return attrXYZ
 

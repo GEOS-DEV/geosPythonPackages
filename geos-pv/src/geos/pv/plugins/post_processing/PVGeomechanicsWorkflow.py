@@ -366,7 +366,7 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.nbWarnings = self.counter.warningCount
         self.nbErrors = self.counter.errorCount
 
-        # Reset the CountVerbosityHandler in case the plugin is apply again
+        # Reset the CountVerbosityHandler in case the plugin is applied again
         self.counter.resetWarningCount()
         self.counter.resetErrorCount()
 
