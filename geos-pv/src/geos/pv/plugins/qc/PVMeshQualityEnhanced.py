@@ -33,6 +33,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMetricsOther, g
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.paraviewTreatments import getArrayChoices
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 The ``Mesh Quality Enhanced`` filter computes requested mesh quality metrics on meshes. Both surfaces and volumic metrics can be computed with this plugin.
@@ -57,10 +58,10 @@ To use it:
     Please refer to the `Verdict Manual <https://visit-sphinx-github-user-manual.readthedocs.io/en/v3.4.0/_downloads/9d944264b44b411aeb4a867a1c9b1ed5/VerdictManual-revA.pdf>`_ for metrics and range definitions.
 """
 
+HANDLER: logging.Handler = VTKHandler()
 
-@SISOFilter( category=FilterCategory.QC,
-             decoratedLabel="Mesh Quality Enhanced",
-             decoratedType="vtkUnstructuredGrid" )
+
+@SISOFilter( category=FilterCategory.QC, decoratedLabel="Mesh Quality Enhanced", decoratedType="vtkUnstructuredGrid" )
 class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
@@ -231,8 +232,9 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
         otherMetrics: set[ int ] = self._getQualityMetricsToUse( self._commonMeshQualityMetric )
 
         meshQualityEnhancedFilter: MeshQualityEnhanced = MeshQualityEnhanced( inputMesh, True )
-        if len( meshQualityEnhancedFilter.logger.handlers ) == 0:
-            meshQualityEnhancedFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( HANDLER, meshQualityEnhancedFilter.logger ):
+            meshQualityEnhancedFilter.setLoggerHandler( HANDLER )
+
         meshQualityEnhancedFilter.SetCellQualityMetrics( triangleMetrics=triangleMetrics,
                                                          quadMetrics=quadMetrics,
                                                          tetraMetrics=tetraMetrics,
@@ -240,6 +242,7 @@ class PVMeshQualityEnhanced( VTKPythonAlgorithmBase ):
                                                          wedgeMetrics=wedgeMetrics,
                                                          hexaMetrics=hexaMetrics )
         meshQualityEnhancedFilter.SetOtherMeshQualityMetrics( otherMetrics )
+
         try:
             meshQualityEnhancedFilter.applyFilter()
             outputMesh.ShallowCopy( meshQualityEnhancedFilter.getOutput() )

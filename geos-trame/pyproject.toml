@@ -30,6 +30,8 @@ keywords = [
 ]
 
 dependencies = [
+    "setuptools",
+    "typing-extensions==4.12.2",
     "trame==3.6.5",
     "trame-vuetify==3.1.0",
     "trame-code==1.0.1",
@@ -43,7 +45,7 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "mpld3<0.5.11",
     "paramiko==4.0.0",
-    "xsdata==24.5",
+    "xsdata[cli]>=25.4",
     "xsdata-pydantic[lxml]==24.5",
     "pyvista==0.45.2",
     "dpath==2.2.0",
@@ -67,6 +69,7 @@ dev = [
     "pre-commit"
 ]
 test = [
+    "setuptools",
     "pytest==8.3.3",
     "pytest-seleniumbase==4.31.6",
     "pixelmatch==0.3.0",

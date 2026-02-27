@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing_extensions import Self
 
@@ -21,6 +22,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.processing.generic_processing_tools.SplitMesh import SplitMesh
+from geos.utils.Logger import isHandlerInLogger
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 
 __doc__ = f"""
@@ -37,13 +39,14 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING, decoratedLabel="Split Mesh", decoratedType="vtkPointSet" )
 class PVSplitMesh( VTKPythonAlgorithmBase ):
 
     def __init__( self: Self ) -> None:
         """Split mesh cells."""
-        pass
 
     def ApplyFilter( self: Self, inputMesh: vtkPointSet, outputMesh: vtkPointSet ) -> None:
         """Apply vtk filter.
@@ -53,8 +56,8 @@ class PVSplitMesh( VTKPythonAlgorithmBase ):
             outputMesh: Output mesh.
         """
         splitMeshFilter: SplitMesh = SplitMesh( inputMesh, True )
-        if len( splitMeshFilter.logger.handlers ) == 0:
-            splitMeshFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( HANDLER, splitMeshFilter.logger ):
+            splitMeshFilter.setLoggerHandler( HANDLER )
 
         try:
             splitMeshFilter.applyFilter()

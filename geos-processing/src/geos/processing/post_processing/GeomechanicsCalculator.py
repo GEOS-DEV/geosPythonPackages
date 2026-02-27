@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayModifiers import createAttribute
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( AttributeEnum, ComponentNameEnum, GeosMeshOutputsEnum,
                                               PostProcessingOutputsEnum )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_GRAIN_BULK_MODULUS,
@@ -34,7 +34,7 @@ To compute the geomechanics outputs, the mesh must have the following properties
     - The initial porosity named "porosityInitial"
     - The delta of pressure named "deltaPressure"
     - The density named "density"
-    - The effective stress named "stressEffective"
+    - The average stress named "averageStress"
     - The initial effective stress named "stressEffectiveInitial"
     - The pressure named "pressure"
 
@@ -125,10 +125,10 @@ POROSITY_T0: AttributeEnum = GeosMeshOutputsEnum.POROSITY_INI
 PRESSURE: AttributeEnum = GeosMeshOutputsEnum.PRESSURE
 DELTA_PRESSURE: AttributeEnum = GeosMeshOutputsEnum.DELTA_PRESSURE
 DENSITY: AttributeEnum = GeosMeshOutputsEnum.ROCK_DENSITY
-STRESS_EFFECTIVE: AttributeEnum = GeosMeshOutputsEnum.STRESS_EFFECTIVE
+AVERAGE_STRESS: AttributeEnum = GeosMeshOutputsEnum.AVERAGE_STRESS
 STRESS_EFFECTIVE_T0: AttributeEnum = PostProcessingOutputsEnum.STRESS_EFFECTIVE_INITIAL
 MANDATORY_PROPERTIES: tuple[ AttributeEnum, ...] = ( POROSITY, POROSITY_T0, PRESSURE, DELTA_PRESSURE, DENSITY,
-                                                     STRESS_EFFECTIVE, STRESS_EFFECTIVE_T0 )
+                                                     AVERAGE_STRESS, STRESS_EFFECTIVE_T0 )
 
 # Basic properties:
 BIOT_COEFFICIENT: AttributeEnum = PostProcessingOutputsEnum.BIOT_COEFFICIENT
@@ -141,7 +141,7 @@ STRESS_TOTAL: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL
 STRESS_TOTAL_T0: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL_INITIAL
 STRESS_TOTAL_RATIO_REAL: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL_RATIO_REAL
 LITHOSTATIC_STRESS: AttributeEnum = PostProcessingOutputsEnum.LITHOSTATIC_STRESS
-STRAIN_ELASTIC: AttributeEnum = PostProcessingOutputsEnum.STRAIN_ELASTIC
+AVERAGE_STRAIN: AttributeEnum = PostProcessingOutputsEnum.AVERAGE_STRAIN
 STRESS_TOTAL_DELTA: AttributeEnum = PostProcessingOutputsEnum.STRESS_TOTAL_DELTA
 RSP_REAL: AttributeEnum = PostProcessingOutputsEnum.RSP_REAL
 RSP_OED: AttributeEnum = PostProcessingOutputsEnum.RSP_OED
@@ -149,7 +149,7 @@ STRESS_EFFECTIVE_RATIO_OED: AttributeEnum = PostProcessingOutputsEnum.STRESS_EFF
 BASIC_PROPERTIES: tuple[ AttributeEnum,
                          ...] = ( BIOT_COEFFICIENT, COMPRESSIBILITY, COMPRESSIBILITY_OED, COMPRESSIBILITY_REAL,
                                   SPECIFIC_GRAVITY, STRESS_EFFECTIVE_RATIO_REAL, STRESS_TOTAL, STRESS_TOTAL_T0,
-                                  STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, STRAIN_ELASTIC, STRESS_TOTAL_DELTA,
+                                  STRESS_TOTAL_RATIO_REAL, LITHOSTATIC_STRESS, AVERAGE_STRAIN, STRESS_TOTAL_DELTA,
                                   RSP_REAL, RSP_OED, STRESS_EFFECTIVE_RATIO_OED )
 
 # Advanced properties:
@@ -396,7 +396,7 @@ class GeomechanicsCalculator:
                 self._deltaPressure = value
             elif name == DENSITY.attributeName:
                 self._density = value
-            elif name == STRESS_EFFECTIVE.attributeName:
+            elif name == AVERAGE_STRESS.attributeName:
                 self._effectiveStress = value
             elif name == STRESS_EFFECTIVE_T0.attributeName:
                 self._effectiveStressT0 = value
@@ -590,7 +590,7 @@ class GeomechanicsCalculator:
             # TODO: lithostatic stress calculation is deactivated until the formula is not fixed
             # elif name == LITHOSTATIC_STRESS.attributeName:
             #     return self.lithostaticStress
-            elif name == STRAIN_ELASTIC.attributeName:
+            elif name == AVERAGE_STRAIN.attributeName:
                 return self.elasticStrain
             elif name == STRESS_TOTAL_DELTA.attributeName:
                 return self.deltaTotalStress
@@ -712,6 +712,18 @@ class GeomechanicsCalculator:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
     def applyFilter( self: Self ) -> None:
         """Compute the geomechanics properties and create attributes on the mesh.
 
@@ -742,12 +754,22 @@ class GeomechanicsCalculator:
             if attribute.nbComponent == 6:
                 componentNames = ComponentNameEnum.XYZ.value
 
-            if not createAttribute(
-                    self.output, array, attributeName, componentNames=componentNames, piece=piece, logger=self.logger ):
-                raise ValueError( f"Something went wrong during the creation of the attribute { attributeName }." )
+            createAttribute( self.output,
+                             array,
+                             attributeName,
+                             componentNames=componentNames,
+                             piece=piece,
+                             logger=self.logger )
 
         self.logger.info( "All the geomechanics properties have been added to the mesh." )
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 
@@ -767,12 +789,10 @@ class GeomechanicsCalculator:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def getOutputType( self: Self ) -> str:
         """Get output object type.
@@ -1073,7 +1093,7 @@ class GeomechanicsCalculator:
                                                                             self._basicProperties.biotCoefficient,
                                                                             STRESS_TOTAL )
         else:
-            mess = f"{ STRESS_TOTAL.attributeName } has not been computed, geomechanics property { STRESS_EFFECTIVE.attributeName } or { BIOT_COEFFICIENT.attributeName } are missing."
+            mess = f"{ STRESS_TOTAL.attributeName } has not been computed, geomechanics property { AVERAGE_STRESS.attributeName } or { BIOT_COEFFICIENT.attributeName } are missing."
             raise AttributeError( mess )
 
         # Compute the total stress ratio.
@@ -1172,19 +1192,19 @@ class GeomechanicsCalculator:
         if self._mandatoryProperties.effectiveStress is not None and self._mandatoryProperties.effectiveStressT0 is not None:
             deltaEffectiveStress = self._mandatoryProperties.effectiveStress - self._mandatoryProperties.effectiveStressT0
 
-            if not isAttributeInObject( self.output, STRAIN_ELASTIC.attributeName, STRAIN_ELASTIC.piece ):
+            if not isAttributeInObject( self.output, AVERAGE_STRAIN.attributeName, AVERAGE_STRAIN.piece ):
                 if self.computeYoungPoisson:
                     self._basicProperties.elasticStrain = fcts.elasticStrainFromBulkShear(
                         deltaEffectiveStress, self._elasticModuli.bulkModulus, self._elasticModuli.shearModulus )
                 else:
                     self._basicProperties.elasticStrain = fcts.elasticStrainFromYoungPoisson(
                         deltaEffectiveStress, self._elasticModuli.youngModulus, self._elasticModuli.poissonRatio )
-                self._attributesToCreate.append( STRAIN_ELASTIC )
+                self._attributesToCreate.append( AVERAGE_STRAIN )
             else:
-                self._basicProperties.totalStressT0 = getArrayInObject( self.output, STRAIN_ELASTIC.attributeName,
-                                                                        STRAIN_ELASTIC.piece )
+                self._basicProperties.totalStressT0 = getArrayInObject( self.output, AVERAGE_STRAIN.attributeName,
+                                                                        AVERAGE_STRAIN.piece )
                 self.logger.warning(
-                    f"{ STRAIN_ELASTIC.attributeName } is already on the mesh, it has not been computed by the filter."
+                    f"{ AVERAGE_STRAIN.attributeName } is already on the mesh, it has not been computed by the filter."
                 )
 
         return

@@ -16,6 +16,7 @@ GENERATE_GLOBAL_IDS = "generateGlobalIds"
 NON_CONFORMAL = "nonConformal"
 SELF_INTERSECTING_ELEMENTS = "selfIntersectingElements"
 SUPPORTED_ELEMENTS = "supportedElements"
+ORPHAN_2D = "orphan2d"
 
 
 @dataclass( frozen=True )

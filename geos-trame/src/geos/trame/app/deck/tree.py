@@ -20,7 +20,7 @@ from trame_simput import get_simput_manager
 
 from geos.trame.app.deck.file import DeckFile
 from geos.trame.app.geosTrameException import GeosTrameException
-from geos.trame.schema_generated.schema_mod import Problem, Included, File, Functions
+from geos.trame.schema_generated.schema_mod import ProblemType, Included, File, Functions
 from geos.trame.app.utils.file_utils import normalize_path, format_xml
 
 import logging
@@ -127,14 +127,14 @@ class DeckTree( object ):
         return nodeDict
 
     @staticmethod
-    def decode_data( data: dict ) -> Problem:
+    def decode_data( data: dict ) -> ProblemType:
         """Convert a data to a xml serializable file."""
         context = XmlContext(
             element_name_generator=text.pascal_case,
             attribute_name_generator=text.camel_case,
         )
         decoder = DictDecoder( context=context, config=ParserConfig() )
-        node: Problem = decoder.decode( data )
+        node: ProblemType = decoder.decode( data )
         return node
 
     @staticmethod
@@ -200,8 +200,8 @@ class DeckTree( object ):
         files = self._split( pb )
 
         for filepath, content in files.items():
-            model_loaded: Problem = DeckTree.decode_data( content )
-            model_with_changes: Problem = self._apply_changed_properties( model_loaded )
+            model_loaded: ProblemType = DeckTree.decode_data( content )
+            model_with_changes: ProblemType = self._apply_changed_properties( model_loaded )
 
             assert ( self.input_file is not None and self.input_file.xml_parser is not None )
             if self.input_file.xml_parser.contains_include_files():
@@ -221,7 +221,7 @@ class DeckTree( object ):
             self._ctrl.on_add_success( title="File saved", message=f"File {basename} has been saved." )
 
     @staticmethod
-    def _append_include_file( model: Problem, included_file_path: str ) -> None:
+    def _append_include_file( model: ProblemType, included_file_path: str ) -> None:
         """Append an Included object which follows this structure according to the documentation.
 
         <Included>
@@ -278,7 +278,7 @@ class DeckTree( object ):
         """
         return "".join( [ "_" + char.lower() if char.isupper() else char for char in content ] ).lstrip( "_" )
 
-    def _apply_changed_properties( self, model: Problem ) -> Problem:
+    def _apply_changed_properties( self, model: ProblemType ) -> ProblemType:
         """Retrieves all edited 'properties' from the simput_manager and apply it to a given model."""
         manager = get_simput_manager( self._sm_id )
         modified_proxy_ids: set[ str ] = manager.proxymanager.dirty_proxy_data

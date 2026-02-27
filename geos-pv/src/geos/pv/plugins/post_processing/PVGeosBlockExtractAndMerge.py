@@ -23,6 +23,7 @@ from geos.mesh.utils.multiblockHelpers import getBlockNames
 
 from geos.utils.Errors import VTKError
 from geos.utils.pieceEnum import Piece
+from geos.utils.Logger import ( CountWarningHandler, getLoggerHandlerType )
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, GeosDomainNameEnum,
                                               getAttributeToTransferFromInitialTime )
 
@@ -81,6 +82,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Extract & Merge GEOS Block"
 
 
@@ -130,10 +132,20 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( VTKHandler() )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
-        self.logger.info( f"Apply plugin { self.logger.name }." )
+        counter: CountWarningHandler = CountWarningHandler()
+        self.counter: CountWarningHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def RequestDataObject(
         self: Self,
@@ -276,7 +288,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 f"Apply the plugin { self.logger.name } for the first time step to get the initial properties." )
             try:
                 doExtractAndMerge( inputMesh, self.outputCellsT0, vtkMultiBlockDataSet(), vtkMultiBlockDataSet(),
-                                   self.extractFault, self.extractWell )
+                                   self.extractFault, self.extractWell, self.counter )
                 request.Set( executive.CONTINUE_EXECUTING(), 1 )
             except ( ValueError, VTKError ) as e:
                 self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
@@ -296,7 +308,7 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
             try:
                 doExtractAndMerge( inputMesh, outputCells, outputFaults, outputWells, self.extractFault,
-                                   self.extractWell )
+                                   self.extractWell, self.counter )
 
                 # Copy attributes from the initial time step
                 meshAttributes: set[ str ] = getAttributeSet( self.outputCellsT0, piece=Piece.CELLS )
@@ -307,7 +319,8 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
 
                 # Create elementCenter attribute in the volume mesh if needed
                 cellCenterAttributeName: str = GeosMeshOutputsEnum.ELEMENT_CENTER.attributeName
-                createCellCenterAttribute( outputCells, cellCenterAttributeName )
+                if cellCenterAttributeName not in meshAttributes:
+                    createCellCenterAttribute( outputCells, cellCenterAttributeName, logger=self.logger )
 
                 # Stop the time step iteration
                 request.Remove( executive.CONTINUE_EXECUTING() )
@@ -315,11 +328,18 @@ class PVGeosBlockExtractAndMerge( VTKPythonAlgorithmBase ):
                 # Set to -2 in case time changes on Paraview
                 self.requestDataStep = -2
 
-                self.logger.info( f"The plugin { self.logger.name } succeeded." )
+                result: str = f"The plugin { self.logger.name } succeeded"
+                if self.counter.warningCount > 0:
+                    self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+                else:
+                    self.logger.info( f"{ result }." )
             except ( ValueError, VTKError ) as e:
                 self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
             except Exception as e:
                 mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
                 self.logger.critical( mess, exc_info=True )
+
+            self.nbWarnings = self.counter.warningCount
+            self.counter.resetWarningCount()
 
         return 1
