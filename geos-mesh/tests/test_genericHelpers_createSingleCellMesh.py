@@ -36,7 +36,7 @@ quadPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1
                                                           [ 0.0, 1.0, 0.0 ] ] )
 
 pointsCoordsAll: tuple[ npt.NDArray[ np.float64 ], ...] = ( tetraPointsCoords, hexaPointsCoords, pyrPointsCoords,
-                                                        triPointsCoords, quadPointsCoords )
+                                                            triPointsCoords, quadPointsCoords )
 cellTypesAll: tuple[ int, ...] = ( tetraCellType, hexaCellType, pyramidCellType, triangleCellType, quadCellType )
 
 
