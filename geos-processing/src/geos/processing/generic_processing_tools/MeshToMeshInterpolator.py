@@ -4,6 +4,148 @@ from vtkmodules.vtkCommonDataModel import vtkBoundingBox
 from enum import IntEnum   
 import numpy as np
 
+######################COPILOT LAZY FRIDAY - TO REVIEW ############################
+
+from collections import defaultdict
+from vtk.util import numpy_support as ns
+
+def _cell_centroids(ug: vtk.vtkUnstructuredGrid) -> np.ndarray:
+    n = ug.GetNumberOfCells()
+    centroids = np.zeros((n, 3), dtype=np.float64)
+    pts = ug.GetPoints()
+    for cid in range(n):
+        cell = ug.GetCell(cid)
+        ids = cell.GetPointIds()
+        xyz = np.array([pts.GetPoint(ids.GetId(i)) for i in range(ids.GetNumberOfIds())], dtype=np.float64)
+        centroids[cid] = xyz.mean(axis=0)
+    return centroids
+
+def _build_point_adjacency(ug: vtk.vtkUnstructuredGrid):
+    n = ug.GetNumberOfCells()
+    point2cells = defaultdict(list)
+    for cid in range(n):
+        ids = ug.GetCell(cid).GetPointIds()
+        for i in range(ids.GetNumberOfIds()):
+            point2cells[ids.GetId(i)].append(cid)
+    neighbors = [set() for _ in range(n)]
+    for cid in range(n):
+        ids = ug.GetCell(cid).GetPointIds()
+        for i in range(ids.GetNumberOfIds()):
+            pid = ids.GetId(i)
+            for nb in point2cells[pid]:
+                if nb != cid:
+                    neighbors[cid].add(nb)
+    return [np.fromiter(s, dtype=np.int32) for s in neighbors]
+
+def _build_face_adjacency(ug: vtk.vtkUnstructuredGrid):
+    """
+    Strict adjacency (shared face). Only works when VTK can enumerate faces.
+    Falls back to empty for cells where faces can't be queried.
+    """
+    n = ug.GetNumberOfCells()
+    face2cells = defaultdict(list)
+    for cid in range(n):
+        cell = ug.GetCell(cid)
+        nf = cell.GetNumberOfFaces()
+        if nf is None or nf <= 0:
+            continue
+        for fi in range(nf):
+            face = cell.GetFace(fi)
+            fids = [face.GetPointId(i) for i in range(face.GetNumberOfPoints())]
+            key = tuple(sorted(fids))
+            face2cells[key].append(cid)
+    neighbors = [set() for _ in range(n)]
+    for cells in face2cells.values():
+        if len(cells) >= 2:
+            for a in cells:
+                for b in cells:
+                    if a != b:
+                        neighbors[a].add(b)
+    return [np.fromiter(s, dtype=np.int32) for s in neighbors]
+
+def gaussian_cell_smooth(
+    ug: vtk.vtkUnstructuredGrid,
+    array_name: str,
+    sigma: float = 1.0,
+    self_weight: float = 1.0,
+    iterations: int = 1,
+    adjacency: str = "point",  # 'point' (default) or 'face'
+):
+    """
+    Gaussian local smoothing for CELL data on an unstructured grid.
+    Weights = exp( -0.5 * (d/sigma)^2 ), where d is centroid distance.
+
+    Parameters
+    ----------
+    ug : vtkUnstructuredGrid
+        Input mesh (modified in-place by adding a new cell array).
+    array_name : str
+        Name of the cell data array to smooth.
+    sigma : float
+        Gaussian sigma in world units (same units as point coordinates).
+    self_weight : float
+        Weight for the cell's own value (stabilizes smoothing).
+    iterations : int
+        Number of smoothing passes (more passes ≈ stronger blur).
+    adjacency : {'point', 'face'}
+        How to define neighbors. 'point' is more inclusive and robust.
+    out_name : str | None
+        Name for the output array. Defaults to '{array_name}_gauss'.
+
+    Returns
+    -------
+    ug, out_name
+        The same ug with a new cell array added.
+    """
+    if sigma <= 0:
+        raise ValueError("sigma must be > 0")
+
+    n_cells = ug.GetNumberOfCells()
+    in_vtk = ug.GetCellData().GetArray(array_name)
+    if in_vtk is None:
+        raise ValueError(f"Cell array '{array_name}' not found.")
+    X = ns.vtk_to_numpy(in_vtk)
+    if X.ndim == 1:
+        X = X[:, None]  # (N,1) for scalars
+    n_comp = X.shape[1]
+
+    # Adjacency
+    if adjacency == "face":
+        N = _build_face_adjacency(ug)
+        # Fallback to point neighbors for cells with no face neighbors
+        if any(nb.size == 0 for nb in N):
+            N_point = _build_point_adjacency(ug)
+            N = [nb if nb.size > 0 else N_point[i] for i, nb in enumerate(N)]
+    else:
+        N = _build_point_adjacency(ug)
+
+    # Geometry
+    C = _cell_centroids(ug)
+
+    Xk = X.copy()
+    for _ in range(iterations):
+        Xnext = np.empty_like(Xk)
+        for cid in range(n_cells):
+            nb = N[cid]
+            if nb.size == 0:
+                Xnext[cid] = Xk[cid]
+                continue
+            d = np.linalg.norm(C[nb] - C[cid], axis=1)  # Euclidean distance between centroids
+            w = np.exp(-0.5 * (d / sigma) ** 2)
+            wsum = w.sum() + self_weight
+            num = (w[:, None] * Xk[nb]).sum(axis=0) + self_weight * Xk[cid]
+            Xnext[cid] = num / (wsum if wsum > 0 else 1.0)
+        Xk = Xnext
+
+    out_name = f"{array_name}_gauss"
+
+    out = ns.numpy_to_vtk(Xk if n_comp > 1 else Xk.ravel(), deep=True)
+    out.SetName(out_name)
+    ug.GetCellData().AddArray(out)
+    return ug
+
+
+####################################################################################
 class PIECE(IntEnum):
     ONPOINT =  1
     ONCELL = 2
@@ -114,10 +256,10 @@ def _filter_volume_cells(mesh, save_surfaces=True, output_prefix=""):
         fname = f"{output_prefix}_surfaces_only.vtu" if output_prefix else "surfaces_only.vtu"
         w = vtk.vtkXMLUnstructuredGridWriter()
         w.SetFileName(fname); w.SetInputData(surf); w.Write()
-        print(f"  💾 Saved surface cells → {fname}")
+        print(f"Saved surface cells → {fname}")
 
     if n_surface == 0 and n_other == 0:
-        print("  ✅ No filtering needed (all cells are 3D)")
+        print("No filtering needed (all cells are 3D)")
         return mesh
 
     sn = vtk.vtkSelectionNode()
@@ -273,6 +415,11 @@ def main():
     print(f"\n  Elapsed time: {time.perf_counter() - start:.6f} s")
     print("")
     
+    section = 'Gaussing'
+    start = time.perf_counter()
+    target_mesh =  gaussian_cell_smooth(target_mesh,'mapped_POROSITY',10)
+    end = time.perf_counter()
+    print(f"[{section}] Elapsed time: {end - start:.6f} seconds")
     
     section = 'Field transfer'
     print(f"[{section}]")
