@@ -84,6 +84,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "GEOS Geomechanics Workflow"
 
 
@@ -138,10 +139,9 @@ class PVGeomechanicsWorkflow( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountVerbosityHandler = CountVerbosityHandler()

@@ -41,6 +41,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @smproxy.filter( name="PVCellTypeCounterEnhanced", label="Cell Type Counter Enhanced" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.QC.value }"/>' )
@@ -59,8 +61,6 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         self._saveToFile: bool = True
         # used to concatenate results if vtkMultiBlockDataSet
         self._countsAll: CellTypeCounts = CellTypeCounts()
-
-        self.handler: logging.Handler = VTKHandler()
 
     @smproperty.intvector(
         name="SetSaveToFile",
@@ -141,8 +141,8 @@ class PVCellTypeCounterEnhanced( VTKPythonAlgorithmBase ):
         assert outputTable is not None, "Output pipeline is null."
 
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced( inputMesh, True )
-        if not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
-            cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, cellTypeCounterEnhancedFilter.logger ):
+            cellTypeCounterEnhancedFilter.setLoggerHandler( HANDLER )
 
         try:
             cellTypeCounterEnhancedFilter.applyFilter()

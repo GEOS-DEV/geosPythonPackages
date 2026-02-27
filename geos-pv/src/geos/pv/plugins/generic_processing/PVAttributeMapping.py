@@ -54,6 +54,8 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+
 
 @smproxy.filter( name="PVAttributeMapping", label="Attribute Mapping" )
 @smhint.xml( f'<ShowInMenu category="{ FilterCategory.GENERIC_PROCESSING.value }"/>' )
@@ -76,7 +78,6 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         self.piece: Piece = Piece.CELLS
         self.clearAttributeNames = True
         self.attributeNames: list[ str ] = []
-        self.handler: logging.Handler = VTKHandler()
 
     @smproperty.intvector(
         name="AttributePiece",
@@ -190,8 +191,8 @@ class PVAttributeMapping( VTKPythonAlgorithmBase ):
         attributeMappingFilter: AttributeMapping = AttributeMapping( meshFrom, outData, set( self.attributeNames ),
                                                                      self.piece, True )
 
-        if not isHandlerInLogger( self.handler, attributeMappingFilter.logger ):
-            attributeMappingFilter.setLoggerHandler( self.handler )
+        if not isHandlerInLogger( HANDLER, attributeMappingFilter.logger ):
+            attributeMappingFilter.setLoggerHandler( HANDLER )
 
         try:
             attributeMappingFilter.applyFilter()

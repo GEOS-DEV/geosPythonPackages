@@ -60,6 +60,7 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
 loggerTitle: str = "Geos Log Reader"
 
 
@@ -150,10 +151,9 @@ class PVGeosLogReader( VTKPythonAlgorithmBase ):
         for prop in propsSolvers:
             self.m_convergence.AddArray( prop )
 
-        self.handler: logging.Handler = VTKHandler()
         self.logger = logging.getLogger( loggerTitle )
         self.logger.setLevel( logging.INFO )
-        self.logger.addHandler( self.handler )
+        self.logger.addHandler( HANDLER )
         self.logger.propagate = False
 
         counter: CountVerbosityHandler = CountVerbosityHandler()
