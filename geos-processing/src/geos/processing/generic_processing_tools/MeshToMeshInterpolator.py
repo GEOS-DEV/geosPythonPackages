@@ -44,29 +44,39 @@ def _get_cellCenters(mesh):
     return centers.GetOutput().GetPoints()
 
 def _vectorize_fields_out(fieldnames, mesh, piece):
-    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+    from vtk.util.numpy_support import vtk_to_numpy
     #use numpy for some speedup
+    #assuming any vector fields will not have more than 9 components
+    fieldnc = []
     if piece == PIECE.ONPOINT: 
-        fp = np.zeros(shape=(mesh.GetNumberOfPoints(), len(fieldnames)), dtype=float)
+        fp = np.zeros(shape=(mesh.GetNumberOfPoints(), len(fieldnames),9), dtype=float)
     elif piece == PIECE.ONCELL:
-        fp = np.zeros(shape=(mesh.GetNumberOfCells(), len(fieldnames)), dtype=float)
+        fp = np.zeros(shape=(mesh.GetNumberOfCells(), len(fieldnames),9), dtype=float)
 
     for j,field in enumerate(fieldnames):
         if piece == PIECE.ONPOINT:
-            data = mesh.GetPointData().GetArray(field[0])
+            if not mesh.GetPointData().HasArray(field[0]):
+                print(f"{field[0]} is not an array of  point data's source mesh")
+            else:
+                data = mesh.GetPointData().GetArray(field[0])
+                fieldnc.append(data.GetNumberOfComponents())
         elif piece == PIECE.ONCELL:
-            data = mesh.GetCellData().GetArray(field[0])
+            if not mesh.GetCellData().HasArray(field[0]):
+                print(f"{field[0]} is not an array of cell data's source mesh")
+            else:
+                data = mesh.GetCellData().GetArray(field[0])
+                fieldnc.append(data.GetNumberOfComponents())
 
-        fp[:,j] = vtk_to_numpy(data)
+        fp[:,j,:fieldnc[-1]] = vtk_to_numpy(data).reshape(-1,fieldnc[-1])
     
-    return fp
+    return fp, fieldnc
 
-def _vectorize_fields_in(fieldnames, mesh, fp,  piece):
-    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+def _vectorize_fields_in(fieldnames, fieldnc,  mesh, fp,  piece):
+    from vtk.util.numpy_support import numpy_to_vtk
     #use numpy for some speedup
 
     for j,field in enumerate(fieldnames):
-        arr = numpy_to_vtk(fp[:,j])
+        arr = numpy_to_vtk(fp[:,j,:fieldnc[j]])
         arr.SetName(field[1])
         if piece == PIECE.ONPOINT:
             mesh.GetPointData().AddArray(arr)
@@ -78,12 +88,14 @@ def _vectorize_fields_in(fieldnames, mesh, fp,  piece):
 def main():
 
     reader = vtk.vtkXMLUnstructuredGridReader()
-    # reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geos-data/Case2/Outputs_GNL_Coupled_Case2_Test6_585524-100/GNL/000086/MESH/Level0/Drake/rank_43.vtu')
-    reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/data/GNL/Asmae/Mesh/GNL_update_poro.vtu')
+    reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/4_GNL_Biot.vtu')
+    # reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/GNL_update_biot.vtu') #name of the source mesh
     reader.Update()
     source_mesh = reader.GetOutput()
-    
-    # reader.SetFileName('')
+
+    reader = vtk.vtkXMLUnstructuredGridReader()
+    reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/4_GNL_refined_target.vtu')
+    # reader.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/GNL_hexdom7.vtu') # name of the target mesh
     reader.Update()
     target_mesh = reader.GetOutput()
 
@@ -94,24 +106,29 @@ def main():
     end = time.perf_counter()
     print(f"[{section}] Elapsed time: {end - start:.6f} seconds")
 
+    print("Checking for few index c2c and p2p mappings")
     print(pt_s2t[1:10])
     print(c_s2t[1:10])
 
     section = 'Vectorizing'
     start = time.perf_counter()
-    # c_fieldnames = [('pressure','mapped_pressure')] # for rank43 test
-    c_fieldnames = [('Porosity','mapped_POROSITY')] # for GNL test
+    c_fieldnames = [('Porosity','mapped_POROSITY'), ('PERM','mapped_PERM')] # for GNL test
     # pt_fieldnames = [('','')]
-    c_source_vec = _vectorize_fields_out(c_fieldnames,source_mesh, PIECE.ONCELL)
-    _vectorize_fields_in(c_fieldnames, target_mesh, c_source_vec[c_s2t,:],  PIECE.ONCELL)
+    c_source_vec, c_fieldnc = _vectorize_fields_out(c_fieldnames,source_mesh, PIECE.ONCELL)
+    _vectorize_fields_in(c_fieldnames, c_fieldnc, target_mesh, c_source_vec[c_s2t,:,:],  PIECE.ONCELL)
     end = time.perf_counter()
     print(f"[{section}] Elapsed time: {end - start:.6f} seconds")
 
     section = 'Writing'
     start = time.perf_counter()
     writer = vtk.vtkXMLUnstructuredGridWriter()
-    writer.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/data/GNL/Asmae/Mesh/GNL_update_poro_new.vtu')
+    # writer.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/4_GNL_refined_mapped.vtu')
+    writer.SetFileName('/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/mesh_Jian/pain/mesh_mapped.vtu')
     writer.SetInputData(target_mesh)
+
+    # writer.SetCompressorTypeToZLib()
+    # writer.SetCompressionLevel(9)
+
     writer.Update()
     writer.Write()
     end = time.perf_counter()
