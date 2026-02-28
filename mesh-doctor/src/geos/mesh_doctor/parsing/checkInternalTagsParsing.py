@@ -15,12 +15,9 @@ __TAG_ARRAY = "tagArray"
 __OUTPUT_CSV = "outputCsv"
 __NULL_TAG_VALUE = "nullTagValue"
 __FIXED_OUTPUT = "fixedOutput"
-__DATA_MODE = "dataMode"
 __VERBOSE = "verbose"
 
 __TAG_ARRAY_DEFAULT = "tags"
-__DATA_MODE_VALUES = "binary", "ascii"
-__DATA_MODE_DEFAULT = __DATA_MODE_VALUES[ 0 ]
 
 
 def convert( parsedOptions: dict[ str, Any ] ) -> Options:
@@ -32,15 +29,11 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     Returns:
         Options: Configuration options for internal tags check.
     """
-    # Get dataMode setting
-    dataMode: str = parsedOptions.get( __DATA_MODE, __DATA_MODE_DEFAULT )
-    isDataModeBinary: bool = dataMode == __DATA_MODE_DEFAULT
-
-    # Create VtkOutput for fixed mesh if specified
+    # Create VtkOutput for fixed mesh if specified (always binary mode)
     fixedOutput: Optional[ str ] = parsedOptions.get( __FIXED_OUTPUT )
     fixedVtkOutput = None
     if fixedOutput:
-        fixedVtkOutput = VtkOutput( output=fixedOutput, isDataModeBinary=isDataModeBinary )
+        fixedVtkOutput = VtkOutput( output=fixedOutput, isDataModeBinary=True )
 
     return Options( tagValues=tuple( parsedOptions[ __TAG_VALUES ] ),
                     tagArrayName=parsedOptions.get( __TAG_ARRAY, __TAG_ARRAY_DEFAULT ),
@@ -71,10 +64,10 @@ in the volume mesh and not inadvertently placed on external boundaries.
 
     p.add_argument( '--' + __TAG_VALUES,
                     nargs='+',
-                    type=float,
+                    type=int,
                     required=True,
                     metavar='VALUE',
-                    help="[floats]: Tag values to check (space-separated list, e.g., --tagValues 8 9 10)" )
+                    help="[ints]: Tag values to check (space-separated list, e.g., --tagValues 8 9 10)" )
 
     p.add_argument( '--' + __TAG_ARRAY,
                     type=str,
@@ -89,23 +82,16 @@ in the volume mesh and not inadvertently placed on external boundaries.
                     help="[string]: Output CSV file for problematic elements (optional)" )
 
     p.add_argument( '--' + __NULL_TAG_VALUE,
-                    type=float,
+                    type=int,
                     default=None,
                     metavar='VALUE',
-                    help="[float]: Tag value to assign to faulty cells (e.g., 9999). Required to use --fixedOutput." )
+                    help="[int]: Tag value to assign to faulty cells (e.g., 9999). Required to use --fixedOutput." )
 
     p.add_argument( '--' + __FIXED_OUTPUT,
                     type=str,
                     default=None,
                     metavar='FILE',
                     help="[string]: Output VTU file with faulty cells retagged to nullTagValue (optional)" )
-
-    p.add_argument(
-        '--' + __DATA_MODE,
-        type=str,
-        metavar=", ".join( __DATA_MODE_VALUES ),
-        default=__DATA_MODE_DEFAULT,
-        help='[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
     p.add_argument( '--' + __VERBOSE,
                     '-v',

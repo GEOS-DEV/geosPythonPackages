@@ -11,9 +11,6 @@ from geos.mesh.io.vtkIO import VtkOutput
 
 __ORPHAN_OUTPUT = "orphanOutput"
 __CLEAN_OUTPUT = "cleanOutput"
-__DATA_MODE = "dataMode"
-__DATA_MODE_VALUES = "binary", "ascii"
-__DATA_MODE_DEFAULT = __DATA_MODE_VALUES[ 0 ]
 
 
 def convert( parsedOptions: dict[ str, Any ] ) -> Options:
@@ -27,18 +24,16 @@ def convert( parsedOptions: dict[ str, Any ] ) -> Options:
     """
     orphanOutput: Optional[ str ] = parsedOptions.get( __ORPHAN_OUTPUT )
     cleanOutput: Optional[ str ] = parsedOptions.get( __CLEAN_OUTPUT )
-    dataMode: str = parsedOptions.get( __DATA_MODE, __DATA_MODE_DEFAULT )
-    isDataModeBinary: bool = dataMode == __DATA_MODE_DEFAULT
 
-    # Create VtkOutput for orphan file if specified
+    # Create VtkOutput for orphan file if specified (always binary mode)
     orphanVtkOutput = None
     if orphanOutput:
-        orphanVtkOutput = VtkOutput( output=orphanOutput, isDataModeBinary=isDataModeBinary )
+        orphanVtkOutput = VtkOutput( output=orphanOutput, isDataModeBinary=True )
 
-    # Create VtkOutput for clean file if specified
+    # Create VtkOutput for clean file if specified (always binary mode)
     cleanVtkOutput = None
     if cleanOutput:
-        cleanVtkOutput = VtkOutput( output=cleanOutput, isDataModeBinary=isDataModeBinary )
+        cleanVtkOutput = VtkOutput( output=cleanOutput, isDataModeBinary=True )
 
     return Options( orphanVtkOutput=orphanVtkOutput, cleanVtkOutput=cleanVtkOutput )
 
@@ -60,12 +55,6 @@ def fillSubparser( subparsers: _SubParsersAction[ Any ] ) -> None:
                     type=str,
                     metavar='FILE',
                     help="[string]: Output VTU file with orphaned 2D cells removed." )
-    p.add_argument(
-        '--' + __DATA_MODE,
-        type=str,
-        metavar=", ".join( __DATA_MODE_VALUES ),
-        default=__DATA_MODE_DEFAULT,
-        help='[string]: For ".vtu" output format, the data mode can be binary or ascii. Defaults to binary.' )
 
 
 def displayResults( options: Options, result: Result ) -> None:

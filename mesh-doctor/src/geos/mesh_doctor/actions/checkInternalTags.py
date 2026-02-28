@@ -23,10 +23,10 @@ class Options:
         fixedVtkOutput: Optional VtkOutput for mesh with faulty cells retagged
         verbose: Enable detailed connectivity diagnostics for problematic cells
     """
-    tagValues: tuple[ float, ...]
+    tagValues: tuple[ int, ...]
     tagArrayName: str
     outputCsv: Optional[ str ]
-    nullTagValue: Optional[ float ]
+    nullTagValue: Optional[ int ]
     fixedVtkOutput: Optional[ VtkOutput ]
     verbose: bool = False
 
@@ -54,7 +54,7 @@ class ElementInfo:
         neighbors: List of neighbor cell IDs
     """
     cellId: int
-    tag: float
+    tag: int
     numNeighbors: int
     neighbors: list[ int ]
 
@@ -178,6 +178,18 @@ def checkInternalTags( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Resu
 
     tags = cellData.GetArray( options.tagArrayName )
 
+    # Convert tag array to int if needed
+    if not isinstance( tags, vtk.vtkIntArray ):
+        setupLogger.info( f"Converting tag array '{options.tagArrayName}' to integer type..." )
+        intTagsArray = vtk.vtkIntArray()
+        intTagsArray.SetName( tags.GetName() )
+        intTagsArray.SetNumberOfComponents( tags.GetNumberOfComponents() )
+        for i in range( tags.GetNumberOfTuples() ):
+            intTagsArray.InsertNextValue( int( tags.GetValue( i ) ) )
+        mesh.GetCellData().RemoveArray( options.tagArrayName )
+        mesh.GetCellData().AddArray( intTagsArray )
+        tags = intTagsArray
+
     # Define cell types
     SURFACE_CELL_TYPES = [ vtk.VTK_TRIANGLE, vtk.VTK_QUAD, vtk.VTK_POLYGON, vtk.VTK_PIXEL ]
     VOLUME_CELL_TYPES = [ vtk.VTK_TETRA, vtk.VTK_HEXAHEDRON, vtk.VTK_WEDGE, vtk.VTK_PYRAMID, vtk.VTK_VOXEL ]
@@ -250,12 +262,9 @@ def checkInternalTags( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Resu
         setupLogger.info( f"  With 3+ neighbors: {len(elementsByNeighbors['other'])} cells" )
 
         # Collect bad elements
-        for elem in elementsByNeighbors[ 0 ]:
-            allBadElements.append( elem )
-        for elem in elementsByNeighbors[ 1 ]:
-            allBadElements.append( elem )
-        for elem in elementsByNeighbors[ 'other' ]:
-            allBadElements.append( elem )
+        allBadElements.extend( elementsByNeighbors[ 0 ] )
+        allBadElements.extend( elementsByNeighbors[ 1 ] )
+        allBadElements.extend( elementsByNeighbors[ 'other' ] )
 
         tagResults[ tagValue ] = elementsByNeighbors
 
@@ -327,7 +336,7 @@ def checkInternalTags( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Resu
 
         setupLogger.info( f"Retagged {numRetagged} cells" )
 
-        # Write the modified mesh
+        # Write the modified mesh (tag array already in int format)
         writeMesh( mesh, options.fixedVtkOutput )
         setupLogger.info( f"Written fixed mesh to: {options.fixedVtkOutput.output}" )
     elif options.fixedVtkOutput and not allBadElements:
