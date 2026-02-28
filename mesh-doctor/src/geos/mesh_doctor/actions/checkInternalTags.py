@@ -3,7 +3,7 @@
 """Check that tagged 2D elements are internal (have exactly 2 volume neighbors)."""
 
 from dataclasses import dataclass
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union
 import vtk
 from tqdm import tqdm
 
@@ -230,7 +230,7 @@ def checkInternalTags( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Resu
         setupLogger.info( f"Checking tag = {tagValue}" )
         setupLogger.info( f"{'='*60}" )
 
-        elementsByNeighbors: Dict[ Any, List[ int ] ] = { 0: [], 1: [], 2: [], 'other': [] }
+        elementsByNeighbors: Dict[Union[int, str], List[ElementInfo]] = { 0: [], 1: [], 2: [], 'other': [] }
 
         # Get cells with this tag (pre-filtered)
         cellsWithTag = tagToCells.get( tagValue, [] )
