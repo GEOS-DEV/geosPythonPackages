@@ -200,7 +200,6 @@ def hasArray(
     for piece in [ Piece.CELLS, Piece.POINTS, Piece.FIELD ]:
         for arrayName in arrayNames:
             if isAttributeInObject( mesh, arrayName, piece ):
-                logging.error( f"The mesh contains the array named '{ arrayName }'." )
                 return True
 
     return False
