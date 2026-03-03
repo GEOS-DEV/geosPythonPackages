@@ -5,13 +5,13 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self, Any
-from geos.utils.Logger import ( Logger, getLogger )
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Rectangle
 
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.mesh.stats.tetrahedraAnalysisHelpers import ( getCoordinatesDoublePrecision, extractTetConnectivity,
                                                         analyzeAllTets, computeQualityScore )
 
@@ -50,7 +50,7 @@ To use the filter:
         tetQualityAnalysisFilter.logger.error( f"The filter { tetQualityAnalysisFilter.logger.name } failed due to: { e }" )
 """
 
-loggerName: str = "Tetrahedra Quality Analysis"
+loggerTitle: str = "Tetrahedra Quality Analysis"
 
 
 class TetQualityAnalysis:
@@ -73,14 +73,26 @@ class TetQualityAnalysis:
         self.tets: dict[ int, int ] = {}
         self.filename = 'mesh_comparison.png'
 
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerName, True )
+            self.logger = getLogger( loggerTitle, True )
         else:
-            self.logger = logging.getLogger( loggerName )
+            self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -91,12 +103,10 @@ class TetQualityAnalysis:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        self.handler = handler
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def applyFilter( self: Self ) -> None:
         """Apply Tetrahedra Analysis."""
@@ -228,7 +238,17 @@ class TetQualityAnalysis:
         self.computeDeltasFromBest()
         self.createComparisonDashboard()
 
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return
 
     def printDistributionStatistics( self: Self ) -> None:
         """Print the distribution statistics for various metrics."""
