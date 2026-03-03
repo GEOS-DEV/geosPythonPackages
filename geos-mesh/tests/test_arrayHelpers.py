@@ -590,10 +590,12 @@ def test_getNumberOfComponentsValueError( dataSetTest: vtkMultiBlockDataSet, ) -
 
 
 @pytest.mark.parametrize( "meshName, attributeName, piece, expected", [
+    ( "extractAndMergeVolume", "averageStress", Piece.CELLS, ( "XX", "YY", "ZZ", "YZ", "XZ", "XY" ) ),
     ( "extractAndMergeVolume", "externalForce", Piece.POINTS, ( None, None, None ) ),
     ( "extractAndMergeVolume", "elementCenter", Piece.CELLS, ( None, None, None ) ),
     ( "extractAndMergeVolume", "ghostRank", Piece.POINTS, () ),
     ( "extractAndMergeVolume", "ghostRank", Piece.CELLS, () ),
+    ( "2Ranks", "averageStress", Piece.CELLS, ( "XX", "YY", "ZZ", "YZ", "XZ", "XY" ) ),
     ( "2Ranks", "externalForce", Piece.POINTS, ( None, None, None ) ),
     ( "2Ranks", "elementCenter", Piece.CELLS, ( None, None, None ) ),
     ( "2Ranks", "ghostRank", Piece.POINTS, () ),
