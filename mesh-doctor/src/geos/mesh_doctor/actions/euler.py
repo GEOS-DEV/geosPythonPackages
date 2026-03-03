@@ -19,17 +19,18 @@ class Options:
 @dataclass( frozen=True )
 class Result:
     """Result of Euler characteristic computation.
-    
+
     Attributes:
         numVertices: Number of surface vertices (V)
         numEdges: Number of surface edges (E)
         numFaces: Number of surface faces (F)
-        eulerCharacteristic: Euler characteristic (χ = V - E + F)
+        eulerCharacteristic: Euler characteristic (X = V - E + F)
         num3dCells: Number of 3D volumetric cells in input
         num2dCells: Number of 2D surface cells in input (ignored)
         numOtherCells: Number of other cells in input
         numBoundaryEdges: Number of boundary edges
         numNonManifoldEdges: Number of non-manifold edges
+        numConnectedComponents: Number of disconnected mesh regions
     """
     numVertices: int
     numEdges: int
@@ -40,55 +41,64 @@ class Result:
     numOtherCells: int
     numBoundaryEdges: int
     numNonManifoldEdges: int
+    numConnectedComponents: int
+
+
+def __countConnectedComponents( mesh: vtk.vtkUnstructuredGrid ) -> int:
+    """Count number of disconnected mesh components.
+
+    Args:
+        mesh: Input unstructured grid
+
+    Returns:
+        Number of disconnected regions
+    """
+    setupLogger.info( "Checking for disconnected components..." )
+
+    connectivity = vtk.vtkConnectivityFilter()
+    connectivity.SetInputData( mesh )
+    connectivity.SetExtractionModeToAllRegions()
+    connectivity.ColorRegionsOn()
+    connectivity.Update()
+
+    numRegions = connectivity.GetNumberOfExtractedRegions()
+
+    setupLogger.info( f"Found {numRegions} disconnected component(s)" )
+
+    return numRegions
 
 
 def __filter3dElements( mesh: vtk.vtkUnstructuredGrid ) -> tuple[ vtk.vtkUnstructuredGrid, int, int, int, bool ]:
     """Filter only 3D volumetric elements from unstructured grid.
-    
+
     Removes 2D faces, 1D edges, and 0D vertices.
-    
+
     Args:
         mesh: Input unstructured grid
-        
+
     Returns:
         Tuple of (filtered_mesh, n_3d, n_2d, n_other, has_3d)
     """
-    # Cell types that are 3D volumes
-    volumeTypes = [
-        vtk.VTK_TETRA,  # 10
-        vtk.VTK_HEXAHEDRON,  # 12
-        vtk.VTK_WEDGE,  # 13
-        vtk.VTK_PYRAMID,  # 14
-        vtk.VTK_VOXEL,  # 11
-        vtk.VTK_PENTAGONAL_PRISM,  # 15
-        vtk.VTK_HEXAGONAL_PRISM,  # 16
-        vtk.VTK_QUADRATIC_TETRA,  # 24
-        vtk.VTK_QUADRATIC_HEXAHEDRON,  # 25
-        vtk.VTK_QUADRATIC_WEDGE,  # 26
-        vtk.VTK_QUADRATIC_PYRAMID,  # 27
-    ]
-
-    surfaceTypes = [
-        vtk.VTK_TRIANGLE, vtk.VTK_QUAD, vtk.VTK_POLYGON, vtk.VTK_QUADRATIC_TRIANGLE, vtk.VTK_QUADRATIC_QUAD
-    ]
-
-    # Count cell types
+    # Classify cells by dimension
+    cell3dIds = []
     n3d = 0
     n2d = 0
     nOther = 0
 
     setupLogger.info( "Classifying cell types..." )
     for i in tqdm( range( mesh.GetNumberOfCells() ), desc="Scanning cells" ):
-        cellType = mesh.GetCellType( i )
+        cell = mesh.GetCell( i )
+        cellDim = cell.GetCellDimension()
 
-        if cellType in volumeTypes:
+        if cellDim == 3:
+            cell3dIds.append( i )
             n3d += 1
-        elif cellType in surfaceTypes:
+        elif cellDim == 2:
             n2d += 1
         else:
             nOther += 1
 
-    setupLogger.info( f"Cell type breakdown:" )
+    setupLogger.info( "Cell type breakdown:" )
     setupLogger.info( f"  3D volumetric cells: {n3d}" )
     setupLogger.info( f"  2D surface cells:    {n2d}" )
     setupLogger.info( f"  Other cells:         {nOther}" )
@@ -106,36 +116,27 @@ def __filter3dElements( mesh: vtk.vtkUnstructuredGrid ) -> tuple[ vtk.vtkUnstruc
         setupLogger.info( f"Filtering out {n2d} 2D boundary cells..." )
         setupLogger.info( f"Using only {n3d} volumetric elements for surface extraction" )
 
-    # Add cell type array for filtering
-    cellTypes = vtk.vtkIntArray()
-    cellTypes.SetName( "CellType" )
-    cellTypes.SetNumberOfTuples( mesh.GetNumberOfCells() )
+    # Extract only 3D cells using vtkExtractCells
+    idList = vtk.vtkIdList()
+    for cellId in cell3dIds:
+        idList.InsertNextId( cellId )
 
-    for i in range( mesh.GetNumberOfCells() ):
-        cellTypes.SetValue( i, mesh.GetCellType( i ) )
+    extractor = vtk.vtkExtractCells()
+    extractor.SetInputData( mesh )
+    extractor.SetCellList( idList )
+    extractor.Update()
 
-    mesh.GetCellData().AddArray( cellTypes )
-
-    # Threshold filter to extract only 3D cells
-    threshold = vtk.vtkThreshold()
-    threshold.SetInputData( mesh )
-    threshold.SetInputArrayToProcess( 0, 0, 0, vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS, "CellType" )
-    threshold.SetThresholdFunction( vtk.vtkThreshold.THRESHOLD_BETWEEN )
-    threshold.SetLowerThreshold( 10 )  # Minimum 3D cell type
-    threshold.SetUpperThreshold( 100 )  # Maximum reasonable cell type
-    threshold.Update()
-
-    filteredMesh = threshold.GetOutput()
+    filteredMesh = extractor.GetOutput()
 
     return filteredMesh, n3d, n2d, nOther, has3d
 
 
 def __extractSurface( mesh: vtk.vtkUnstructuredGrid ) -> vtk.vtkPolyData:
     """Extract surface from unstructured grid (3D elements only).
-    
+
     Args:
         mesh: Input unstructured grid (3D elements)
-        
+
     Returns:
         Surface as polydata
     """
@@ -148,35 +149,29 @@ def __extractSurface( mesh: vtk.vtkUnstructuredGrid ) -> vtk.vtkPolyData:
 
 def __countUniqueEdges( surface: vtk.vtkPolyData ) -> int:
     """Count unique edges in the surface mesh.
-    
+
     Args:
         surface: Surface mesh
-        
+
     Returns:
         Number of unique edges
     """
     setupLogger.info( "Counting unique edges..." )
-    edges = set()
-    nFaces = surface.GetNumberOfCells()
 
-    for i in tqdm( range( nFaces ), desc="Processing faces" ):
-        cell = surface.GetCell( i )
-        nEdges = cell.GetNumberOfEdges()
-        for j in range( nEdges ):
-            edge = cell.GetEdge( j )
-            pt1 = edge.GetPointId( 0 )
-            pt2 = edge.GetPointId( 1 )
-            edges.add( tuple( sorted( [ pt1, pt2 ] ) ) )
+    # Use VTK's edge extraction (faster than manual iteration)
+    edgeExtractor = vtk.vtkExtractEdges()
+    edgeExtractor.SetInputData( surface )
+    edgeExtractor.Update()
 
-    return len( edges )
+    return edgeExtractor.GetOutput().GetNumberOfCells()
 
 
 def __checkMeshQuality( surface: vtk.vtkPolyData ) -> tuple[ int, int ]:
     """Check for boundary edges and non-manifold features.
-    
+
     Args:
         surface: Surface mesh
-        
+
     Returns:
         Tuple of (boundary_edges, non_manifold_edges)
     """
@@ -207,13 +202,13 @@ def __checkMeshQuality( surface: vtk.vtkPolyData ) -> tuple[ int, int ]:
 
 def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
     """Compute Euler characteristic for a mesh.
-    
+
     Only considers 3D volumetric elements. Extracts surface and computes V - E + F.
-    
+
     Args:
         mesh: Input unstructured grid
         options: Computation options
-        
+
     Returns:
         Result with Euler characteristic and topology information
     """
@@ -223,6 +218,9 @@ def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
     # Filter to 3D elements only
     mesh3d, n3d, n2d, nOther, has3d = __filter3dElements( mesh )
 
+    # Count connected components BEFORE extracting surface
+    numComponents = __countConnectedComponents( mesh3d )
+
     # Extract surface from 3D elements
     surface = __extractSurface( mesh3d )
 
@@ -231,7 +229,7 @@ def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
     F = surface.GetNumberOfCells()
     E = __countUniqueEdges( surface )
 
-    setupLogger.info( f"Surface topology:" )
+    setupLogger.info( "Surface topology:" )
     setupLogger.info( f"  Vertices (V): {V:,}" )
     setupLogger.info( f"  Edges    (E): {E:,}" )
     setupLogger.info( f"  Faces    (F): {F:,}" )
@@ -239,32 +237,65 @@ def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
     # Calculate Euler characteristic
     euler = V - E + F
 
-    setupLogger.info( f"Euler characteristic (χ = V - E + F): {euler}" )
+    setupLogger.info( f"Euler characteristic (X = V - E + F): {euler}" )
+    setupLogger.info( f"Connected components: {numComponents}" )
 
-    # Interpret result
-    if euler == 2:
-        setupLogger.info( "Topology: Closed surface (sphere-like)" )
-    elif euler == 0:
-        setupLogger.info( "Topology: Torus-like or open cylinder" )
-    elif euler == 1:
-        setupLogger.info( "Topology: Disk-like (open surface)" )
+    # Interpret result with component information
+    if numComponents == 1:
+        # Single component - standard topology interpretation
+        if euler == 2:
+            setupLogger.info( "Topology: Single closed surface (sphere-like) - VALID for simulation!" )
+        elif euler == 0:
+            setupLogger.warning( "Topology: Torus-like (genus 1)" )
+            setupLogger.warning( "  Expected X = 2 for standard simulation mesh" )
+        elif euler == 1:
+            setupLogger.warning( "Topology: Disk-like (open surface)" )
+            setupLogger.warning( "  Mesh is not closed! Expected X = 2" )
+        elif euler < 0:
+            genus = ( 2 - euler ) // 2
+            setupLogger.warning( f"Topology: Complex surface with handles (genus g = {genus})" )
+            setupLogger.warning( "  Expected X = 2 for standard simulation mesh" )
+        else:
+            setupLogger.warning( f"Topology: Unexpected (X = {euler})" )
     else:
-        genus = ( 2 - euler ) / 2
-        setupLogger.info( f"Topology: Complex (genus g ≈ {genus:.1f})" )
+        # Multiple components detected
+        expectedEuler = 2 * numComponents  # If all components are sphere-like
+
+        setupLogger.error( f"Topology: Mesh has {numComponents} DISCONNECTED COMPONENTS!" )
+        setupLogger.error( f"  Euler characteristic: {euler}" )
+        setupLogger.error( f"  Expected for {numComponents} spheres: X = {expectedEuler}" )
+
+        if numComponents > 1:
+            # Internal cavities = additional components beyond the outer surface
+            numCavities = numComponents - 1
+            setupLogger.error( f"  Likely {numCavities} internal void(s)/cavity(ies)" )
+
+        if euler == expectedEuler:
+            setupLogger.error( "  All components are sphere-like (X=2 each)" )
+        elif euler < expectedEuler:
+            setupLogger.error( "  Some components have genus > 0 (holes/handles)" )
+        else:
+            setupLogger.error( "  Unusual topology - verify mesh integrity" )
+
+        setupLogger.error( "  This mesh is NOT suitable for simulation without fixing!" )
+        setupLogger.error( "  Expected: single closed volume (X = 2, components = 1)" )
 
     # Check mesh quality
     boundaryEdges, nonManifoldEdges = __checkMeshQuality( surface )
 
-    setupLogger.info( f"Mesh quality:" )
+    setupLogger.info( "Mesh quality:" )
     setupLogger.info( f"  Boundary edges:     {boundaryEdges:,}" )
     setupLogger.info( f"  Non-manifold edges: {nonManifoldEdges:,}" )
 
     if boundaryEdges == 0 and nonManifoldEdges == 0:
-        setupLogger.info( "  Perfect closed manifold mesh!" )
+        if euler == 2 and numComponents == 1:
+            setupLogger.info( "  Perfect closed manifold mesh - READY for simulation!" )
+        else:
+            setupLogger.warning( "  Perfect manifold but topology issues - verify before simulation" )
     elif boundaryEdges > 0:
         setupLogger.warning( "  Open surface detected (has boundaries)" )
     if nonManifoldEdges > 0:
-        setupLogger.warning( "  Non-manifold edges detected (mesh has issues!)" )
+        setupLogger.error( "  Non-manifold edges detected (mesh has issues!)" )
 
     return Result( numVertices=V,
                    numEdges=E,
@@ -274,16 +305,17 @@ def meshAction( mesh: vtk.vtkUnstructuredGrid, options: Options ) -> Result:
                    num2dCells=n2d,
                    numOtherCells=nOther,
                    numBoundaryEdges=boundaryEdges,
-                   numNonManifoldEdges=nonManifoldEdges )
+                   numNonManifoldEdges=nonManifoldEdges,
+                   numConnectedComponents=numComponents )
 
 
 def action( vtuInputFile: str, options: Options ) -> Result:
     """Compute Euler characteristic for a VTU file.
-    
+
     Args:
         vtuInputFile: Path to input VTU file
         options: Computation options
-        
+
     Returns:
         Result with Euler characteristic and topology information
     """
