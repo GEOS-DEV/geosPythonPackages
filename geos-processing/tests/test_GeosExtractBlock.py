@@ -23,7 +23,7 @@ def test_GeosExtractBlock(
     extractWell: bool,
 ) -> None:
     """Test GeosExtractBlock vtk filter."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
 
     geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
     geosBlockExtractor.applyFilter()

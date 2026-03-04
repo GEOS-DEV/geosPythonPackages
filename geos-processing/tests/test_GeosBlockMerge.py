@@ -31,7 +31,7 @@ def test_GeosBlockMerge(
     convertFaultToSurface: bool,
 ) -> None:
     """Test GeosBlockMerge vtk filter."""
-    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "singlePhasePoromechanicsVTKOutput" )
+    multiBlockDataSet: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
 
     geosBlockExtractor: GeosBlockExtractor = GeosBlockExtractor( multiBlockDataSet, extractFault, extractWell )
     geosBlockExtractor.applyFilter()

@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 import numpy as np
 from typing_extensions import Self
@@ -21,6 +22,7 @@ from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 update_paths()
 
 from geos.utils.Errors import VTKError
+from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_DEG, DEFAULT_ROCK_COHESION )
 from geos.processing.post_processing.SurfaceGeomechanics import SurfaceGeomechanics
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
@@ -50,6 +52,9 @@ To use it:
 
 """
 
+HANDLER: logging.Handler = VTKHandler()
+loggerTitle: str = "Surface Geomechanics"
+
 
 @SISOFilter( category=FilterCategory.GEOS_POST_PROCESSING,
              decoratedLabel="GEOS Surface Geomechanics",
@@ -65,6 +70,25 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
         self.rockCohesion: float = DEFAULT_ROCK_COHESION
         # friction angle (°)
         self.frictionAngle: float = DEFAULT_FRICTION_ANGLE_DEG
+
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( HANDLER )
+        self.logger.propagate = False
+
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        self.nbErrors: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+            self.counter.resetErrorCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     @smproperty.doublevector(
         name="RockCohesion",
@@ -115,37 +139,64 @@ class PVSurfaceGeomechanics( VTKPythonAlgorithmBase ):
             inputMesh (vtkMultiBlockDataSet): The input multiblock mesh with surfaces.
             outputMesh (vtkMultiBlockDataSet): The output multiblock mesh with converted attributes and SCU.
         """
+        self.logger.info( f"Apply plugin { self.logger.name }." )
+
         outputMesh.ShallowCopy( inputMesh )
+        try:
+            surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( inputMesh )
+            for blockIndex in surfaceBlockIndexes:
+                surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( outputMesh, blockIndex ) )
 
-        surfaceBlockIndexes: list[ int ] = getBlockElementIndexesFlatten( inputMesh )
-        for blockIndex in surfaceBlockIndexes:
-            surfaceBlock: vtkPolyData = vtkPolyData.SafeDownCast( getBlockFromFlatIndex( outputMesh, blockIndex ) )
+                loggerName: str = f"Surface geomechanics for the blockIndex { blockIndex }"
+                sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, loggerName, True )
 
-            sgFilter: SurfaceGeomechanics = SurfaceGeomechanics( surfaceBlock, True )
-            sgFilter.SetSurfaceName( f"blockIndex {blockIndex}" )
-            if len( sgFilter.logger.handlers ) == 0:
-                sgFilter.SetLoggerHandler( VTKHandler() )
+                if not isHandlerInLogger( HANDLER, sgFilter.logger ):
+                    sgFilter.SetLoggerHandler( HANDLER )
 
-            sgFilter.SetRockCohesion( self._getRockCohesion() )
-            sgFilter.SetFrictionAngle( self._getFrictionAngle() )
+                sgFilter.SetRockCohesion( self._getRockCohesion() )
+                sgFilter.SetFrictionAngle( self._getFrictionAngle() )
 
-            try:
-                sgFilter.applyFilter()
-                outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
+                try:
+                    sgFilter.applyFilter()
+                    # Add to the warning counter the number of warning logged with the call of SurfaceGeomechanics filter
+                    self.counter.addExternalWarningCount( sgFilter.nbWarnings )
 
-                # add attributes to output surface mesh
-                for attributeName in sgFilter.GetNewAttributeNames():
-                    attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
-                    surfaceBlock.GetCellData().AddArray( attr )
-                    surfaceBlock.GetCellData().Modified()
-                surfaceBlock.Modified()
-            except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
-                sgFilter.logger.error( f"The filter { sgFilter.logger.name } failed due to:\n{ e }" )
-            except Exception as e:
-                mess: str = f"The filter { sgFilter.logger.name } failed due to:\n{ e }"
-                sgFilter.logger.critical( mess, exc_info=True )
+                    outputSurface: vtkPolyData = sgFilter.GetOutputMesh()
 
-        outputMesh.Modified()
+                    # add attributes to output surface mesh
+                    for attributeName in sgFilter.GetNewAttributeNames():
+                        attr: vtkDataArray = outputSurface.GetCellData().GetArray( attributeName )
+                        surfaceBlock.GetCellData().AddArray( attr )
+                        surfaceBlock.GetCellData().Modified()
+                    surfaceBlock.Modified()
+                except ( ValueError, VTKError, AttributeError, AssertionError, TypeError ) as e:
+                    sgFilter.logger.error( f"The filter { loggerName } failed due to:\n{ e }" )
+                    raise ChildProcessError( f"Error during the processing of: { loggerName }." ) from e
+                except Exception as e:
+                    mess: str = f"The filter { loggerName } failed due to:\n{ e }"
+                    sgFilter.logger.critical( mess, exc_info=True )
+                    raise ChildProcessError( f"Critical error during the processing of: { loggerName }." ) from e
+
+            result: str = f"The plugin { self.logger.name } succeeded"
+            if self.counter.warningCount > 0:
+                self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+            else:
+                self.logger.info( f"{ result }." )
+
+        except ChildProcessError as e:
+            self.logger.error( f"The plugin { self.logger.name } failed due to:\n{ e }" )
+        except Exception as e:
+            mess = f"The plugin { self.logger.name } failed due to:\n{ e }"
+            self.logger.critical( mess, exc_info=True )
+
+        # Keep number of verbosity logged during the plugin application
+        self.nbWarnings = self.counter.warningCount
+        self.nbErrors = self.counter.errorCount
+
+        # Reset the CountVerbosityHandler in case the plugin is applied again
+        self.counter.resetWarningCount()
+        self.counter.resetErrorCount()
+
         return
 
     def _getFrictionAngle( self: Self ) -> float:

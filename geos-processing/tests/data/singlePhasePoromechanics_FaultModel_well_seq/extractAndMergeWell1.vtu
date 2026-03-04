@@ -1,8 +1,12 @@
+<?xml version="1.0"?>
 <VTKFile type="UnstructuredGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64" compressor="vtkZLibDataCompressor">
   <UnstructuredGrid>
     <FieldData>
-      <DataArray type="Float64" Name="TIME" NumberOfTuples="1" format="binary" RangeMin="0" RangeMax="0">
-        AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
+      <DataArray type="Float64" Name="TIME" NumberOfTuples="1" format="binary" RangeMin="30000000" RangeMax="30000000">
+        AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF5jYGBgsJhT4wgAA/UBkg==
+      </DataArray>
+      <DataArray type="Float64" Name="TimeValue" NumberOfTuples="1" format="binary" RangeMin="30000000" RangeMax="30000000">
+        AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF5jYGBgsJhT4wgAA/UBkg==
       </DataArray>
     </FieldData>
     <Piece NumberOfPoints="2" NumberOfCells="1">
@@ -15,14 +19,14 @@
         <DataArray type="Float64" Name="water_enthalpy" format="binary" RangeMin="0" RangeMax="0">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
         </DataArray>
-        <DataArray type="Float64" Name="water_dDensity" format="binary" RangeMin="0" RangeMax="0">
-          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
+        <DataArray type="Float64" Name="water_dDensity" format="binary" RangeMin="2.775419358836776e-7" RangeMax="2.775419358836776e-7">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF7LXXAwXGnBJDsAEdMDuA==
         </DataArray>
         <DataArray type="Float64" Name="water_dViscosity" format="binary" RangeMin="0" RangeMax="0">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
         </DataArray>
-        <DataArray type="Float64" Name="water_density" format="binary" RangeMin="1325" RangeMax="1325">
-          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAADgAAAAAAAAA=eF5jYACCLVMcAAOMAYk=
+        <DataArray type="Float64" Name="water_density" format="binary" RangeMin="1327.7725206739394" RangeMax="1327.7725206739394">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF4zv7GCX3z/FAcAD+QDcQ==
         </DataArray>
         <DataArray type="Float64" Name="water_viscosity" format="binary" RangeMin="0.001" RangeMax="0.001">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF77s/LjJd+kAHsAGYAEpw==
@@ -33,14 +37,17 @@
         <DataArray type="Float64" Name="water_dInternalEnergy" format="binary" RangeMin="0" RangeMax="0">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
         </DataArray>
+        <DataArray type="Int64" Name="reservoirAndWellsSolver_singlePhaseWellVars_dofIndex" format="binary" RangeMin="3028" RangeMax="3028">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAADAAAAAAAAAA=eF67ws0ABgAG9QDg
+        </DataArray>
         <DataArray type="Int32" Name="ghostRank" format="binary" RangeMin="-2" RangeMax="-2">
           AQAAAAAAAAAAgAAAAAAAAAQAAAAAAAAADAAAAAAAAAA=eF779///fwAJ9gP8
         </DataArray>
-        <DataArray type="Float64" Name="pressure" format="binary" RangeMin="0" RangeMax="0">
-          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
+        <DataArray type="Float64" Name="pressure" format="binary" RangeMin="10000000" RangeMax="10000000">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF5jYGBguCCU7AgABIUBhw==
         </DataArray>
-        <DataArray type="Float64" Name="connectionRate" format="binary" RangeMin="0" RangeMax="0">
-          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jYIAAAAAIAAE=
+        <DataArray type="Float64" Name="connectionRate" format="binary" RangeMin="-0.007062739306320509" RangeMax="-0.007062739306320509">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF5jYChZevFtzX4ADbsEEw==
         </DataArray>
         <DataArray type="Int64" Name="localToGlobalMap" format="binary" RangeMin="6063" RangeMax="6063">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAADAAAAAAAAAA=eF5bL84ABgAGIQDH
@@ -61,6 +68,9 @@
         </DataArray>
         <DataArray type="Float64" Name="elementVolume" format="binary" RangeMin="78.53981633974485" RangeMax="78.53981633974485">
           AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAAEAAAAAAAAAA=eF6zcb4a2bMo2AEAD3QDbw==
+        </DataArray>
+        <DataArray type="Int64" Name="blockIndex" format="binary" RangeMin="1" RangeMax="1">
+          AQAAAAAAAAAAgAAAAAAAAAgAAAAAAAAACwAAAAAAAAA=eF5jZIAAAAAQAAI=
         </DataArray>
       </CellData>
       <Points>

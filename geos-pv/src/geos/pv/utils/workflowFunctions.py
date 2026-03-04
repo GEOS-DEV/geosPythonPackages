@@ -2,14 +2,17 @@
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
-
+import logging
 from geos.processing.post_processing.GeosBlockExtractor import GeosBlockExtractor
 from geos.processing.post_processing.GeosBlockMerge import GeosBlockMerge
+from geos.utils.Logger import ( CountVerbosityHandler, isHandlerInLogger )
+from geos.utils.Errors import VTKError
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 
-from paraview.detail.loghandler import ( VTKHandler )  # type: ignore[import-not-found]
+from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-found]
 
+HANDLER: logging.Handler = VTKHandler()
 
 def doExtractAndMerge(
     mesh: vtkMultiBlockDataSet,
@@ -18,6 +21,7 @@ def doExtractAndMerge(
     outputWells: vtkMultiBlockDataSet,
     extractFault: bool,
     extractWell: bool,
+    verbosityCounter: CountVerbosityHandler,
 ) -> None:
     """Apply block extraction and merge.
 
@@ -28,30 +32,45 @@ def doExtractAndMerge(
         outputWells (vtkMultiBlockDataSet): Output well mesh
         extractFault (bool): True if SurfaceElementRegion needs to be extracted, False otherwise.
         extractWell (bool): True if WellElementRegion needs to be extracted, False otherwise.
+        verbosityCounter (logging.Handler): The plugin Handler to update with the number of verbosity logged during the call of the extract and merge filters.
+
+    Raises:
+        ChildProcessError: Error during the call of GeosBlockMerge or GeosBlockExtractor filter.
     """
     # Extract blocks
     blockExtractor: GeosBlockExtractor = GeosBlockExtractor( mesh,
                                                              extractFault=extractFault,
                                                              extractWell=extractWell,
                                                              speHandler=True )
-    if len( blockExtractor.logger.handlers ) == 0:
-        blockExtractor.setLoggerHandler( VTKHandler() )
+    if not isHandlerInLogger( HANDLER, blockExtractor.logger ):
+        blockExtractor.setLoggerHandler( HANDLER )
 
-    blockExtractor.applyFilter()
+    try:
+        blockExtractor.applyFilter()
+    except ( ValueError, TypeError ) as e:
+        blockExtractor.logger.error( f"The filter { blockExtractor.logger.name } failed due to: { e }." )
+        raise ChildProcessError( f"Error during the processing of: { blockExtractor.logger.name }." ) from e
+    except Exception as e:
+        mess: str = f"The filter { blockExtractor.logger.name } failed du to: { e }"
+        blockExtractor.logger.critical( mess, exc_info=True )
+        raise ChildProcessError( f"Critical error during the processing of: { blockExtractor.logger.name }." ) from e
+
+    # Add to the warning count the number of warning logged with the call of GeosBlockExtractor filter
+    verbosityCounter.addExternalWarningCount( blockExtractor.nbWarnings )
 
     # recover output objects from GeosBlockExtractor filter and merge internal blocks
     volumeBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.volume
-    outputCells.ShallowCopy( mergeBlocksFilter( volumeBlockExtracted, False, "Volume" ) )
+    outputCells.ShallowCopy( mergeBlocksFilter( volumeBlockExtracted, verbosityCounter, False, "Volume" ) )
     outputCells.Modified()
 
     if extractFault:
         faultBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.fault
-        outputFaults.ShallowCopy( mergeBlocksFilter( faultBlockExtracted, True, "Fault" ) )
+        outputFaults.ShallowCopy( mergeBlocksFilter( faultBlockExtracted, verbosityCounter, True, "Fault" ) )
         outputFaults.Modified()
 
     if extractWell:
         wellBlockExtracted: vtkMultiBlockDataSet = blockExtractor.extractedGeosDomain.well
-        outputWells.ShallowCopy( mergeBlocksFilter( wellBlockExtracted, False, "Well" ) )
+        outputWells.ShallowCopy( mergeBlocksFilter( wellBlockExtracted, verbosityCounter, False, "Well" ) )
         outputWells.Modified()
 
     return
@@ -59,6 +78,7 @@ def doExtractAndMerge(
 
 def mergeBlocksFilter(
     mesh: vtkMultiBlockDataSet,
+    verbosityCounter: CountVerbosityHandler,
     convertSurfaces: bool = False,
     domainToMerge: str = "Volume",
 ) -> vtkMultiBlockDataSet:
@@ -66,6 +86,7 @@ def mergeBlocksFilter(
 
     Args:
         mesh (vtkMultiBlockDataSet): Mesh to merge.
+        verbosityCounter (logging.Handler): The plugin Handler to update with the number of verbosity logged during the call of the  merge filters.
         convertSurfaces (bool, optional): True to convert surface from vtkUnstructuredGrid to vtkPolyData.
             Defaults to False.
         domainToMerge (str, optional): The name of the GEOS domain processed.
@@ -73,12 +94,29 @@ def mergeBlocksFilter(
 
     Returns:
         vtkMultiBlockDataSet: Mesh composed of internal merged blocks.
+
+    Raises:
+        ChildProcessError: Error during the call of GeosBlockMerge filter.
     """
-    loggerName = f"GEOS Block Merge for the domain { domainToMerge }."
+    loggerName = f"GEOS Block Merge for the domain { domainToMerge }"
     mergeBlockFilter: GeosBlockMerge = GeosBlockMerge( mesh, convertSurfaces, True, loggerName )
-    if len( mergeBlockFilter.logger.handlers ) == 0:
-        mergeBlockFilter.setLoggerHandler( VTKHandler() )
-    mergeBlockFilter.applyFilter()
+    if not isHandlerInLogger( HANDLER, mergeBlockFilter.logger ):
+        mergeBlockFilter.setLoggerHandler( HANDLER )
+
+    try:
+        mergeBlockFilter.applyFilter()
+    except ( ValueError, VTKError ) as e:
+        mergeBlockFilter.logger.error( f"The filter { mergeBlockFilter.logger.name } failed due to: { e }" )
+        raise ChildProcessError( f"Error during the processing of: { loggerName }." ) from e
+    except Exception as e:
+        mess: str = f"The filter { mergeBlockFilter.logger.name } failed due to: { e }"
+        mergeBlockFilter.logger.critical( mess, exc_info=True )
+        raise ChildProcessError( f"Critical error during the processing of: { loggerName }." ) from e
+
+    # Add to the warning count the number of warning logged with the call of GeosBlockMerge filter
+    verbosityCounter.addExternalWarningCount( mergeBlockFilter.nbWarnings )
+
     mergedBlocks: vtkMultiBlockDataSet = vtkMultiBlockDataSet()
     mergedBlocks.ShallowCopy( mergeBlockFilter.getOutput() )
+
     return mergedBlocks

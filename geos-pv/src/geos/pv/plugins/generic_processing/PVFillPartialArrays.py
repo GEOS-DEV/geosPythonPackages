@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Romain Baville
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing import Any, Optional, Union
 from typing_extensions import Self
@@ -21,6 +22,7 @@ from geos.pv.utils.config import update_paths
 
 update_paths()
 
+from geos.utils.Logger import isHandlerInLogger
 from geos.pv.utils.details import ( SISOFilter, FilterCategory )
 from geos.processing.generic_processing_tools.FillPartialArrays import FillPartialArrays
 
@@ -38,6 +40,8 @@ To use it:
 * Apply
 
 """
+
+HANDLER: logging.Handler = VTKHandler()
 
 
 @SISOFilter( category=FilterCategory.GENERIC_PROCESSING,
@@ -105,8 +109,8 @@ class PVFillPartialArrays( VTKPythonAlgorithmBase ):
             speHandler=True,
         )
 
-        if len( fillPartialArraysFilter.logger.handlers ) == 0:
-            fillPartialArraysFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( HANDLER, fillPartialArraysFilter.logger ):
+            fillPartialArraysFilter.setLoggerHandler( HANDLER )
 
         try:
             fillPartialArraysFilter.applyFilter()

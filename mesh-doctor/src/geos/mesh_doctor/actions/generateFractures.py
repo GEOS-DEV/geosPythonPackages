@@ -326,7 +326,7 @@ def __copyFieldsSplitMesh( oldMesh: vtkUnstructuredGrid, splitMesh: vtkUnstructu
         # Reshape oldPointsArray if it is 1-dimensional
         if len( oldPointsArray.shape ) == 1:
             oldPointsArray = oldPointsArray.reshape( ( oldNrows, 1 ) )
-        newPointsArray = empty( ( newNumberPoints, oldNcols ) )
+        newPointsArray = empty( ( newNumberPoints, oldNcols ), dtype=oldPointsArray.dtype )
         newPointsArray[ :oldNrows, : ] = oldPointsArray
         for newAndOldId in addedPointsWithOldId:
             newPointsArray[ newAndOldId[ 0 ], : ] = oldPointsArray[ newAndOldId[ 1 ], : ]

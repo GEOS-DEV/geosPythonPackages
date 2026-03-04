@@ -16,7 +16,7 @@ from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getAttributeSet, is
 from geos.mesh.utils.genericHelpers import ( getLocalBasisVectors, convertAttributeFromLocalToXYZForOneCell )
 import geos.geomechanics.processing.geomechanicsCalculatorFunctions as fcts
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.PhysicalConstants import ( DEFAULT_FRICTION_ANGLE_RAD, DEFAULT_ROCK_COHESION )
 from geos.utils.GeosOutputsConstants import ( ComponentNameEnum, GeosMeshOutputsEnum, PostProcessingOutputsEnum )
 
@@ -65,7 +65,7 @@ To use the filter:
     # Do calculations
     try:
         sg.applyFilter()
-    except ( ValueError, VTKError, AttributeError, AssertionError ) as e:
+    except ( ValueError, VTKError, AttributeError, AssertionError, TypeError ) as e:
         sg.logger.error( f"The filter { sg.logger.name } failed due to: { e }" )
     except Exception as e:
         mess: str = f"The filter { sg.logger.name } failed due to: { e }"
@@ -88,12 +88,16 @@ To use the filter:
 
     Note that the dimension of the attributes to convert must be equal or greater than 3.
 """
-loggerTitle: str = "Surface Geomechanics"
 
 
 class SurfaceGeomechanics:
 
-    def __init__( self: Self, surfacicMesh: vtkPolyData, speHandler: bool = False ) -> None:
+    def __init__(
+        self: Self,
+        surfacicMesh: vtkPolyData,
+        loggerName: str = "Surface Geomechanics",
+        speHandler: bool = False,
+    ) -> None:
         """Vtk filter to compute geomechanical surfacic attributes.
 
         Input and Output objects are a vtkPolydata with surfaces
@@ -101,21 +105,32 @@ class SurfaceGeomechanics:
 
         Args:
             surfacicMesh (vtkPolyData): The input surfacic mesh.
+            loggerName (str, optional): Name of the filter logger.
+                Defaults to "Surface Geomechanics".
             speHandler (bool, optional): True to use a specific handler, False to use the internal handler.
                 Defaults to False.
         """
         # Logger
         self.logger: Logger
         if not speHandler:
-            self.logger = getLogger( loggerTitle, True )
+            self.logger = getLogger( loggerName, True )
         else:
-            self.logger = logging.getLogger( loggerTitle )
+            self.logger = logging.getLogger( loggerName )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-        # Input surfacic mesh
-        if not surfacicMesh.IsA( "vtkPolyData" ):
-            self.logger.error( f"Input surface is expected to be a vtkPolyData, not a {type(surfacicMesh)}." )
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
         self.inputMesh: vtkPolyData = surfacicMesh
         # Identification of the input surface (logging purpose)
         self.name: Union[ str, None ] = None
@@ -144,20 +159,10 @@ class SurfaceGeomechanics:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning(
-                "The logger already has an handler, to use yours set the argument 'speHandler' to True during the filter initialization."
-            )
-
-    def SetSurfaceName( self: Self, name: str ) -> None:
-        """Set a name for the input surface. For logging purpose only.
-
-        Args:
-            name (str): The identifier for the surface.
-        """
-        self.name = name
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def SetRockCohesion( self: Self, rockCohesion: float ) -> None:
         """Set rock cohesion value. Defaults to 0.0 Pa.
@@ -233,18 +238,17 @@ class SurfaceGeomechanics:
         """Compute Geomechanical properties on input surface.
 
         Raises:
+            TypeError: Error with the type of the input mesh.
             ValueError: Errors during the creation of an attribute.
             VTKError: Error raises during the call of VTK function.
             AttributeError: Attributes must be on cell.
             AssertionError: Something went wrong during the shearCapacityUtilization computation.
         """
-        msg = f"Applying filter {self.logger.name}"
-        if self.name is not None:
-            msg += f" on surface : {self.name}."
-        else:
-            msg += "."
+        self.logger.info( f"Apply filter { self.logger.name }." )
 
-        self.logger.info( msg )
+        # Input surfacic mesh
+        if not self.inputMesh.IsA( "vtkPolyData" ):
+            raise TypeError( f"Input surface is expected to be a vtkPolyData, not a { type( self.inputMesh ) }." )
 
         self.outputMesh = vtkPolyData()
         self.outputMesh.ShallowCopy( self.inputMesh )
@@ -257,7 +261,15 @@ class SurfaceGeomechanics:
         # Compute shear capacity utilization
         self.computeShearCapacityUtilization()
 
-        self.logger.info( f"Filter {self.logger.name} successfully applied on surface {self.name}." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 
@@ -343,6 +355,9 @@ class SurfaceGeomechanics:
 
         Returns:
             npt.NDArray[np.float64]: Vector of new coordinates of the attribute.
+
+        Raises:
+            ValueError: Error with the shape of attrArray or the computation of the attribute coordinates.
         """
         attrXYZ: npt.NDArray[ np.float64 ] = np.full_like( attrArray, np.nan )
 
@@ -360,17 +375,12 @@ class SurfaceGeomechanics:
             attrXYZ[ i ] = convertAttributeFromLocalToXYZForOneCell( cellAttribute, cellLocalBasis )
 
         if not np.any( np.isfinite( attrXYZ ) ):
-            self.logger.error( "Attribute new coordinate calculation failed." )
+            raise ValueError( "Attribute new coordinates calculation failed." )
 
         return attrXYZ
 
     def computeShearCapacityUtilization( self: Self ) -> None:
-        """Compute the shear capacity utilization (SCU) on surface.
-
-        Raises:
-            ValueError: Something went wrong during the creation of an attribute.
-            AssertionError: Something went wrong during the shearCapacityUtilization computation.
-        """
+        """Compute the shear capacity utilization (SCU) on surface."""
         SCUAttributeName: str = PostProcessingOutputsEnum.SCU.attributeName
 
         if not isAttributeInObject( self.outputMesh, SCUAttributeName, self.attributePiece ):

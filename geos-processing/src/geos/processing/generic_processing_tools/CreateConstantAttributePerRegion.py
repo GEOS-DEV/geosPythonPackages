@@ -12,12 +12,10 @@ import vtkmodules.util.numpy_support as vnp
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkDataSet
 
 from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( getLogger, Logger, CountWarningHandler )
-from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getNumberOfComponents,
-                                           getVtkDataTypeInObject, isAttributeGlobal, getAttributePieceInfo,
-                                           checkValidValuesInDataSet, checkValidValuesInMultiBlock )
-from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttributeDataSet,
-                                             createConstantAttributeMultiBlock )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
+from geos.mesh.utils.arrayHelpers import ( getArrayInObject, getComponentNames, getAttributePieceInfo,
+                                           getVtkArrayTypeInObject, getNumberOfComponents, checkValidValuesInObject )
+from geos.mesh.utils.arrayModifiers import ( createAttribute, createConstantAttribute )
 from geos.mesh.utils.multiblockHelpers import getBlockElementIndexesFlatten
 
 __doc__ = """
@@ -122,11 +120,7 @@ class CreateConstantAttributePerRegion:
         # Check if the new component have default values (information for the output message).
         self.useDefaultValue: bool = False
 
-        # Warnings counter.
-        self.counter: CountWarningHandler = CountWarningHandler()
-        self.counter.setLevel( logging.INFO )
-
-        # Logger.
+        # Logger
         self.logger: Logger
         if not speHandler:
             self.logger = getLogger( loggerTitle, True )
@@ -134,6 +128,18 @@ class CreateConstantAttributePerRegion:
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -144,12 +150,10 @@ class CreateConstantAttributePerRegion:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            # This warning does not count for the number of warning created during the application of the filter.
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler' to True"
-                                 " during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def applyFilter( self: Self ) -> None:
         """Create a constant attribute per region in the mesh.
@@ -159,9 +163,6 @@ class CreateConstantAttributePerRegion:
             AttributeError: Errors with the attribute of the mesh.
         """
         self.logger.info( f"Apply filter { self.logger.name }." )
-
-        # Add the handler to count warnings messages.
-        self.logger.addHandler( self.counter )
 
         # Check the validity of the attribute region.
         if self.piece == Piece.NONE:
@@ -185,17 +186,12 @@ class CreateConstantAttributePerRegion:
                 )
 
         listIndexes: list[ Any ] = list( self.dictRegionValues.keys() )
-        validIndexes: list[ Any ] = []
-        invalidIndexes: list[ Any ] = []
+        validIndexes: list[ Any ]
+        invalidIndexes: list[ Any ]
+        validIndexes, invalidIndexes = checkValidValuesInObject( self.mesh, self.regionName, listIndexes, self.piece )
         regionArray: npt.NDArray[ Any ]
         newArray: npt.NDArray[ Any ]
         if isinstance( self.mesh, vtkMultiBlockDataSet ):
-            # Check if the attribute region is global.
-            if not isAttributeGlobal( self.mesh, self.regionName, self.piece ):
-                raise AttributeError( f"The region attribute { self.regionName } has to be global." )
-
-            validIndexes, invalidIndexes = checkValidValuesInMultiBlock( self.mesh, self.regionName, listIndexes,
-                                                                         self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
@@ -203,12 +199,12 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                createConstantAttributeMultiBlock( self.mesh,
-                                                   self.defaultValue,
-                                                   self.newAttributeName,
-                                                   componentNames=self.componentNames,
-                                                   piece=self.piece,
-                                                   logger=self.logger )
+                createConstantAttribute( self.mesh,
+                                         self.defaultValue,
+                                         self.newAttributeName,
+                                         componentNames=self.componentNames,
+                                         piece=self.piece,
+                                         logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -230,8 +226,6 @@ class CreateConstantAttributePerRegion:
                                      logger=self.logger )
 
         else:
-            validIndexes, invalidIndexes = checkValidValuesInDataSet( self.mesh, self.regionName, listIndexes,
-                                                                      self.piece )
             if len( validIndexes ) == 0:
                 if len( self.dictRegionValues ) == 0:
                     self.logger.warning( "No region index entered." )
@@ -239,12 +233,12 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning(
                         f"The region indexes entered are not in the region attribute { self.regionName }." )
 
-                createConstantAttributeDataSet( self.mesh,
-                                                self.defaultValue,
-                                                self.newAttributeName,
-                                                componentNames=self.componentNames,
-                                                piece=self.piece,
-                                                logger=self.logger )
+                createConstantAttribute( self.mesh,
+                                         self.defaultValue,
+                                         self.newAttributeName,
+                                         componentNames=self.componentNames,
+                                         piece=self.piece,
+                                         logger=self.logger )
 
             else:
                 if len( invalidIndexes ) > 0:
@@ -273,7 +267,7 @@ class CreateConstantAttributePerRegion:
         """
         # Get the numpy type from the vtk typecode.
         dictType: dict[ int, Any ] = vnp.get_vtk_to_numpy_typemap()
-        regionVtkType: int = getVtkDataTypeInObject( self.mesh, self.regionName, self.piece )
+        regionVtkType: int = getVtkArrayTypeInObject( self.mesh, self.regionName, self.piece )
         regionNpType: type = dictType[ regionVtkType ]
 
         # Set the correct type of values and region index.
@@ -342,9 +336,6 @@ class CreateConstantAttributePerRegion:
         Args:
             trueIndexes (list[Any]): The list of the true region indexes use to create the attribute.
         """
-        # The Filter succeed.
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
-
         # Info about the created attribute.
         # The piece where the attribute is created.
         self.logger.info( f"The new attribute { self.newAttributeName } is created on { self.piece.value }." )
@@ -409,3 +400,15 @@ class CreateConstantAttributePerRegion:
                     self.logger.warning( messValue )
                 else:
                     self.logger.info( messValue )
+
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return

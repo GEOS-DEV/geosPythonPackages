@@ -19,7 +19,7 @@ from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from geos.processing.pre_processing.CellTypeCounterEnhanced import CellTypeCounterEnhanced
 from geos.mesh.model.CellTypeCounts import CellTypeCounts
 from geos.mesh.model.QualityMetricSummary import ( QualityMetricSummary, StatTypes )
-from geos.mesh.utils.arrayHelpers import getAttributesFromDataSet
+from geos.mesh.utils.arrayHelpers import getAttributesWithNumberOfComponents
 from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFromIndex, getQualityMetricFromIndex,
                                                        VtkCellQualityMetricEnum, CellQualityMetricAdditionalEnum,
                                                        QualityMetricOtherEnum, MeshQualityMetricEnum,
@@ -28,7 +28,7 @@ from geos.mesh.stats.meshQualityMetricHelpers import ( getQualityMeasureNameFrom
                                                        getChildrenCellTypes )
 
 import geos.utils.geometryFunctions as geom
-from geos.utils.Logger import ( Logger, getLogger )
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 from geos.utils.pieceEnum import Piece
 
 __doc__ = """
@@ -131,10 +131,10 @@ class MeshQualityEnhanced():
         # Static members that can be loaded once to save computational times
         self._allCellTypesExtended: tuple[ int, ...] = getAllCellTypesExtended()
         self._allCellTypes: tuple[ int, ...] = getAllCellTypes()
-
-        # Logger.
         self.speHandler: bool = speHandler
-        self.handler: None | logging.Handler = None
+        self.handler: logging.Handler
+
+        # Logger
         self.logger: Logger
         if not speHandler:
             self.logger = getLogger( loggerTitle, True )
@@ -142,6 +142,25 @@ class MeshQualityEnhanced():
             self.logger = logging.getLogger( loggerTitle )
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
+            handlers: list[ logging.Handler ] = self.logger.handlers
+            # Get the handler to specify if the logger already exist and has it
+            for handler in handlers:
+                # The CountVerbosityHandler can't be the handler to specify
+                if type( handler ) is not type( CountVerbosityHandler() ):
+                    self.handler = handler
+                    break
+
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -153,11 +172,10 @@ class MeshQualityEnhanced():
             handler (logging.Handler): The handler to add.
         """
         self.handler = handler
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def GetQualityMetricSummary( self: Self ) -> QualityMetricSummary:
         """Get QualityMetricSummary object.
@@ -308,7 +326,15 @@ class MeshQualityEnhanced():
 
         self._outputMesh.Modified()
 
-        self.logger.info( f"The filter { self.logger.name } succeeded." )
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
+
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
 
         return
 
@@ -320,9 +346,14 @@ class MeshQualityEnhanced():
         """Compute cell type counts."""
         cellTypeCounterEnhancedFilter: CellTypeCounterEnhanced = CellTypeCounterEnhanced(
             self._outputMesh, self.speHandler )
-        if self.speHandler and len( cellTypeCounterEnhancedFilter.logger.handlers ) == 0:
+
+        if self.speHandler and not isHandlerInLogger( self.handler, cellTypeCounterEnhancedFilter.logger ):
             cellTypeCounterEnhancedFilter.setLoggerHandler( self.handler )
+
         cellTypeCounterEnhancedFilter.applyFilter()
+
+        # Add to the warning counter the number of warning logged with the call of CelltypeCounterEnhanced filter
+        self.counter.addExternalWarningCount( cellTypeCounterEnhancedFilter.nbWarnings )
 
         counts: CellTypeCounts = cellTypeCounterEnhancedFilter.GetCellTypeCountsObject()
         if counts is None:
@@ -355,7 +386,7 @@ class MeshQualityEnhanced():
             metricIndex (int): Quality metric index
         """
         arrayName: str = getQualityMetricArrayName( metricIndex )
-        if arrayName in getAttributesFromDataSet( self._outputMesh, piece=Piece.CELLS ):
+        if arrayName in getAttributesWithNumberOfComponents( self._outputMesh, piece=Piece.CELLS ):
             # Metric is already computed (by default computed for all cell types if applicable )
             return
 

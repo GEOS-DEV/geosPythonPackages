@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Martin Lemay, Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing import Union
 from typing_extensions import Self
@@ -25,6 +26,7 @@ update_paths()
 
 from geos.processing.generic_processing_tools.MergeBlockEnhanced import MergeBlockEnhanced
 from geos.utils.Errors import VTKError
+from geos.utils.Logger import isHandlerInLogger
 from geos.pv.utils.details import FilterCategory
 
 __doc__ = f"""
@@ -50,6 +52,8 @@ To use it:
     - -1 for int data.
     - nan for float data.
 """
+
+HANDLER: logging.Handler = VTKHandler()
 
 
 @smproxy.filter( name="PVMergeBlocksEnhanced", label="Merge Blocks Keeping Partial Attributes" )
@@ -115,8 +119,8 @@ class PVMergeBlocksEnhanced( VTKPythonAlgorithmBase ):
 
         mergeBlockEnhancedFilter: MergeBlockEnhanced = MergeBlockEnhanced( inputMesh, True )
 
-        if len( mergeBlockEnhancedFilter.logger.handlers ) == 0:
-            mergeBlockEnhancedFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( HANDLER, mergeBlockEnhancedFilter.logger ):
+            mergeBlockEnhancedFilter.setLoggerHandler( HANDLER )
 
         try:
             mergeBlockEnhancedFilter.applyFilter()

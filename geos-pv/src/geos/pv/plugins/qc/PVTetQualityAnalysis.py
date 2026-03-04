@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Paloma Martinez
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing_extensions import Self, Optional
 
@@ -24,6 +25,7 @@ from paraview.detail.loghandler import VTKHandler  # type: ignore[import-not-fou
 
 from geos.processing.pre_processing.TetQualityAnalysis import TetQualityAnalysis
 from geos.pv.utils.details import FilterCategory
+from geos.utils.Logger import isHandlerInLogger
 
 __doc__ = f"""
 Tetrahedra QC is a ParaView plugin filter that analyze and compare the tetrahedras of two given vtkUnstructured grid datasets.
@@ -39,6 +41,8 @@ To use it:
 * Change the output filename if needed
 * Apply
 """
+
+HANDLER: logging.Handler = VTKHandler()
 
 
 @smproxy.filter( name="PVTetQualityAnalysis", label="Tetrahedra QC" )
@@ -103,10 +107,11 @@ class PVTetQualityAnalysis( VTKPythonAlgorithmBase ):
 
         tetQualityAnalysisFilter: TetQualityAnalysis = TetQualityAnalysis( self._meshes, True )
 
-        if len( tetQualityAnalysisFilter.logger.handlers ) == 0:
-            tetQualityAnalysisFilter.setLoggerHandler( VTKHandler() )
+        if not isHandlerInLogger( HANDLER, tetQualityAnalysisFilter.logger ):
+            tetQualityAnalysisFilter.setLoggerHandler( HANDLER )
 
         try:
+            tetQualityAnalysisFilter.setFilename( self._filename )
             tetQualityAnalysisFilter.applyFilter()
         except Exception as e:
             tetQualityAnalysisFilter.logger.error( f' FATAL ERROR due to:\n{e}' )

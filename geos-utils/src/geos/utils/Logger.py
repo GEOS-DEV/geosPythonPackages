@@ -97,22 +97,113 @@ def VTKCaptureLog() -> Generator[ Any, Any, Any ]:
             os.close( savedStderrFd )
 
 
-class CountWarningHandler( logging.Handler ):
-    """Create an handler to count the warnings logged."""
+class CountVerbosityHandler( logging.Handler ):
+    """Create an handler to count verbosity logged."""
 
     def __init__( self: Self ) -> None:
         """Init the handler."""
         super().__init__()
-        self.warningCount = 0
+        self.warningCount: int = 0
+        self.errorCount: int = 0
+
+    def resetWarningCount( self: Self, value: int = 0 ) -> None:
+        """Set the warning counter to a specific value.
+
+        Args:
+            value (optional, int): The value to set for the warning counter.
+                Defaults to 0.
+        """
+        self.warningCount = value
+
+    def resetErrorCount( self: Self, value: int = 0 ) -> None:
+        """Set the error counter to a specific value.
+
+        Args:
+            value (optional, int): The value to set for the error counter.
+                Defaults to 0.
+        """
+        self.errorCount = value
+
+    def addExternalWarningCount( self: Self, externalWarningCount: int ) -> None:
+        """Add external warning count.
+
+        Args:
+            externalWarningCount (int): An external warning count to add to the internal one.
+        """
+        self.warningCount += externalWarningCount
+
+    def addExternalErrorCount( self: Self, externalErrorCount: int ) -> None:
+        """Add external error count.
+
+        Args:
+            externalErrorCount (int): An external error count to add to the internal one.
+        """
+        self.errorCount += externalErrorCount
 
     def emit( self: Self, record: logging.LogRecord ) -> None:
-        """Count all the warnings logged.
+        """Count all verbosity (warning, error and higher) logged.
 
         Args:
             record (logging.LogRecord): Record.
         """
         if record.levelno == logging.WARNING:
             self.warningCount += 1
+
+        if record.levelno >= logging.ERROR:
+            self.errorCount += 1
+
+
+def getLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> logging.Handler:
+    """Get the logger handler with a certain type.
+
+    Args:
+        handlerType (type): The type of the handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        logging.Handler: The first logger handler with the correct type.
+
+    Raises:
+        ValueError: The logger has no handler with the wanted type.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    for loggerHandler in listLoggerHandlers:
+        if type( loggerHandler ) is handlerType:
+            return loggerHandler
+
+    raise ValueError( "The logger has no handler with the wanted type." )
+
+
+def hasLoggerHandlerType( handlerType: type, logger: logging.Logger ) -> bool:
+    """Check if the logger has a handler with a certain type.
+
+    Args:
+        handlerType (type): The type of the handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        bool: True if the logger has a handler with the same type, False otherwise.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    return any( type( loggerHandler ) is handlerType for loggerHandler in listLoggerHandlers )
+
+
+def isHandlerInLogger( handler: logging.Handler, logger: logging.Logger ) -> bool:
+    """Check if the handler is in the logger.
+
+    Args:
+        handler (logging.Handler): The handler of interest.
+        logger (logging.Logger): The logger to check.
+
+    Returns:
+        bool: True if the logger has the handler, False otherwise.
+    """
+    listLoggerHandlers: list[ logging.Handler ] = logger.handlers
+    for loggerHandler in listLoggerHandlers:
+        if type( handler ) is type( loggerHandler ) and loggerHandler.__dict__ == handler.__dict__:
+            return True
+
+    return False
 
 
 # Add the convenience method for the logger
