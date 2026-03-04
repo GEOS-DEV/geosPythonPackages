@@ -21,7 +21,7 @@ from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkFieldData, vtkMultiBlockDataSet, vtkDataSet,
                                             vtkCompositeDataSet, vtkDataObject, vtkPointData, vtkCellData, vtkPolyData,
-                                            vtkCell,  , vtkSelection )
+                                            vtkCell, vtkSelection, vtkSelectionNode )
 from typing import cast
 
 

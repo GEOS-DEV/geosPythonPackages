@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2026 TotalEnergies.
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
+import logging
 from pathlib import Path
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import Self, Any
+from typing_extensions import Self, Any, Union
 from scipy.spatial import cKDTree
 from xml.etree.ElementTree import ElementTree, Element, SubElement
-import pyvista as pv
+from enum import Enum
 
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkPolyData )
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
@@ -18,33 +19,43 @@ from geos.mesh.utils.arrayHelpers import (isAttributeInObject, getArrayInObject,
 from geos.mesh.utils.arrayModifiers import (createAttribute, updateAttribute)
 from geos.utils.pieceEnum import Piece
 from geos.mesh.io.vtkIO import writeMesh, VtkOutput
+from geos.utils.Logger import ( Logger, getLogger )
 
 
-# ============================================================================
-# STRESS PROJECTION
-# ============================================================================
+loggerTitle = "Stress Projector"
+
+
+class StressProjectorWeightingScheme( str, Enum ):
+    """Enum for weighting scheme."""
+    ARITHMETIC = "arithmetic"
+    HARM = "harmonic"
+    DIST = "distance"
+    VOL = "volume"
+    DIST_VOL = "distanceVolume"
+    INV_SQ_DIST = "inverseSquareDistance"
+
+
+
 class StressProjector:
     """Projects volume stress onto fault surfaces and tracks principal stresses in VTU."""
 
-    # -------------------------------------------------------------------
-    def __init__( self: Self, adjacencyMapping: dict[ int, list[ pv.DataSet ] ],
+    def __init__( self: Self, adjacencyMapping: dict[ int, list[ vtkUnstructuredGrid ] ],
                   geometricProperties: dict[ str, Any ],
-                  outputDir: str = ".",  ) -> None:
+                  outputDir: str = ".", logger: Union[ Logger, None] = None  ) -> None:
         """Initialize with pre-computed adjacency mapping and geometric properties.
 
-        Parameters
-        ----------
-        config : Configuration object
-        adjacencyMapping : dict
-            Pre-computed dict mapping fault cells to volume cells
-        geometricProperties : dict
-            Pre-computed geometric properties from FaultGeometry:
-            - 'volumes': cell volumes
-            - 'centers': cell centers
-            - 'distances': distances to fault
-            - 'faultTree': KDTree for fault
+        Args:
+            adjacencyMapping (dict[int, list[ vtkUnstructuredGrid]]): Pre-computed dict mapping fault cells to volume cells
+            geometricProperties (dict[str, Any]): Pre-computed geometric properties from FaultGeometry:
+                - 'volumes': cell volumes
+                - 'centers': cell centers
+                - 'distances': distances to fault
+                - 'faultTree': KDTree for fault
+            outputDir (str, optional): Output directory to save plots.
+                Defaults is current directory
+            logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
         """
-        # self.config = config
         self.adjacencyMapping = adjacencyMapping
 
         # Store pre-computed geometric properties
@@ -62,32 +73,62 @@ class StressProjector:
         # Output directory for VTU files
         self.vtuOutputDir = Path( outputDir ) / "principal_stresses"
 
-    # -------------------------------------------------------------------
+        # Logger
+        self.logger: Logger
+        if logger is None:
+            self.logger = getLogger( loggerTitle, True )
+        else:
+            self.logger = logging.getLogger( f"{logger.name}" )
+            self.logger.setLevel( logging.INFO )
+            self.logger.propagate = False
+
+
     def setMonitoredCells( self: Self, cellIndices: list[ int ] | None = None ) -> None:
         """Set specific cells to monitor (optional).
 
-        Parameters:
-            cellIndices: list of volume cell indices to track
+        Args:
+            cellIndices (list[int], optional): List of volume cell indices to track.
                          If None, all contributing cells are tracked
         """
         self.monitoredCells = set( cellIndices ) if cellIndices is not None else None
 
-    # -------------------------------------------------------------------
+
     def projectStressToFault(
             self: Self,
             volumeData: vtkUnstructuredGrid,
             volumeInitial: vtkUnstructuredGrid,
-            faultSurface: vtkPolyData,
+            faultSurface: vtkUnstructuredGrid,
             time: float | None = None,
             timestep: int | None = None,
-            weightingScheme: str = "arithmetic",
+            weightingScheme: StressProjectorWeightingScheme = StressProjectorWeightingScheme.ARITHMETIC,
             stressName: str = "averageStress",
             biotName: str = "rockPorosity_biotCoefficient",
             computePrincipalStresses: bool = False,
-            frictionAngle: float = 10, cohesion: float = 0 ) -> tuple[ vtkPolyData, vtkUnstructuredGrid, vtkUnstructuredGrid ]:
+            frictionAngle: float = 10, cohesion: float = 0 ) -> tuple[ vtkUnstructuredGrid, vtkUnstructuredGrid, vtkUnstructuredGrid ]:
         """Project stress and save principal stresses to VTU.
 
         Now uses pre-computed geometric properties for efficiency
+
+        Args:
+            volumeData (vtkUnstructuredGrid): Volumic mesh.
+            volumeInitial (vtkUnstructuredGrid): Pre-simulation mesh
+            faultSurface (vtkUnstructureGrid): Fault mesh.
+            time (float | None, optional): Time. Defaults is None.
+            timestep (int | None, optional): Timestep considered. Defaults is None.
+            weightingScheme (StressProjectorWeightingScheme, optional): Weighting scheme for projection. Defaults is "arithmetic".
+            stressName (str, optional): Stress attribute name from GEOS
+                Defaults is "averageStress".
+            biotName (str, optional): Biot coefficient attribute name from GEOS
+                Defaults is "rockPorosity_biotCoefficient".
+            computePrincipalStresses (bool, optional): Flag to compute principal stresses.
+                Defaults is False.
+            frictionAngle (float, optional): Friction angle in degrees.
+                Defaults is 10 degrees.
+            cohesion (float, optional): Rock cohesion in bar.
+                Defaults is 0 bar.
+
+        Returns:
+            tuple[vtkUnstructuredGrid, vtkUnstructuredGrid, vtkUnstructuredGrid]: Fault mesh, volumic mesh, cell contributing mesh.
         """
         if not isAttributeInObject ( volumeData, stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{stressName}' in dataset" )
@@ -109,24 +150,11 @@ class StressProjector:
         stressTotalInitial = stressEffectiveInitial - biot[ :, None, None ] * pressureInitial[ :, None, None ] * arrI
 
         # =====================================================================
-        # 2. USE PRE-COMPUTED ADJACENCY
-        # =====================================================================
-
-        # =====================================================================
         # 3. PREPARE FAULT GEOMETRY
         # =====================================================================
-        # TODO fix
-        normalsXX, tangent1XX, tangent2XX = getLocalBasisVectors( faultSurface )
-        # normals = faultSurface.cell_data[ "Normals" ]
-        # tangent1 = faultSurface.cell_data[ "tangent1" ]
-        # tangent2 = faultSurface.cell_data[ "tangent2" ]
         normals = vtk_to_numpy( faultSurface.GetCellData().GetNormals() )
         tangent1 = vtk_to_numpy( faultSurface.GetCellData().GetArray( "Tangents1") )
         tangent2 = vtk_to_numpy( faultSurface.GetCellData().GetArray( "Tangents2") )
-
-        print( (normalsXX - normals ).max() )
-        print( (tangent1XX - tangent1 ).max() )
-        print( (tangent2XX - tangent2 ).max() )
 
         faultCenters = computeCellCenterCoordinates( faultSurface )
         fcenters = faultSurface.GetCellData().GetArray( 'elementCenter' )
@@ -151,7 +179,7 @@ class StressProjector:
             else:
                 cellsToTrack = allContributingCells
 
-            print( f"  📊 Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
+            self.logger.info( f"  📊 Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
 
             # Create mesh with only contributing cells
             contributingMesh = self._createVolumicContribMesh( volumeData, faultSurface, cellsToTrack,
@@ -174,8 +202,8 @@ class StressProjector:
         deltaTauArr = np.zeros( nFault )
         nContributors = np.zeros( nFault, dtype=int )
 
-        print( f"  🔄 Projecting stress to {nFault} fault cells..." )
-        print( f"     Weighting scheme: {weightingScheme}" )
+        self.logger.info( f"  🔄 Projecting stress to {nFault} fault cells...\n"
+                f"     Weighting scheme: {weightingScheme}" )
 
         for faultIdx in range( nFault ):
             if faultIdx not in self.adjacencyMapping:
@@ -192,22 +220,22 @@ class StressProjector:
             # CALCULATE WEIGHTS (using pre-computed properties)
             # ===================================================================
 
-            if weightingScheme == 'arithmetic' or weightingScheme == 'harmonic':
+            if weightingScheme == StressProjectorWeightingScheme.ARITHMETIC or weightingScheme == StressProjectorWeightingScheme.HARM:
                 weights = np.ones( len( allVol ) ) / len( allVol )
 
-            elif weightingScheme == 'distance':
+            elif weightingScheme == StressProjectorWeightingScheme.DIST:
                 # Use pre-computed distances
                 dists = np.array( [ self.distanceToFault[ v ] for v in allVol ] )
                 dists = np.maximum( dists, 1e-6 )
                 invDists = 1.0 / dists
                 weights = invDists / np.sum( invDists )
 
-            elif weightingScheme == 'volume':
+            elif weightingScheme == StressProjectorWeightingScheme.VOL:
                 # Use pre-computed volumes
                 vols = np.array( [ self.volumeCellVolumes[ v ] for v in allVol ] )
                 weights = vols / np.sum( vols )
 
-            elif weightingScheme == 'distanceVolume':
+            elif weightingScheme == StressProjectorWeightingScheme.DIST_VOL:
                 # Use pre-computed volumes and distances
                 vols = np.array( [ self.volumeCellVolumes[ v ] for v in allVol ] )
                 dists = np.array( [ self.distanceToFault[ v ] for v in allVol ] )
@@ -216,7 +244,7 @@ class StressProjector:
                 weights = vols / dists
                 weights = weights / np.sum( weights )
 
-            elif weightingScheme == 'inverseSquareDistance':
+            elif weightingScheme == StressProjectorWeightingScheme.INV_SQ_DIST:
                 # Use pre-computed distances
                 dists = np.array( [ self.distanceToFault[ v ] for v in allVol ] )
                 dists = np.maximum( dists, 1e-6 )
@@ -281,16 +309,16 @@ class StressProjector:
         valid = nContributors > 0
         nValid = np.sum( valid )
 
-        print( f"  ✅ Stress projected: {nValid}/{nFault} fault cells ({nValid/nFault*100:.1f}%)" )
+        self.logger.info( f"  ✅ Stress projected: {nValid}/{nFault} fault cells ({nValid/nFault*100:.1f}%)" )
 
         if np.sum( valid ) > 0:
-            print( f"     Contributors per fault cell: min={np.min(nContributors[valid])}, "
+            self.logger.info( f"     Contributors per fault cell: min={np.min(nContributors[valid])}, "
                    f"max={np.max(nContributors[valid])}, "
                    f"mean={np.mean(nContributors[valid]):.1f}" )
 
         return faultSurface, volumeData, contributingMesh
 
-    # -------------------------------------------------------------------
+
     @staticmethod
     def computePrincipalStresses( stressTensor: StressTensor ) -> dict[ str, npt.NDArray[ np.float64 ] ]:
         """Compute principal stresses and directions.
@@ -299,8 +327,11 @@ class StressProjector:
         - σ1 = most compressive (most negative)
         - σ3 = least compressive (least negative, or most tensile)
 
+        Args:
+            stressTensor (StressTensor): Stress tensor object
+
         Returns:
-            dict with eigenvalues, eigenvectors, meanStress, deviatoricStress
+            dict[str, npt.NDArray[ np.float64]]: dict with eigenvalues, eigenvectors, meanStress, deviatoricStress
         """
         eigenvalues, eigenvectors = np.linalg.eigh( stressTensor )
 
@@ -322,22 +353,24 @@ class StressProjector:
             'direction3': eigenVectorsSorted[ :, 2 ]  # Direction of σ3
         }
 
-    # -------------------------------------------------------------------
-    def _createVolumicContribMesh( self: Self, volumeData: pv.UnstructuredGrid, faultSurface: pv.PolyData,
-                                   cellsToTrack: set[ int ], mapping: dict[ int, list[ pv.DataSet ] ], biotName: str = "rockPorosity_biotCoefficient",
-            computePrincipalStresses: bool = False, frictionAngle : float = 10, cohesion: float = 0 ) -> pv.DataSet:
+
+    def _createVolumicContribMesh( self: Self, volumeData: vtkUnstructuredGrid, faultSurface: vtkUnstructuredGrid,
+                                   cellsToTrack: set[ int ], mapping: dict[ int, list[ vtkUnstructuredGrid ] ], biotName: str = "rockPorosity_biotCoefficient",
+            computePrincipalStresses: bool = False, frictionAngle : float = 10, cohesion: float = 0 ) -> vtkUnstructuredGrid:
         """Create a mesh containing only contributing cells with principal stress data and compute analytical normal/shear stresses based on fault dip angle.
 
-        Parameters
-        ----------
-        volumeData : pyvista.UnstructuredGrid
-            Volume mesh with stress data (rock_stress or averageStress)
-        faultSurface : pyvista.PolyData
-            Fault surface with dipAngle and strikeAngle per cell
-        cellsToTrack : set
-            Set of volume cell indices to include
-        mapping : dict
-            Adjacency mapping {faultIdx: {'plus': [...], 'minus': [...]}}
+        Args:
+            volumeData (vtkUnstructuredGrid): Volume mesh with stress data (rock_stress or averageStress)
+            faultSurface (vtkUnstructuredGrid): Fault surface with dipAngle and strikeAngle per cell
+            cellsToTrack (set[int]): Set of volume cell indices to include
+            mapping (dict[int, list[ vtkUnstructuredGrid]]): Adjacency mapping {faultIdx: {'plus': [...], 'minus': [...]}}
+            biotName (str): Biot coefficient name in GEOS
+            computePrincipalStresses (bool): Flag to compute principal stresses
+            frictionAngle (float): Friction angle in degrees.
+            cohesion (float): Cohesion in bar.
+
+        Returns:
+            vtkUnstructuredGrid: Mesh subset from contributing cells with new/updated arrays.
         """
         # ===================================================================
         # EXTRACT STRESS DATA FROM VOLUME
@@ -346,7 +379,7 @@ class StressProjector:
         if not isAttributeInObject( volumeData, stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{stressName}' in volume dataset" )
 
-        print( f"  📊 Extracting stress from field: '{stressName}'" )
+        self.logger.info( f"  📊 Extracting stress from field: '{stressName}'" )
 
         # Extract effective stress and pressure
         pressure = getArrayInObject( volumeData, "pressure", Piece.CELLS ) / 1e5  # Convert to bar
@@ -379,22 +412,22 @@ class StressProjector:
         for subsetIdx in range( subsetMesh.GetNumberOfCells() ):
             dist, idx = tree.query( subsetCenters[ subsetIdx ] )
             if dist > 1e-6:
-                print( f"        WARNING: Cell {subsetIdx} not matched (dist={dist})" )
+                self.logger.warning( f"        WARNING: Cell {subsetIdx} not matched (dist={dist})" )
             subsetToOriginal[ subsetIdx ] = cellIndices[ idx ]
 
         # ===================================================================
         # MAP VOLUME CELLS TO FAULT DIP/STRIKE ANGLES
         # ===================================================================
-        print( "     📐 Mapping volume cells to fault dip/strike angles..." )
+        self.logger.info( "     📐 Mapping volume cells to fault dip/strike angles..." )
 
         # Check if fault surface has required data
         if 'dipAngle' not in faultSurface.cell_data:
-            print( "        ⚠️ WARNING: 'dipAngle' not found in faultSurface" )
-            print( f"        Available fields: {list(faultSurface.cell_data.keys())}" )
+            self.logger.warning( "        ⚠️ WARNING: 'dipAngle' not found in faultSurface"
+                    f"        Available fields: {list(faultSurface.cell_data.keys())}" )
             return None
 
         if 'strikeAngle' not in faultSurface.cell_data:
-            print( "        ⚠️ WARNING: 'strikeAngle' not found in faultSurface" )
+            self.logger.warning( "        ⚠️ WARNING: 'strikeAngle' not found in faultSurface" )
 
         # Create mapping: volume_cell_id -> [dipAngles, strikeAngles]
         volumeToDip: dict[ int, npt.NDArray[ np.float64 ] ] = {}
@@ -422,12 +455,12 @@ class StressProjector:
         volumeToDipAvg = { volIdx: np.mean( dips ) for volIdx, dips in volumeToDip.items() }
         volumeToStrikeAvg = { volIdx: np.mean( strikes ) for volIdx, strikes in volumeToStrike.items() }
 
-        print( f"        ✅ Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
+        self.logger.info( f"        ✅ Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
 
         # Statistics
         allDips = [ np.mean( dips ) for dips in volumeToDip.values() ]
         if len( allDips ) > 0:
-            print( f"        Dip angle range: [{np.min(allDips):.1f}, {np.max(allDips):.1f}]°" )
+            self.logger.info( f"        Dip angle range: [{np.min(allDips):.1f}, {np.max(allDips):.1f}]°" )
 
         # ===================================================================
         # COMPUTE PRINCIPAL STRESSES AND ANALYTICAL FAULT STRESSES
@@ -455,7 +488,7 @@ class StressProjector:
         sideArr = np.zeros( nCells, dtype=int )
         nFaultCellsArr = np.zeros( nCells, dtype=int )
 
-        print( "     🔢 Computing principal stresses and analytical projections..." )
+        self.logger.info( "     🔢 Computing principal stresses and analytical projections..." )
 
         for subsetIdx in range( nCells ):
             origIdx = subsetToOriginal[ subsetIdx ]
@@ -595,29 +628,24 @@ class StressProjector:
         # ===================================================================
         validAnalytical = ~np.isnan( sigmaNAnalyticalArr )
         nValid = np.sum( validAnalytical )
+        nCritical = np.sum( ( SCUAnalyticalArr >= 0.8 ) & ( SCUAnalyticalArr < 1.0 ) )
+        nUnstable = np.sum( SCUAnalyticalArr >= 1.0 )
 
         if nValid > 0:
-            print( f"     📊 Analytical fault stresses computed for {nValid}/{nCells} cells" )
-            print(
-                f"        σ_n range: [{np.nanmin(sigmaNAnalyticalArr):.1f}, {np.nanmax(sigmaNAnalyticalArr):.1f}] bar" )
-            print( f"        τ range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar" )
-            print( f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°" )
-
-            # if hasattr( self.config, 'FRICTION_ANGLE' ) and hasattr( self.config, 'COHESION' ):
-            print(
-                f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
-            )
-            nCritical = np.sum( ( SCUAnalyticalArr >= 0.8 ) & ( SCUAnalyticalArr < 1.0 ) )
-            nUnstable = np.sum( SCUAnalyticalArr >= 1.0 )
-            print( f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)" )
-            print( f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
+            self.logger.info( f"     📊 Analytical fault stresses computed for {nValid}/{nCells} cells"
+                f"        σ_n range: [{np.nanmin(sigmaNAnalyticalArr):.1f}, {np.nanmax(sigmaNAnalyticalArr):.1f}] bar"
+                f"        τ range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar"
+                f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°"
+                                f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
+                f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)"
+                f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)")
         else:
-            print( "     ⚠️  No analytical stresses computed (no fault mapping)" )
+            self.logger.warning( "     ⚠️  No analytical stresses computed (no fault mapping)" )
 
         return subsetMesh
 
-    # -------------------------------------------------------------------
-    def _savePrincipalStressVTU( self: Self, mesh: pv.DataSet, time: float, timestep: int ) -> None:
+
+    def _savePrincipalStressVTU( self: Self, mesh: vtkUnstructuredGrid, time: float, timestep: int ) -> None:
         """Save principal stress mesh to VTU file.
 
         Parameters:
@@ -642,23 +670,24 @@ class StressProjector:
             'file': vtuFilename
         } )
 
-        print( f"     💾 Saved principal stresses: {vtuFilename}" )
+        self.logger.info( f"     💾 Saved principal stresses: {vtuFilename}" )
 
-    # -------------------------------------------------------------------
+
     def savePVDCollection( self: Self, filename: str = "principal_stresses.pvd" ) -> None:
         """Create PVD file for time series visualization in ParaView.
 
-        Parameters:
-            filename: Name of PVD file
+        Args:
+            filename: Name of PVD file.
+                Defaults is "principal_stresses.pvd".
         """
         if len( self.timestepInfo ) == 0:
-            print( "⚠️  No timestep data to save in PVD" )
+            self.logger.error( "⚠️  No timestep data to save in PVD" )
             return
 
         pvdPath = self.vtuOutputDir / filename
 
-        print( f"\n💾 Creating PVD collection: {pvdPath}" )
-        print( f"   Timesteps: {len(self.timestepInfo)}" )
+        self.logger.info( f"\n💾 Creating PVD collection: {pvdPath}"
+                f"   Timesteps: {len(self.timestepInfo)}" )
 
         # Create XML structure
         root = Element( 'VTKFile' )
@@ -679,10 +708,12 @@ class StressProjector:
         tree = ElementTree( root )
         tree.write( str( pvdPath ), encoding='utf-8', xml_declaration=True )
 
-        print( "   ✅ PVD file created successfully" )
-        print( f"   📂 Output directory: {self.vtuOutputDir}" )
-        print( "\n   🎨 To visualize in ParaView:" )
-        print( f"      1. Open: {pvdPath}" )
-        print( "      2. Apply" )
-        print( "      3. Color by: sigma1, sigma2, sigma3, meanStress, etc." )
-        print( "      4. Use 'side' filter to show plus/minus/both" )
+        self.logger.info( "   ✅ PVD file created successfully"
+        f"   📂 Output directory: {self.vtuOutputDir}"
+        "\n   🎨 To visualize in ParaView:"
+        f"      1. Open: {pvdPath}"
+        "      2. Apply"
+        "      3. Color by: sigma1, sigma2, sigma3, meanStress, etc."
+        "      4. Use 'side' filter to show plus/minus/both" )
+
+

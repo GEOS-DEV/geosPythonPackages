@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2024 TotalEnergies.
 # SPDX-FileContributor: Alexandre Benedicto
+import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -295,3 +296,21 @@ class PVDReader:
 
     def getAllTimestepsValues( self ) -> list[ float ]:
         return list( [ value[0] for _, value in self.datasets.items() ] )
+
+
+def createPVD( outputDir: str, outputFiles: list[ tuple[ int, str ] ] ) -> None:
+        """Create PVD collection file.
+
+        Args:
+            outputDir (str): Output directory
+            outputFiles (list[tuple[int, str]]): List containing all the filenames of the PVD files
+        """
+        pvdPath = os.path.join( outputDir, 'fault_analysis.pvd')
+        with open( pvdPath, 'w' ) as f:
+            f.write( '<VTKFile type="Collection" version="0.1">\n' )
+            f.write( '  <Collection>\n' )
+            for t, fname in outputFiles:
+                f.write( f'    <DataSet timestep="{t}" file="{fname}"/>\n' )
+            f.write( '  </Collection>\n' )
+            f.write( '</VTKFile>\n' )
+        print( f"\n✅ PVD created: {pvdPath}" )
