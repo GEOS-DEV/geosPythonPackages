@@ -15,7 +15,14 @@ class StressTensor:
 
     @staticmethod
     def buildFromArray( arr: npt.NDArray[ np.float64 ] ) -> npt.NDArray[ np.float64 ]:
-        """Convert stress array to 3x3 tensor format."""
+        """Convert stress array to 3x3 tensor format.
+
+        Args:
+            arr ( npt.NDArray[np.float64]): Array to convert.
+
+        Returns:
+            npt.NDArray[np.float64]: 3x3 converted stress tensor.
+        """
         n = arr.shape[ 0 ]
         tensors: npt.NDArray[ np.float64 ] = np.zeros( ( n, 3, 3 ), dtype=np.float64 )
 
@@ -34,10 +41,20 @@ class StressTensor:
         return tensors
 
     @staticmethod
-    def rotateToFaultFrame( stressTensorarr: npt.NDArray[ np.float64 ], normal: npt.NDArray[ np.float64 ],
+    def rotateToFaultFrame( stressTensorArr: npt.NDArray[ np.float64 ], normal: npt.NDArray[ np.float64 ],
                             tangent1: npt.NDArray[ np.float64 ],
                             tangent2: npt.NDArray[ np.float64 ] ) -> dict[ str, Any ]:
-        """Rotate stress tensor to fault local coordinate system."""
+        """Rotate stress tensor to fault local coordinate system.
+
+        Args:
+            stressTensorArr (npt.NDArray[np.float64]): Stress tensor to rotate.
+            normal (npt.NDArray[np.float64]): Surface normal vectors.
+            tangent1 (npt.NDArray[np.float64]): Surface tangents vectors 1.
+            tangent2 (npt.NDArray[np.float64])): Surface tangents vectors 2.
+
+        Returns:
+            dict[str, Any]: Dictionary containing local stress, normal stress, shear stress and strike and shear dip.
+        """
         # Verify orthonormality
         assert np.abs( np.linalg.norm( tangent1 ) - 1.0 ) < 1e-10, f"T1 - {np.abs( np.linalg.norm( tangent1 ) - 1.0 )}"
         assert np.abs( np.linalg.norm( tangent2 ) - 1.0 ) < 1e-10, f"T2 - {np.abs( np.linalg.norm( tangent2 ) - 1.0 )}"
@@ -48,7 +65,7 @@ class StressTensor:
         R = np.column_stack( ( normal, tangent1, tangent2 ) )
 
         # Rotate tensor
-        stressLocal = R.T @ stressTensorarr @ R
+        stressLocal = R.T @ stressTensorArr @ R
 
         # Traction on fault plane (normal = [1,0,0] in local frame)
         tractionLocal = stressLocal @ np.array( [ 1.0, 0.0, 0.0 ] )
