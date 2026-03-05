@@ -6,7 +6,7 @@ This document explains the Continuous Integration (CI) setup for the geosPythonP
 
 The CI system consists of two main workflows:
 
-1. **`python-package.yml`** - Tests all Python packages individually
+1. **`python-package.yml`** - Tests all Python packages individually,
 2. **`test_geos_integration.yml`** - Tests integration with the GEOS simulation framework
 
 ## Workflow 1: Python Package Testing (`python-package.yml`)

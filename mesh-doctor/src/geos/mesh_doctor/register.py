@@ -59,7 +59,7 @@ def registerParsingActions(
                         parsing.FIX_ELEMENTS_ORDERINGS, parsing.GENERATE_CUBE, parsing.GENERATE_FRACTURES,
                         parsing.GENERATE_GLOBAL_IDS, parsing.MAIN_CHECKS, parsing.NON_CONFORMAL,
                         parsing.SELF_INTERSECTING_ELEMENTS, parsing.SUPPORTED_ELEMENTS, parsing.ORPHAN_2D,
-                        parsing.CHECK_INTERNAL_TAGS ):
+                        parsing.CHECK_INTERNAL_TAGS, parsing.EULER ):
         __HELPERS[ actionName ] = actionName
         __ACTIONS[ actionName ] = actionName
 

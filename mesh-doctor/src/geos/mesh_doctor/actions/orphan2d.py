@@ -67,7 +67,8 @@ def getCellFacePoints( cell: vtk.vtkCell ) -> list[ tuple[ int, ...] ]:
     return globalFaces
 
 
-def buildMeshSubset( mesh: vtkUnstructuredGrid, cellIndices: list[ int ], description: str ) -> vtkUnstructuredGrid:
+def buildMeshSubset( mesh: vtkUnstructuredGrid, cellIndices: list[ int ],
+                     description: str ) -> Optional[ vtkUnstructuredGrid ]:
     """Build a new mesh containing only the specified cells.
 
     Args:
@@ -76,7 +77,7 @@ def buildMeshSubset( mesh: vtkUnstructuredGrid, cellIndices: list[ int ], descri
         description: Description for progress messages.
 
     Returns:
-        A new vtkUnstructuredGrid containing only the specified cells.
+        A new vtkUnstructuredGrid containing only the specified cells, or None if no cells.
     """
     if not cellIndices:
         setupLogger.info( f"No {description} to create." )
