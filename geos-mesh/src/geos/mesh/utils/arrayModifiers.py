@@ -747,19 +747,27 @@ def renameAttribute(
     return
 
 
-def updateAttribute( mesh: vtkDataSet, newValue: npt.NDArray[ Any ], attributeName: str, piece: Piece = Piece.CELLS, logger: Union[ Logger, None ] = None ) -> None:
+def updateAttribute( mesh: vtkDataSet,
+                     newValue: npt.NDArray[ Any ],
+                     attributeName: str,
+                     piece: Piece = Piece.CELLS,
+                     logger: Union[ Logger, None ] = None ) -> None:
     """Update the value of an attribute. Creates the attribute if it is not already in the dataset.
 
     Args:
         mesh (vtkDataSet): Input mesh.
+        newValue (npt.NDArray[Any]): New value for the attribute.
         attributeName (str): Name of the attribute.
-        newValue (vtkDataArray):
+        piece (Piece): The piece of the attribute.
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+            Defaults to None, an internal logger is used.
     """
     # Check if an external logger is given.
     if logger is None:
         logger = getLogger( "updateAttribute", True )
 
     if isAttributeInObject( mesh, attributeName, piece ):
+        data: Union[ vtkPointData, vtkCellData ]
         if piece == Piece.CELLS:
             data = mesh.GetCellData()
         elif piece == Piece.POINTS:
@@ -859,7 +867,6 @@ def transferPointDataToCellData(
 
     Returns:
         vtkPointSet: Output mesh where point data were transferred to cells.
-
     """
     if logger is None:
         logger = getLogger( "transferPointDataToCellData", True )

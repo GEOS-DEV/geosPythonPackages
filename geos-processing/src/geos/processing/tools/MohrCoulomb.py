@@ -3,23 +3,26 @@
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
 import logging
 import numpy as np
-from typing_extensions import Any, Self, Union
+from typing_extensions import Self, Union
 
-from vtkmodules.vtkCommonDataModel import (
-    vtkDataSet )
-from vtkmodules.util.numpy_support import numpy_to_vtk
+from vtkmodules.vtkCommonDataModel import ( vtkDataSet )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject, isAttributeInObject )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, updateAttribute )
-from geos.utils.pieceEnum import (Piece)
+from geos.utils.pieceEnum import ( Piece )
 
 from geos.utils.Logger import ( Logger, getLogger )
 
 loggerTitle = "MohrCoulomb Analysis"
 
+
 class MohrCoulombAnalysis:
     """Mohr-Coulomb failure criterion analysis."""
 
-    def __init__( self: Self, surface: vtkDataSet, cohesion: float, frictionAngle: float, logger: Union[ Logger, None] = None ) -> None:
+    def __init__( self: Self,
+                  surface: vtkDataSet,
+                  cohesion: float,
+                  frictionAngle: float,
+                  logger: Union[ Logger, None ] = None ) -> None:
         """Mohr-Coulomb analyzer.
 
         Args:
@@ -42,7 +45,6 @@ class MohrCoulombAnalysis:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-
     def analyze( self: Self ) -> vtkDataSet:
         """Perform Mohr-Coulomb stability analysis.
 
@@ -54,8 +56,6 @@ class MohrCoulombAnalysis:
         # Extract stress components
         sigmaN = getArrayInObject( self.surface, "sigmaNEffective", Piece.CELLS )
         tau = getArrayInObject( self.surface, "tauEffective", Piece.CELLS )
-        deltaSigmaN = getArrayInObject( self.surface, 'deltaSigmaNEffective', Piece.CELLS )
-        deltaTau = getArrayInObject( self.surface, 'deltaTauEffective', Piece.CELLS )
 
         # Mohr-Coulomb failure envelope
         tauCritical = self.cohesion - sigmaN * mu
@@ -99,22 +99,22 @@ class MohrCoulombAnalysis:
         safety = tauCritical - tau
 
         # Store results
-        attributes = { "mohrCohesion": np.full( self.surface.GetNumberOfCells(), self.cohesion ),
-                       "mohrFrictionAngle": np.full( self.surface.GetNumberOfCells(), self.frictionAngle ),
-                       "mohrFrictionCoefficient": np.full( self.surface.GetNumberOfCells(), mu ),
-                       "mohr_critical_shear_stress": tauCritical,
-                       "SCU": SCU,
-                       "deltaSCU": deltaSCU,
-                       "CFS": CFS,
-                       "deltaCFS": deltaCFS,
-                       "safetyMargin": safety,
-                       "stabilityState": stability,
-                       "failureProbability": failureProba }
+        attributes = {
+            "mohrCohesion": np.full( self.surface.GetNumberOfCells(), self.cohesion ),
+            "mohrFrictionAngle": np.full( self.surface.GetNumberOfCells(), self.frictionAngle ),
+            "mohrFrictionCoefficient": np.full( self.surface.GetNumberOfCells(), mu ),
+            "mohr_critical_shear_stress": tauCritical,
+            "SCU": SCU,
+            "deltaSCU": deltaSCU,
+            "CFS": CFS,
+            "deltaCFS": deltaCFS,
+            "safetyMargin": safety,
+            "stabilityState": stability,
+            "failureProbability": failureProba
+        }
 
-        cdata = self.surface.GetCellData()
         for attributeName, value in attributes.items():
             updateAttribute( self.surface, value, attributeName, Piece.CELLS )
-
 
         nStable = np.sum( stability == 0 )
         nCritical = np.sum( stability == 1 )
@@ -126,11 +126,11 @@ class MohrCoulombAnalysis:
             maxIncrease = np.max( deltaSCU )
             maxDecrease = np.min( deltaSCU )
             self.logger.info( f"  ✅ Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical,\n"
-                            f"{nStable} stable cells\n"
-                             f"     ΔSCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, \n"
-                            f"maxDecrease={maxDecrease:.3f}" )
+                              f"{nStable} stable cells\n"
+                              f"     ΔSCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, \n"
+                              f"maxDecrease={maxDecrease:.3f}" )
         else:
             self.logger.info( f"  ✅ Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, \n"
-                    f"{nStable} stable cells" )
+                              f"{nStable} stable cells" )
 
         return self.surface

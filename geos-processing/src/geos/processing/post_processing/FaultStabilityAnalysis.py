@@ -1,27 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2026 TotalEnergies.
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
-from pathlib import Path
-import numpy as np
+import os
+import logging
 from typing_extensions import Self
 
-from vtkmodules.vtkCommonDataModel import vtkCellLocator, vtkMultiBlockDataSet, vtkDataSet, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkUnstructuredGrid
 
-from geos.mesh.utils.multiblockModifiers import mergeBlocks
-from geos.mesh.io.vtkIO import ( PVDReader, createPVD )
-from geos.mesh.utils.arrayHelpers import (isAttributeInObject, getAttributeSet, getArrayInObject)
-from geos.mesh.utils.arrayModifiers import ( createAttribute, updateAttribute )
+from geos.mesh.utils.multiblockModifiers import ( mergeBlocks )
+from geos.mesh.io.vtkIO import ( PVDReader, createPVD, writeMesh, VtkOutput )
 
 from geos.processing.tools.FaultGeometry import ( FaultGeometry )
-from geos.processing.tools.FaultVisualizer import (Visualizer)
-from geos.processing.tools.MohrCoulomb import (MohrCoulombAnalysis)
-from geos.processing.tools.SensitivityAnalyzer import (SensitivityAnalyzer)
-from geos.processing.tools.StressProjector import (StressProjector, StressProjectorWeightingScheme )
+from geos.processing.tools.FaultVisualizer import ( Visualizer )
+from geos.processing.tools.MohrCoulomb import ( MohrCoulombAnalysis )
+from geos.processing.tools.SensitivityAnalyzer import ( SensitivityAnalyzer )
+from geos.processing.tools.StressProjector import ( StressProjector, StressProjectorWeightingScheme )
 
 from geos.utils.GeosOutputsConstants import ( GeosMeshOutputsEnum, PostProcessingOutputsEnum )
-from geos.utils.pieceEnum import Piece
-from geos.utils.Logger import ( Logger, getLogger )
-import logging
+from geos.utils.Logger import ( getLogger, Logger, CountVerbosityHandler, isHandlerInLogger, getLoggerHandlerType )
 
 __doc__ = """
 FaultStabilityAnalysis is a vtk filter that performs an analysis of requested faults in a mesh for several timesteps of simulation.
@@ -67,8 +63,17 @@ To use it:
 
 loggerTitle: str = "Fault Stability Analysis"
 
+
 class FaultStabilityAnalysis:
-    def __init__( self: Self, inputMesh: vtkDataSet, faultAttribute: str, faultValues: list[ int | float ],  pvdFile: str, speHandler: bool = False, ) -> None:
+
+    def __init__(
+        self: Self,
+        inputMesh: vtkDataSet,
+        faultAttribute: str,
+        faultValues: list[ int | float ],
+        pvdFile: str,
+        speHandler: bool = False,
+    ) -> None:
         """Fault stability analysis workflow.
 
         Args:
@@ -81,7 +86,7 @@ class FaultStabilityAnalysis:
                     Defaults to False.
         """
         self.pvdFile = pvdFile
-        self.timeIndexes: list[int] | None = None
+        self.timeIndexes: list[ int ] | None = None
 
         self.outputDir: str = "FaultStabilityAnalysis/"
 
@@ -103,14 +108,13 @@ class FaultStabilityAnalysis:
         self.weightingScheme: StressProjectorWeightingScheme = StressProjectorWeightingScheme.ARITHMETIC
 
         self.computePrincipalStresses = False
-        self.profileStartPoints = []  # Profile Fault 1
+        self.profileStartPoints: list[ tuple[ float, float ] ] = []
         self.profileSearchRadius = None
 
         # Sensitivity analysis
         self.runSensitivity: bool = True
-        self.sensitivityFrictionAngles: list[ float ] = [] # degrees
-        self.sensitivityCohesions: list[ float ] = [] # bar
-
+        self.sensitivityFrictionAngles: list[ float ] = []  # degrees
+        self.sensitivityCohesions: list[ float ] = []  # bar
 
         # Variable names
         self.stressName: str = GeosMeshOutputsEnum.AVERAGE_STRESS.value
@@ -130,10 +134,22 @@ class FaultStabilityAnalysis:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
+
         self.logger.info( "📐 Initialize fault geometry" )
         self.volumeMeshInitial = self._getInitialMesh()
-        self.faultGeometry = FaultGeometry( inputMesh, faultValues, faultAttribute, self.volumeMeshInitial, self.outputDir, self.logger )
-
+        self.faultGeometry = FaultGeometry( inputMesh, faultValues, faultAttribute, self.volumeMeshInitial,
+                                            self.outputDir, self.logger )
 
     def setLoggerHandler( self: Self, handler: logging.Handler ) -> None:
         """Set a specific handler for the filter logger.
@@ -144,11 +160,10 @@ class FaultStabilityAnalysis:
         Args:
             handler (logging.Handler): The handler to add.
         """
-        if len( self.logger.handlers ) == 0:
+        if not isHandlerInLogger( handler, self.logger ):
             self.logger.addHandler( handler )
         else:
-            self.logger.warning( "The logger already has an handler, to use yours set the argument 'speHandler'"
-                                 " to True during the filter initialization." )
+            self.logger.warning( "The logger already has this handler, it has not been added." )
 
     def _getInitialMesh( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh from timestep 0 in the PVD output file and merge the blocks."""
@@ -156,16 +171,15 @@ class FaultStabilityAnalysis:
 
         datasetT0 = reader.getDataSetAtTimeIndex( 0 )
 
-        return mergeBlocks( datasetT0, keepPartialAttributes=True)
-
+        return mergeBlocks( datasetT0, keepPartialAttributes=True )
 
     def _initializeFaultGeometry( self: Self ) -> None:
         """Extract faults and compute geometric properties such as normals and adjacency topology."""
         self.logger.info( "🔧 Computing normals and adjacency topology" )
-        self.faultGeometry.initialize(  processFaultsSeparately=self.processFaultsSeparately, saveContributionCells=self.saveContributionCells )
+        self.faultGeometry.initialize( processFaultsSeparately=self.processFaultsSeparately,
+                                       saveContributionCells=self.saveContributionCells )
 
-
-    def processAllTimeIndexesRequested( self: Self) -> vtkUnstructuredGrid:
+    def processAllTimeIndexesRequested( self: Self ) -> None:
         """Process all time steps using pre-computed fault geometry.
 
         Returns:
@@ -189,6 +203,8 @@ class FaultStabilityAnalysis:
         # Initialize projector with pre-computed topology
         self.logger.info( "Initialize projector with pre-computed topology." )
         projector = StressProjector( adjacencyMapping, geometricProperties, self.outputDir )
+        projector.setStressName( self.stressName )
+        projector.setBiotCoefficientName( self.biotName )
 
         self.logger.info( "=" * 60 )
         self.logger.info( "TIME SERIES PROCESSING" )
@@ -217,15 +233,14 @@ class FaultStabilityAnalysis:
                 surface,
                 time=timeValues[ i ],  # Simulation time
                 timestep=i,  # Timestep index
-                stressName=self.stressName,
-                biotName=self.biotName,
-                weightingScheme=self.weightingScheme )
+                weightingScheme=self.weightingScheme,
+                computePrincipalStresses=self.computePrincipalStresses )
 
             # -----------------------------------
             # Mohr-Coulomb analysis
             # -----------------------------------
-            cohesion = self.cohesion # bar
-            frictionAngle = self.frictionAngle # degrees
+            cohesion = self.cohesion  # bar
+            frictionAngle = self.frictionAngle  # degrees
 
             mc = MohrCoulombAnalysis( surfaceResult, cohesion, frictionAngle )
             surfaceResult = mc.analyze()
@@ -241,12 +256,14 @@ class FaultStabilityAnalysis:
             if self.runSensitivity:
                 analyzer = SensitivityAnalyzer( self.outputDir )
                 if self.sensitivityFrictionAngles is None or self.sensitivityCohesions is None:
-                    raise ValueError( "Sensitivity friction angles and cohesions required if runSensitivity is set to True" )
-                analyzer.runAnalysis( surfaceResult, time, self.sensitivityFrictionAngles, self.sensitivityCohesions, self.profileStartPoints, self.profileSearchRadius )
+                    raise ValueError(
+                        "Sensitivity friction angles and cohesions required if runSensitivity is set to True" )
+                analyzer.runAnalysis( surfaceResult, time, self.sensitivityFrictionAngles, self.sensitivityCohesions,
+                                      self.profileStartPoints, self.profileSearchRadius )
 
             # Save
-            filename = f'fault_analysis_{i:04d}.vtu'
-            # surfaceResult.save( self.outputDir / filename )
+            filename = os.path.join( self.outputDir, f'fault_analysis_{i:04d}.vtu' )
+            writeMesh( mesh=surfaceResult, vtkOutput=VtkOutput( filename ), canOverwrite=True )
             outputFiles.append( ( time, filename ) )
             self.logger.info( f"  💾 Saved: {filename}" )
 
@@ -255,15 +272,25 @@ class FaultStabilityAnalysis:
 
         return surfaceResult
 
-
-    def applyFilter(self: Self) -> None:
-        """Analyze the stability of the fault for all timesteps requested.
-        """
+    def applyFilter( self: Self ) -> None:
+        """Analyze the stability of the fault for all timesteps requested."""
         self._initializeFaultGeometry()
         self.processAllTimeIndexesRequested()
 
+        result: str = f"The filter { self.logger.name } succeeded"
+        if self.counter.warningCount > 0:
+            self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+        else:
+            self.logger.info( f"{ result }." )
 
-    def _plotResults( self : Self, surface:vtkUnstructuredGrid, contributingCells:vtkUnstructuredGrid, time: float ) -> None:
+        # Keep number of warnings logged during the filter application and reset the warnings count in case the filter is applied again.
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
+        return
+
+    def _plotResults( self: Self, surface: vtkUnstructuredGrid, contributingCells: vtkUnstructuredGrid,
+                      time: float ) -> None:
         """Plot and save results for one timestep.
 
         Args:
@@ -271,18 +298,18 @@ class FaultStabilityAnalysis:
             contributingCells (vtkUnstructuredGrid): Cells contributing to the fault.
             time (float): Time
         """
-        Visualizer( self.profileSearchRadius, self.minDepthProfiles,
-                                self.maxDepthProfiles,
-                                savePlots = self.savePlots  ).plotMohrCoulombDiagram( surface,
-                                           time,
-                                           self.outputDir,
-                                           save=self.savePlots, )
-
+        Visualizer( self.profileSearchRadius, self.minDepthProfiles, self.maxDepthProfiles,
+                    savePlots=self.savePlots ).plotMohrCoulombDiagram(
+                        surface,
+                        time,
+                        self.outputDir,
+                        save=self.savePlots,
+                    )
 
         visualizer = Visualizer( self.profileSearchRadius,
-                                self.minDepthProfiles,
-                                self.maxDepthProfiles,
-                                savePlots = self.savePlots )
+                                 self.minDepthProfiles,
+                                 self.maxDepthProfiles,
+                                 savePlots=self.savePlots )
 
         if self.computePrincipalStresses:
             # Plot principal stress from volume cells
@@ -300,12 +327,11 @@ class FaultStabilityAnalysis:
                                                             save=self.savePlots,
                                                             profileStartPoints=self.profileStartPoints )
 
-
-    def setSensitivityFrictionAngles( self: Self, angles: list[float] )-> None:
+    def setSensitivityFrictionAngles( self: Self, angles: list[ float ] ) -> None:
         """Set the friction angles for sensitivy analysis."""
         self.sensitivityFrictionAngles = angles
 
-    def setSensitivityCohesions(self: Self, cohesions: list[float])-> None:
+    def setSensitivityCohesions( self: Self, cohesions: list[ float ] ) -> None:
         """Set the cohesions for sensitivy analysis."""
         self.sensitivityCohesions = cohesions
 
@@ -318,17 +344,15 @@ class FaultStabilityAnalysis:
         if outputDir != "None":
             self.outputDir = outputDir
 
-    def savePlotsOff( self: Self )-> None:
-        """Switch off plot saving option.
-        """
+    def savePlotsOff( self: Self ) -> None:
+        """Switch off plot saving option."""
         self.savePlots = False
 
-    def savePlotsOn( self: Self )-> None:
+    def savePlotsOn( self: Self ) -> None:
         """Switch on plot saving option."""
         self.savePlots = True
 
-
-    def setStressName( self: Self, stressName: str) -> None:
+    def setStressName( self: Self, stressName: str ) -> None:
         """Set the stress attribute name.
 
         Args:
@@ -337,7 +361,7 @@ class FaultStabilityAnalysis:
         if stressName != "None":
             self.stressName = stressName
 
-    def setBiotCoefficientName( self: Self, biotName: str) -> None:
+    def setBiotCoefficientName( self: Self, biotName: str ) -> None:
         """Set the stress attribute name.
 
         Args:
@@ -346,8 +370,7 @@ class FaultStabilityAnalysis:
         if biotName != "None":
             self.biotName = biotName
 
-
-    def setProfileStartPoints( self: Self, startPoints: list[ tuple[ np.float64, np.float64, np.float64 ] ]) -> None:
+    def setProfileStartPoints( self: Self, startPoints: list[ tuple[ float, float ] ] ) -> None:
         """Set the profile start points.
 
         Args:

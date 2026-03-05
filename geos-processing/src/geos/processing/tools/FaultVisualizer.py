@@ -2,33 +2,32 @@
 # SPDX-FileCopyrightText: Copyright 2023-2026 TotalEnergies.
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
 import os
-import pandas as pd
+import logging
 import numpy as np
-import numpy.typing as npt
 from pathlib import Path
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
-import pyvista as pv
 from typing_extensions import Self, Union
 
-from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
-from geos.processing.tools.ProfileExtractor import ProfileExtractor
-from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getArrayInObject )
-from geos.utils.pieceEnum import Piece
+from geos.processing.tools.ProfileExtractor import ( ProfileExtractor )
+from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getArrayInObject, getAttributeSet )
+from geos.utils.pieceEnum import ( Piece )
 from geos.utils.Logger import ( Logger, getLogger )
 
 loggerTitle = "Fault Visualizer"
 
+
 class Visualizer:
     """Visualization utilities."""
 
-
-    def __init__( self, profileSearchRadius: float| None = None,
-                        minDepthProfiles: float | None = None,
-                        maxDepthProfiles: float | None = None,
-                        savePlots:bool = True,
-                        logger: Union[ Logger, None] = None ) -> None:
+    def __init__( self,
+                  profileSearchRadius: float | None = None,
+                  minDepthProfiles: float | None = None,
+                  maxDepthProfiles: float | None = None,
+                  savePlots: bool = True,
+                  logger: Union[ Logger, None ] = None ) -> None:
         """Visualization utilities.
 
         Args:
@@ -54,7 +53,6 @@ class Visualizer:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-
     def plotMohrCoulombDiagram( self: Self,
                                 surface: vtkUnstructuredGrid,
                                 time: float,
@@ -68,14 +66,14 @@ class Visualizer:
             path (Path): Saving path.
             save (bool): Flag to save figures. Defaults is True.
         """
-        sigmaN = - getArrayInObject( surface, "sigmaNEffective", Piece.CELLS )
+        sigmaN = -getArrayInObject( surface, "sigmaNEffective", Piece.CELLS )
         tau = np.abs( getArrayInObject( surface, "tauEffective", Piece.CELLS ) )
         SCU = np.abs( getArrayInObject( surface, "SCU", Piece.CELLS ) )
-        depth =  getArrayInObject( surface, 'elementCenter', Piece.CELLS )[ :, 2 ]
+        depth = getArrayInObject( surface, 'elementCenter', Piece.CELLS )[ :, 2 ]
 
         cohesion = getArrayInObject( surface, "mohrCohesion", Piece.CELLS )[ 0 ]
-        mu = getArrayInObject( surface, "mohrFrictionCoefficient" , Piece.CELLS )[ 0 ]
-        phi = getArrayInObject( surface, 'mohrFrictionAngle' , Piece.CELLS )[ 0 ]
+        mu = getArrayInObject( surface, "mohrFrictionCoefficient", Piece.CELLS )[ 0 ]
+        phi = getArrayInObject( surface, 'mohrFrictionAngle', Piece.CELLS )[ 0 ]
 
         fig, axes = plt.subplots( 1, 2, figsize=( 16, 8 ) )
 
@@ -108,19 +106,19 @@ class Visualizer:
         if save:
             years = time / ( 365.25 * 24 * 3600 )
             filename = f'mohr_coulomb_phi{phi}_c{cohesion}_{years:.0f}y.png'
-            plt.savefig( os.path.join( path, filename), dpi=300, bbox_inches='tight' )
+            plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
             self.logger.info( f"  📊 Plot saved: {filename}" )
 
-
-    def plotDepthProfiles( self: Self,
-                           surface: vtkUnstructuredGrid,
-                           time: float,
-                           path: Path = Path( "." ),
-                           save: bool = True,
-                           profileStartPoints: list[ tuple[ float, float ] ] | None = None,
-                           maxProfilePoints: int = 1000,
-                           referenceProfileId: int = 1,
-                         ) -> None:
+    def plotDepthProfiles(
+        self: Self,
+        surface: vtkUnstructuredGrid,
+        time: float,
+        path: Path = Path( "." ),
+        save: bool = True,
+        profileStartPoints: list[ tuple[ float, float ] ] | None = None,
+        maxProfilePoints: int = 1000,
+        referenceProfileId: int = 1,
+    ) -> None:
         """Plot vertical profiles along the fault showing stress and SCU vs depth.
 
         Args:
@@ -155,15 +153,6 @@ class Visualizer:
             self.logger.warning( "  ⚠️ No fault IDs found - profiles may jump between faults" )
 
         # ===================================================================
-        # LOAD REFERENCE DATA (GEOS + Analytical)
-        # ===================================================================
-        scriptDir = os.path.dirname( os.path.abspath( __file__ ) )
-        referenceData = Visualizer.loadReferenceData( time, scriptDir, profileId=referenceProfileId )
-
-        geosData = referenceData[ 'geos' ]
-        analyticalData = referenceData[ 'analytical' ]
-
-        # ===================================================================
         # PROFILE EXTRACTION SETUP
         # ===================================================================
 
@@ -177,10 +166,8 @@ class Visualizer:
         yRange = yMax - yMin
         zMax - zMin
 
-        if self.profileSearchRadius is not None:
-            searchRadius = self.profileSearchRadius
-        else:
-            searchRadius = min( xRange, yRange ) * 0.15
+        searchRadius = self.profileSearchRadius if self.profileSearchRadius is not None else min( xRange,
+                                                                                                  yRange ) * 0.15
 
         # Auto-generate profile points if not provided
         if profileStartPoints is None:
@@ -218,9 +205,8 @@ class Visualizer:
         # ===================================================================
         # EXTRACT AND PLOT PROFILES
         # ===================================================================
-
-        for i, ( xPos, yPos, zPos ) in enumerate( profileStartPoints ):
-            self.logger.info( f"     → Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f}, {zPos:.1f})" )
+        for i, ( xPos, yPos ) in enumerate( profileStartPoints ):
+            self.logger.info( f"     → Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f})" )
 
             depthsSigma, profileSigmaN, PathXSigma, PathYSigma = ProfileExtractor.extractAdaptiveProfile(
                 centers, sigmaN, xPos, yPos, searchRadius )
@@ -304,66 +290,6 @@ class Visualizer:
             return
 
         # ===================================================================
-        # ADD REFERENCE DATA (GEOS + Analytical) - Only once
-        # ===================================================================
-
-        if geosData is not None:
-            # Colonnes: [Depth_m, Normal_Stress_bar, Shear_Stress_bar, SCU]
-            # Index:    [0,       1,                 2,                 3]
-
-            axes[ 0 ].plot( geosData[ :, 1 ] * 10,
-                            geosData[ :, 0 ],
-                            'o',
-                            color='blue',
-                            markersize=6,
-                            label='GEOS Contact Solver',
-                            alpha=0.7,
-                            mec='k',
-                            mew=1,
-                            fillstyle='none' )
-
-            axes[ 1 ].plot( geosData[ :, 2 ] * 10,
-                            geosData[ :, 0 ],
-                            'o',
-                            color='blue',
-                            markersize=6,
-                            label='GEOS Contact Solver',
-                            alpha=0.7,
-                            mec='k',
-                            mew=1,
-                            fillstyle='none' )
-
-            if geosData.shape[ 1 ] > 3:  # SCU column exists
-                axes[ 2 ].plot( geosData[ :, 3 ],
-                                geosData[ :, 0 ],
-                                'o',
-                                color='blue',
-                                markersize=6,
-                                label='GEOS Contact Solver',
-                                alpha=0.7,
-                                mec='k',
-                                mew=1,
-                                fillstyle='none' )
-
-        if analyticalData is not None:
-            # Format analytique (peut varier)
-            axes[ 0 ].plot( analyticalData[ :, 1 ] * 10,
-                            analyticalData[ :, 0 ],
-                            '--',
-                            color='darkorange',
-                            linewidth=2,
-                            label='Analytical',
-                            alpha=0.8 )
-            if analyticalData.shape[ 1 ] > 2:
-                axes[ 1 ].plot( analyticalData[ :, 2 ] * 10,
-                                analyticalData[ :, 0 ],
-                                '--',
-                                color='darkorange',
-                                linewidth=2,
-                                label='Analytical',
-                                alpha=0.8 )
-
-        # ===================================================================
         # CONFIGURE PLOTS
         # ===================================================================
 
@@ -426,16 +352,16 @@ class Visualizer:
             plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
             self.logger.info( f"  💾 Depth profiles saved: {filename}" )
 
-
-    def plotVolumeStressProfiles( self: Self,
-                                  volumeMesh: vtkUnstructuredGrid,
-                                  faultSurface: vtkUnstructuredGrid,
-                                  time: float,
-                                  path: Path = Path( "." ),
-                                  save: bool = True,
-                                  profileStartPoints: list[ tuple[ float, float, float ] ] | None = None,
-                                  maxProfilePoints: int = 1000,
-                                ) -> None:
+    def plotVolumeStressProfiles(
+        self: Self,
+        volumeMesh: vtkUnstructuredGrid,
+        faultSurface: vtkUnstructuredGrid,
+        time: float,
+        path: Path = Path( "." ),
+        save: bool = True,
+        profileStartPoints: list[ tuple[ float, float, float ] ] | None = None,
+        maxProfilePoints: int = 1000,
+    ) -> None:
         """Plot stress profiles in volume cells adjacent to the fault.
 
         Extracts profiles through contributing cells on BOTH sides of the fault
@@ -463,7 +389,7 @@ class Visualizer:
                 return
 
         # Check for pressure
-        if isAttributeInObject( volumeMesh, 'pressure_bar', Piece.CELLS):
+        if isAttributeInObject( volumeMesh, 'pressure_bar', Piece.CELLS ):
             pressureField = 'pressure_bar'
             pressure = getArrayInObject( volumeMesh, pressureField, Piece.CELLS )
         elif isAttributeInObject( volumeMesh, 'pressure', Piece.CELLS ):
@@ -503,13 +429,12 @@ class Visualizer:
         if pressure is not None:
             pressureMinus = pressure[ maskMinus ]
 
-        # Créer subset de cellData pour le côté plus
+        # cellData subset
         cellDataPlus = {}
         cellDataMinus = {}
-        for key in volumeMesh.GetCellData().items():
+        for key in getAttributeSet( volumeMesh, Piece.CELLS ):
             cellDataPlus[ key ] = getArrayInObject( volumeMesh, key )[ maskPlus ]
             cellDataMinus[ key ] = getArrayInObject( volumeMesh, key )[ maskMinus ]
-
 
         self.logger.info( f"  📍 Plus side: {len(centersPlus):,} cells" )
         self.logger.info( f"  📍 Minus side: {len(centersMinus):,} cells" )
@@ -533,10 +458,7 @@ class Visualizer:
         zMax - zMin
 
         # Search radius (pour extractAdaptiveProfile sur volumes)
-        if self.profileSearchRadius is not None:
-            searchRadius = self.profileSearchRadius
-        else:
-            searchRadius = min( xRange, yRange ) * 0.2
+        searchRadius = self.profileSearchRadius if self.profileSearchRadius is not None else min( xRange, yRange ) * 0.2
 
         # ===================================================================
         # AUTO-GENERATE PROFILE POINTS IF NOT PROVIDED
@@ -601,13 +523,7 @@ class Visualizer:
 
                 if pressure is not None:
                     depthsPressurePlus, profilePressurePlus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                        centersPlus,
-                        pressurePlus,
-                        xPos,
-                        yPos,
-                        zPos,
-                        searchRadius,
-                        cellData=cellDataPlus )
+                        centersPlus, pressurePlus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
 
                 if len( depthsSigma1Plus ) >= 3:
                     labelPlus = 'Plus side'
@@ -707,13 +623,7 @@ class Visualizer:
 
                 if pressure is not None:
                     depthsPressureMinus, profilePressureMinus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                        centersMinus,
-                        pressureMinus,
-                        xPos,
-                        yPos,
-                        zPos,
-                        searchRadius,
-                        cellData=cellDataMinus )
+                        centersMinus, pressureMinus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
 
                 if len( depthsSigma1Minus ) >= 3:
                     labelMinus = 'Minus side'
@@ -862,7 +772,7 @@ class Visualizer:
         axes[ 4 ].legend( handles=customLines, loc='best', fontsize=fsize - 3, ncol=1 )
 
         # Change vertical scale
-        if self.maxDepthProfile is not None:
+        if self.maxDepthProfiles is not None:
             for i in range( len( axes ) ):
                 axes[ i ].set_ylim( bottom=self.maxDepthProfiles )
 
@@ -884,4 +794,3 @@ class Visualizer:
             filename = f'volume_stress_profiles_both_sides_{years:.0f}y.png'
             plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
             self.logger.info( f"  💾 Volume profiles saved: {filename}" )
-

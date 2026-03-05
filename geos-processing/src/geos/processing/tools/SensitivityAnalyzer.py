@@ -10,21 +10,22 @@ from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
 from typing_extensions import Any, Self, Union
 
-from vtkmodules.vtkCommonDataModel import vtkCellData, vtkDataSet, vtkPolyData, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkUnstructuredGrid
 
-from geos.utils.pieceEnum import Piece
+from geos.utils.pieceEnum import ( Piece )
 from geos.mesh.utils.arrayHelpers import ( getArrayInObject )
-from geos.processing.tools.MohrCoulomb import (  MohrCoulombAnalysis )
+from geos.processing.tools.MohrCoulomb import ( MohrCoulombAnalysis )
 
 from geos.processing.tools.ProfileExtractor import ( ProfileExtractor, ProfileExtractorMethod )
 from geos.utils.Logger import ( Logger, getLogger )
 
-
 loggerTitle = "Sensitivity Analyzer"
+
 
 class SensitivityAnalyzer:
     """Performs sensitivity analysis on Mohr-Coulomb parameters."""
-    def __init__( self: Self, outputDir: str = ".", logger: Union[ Logger, None] = None ) -> None:
+
+    def __init__( self: Self, outputDir: str = ".", logger: Union[ Logger, None ] = None ) -> None:
         """Init.
 
         Args:
@@ -48,8 +49,9 @@ class SensitivityAnalyzer:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-
-    def runAnalysis( self: Self, surfaceWithStress, time: float, sensitivityFrictionAngles: list[float], sensitivityCohesions: list[float], profileStartPoints: list[tuple[float]], profileSearchRadius: list[tuple[float]] ) -> list[ dict[ str, Any ] ]:
+    def runAnalysis( self: Self, surfaceWithStress: vtkDataSet, time: float, sensitivityFrictionAngles: list[ float ],
+                     sensitivityCohesions: list[ float ], profileStartPoints: list[ tuple[ float, float ] ],
+                     profileSearchRadius: float ) -> list[ dict[ str, Any ] ]:
         """Run sensitivity analysis for multiple friction angles and cohesions.
 
         Args:
@@ -57,7 +59,7 @@ class SensitivityAnalyzer:
             time (float): Time
             sensitivityFrictionAngles (list[float]): List of friction angles to analyze (in degrees)
             sensitivityCohesions (list[float]): List of cohesion to analyze (in bar)
-            profileStartPoints (list[tuple[float]]): List of start points for profile analysis
+            profileStartPoints (list[tuple[float, float]]): List of start points for profile analysis
             profileSearchRadius (float): Searching radius for determination of profile.
 
         Returns:
@@ -78,7 +80,7 @@ class SensitivityAnalyzer:
             for cohesion in cohesions:
                 self.logger.info( f"→ Testing φ={frictionAngle}°, C={cohesion} bar" )
 
-                surfaceCopy = type(surfaceWithStress)()
+                surfaceCopy = type( surfaceWithStress )()
                 surfaceCopy.DeepCopy( surfaceWithStress )
 
                 mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle )
@@ -86,14 +88,14 @@ class SensitivityAnalyzer:
                 surfaceAnalyzed = mc.analyze()
 
                 stats = self._extractStatistics( surfaceAnalyzed )
-                stats["frictionAngle"] = frictionAngle
-                stats[ "cohesion"] = cohesion
+                stats[ "frictionAngle" ] = frictionAngle
+                stats[ "cohesion" ] = cohesion
 
                 results.append( stats )
 
                 self.logger.info( f"   Unstable: {stats['nUnstable']}, "
-                       f"Critical: {stats['nCritical']}, "
-                       f"Stable: {stats['nStable']}" )
+                                  f"Critical: {stats['nCritical']}, "
+                                  f"Stable: {stats['nStable']}" )
 
         self.results = results
 
@@ -104,7 +106,6 @@ class SensitivityAnalyzer:
         self._plotSCUDepthProfiles( results, time, surfaceWithStress, profileStartPoints, profileSearchRadius )
 
         return results
-
 
     def _extractStatistics( self: Self, surface: vtkUnstructuredGrid ) -> dict[ str, Any ]:
         """Extract statistical metrics from analyzed surface.
@@ -130,7 +131,6 @@ class SensitivityAnalyzer:
 
         nCells = surface.GetNumberOfCells()
 
-
         stats = {
             'nCells': nCells,
             'nStable': np.sum( stability == 0 ),
@@ -147,7 +147,6 @@ class SensitivityAnalyzer:
         }
 
         return stats
-
 
     def _plotSensitivityResults( self: Self, results: list[ dict[ str, Any ] ], time: float ) -> None:
         """Create comprehensive sensitivity analysis plots.
@@ -172,7 +171,6 @@ class SensitivityAnalyzer:
         filename = f'sensitivity_analysis_{years:.0f}y.png'
         fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         self.logger.info( f"📊 Sensitivity plot saved: {filename}" )
-
 
     def _plotHeatMap( self: Self, df: pd.DataFrame, column: str, title: str, ax: plt.Axes ) -> None:
         """Create a single heatmap for sensitivity analysis.
@@ -205,19 +203,23 @@ class SensitivityAnalyzer:
 
         plt.colorbar( im, ax=ax )
 
-
-    def _plotSCUDepthProfiles( self: Self, results: list[ dict[ str, Any ] ], time: float,
-                               surfaceWithStress: vtkDataSet, profileStartPoints: list[tuple[float]]=None, profileSearchRadius: list[tuple[float]]=None,
-                               maxDepthProfiles: float=None, extractionMethod: ProfileExtractorMethod=ProfileExtractorMethod.ADAPTATIVE ) -> None:
+    def _plotSCUDepthProfiles( self: Self,
+                               results: list[ dict[ str, Any ] ],
+                               time: float,
+                               surfaceWithStress: vtkDataSet,
+                               profileStartPoints: list[ tuple[ float, float ] ] | None = None,
+                               profileSearchRadius: float | None = None,
+                               maxDepthProfiles: float | None = None,
+                               extractionMethod: ProfileExtractorMethod = ProfileExtractorMethod.ADAPTATIVE ) -> None:
         """Plot SCU depth profiles for all parameter combinations.
 
         Each (cohesion, friction) pair gets a unique color.
 
         Args:
-            results (list[dict[str, Any]]):
+            results (list[dict[str, Any]]): Dictionnary containing results from sensitivity analysis.
             time (float): Time
-            surfaceWithStress (vtkDataSet):
-            profileStartPoints (list[tuple[float]], optional): List of start points for profile analysis
+            surfaceWithStress (vtkDataSet): Fault mesh with stress attribute.
+            profileStartPoints (list[tuple[float, float]], optional): List of start points for profile analysis
                 Defaults is None.
             profileSearchRadius (float, optional): Searching radius for determination of profile
                 Defaults is None.
@@ -232,7 +234,7 @@ class SensitivityAnalyzer:
 
         # Auto-generate if not provided
         if profileStartPoints is None:
-            self.logger.warning( "  ⚠️  No PROFILE_START_POINTS in config, auto-generating..." )
+            self.logger.warning( "  ⚠️  No PROFILE_START_POINTS provided, auto-generating..." )
             xMin, xMax = np.min( centers[ :, 0 ] ), np.max( centers[ :, 0 ] )
             yMin, yMax = np.min( centers[ :, 1 ] ), np.max( centers[ :, 1 ] )
 
@@ -260,8 +262,8 @@ class SensitivityAnalyzer:
         else:
             searchRadius = profileSearchRadius
 
-        self.logger.info( f"  📍 Using {len(profileStartPoints)} profile point(s) from config"
-            f"     Search radius: {searchRadius:.1f}m" )
+        self.logger.info( f"  📍 Using {len(profileStartPoints)} profile point(s)\n"
+                          f"     Search radius: {searchRadius:.1f}m" )
 
         # Create colormap for parameter combinations
         nCombinations = len( results )
@@ -278,10 +280,10 @@ class SensitivityAnalyzer:
             axes = [ axes ]
 
         # Plot each profile point
-        for profileIdx, ( xPos, yPos, zPos ) in enumerate( profileStartPoints ):
+        for profileIdx, ( xPos, yPos ) in enumerate( profileStartPoints ):
             ax = axes[ profileIdx ]
 
-            self.logger.info( f"  → Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}, {zPos:.1f}):\n" )
+            self.logger.info( f"  → Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}):\n" )
 
             # Plot each parameter combination
             for idx, params in enumerate( results ):
@@ -289,9 +291,8 @@ class SensitivityAnalyzer:
                 cohesion = params[ 'cohesion' ]
 
                 # Re-analyze surface with these parameters
-                surfaceCopy = type(surfaceWithStress)()
+                surfaceCopy = type( surfaceWithStress )()
                 surfaceCopy.DeepCopy( surfaceWithStress )
-
 
                 mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle )
 
@@ -303,7 +304,7 @@ class SensitivityAnalyzer:
                 # Extract profile using adaptive method
                 if extractionMethod == ProfileExtractorMethod.ADAPTATIVE:
                     depthsSCU, profileSCU, _, _ = ProfileExtractor().extractAdaptiveProfile(
-                    centers, SCU, xPos, yPos, searchRadius )
+                        centers, SCU, xPos, yPos, searchRadius )
                 else:
                     raise ValueError( f"Unrecognized profile extraction method '{extractionMethod}'." )
 

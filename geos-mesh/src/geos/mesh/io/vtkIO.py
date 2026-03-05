@@ -5,14 +5,15 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Type, TypeAlias
+from typing import Optional, Type, TypeAlias, Self
 from xml.etree import ElementTree as ET
-from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid, vtkDataSet
 from vtkmodules.vtkIOCore import vtkWriter
 from vtkmodules.vtkIOLegacy import vtkDataReader, vtkUnstructuredGridWriter, vtkUnstructuredGridReader
 from vtkmodules.vtkIOXML import ( vtkXMLGenericDataObjectReader, vtkXMLUnstructuredGridWriter, vtkXMLWriter,
                                   vtkXMLStructuredGridWriter )
-from geos.utils.Logger import getLogger
+
+from geos.utils.Logger import ( getLogger )
 
 __doc__ = """
 Input and Output methods for various VTK mesh formats.
@@ -271,46 +272,61 @@ def writeMesh( mesh: vtkPointSet, vtkOutput: VtkOutput, canOverwrite: bool = Fal
 
 
 class PVDReader:
-    def __init__( self, filename ):
+
+    def __init__( self: Self, filename: str ) -> None:
+        """PVD Reader class.
+
+        Args:
+            filename (str): PVD filename
+        """
         self.filename = filename
         self.dir = Path( filename ).parent
         self.datasets = {}
         self._read()
 
-    def _read( self ):
+    def _read( self ) -> None:
         tree = ET.parse( self.filename )
         root = tree.getroot()
-        datasets = root[0].findall( 'DataSet' )
+        datasets = root[ 0 ].findall( 'DataSet' )
 
-        n: int = 0
-        for dataset in datasets:
+        for n, dataset in enumerate( datasets ):
             timestep = float( dataset.attrib.get( 'timestep', 0 ) )
             datasetFile = Path( dataset.attrib.get( 'file' ) )
-            # self.datasets.update( ( n, timestep ): datasetFile )
             self.datasets[ n ] = ( timestep, datasetFile )
-            n += 1
 
+    def getDataSetAtTimeIndex( self: Self, timeIndex: int ) -> vtkDataSet:
+        """Get the dataset corresponding to requested time index.
 
-    def getDataSetAtTimeIndex( self, timeIndex: int):
-        return readMesh(  self.dir / self.datasets[ timeIndex ][ 1 ] )
+        Args:
+            timeIndex (int): Time index
 
-    def getAllTimestepsValues( self ) -> list[ float ]:
-        return list( [ value[0] for _, value in self.datasets.items() ] )
+        Returns:
+            vtkDataSet: Dataset
+        """
+        return readMesh( self.dir / self.datasets[ timeIndex ][ 1 ] )
+
+    def getAllTimestepsValues( self: Self ) -> list[ float ]:
+        """Get the list of all timesteps values from the PVD.
+
+        Returns:
+            list[float]: List of timesteps values.
+        """
+        return [ value[ 0 ] for _, value in self.datasets.items() ]
 
 
 def createPVD( outputDir: str, outputFiles: list[ tuple[ int, str ] ] ) -> None:
-        """Create PVD collection file.
+    """Create PVD collection file.
 
-        Args:
-            outputDir (str): Output directory
-            outputFiles (list[tuple[int, str]]): List containing all the filenames of the PVD files
-        """
-        pvdPath = os.path.join( outputDir, 'fault_analysis.pvd')
-        with open( pvdPath, 'w' ) as f:
-            f.write( '<VTKFile type="Collection" version="0.1">\n' )
-            f.write( '  <Collection>\n' )
-            for t, fname in outputFiles:
-                f.write( f'    <DataSet timestep="{t}" file="{fname}"/>\n' )
-            f.write( '  </Collection>\n' )
-            f.write( '</VTKFile>\n' )
-        print( f"\n✅ PVD created: {pvdPath}" )
+    Args:
+        outputDir (str): Output directory
+        outputFiles (list[tuple[int, str]]): List containing all the filenames of the PVD files
+    """
+    pvdPath = os.path.join( outputDir, 'fault_analysis.pvd' )
+    with open( pvdPath, 'w' ) as f:
+        f.write( '<VTKFile type="Collection" version="0.1">\n' )
+        f.write( '  <Collection>\n' )
+        for t, fname in outputFiles:
+            f.write( f'    <DataSet timestep="{t}" file="{fname}"/>\n' )
+        f.write( '  </Collection>\n' )
+        f.write( '</VTKFile>\n' )
+    print( f"\n✅ PVD created: {pvdPath}" )

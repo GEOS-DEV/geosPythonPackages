@@ -3,21 +3,21 @@
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
 import logging
 import numpy as np
-import pyvista as pv
 import numpy.typing as npt
 from typing_extensions import Self, Union
 from enum import Enum
 
-from vtkmodules.vtkCommonDataModel import vtkCellData, vtkDataSet, vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkCellData
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from geos.utils.Logger import ( Logger, getLogger )
 
 loggerTitle = "Profile Extractor"
 
+
 class ProfileExtractor:
 
-    def __init__( self: Self, logger: Union[ Logger, None] = None ) -> None:
+    def __init__( self: Self, logger: Union[ Logger, None ] = None ) -> None:
         """Utility class for extracting profiles along fault surfaces.
 
         Args:
@@ -33,23 +33,18 @@ class ProfileExtractor:
             self.logger.setLevel( logging.INFO )
             self.logger.propagate = False
 
-
     def extractAdaptiveProfile(
         self: Self,
-        centers: npt.NDArray[np.float64],
-        values: npt.NDArray[np.float64],
+        centers: npt.NDArray[ np.float64 ],
+        values: npt.NDArray[ np.float64 ],
         xStart: float,
         yStart: float,
         zStart: float | None = None,
         stepSize: float = 20.0,
         maxSteps: int = 500,
-        cellData: vtkCellData = None
-    ) -> tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64]
-    ]:
+        cellData: vtkCellData | None = None
+    ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
+                npt.NDArray[ np.float64 ] ]:
         """Extract a vertical depth profile with automatic fault detection.
 
         The algorithm adaptively follows a vertical sampling strategy guided by
@@ -119,7 +114,7 @@ class ProfileExtractor:
         startPoint = centers[ startIdx ]
 
         self.logger.info( f"        Starting point: ({startPoint[0]:.1f}, {startPoint[1]:.1f}, {startPoint[2]:.1f})\n"
-                 f"        Starting cell index: {startIdx}" )
+                          f"        Starting cell index: {startIdx}" )
 
         # ===================================================================
         # STEP 2: Auto-detection of target fault
@@ -132,8 +127,7 @@ class ProfileExtractor:
 
             for fieldName in faultFieldNames:
                 if cellData.HasArray( fieldName ):
-                    faultIds = vtk_to_numpy( cellData[ fieldName ] )
-
+                    faultIds = vtk_to_numpy( cellData.GetArray( fieldName ) )
 
                     if len( faultIds ) != len( centers ):
                         self.logger.warning( f"        ⚠️ Field '{fieldName}' length mismatch, skipping" )
@@ -144,8 +138,8 @@ class ProfileExtractor:
 
                     uniqueIds = np.unique( faultIds )
                     self.logger.info( f"        Found fault field: '{fieldName}'\n"
-                    f"        Available fault IDs: {uniqueIds}\n"
-                    f"        Target fault ID at start point: {targetFaultId}\n")
+                                      f"        Available fault IDs: {uniqueIds}\n"
+                                      f"        Target fault ID at start point: {targetFaultId}\n" )
 
                     break
 
@@ -158,8 +152,8 @@ class ProfileExtractor:
             nOnFault = np.sum( maskSameFault )
 
             self.logger.info(
-                    f"        Filtering to fault ID={targetFaultId}: {nOnFault}/{nTotal} cells ({nOnFault/nTotal*100:.1f}%)"
-                )
+                f"        Filtering to fault ID={targetFaultId}: {nOnFault}/{nTotal} cells ({nOnFault/nTotal*100:.1f}%)"
+            )
 
             if nOnFault == 0:
                 self.logger.warning( "        ⚠️ No cells found on target fault" )
@@ -177,7 +171,8 @@ class ProfileExtractor:
         else:
             self.logger.warning( "        ⚠️ No fault identification field found" )
             if cellData is not None:
-                self.logger.info( f"        Available fields: {list(cellData.keys())}" )
+                fields = [ cellData.GetArrayName( i ) for i in range( cellData.GetNumberOfArrays() ) ]
+                self.logger.info( f"        Available fields: {list(fields)}" )
             else:
                 self.logger.warning( "        cellData not provided" )
             self.logger.warning( "        Profile may jump between faults!" )
@@ -207,7 +202,7 @@ class ProfileExtractor:
         xyTolerance = max( lateralExtent * 0.3, 100.0 )
 
         self.logger.info( f"        Fault extent: X={xRange:.1f}m, Y={yRange:.1f}m, Z={zRange:.1f}m"
-                f"        XY tolerance: {xyTolerance:.1f}m" )
+                          f"        XY tolerance: {xyTolerance:.1f}m" )
 
         # ===================================================================
         # STEP 6: Slice computation
@@ -245,7 +240,7 @@ class ProfileExtractor:
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         self.logger.info( f"        Median Z spacing: {medianZSpacing:.1f}m"
-                 f"        Creating {nSlices} slices" )
+                          f"        Creating {nSlices} slices" )
 
         try:
             zSlices = np.linspace( zMax, zMin, nSlices + 1 )
@@ -318,14 +313,14 @@ class ProfileExtractor:
         xyDisplacement = np.sqrt( ( pathX[ -1 ] - pathX[ 0 ] )**2 + ( pathY[ -1 ] - pathY[ 0 ] )**2 )
 
         self.logger.info( f"        ✅ Extracted {len(profileIndices)} points\n"
-            f"           Depth range: [{depths.max():.1f}, {depths.min():.1f}]m\n"
-            f"           Coverage: {depthCoverage:.1f}% of fault depth\n"
-            f"           XY displacement: {xyDisplacement:.1f}m\n" )
+                          f"           Depth range: [{depths.max():.1f}, {depths.min():.1f}]m\n"
+                          f"           Coverage: {depthCoverage:.1f}% of fault depth\n"
+                          f"           XY displacement: {xyDisplacement:.1f}m\n" )
 
         return ( depths, profileValues, pathX, pathY )
 
 
-class ProfileExtractorMethod( str, Enum):
+class ProfileExtractorMethod( str, Enum ):
     """String Enum of profile extraction method."""
     VERTICAL_TOPO_BASED = "VerticalProfileTopologyBased"
     ADAPTATIVE = "AdaptativeProfile"
