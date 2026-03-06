@@ -5,7 +5,8 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Type, TypeAlias, Self
+from typing import Optional, Type, TypeAlias
+from typing_extensions import Self
 from xml.etree import ElementTree as ET
 from vtkmodules.vtkCommonDataModel import vtkPointSet, vtkUnstructuredGrid, vtkDataSet
 from vtkmodules.vtkIOCore import vtkWriter
