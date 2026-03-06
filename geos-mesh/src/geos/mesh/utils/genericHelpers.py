@@ -10,18 +10,21 @@ from vtkmodules.util.numpy_support import ( numpy_to_vtk, vtk_to_numpy )
 from vtkmodules.vtkCommonCore import vtkIdList, vtkPoints, reference, vtkDataArray, vtkLogger, vtkFloatArray
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkMultiBlockDataSet, vtkPolyData, vtkDataSet,
                                             vtkDataObject, vtkPlane, vtkCellTypes, vtkIncrementalOctreePointLocator,
-                                            VTK_TRIANGLE )
+                                            VTK_TRIANGLE, vtkSelection, vtkSelectionNode )
 from vtkmodules.vtkFiltersCore import ( vtk3DLinearGridPlaneCutter, vtkPolyDataNormals, vtkPolyDataTangents )
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
-from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
+from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter, vtkGeometryFilter
 from vtkmodules.vtkFiltersGeneral import vtkDataSetTriangleFilter
+from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
+from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
+from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 
 from geos.mesh.utils.multiblockHelpers import ( getBlockElementIndexesFlatten, getBlockFromFlatIndex )
 
 from geos.utils.algebraFunctions import ( getAttributeMatrixFromVector, getAttributeVectorFromMatrix )
 from geos.utils.geometryFunctions import ( getChangeOfBasisMatrix, CANONICAL_BASIS_3D )
 from geos.utils.Logger import ( getLogger, Logger, VTKCaptureLog, RegexExceptionFilter )
-from geos.utils.Errors import VTKError
+from geos.utils.Errors import ( VTKError )
 
 __doc__ = """
 Generic VTK utilities.
@@ -515,12 +518,14 @@ def getLocalBasisVectors(
 
 def computeNormals(
     surface: vtkPolyData,
+    pointNormals: bool = False,
     logger: Union[ Logger, None ] = None,
 ) -> vtkPolyData:
     """Compute and set the normals of a given surface.
 
     Args:
         surface (vtkPolyData): The input surface.
+        pointNormals (bool): Flag to compute point normals. Defaults is False.
         logger (Union[Logger, None], optional): A logger to manage the output messages.
             Defaults to None, an internal logger is used.
 
@@ -665,3 +670,63 @@ def computeSurfaceTextureCoordinates(
         vtkErrorLogger.error( captured.strip() )
 
     return textureFilter.GetOutput()
+
+
+def extractCellSelection( mesh: vtkUnstructuredGrid, ids: list[ int ] ) -> vtkUnstructuredGrid:
+    """Extract cell selection from list of cell Ids.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Initial mesh.
+        ids (list[int]): Cell Ids of the cells to extract.
+
+    Returns:
+        vtkUnstructuredGrid: Subset of the input mesh.
+    """
+    selectionNode: vtkSelectionNode = vtkSelectionNode()
+    selectionNode.SetFieldType( vtkSelectionNode.CELL )
+    selectionNode.SetContentType( vtkSelectionNode.INDICES )
+    selectionNode.SetSelectionList( numpy_to_vtkIdTypeArray( np.asarray( ids ).astype( np.int64 ) ) )
+
+    selection: vtkSelection = vtkSelection()
+    selection.AddNode( selectionNode )
+
+    extractCells = vtkExtractSelection()
+    extractCells.SetInputData( 0, mesh )
+    extractCells.SetInputData( 1, selection )
+    extractCells.Update()
+
+    return vtkUnstructuredGrid.SafeDownCast( extractCells.GetOutputDataObject( 0 ) )
+
+
+def extractSurface( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    """Extract surface from an input mesh.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Input mesh
+
+    Returns:
+        vtkUnstructuredGrid: Surface of the input mesh.
+    """
+    geomFilter: vtkGeometryFilter = vtkGeometryFilter()
+    geomFilter.SetInputData( mesh )
+
+    geomFilter.Update()
+
+    return geomFilter.GetOutput()
+
+
+def computeCellVolumes( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
+    """Compute and return the cell volumes.
+
+    Args:
+        mesh (vtkUnstructuredGrid): Input mesh.
+
+    Returns:
+        vtkUnstructuredGrid: Mesh with volume attribute.
+    """
+    volFilter: vtkCellSizeFilter = vtkCellSizeFilter()
+    volFilter.SetInputData( mesh )
+    volFilter.SetComputeVolume( True )
+    volFilter.Update()
+
+    return volFilter.GetOutput()
