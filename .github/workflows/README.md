@@ -27,7 +27,6 @@ Tests each Python package independently to ensure:
 - `geos-trame` - Trame-based visualization
 - `geos-utils` - Utility functions
 - `geos-xml-tools` - XML preprocessing and formatting
-- `geos-xml-viewer` - XML viewing tools
 - `hdf5-wrapper` - HDF5 file handling wrapper
 - `mesh-doctor` - Tools to perform checks on vtkUnstructuredGrids
 - `pygeos-tools` - GEOS Python tools
@@ -268,7 +267,6 @@ Tests are automatically skipped when changes only affect:
 - `geos-pv/` - ParaView utilities
 - `geos-timehistory/` - Time history analysis
 - `geos-trame/` - Trame visualization
-- `geos-xml-viewer/` - XML viewing tools
 
 #### Configuration Files
 - `.gitignore`, `.gitattributes` - Git configuration

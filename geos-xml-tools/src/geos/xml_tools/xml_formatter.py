@@ -1,8 +1,36 @@
-import os
+# ------------------------------------------------------------------------------------------------------------
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2025 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2025 TotalEnergies
+# Copyright (c) 2018-2025 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2025 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+# ------------------------------------------------------------------------------------------------------------
 from lxml import etree as ElementTree  # type: ignore[import]
+import os
 import re
-from typing import List, Any, TextIO
+from typing import Any, TextIO
 from geos.xml_tools import command_line_parsers
+
+__doc__ = """
+XML Formatter for GEOS Input Files.
+
+This module provides utilities for pretty-printing, re-indenting, and alphabetizing attributes in XML files.
+Features:
+* Customizable indentation, block separation, and attribute sorting.
+* Namespace and close-tag style options.
+* Command-line interface for batch formatting.
+
+Typical usage:
+    from geos.xml_tools.xml_formatter import format_file
+    format_file("input.xml", indent_size=4)
+
+Intended for improving readability and consistency of GEOS XML files.
+"""
 
 
 def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> str:
@@ -28,7 +56,7 @@ def format_attribute( attribute_indent: str, ka: str, attribute_value: str ) -> 
 
     # Identify and split multi-line attributes
     if re.match( r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value ):
-        split_positions: List[ Any ] = [ match.end() for match in re.finditer( r"}\s*,", attribute_value ) ]
+        split_positions: list[ Any ] = [ match.end() for match in re.finditer( r"}\s*,", attribute_value ) ]
         newline_indent = '\n%s' % ( ' ' * ( len( attribute_indent ) + len( ka ) + 4 ) )
         new_values = []
         for a, b in zip( [ None ] + split_positions, split_positions + [ None ], strict=False ):
@@ -71,20 +99,21 @@ def format_xml_level( output: TextIO,
         output.write( opening_line )
 
         # Write attributes
-        if ( len( node.attrib ) > 0 ):
+        if len( node.attrib ) > 0:
             # Choose indentation
             attribute_indent = '%s' % ( indent * ( level + 1 ) )
             if modify_attribute_indent:
                 attribute_indent = ' ' * ( len( opening_line ) )
 
             # Get a copy of the attributes
-            attribute_dict = {}
-            if ( ( level == 0 ) & include_namespace ):
-                # Handle the optional namespace information at the root level
-                # Note: preferably, this would point to a schema we host online
+            attribute_dict = dict( node.attrib )
+            # Conditionally add namespace attributes if at the root level
+            if level == 0 and include_namespace:
+                # Note: This will overwrite any existing namespace attributes with these default values.
+                # If you want to merge instead, you could use a dictionary update.
                 attribute_dict[ 'xmlns:xsi' ] = 'http://www.w3.org/2001/XMLSchema-instance'
                 attribute_dict[ 'xsi:noNamespaceSchemaLocation' ] = '/usr/gapps/GEOS/schema/schema.xsd'
-            elif ( level > 0 ):
+            elif level > 0:
                 attribute_dict = node.attrib
 
             # Sort attribute names
@@ -100,7 +129,7 @@ def format_xml_level( output: TextIO,
 
             for ii in range( 0, len( akeys ) ):
                 k = akeys[ ii ]
-                if ( ( ii == 0 ) & modify_attribute_indent ):
+                if ii == 0 and modify_attribute_indent:
                     output.write( ' %s=\"%s\"' % ( k, attribute_dict[ k ] ) )
                 else:
                     output.write( '\n%s%s=\"%s\"' % ( attribute_indent, k, attribute_dict[ k ] ) )
@@ -114,8 +143,7 @@ def format_xml_level( output: TextIO,
                                   sort_attributes, close_tag_newline, include_namespace )
 
                 # Add space between blocks
-                if ( ( level < block_separation_max_depth ) & ( ii < Nc - 1 ) &
-                     ( child.tag is not ElementTree.Comment ) ):
+                if level < block_separation_max_depth and ii < Nc - 1 and child.tag is not ElementTree.Comment:
                     output.write( '\n' )
 
             # Write the end tag
