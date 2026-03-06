@@ -702,7 +702,7 @@ def extractSurface( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
     """Extract surface from an input mesh.
 
     Args:
-        mesh: Input mesh
+        mesh (vtkUnstructuredGrid): Input mesh
 
     Returns:
         vtkUnstructuredGrid: Surface of the input mesh.
@@ -719,7 +719,7 @@ def computeCellVolumes( mesh: vtkUnstructuredGrid ) -> vtkUnstructuredGrid:
     """Compute and return the cell volumes.
 
     Args:
-        mesh: Input mesh.
+        mesh (vtkUnstructuredGrid): Input mesh.
 
     Returns:
         vtkUnstructuredGrid: Mesh with volume attribute.

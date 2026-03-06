@@ -28,7 +28,7 @@ class FaultGeometry:
 
     def __init__( self: Self,
                   mesh: vtkUnstructuredGrid,
-                  faultValues: list[ int ],
+                  faultValues: list[ int | float ],
                   faultAttribute: str,
                   volumeMesh: vtkUnstructuredGrid,
                   outputDir: str = ".",
@@ -147,8 +147,8 @@ class FaultGeometry:
         contribMask = contributionSide > 0
         contribMask = contribMask.astype( int )
 
-        createAttribute( self.volumeMesh, contributionSide, "contributionSide" )
-        createAttribute( self.volumeMesh, contribMask, "contributionToFaults" )
+        createAttribute( self.volumeMesh, contributionSide, "contributionSide", logger=self.logger )
+        createAttribute( self.volumeMesh, contribMask, "contributionToFaults", logger=self.logger )
 
         # Extract subsets
         maskAll = np.where( contribMask )[ 0 ]
@@ -166,7 +166,7 @@ class FaultGeometry:
         nBoth = np.sum( contributionSide == 3 )
         pctContrib = nContrib / nVolume * 100
 
-        self.logger.info( f"   ✅ Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)" +
+        self.logger.info( f"   ✅ Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)\n"
                           f"      Plus side only:  {nPlus} cells\n"
                           f"      Minus side only: {nMinus} cells\n"
                           f"      Both sides:      {nBoth} cells\n" )
@@ -185,7 +185,7 @@ class FaultGeometry:
 
         writeMesh( mesh=self.contributingCells, vtkOutput=VtkOutput( filenameAll ), canOverwrite=True )
         self.logger.info(
-            f"   💾 All contributing cells saved: {filenameAll}" +
+            f"   💾 All contributing cells saved: {filenameAll}\n"
             f"      ({self.contributingCells.GetNumberOfCells()} cells, {self.contributingCells.GetNumberOfPoints()} points)"
         )
 
@@ -295,8 +295,8 @@ class FaultGeometry:
                           f"{np.max(self.distanceToFault):.1f}] m" )
 
         # 5. Add these properties to volume mesh for reference
-        createAttribute( self.volumeMesh, self.volumeCellVolumes, 'cellVolume', Piece.CELLS )
-        createAttribute( self.volumeMesh, self.distanceToFault, 'distanceToFault', Piece.CELLS )
+        createAttribute( self.volumeMesh, self.volumeCellVolumes, 'cellVolume', Piece.CELLS, logger=self.logger )
+        createAttribute( self.volumeMesh, self.distanceToFault, 'distanceToFault', Piece.CELLS, logger=self.logger )
 
         self.logger.info( "   ✅ Geometric properties computed and cached" )
 
@@ -461,6 +461,9 @@ class FaultGeometry:
                 nFoundNone += 1
 
         nCells = faultSurface.GetNumberOfCells()
+        if nCells <= 0:
+            raise ValueError( "No cell in the fault surface." )
+
         avgNeighbors = totalNeighbors / nCells if nCells > 0 else 0
 
         stats = {

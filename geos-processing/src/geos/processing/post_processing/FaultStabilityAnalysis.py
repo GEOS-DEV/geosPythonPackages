@@ -34,7 +34,7 @@ To use it:
     # Filter inputs.
     inputMesh: vtkDataSet
     faultAttribute: str
-    faultValues: list[int]
+    faultValues: list[int|float]
     pvdFile: str
     speHandler: bool
 
@@ -101,7 +101,7 @@ class FaultStabilityAnalysis:
         self.savePlots: bool = True
         self.zscale: float = 1.0
 
-        self.nDepthProfiles = 1  # Nombre de lignes verticales
+        self.nDepthProfiles = 1
         self.minDepthProfiles = None
         self.maxDepthProfiles = None
         self.saveContributionCells = True  # Save vtu contributive cells
@@ -274,6 +274,8 @@ class FaultStabilityAnalysis:
 
     def applyFilter( self: Self ) -> None:
         """Analyze the stability of the fault for all timesteps requested."""
+        self.logger.info( f"Apply filter { self.logger.name }." )
+
         self._initializeFaultGeometry()
         self.processAllTimeIndexesRequested()
 
@@ -296,20 +298,19 @@ class FaultStabilityAnalysis:
         Args:
             surface (vtkUnstructuredGrid): Fault mesh.
             contributingCells (vtkUnstructuredGrid): Cells contributing to the fault.
-            time (float): Time
+            time (float): Time.
         """
-        Visualizer( self.profileSearchRadius, self.minDepthProfiles, self.maxDepthProfiles,
-                    savePlots=self.savePlots ).plotMohrCoulombDiagram(
-                        surface,
-                        time,
-                        self.outputDir,
-                        save=self.savePlots,
-                    )
-
         visualizer = Visualizer( self.profileSearchRadius,
                                  self.minDepthProfiles,
                                  self.maxDepthProfiles,
                                  savePlots=self.savePlots )
+
+        visualizer.plotMohrCoulombDiagram(
+            surface,
+            time,
+            self.outputDir,
+            save=self.savePlots,
+        )
 
         if self.computePrincipalStresses:
             # Plot principal stress from volume cells
@@ -318,14 +319,6 @@ class FaultStabilityAnalysis:
                                                  time=time,
                                                  path=self.outputDir,
                                                  profileStartPoints=self.profileStartPoints )
-
-            # Visualize comparison analytical/numerical
-            visualizer.plotAnalyticalVsNumericalComparison( volumeMesh=contributingCells,
-                                                            faultSurface=surface,
-                                                            time=time,
-                                                            path=self.outputDir,
-                                                            save=self.savePlots,
-                                                            profileStartPoints=self.profileStartPoints )
 
     def setSensitivityFrictionAngles( self: Self, angles: list[ float ] ) -> None:
         """Set the friction angles for sensitivy analysis."""

@@ -61,39 +61,39 @@ class MohrCoulombAnalysis:
         tauCritical = self.cohesion - sigmaN * mu
 
         # Coulomb Failure Stress
-        CFS = tau - mu * sigmaN
+        cfs = tau - mu * sigmaN
 
         # Shear Capacity Utilization: SCU = τ / τ_crit
-        SCU = np.divide( tau, tauCritical, out=np.zeros_like( tau ), where=tauCritical != 0 )
+        scu = np.divide( tau, tauCritical, out=np.zeros_like( tau ), where=tauCritical != 0 )
 
         # if "SCUInitial" not in surface.cell_data:
         if not isAttributeInObject( self.surface, "SCUInitial", Piece.CELLS ):
             # First timestep: store as initial reference
-            SCUInitial = SCU.copy()
-            CFSInitial = CFS.copy()
-            deltaSCU = np.zeros_like( SCU )
-            deltaCFS = np.zeros_like( CFS )
+            scuInitial = scu.copy()
+            cfsInitial = cfs.copy()
+            deltaSCU = np.zeros_like( scu )
+            deltaCFS = np.zeros_like( cfs )
 
-            createAttribute( self.surface, SCUInitial, "SCUInitial" )
-            createAttribute( self.surface, CFSInitial, "CFSInitial" )
+            createAttribute( self.surface, scuInitial, "SCUInitial" )
+            createAttribute( self.surface, cfsInitial, "CFSInitial" )
 
             isInitial = True
         else:
             # Subsequent timesteps: calculate change from initial
-            SCUInitial = getArrayInObject( self.surface, "SCUInitial", Piece.CELLS )
-            CFSInitial = getArrayInObject( self.surface, "CFSInitial", Piece.CELLS )
-            deltaSCU = SCU - SCUInitial
-            deltaCFS = CFS - CFSInitial
+            scuInitial = getArrayInObject( self.surface, "SCUInitial", Piece.CELLS )
+            cfsInitial = getArrayInObject( self.surface, "CFSInitial", Piece.CELLS )
+            deltaSCU = scu - scuInitial
+            deltaCFS = cfs - cfsInitial
             isInitial = False
 
         # Stability classification
         stability = np.zeros_like( tau, dtype=int )
-        stability[ SCU >= 0.8 ] = 1  # Critical
-        stability[ SCU >= 1.0 ] = 2  # Unstable
+        stability[ scu >= 0.8 ] = 1  # Critical
+        stability[ scu >= 1.0 ] = 2  # Unstable
 
         # Failure probability (sigmoid)
         k = 10.0
-        failureProba = 1.0 / ( 1.0 + np.exp( -k * ( SCU - 1.0 ) ) )
+        failureProba = 1.0 / ( 1.0 + np.exp( -k * ( scu - 1.0 ) ) )
 
         # Safety margin
         safety = tauCritical - tau
@@ -103,10 +103,10 @@ class MohrCoulombAnalysis:
             "mohrCohesion": np.full( self.surface.GetNumberOfCells(), self.cohesion ),
             "mohrFrictionAngle": np.full( self.surface.GetNumberOfCells(), self.frictionAngle ),
             "mohrFrictionCoefficient": np.full( self.surface.GetNumberOfCells(), mu ),
-            "mohr_critical_shear_stress": tauCritical,
-            "SCU": SCU,
+            "mohrCriticalShearStress": tauCritical,
+            "SCU": scu,
             "deltaSCU": deltaSCU,
-            "CFS": CFS,
+            "CFS": cfs,
             "deltaCFS": deltaCFS,
             "safetyMargin": safety,
             "stabilityState": stability,

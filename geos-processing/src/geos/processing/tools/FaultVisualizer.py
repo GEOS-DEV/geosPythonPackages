@@ -68,7 +68,7 @@ class Visualizer:
         """
         sigmaN = -getArrayInObject( surface, "sigmaNEffective", Piece.CELLS )
         tau = np.abs( getArrayInObject( surface, "tauEffective", Piece.CELLS ) )
-        SCU = np.abs( getArrayInObject( surface, "SCU", Piece.CELLS ) )
+        scu = np.abs( getArrayInObject( surface, "SCU", Piece.CELLS ) )
         depth = getArrayInObject( surface, 'elementCenter', Piece.CELLS )[ :, 2 ]
 
         cohesion = getArrayInObject( surface, "mohrCohesion", Piece.CELLS )[ 0 ]
@@ -91,7 +91,7 @@ class Visualizer:
 
         # Plot 2: SCU vs σ_n
         ax2 = axes[ 1 ]
-        sc2 = ax2.scatter( sigmaN, SCU, c=depth, cmap='turbo_r', s=20, alpha=0.8 )
+        sc2 = ax2.scatter( sigmaN, scu, c=depth, cmap='turbo_r', s=20, alpha=0.8 )
         ax2.axhline( y=1.0, color='r', linestyle='--', label='Failure (SCU=1)' )
         ax2.set_xlabel( 'Normal Stress [bar]' )
         ax2.set_ylabel( 'SCU [-]' )
@@ -137,8 +137,8 @@ class Visualizer:
         depth = centers[ :, 2 ]
         sigmaN = surface.cell_data[ 'sigmaNEffective' ]
         tau = surface.cell_data[ 'tauEffective' ]
-        SCU = surface.cell_data[ 'SCU' ]
-        SCU = np.sqrt( SCU**2 )
+        scu = surface.cell_data[ 'SCU' ]
+        scu = np.sqrt( scu**2 )
         surface.cell_data[ 'deltaSCU' ]
 
         # Extraire les IDs de faille
@@ -214,11 +214,11 @@ class Visualizer:
             depthsTau, profileTau, _, _ = ProfileExtractor.extractAdaptiveProfile( centers, tau, xPos, yPos,
                                                                                    searchRadius )
 
-            depthsSCU, profileSCU, _, _ = ProfileExtractor.extractAdaptiveProfile( centers, SCU, xPos, yPos,
+            depthsSCU, profileSCU, _, _ = ProfileExtractor.extractAdaptiveProfile( centers, scu, xPos, yPos,
                                                                                    searchRadius )
 
             depthsDeltaSCU, profileDeltaSCU, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                centers, SCU, xPos, yPos, searchRadius )
+                centers, scu, xPos, yPos, searchRadius )
 
             # Calculate path length
             if len( PathXSigma ) > 1:
@@ -457,7 +457,7 @@ class Visualizer:
         yRange = yMax - yMin
         zMax - zMin
 
-        # Search radius (pour extractAdaptiveProfile sur volumes)
+        # Search radius
         searchRadius = self.profileSearchRadius if self.profileSearchRadius is not None else min( xRange, yRange ) * 0.2
 
         # ===================================================================
@@ -511,7 +511,6 @@ class Visualizer:
             if len( centersPlus ) > 0:
                 self.logger.info( "        Processing PLUS side..." )
 
-                # Pour VOLUMES, utiliser extractAdaptiveProfile avec cellData
                 depthsSigma1Plus, profileSigma1Plus, _, _ = ProfileExtractor.extractAdaptiveProfile(
                     centersPlus, sigma1Plus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
 
@@ -611,7 +610,6 @@ class Visualizer:
             if len( centersMinus ) > 0:
                 self.logger.info( "        Processing MINUS side..." )
 
-                # Pour VOLUMES, utiliser extractAdaptiveProfile avec cellData
                 depthsSigma1Minus, profileSigma1Minus, _, _ = ProfileExtractor.extractAdaptiveProfile(
                     centersMinus, sigma1Minus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
 

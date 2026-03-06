@@ -56,10 +56,10 @@ class StressTensor:
             dict[str, Any]: Dictionary containing local stress, normal stress, shear stress and strike and shear dip.
         """
         # Verify orthonormality
-        assert np.abs( np.linalg.norm( tangent1 ) - 1.0 ) < 1e-10, f"T1 - {np.abs( np.linalg.norm( tangent1 ) - 1.0 )}"
-        assert np.abs( np.linalg.norm( tangent2 ) - 1.0 ) < 1e-10, f"T2 - {np.abs( np.linalg.norm( tangent2 ) - 1.0 )}"
-        assert np.abs( np.dot( normal, tangent1 ) ) < 1e-10
-        assert np.abs( np.dot( normal, tangent2 ) ) < 1e-10
+        if np.abs( np.linalg.norm( tangent1 ) - 1.0 ) >= 1e-10 or np.abs( np.linalg.norm( tangent2 ) - 1.0 ) >= 1e-10:
+            raise ValueError( "Tangents expected to be normalized." )
+        if np.abs( np.dot( normal, tangent1 ) ) >= 1e-10 or np.abs( np.dot( normal, tangent2 ) ) >= 1e-10:
+            raise ValueError( "Tangents and Normals expected to be orthogonal." )
 
         # Rotation matrix: columns = local directions (n, t1, t2)
         R = np.column_stack( ( normal, tangent1, tangent2 ) )

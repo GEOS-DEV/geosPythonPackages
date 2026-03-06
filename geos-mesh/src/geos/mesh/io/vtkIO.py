@@ -315,14 +315,15 @@ class PVDReader:
         return [ value[ 0 ] for _, value in self.datasets.items() ]
 
 
-def createPVD( outputDir: str, outputFiles: list[ tuple[ int, str ] ] ) -> None:
+def createPVD( outputDir: str, pvdFilename: str, outputFiles: list[ tuple[ int, str ] ] ) -> None:
     """Create PVD collection file.
 
     Args:
         outputDir (str): Output directory
+        pvdFilename (str): Output PVD filename
         outputFiles (list[tuple[int, str]]): List containing all the filenames of the PVD files
     """
-    pvdPath = os.path.join( outputDir, 'fault_analysis.pvd' )
+    pvdPath = os.path.join( outputDir, pvdFilename )
     with open( pvdPath, 'w' ) as f:
         f.write( '<VTKFile type="Collection" version="0.1">\n' )
         f.write( '  <Collection>\n' )
