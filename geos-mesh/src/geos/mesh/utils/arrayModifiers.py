@@ -479,7 +479,7 @@ def copyAttribute(
             nbElementTo = meshTo.GetNumberOfCells()
             nbElementFrom = meshFrom.GetNumberOfCells()
             if nbElementFrom != nbElementTo:
-                raise ValueError( "The two meshes have not the same number of cells." )
+                raise ValueError( "The two meshes don't have the same number of cells." )
 
             idElemToCompare = randint( 0, nbElementTo )
             cellTo: vtkCell = meshTo.GetCell( idElemToCompare )
@@ -499,7 +499,7 @@ def copyAttribute(
             raise ValueError( "The piece of the attribute to copy must be cells or points." )
 
         if coordElementTo != coordElementFrom:
-            raise ValueError( "The two meshes have not the same element indexation." )
+            raise ValueError( "The two meshes don't have the same element indexation." )
 
         npArray: npt.NDArray[ Any ] = getArrayInObject( meshFrom, attributeNameFrom, piece )
         componentNames: tuple[ str, ...] = getComponentNames( meshFrom, attributeNameFrom, piece )
