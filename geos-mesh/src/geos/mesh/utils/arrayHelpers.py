@@ -306,7 +306,7 @@ def getNumpyGlobalIdsArray(
     if not isinstance( data, vtkFieldData ):
         raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
 
-    globalIds = data.GetGlobalIds( globalIdName ) # type: ignore[arg-type]
+    globalIds = data.GetGlobalIds( globalIdName )  # type: ignore[arg-type]
 
     if globalIds is None:
         mess: str
