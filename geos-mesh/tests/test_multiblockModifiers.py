@@ -17,8 +17,8 @@ from packaging.version import Version
 
 
 @pytest.mark.parametrize( "keepPartialAttributes, nbPointAttributes, nbCellAttributes, nbFieldAttributes", [
-    ( False, 0, 16, 1 ),
-    ( True, 2, 30, 1 ),
+    ( False, 0, 14, 1 ),
+    ( True, 6, 49, 1 ),
 ] )
 def test_mergeBlocks(
     dataSetTest: vtkMultiBlockDataSet,
@@ -28,7 +28,7 @@ def test_mergeBlocks(
     keepPartialAttributes: bool,
 ) -> None:
     """Test the merging of a multiblock."""
-    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "multiblockGeosOutput" )
+    vtkMultiBlockDataSetTest: vtkMultiBlockDataSet = dataSetTest( "geosOutput2Ranks" )
 
     dataset: vtkUnstructuredGrid
     dataset = multiblockModifiers.mergeBlocks( vtkMultiBlockDataSetTest, keepPartialAttributes )

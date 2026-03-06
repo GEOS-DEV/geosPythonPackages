@@ -1,32 +1,43 @@
 # SPDX-FileContributor: Martin Lemay
 # SPDX-License-Identifier: Apache 2.0
 # ruff: noqa: E402 # disable Module level import not at top of file
-import os
-from dataclasses import dataclass
+import pytest
 import numpy as np
 import numpy.typing as npt
-import pytest
-from typing import (
-    Iterator, )
+
+from typing import Iterator
+from dataclasses import dataclass
 
 from geos.mesh.utils.genericHelpers import createSingleCellMesh
 
 from vtkmodules.util.numpy_support import vtk_to_numpy
-
+from vtkmodules.vtkCommonCore import vtkPoints, vtkIdList
 from vtkmodules.vtkCommonDataModel import ( vtkUnstructuredGrid, vtkCellArray, vtkCellTypes, VTK_TRIANGLE, VTK_QUAD,
                                             VTK_TETRA, VTK_HEXAHEDRON, VTK_PYRAMID )
 
-from vtkmodules.vtkCommonCore import (
-    vtkPoints,
-    vtkIdList,
-)
+tetraCellType: int = VTK_TETRA
+tetraPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 0.0, 1.0 ],
+                                                           [ 0.0, 1.0, 0.0 ] ] )
 
-# inputs
-data_root: str = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "data" )
+hexaCellType: int = VTK_HEXAHEDRON
+hexaPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                          [ 0.0, 1.0, 0.0 ], [ 0.0, 0.0, 1.0 ], [ 1.0, 0.0, 1.0 ],
+                                                          [ 1.0, 1.0, 1.0 ], [ 0.0, 1.0, 1.0 ] ] )
 
-data_filename_all: tuple[ str, ...] = ( "triangle_cell.csv", "quad_cell.csv", "tetra_cell.csv", "pyramid_cell.csv",
-                                        "hexa_cell.csv" )
-cell_type_all: tuple[ int, ...] = ( VTK_TRIANGLE, VTK_QUAD, VTK_TETRA, VTK_PYRAMID, VTK_HEXAHEDRON )
+pyramidCellType: int = VTK_PYRAMID
+pyrPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                         [ 0.0, 1.0, 0.0 ], [ 0.5, 0.5, 1.0 ] ] )
+
+triangleCellType: int = VTK_TRIANGLE
+triPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 0.0, 1.0, 0.0 ] ] )
+
+quadCellType: int = VTK_QUAD
+quadPointsCoords: npt.NDArray[ np.float64 ] = np.array( [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 0.0 ], [ 1.0, 1.0, 0.0 ],
+                                                          [ 0.0, 1.0, 0.0 ] ] )
+
+pointsCoordsAll: tuple[ npt.NDArray[ np.float64 ], ...] = ( tetraPointsCoords, hexaPointsCoords, pyrPointsCoords,
+                                                            triPointsCoords, quadPointsCoords )
+cellTypesAll: tuple[ int, ...] = ( tetraCellType, hexaCellType, pyramidCellType, triangleCellType, quadCellType )
 
 
 @dataclass( frozen=True )
@@ -45,12 +56,11 @@ def __generate_test_data() -> Iterator[ TestCase ]:
     Yields:
         Iterator[ TestCase ]: iterator on test cases
     """
-    for cellType, path in zip( cell_type_all, data_filename_all, strict=True ):
-        cell: npt.NDArray[ np.float64 ] = np.loadtxt( os.path.join( data_root, path ), dtype=float, delimiter=',' )
-        yield TestCase( cellType, cell )
+    for cellType, cellPoints in zip( cellTypesAll, pointsCoordsAll, strict=True ):
+        yield TestCase( cellType, cellPoints )
 
 
-ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellType in cell_type_all ]
+ids: list[ str ] = [ vtkCellTypes.GetClassNameFromTypeId( cellType ) for cellType in cellTypesAll ]
 
 
 @pytest.mark.parametrize( "test_case", __generate_test_data(), ids=ids )
@@ -72,8 +82,6 @@ def test_createSingleCellMesh( test_case: TestCase ) -> None:
     assert np.array_equal( pointCoords.ravel(), test_case.cellPoints.ravel() ), "Points coordinates are wrong."
 
     cellsOut: vtkCellArray = output.GetCells()
-    typesArray0: npt.NDArray[ np.int64 ] = vtk_to_numpy( output.GetDistinctCellTypesArray() )
-
     assert cellsOut is not None, "Cells from output mesh are undefined."
     assert cellsOut.GetNumberOfCells() == 1, "Number of cells is expected to be 1."
     # check cell types
