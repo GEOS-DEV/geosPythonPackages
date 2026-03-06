@@ -12,3 +12,5 @@ The `geos-processing` package contains different tools to prepare, post-process 
     pre_processing.rst
 
     post_processing.rst
+
+    tools.rst

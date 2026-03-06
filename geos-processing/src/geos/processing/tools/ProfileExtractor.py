@@ -45,37 +45,39 @@ class ProfileExtractor:
         cellData: vtkCellData | None = None
     ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                 npt.NDArray[ np.float64 ] ]:
-        """Extract a vertical depth profile with automatic fault detection.
+        """
+        Extract a vertical depth profile with automatic fault detection.
 
         The algorithm adaptively follows a vertical sampling strategy guided by
         detected fault membership inside the provided cell data. It performs:
 
-        1. Finding the closest starting point to the provided (xStart, yStart, zStart).
-        2. Automatically detecting the target fault using the provided ``cellData``
-        (e.g., fields like ``FaultMask`` or any other fault-identifying attribute).
-        3. Filtering the dataset to keep **only cells belonging to that fault**.
-        4. Splitting the remaining dataset into successive Z-depth slices.
-        5. For each slice, selecting the nearest cell in the XY plane to build the
-        final vertical profile.
+            1. Finding the closest starting point to the provided (xStart, yStart, zStart).
+            2. Automatically detecting the target fault using the provided ``cellData``
+                (e.g., fields like ``FaultMask`` or any other fault-identifying attribute).
+            3. Filtering the dataset to keep **only cells belonging to that fault**.
+            4. Splitting the remaining dataset into successive Z-depth slices.
+            5. For each slice, selecting the nearest cell in the XY plane to build the
+                final vertical profile.
+
 
         Args:
             centers (np.ndarray): Array of cell centers with shape ``(nCells, 3)``.
             values (np.ndarray): Scalar values associated with each cell (shape ``(nCells,)``).
             xStart (float or ndarray): Starting X coordinate.
             yStart (float or ndarray): Starting Y coordinate.
-            zStart (float or ndarray | None):  Starting Z coordinate. If ``None``, the method uses the highest point
-                    near the provided XY start position.
+            zStart (float or ndarray | None): Starting Z coordinate. If ``None``, the method uses
+                the highest point near the provided XY start position.
             stepSize (float): Vertical step size used when scanning depth layers.
-                    Defaults is 20.0
+                Default is 20.0.
             maxSteps (int): Maximum number of vertical layers to traverse.
-                    Defaults is 500.
-            cellData (vtkCellData | None): VTK cell data object containing fields such as:
-                ``attribute``, ``FaultMask``, or other identifiers.
-                These fields are used to automatically detect the correct fault and
-                filter the dataset accordingly.
+                Default is 500.
+            cellData (vtkCellData | None): VTK cell data object containing fields such as
+                ``attribute``, ``FaultMask``, or other identifiers used to detect and filter
+                the target fault.
 
         Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: depth, profile values, X and Y coordinates of the profile path
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                depth, profile values, X and Y coordinates of the profile path.
         """
         # Convert to np arrays
         centers = np.asarray( centers )
