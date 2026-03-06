@@ -285,13 +285,16 @@ def checkValidValuesInObject(
     return ( validValues, invalidValues )
 
 
-def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ], ) -> npt.NDArray:
+def getNumpyGlobalIdsArray(
+    data: Union[ vtkCellData, vtkPointData ],
+    globalIdName: str | None = None,
+) -> npt.NDArray:
     """Get a numpy array of the GlobalIds if it exist.
 
-    Note that for some cases (GEOS simulations), the attribute "localToGlobalMap" is the GlobalIds.
-
     Args:
-        data (Union[ vtkCellData, vtkPointData ]): Cell or point array.
+        data (Union[vtkCellData, vtkPointData]): Cell or point array.
+        globalIdName (str|None,  optional): The name of the attribute to consider as the one with the globalIds if it is not the default one.
+            Default to None.
 
     Returns:
         (npt.NDArray): The numpy array of GlobalIds.
@@ -303,10 +306,15 @@ def getNumpyGlobalIdsArray( data: Union[ vtkCellData, vtkPointData ], ) -> npt.N
     if not isinstance( data, vtkFieldData ):
         raise TypeError( f"data '{ data }' entered is not a vtkFieldData object." )
 
-    globalIds: vtkDataArray = data.GetGlobalIds() if data.GetGlobalIds() is not None else data.GetArray(
-        "localToGlobalMap" )
+    globalIds = data.GetGlobalIds( globalIdName ) # type: ignore[arg-type]
+
     if globalIds is None:
-        raise AttributeError( "There is no GlobalIds in the given fieldData." )
+        mess: str
+        if globalIdName is None:
+            mess = "There is no GlobalIds in the fieldData."
+        else:
+            mess = f"The attribute { globalIdName } to consider as GlobalIds is not in the fieldData."
+        raise AttributeError( mess )
 
     return vtk_to_numpy( globalIds )
 
@@ -315,16 +323,19 @@ def getNumpyArrayByName(
     data: Union[ vtkCellData, vtkPointData ],
     name: str,
     sorted: bool = False,
+    globalIdName: str | None = None,
 ) -> npt.NDArray:
     """Get the numpy array of a given vtkDataArray found by its name.
 
-    If sorted is selected, this allows the option to reorder the values wrt GlobalIds. If not GlobalIds was found,
-    no reordering will be perform.
+    If sorted is selected, this allows the option to reorder the values wrt GlobalIds.
 
     Args:
         data (Union[vtkCellData, vtkPointData]): Vtk field data.
         name (str): Array name to sort.
-        sorted (bool, optional): Sort the output array with the help of GlobalIds. Defaults to False.
+        sorted (bool, optional): Sort the output array with the help of GlobalIds.
+            Defaults to False.
+        globalIdName (str|None,  optional): The name of the attribute to consider as the one with the globalIds if it is not the default one.
+            Default to None.
 
     Returns:
         npt.NDArray: Sorted array.
@@ -337,7 +348,7 @@ def getNumpyArrayByName(
 
     npArray: npt.NDArray = vtk_to_numpy( data.GetArray( name ) )
     if sorted and ( data.IsA( "vtkCellData" ) or data.IsA( "vtkPointData" ) ):
-        globalids: npt.NDArray = getNumpyGlobalIdsArray( data )
+        globalids: npt.NDArray = getNumpyGlobalIdsArray( data, globalIdName )
         npArray = npArray[ np.argsort( globalids ) ]
 
     return npArray

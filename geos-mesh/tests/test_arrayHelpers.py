@@ -277,7 +277,7 @@ def test_getNumpyGlobalIdsArray( dataSetTest: vtkDataSet ) -> None:
         fieldData: vtkPointData | vtkCellData = dataset.GetPointData(
         ) if piece == Piece.POINTS else dataset.GetCellData()
         npArrayExpected: npt.NDArray = vtk_to_numpy( fieldData.GetArray( "localToGlobalMap" ) )
-        npArrayObtained: npt.NDArray = arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+        npArrayObtained: npt.NDArray = arrayHelpers.getNumpyGlobalIdsArray( fieldData, "localToGlobalMap" )
         assert ( npArrayObtained == npArrayExpected ).all()
 
 
@@ -288,11 +288,19 @@ def test_getNumpyGlobalIdsArrayTypeError() -> None:
         arrayHelpers.getNumpyGlobalIdsArray( fieldData )
 
 
-def test_getNumpyGlobalIdsArrayAttributeError() -> None:
+@pytest.mark.parametrize( "globalIdName", [
+    ( "attributeName" ),
+    ( None ),
+] )
+def test_getNumpyGlobalIdsArrayAttributeError(
+    dataSetTest: vtkDataSet,
+    globalIdName: str | None,
+) -> None:
     """Test getNumpyGlobalIdsArray AttributeError raises."""
-    fieldData: vtkFieldData = vtkFieldData()
+    dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
+    cellData: vtkCellData = dataset.GetCellData()
     with pytest.raises( AttributeError ):
-        arrayHelpers.getNumpyGlobalIdsArray( fieldData )
+        arrayHelpers.getNumpyGlobalIdsArray( cellData, globalIdName )
 
 
 @pytest.mark.parametrize( "meshName, piece, expectedAttributeSet", [
@@ -339,10 +347,10 @@ def test_getAttributeSet(
     assert obtainedAttributeSet == expectedAttributeSet
 
 
-@pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray", [
-    ( "blockIndex", False, Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ) ),
-    ( "localToGlobalMap", True, Piece.CELLS, np.array( list( range( 6000 ) ), dtype=np.int64 ) ),
-    ( "localToGlobalMap", True, Piece.POINTS, np.array( list( range( 7381 ) ), dtype=np.int64 ) ),
+@pytest.mark.parametrize( "arrayName, sorted, piece, expectedNpArray, globalIdName", [
+    ( "blockIndex", False, Piece.CELLS, np.array( [ 1 for _ in range( 6000 ) ], dtype=np.int64 ), "localToGlobalMap" ),
+    ( "localToGlobalMap", True, Piece.CELLS, np.array( list( range( 6000 ) ), dtype=np.int64 ), "localToGlobalMap" ),
+    ( "localToGlobalMap", True, Piece.POINTS, np.array( list( range( 7381 ) ), dtype=np.int64 ), "localToGlobalMap" ),
 ] )
 def test_getNumpyArrayByName(
     dataSetTest: vtkDataSet,
@@ -350,11 +358,12 @@ def test_getNumpyArrayByName(
     sorted: bool,
     piece: Piece,
     expectedNpArray: npt.NDArray,
+    globalIdName: str,
 ) -> None:
     """Test the function getNumpyGlobalIdsArray."""
     dataset: vtkDataSet = dataSetTest( "extractAndMergeVolume" )
     fieldData: vtkPointData | vtkCellData = dataset.GetPointData() if piece == Piece.POINTS else dataset.GetCellData()
-    obtainedNpArray: npt.NDArray = arrayHelpers.getNumpyArrayByName( fieldData, arrayName, sorted )
+    obtainedNpArray: npt.NDArray = arrayHelpers.getNumpyArrayByName( fieldData, arrayName, sorted, globalIdName )
     assert ( obtainedNpArray == expectedNpArray ).all()
 
 
