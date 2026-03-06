@@ -3,6 +3,7 @@
 # SPDX-FileContributor: Alexandre Benedicto, Martin Lemay
 # ruff: noqa: E402 # disable Module level import not at top of file
 import sys
+import logging
 from pathlib import Path
 from typing import Any, Union, cast
 
@@ -17,6 +18,7 @@ from geos.pv.utils.config import update_paths
 update_paths()
 
 from geos.mesh.utils.multiblockModifiers import mergeBlocks
+from geos.utils.Logger import ( CountVerbosityHandler, getLoggerHandlerType )
 import geos.pv.utils.paraviewTreatments as pvt
 from geos.pv.utils.checkboxFunction import createModifiedCallback  # type: ignore[attr-defined]
 from geos.pv.utils.DisplayOrganizationParaview import DisplayOrganizationParaview
@@ -28,6 +30,11 @@ from paraview.simple import (  # type: ignore[import-not-found]
     GetActiveSource, GetActiveView, Render, Show, servermanager )
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase, smdomain, smproperty  # type: ignore[import-not-found]
 # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/util/vtkAlgorithm.py
+from paraview.detail.loghandler import (  # type: ignore[import-not-found]
+    VTKHandler,
+)  # source: https://github.com/Kitware/ParaView/blob/master/Wrapping/Python/paraview/detail/loghandler.py
+
+
 
 from vtkmodules.vtkCommonCore import vtkDataArraySelection, vtkInformation
 from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkMultiBlockDataSet
@@ -50,6 +57,9 @@ To use it:
 
 """
 
+loggerTitle: str = "Python View Configurator"
+HANDLER: VTKHandler = VTKHandler()
+
 
 @SISOFilter( category=FilterCategory.QC,
              decoratedLabel="Python View Configurator",
@@ -61,7 +71,6 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
 
         Input is a vtkDataObject.
         """
-        # super().__init__( nInputPorts=1, nOutputPorts=1 )
         # Python view layout and object.
         self.m_layoutName: str = ""
         self.m_pythonView: Any
@@ -138,6 +147,23 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
             "removeRegions": False,
             "curvesAspect": {},
         }
+
+        self.logger = logging.getLogger( loggerTitle )
+        self.logger.setLevel( logging.INFO )
+        self.logger.addHandler( HANDLER )
+        self.logger.propagate = False
+
+        counter: CountVerbosityHandler = CountVerbosityHandler()
+        self.counter: CountVerbosityHandler
+        self.nbWarnings: int = 0
+        try:
+            self.counter = getLoggerHandlerType( type( counter ), self.logger )
+            self.counter.resetWarningCount()
+        except ValueError:
+            self.counter = counter
+            self.counter.setLevel( logging.INFO )
+
+        self.logger.addHandler( self.counter )
 
     def getUserChoices( self: Self ) -> dict[ str, Any ]:
         """Access the m_userChoices attribute.
@@ -808,12 +834,29 @@ class PVPythonViewConfigurator( VTKPythonAlgorithmBase ):
             outputMesh : A dummy mesh transformed.
 
         """
-        assert self.m_pythonView is not None, "No Python View was found."
-        viewSize = GetActiveView().ViewSize
-        self.m_userChoices[ "ratio" ] = viewSize[ 0 ] / viewSize[ 1 ]
-        self.defineInputNames()
-        self.defineUserChoicesCurves()
-        self.defineCurvesAspect()
-        self.m_pythonView.Script = self.buildPythonViewScript()
-        Render()
+        self.logger.info( f"Apply the plugin { self.logger.name }." )
+        try:
+            if self.m_pythonView is None:
+                raise ValueError( "No Python View was found." )
+
+            viewSize = GetActiveView().ViewSize
+            self.m_userChoices[ "ratio" ] = viewSize[ 0 ] / viewSize[ 1 ]
+            self.defineInputNames()
+            self.defineUserChoicesCurves()
+            self.defineCurvesAspect()
+            self.m_pythonView.Script = self.buildPythonViewScript()
+            Render()
+
+            result: str = f"The plugin { self.logger.name } succeeded"
+            if self.counter.warningCount > 0:
+                self.logger.warning( f"{ result } but { self.counter.warningCount } warnings have been logged." )
+            else:
+                self.logger.info( f"{ result }." )
+        except Exception as e:
+            self.logger.error( f"The plugin failed due to:\n{ e }" )
+            return
+
+        self.nbWarnings = self.counter.warningCount
+        self.counter.resetWarningCount()
+
         return

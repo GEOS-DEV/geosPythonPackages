@@ -292,7 +292,8 @@ def setupAllAxes(
         first_ax.ticklabel_format( style="sci", axis="x", scilimits=( 0, 0 ), useMathText=True )
         for i in range( 1, len( associatedProperties.keys() ) ):
             second_ax = first_ax.twinx()
-            assert isinstance( second_ax, axes.Axes )
+            if not isinstance( second_ax, axes.Axes ):
+                raise TypeError( "The second ax has not the right type.")
             all_ax.append( second_ax )
             all_ax[ i ].spines[ "right" ].set_position( ( "axes", 1 + 0.07 * ( i - 1 ) ) )
             all_ax[ i ].tick_params( axis="y", which="both", left=False, right=True )
@@ -304,7 +305,8 @@ def setupAllAxes(
         first_ax.ticklabel_format( style="sci", axis="y", scilimits=( 0, 0 ), useMathText=True )
         for i in range( 1, len( associatedProperties.keys() ) ):
             second_ax = first_ax.twiny()
-            assert isinstance( second_ax, axes.Axes )
+            if not isinstance( second_ax, axes.Axes ):
+                raise TypeError( "The second ax has not the right type.")
             all_ax.append( second_ax )
             all_ax[ i ].spines[ "bottom" ].set_position( ( "axes", -0.08 * i ) )
             all_ax[ i ].xaxis.set_label_position( "bottom" )
@@ -383,7 +385,8 @@ def getExtremaAllAxes( axes: list[ axes.Axes ], ) -> tuple[ tuple[ float, float 
     Returns:
         tuple[tuple[float, float], tuple[float, float]]: ((xMin, xMax), (yMin, yMax))
     """
-    assert len( axes ) > 0
+    if len( axes ) <= 0:
+        raise ValueError( "The list of axes can not be empty.")
     xMin, xMax, yMin, yMax = getAxeLimits( axes[ 0 ] )
     if len( axes ) > 1:
         for i in range( 1, len( axes ) ):
