@@ -1,0 +1,27 @@
+#!/bin/sh
+#SBATCH --job-name="{{ job_name }}"
+#SBATCH --ntasks={{ ntasks }}
+#SBATCH --partition={{ partition }}
+#SBATCH --comment={{ comment_gr }}
+#SBACTH --account={{ account }}
+#SBATCH --nodes={{ nodes }}
+#SBATCH --time={{ time | default('00:10:00') }}
+#SBATCH --mem={{ mem }}
+#SBATCH --output=job_GEOS_%j.out
+#SBATCH --error=job_GEOS_%j.err
+
+ulimit -s unlimited
+ulimit -c unlimited
+
+module purge
+module use {{ geos_module }}
+module load {{ geos_load_list }}
+
+export HDF5_USE_FILE_LOCKING=FALSE
+export OMP_NUM_THREADS=1
+export EXEC={{ geos_path }}
+
+srun --mpi=pmix_v3 --hint=nomultithread \
+    -n {{ ntasks }} ${EXEC} \
+    -o Outputs_${SLURM_JOBID} \
+    -i {{ input_file | default('geosDeck.xml') }} | tee log_${SLURM_JOBID}.out
