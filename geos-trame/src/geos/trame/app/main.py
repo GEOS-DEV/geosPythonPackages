@@ -10,7 +10,7 @@ from trame.app import get_server  # type: ignore
 from trame_server import Server
 
 import sys
-sys.path.insert( 0, "/data/pau901/SIM_CS/users/jfranc/geosPythonPackages/geos-trame/src" )
+sys.path.insert( 0, "//home/jfranc/App/Code/geosPythonPackages/geos-trame/src" )
 
 #do not override if existing
 from geos.trame.app.core import GeosTrame
@@ -30,7 +30,7 @@ def main( server: Server = None, **kwargs: Any ) -> None:
 
     # parse args
     parser = server.cli
-    parser.add_argument( "-I", "--input", help="Input file (.xml)", required=True )
+    parser.add_argument( "-I", "--input", help="Input file (.xml)", required=False)
     parser.add_argument( "-e", "--env", help="dot_env file" , required=False )
 
     ( args, _unknown ) = parser.parse_known_args()

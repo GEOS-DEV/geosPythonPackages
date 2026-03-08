@@ -34,7 +34,7 @@ import sys
 @TrameApp()
 class GeosTrame:
 
-    def __init__( self, server: Server, file_name: str ) -> None:
+    def __init__( self, server: Server, file_name: str = "input.xml" ) -> None:
         """Constructor."""
         self.alertHandler: AlertHandler | None = None
         self.deckPlotting: DeckPlotting | None = None
@@ -102,6 +102,26 @@ class GeosTrame:
         """Sets the input file of the InputTree object and populates simput/ui."""
         self.tree.set_input_file( file_name )
 
+    def logHW(self):
+        print("hello world")
+
+    def gallery(self, path : str) -> None:
+        
+        for i in range(5):
+            with vuetify.VRow( classes="mb-6" ):
+                with vuetify.VCol(
+                    cols=12,
+                    order=1,
+            ):
+                    with vuetify.VCard(title=f"case #{i:003}", 
+                                        text="This is a test of linear depletion",
+                                       classes="ma-12",
+                                       click=(self.logHW,)):
+                            vuetify.VImg(height="100px", width="100px",
+      src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg")
+                            pass
+
+
     def deck_ui( self ) -> None:
         """Generates the UI for the deck edition / visualization tab."""
         with vuetify.VRow( classes="mb-6 fill-height" ):
@@ -160,11 +180,11 @@ class GeosTrame:
 
             with html.Div( style="position: relative; display: flex; border-bottom: 1px solid gray", ):
                 with vuetify.VTabs(
-                        v_model=( "tab_idx", 0 ),
+                        v_model=( "tab_idx", 1 ),
                         style="z-index: 1;",
                         color="grey",
                 ):
-                    for tab_label in [ "Input File", "Execute", "Results Viewer" ]:
+                    for tab_label in [ "Library", "Input File", "Execute", "Results Viewer" ]:
                         vuetify.VTab( tab_label )
 
                 with html.Div(
@@ -173,7 +193,7 @@ class GeosTrame:
                 ):
                     with (
                             html.Div(
-                                v_if=( "tab_idx == 0", ),
+                                v_if=( "tab_idx == 1", ),
                                 style=
                                 "height: 100%; width: 100%; display: flex; align-items: center; justify-content: flex-end;",
                             ),
@@ -181,13 +201,25 @@ class GeosTrame:
                                 click=self.tree.write_files,
                                 icon=True,
                                 style="z-index: 1;",
-                                id="save-button",
+                                id="save-button",### TODO forward file to next step
                             ),
                     ):
-                        vuetify.VIcon( "mdi-content-save-outline" )
+                        vuetify.VIcon( "mdi-arrow-right-bold-circle-outline" )
 
-            # input file editor
             with vuetify.VCol( v_show=( "tab_idx == 0", ), classes="flex-grow-1 pa-0 ma-0" ):
+                if self.tree.input_file is not None:
+                    self.gallery("./gallery")
+                else:
+                    self.ctrl.on_add_error(
+                        "Error",
+                        "The file " + self.state.input_file + " cannot be parsed.",
+                    )
+                    print(
+                        "The file " + self.state.input_file + " cannot be parsed.",
+                        file=sys.stderr,
+                    )
+            # input file editor
+            with vuetify.VCol( v_show=( "tab_idx == 1", ), classes="flex-grow-1 pa-0 ma-0" ):
                 if self.tree.input_file is not None:
                     self.deck_ui()
                 else:
@@ -200,7 +232,7 @@ class GeosTrame:
                         file=sys.stderr,
                     )
 
-            with vuetify.VCol( v_show=( "tab_idx == 1" ), classes="flex-grow-1 pa-0 ma-0" ):
+            with vuetify.VCol( v_show=( "tab_idx == 2" ), classes="flex-grow-1 pa-0 ma-0" ):
                 if self.simulation is not None:
                     define_simulation_view( self.server )
                 else:
