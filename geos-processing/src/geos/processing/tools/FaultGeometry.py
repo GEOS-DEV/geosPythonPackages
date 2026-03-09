@@ -504,13 +504,13 @@ class FaultGeometry:
             faultCells = extractCellSelection( self.mesh, ids=faultMask )
 
             if faultCells.GetNumberOfCells() == 0:
-                self.logger.warning( f"⚠️  No cells for fault {faultId}" )
+                self.logger.warning( f"  No cells for fault {faultId}" )
                 continue
 
             # Extract surface
             surf = extractSurface( faultCells )
             if surf.GetNumberOfCells() == 0:
-                self.logger.warning( f"⚠️ No cells found during surface extraction of fault {faultId}" )
+                self.logger.warning( f" No cells found during surface extraction of fault {faultId}" )
                 continue
 
             # Compute normals
