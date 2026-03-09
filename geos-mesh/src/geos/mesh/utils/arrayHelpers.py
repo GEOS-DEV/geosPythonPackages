@@ -293,7 +293,7 @@ def getNumpyGlobalIdsArray(
 
     Args:
         data (Union[vtkCellData, vtkPointData]): Cell or point array.
-        globalIdName (str|None,  optional): The name of the attribute to consider as the one with the globalIds if it is not the default one.
+        globalIdName (str|None,  optional): The name of the attribute to consider as global ids. If None, the default global Ids of the mesh are considered.
             Default to None.
 
     Returns:
