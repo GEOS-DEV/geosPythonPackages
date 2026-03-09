@@ -85,17 +85,19 @@ class GeosTrame:
 
         # Data loader
         self.data_loader = DataLoader( self.tree, self.region_viewer, self.well_viewer, trame_server=server )
-        self.state.selected_case = 1
-        self.state.change("selected_case" )(self.on_case_selected)
+
 
         # Properties checker
         self.properties_checker = PropertiesChecker( self.tree, self.region_viewer, trame_server=server )
 
         # TODO put as a modal window
-        # self.set_input_file( file_name=self.state.input_file )
+        self.set_input_file( file_name=self.state.input_file )
 
         # Load components
-        # self.build_ui()
+        self.build_ui()
+
+        self.state.selected_case = 1
+        self.state.change("selected_case" )(self.on_case_selected)
 
     @property
     def state( self ) -> State:
@@ -121,7 +123,8 @@ class GeosTrame:
 
         self.state.input_file = str(path)
         self.set_input_file(str(path))
-        self.build_ui()
+        # self.build_ui()
+        self.deck_ui()
         self.state.tab_idx = 1
 
         print("Case clicked:", case_id)
