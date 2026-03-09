@@ -78,12 +78,12 @@ class SensitivityAnalyzer:
         results = []
         for frictionAngle in frictionAngles:
             for cohesion in cohesions:
-                self.logger.info( f"→ Testing φ={frictionAngle}°, C={cohesion} bar" )
+                self.logger.info( f"-> Testing φ={frictionAngle}°, C={cohesion} bar" )
 
                 surfaceCopy = type( surfaceWithStress )()
                 surfaceCopy.DeepCopy( surfaceWithStress )
 
-                mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle )
+                mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle, logger=self.logger )
 
                 surfaceAnalyzed = mc.analyze()
 
@@ -125,7 +125,7 @@ class SensitivityAnalyzer:
             dict[str, Any]: Statistical metrics.
         """
         stability = getArrayInObject( surface, "stabilityState", Piece.CELLS )
-        SCU = getArrayInObject( surface, "SCU", Piece.CELLS )
+        scu = getArrayInObject( surface, "SCU", Piece.CELLS )
         failureProba = getArrayInObject( surface, "failureProbability", Piece.CELLS )
         safetyMargin = getArrayInObject( surface, "safetyMargin", Piece.CELLS )
 
@@ -139,8 +139,8 @@ class SensitivityAnalyzer:
             'pctUnstable': np.sum( stability == 2 ) / nCells * 100,
             'pctCritical': np.sum( stability == 1 ) / nCells * 100,
             'pctStable': np.sum( stability == 0 ) / nCells * 100,
-            'meanSCU': np.mean( SCU ),
-            'maxSCU': np.max( SCU ),
+            'meanSCU': np.mean( scu ),
+            'maxSCU': np.max( scu ),
             'meanFailureProb': np.mean( failureProba ),
             'meanSafetyMargin': np.mean( safetyMargin ),
             'minSafetyMargin': np.min( safetyMargin )
@@ -170,7 +170,7 @@ class SensitivityAnalyzer:
         years = time / ( 365.25 * 24 * 3600 )
         filename = f'sensitivity_analysis_{years:.0f}y.png'
         fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
-        self.logger.info( f"📊 Sensitivity plot saved: {filename}" )
+        self.logger.info( f"Sensitivity plot saved: {filename}" )
 
     def _plotHeatMap( self: Self, df: pd.DataFrame, column: str, title: str, ax: plt.Axes ) -> None:
         """Create a single heatmap for sensitivity analysis.
@@ -226,7 +226,7 @@ class SensitivityAnalyzer:
             maxDepthProfiles (float, optional): Maximum depth for profile display
             extractionMethod (ProfileExtractorMethod): Profile extraction method
         """
-        self.logger.info( "\n  📊 Creating SCU sensitivity depth profiles..." )
+        self.logger.info( "\n  Creating SCU sensitivity depth profiles..." )
 
         # Extract depth data
         centers = getArrayInObject( surfaceWithStress, 'elementCenter', Piece.CELLS )
@@ -234,7 +234,7 @@ class SensitivityAnalyzer:
 
         # Auto-generate if not provided
         if profileStartPoints is None:
-            self.logger.warning( "  ⚠️  No PROFILE_START_POINTS provided, auto-generating..." )
+            self.logger.warning( "    No PROFILE_START_POINTS provided, auto-generating..." )
             xMin, xMax = np.min( centers[ :, 0 ] ), np.max( centers[ :, 0 ] )
             yMin, yMax = np.min( centers[ :, 1 ] ), np.max( centers[ :, 1 ] )
 
@@ -262,7 +262,7 @@ class SensitivityAnalyzer:
         else:
             searchRadius = profileSearchRadius
 
-        self.logger.info( f"  📍 Using {len(profileStartPoints)} profile point(s)\n"
+        self.logger.info( f"   Using {len(profileStartPoints)} profile point(s)\n"
                           f"     Search radius: {searchRadius:.1f}m" )
 
         # Create colormap for parameter combinations
@@ -283,7 +283,7 @@ class SensitivityAnalyzer:
         for profileIdx, ( xPos, yPos ) in enumerate( profileStartPoints ):
             ax = axes[ profileIdx ]
 
-            self.logger.info( f"  → Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}):\n" )
+            self.logger.info( f"  -> Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}):\n" )
 
             # Plot each parameter combination
             for idx, params in enumerate( results ):
@@ -294,30 +294,30 @@ class SensitivityAnalyzer:
                 surfaceCopy = type( surfaceWithStress )()
                 surfaceCopy.DeepCopy( surfaceWithStress )
 
-                mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle )
+                mc = MohrCoulombAnalysis( surfaceCopy, cohesion, frictionAngle, logger=self.logger )
 
                 surfaceAnalyzed = mc.analyze()
 
                 # Extract SCU
-                SCU = np.abs( getArrayInObject( surfaceAnalyzed, "SCU", Piece.CELLS ) )
+                scu = np.abs( getArrayInObject( surfaceAnalyzed, "SCU", Piece.CELLS ) )
 
                 # Extract profile using adaptive method
                 if extractionMethod == ProfileExtractorMethod.ADAPTATIVE:
-                    depthsSCU, profileSCU, _, _ = ProfileExtractor().extractAdaptiveProfile(
-                        centers, SCU, xPos, yPos, searchRadius )
+                    depthsSCU, profileSCU, _, _ = ProfileExtractor( logger=self.logger ).extractAdaptiveProfile(
+                        centers, scu, xPos, yPos, searchRadius )
                 else:
                     raise ValueError( f"Unrecognized profile extraction method '{extractionMethod}'." )
 
                 if len( depthsSCU ) >= 3:
                     color = cmap( norm( idx ) )
-                    label = f'φ={frictionAngle}°, C={cohesion} bar'
+                    label = fr'$\phi$={frictionAngle}°, C={cohesion} bar'
                     ax.plot( profileSCU, depthsSCU, color=color, label=label, linewidth=2, alpha=0.8 )
 
                     if idx == 0:  # Print info only once per profile
-                        self.logger.info( f"     ✅ {len(depthsSCU)} points extracted" )
+                        self.logger.info( f"      {len(depthsSCU)} points extracted" )
                 else:
                     if idx == 0:
-                        self.logger.warning( f"     ⚠️  Insufficient points ({len(depthsSCU)})" )
+                        self.logger.warning( f"       Insufficient points ({len(depthsSCU)})" )
 
             # Add critical lines
             ax.axvline( x=0.8,
@@ -352,4 +352,4 @@ class SensitivityAnalyzer:
         # Save
         filename = f'sensitivity_scu_profiles_{years:.0f}y.png'
         fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
-        self.logger.info( f"  💾 SCU sensitivity profiles saved: {filename}" )
+        self.logger.info( f"   SCU sensitivity profiles saved: {filename}" )

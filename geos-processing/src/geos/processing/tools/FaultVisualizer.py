@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2026 TotalEnergies.
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
-import os
 import logging
 import numpy as np
 from pathlib import Path
@@ -77,19 +76,19 @@ class Visualizer:
 
         fig, axes = plt.subplots( 1, 2, figsize=( 16, 8 ) )
 
-        # Plot 1: τ vs σ_n
+        # Plot 1: tau vs sigma_n
         ax1 = axes[ 0 ]
         ax1.scatter( sigmaN, tau, c=depth, cmap='turbo_r', s=20, alpha=0.8 )
         sigmaRange = np.linspace( 0, np.max( sigmaN ), 100 )
         tauCritical = cohesion + mu * sigmaRange
-        ax1.plot( sigmaRange, tauCritical, 'k--', linewidth=2, label=f'M-C (C={cohesion} bar, φ={phi}°)' )
+        ax1.plot( sigmaRange, tauCritical, 'k--', linewidth=2, label=fr'M-C (C={cohesion} bar, $\phi$={phi}°)' )
         ax1.set_xlabel( 'Normal Stress [bar]' )
         ax1.set_ylabel( 'Shear Stress [bar]' )
         ax1.legend()
         ax1.grid( True, alpha=0.3 )
         ax1.set_title( 'Mohr-Coulomb Diagram' )
 
-        # Plot 2: SCU vs σ_n
+        # Plot 2: SCU vs sigma_n
         ax2 = axes[ 1 ]
         sc2 = ax2.scatter( sigmaN, scu, c=depth, cmap='turbo_r', s=20, alpha=0.8 )
         ax2.axhline( y=1.0, color='r', linestyle='--', label='Failure (SCU=1)' )
@@ -106,13 +105,14 @@ class Visualizer:
         if save:
             years = time / ( 365.25 * 24 * 3600 )
             filename = f'mohr_coulomb_phi{phi}_c{cohesion}_{years:.0f}y.png'
-            plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
-            self.logger.info( f"  📊 Plot saved: {filename}" )
+            plt.savefig( path / filename, dpi=300, bbox_inches='tight' )
+            plt.savefig( str( path / filename ), dpi=300, bbox_inches='tight' )
 
     def plotDepthProfiles(
         self: Self,
         surface: vtkUnstructuredGrid,
         time: float,
+        faultAttribute: str,
         path: Path = Path( "." ),
         save: bool = True,
         profileStartPoints: list[ tuple[ float, float ] ] | None = None,
@@ -124,33 +124,30 @@ class Visualizer:
         Args:
             surface (vtkUnstructuredGrid): Fault mesh.
             time (float): Time.
+            faultAttribute (str): Fault attribute name.
             path (Path): Saving path. Defaults is current directory.
             save (bool): Flag to save plots. Defaults is True.
             profileStartPoints (list[ tuple[ float, float ] ] | None): List of start points for profile analysis
             maxProfilePoints (int): Max profile points displayed. Defaults is 1000.
             referenceProfileId (int): Id of profile to plot. Defaults is 1.
         """
-        self.logger.info( "  📊 Creating depth profiles " )
+        self.logger.info( "  Creating depth profiles " )
 
         # Extract data
-        centers = surface.cell_data[ 'elementCenter' ]
+        centers = getArrayInObject( surface, 'elementCenter', Piece.CELLS )
         depth = centers[ :, 2 ]
-        sigmaN = surface.cell_data[ 'sigmaNEffective' ]
-        tau = surface.cell_data[ 'tauEffective' ]
-        scu = surface.cell_data[ 'SCU' ]
+        sigmaN = getArrayInObject( surface, 'sigmaNEffective', Piece.CELLS )
+        tau = getArrayInObject( surface, 'tauEffective', Piece.CELLS )
+        scu = getArrayInObject( surface, 'SCU', Piece.CELLS )
         scu = np.sqrt( scu**2 )
-        surface.cell_data[ 'deltaSCU' ]
 
         # Extraire les IDs de faille
         faultIds = None
-        if 'FaultMask' in surface.cell_data:
-            faultIds = surface.cell_data[ 'FaultMask' ]
-            self.logger.info( f"  📋 Detected {len(np.unique(faultIds[faultIds > 0]))} distinct faults" )
-        elif 'attribute' in surface.cell_data:
-            faultIds = surface.cell_data[ 'attribute' ]
-            self.logger.info( "  📋 Using 'attribute' field for fault identification" )
+        if faultAttribute in getAttributeSet( surface, Piece.CELLS ):
+            faultIds = getArrayInObject( surface, faultAttribute, Piece.CELLS )
+            self.logger.info( f"   Detected {len(np.unique(faultIds[faultIds > 0]))} distinct faults" )
         else:
-            self.logger.warning( "  ⚠️ No fault IDs found - profiles may jump between faults" )
+            self.logger.error( f" Invalid fault attribute name '{faultAttribute}'. No fault IDs found." )
 
         # ===================================================================
         # PROFILE EXTRACTION SETUP
@@ -171,7 +168,7 @@ class Visualizer:
 
         # Auto-generate profile points if not provided
         if profileStartPoints is None:
-            self.logger.warning( "  ⚠️  No profileStartPoints provided, auto-generating 5 profiles..." )
+            self.logger.warning( "    No profileStartPoints provided, auto-generating 5 profiles..." )
             nProfiles = 5
 
             # Determine dominant fault direction
@@ -197,7 +194,7 @@ class Visualizer:
         fig, axes = plt.subplots( 1, 4, figsize=( 24, 12 ) )
         colors = plt.cm.RdYlGn( np.linspace( 0, 1, nProfiles ) )  # type: ignore [attr-defined]
 
-        self.logger.info( f"  📍 Processing {nProfiles} profiles:" )
+        self.logger.info( f"   Processing {nProfiles} profiles:" )
         self.logger.info( f"     Depth range: [{zMin:.1f}, {zMax:.1f}]m" )
 
         successfulProfiles = 0
@@ -206,18 +203,18 @@ class Visualizer:
         # EXTRACT AND PLOT PROFILES
         # ===================================================================
         for i, ( xPos, yPos ) in enumerate( profileStartPoints ):
-            self.logger.info( f"     → Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f})" )
+            self.logger.info( f"     -> Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f})" )
 
-            depthsSigma, profileSigmaN, PathXSigma, PathYSigma = ProfileExtractor.extractAdaptiveProfile(
-                centers, sigmaN, xPos, yPos, searchRadius )
+            depthsSigma, profileSigmaN, PathXSigma, PathYSigma = ProfileExtractor(
+                logger=self.logger ).extractAdaptiveProfile( centers, sigmaN, xPos, yPos, searchRadius )
 
-            depthsTau, profileTau, _, _ = ProfileExtractor.extractAdaptiveProfile( centers, tau, xPos, yPos,
-                                                                                   searchRadius )
+            depthsTau, profileTau, _, _ = ProfileExtractor( logger=self.logger ).extractAdaptiveProfile(
+                centers, tau, xPos, yPos, searchRadius )
 
-            depthsSCU, profileSCU, _, _ = ProfileExtractor.extractAdaptiveProfile( centers, scu, xPos, yPos,
-                                                                                   searchRadius )
+            depthsSCU, profileSCU, _, _ = ProfileExtractor( logger=self.logger ).extractAdaptiveProfile(
+                centers, scu, xPos, yPos, searchRadius )
 
-            depthsDeltaSCU, profileDeltaSCU, _, _ = ProfileExtractor.extractAdaptiveProfile(
+            depthsDeltaSCU, profileDeltaSCU, _, _ = ProfileExtractor( logger=self.logger ).extractAdaptiveProfile(
                 centers, scu, xPos, yPos, searchRadius )
 
             # Calculate path length
@@ -233,7 +230,7 @@ class Visualizer:
             nPoints = len( depthsSigma )
 
             if nPoints >= minPoints:
-                label = f'Profile {i+1} → ({xPos:.0f}, {yPos:.0f})'
+                label = f'Profile {i+1} -> ({xPos:.0f}, {yPos:.0f})'
 
                 # Plot 1: Normal stress vs depth
                 axes[ 0 ].plot( profileSigmaN,
@@ -280,12 +277,12 @@ class Visualizer:
                                 markevery=2 )
 
                 successfulProfiles += 1
-                self.logger.info( f"        ✅ {nPoints} points found" )
+                self.logger.info( f"         {nPoints} points found" )
             else:
-                self.logger.warning( f"        ⚠️  Insufficient points ({nPoints}), skipping" )
+                self.logger.warning( f"          Insufficient points ({nPoints}), skipping" )
 
         if successfulProfiles == 0:
-            self.logger.error( "  ❌ No valid profiles found!" )
+            self.logger.error( "  No valid profiles found!" )
             plt.close()
             return
 
@@ -296,7 +293,7 @@ class Visualizer:
         fsize = 14
 
         # Plot 1: Normal Stress
-        axes[ 0 ].set_xlabel( 'Normal Stress σₙ [bar]', fontsize=fsize, weight="bold" )
+        axes[ 0 ].set_xlabel( 'Normal Stress sigmaₙ [bar]', fontsize=fsize, weight="bold" )
         axes[ 0 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 0 ].set_title( 'Normal Stress Profile', fontsize=fsize + 2, weight="bold" )
         axes[ 0 ].grid( True, alpha=0.3, linestyle='--' )
@@ -304,7 +301,8 @@ class Visualizer:
         axes[ 0 ].tick_params( labelsize=fsize - 2 )
 
         # Plot 2: Shear Stress
-        axes[ 1 ].set_xlabel( 'Shear Stress τ [bar]', fontsize=fsize, weight="bold" )
+        # axes[ 1 ].set_xlabel( 'Shear Stress τ [bar]', fontsize=fsize, weight="bold" )
+        axes[ 1 ].set_xlabel( 'Shear Stress $\\tau$ [bar]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_title( 'Shear Stress Profile', fontsize=fsize + 2, weight="bold" )
         axes[ 1 ].grid( True, alpha=0.3, linestyle='--' )
@@ -323,7 +321,7 @@ class Visualizer:
         axes[ 2 ].set_xlim( left=0 )
 
         # Plot 4: Delta SCU
-        axes[ 3 ].set_xlabel( 'Δ SCU [-]', fontsize=fsize, weight="bold" )
+        axes[ 3 ].set_xlabel( '$\\Delta$ SCU [-]', fontsize=fsize, weight="bold" )
         axes[ 3 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 3 ].set_title( 'Delta SCU', fontsize=fsize + 2, weight="bold" )
         axes[ 3 ].grid( True, alpha=0.3, linestyle='--' )
@@ -349,8 +347,8 @@ class Visualizer:
         # Save
         if save:
             filename = f'depth_profiles_{years:.0f}y.png'
-            plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
-            self.logger.info( f"  💾 Depth profiles saved: {filename}" )
+            plt.savefig( path / filename, dpi=300, bbox_inches='tight' )
+            self.logger.info( f"   Depth profiles saved: {filename}" )
 
     def plotVolumeStressProfiles(
         self: Self,
@@ -376,7 +374,7 @@ class Visualizer:
             profileStartPoints (list[ tuple[ float, float ] ] | None): List of start points for profile analysis
             maxProfilePoints (int): Max profile points displayed. Defaults is 1000.
         """
-        self.logger.info( "  📊 Creating volume stress profiles (both sides)" )
+        self.logger.info( "  Creating volume stress profiles (both sides)" )
 
         # ===================================================================
         # CHECK IF REQUIRED DATA EXISTS
@@ -385,7 +383,7 @@ class Visualizer:
 
         for field in requiredFields:
             if isAttributeInObject( volumeMesh, field, Piece.CELLS ):
-                self.logger.warning( f"  ⚠️  Missing required field: {field}" )
+                self.logger.warning( f"    Missing required field: {field}" )
                 return
 
         # Check for pressure
@@ -397,7 +395,7 @@ class Visualizer:
             pressure = getArrayInObject( volumeMesh, pressureField, Piece.CELLS ) / 1e5
             self.logger.info( "  ℹ️  Converting pressure from Pa to bar" )
         else:
-            self.logger.warning( "  ⚠️  No pressure field found" )
+            self.logger.warning( "    No pressure field found" )
             pressure = None
 
         # Extract volume data
@@ -436,18 +434,18 @@ class Visualizer:
             cellDataPlus[ key ] = getArrayInObject( volumeMesh, key )[ maskPlus ]
             cellDataMinus[ key ] = getArrayInObject( volumeMesh, key )[ maskMinus ]
 
-        self.logger.info( f"  📍 Plus side: {len(centersPlus):,} cells" )
-        self.logger.info( f"  📍 Minus side: {len(centersMinus):,} cells" )
+        self.logger.info( f"   Plus side: {len(centersPlus):,} cells" )
+        self.logger.info( f"   Minus side: {len(centersMinus):,} cells" )
 
         if len( centersPlus ) == 0 and len( centersMinus ) == 0:
-            self.logger.error( "  ⚠️  No contributing cells found!" )
+            self.logger.error( "    No contributing cells found!" )
             return
 
         # ===================================================================
         # GET FAULT BOUNDS
         # ===================================================================
 
-        faultCenters = faultSurface.cell_data[ 'elementCenter' ]
+        faultCenters = getArrayInObject( faultSurface, 'elementCenter', Piece.CELLS )
 
         xMin, xMax = np.min( faultCenters[ :, 0 ] ), np.max( faultCenters[ :, 0 ] )
         yMin, yMax = np.min( faultCenters[ :, 1 ] ), np.max( faultCenters[ :, 1 ] )
@@ -465,7 +463,7 @@ class Visualizer:
         # ===================================================================
 
         if profileStartPoints is None:
-            self.logger.warning( "  ⚠️  No profileStartPoints provided, auto-generating..." )
+            self.logger.warning( "    No profileStartPoints provided, auto-generating..." )
             nProfiles = 3
 
             if xRange > yRange:
@@ -493,7 +491,7 @@ class Visualizer:
         colorsPlus = plt.cm.Reds( np.linspace( 0.4, 0.9, nProfiles ) )  # type: ignore [attr-defined]
         colorsMinus = plt.cm.Blues( np.linspace( 0.4, 0.9, nProfiles ) )  # type: ignore [attr-defined]
 
-        self.logger.info( f"  📍 Processing {nProfiles} volume profiles:" )
+        self.logger.info( f"   Processing {nProfiles} volume profiles:" )
         self.logger.info( f"     Depth range: [{zMin:.1f}, {zMax:.1f}]m" )
 
         successfulProfiles = 0
@@ -503,7 +501,7 @@ class Visualizer:
         # ===================================================================
 
         for i, ( xPos, yPos, zPos ) in enumerate( profileStartPoints ):
-            self.logger.info( f"     → Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f}, {zPos:.1f})" )
+            self.logger.info( f"     -> Profile {i+1}: starting at ({xPos:.1f}, {yPos:.1f}, {zPos:.1f})" )
 
             # ================================================================
             # PLUS SIDE
@@ -511,18 +509,42 @@ class Visualizer:
             if len( centersPlus ) > 0:
                 self.logger.info( "        Processing PLUS side..." )
 
-                depthsSigma1Plus, profileSigma1Plus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersPlus, sigma1Plus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
+                depthsSigma1Plus, profileSigma1Plus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersPlus,
+                                                                 sigma1Plus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataPlus )
 
-                depthsSigma2Plus, profileSigma2Plus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersPlus, sigma2Plus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
+                depthsSigma2Plus, profileSigma2Plus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersPlus,
+                                                                 sigma2Plus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataPlus )
 
-                depthsSigma3Plus, profileSigma3Plus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersPlus, sigma3Plus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
+                depthsSigma3Plus, profileSigma3Plus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersPlus,
+                                                                 sigma3Plus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataPlus )
 
                 if pressure is not None:
-                    depthsPressurePlus, profilePressurePlus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                        centersPlus, pressurePlus, xPos, yPos, zPos, searchRadius, cellData=cellDataPlus )
+                    depthsPressurePlus, profilePressurePlus, _, _ = ProfileExtractor(
+                        logger=self.logger ).extractAdaptiveProfile( centersPlus,
+                                                                     pressurePlus,
+                                                                     xPos,
+                                                                     yPos,
+                                                                     zPos,
+                                                                     searchRadius,
+                                                                     cellData=cellDataPlus )
 
                 if len( depthsSigma1Plus ) >= 3:
                     labelPlus = 'Plus side'
@@ -539,7 +561,7 @@ class Visualizer:
                                         markersize=3,
                                         markevery=2 )
 
-                    # Plot σ1
+                    # Plot sigma1
                     axes[ 1 ].plot( profileSigma1Plus,
                                     depthsSigma1Plus,
                                     color=colorsPlus[ i ],
@@ -550,7 +572,7 @@ class Visualizer:
                                     markersize=3,
                                     markevery=2 )
 
-                    # Plot σ2
+                    # Plot sigma2
                     axes[ 2 ].plot( profileSigma2Plus,
                                     depthsSigma2Plus,
                                     color=colorsPlus[ i ],
@@ -561,7 +583,7 @@ class Visualizer:
                                     markersize=3,
                                     markevery=2 )
 
-                    # Plot σ3
+                    # Plot sigma3
                     axes[ 3 ].plot( profileSigma3Plus,
                                     depthsSigma3Plus,
                                     color=colorsPlus[ i ],
@@ -601,7 +623,7 @@ class Visualizer:
                                     markersize=2,
                                     markevery=2 )
 
-                    self.logger.info( f"        ✅ PLUS: {len(depthsSigma1Plus)} points" )
+                    self.logger.info( f"         PLUS: {len(depthsSigma1Plus)} points" )
                     successfulProfiles += 1
 
             # ================================================================
@@ -610,18 +632,42 @@ class Visualizer:
             if len( centersMinus ) > 0:
                 self.logger.info( "        Processing MINUS side..." )
 
-                depthsSigma1Minus, profileSigma1Minus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersMinus, sigma1Minus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
+                depthsSigma1Minus, profileSigma1Minus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersMinus,
+                                                                 sigma1Minus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataMinus )
 
-                depthsSigma2Minus, profileSigma2Minus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersMinus, sigma2Minus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
+                depthsSigma2Minus, profileSigma2Minus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersMinus,
+                                                                 sigma2Minus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataMinus )
 
-                depthsSigma3Minus, profileSigma3Minus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                    centersMinus, sigma3Minus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
+                depthsSigma3Minus, profileSigma3Minus, _, _ = ProfileExtractor(
+                    logger=self.logger ).extractAdaptiveProfile( centersMinus,
+                                                                 sigma3Minus,
+                                                                 xPos,
+                                                                 yPos,
+                                                                 zPos,
+                                                                 searchRadius,
+                                                                 cellData=cellDataMinus )
 
                 if pressure is not None:
-                    depthsPressureMinus, profilePressureMinus, _, _ = ProfileExtractor.extractAdaptiveProfile(
-                        centersMinus, pressureMinus, xPos, yPos, zPos, searchRadius, cellData=cellDataMinus )
+                    depthsPressureMinus, profilePressureMinus, _, _ = ProfileExtractor(
+                        logger=self.logger ).extractAdaptiveProfile( centersMinus,
+                                                                     pressureMinus,
+                                                                     xPos,
+                                                                     yPos,
+                                                                     zPos,
+                                                                     searchRadius,
+                                                                     cellData=cellDataMinus )
 
                 if len( depthsSigma1Minus ) >= 3:
                     labelMinus = 'Minus side'
@@ -638,7 +684,7 @@ class Visualizer:
                                         markersize=3,
                                         markevery=2 )
 
-                    # Plot σ1
+                    # Plot sigma1
                     axes[ 1 ].plot( profileSigma1Minus,
                                     depthsSigma1Minus,
                                     color=colorsMinus[ i ],
@@ -649,7 +695,7 @@ class Visualizer:
                                     markersize=3,
                                     markevery=2 )
 
-                    # Plot σ2
+                    # Plot sigma2
                     axes[ 2 ].plot( profileSigma2Minus,
                                     depthsSigma2Minus,
                                     color=colorsMinus[ i ],
@@ -660,7 +706,7 @@ class Visualizer:
                                     markersize=3,
                                     markevery=2 )
 
-                    # Plot σ3
+                    # Plot sigma3
                     axes[ 3 ].plot( profileSigma3Minus,
                                     depthsSigma3Minus,
                                     color=colorsMinus[ i ],
@@ -700,11 +746,11 @@ class Visualizer:
                                     markersize=2,
                                     markevery=2 )
 
-                    self.logger.info( f"        ✅ MINUS: {len(depthsSigma1Minus)} points" )
+                    self.logger.info( f"         MINUS: {len(depthsSigma1Minus)} points" )
                     successfulProfiles += 1
 
         if successfulProfiles == 0:
-            self.logger.error( "  ❌ No valid profiles found!" )
+            self.logger.error( "   No valid profiles found!" )
             plt.close()
             return
 
@@ -732,22 +778,22 @@ class Visualizer:
                             style='italic',
                             color='gray' )
 
-        # Plot 1: σ1 (Maximum principal stress)
-        axes[ 1 ].set_xlabel( 'σ₁ (Max Principal) [bar]', fontsize=fsize, weight="bold" )
+        # Plot 1: sigma1 (Maximum principal stress)
+        axes[ 1 ].set_xlabel( 'sigma₁ (Max Principal) [bar]', fontsize=fsize, weight="bold" )
         axes[ 1 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 1 ].grid( True, alpha=0.3, linestyle='--' )
         axes[ 1 ].legend( loc='best', fontsize=fsize - 2 )
         axes[ 1 ].tick_params( labelsize=fsize - 2 )
 
-        # Plot 2: σ2 (Intermediate principal stress)
-        axes[ 2 ].set_xlabel( 'σ₂ (Inter Principal) [bar]', fontsize=fsize, weight="bold" )
+        # Plot 2: sigma2 (Intermediate principal stress)
+        axes[ 2 ].set_xlabel( 'sigma₂ (Inter Principal) [bar]', fontsize=fsize, weight="bold" )
         axes[ 2 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 2 ].grid( True, alpha=0.3, linestyle='--' )
         axes[ 2 ].legend( loc='best', fontsize=fsize - 2 )
         axes[ 2 ].tick_params( labelsize=fsize - 2 )
 
-        # Plot 3: σ3 (Min principal stress)
-        axes[ 3 ].set_xlabel( 'σ₃ (Min Principal) [bar]', fontsize=fsize, weight="bold" )
+        # Plot 3: sigma3 (Min principal stress)
+        axes[ 3 ].set_xlabel( 'sigma₃ (Min Principal) [bar]', fontsize=fsize, weight="bold" )
         axes[ 3 ].set_ylabel( 'Depth [m]', fontsize=fsize, weight="bold" )
         axes[ 3 ].grid( True, alpha=0.3, linestyle='--' )
         axes[ 3 ].legend( loc='best', fontsize=fsize - 2 )
@@ -763,9 +809,9 @@ class Visualizer:
         customLines = [
             Line2D( [ 0 ], [ 0 ], color='red', linewidth=2.5, marker=None, label='Plus side', alpha=0.5 ),
             Line2D( [ 0 ], [ 0 ], color='blue', linewidth=2.5, marker=None, label='Minus side', alpha=0.5 ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='o', label='σ₁ (max)' ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.0, linestyle='-', marker='s', label='σ₂ (inter)' ),
-            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='v', label='σ₃ (min)' )
+            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='o', label='sigma₁ (max)' ),
+            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.0, linestyle='-', marker='s', label='sigma₂ (inter)' ),
+            Line2D( [ 0 ], [ 0 ], color='gray', linewidth=2.5, linestyle='-', marker='v', label='sigma₃ (min)' )
         ]
         axes[ 4 ].legend( handles=customLines, loc='best', fontsize=fsize - 3, ncol=1 )
 
@@ -790,5 +836,5 @@ class Visualizer:
         # Save
         if save:
             filename = f'volume_stress_profiles_both_sides_{years:.0f}y.png'
-            plt.savefig( os.path.join( path, filename ), dpi=300, bbox_inches='tight' )
-            self.logger.info( f"  💾 Volume profiles saved: {filename}" )
+            plt.savefig( path / filename, dpi=300, bbox_inches='tight' )
+            self.logger.info( f"   Volume profiles saved: {filename}" )

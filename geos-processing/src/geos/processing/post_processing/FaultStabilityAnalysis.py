@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright 2023-2026 TotalEnergies.
 # SPDX-FileContributor: Nicolas Pillardou, Paloma Martinez
-import os
 import logging
 from typing_extensions import Self
+from pathlib import Path
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet, vtkUnstructuredGrid
 
@@ -47,7 +47,7 @@ To use it:
     faultStabilityFilter.setBiotCoefficientName( biotName: str )
     faultStabilityFilter.setSensitivityFrictionAngles( list[ float ] )
     faultStabilityFilter.setSensitivityCohesions( list[ float] )
-    faultStabilityFilter.setProfileStartPoints( list[ tuple[ np.float64, np.float64, np.float64 ] ] )
+    faultStabilityFilter.setProfileStartPoints( list[ tuple[ np.float64, np.float64 ] ] )
 
     # Set your handler (only if speHandler is True).
     yourHandler: logging.Handler
@@ -88,7 +88,7 @@ class FaultStabilityAnalysis:
         self.pvdFile = pvdFile
         self.timeIndexes: list[ int ] | None = None
 
-        self.outputDir: str = "FaultStabilityAnalysis/"
+        self.outputDir: Path = Path( "FaultStabilityAnalysis/" )
 
         # Mechanical parameters
         self.frictionAngle: float = 12  # [degrees]
@@ -146,7 +146,7 @@ class FaultStabilityAnalysis:
 
         self.logger.addHandler( self.counter )
 
-        self.logger.info( "📐 Initialize fault geometry" )
+        self.logger.info( " Initialize fault geometry" )
         self.volumeMeshInitial = self._getInitialMesh()
         self.faultGeometry = FaultGeometry( inputMesh, faultValues, faultAttribute, self.volumeMeshInitial,
                                             self.outputDir, self.logger )
@@ -167,15 +167,15 @@ class FaultStabilityAnalysis:
 
     def _getInitialMesh( self: Self ) -> vtkUnstructuredGrid:
         """Get the mesh from timestep 0 in the PVD output file and merge the blocks."""
-        reader = PVDReader( self.pvdFile )
+        reader = PVDReader( self.pvdFile, logger=self.logger )
 
         datasetT0 = reader.getDataSetAtTimeIndex( 0 )
 
-        return mergeBlocks( datasetT0, keepPartialAttributes=True )
+        return mergeBlocks( datasetT0, keepPartialAttributes=True, logger=self.logger )
 
     def _initializeFaultGeometry( self: Self ) -> None:
         """Extract faults and compute geometric properties such as normals and adjacency topology."""
-        self.logger.info( "🔧 Computing normals and adjacency topology" )
+        self.logger.info( " Computing normals and adjacency topology" )
         self.faultGeometry.initialize( processFaultsSeparately=self.processFaultsSeparately,
                                        saveContributionCells=self.saveContributionCells )
 
@@ -186,7 +186,7 @@ class FaultStabilityAnalysis:
             vtkUnstructuredGrid: Fault mesh.
         """
         self.logger.info( "Reading PVD file" )
-        reader = PVDReader( self.pvdFile )
+        reader = PVDReader( self.pvdFile, self.logger )
         timeValues = reader.getAllTimestepsValues()
 
         if self.timeIndexes:
@@ -202,7 +202,7 @@ class FaultStabilityAnalysis:
 
         # Initialize projector with pre-computed topology
         self.logger.info( "Initialize projector with pre-computed topology." )
-        projector = StressProjector( adjacencyMapping, geometricProperties, self.outputDir )
+        projector = StressProjector( adjacencyMapping, geometricProperties, self.outputDir, self.logger )
         projector.setStressName( self.stressName )
         projector.setBiotCoefficientName( self.biotName )
 
@@ -211,14 +211,14 @@ class FaultStabilityAnalysis:
         self.logger.info( "=" * 60 )
 
         for i, time in enumerate( timeValues ):
-            self.logger.info( f"\n→ Step {i+1}/{len(timeValues)}: {time/(365.25*24*3600):.2f} years" )
+            self.logger.info( f"\n Step {i+1}/{len(timeValues)}: {time/(365.25*24*3600):.2f} years" )
 
             # Read time step
             idx = self.timeIndexes[ i ] if self.timeIndexes else i
             dataset = reader.getDataSetAtTimeIndex( idx )
 
             # Merge blocks
-            volumeData = mergeBlocks( dataset, keepPartialAttributes=True )
+            volumeData = mergeBlocks( dataset, keepPartialAttributes=True, logger=self.logger )
 
             if dataInitial is None:
                 dataInitial = volumeData
@@ -242,7 +242,7 @@ class FaultStabilityAnalysis:
             cohesion = self.cohesion  # bar
             frictionAngle = self.frictionAngle  # degrees
 
-            mc = MohrCoulombAnalysis( surfaceResult, cohesion, frictionAngle )
+            mc = MohrCoulombAnalysis( surfaceResult, cohesion, frictionAngle, logger=self.logger )
             surfaceResult = mc.analyze()
 
             # -----------------------------------
@@ -254,21 +254,24 @@ class FaultStabilityAnalysis:
             # Sensitivity analysis
             # -----------------------------------
             if self.runSensitivity:
-                analyzer = SensitivityAnalyzer( self.outputDir )
-                if self.sensitivityFrictionAngles is None or self.sensitivityCohesions is None:
+                if len( self.sensitivityFrictionAngles ) == 0 or len( self.sensitivityCohesions ) == 0:
                     raise ValueError(
                         "Sensitivity friction angles and cohesions required if runSensitivity is set to True" )
+                analyzer = SensitivityAnalyzer( self.outputDir, self.logger )
                 analyzer.runAnalysis( surfaceResult, time, self.sensitivityFrictionAngles, self.sensitivityCohesions,
                                       self.profileStartPoints, self.profileSearchRadius )
 
             # Save
-            filename = os.path.join( self.outputDir, f'fault_analysis_{i:04d}.vtu' )
-            writeMesh( mesh=surfaceResult, vtkOutput=VtkOutput( filename ), canOverwrite=True )
+            filename = self.outputDir / f'fault_analysis_{i:04d}.vtu'
+            writeMesh( mesh=surfaceResult,
+                       vtkOutput=VtkOutput( str( filename ) ),
+                       canOverwrite=True,
+                       logger=self.logger )
             outputFiles.append( ( time, filename ) )
-            self.logger.info( f"  💾 Saved: {filename}" )
+            self.logger.info( f"   Saved: {filename}" )
 
         # Create master PVD
-        createPVD( self.outputDir, outputFiles )
+        createPVD( self.outputDir, 'fault_analysis.pvd', outputFiles, self.logger )
 
         return surfaceResult
 
@@ -303,7 +306,8 @@ class FaultStabilityAnalysis:
         visualizer = Visualizer( self.profileSearchRadius,
                                  self.minDepthProfiles,
                                  self.maxDepthProfiles,
-                                 savePlots=self.savePlots )
+                                 savePlots=self.savePlots,
+                                 logger=self.logger )
 
         visualizer.plotMohrCoulombDiagram(
             surface,
@@ -328,11 +332,11 @@ class FaultStabilityAnalysis:
         """Set the cohesions for sensitivy analysis."""
         self.sensitivityCohesions = cohesions
 
-    def setOutputDirectory( self: Self, outputDir: str ) -> None:
+    def setOutputDirectory( self: Self, outputDir: Path ) -> None:
         """Set the saving output directory.
 
         Args:
-            outputDir (str): Output directory
+            outputDir (Path): Output directory
         """
         if outputDir != "None":
             self.outputDir = outputDir
@@ -364,9 +368,13 @@ class FaultStabilityAnalysis:
             self.biotName = biotName
 
     def setProfileStartPoints( self: Self, startPoints: list[ tuple[ float, float ] ] ) -> None:
-        """Set the profile start points.
+        """Set the profile start points as a list of ( x, y ).
 
         Args:
-            startPoints (list[tuple[np.float64, np.float64, np.float64]]): List of starting points coordinates.
+            startPoints (list[tuple[np.float64, np.float64]]): List of starting points coordinates.
         """
+        for coords in startPoints:
+            if not len( coords ) == 2:
+                raise TypeError( f"Expected a vector of length 2, not {len(coords)}." )
+
         self.profileStartPoints = startPoints

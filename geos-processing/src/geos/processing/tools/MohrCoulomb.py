@@ -63,10 +63,9 @@ class MohrCoulombAnalysis:
         # Coulomb Failure Stress
         cfs = tau - mu * sigmaN
 
-        # Shear Capacity Utilization: SCU = τ / τ_crit
+        # Shear Capacity Utilization: SCU = tau / tau_crit
         scu = np.divide( tau, tauCritical, out=np.zeros_like( tau ), where=tauCritical != 0 )
 
-        # if "SCUInitial" not in surface.cell_data:
         if not isAttributeInObject( self.surface, "SCUInitial", Piece.CELLS ):
             # First timestep: store as initial reference
             scuInitial = scu.copy()
@@ -74,8 +73,8 @@ class MohrCoulombAnalysis:
             deltaSCU = np.zeros_like( scu )
             deltaCFS = np.zeros_like( cfs )
 
-            createAttribute( self.surface, scuInitial, "SCUInitial" )
-            createAttribute( self.surface, cfsInitial, "CFSInitial" )
+            createAttribute( self.surface, scuInitial, "SCUInitial", logger=self.logger )
+            createAttribute( self.surface, cfsInitial, "CFSInitial", logger=self.logger )
 
             isInitial = True
         else:
@@ -114,7 +113,7 @@ class MohrCoulombAnalysis:
         }
 
         for attributeName, value in attributes.items():
-            updateAttribute( self.surface, value, attributeName, Piece.CELLS )
+            updateAttribute( self.surface, value, attributeName, Piece.CELLS, logger=self.logger )
 
         nStable = np.sum( stability == 0 )
         nCritical = np.sum( stability == 1 )
@@ -125,12 +124,12 @@ class MohrCoulombAnalysis:
             meanDelta = np.mean( np.abs( deltaSCU ) )
             maxIncrease = np.max( deltaSCU )
             maxDecrease = np.min( deltaSCU )
-            self.logger.info( f"  ✅ Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical,\n"
+            self.logger.info( f"   Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical,\n"
                               f"{nStable} stable cells\n"
-                              f"     ΔSCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, \n"
+                              f"     Delta SCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, \n"
                               f"maxDecrease={maxDecrease:.3f}" )
         else:
-            self.logger.info( f"  ✅ Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, \n"
+            self.logger.info( f"   Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, \n"
                               f"{nStable} stable cells" )
 
         return self.surface

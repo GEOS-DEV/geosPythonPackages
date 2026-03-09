@@ -518,7 +518,6 @@ def getLocalBasisVectors(
 
 def computeNormals(
     surface: vtkPolyData,
-    pointNormals: bool = False,
     logger: Union[ Logger, None ] = None,
 ) -> vtkPolyData:
     """Compute and set the normals of a given surface.

@@ -91,7 +91,7 @@ class FaultGeometry:
         self.faultSurface, self.surfaces = self._extractAndComputeNormals()
 
         # Pre-compute adjacency mapping
-        self.logger.info( "🔍 Pre-computing volume-fault adjacency topology\n"
+        self.logger.info( " Pre-computing volume-fault adjacency topology\n"
                           "   Method: Face-sharing (adaptive epsilon)\n" )
 
         self.adjacencyMapping = self._buildAdjacencyMappingFaceSharing(
@@ -107,7 +107,7 @@ class FaultGeometry:
         nWithBoth = sum( 1 for m in self.adjacencyMapping.values()
                          if len( m[ 'plus' ] ) > 0 and len( m[ 'minus' ] ) > 0 )
 
-        self.logger.info( "✅ Adjacency topology computed:\n"
+        self.logger.info( " Adjacency topology computed:\n"
                           f"   - {nMapped}/{self.faultSurface.GetNumberOfCells()} fault cells mapped\n"
                           f"   - {nWithBoth} cells have neighbors on both sides\n" )
 
@@ -120,7 +120,7 @@ class FaultGeometry:
             saveContributionCells (bool): Save contributing cells as VTU.
                 Defaults is True.
         """
-        self.logger.info( "📦 Marking contributing volume cells..." )
+        self.logger.info( " Marking contributing volume cells..." )
 
         nVolume = self.volumeMesh.GetNumberOfCells()
 
@@ -166,7 +166,7 @@ class FaultGeometry:
         nBoth = np.sum( contributionSide == 3 )
         pctContrib = nContrib / nVolume * 100
 
-        self.logger.info( f"   ✅ Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)\n"
+        self.logger.info( f"    Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)\n"
                           f"      Plus side only:  {nPlus} cells\n"
                           f"      Minus side only: {nMinus} cells\n"
                           f"      Both sides:      {nBoth} cells\n" )
@@ -183,24 +183,33 @@ class FaultGeometry:
         # Save all contributing cells
         filenameAll = self.outputDir / "contributing_cells_all.vtu"
 
-        writeMesh( mesh=self.contributingCells, vtkOutput=VtkOutput( filenameAll ), canOverwrite=True )
+        writeMesh( mesh=self.contributingCells,
+                   vtkOutput=VtkOutput( filenameAll ),
+                   canOverwrite=True,
+                   logger=self.logger )
         self.logger.info(
-            f"   💾 All contributing cells saved: {filenameAll}\n"
+            f"    All contributing cells saved: {filenameAll}\n"
             f"      ({self.contributingCells.GetNumberOfCells()} cells, {self.contributingCells.GetNumberOfPoints()} points)"
         )
 
         # Save plus side
         filenamePlus = self.outputDir / "contributingCellsPlus.vtu"
-        self.logger.info( f"   💾 Plus side cells saved: {filenamePlus}" )
-        writeMesh( mesh=self.contributingCellsPlus, vtkOutput=VtkOutput( filenamePlus ), canOverwrite=True )
+        self.logger.info( f"    Plus side cells saved: {filenamePlus}" )
+        writeMesh( mesh=self.contributingCellsPlus,
+                   vtkOutput=VtkOutput( filenamePlus ),
+                   canOverwrite=True,
+                   logger=self.logger )
         self.logger.info(
             f"      ({self.contributingCellsPlus.GetNumberOfCells()} cells, {self.contributingCellsPlus.GetNumberOfPoints()} points)"
         )
 
         # Save minus side
         filenameMinus = self.outputDir / "contributingCellsMinus.vtu"
-        self.logger.info( f"   💾 Minus side cells saved: {filenameMinus}" )
-        writeMesh( mesh=self.contributingCellsMinus, vtkOutput=VtkOutput( filenameMinus ), canOverwrite=True )
+        self.logger.info( f"    Minus side cells saved: {filenameMinus}" )
+        writeMesh( mesh=self.contributingCellsMinus,
+                   vtkOutput=VtkOutput( filenameMinus ),
+                   canOverwrite=True,
+                   logger=self.logger )
         self.logger.info(
             f"      ({self.contributingCellsMinus.GetNumberOfCells()} cells, {self.contributingCellsMinus.GetNumberOfPoints()} points)"
         )
@@ -261,7 +270,7 @@ class FaultGeometry:
             - Distance from each volume cell to nearest fault cell
             - KDTree for fault surface
         """
-        self.logger.info( "📐 Pre-computing geometric properties..." )
+        self.logger.info( " Pre-computing geometric properties..." )
 
         nVolume = self.volumeMesh.GetNumberOfCells()
 
@@ -298,7 +307,7 @@ class FaultGeometry:
         createAttribute( self.volumeMesh, self.volumeCellVolumes, 'cellVolume', Piece.CELLS, logger=self.logger )
         createAttribute( self.volumeMesh, self.distanceToFault, 'distanceToFault', Piece.CELLS, logger=self.logger )
 
-        self.logger.info( "   ✅ Geometric properties computed and cached" )
+        self.logger.info( "    Geometric properties computed and cached" )
 
     def _buildAdjacencyMappingFaceSharing( self: Self,
                                            processFaultsSeparately: bool = True
@@ -309,7 +318,7 @@ class FaultGeometry:
         """
         faultIds = np.unique( getArrayInObject( self.faultSurface, self.faultAttribute, Piece.CELLS ) )
         nFaults = len( faultIds )
-        self.logger.info( f"  📋 Processing {nFaults} separate faults: {faultIds}\n" )
+        self.logger.info( f"   Processing {nFaults} separate faults: {faultIds}\n" )
 
         allMappings: dict[ int, dict[ str, list[ int ] ] ] = {}
 
@@ -318,7 +327,7 @@ class FaultGeometry:
             indices = np.where( mask )[ 0 ]
             singleFault = extractCellSelection( self.faultSurface, indices )
 
-            self.logger.info( f"  🔧 Mapping Fault {faultId}..." )
+            self.logger.info( f"   Mapping Fault {faultId}..." )
 
             # Build face-sharing mapping with adaptive epsilon
             localMapping = self._findFaceSharingCells( singleFault )
@@ -376,7 +385,7 @@ class FaultGeometry:
             # Score = percentage with both sides + penalty for no neighbors
             score = stats[ 'pctBoth' ] - 2.0 * stats[ 'pctNone' ]
 
-            self.logger.info( f"            ε={epsilon:.3f}m → Both: {stats['pctBoth']:.1f}%, "
+            self.logger.info( f"            ε={epsilon:.3f}m -> Both: {stats['pctBoth']:.1f}%, "
                               f"One: {stats['pctOne']:.1f}%, None: {stats['pctNone']:.1f}%, "
                               f"Avg: {stats['avgNeighbors']:.2f} (score: {score:.1f})" )
 
@@ -386,8 +395,8 @@ class FaultGeometry:
                 bestMapping = mapping
                 bestStats = stats
 
-        self.logger.info( f"         ✅ Best epsilon: {bestEpsilon:.6f}m\n"
-                          "         ✅ Face-sharing mapping completed:\n"
+        self.logger.info( f"          Best epsilon: {bestEpsilon:.6f}m\n"
+                          "          Face-sharing mapping completed:\n"
                           f"            Both sides: {bestStats['nBoth']} ({bestStats['pctBoth']:.1f}%)\n"
                           f"            One side: {bestStats['nOne']} ({bestStats['pctOne']:.1f}%)\n"
                           f"            No neighbors: {bestStats['nNone']} ({bestStats['pctNone']:.1f}%)\n"
@@ -513,8 +522,8 @@ class FaultGeometry:
             mb.SetBlock( i, surf )
             surfaces.append( surf )
 
-        merged = mergeBlocks( mb, keepPartialAttributes=True )
-        self.logger.info( f"✅ Normals computed for {merged.GetNumberOfCells()} fault cells" )
+        merged = mergeBlocks( mb, keepPartialAttributes=True, logger=self.logger )
+        self.logger.info( f" Normals computed for {merged.GetNumberOfCells()} fault cells" )
 
         return merged, surfaces
 
@@ -562,14 +571,14 @@ class FaultGeometry:
 
         surf.GetCellData().SetNormals( numpy_to_vtk( normals.ravel() ) )
 
-        createAttribute( surf, tangents1, "Tangents1" )
-        createAttribute( surf, tangents2, "Tangents2" )
+        createAttribute( surf, tangents1, "Tangents1", logger=self.logger )
+        createAttribute( surf, tangents2, "Tangents2", logger=self.logger )
         surf.GetCellData().SetActiveTangents( "Tangents1" )
 
         dipAngles, strikeAngles = self.computeDipStrikeFromCellBase( normals, tangents1, tangents2 )
 
-        createAttribute( surf, dipAngles, "dipAngle" )
-        createAttribute( surf, strikeAngles, "strikeAngle" )
+        createAttribute( surf, dipAngles, "dipAngle", logger=self.logger )
+        createAttribute( surf, strikeAngles, "strikeAngle", logger=self.logger )
 
         return surf
 
@@ -631,7 +640,7 @@ class FaultGeometry:
         """
         surface = self.faultSurface
 
-        self.logger.info( "🔍 DIAGNOSTIC OF NORMALS" )
+        self.logger.info( " DIAGNOSTIC OF NORMALS" )
         self.logger.info( "=" * 60 )
 
         normals = surface.GetCellData().GetNormals()
@@ -674,22 +683,25 @@ class FaultGeometry:
 
         # Visual consistency check
         if nReversed > nCells * 0.1:
-            self.logger.warning( "  ⚠️  More than 10% of normals point in the opposite direction!" )
+            self.logger.warning( "    More than 10% of normals point in the opposite direction!" )
         else:
-            self.logger.info( "  ✅ Orientation is consistent" )
+            self.logger.info( "   Orientation is consistent" )
 
         # Identify problematic cells (poor orthogonality)
         badOrtho = ( ( np.abs( dotNormT1 ) > 1e-3 ) | ( np.abs( dotNormT2 ) > 1e-3 ) | ( np.abs( dotT1T2 ) > 1e-3 ) )
         nBad = np.sum( badOrtho )
 
         if nBad > 0:
-            self.logger.warning( f"\n⚠️  {nBad} cells with poor orthogonality (|dot| > 1e-3)" )
+            self.logger.warning( f"  {nBad} cells with poor orthogonality (|dot| > 1e-3)" )
             updateAttribute( surface,
                              np.maximum.reduce( [ np.abs( dotNormT1 ),
                                                   np.abs( dotNormT2 ),
-                                                  np.abs( dotT1T2 ) ] ), "orthogonalityError", Piece.CELLS )
+                                                  np.abs( dotT1T2 ) ] ),
+                             "orthogonalityError",
+                             Piece.CELLS,
+                             logger=self.logger )
         else:
-            self.logger.info( "\n✅ All cells have good orthogonality" )
+            self.logger.info( " All cells have good orthogonality" )
 
         self.logger.info( "=" * 60 )
 

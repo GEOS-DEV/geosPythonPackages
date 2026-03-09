@@ -17,7 +17,8 @@ from geos.geomechanics.model.StressTensor import ( StressTensor )
 
 from geos.mesh.io.vtkIO import ( writeMesh, VtkOutput )
 from geos.mesh.utils.genericHelpers import ( extractCellSelection )
-from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getArrayInObject, computeCellCenterCoordinates )
+from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getAttributeSet, getArrayInObject,
+                                           computeCellCenterCoordinates )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, updateAttribute )
 from geos.utils.pieceEnum import ( Piece )
 
@@ -73,7 +74,7 @@ class StressProjector:
         self.timestepInfo: list[ dict[ str, Any ] ] = []
 
         # Track which cells to monitor (optional)
-        self.monitoredCells: set[ int ] | None = set()
+        self.monitoredCells: set[ int ] | None = None
 
         # Output directory for VTU files
         self.vtuOutputDir = Path( outputDir ) / "principal_stresses"
@@ -158,7 +159,7 @@ class StressProjector:
         tangent2 = vtk_to_numpy( faultSurface.GetCellData().GetArray( "Tangents2" ) )
 
         faultCenters = vtk_to_numpy( computeCellCenterCoordinates( faultSurface ) )
-        updateAttribute( faultSurface, faultCenters, 'elementCenter', Piece.CELLS )
+        updateAttribute( faultSurface, faultCenters, 'elementCenter', Piece.CELLS, logger=self.logger )
 
         nFault = faultSurface.GetNumberOfCells()
 
@@ -179,7 +180,7 @@ class StressProjector:
             else:
                 cellsToTrack = allContributingCells
 
-            self.logger.info( f"  📊 Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
+            self.logger.info( f"  Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
 
             # Create mesh with only contributing cells
             contributingMesh = self._createVolumicContribMesh( volumeData,
@@ -206,7 +207,7 @@ class StressProjector:
         deltaTauArr = np.zeros( nFault )
         nContributors = np.zeros( nFault, dtype=int )
 
-        self.logger.info( f"  🔄 Projecting stress to {nFault} fault cells...\n"
+        self.logger.info( f"    Projecting stress to {nFault} fault cells...\n"
                           f"     Weighting scheme: {weightingScheme}" )
 
         for faultIdx in range( nFault ):
@@ -304,7 +305,7 @@ class StressProjector:
         for attributeName, value in zip(
             [ "sigmaNEffective", "tauEffective", "tauStrike", "tauDip", "deltaSigmaNEffective", "deltaTauEffective" ],
             [ sigmaNArr, tauDipArr, tauStrikeArr, tauDipArr, deltaSigmaNArr, deltaTauArr ] ):
-            updateAttribute( faultSurface, value, attributeName, Piece.CELLS )
+            updateAttribute( faultSurface, value, attributeName, Piece.CELLS, logger=self.logger )
 
         # =====================================================================
         # 8. STATISTICS
@@ -312,7 +313,7 @@ class StressProjector:
         valid = nContributors > 0
         nValid = np.sum( valid )
 
-        self.logger.info( f"  ✅ Stress projected: {nValid}/{nFault} fault cells ({nValid/nFault*100:.1f}%)" )
+        self.logger.info( f"   Stress projected: {nValid}/{nFault} fault cells ({nValid/nFault*100:.1f}%)" )
 
         if np.sum( valid ) > 0:
             self.logger.info( f"     Contributors per fault cell: min={np.min(nContributors[valid])}, "
@@ -326,8 +327,8 @@ class StressProjector:
         """Compute principal stresses and directions.
 
         Convention: Compression is NEGATIVE
-        - σ1 = most compressive (most negative)
-        - σ3 = least compressive (least negative, or most tensile)
+        - sigma1 = most compressive (most negative)
+        - sigma3 = least compressive (least negative, or most tensile)
 
         Args:
             stressTensor (StressTensor): Stress tensor object
@@ -338,7 +339,7 @@ class StressProjector:
         eigenvalues, eigenvectors = np.linalg.eigh( stressTensor )
 
         # Sort from MOST NEGATIVE to LEAST NEGATIVE (most compressive to least)
-        # Example: -600 < -450 < -200, so -600 is σ1 (most compressive)
+        # Example: -600 < -450 < -200, so -600 is sigma1 (most compressive)
         idx = np.argsort( eigenvalues )  # Ascending order (most negative first)
         eigenvaluesSorted = eigenvalues[ idx ]
         eigenVectorsSorted = eigenvectors[ :, idx ]
@@ -349,10 +350,10 @@ class StressProjector:
             'sigma3': eigenvaluesSorted[ 2 ],  # Least compressive (least negative)
             'meanStress': np.mean( eigenvaluesSorted ),
             'deviatoricStress': eigenvaluesSorted[ 0 ] -
-            eigenvaluesSorted[ 2 ],  # σ1 - σ3 (negative - more negative = positive or less negative)
-            'direction1': eigenVectorsSorted[ :, 0 ],  # Direction of σ1
-            'direction2': eigenVectorsSorted[ :, 1 ],  # Direction of σ2
-            'direction3': eigenVectorsSorted[ :, 2 ]  # Direction of σ3
+            eigenvaluesSorted[ 2 ],  # sigma1 - sigma3 (negative - more negative = positive or less negative)
+            'direction1': eigenVectorsSorted[ :, 0 ],  # Direction of sigma1
+            'direction2': eigenVectorsSorted[ :, 1 ],  # Direction of sigma2
+            'direction3': eigenVectorsSorted[ :, 2 ]  # Direction of sigma3
         }
 
     def _createVolumicContribMesh( self: Self,
@@ -384,7 +385,7 @@ class StressProjector:
         if not isAttributeInObject( volumeData, self.stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{self.stressName}' in volume dataset" )
 
-        self.logger.info( f"  📊 Extracting stress from field: '{self.stressName}'" )
+        self.logger.info( f"  Extracting stress from field: '{self.stressName}'" )
 
         # Extract effective stress and pressure
         pressure = getArrayInObject( volumeData, "pressure", Piece.CELLS ) / 1e5  # Convert to bar
@@ -404,7 +405,10 @@ class StressProjector:
         cellMask = np.zeros( volumeData.GetNumberOfCells(), dtype=bool )
         cellMask[ cellIndices ] = True
 
-        subsetMesh = extractCellSelection( cellMask )
+        subsetMesh = extractCellSelection( volumeData, cellMask )
+
+        if subsetMesh.GetNumberOfCells() == 0:
+            self.logger.warning( "No cells found in the subset mesh. " )
 
         # ===================================================================
         # REBUILD MAPPING: subsetIdx -> originalIdx
@@ -424,15 +428,15 @@ class StressProjector:
         # ===================================================================
         # MAP VOLUME CELLS TO FAULT DIP/STRIKE ANGLES
         # ===================================================================
-        self.logger.info( "     📐 Mapping volume cells to fault dip/strike angles..." )
+        self.logger.info( "     Mapping volume cells to fault dip/strike angles..." )
 
         # Check if fault surface has required data
         if not faultSurface.GetCellData().HasArray( 'dipAngle' ):
-            raise AttributeError( "        ⚠️ WARNING: 'dipAngle' not found in faultSurface\n"
-                                  f"        Available fields: {list(faultSurface.cell_data.keys())}" )
+            raise AttributeError( "         WARNING: 'dipAngle' not found in faultSurface\n"
+                                  f"        Available fields: {list(getAttributeSet( faultSurface, Piece.CELLS ))}" )
 
         if not faultSurface.GetCellData().HasArray( 'strikeAngle' ):
-            raise AttributeError( "        ⚠️ WARNING: 'strikeAngle' not found in faultSurface" )
+            raise AttributeError( "         WARNING: 'strikeAngle' not found in faultSurface" )
 
         # Create mapping: volume_cell_id -> [dipAngles, strikeAngles]
         volumeToDip: dict[ int, list[ np.float64 ] ] = {}
@@ -460,7 +464,7 @@ class StressProjector:
         volumeToDipAvg = { volIdx: np.mean( dips ) for volIdx, dips in volumeToDip.items() }
         volumeToStrikeAvg = { volIdx: np.mean( strikes ) for volIdx, strikes in volumeToStrike.items() }
 
-        self.logger.info( f"        ✅ Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
+        self.logger.info( f"         Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
 
         # Statistics
         allDips = [ np.mean( dips ) for dips in volumeToDip.values() ]
@@ -493,7 +497,7 @@ class StressProjector:
         sideArr = np.zeros( nCells, dtype=int )
         nFaultCellsArr = np.zeros( nCells, dtype=int )
 
-        self.logger.info( "     🔢 Computing principal stresses and analytical projections..." )
+        self.logger.info( "       Computing principal stresses and analytical projections..." )
 
         for subsetIdx in range( nCells ):
             origIdx = subsetToOriginal[ subsetIdx ]
@@ -526,7 +530,7 @@ class StressProjector:
                 strikeDeg = volumeToStrikeAvg.get( origIdx, np.nan )
                 strikeAngleArr[ subsetIdx ] = strikeDeg
 
-                # δ = 90° - dip (angle from horizontal)
+                # d = 90° - dip (angle from horizontal)
                 deltaDeg = 90.0 - dipDeg
                 deltaRad = np.radians( deltaDeg )
                 deltaArr[ subsetIdx ] = deltaDeg
@@ -536,8 +540,8 @@ class StressProjector:
                 sigma3 = principal[ 'sigma3' ]  # Least compressive (least negative)
 
                 # Anderson formulas (1951)
-                # σ_n = (σ1 + σ3)/2 - (σ1 - σ3)/2 * cos(2δ)
-                # τ = |(σ1 - σ3)/2 * sin(2δ)|
+                # sigma_n = (sigma1 + sigma3)/2 - (sigma1 - sigma3)/2 * cos(2d)
+                # tau = |(sigma1 - sigma3)/2 * sin(2d)|
 
                 sigmaMean = ( sigma1 + sigma3 ) / 2.0
                 sigmaDiff = ( sigma1 - sigma3 ) / 2.0
@@ -602,17 +606,17 @@ class StressProjector:
         ), ( sigma1Arr, sigma2Arr, sigma3Arr, meanStressArr, deviatoricStressArr, pressureArr, direction1Arr,
              direction2Arr, direction3Arr, sigmaNAnalyticalArr, tauAnalyticalArr, dipAngleArr, strikeAngleArr,
              deltaArr ) ):
-            updateAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS )
+            updateAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS, logger=self.logger )
 
         # ===================================================================
         # COMPUTE SCU ANALYTICALLY (Mohr-Coulomb)
         # ===================================================================
         mu = np.tan( np.radians( frictionAngle ) )
 
-        # τ_crit = C - σ_n * μ
-        # Note: σ_n is negative (compression), so -σ_n * μ is positive
+        # tau_crit = C - sigma_n * mu
+        # Note: sigma_n is negative (compression), so -sigma_n * mu is positive
         tauCriticalArr: npt.NDArray[ np.float64 ] = cohesion - sigmaNAnalyticalArr * mu
-        # SCU = τ / τ_crit
+        # SCU = tau / tau_crit
         SCUAnalyticalArr: npt.NDArray[ np.float64 ] = np.divide( tauAnalyticalArr,
                                                                  tauCriticalArr,
                                                                  out=np.zeros_like( tauAnalyticalArr ),
@@ -621,7 +625,7 @@ class StressProjector:
         for attributeName, attributeArray in zip(
             ( 'tauCriticalAnalytical', 'SCUAnalytical', 'side', 'nFaultCells', 'originalCellIds' ),
             ( tauCriticalArr, SCUAnalyticalArr, sideArr, nFaultCellsArr, subsetToOriginal ) ):
-            createAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS )
+            createAttribute( subsetMesh, attributeArray, attributeName, piece=Piece.CELLS, logger=self.logger )
 
         # ===================================================================
         # STATISTICS
@@ -633,15 +637,15 @@ class StressProjector:
 
         if nValid > 0:
             self.logger.info(
-                f"     📊 Analytical fault stresses computed for {nValid}/{nCells} cells"
-                f"        σ_n range: [{np.nanmin(sigmaNAnalyticalArr):.1f}, {np.nanmax(sigmaNAnalyticalArr):.1f}] bar"
-                f"        τ range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar"
+                f"      Analytical fault stresses computed for {nValid}/{nCells} cells"
+                f"        sigma_n range: [{np.nanmin(sigmaNAnalyticalArr):.1f}, {np.nanmax(sigmaNAnalyticalArr):.1f}] bar"
+                f"        tau range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar"
                 f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°"
                 f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
                 f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)"
                 f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
         else:
-            self.logger.warning( "     ⚠️  No analytical stresses computed (no fault mapping)" )
+            self.logger.warning( "       No analytical stresses computed (no fault mapping)" )
 
         return subsetMesh
 
@@ -661,7 +665,7 @@ class StressProjector:
         vtuPath = self.vtuOutputDir / vtuFilename
 
         # Save mesh
-        writeMesh( mesh=mesh, vtkOutput=VtkOutput( vtuPath ) )
+        writeMesh( mesh=mesh, vtkOutput=VtkOutput( vtuPath ), logger=self.logger, canOverwrite=True )
 
         # Store metadata for PVD
         self.timestepInfo.append( {
@@ -670,7 +674,7 @@ class StressProjector:
             'file': vtuFilename
         } )
 
-        self.logger.info( f"     💾 Saved principal stresses: {vtuFilename}" )
+        self.logger.info( f"      Saved principal stresses: {vtuFilename}" )
 
     def savePVDCollection( self: Self, filename: str = "principal_stresses.pvd" ) -> None:
         """Create PVD file for time series visualization in ParaView.
@@ -680,12 +684,12 @@ class StressProjector:
                 Defaults is "principal_stresses.pvd".
         """
         if len( self.timestepInfo ) == 0:
-            self.logger.error( "⚠️  No timestep data to save in PVD" )
+            self.logger.error( "  No timestep data to save in PVD" )
             return
 
         pvdPath = self.vtuOutputDir / filename
 
-        self.logger.info( f"\n💾 Creating PVD collection: {pvdPath}"
+        self.logger.info( f" Creating PVD collection: {pvdPath}"
                           f"   Timesteps: {len(self.timestepInfo)}" )
 
         # Create XML structure
@@ -707,9 +711,9 @@ class StressProjector:
         tree = ElementTree( root )
         tree.write( str( pvdPath ), encoding='utf-8', xml_declaration=True )
 
-        self.logger.info( "   ✅ PVD file created successfully"
-                          f"   📂 Output directory: {self.vtuOutputDir}"
-                          "\n   🎨 To visualize in ParaView:"
+        self.logger.info( "    PVD file created successfully"
+                          f"    Output directory: {self.vtuOutputDir}"
+                          "\n    To visualize in ParaView:"
                           f"      1. Open: {pvdPath}"
                           "      2. Apply"
                           "      3. Color by: sigma1, sigma2, sigma3, meanStress, etc."

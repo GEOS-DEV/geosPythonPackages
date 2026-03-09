@@ -52,6 +52,7 @@ ArrayModifiers contains utilities to process VTK Arrays objects.
 These methods include:
     - filling partial VTK arrays with values (useful for block merge)
     - creation of new VTK array, empty or with a given data array
+    - modification of the value of a VTK array
     - copy VTK array from a source mesh to a final mesh
     - transfer VTK array from a source mesh to a final mesh with a element map
     - transfer from VTK point data to VTK cell data

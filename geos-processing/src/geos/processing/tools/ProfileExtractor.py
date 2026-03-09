@@ -45,12 +45,10 @@ class ProfileExtractor:
         cellData: vtkCellData | None = None
     ) -> tuple[ npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ], npt.NDArray[ np.float64 ],
                 npt.NDArray[ np.float64 ] ]:
-        """
-        Extract a vertical depth profile with automatic fault detection.
+        """Extract a vertical depth profile with automatic fault detection.
 
         The algorithm adaptively follows a vertical sampling strategy guided by
         detected fault membership inside the provided cell data. It performs:
-
             1. Finding the closest starting point to the provided (xStart, yStart, zStart).
             2. Automatically detecting the target fault using the provided ``cellData``
                 (e.g., fields like ``FaultMask`` or any other fault-identifying attribute).
@@ -58,7 +56,6 @@ class ProfileExtractor:
             4. Splitting the remaining dataset into successive Z-depth slices.
             5. For each slice, selecting the nearest cell in the XY plane to build the
                 final vertical profile.
-
 
         Args:
             centers (np.ndarray): Array of cell centers with shape ``(nCells, 3)``.
@@ -84,7 +81,7 @@ class ProfileExtractor:
         values = np.asarray( values )
 
         if len( centers ) == 0:
-            self.logger.warning( "        ⚠️ No cells provided" )
+            self.logger.warning( "         No cells provided" )
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         # ===================================================================
@@ -99,7 +96,7 @@ class ProfileExtractor:
             closestIndices = np.argsort( dXY )[ :20 ]
 
             if len( closestIndices ) == 0:
-                self.logger.warning( "        ⚠️ No cells found near start point" )
+                self.logger.warning( "         No cells found near start point" )
                 return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
             # Take the highest Z value
@@ -132,7 +129,7 @@ class ProfileExtractor:
                     faultIds = vtk_to_numpy( cellData.GetArray( fieldName ) )
 
                     if len( faultIds ) != len( centers ):
-                        self.logger.warning( f"        ⚠️ Field '{fieldName}' length mismatch, skipping" )
+                        self.logger.warning( f"         Field '{fieldName}' length mismatch, skipping" )
                         continue
 
                     # Get starting ID
@@ -158,7 +155,7 @@ class ProfileExtractor:
             )
 
             if nOnFault == 0:
-                self.logger.warning( "        ⚠️ No cells found on target fault" )
+                self.logger.warning( "         No cells found on target fault" )
                 return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
             # Replace centers and values by the filtered subset
@@ -169,9 +166,9 @@ class ProfileExtractor:
             dToStart = np.sqrt( np.sum( ( centers - startPoint )**2, axis=1 ) )
             startIdx = np.argmin( dToStart )
 
-            self.logger.info( f"        ✅ Profile will stay on fault ID={targetFaultId}" )
+            self.logger.info( f"         Profile will stay on fault ID={targetFaultId}" )
         else:
-            self.logger.warning( "        ⚠️ No fault identification field found" )
+            self.logger.warning( "         No fault identification field found" )
             if cellData is not None:
                 fields = [ cellData.GetArrayName( i ) for i in range( cellData.GetNumberOfArrays() ) ]
                 self.logger.info( f"        Available fields: {list(fields)}" )
@@ -197,7 +194,7 @@ class ProfileExtractor:
         zRange = np.max( centers[ :, 2 ] ) - np.min( centers[ :, 2 ] )
 
         if zRange <= 0:
-            self.logger.warning( f"        ⚠️ Invalid zRange: {zRange}" )
+            self.logger.warning( f"         Invalid zRange: {zRange}" )
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         lateralExtent = max( xRange, yRange )
@@ -215,7 +212,7 @@ class ProfileExtractor:
         zDiffsPositive = zDiffs[ zDiffs > 1e-6 ]
 
         if len( zDiffsPositive ) == 0:
-            self.logger.warning( "        ⚠️ All cells at same Z" )
+            self.logger.warning( "         All cells at same Z" )
 
             dXY = np.sqrt( ( centers[ :, 0 ] - refX )**2 + ( centers[ :, 1 ] - refY )**2 )
             sortedIndices = np.argsort( dXY )
@@ -238,7 +235,7 @@ class ProfileExtractor:
         nSlices = min( nSlices, 10000 )  # Limit to 10k slices max
 
         if nSlices <= 0:
-            self.logger.warning( f"        ⚠️ Invalid nSlices: {nSlices}" )
+            self.logger.warning( f"         Invalid nSlices: {nSlices}" )
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         self.logger.info( f"        Median Z spacing: {medianZSpacing:.1f}m"
@@ -247,7 +244,7 @@ class ProfileExtractor:
         try:
             zSlices = np.linspace( zMax, zMin, nSlices + 1 )
         except ( MemoryError, ValueError ) as e:
-            self.logger.error( f"        ⚠️ Error creating slices: {e}" )
+            self.logger.error( f"         Error creating slices: {e}" )
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         # ===================================================================
@@ -293,7 +290,7 @@ class ProfileExtractor:
                 uniqueIndices.append( idx )
 
         if len( uniqueIndices ) == 0:
-            self.logger.warning( "        ⚠️ No points extracted" )
+            self.logger.warning( "         No points extracted" )
             return np.array( [] ), np.array( [] ), np.array( [] ), np.array( [] )
 
         profileIndicesArr = np.array( uniqueIndices )
@@ -314,7 +311,7 @@ class ProfileExtractor:
         depthCoverage = ( depths.max() - depths.min() ) / zRange * 100 if zRange > 0 else 0
         xyDisplacement = np.sqrt( ( pathX[ -1 ] - pathX[ 0 ] )**2 + ( pathY[ -1 ] - pathY[ 0 ] )**2 )
 
-        self.logger.info( f"        ✅ Extracted {len(profileIndices)} points\n"
+        self.logger.info( f"         Extracted {len(profileIndices)} points\n"
                           f"           Depth range: [{depths.max():.1f}, {depths.min():.1f}]m\n"
                           f"           Coverage: {depthCoverage:.1f}% of fault depth\n"
                           f"           XY displacement: {xyDisplacement:.1f}m\n" )
