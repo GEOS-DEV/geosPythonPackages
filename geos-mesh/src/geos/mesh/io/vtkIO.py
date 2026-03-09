@@ -108,7 +108,11 @@ def _readData( filepath: str, readerClass: VtkReaderClass ) -> Optional[ vtkPoin
     return output
 
 
-def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isBinary: bool ) -> int:
+def _writeData( mesh: vtkPointSet,
+                writerClass: VtkWriterClass,
+                output: str,
+                isBinary: bool,
+                logger: Union[ Logger, None ] = None ) -> int:
     """Generic helper to write a VTK file using a specific writer class.
 
     Args:
@@ -116,11 +120,16 @@ def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isB
         writerClass (VtkWriterClass): The VTK writer class to use.
         output (str): The output file path.
         isBinary (bool): Whether to write the file in binary mode (True) or ASCII (False).
+        logger (Union[Logger, None], optional): A logger to manage the output messages.
+                    Defaults to None, an internal logger is used.
 
     Returns:
         int: 1 if success, 0 otherwise.
     """
-    ioLogger.info( f"Writing mesh to '{output}' using {writerClass.__name__}..." )
+    if logger is None:
+        logger = ioLogger
+
+    logger.info( f"Writing mesh to '{output}' using {writerClass.__name__}..." )
     writer = writerClass()
     writer.SetFileName( output )
     writer.SetInputData( mesh )
@@ -129,10 +138,10 @@ def _writeData( mesh: vtkPointSet, writerClass: VtkWriterClass, output: str, isB
     if isinstance( writer, vtkXMLWriter ):
         if isBinary:
             writer.SetDataModeToBinary()
-            ioLogger.info( "Data mode set to Binary." )
+            logger.info( "Data mode set to Binary." )
         else:
             writer.SetDataModeToAscii()
-            ioLogger.info( "Data mode set to ASCII." )
+            logger.info( "Data mode set to ASCII." )
 
     return writer.Write()
 
@@ -268,7 +277,7 @@ def writeMesh( mesh: vtkPointSet,
         if not writerClass:
             raise ValueError( f"Writing to extension '{outputPath.suffix}' is not supported." )
 
-        successCode = _writeData( mesh, writerClass, str( outputPath ), vtkOutput.isDataModeBinary )
+        successCode = _writeData( mesh, writerClass, str( outputPath ), vtkOutput.isDataModeBinary, logger )
         if not successCode:
             raise RuntimeError( f"VTK writer failed to write file '{outputPath}'." )
 

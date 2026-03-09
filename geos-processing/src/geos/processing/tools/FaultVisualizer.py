@@ -383,7 +383,7 @@ class Visualizer:
 
         for field in requiredFields:
             if isAttributeInObject( volumeMesh, field, Piece.CELLS ):
-                self.logger.warning( f"    Missing required field: {field}" )
+                self.logger.warning( f"    Missing required field: {field} - Cannot plot volume stress profile." )
                 return
 
         # Check for pressure
@@ -393,7 +393,7 @@ class Visualizer:
         elif isAttributeInObject( volumeMesh, 'pressure', Piece.CELLS ):
             pressureField = 'pressure'
             pressure = getArrayInObject( volumeMesh, pressureField, Piece.CELLS ) / 1e5
-            self.logger.info( "  ℹ️  Converting pressure from Pa to bar" )
+            self.logger.info( "      Converting pressure from Pa to bar" )
         else:
             self.logger.warning( "    No pressure field found" )
             pressure = None
@@ -438,8 +438,7 @@ class Visualizer:
         self.logger.info( f"   Minus side: {len(centersMinus):,} cells" )
 
         if len( centersPlus ) == 0 and len( centersMinus ) == 0:
-            self.logger.error( "    No contributing cells found!" )
-            return
+            raise ValueError( "No contributing cells found!" )
 
         # ===================================================================
         # GET FAULT BOUNDS
@@ -750,9 +749,7 @@ class Visualizer:
                     successfulProfiles += 1
 
         if successfulProfiles == 0:
-            self.logger.error( "   No valid profiles found!" )
-            plt.close()
-            return
+            raise ValueError( "   No valid profiles found!" )
 
         # ===================================================================
         # CONFIGURE PLOTS

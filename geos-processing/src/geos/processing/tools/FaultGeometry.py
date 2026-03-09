@@ -87,12 +87,13 @@ class FaultGeometry:
             saveContributionCells (bool): Save the contributing cells as VTU.
                     Defaults is True.
         """
+        self.logger.info( "***Computing normals and adjacency topology***" )
+
         # Extract and compute normals
         self.faultSurface, self.surfaces = self._extractAndComputeNormals()
 
         # Pre-compute adjacency mapping
-        self.logger.info( " Pre-computing volume-fault adjacency topology\n"
-                          "   Method: Face-sharing (adaptive epsilon)\n" )
+        self.logger.info( "Pre-computing volume-fault adjacency topology with face-sharing (adaptive epsilon) method." )
 
         self.adjacencyMapping = self._buildAdjacencyMappingFaceSharing(
             processFaultsSeparately=processFaultsSeparately )
@@ -107,11 +108,12 @@ class FaultGeometry:
         nWithBoth = sum( 1 for m in self.adjacencyMapping.values()
                          if len( m[ 'plus' ] ) > 0 and len( m[ 'minus' ] ) > 0 )
 
-        self.logger.info( " Adjacency topology computed:\n"
-                          f"   - {nMapped}/{self.faultSurface.GetNumberOfCells()} fault cells mapped\n"
-                          f"   - {nWithBoth} cells have neighbors on both sides\n" )
+        self.logger.info( "Adjacency topology computed:" )
+        self.logger.info( f"   {nMapped}/{self.faultSurface.GetNumberOfCells()} fault cells mapped" )
+        self.logger.info( f"   {nWithBoth} cells have neighbors on both sides" )
 
         self.initialized = True
+        self.logger.info( "-" * 60 )
 
     def _markContributingCells( self: Self, saveContributionCells: bool = True ) -> None:
         """Mark volume cells that contribute to fault stress projection.
@@ -120,7 +122,7 @@ class FaultGeometry:
             saveContributionCells (bool): Save contributing cells as VTU.
                 Defaults is True.
         """
-        self.logger.info( " Marking contributing volume cells..." )
+        self.logger.info( "Marking contributing volume cells..." )
 
         nVolume = self.volumeMesh.GetNumberOfCells()
 
@@ -160,16 +162,16 @@ class FaultGeometry:
         self.contributingCellsMinus = extractCellSelection( self.volumeMesh, maskMinus )
 
         # Statistics
-        nContrib = np.sum( maskAll )
+        nContrib = len( maskAll )
         nPlus = np.sum( contributionSide == 1 )
         nMinus = np.sum( contributionSide == 2 )
         nBoth = np.sum( contributionSide == 3 )
         pctContrib = nContrib / nVolume * 100
 
-        self.logger.info( f"    Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)\n"
-                          f"      Plus side only:  {nPlus} cells\n"
-                          f"      Minus side only: {nMinus} cells\n"
-                          f"      Both sides:      {nBoth} cells\n" )
+        self.logger.info( f"Total contributing: {nContrib}/{nVolume} ({pctContrib:.1f}%)" )
+        self.logger.info( f"      Plus side only:  {nPlus} cells" )
+        self.logger.info( f"      Minus side only: {nMinus} cells" )
+        self.logger.info( f"      Both sides:      {nBoth} cells" )
 
         # Save to files if requested
         if saveContributionCells:
@@ -187,31 +189,32 @@ class FaultGeometry:
                    vtkOutput=VtkOutput( filenameAll ),
                    canOverwrite=True,
                    logger=self.logger )
-        self.logger.info(
-            f"    All contributing cells saved: {filenameAll}\n"
-            f"      ({self.contributingCells.GetNumberOfCells()} cells, {self.contributingCells.GetNumberOfPoints()} points)"
-        )
 
         # Save plus side
         filenamePlus = self.outputDir / "contributingCellsPlus.vtu"
-        self.logger.info( f"    Plus side cells saved: {filenamePlus}" )
         writeMesh( mesh=self.contributingCellsPlus,
                    vtkOutput=VtkOutput( filenamePlus ),
                    canOverwrite=True,
                    logger=self.logger )
-        self.logger.info(
-            f"      ({self.contributingCellsPlus.GetNumberOfCells()} cells, {self.contributingCellsPlus.GetNumberOfPoints()} points)"
-        )
 
         # Save minus side
         filenameMinus = self.outputDir / "contributingCellsMinus.vtu"
-        self.logger.info( f"    Minus side cells saved: {filenameMinus}" )
         writeMesh( mesh=self.contributingCellsMinus,
                    vtkOutput=VtkOutput( filenameMinus ),
                    canOverwrite=True,
                    logger=self.logger )
+        self.logger.info( "Contribution cells saved:" )
         self.logger.info(
-            f"      ({self.contributingCellsMinus.GetNumberOfCells()} cells, {self.contributingCellsMinus.GetNumberOfPoints()} points)"
+            f"    *All* contributing cells: {filenameAll} - "
+            f" ({self.contributingCells.GetNumberOfCells()} cells, {self.contributingCells.GetNumberOfPoints()} points)"
+        )
+        self.logger.info(
+            f"    *Plus* side cells: {filenamePlus} -"
+            f" ({self.contributingCellsPlus.GetNumberOfCells()} cells, {self.contributingCellsPlus.GetNumberOfPoints()} points)"
+        )
+        self.logger.info(
+            f"    *Minus* side cells: {filenameMinus} -"
+            f" ({self.contributingCellsMinus.GetNumberOfCells()} cells, {self.contributingCellsMinus.GetNumberOfPoints()} points)"
         )
 
     def getContributingCells( self: Self, side: str = 'all' ) -> vtkUnstructuredGrid:
@@ -270,44 +273,37 @@ class FaultGeometry:
             - Distance from each volume cell to nearest fault cell
             - KDTree for fault surface
         """
-        self.logger.info( " Pre-computing geometric properties..." )
+        self.logger.info( "Pre-computing geometric properties..." )
 
         nVolume = self.volumeMesh.GetNumberOfCells()
 
         # 1. Compute volume centers
-        self.logger.info( "   Computing cell centers..." )
         self.volumeCenters = vtk_to_numpy( computeCellCenterCoordinates( self.volumeMesh ) )
 
         # 2. Compute cell volumes
-        self.logger.info( "   Computing cell volumes..." )
         volumeWithSizes = computeCellVolumes( self.volumeMesh )
         self.volumeCellVolumes = getArrayInObject( volumeWithSizes, 'Volume', Piece.CELLS )
 
-        self.logger.info( f"      Volume range: [{np.min(self.volumeCellVolumes):.1e}, \n"
+        self.logger.info( f"   Cells volume range: [{np.min(self.volumeCellVolumes):.1e}, "
                           f"{np.max(self.volumeCellVolumes):.1e}] m³" )
 
         # 3. Build KDTree for fault surface (for fast distance queries)
-        self.logger.info( "   Building KDTree for fault surface..." )
-
         faultCenters = computeCellCenterCoordinates( self.faultSurface )
         self.faultTree = cKDTree( faultCenters )
 
         # 4. Compute distance from each volume cell to nearest fault cell
-        self.logger.info( "   Computing distances to fault..." )
         self.distanceToFault = np.zeros( nVolume )
 
         # Vectorized query for all points at once (much faster)
         distances, _ = self.faultTree.query( self.volumeCenters )
         self.distanceToFault = distances
 
-        self.logger.info( f"      Distance range: [{np.min(self.distanceToFault):.1f}, \n"
+        self.logger.info( f"   Distance to fault range: [{np.min(self.distanceToFault):.1f},"
                           f"{np.max(self.distanceToFault):.1f}] m" )
 
         # 5. Add these properties to volume mesh for reference
         createAttribute( self.volumeMesh, self.volumeCellVolumes, 'cellVolume', Piece.CELLS, logger=self.logger )
         createAttribute( self.volumeMesh, self.distanceToFault, 'distanceToFault', Piece.CELLS, logger=self.logger )
-
-        self.logger.info( "    Geometric properties computed and cached" )
 
     def _buildAdjacencyMappingFaceSharing( self: Self,
                                            processFaultsSeparately: bool = True
@@ -318,7 +314,7 @@ class FaultGeometry:
         """
         faultIds = np.unique( getArrayInObject( self.faultSurface, self.faultAttribute, Piece.CELLS ) )
         nFaults = len( faultIds )
-        self.logger.info( f"   Processing {nFaults} separate faults: {faultIds}\n" )
+        self.logger.info( f"Processing {nFaults} separate faults: {faultIds}" )
 
         allMappings: dict[ int, dict[ str, list[ int ] ] ] = {}
 
@@ -327,7 +323,7 @@ class FaultGeometry:
             indices = np.where( mask )[ 0 ]
             singleFault = extractCellSelection( self.faultSurface, indices )
 
-            self.logger.info( f"   Mapping Fault {faultId}..." )
+            self.logger.info( f"  Mapping Fault {faultId}..." )
 
             # Build face-sharing mapping with adaptive epsilon
             localMapping = self._findFaceSharingCells( singleFault )
@@ -386,8 +382,8 @@ class FaultGeometry:
             score = stats[ 'pctBoth' ] - 2.0 * stats[ 'pctNone' ]
 
             self.logger.info( f"            ε={epsilon:.3f}m -> Both: {stats['pctBoth']:.1f}%, "
-                              f"One: {stats['pctOne']:.1f}%, None: {stats['pctNone']:.1f}%, "
-                              f"Avg: {stats['avgNeighbors']:.2f} (score: {score:.1f})" )
+                              f" One: {stats['pctOne']:.1f}%, None: {stats['pctNone']:.1f}%, "
+                              f" Avg: {stats['avgNeighbors']:.2f} (score: {score:.1f})" )
 
             if score > bestScore:
                 bestScore = score
@@ -395,12 +391,12 @@ class FaultGeometry:
                 bestMapping = mapping
                 bestStats = stats
 
-        self.logger.info( f"          Best epsilon: {bestEpsilon:.6f}m\n"
-                          "          Face-sharing mapping completed:\n"
-                          f"            Both sides: {bestStats['nBoth']} ({bestStats['pctBoth']:.1f}%)\n"
-                          f"            One side: {bestStats['nOne']} ({bestStats['pctOne']:.1f}%)\n"
-                          f"            No neighbors: {bestStats['nNone']} ({bestStats['pctNone']:.1f}%)\n"
-                          f"            Average neighbors per fault cell: {bestStats['avgNeighbors']:.2f}" )
+        self.logger.info( f"         Best epsilon: {bestEpsilon:.6f}m" )
+        self.logger.info( "          Face-sharing mapping completed:" )
+        self.logger.info( f"            Both sides: {bestStats['nBoth']} ({bestStats['pctBoth']:.1f}%)" )
+        self.logger.info( f"            One side: {bestStats['nOne']} ({bestStats['pctOne']:.1f}%)" )
+        self.logger.info( f"            No neighbors: {bestStats['nNone']} ({bestStats['pctNone']:.1f}%)" )
+        self.logger.info( f"            Average neighbors per fault cell: {bestStats['avgNeighbors']:.2f}" )
 
         return bestMapping
 
@@ -514,7 +510,7 @@ class FaultGeometry:
                 continue
 
             # Compute normals
-            surf = computeNormals( surf, pointNormals=True )
+            surf = computeNormals( surf, self.logger )
 
             # Orient normals consistently within the fault
             surf = self._orientNormals( surf )
@@ -522,8 +518,11 @@ class FaultGeometry:
             mb.SetBlock( i, surf )
             surfaces.append( surf )
 
+        if len( surfaces ) == 0:
+            raise ValueError( "No surface could be extracted with {self.faultAttribute} fault attribute name." )
+
         merged = mergeBlocks( mb, keepPartialAttributes=True, logger=self.logger )
-        self.logger.info( f" Normals computed for {merged.GetNumberOfCells()} fault cells" )
+        self.logger.info( f"Normals computed for {merged.GetNumberOfCells()} fault cells" )
 
         return merged, surfaces
 
@@ -640,8 +639,7 @@ class FaultGeometry:
         """
         surface = self.faultSurface
 
-        self.logger.info( " DIAGNOSTIC OF NORMALS" )
-        self.logger.info( "=" * 60 )
+        self.logger.info( "Diagnostic of normals" )
 
         normals = surface.GetCellData().GetNormals()
         tangent1 = surface.GetCellData().GetTangents()
@@ -654,21 +652,23 @@ class FaultGeometry:
         dotNormT2 = np.array( [ np.dot( normals[ i ], tangent2[ i ] ) for i in range( nCells ) ] )
         dotT1T2 = np.array( [ np.dot( tangent1[ i ], tangent2[ i ] ) for i in range( nCells ) ] )
 
+        self.logger.info( "Orthogonality (should be close to 0):" )
         self.logger.info(
-            "Orthogonality (should be close to 0):\n"
-            f"  Normal · Tangent1  : max={np.max(np.abs(dotNormT1)):.2e}, mean={np.mean(np.abs(dotNormT1)):.2e}\n"
-            f"  Normal · Tangent2  : max={np.max(np.abs(dotNormT2)):.2e}, mean={np.mean(np.abs(dotNormT2)):.2e}\n"
-            f"  Tangent1 · Tangent2: max={np.max(np.abs(dotT1T2)):.2e}, mean={np.mean(np.abs(dotT1T2)):.2e}\n" )
+            f"  Normal · Tangent1  : max={np.max(np.abs(dotNormT1)):.2e}, mean={np.mean(np.abs(dotNormT1)):.2e}" )
+        self.logger.info(
+            f"  Normal · Tangent2  : max={np.max(np.abs(dotNormT2)):.2e}, mean={np.mean(np.abs(dotNormT2)):.2e}" )
+        self.logger.info(
+            f"  Tangent1 · Tangent2: max={np.max(np.abs(dotT1T2)):.2e}, mean={np.mean(np.abs(dotT1T2)):.2e}" )
 
         # Check vector norms (should be unit length)
         normN = np.linalg.norm( normals, axis=1 )
         normT1 = np.linalg.norm( tangent1, axis=1 )
         normT2 = np.linalg.norm( tangent2, axis=1 )
 
-        self.logger.info( "Norms (should be close to 1):\n"
-                          f"  Normals  : min={np.min(normN):.6f}, max={np.max(normN):.6f}\n"
-                          f"  Tangent1 : min={np.min(normT1):.6f}, max={np.max(normT1):.6f}\n"
-                          f"  Tangent2 : min={np.min(normT2):.6f}, max={np.max(normT2):.6f}\n" )
+        self.logger.info( "Norms (should be close to 1):" )
+        self.logger.info( f"  Normals  : min={np.min(normN):.6f}, max={np.max(normN):.6f}" )
+        self.logger.info( f"  Tangent1 : min={np.min(normT1):.6f}, max={np.max(normT1):.6f}" )
+        self.logger.info( f"  Tangent2 : min={np.min(normT2):.6f}, max={np.max(normT2):.6f}" )
 
         # Check orientation consistency
         meanNormal = np.mean( normals, axis=0 )
@@ -677,15 +677,15 @@ class FaultGeometry:
         dotsWithMean = np.array( [ np.dot( normals[ i ], meanNormal ) for i in range( nCells ) ] )
         nReversed = np.sum( dotsWithMean < 0 )
 
-        self.logger.info( "Orientation consistency:\n"
-                          f"  Mean normal: [{meanNormal[0]:.3f}, {meanNormal[1]:.3f}, {meanNormal[2]:.3f}]\n"
-                          f"  Reversed normals: {nReversed}/{nCells} ({nReversed/nCells*100:.1f}%)\n" )
+        self.logger.info( "Orientation consistency:" )
+        self.logger.info( f"  Mean normal: [{meanNormal[0]:.3f}, {meanNormal[1]:.3f}, {meanNormal[2]:.3f}]" )
+        self.logger.info( f"  Reversed normals: {nReversed}/{nCells} ({nReversed/nCells*100:.1f}%)" )
 
         # Visual consistency check
         if nReversed > nCells * 0.1:
-            self.logger.warning( "    More than 10% of normals point in the opposite direction!" )
+            self.logger.warning( "More than 10% of normals point in the opposite direction!" )
         else:
-            self.logger.info( "   Orientation is consistent" )
+            self.logger.info( "Normals orientation is consistent" )
 
         # Identify problematic cells (poor orthogonality)
         badOrtho = ( ( np.abs( dotNormT1 ) > 1e-3 ) | ( np.abs( dotNormT2 ) > 1e-3 ) | ( np.abs( dotT1T2 ) > 1e-3 ) )
@@ -701,8 +701,6 @@ class FaultGeometry:
                              Piece.CELLS,
                              logger=self.logger )
         else:
-            self.logger.info( " All cells have good orthogonality" )
-
-        self.logger.info( "=" * 60 )
+            self.logger.info( "All cells have good orthogonality" )
 
         return surface

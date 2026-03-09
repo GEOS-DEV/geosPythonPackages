@@ -146,7 +146,6 @@ class FaultStabilityAnalysis:
 
         self.logger.addHandler( self.counter )
 
-        self.logger.info( " Initialize fault geometry" )
         self.volumeMeshInitial = self._getInitialMesh()
         self.faultGeometry = FaultGeometry( inputMesh, faultValues, faultAttribute, self.volumeMeshInitial,
                                             self.outputDir, self.logger )
@@ -175,7 +174,9 @@ class FaultStabilityAnalysis:
 
     def _initializeFaultGeometry( self: Self ) -> None:
         """Extract faults and compute geometric properties such as normals and adjacency topology."""
-        self.logger.info( " Computing normals and adjacency topology" )
+        self.logger.info( "=" * 70 )
+        self.logger.info( "Initialize fault geometry" )
+        self.logger.info( "=" * 70 )
         self.faultGeometry.initialize( processFaultsSeparately=self.processFaultsSeparately,
                                        saveContributionCells=self.saveContributionCells )
 
@@ -206,12 +207,12 @@ class FaultStabilityAnalysis:
         projector.setStressName( self.stressName )
         projector.setBiotCoefficientName( self.biotName )
 
-        self.logger.info( "=" * 60 )
-        self.logger.info( "TIME SERIES PROCESSING" )
-        self.logger.info( "=" * 60 )
+        self.logger.info( "=" * 70 )
+        self.logger.info( "Time Series Processing" )
+        self.logger.info( "=" * 70 )
 
         for i, time in enumerate( timeValues ):
-            self.logger.info( f"\n Step {i+1}/{len(timeValues)}: {time/(365.25*24*3600):.2f} years" )
+            self.logger.info( f"***Step {i+1}/{len(timeValues)}: {time/(365.25*24*3600):.2f} years***" )
 
             # Read time step
             idx = self.timeIndexes[ i ] if self.timeIndexes else i
@@ -269,6 +270,8 @@ class FaultStabilityAnalysis:
                        logger=self.logger )
             outputFiles.append( ( time, filename ) )
             self.logger.info( f"   Saved: {filename}" )
+
+            self.logger.info( "=" * 60 )
 
         # Create master PVD
         createPVD( self.outputDir, 'fault_analysis.pvd', outputFiles, self.logger )

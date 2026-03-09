@@ -68,9 +68,8 @@ class SensitivityAnalyzer:
         frictionAngles = sensitivityFrictionAngles
         cohesions = sensitivityCohesions
 
-        self.logger.info( "=" * 60 )
-        self.logger.info( "SENSITIVITY ANALYSIS" )
-        self.logger.info( "=" * 60 )
+        self.logger.info( "-" * 70 )
+        self.logger.info( "Sensitivity Analysis" )
         self.logger.info( f"Friction angles: {frictionAngles}" )
         self.logger.info( f"Cohesions: {cohesions}" )
         self.logger.info( f"Total combinations: {len(frictionAngles) * len(cohesions)}" )
@@ -78,7 +77,7 @@ class SensitivityAnalyzer:
         results = []
         for frictionAngle in frictionAngles:
             for cohesion in cohesions:
-                self.logger.info( f"-> Testing φ={frictionAngle}°, C={cohesion} bar" )
+                self.logger.info( f"Testing phi={frictionAngle}°, C={cohesion} bar" )
 
                 surfaceCopy = type( surfaceWithStress )()
                 surfaceCopy.DeepCopy( surfaceWithStress )
@@ -171,6 +170,7 @@ class SensitivityAnalyzer:
         filename = f'sensitivity_analysis_{years:.0f}y.png'
         fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
         self.logger.info( f"Sensitivity plot saved: {filename}" )
+        self.logger.info( "-" * 60 )
 
     def _plotHeatMap( self: Self, df: pd.DataFrame, column: str, title: str, ax: plt.Axes ) -> None:
         """Create a single heatmap for sensitivity analysis.
@@ -226,7 +226,7 @@ class SensitivityAnalyzer:
             maxDepthProfiles (float, optional): Maximum depth for profile display
             extractionMethod (ProfileExtractorMethod): Profile extraction method
         """
-        self.logger.info( "\n  Creating SCU sensitivity depth profiles..." )
+        self.logger.info( "Creating SCU sensitivity depth profiles..." )
 
         # Extract depth data
         centers = getArrayInObject( surfaceWithStress, 'elementCenter', Piece.CELLS )
@@ -234,7 +234,7 @@ class SensitivityAnalyzer:
 
         # Auto-generate if not provided
         if profileStartPoints is None:
-            self.logger.warning( "    No PROFILE_START_POINTS provided, auto-generating..." )
+            self.logger.warning( "No profile start point provided, auto-generating..." )
             xMin, xMax = np.min( centers[ :, 0 ] ), np.max( centers[ :, 0 ] )
             yMin, yMax = np.min( centers[ :, 1 ] ), np.max( centers[ :, 1 ] )
 
@@ -262,8 +262,8 @@ class SensitivityAnalyzer:
         else:
             searchRadius = profileSearchRadius
 
-        self.logger.info( f"   Using {len(profileStartPoints)} profile point(s)\n"
-                          f"     Search radius: {searchRadius:.1f}m" )
+        self.logger.info( f"Using {len(profileStartPoints)} profile point(s),"
+                          f" search radius: {searchRadius:.1f}m" )
 
         # Create colormap for parameter combinations
         nCombinations = len( results )
@@ -283,7 +283,7 @@ class SensitivityAnalyzer:
         for profileIdx, ( xPos, yPos ) in enumerate( profileStartPoints ):
             ax = axes[ profileIdx ]
 
-            self.logger.info( f"  -> Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}):\n" )
+            self.logger.info( f" Profile {profileIdx+1} at ({xPos:.1f}, {yPos:.1f}):" )
 
             # Plot each parameter combination
             for idx, params in enumerate( results ):
@@ -352,4 +352,4 @@ class SensitivityAnalyzer:
         # Save
         filename = f'sensitivity_scu_profiles_{years:.0f}y.png'
         fig.savefig( self.outputDir / filename, dpi=300, bbox_inches='tight' )
-        self.logger.info( f"   SCU sensitivity profiles saved: {filename}" )
+        self.logger.info( f"  SCU sensitivity profiles saved: {filename}" )

@@ -124,12 +124,12 @@ class MohrCoulombAnalysis:
             meanDelta = np.mean( np.abs( deltaSCU ) )
             maxIncrease = np.max( deltaSCU )
             maxDecrease = np.min( deltaSCU )
-            self.logger.info( f"   Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical,\n"
-                              f"{nStable} stable cells\n"
-                              f"     Delta SCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, \n"
+            self.logger.info( f"  Mohr-Coulomb: {nUnstable} unstable, {nCritical} critical, "
+                              f"{nStable} stable cells" )
+            self.logger.info( f"    Delta SCU: mean={meanDelta:.3f}, maxIncrease={maxIncrease:.3f}, "
                               f"maxDecrease={maxDecrease:.3f}" )
         else:
-            self.logger.info( f"   Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, \n"
+            self.logger.info( f"  Mohr-Coulomb (initial): {nUnstable} unstable, {nCritical} critical, "
                               f"{nStable} stable cells" )
 
         return self.surface

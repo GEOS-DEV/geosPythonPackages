@@ -17,8 +17,7 @@ from geos.geomechanics.model.StressTensor import ( StressTensor )
 
 from geos.mesh.io.vtkIO import ( writeMesh, VtkOutput )
 from geos.mesh.utils.genericHelpers import ( extractCellSelection )
-from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getAttributeSet, getArrayInObject,
-                                           computeCellCenterCoordinates )
+from geos.mesh.utils.arrayHelpers import ( isAttributeInObject, getArrayInObject, computeCellCenterCoordinates )
 from geos.mesh.utils.arrayModifiers import ( createAttribute, updateAttribute )
 from geos.utils.pieceEnum import ( Piece )
 
@@ -180,7 +179,7 @@ class StressProjector:
             else:
                 cellsToTrack = allContributingCells
 
-            self.logger.info( f"  Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
+            self.logger.info( f"Computing principal stresses for {len(cellsToTrack)} contributing cells..." )
 
             # Create mesh with only contributing cells
             contributingMesh = self._createVolumicContribMesh( volumeData,
@@ -207,8 +206,8 @@ class StressProjector:
         deltaTauArr = np.zeros( nFault )
         nContributors = np.zeros( nFault, dtype=int )
 
-        self.logger.info( f"    Projecting stress to {nFault} fault cells...\n"
-                          f"     Weighting scheme: {weightingScheme}" )
+        self.logger.info( f"Projecting stress to {nFault} fault cells..." )
+        self.logger.info( f"   Weighting scheme: {weightingScheme.value}" )
 
         for faultIdx in range( nFault ):
             if faultIdx not in self.adjacencyMapping:
@@ -385,8 +384,6 @@ class StressProjector:
         if not isAttributeInObject( volumeData, self.stressName, Piece.CELLS ):
             raise ValueError( f"No stress data '{self.stressName}' in volume dataset" )
 
-        self.logger.info( f"  Extracting stress from field: '{self.stressName}'" )
-
         # Extract effective stress and pressure
         pressure = getArrayInObject( volumeData, "pressure", Piece.CELLS ) / 1e5  # Convert to bar
         biot = getArrayInObject( volumeData, self.biotName, Piece.CELLS )
@@ -408,7 +405,7 @@ class StressProjector:
         subsetMesh = extractCellSelection( volumeData, cellMask )
 
         if subsetMesh.GetNumberOfCells() == 0:
-            self.logger.warning( "No cells found in the subset mesh. " )
+            raise ValueError( "No cells found in the subset mesh." )
 
         # ===================================================================
         # REBUILD MAPPING: subsetIdx -> originalIdx
@@ -422,21 +419,13 @@ class StressProjector:
         for subsetIdx in range( subsetMesh.GetNumberOfCells() ):
             dist, idx = tree.query( subsetCenters[ subsetIdx ] )
             if dist > 1e-6:
-                self.logger.warning( f"        WARNING: Cell {subsetIdx} not matched (dist={dist})" )
+                self.logger.warning( f"Cell {subsetIdx} not matched (dist={dist})" )
             subsetToOriginal[ subsetIdx ] = cellIndices[ idx ]
 
         # ===================================================================
         # MAP VOLUME CELLS TO FAULT DIP/STRIKE ANGLES
         # ===================================================================
-        self.logger.info( "     Mapping volume cells to fault dip/strike angles..." )
-
-        # Check if fault surface has required data
-        if not faultSurface.GetCellData().HasArray( 'dipAngle' ):
-            raise AttributeError( "         WARNING: 'dipAngle' not found in faultSurface\n"
-                                  f"        Available fields: {list(getAttributeSet( faultSurface, Piece.CELLS ))}" )
-
-        if not faultSurface.GetCellData().HasArray( 'strikeAngle' ):
-            raise AttributeError( "         WARNING: 'strikeAngle' not found in faultSurface" )
+        self.logger.info( "Mapping volume cells to fault dip/strike angles..." )
 
         # Create mapping: volume_cell_id -> [dipAngles, strikeAngles]
         volumeToDip: dict[ int, list[ np.float64 ] ] = {}
@@ -464,12 +453,12 @@ class StressProjector:
         volumeToDipAvg = { volIdx: np.mean( dips ) for volIdx, dips in volumeToDip.items() }
         volumeToStrikeAvg = { volIdx: np.mean( strikes ) for volIdx, strikes in volumeToStrike.items() }
 
-        self.logger.info( f"         Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
+        self.logger.info( f"Mapped {len(volumeToDipAvg)} volume cells to fault angles" )
 
         # Statistics
         allDips = [ np.mean( dips ) for dips in volumeToDip.values() ]
         if len( allDips ) > 0:
-            self.logger.info( f"        Dip angle range: [{np.min(allDips):.1f}, {np.max(allDips):.1f}]°" )
+            self.logger.info( f"Dip angle range: [{np.min(allDips):.1f}, {np.max(allDips):.1f}]°" )
 
         # ===================================================================
         # COMPUTE PRINCIPAL STRESSES AND ANALYTICAL FAULT STRESSES
@@ -497,7 +486,7 @@ class StressProjector:
         sideArr = np.zeros( nCells, dtype=int )
         nFaultCellsArr = np.zeros( nCells, dtype=int )
 
-        self.logger.info( "       Computing principal stresses and analytical projections..." )
+        self.logger.info( "Computing principal stresses and analytical projections..." )
 
         for subsetIdx in range( nCells ):
             origIdx = subsetToOriginal[ subsetIdx ]
@@ -636,14 +625,19 @@ class StressProjector:
         nUnstable = np.sum( SCUAnalyticalArr >= 1.0 )
 
         if nValid > 0:
+            self.logger.info( f"Analytical fault stresses computed for {nValid}/{nCells} cells" )
             self.logger.info(
-                f"      Analytical fault stresses computed for {nValid}/{nCells} cells"
                 f"        sigma_n range: [{np.nanmin(sigmaNAnalyticalArr):.1f}, {np.nanmax(sigmaNAnalyticalArr):.1f}] bar"
-                f"        tau range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar"
-                f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°"
+            )
+            self.logger.info(
+                f"        tau range: [{np.nanmin(tauAnalyticalArr):.1f}, {np.nanmax(tauAnalyticalArr):.1f}] bar" )
+            self.logger.info(
+                f"        Dip angle range: [{np.nanmin(dipAngleArr):.1f}, {np.nanmax(dipAngleArr):.1f}]°" )
+            self.logger.info(
                 f"        SCU range: [{np.nanmin(SCUAnalyticalArr[validAnalytical]):.2f}, {np.nanmax(SCUAnalyticalArr[validAnalytical]):.2f}]"
-                f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)"
-                f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
+            )
+            self.logger.info( f"        Critical cells (SCU≥0.8): {nCritical} ({nCritical/nValid*100:.1f}%)" )
+            self.logger.info( f"        Unstable cells (SCU≥1.0): {nUnstable} ({nUnstable/nValid*100:.1f}%)" )
         else:
             self.logger.warning( "       No analytical stresses computed (no fault mapping)" )
 
@@ -674,7 +668,7 @@ class StressProjector:
             'file': vtuFilename
         } )
 
-        self.logger.info( f"      Saved principal stresses: {vtuFilename}" )
+        self.logger.info( f"   Saved principal stresses: {vtuFilename}" )
 
     def savePVDCollection( self: Self, filename: str = "principal_stresses.pvd" ) -> None:
         """Create PVD file for time series visualization in ParaView.
@@ -711,13 +705,7 @@ class StressProjector:
         tree = ElementTree( root )
         tree.write( str( pvdPath ), encoding='utf-8', xml_declaration=True )
 
-        self.logger.info( "    PVD file created successfully"
-                          f"    Output directory: {self.vtuOutputDir}"
-                          "\n    To visualize in ParaView:"
-                          f"      1. Open: {pvdPath}"
-                          "      2. Apply"
-                          "      3. Color by: sigma1, sigma2, sigma3, meanStress, etc."
-                          "      4. Use 'side' filter to show plus/minus/both" )
+        self.logger.info( "PVD file created successfully: {pvdPath}" )
 
     def setStressName( self: Self, stressName: str ) -> None:
         """Set the stress attribute name.
