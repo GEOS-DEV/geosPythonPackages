@@ -9,9 +9,9 @@ import os
 from trame.app import get_server  # type: ignore
 from trame_server import Server
 
-import sys
+#import sys
 # sys.path.insert( 0, "//home/jfranc/App/Code/geosPythonPackages/geos-trame/src" )
-sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-trame/src" )
+#sys.path.insert( 0, "/data/pau901/SIM_CS/04_WORKSPACE/USERS/jfranc/geosPythonPackages/geos-trame/src" )
 
 
 
@@ -37,11 +37,11 @@ def main( server: Server = None, **kwargs: Any ) -> None:
     parser.add_argument( "-e", "--env", help="dot_env file" , required=False )
 
     ( args, _unknown ) = parser.parse_known_args()
-    
     if args.env:
         assert load_dotenv( dotenv_path=Path(args.env) )
     else:
-        assert load_dotenv( dotenv_path=Path( __file__ ).parent.parent / "assets/.env" )
+        os.environ["ASSETS_DIR"] = str( Path( __file__ ).parent.parent / "assets/" )
+        os.environ["TEMPLATE_DIR"] = str(Path( __file__ ).parent.parent / "app/io/jinja_t/") 
     
     Authentificator.reload_simconstants()
     
